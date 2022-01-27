@@ -3,13 +3,13 @@
   xmlns:xhtml="http://www.w3.org/1999/xhtml">
   <url>
     <loc>https://luth.io/blog/</loc>
-    <lastmod>2022-01-27T10:11:05-07:00</lastmod>
+    <lastmod>2022-01-27T11:51:20-07:00</lastmod>
   </url><url>
-    <loc>https://luth.io/blog/introduction/</loc>
-    <lastmod>2022-01-27T10:11:05-07:00</lastmod>
+    <loc>https://luth.io/blog/free-personal-blog-hugo-github-pages/</loc>
+    <lastmod>2022-01-27T11:51:20-07:00</lastmod>
   </url><url>
     <loc>https://luth.io/</loc>
-    <lastmod>2022-01-27T10:11:05-07:00</lastmod>
+    <lastmod>2022-01-27T11:51:20-07:00</lastmod>
     <xhtml:link
                 rel="alternate"
                 hreflang="fr"
@@ -60,6 +60,9 @@
                 hreflang="en"
                 href="https://luth.io/"
                 />
+  </url><url>
+    <loc>https://luth.io/blog/introduction/</loc>
+    <lastmod>2022-01-27T10:11:05-07:00</lastmod>
   </url><url>
     <loc>https://luth.io/about/</loc>
     <lastmod>2022-01-26T08:26:16-07:00</lastmod>

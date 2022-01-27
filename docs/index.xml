@@ -6,7 +6,17 @@
     <description>Recent content on Luther Monson</description>
     <generator>Hugo -- gohugo.io</generator>
     <language>en</language>
-    <lastBuildDate>Thu, 27 Jan 2022 10:11:05 -0700</lastBuildDate><atom:link href="https://luth.io/index.xml" rel="self" type="application/rss+xml" />
+    <lastBuildDate>Thu, 27 Jan 2022 11:51:20 -0700</lastBuildDate><atom:link href="https://luth.io/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>Free Blog Hosting Using Hugo &#43; Github Pages</title>
+      <link>https://luth.io/blog/free-personal-blog-hugo-github-pages/</link>
+      <pubDate>Thu, 27 Jan 2022 11:51:20 -0700</pubDate>
+      
+      <guid>https://luth.io/blog/free-personal-blog-hugo-github-pages/</guid>
+      <description>Since I just rode this merry-go-round here is a quick overview of how you can achieve a professional looking personal blog with custom DNS with minimal effort at no cost and completely run out of a single Github Repository.
+Prerequisites You&amp;rsquo;ll need to do your own homework on how to use Hugo and you should have a Github account and have a decent understanding of using git and getting changes committed and pushed to a repo.</description>
+    </item>
+    
     <item>
       <title>Introduction</title>
       <link>https://luth.io/blog/introduction/</link>

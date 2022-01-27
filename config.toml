@@ -4,7 +4,7 @@ baseurl                 = "https://luth.io/"
 DefaultContentLanguage  = "en"
 title                   = "Luther Monson"
 theme                   = "hugo-future-imperfect-slim"
-
+publishDir              = "docs"
 paginate                = 3
 disqusShortname         = ""
 googleAnalytics         = "G-MSTSKGFWTX"
