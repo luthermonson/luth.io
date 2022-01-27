@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>Luther Monson</title>
+    <link>https://luth.io/</link>
+    <description>Recent content on Luther Monson</description>
+    <generator>Hugo -- gohugo.io</generator>
+    <language>en</language>
+    <lastBuildDate>Thu, 27 Jan 2022 10:11:05 -0700</lastBuildDate><atom:link href="https://luth.io/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>Introduction</title>
+      <link>https://luth.io/blog/introduction/</link>
+      <pubDate>Thu, 27 Jan 2022 10:11:05 -0700</pubDate>
+      
+      <guid>https://luth.io/blog/introduction/</guid>
+      <description>Getting a blog up and running to get some of the thoughts out of my head and into a markdown file. For reference on who I am please check out the about section and stay tuned for more content related to what it is I do everyday.</description>
+    </item>
+    
+    <item>
+      <title>About the Blogger</title>
+      <link>https://luth.io/about/</link>
+      <pubDate>Wed, 26 Jan 2022 08:26:16 -0700</pubDate>
+      
+      <guid>https://luth.io/about/</guid>
+      <description>Originally born and raised in the Midwest, Luther moved to the expansive deserts of the American Southwest after receiving a Bachelor of the Arts in Computer Science from Gustavus Adolphus College in Southern Minnesota. After moving to Arizona, Luther spent his career building web APIs and utilities for various industries in PHP and NodeJS before migrating to Open Source DevOps tooling using Containers and Virtualization.
+Luther is an Open Source developer mostly writing Go and working in the Kubernetes space by way of his employer SUSE and their Multi-Cluster Management tool Rancher.</description>
+    </item>
+    
+  </channel>
+</rss>

@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>Blog on Luther Monson</title>
+    <link>https://luth.io/blog/</link>
+    <description>Recent content in Blog on Luther Monson</description>
+    <generator>Hugo -- gohugo.io</generator>
+    <language>en</language>
+    <lastBuildDate>Thu, 27 Jan 2022 10:11:05 -0700</lastBuildDate><atom:link href="https://luth.io/blog/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>Introduction</title>
+      <link>https://luth.io/blog/introduction/</link>
+      <pubDate>Thu, 27 Jan 2022 10:11:05 -0700</pubDate>
+      
+      <guid>https://luth.io/blog/introduction/</guid>
+      <description>Getting a blog up and running to get some of the thoughts out of my head and into a markdown file. For reference on who I am please check out the about section and stay tuned for more content related to what it is I do everyday.</description>
+    </item>
+    
+  </channel>
+</rss>
