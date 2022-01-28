@@ -1,4 +1,7 @@
 <head>
+  {{- if .Site.Params.GoogleMeasurementId -}}
+    {{ partial "global-site-tag" . }}
+  {{- end -}}
   {{ partial "meta" . }}
   {{ hugo.Generator }}
   {{ if .Site.Params.enableCDN }}

@@ -7,7 +7,6 @@ theme                   = "hugo-future-imperfect-slim"
 publishDir              = "docs"
 paginate                = 3
 disqusShortname         = ""
-googleAnalytics         = "G-MSTSKGFWTX"
 pluralizeListTitles     = false
 disableLanguages        = []
 
@@ -23,6 +22,7 @@ disableLanguages        = []
   home                  = ["html", "json", "rss"]
 
 [params]
+  googleMeasurementId     = "G-MSTSKGFWTX"
   enableCDN             = false
   cssFiles              = ["default"]
   jsFiles               = ["default"]
