@@ -1,0 +1,675 @@
+<!doctype html>
+<html lang="en">
+  <head>
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-MSTSKGFWTX"></script>
+<script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+
+    gtag('config', 'G-MSTSKGFWTX');
+</script><meta charset="utf-8">
+<title>Practical Cue Example, Produce YAML Config from Go Types - Luther Monson</title>
+<meta name="description" content="Luther Monson&#39;s Blog about Software Engineering mostly using the Go Programming language. Focusing on Containers and Virtualization with an emphasis on Kubernetes distributions and provisioning.">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<meta name="twitter:card" content="summary_large_image">
+
+<meta property="og:site_name" content="Luther Monson">
+<meta property="og:title" content="Practical Cue Example, Produce YAML Config from Go Types">
+<meta property="og:description" content="Luther Monson&#39;s Blog about Software Engineering mostly using the Go Programming language. Focusing on Containers and Virtualization with an emphasis on Kubernetes distributions and provisioning.">
+<meta property="og:type" content="article">
+<meta property="og:url" content="https://luth.io/blog/2022/01/practical-cue-example/">
+  <meta property="og:image" content="https://luth.io/img/luther-monson-headshot.jpg">
+
+
+
+  <link rel="manifest" href="/favicon/site.webmanifest?v=1">
+  <link rel="apple-touch-icon" sizes="180x180" href="/favicon/apple-touch-icon.png?v=1">
+  <link rel="icon" type="image/png" sizes="32x32" href="/favicon/favicon-32x32.png?v=1">
+  <link rel="icon" type="image/png" sizes="16x16" href="/favicon/favicon-16x16.png?v=1">
+  
+    <link rel="mask-icon" href="/favicon/safari-pinned-tab.svg?v=1" color="#ffffff">
+    <link rel="shortcut icon" href="/favicon/favicon.ico?v=1">
+    <meta name="msapplication-config" content="/favicon/browserconfig.xml?v=1">
+  
+  <meta name="msapplication-TileColor" content="#ffffff">
+  <meta name="theme-color" content="#ffffff">
+
+
+  <meta name="generator" content="Hugo 0.92.0" />
+  <link rel="stylesheet" href="/css/bundle.min.5233f2a4cd515395301b4154f6c1c621695e8cf53faa0935b76ac52fed7f4585.css" integrity="sha256-UjPypM1RU5UwG0FU9sHGIWlejPU/qgk1t2rFL&#43;1/RYU="><link rel="stylesheet" href="/css/add-on.css">
+</head>
+
+  <body>
+    
+
+<header id="site-header">
+  <nav id="site-nav">
+    <h1 class="nav-title">
+      <a href="/" class="nav">
+        
+          Blog
+        
+      </a>
+    </h1>
+    <menu id="site-nav-menu" class="flyout-menu menu">
+      
+        
+          
+          <a href="/" class="nav link"><i class='fa fa-home'></i> Home</a>
+        
+      
+        
+          
+          <a href="/about" class="nav link"><i class='far fa-id-card'></i> About</a>
+        
+      
+        
+          
+          <a href="/blog" class="nav link"><i class='far fa-newspaper'></i> Blog</a>
+        
+      
+        
+          
+          <a href="/categories" class="nav link"><i class='fas fa-sitemap'></i> Categories</a>
+        
+      
+      <a href="#share-menu" class="nav link share-toggle"><i class="fas fa-share-alt">&nbsp;</i>Share</a>
+      <a href="#search-input" class="nav link search-toggle"><i class="fas fa-search">&nbsp;</i>Search</a>
+    </menu>
+    <a href="#search-input" class="nav search-toggle"><i class="fas fa-search fa-2x">&nbsp;</i></a>
+    <a href="#share-menu" class="nav share-toggle"><i class="fas fa-share-alt fa-2x">&nbsp;</i></a>
+    <a href="#lang-menu" class="nav lang-toggle" lang="en">en</a>
+    <a href="#site-nav" class="nav nav-toggle"><i class="fas fa-bars fa-2x"></i></a>
+  </nav>
+  <menu id="search" class="menu"><input id="search-input" class="search-input menu"></input><div id="search-results" class="search-results menu"></div></menu>
+  <menu id="lang-menu" class="flyout-menu menu">
+  <a href="#" lang="en" class="nav link active">English (en)</a>
+  
+    
+      
+    
+      
+        <a href="/fr" lang="fr" class="nav no-lang link">Français (fr)</a>
+      
+    
+      
+        <a href="/pl" lang="pl" class="nav no-lang link">Polski (pl)</a>
+      
+    
+      
+        <a href="/pt" lang="pt" class="nav no-lang link">Português (pt)</a>
+      
+    
+      
+        <a href="/de" lang="de" class="nav no-lang link">Deutsche (de)</a>
+      
+    
+      
+        <a href="/es" lang="es" class="nav no-lang link">Española (es)</a>
+      
+    
+      
+        <a href="/zh-cn" lang="zh-cn" class="nav no-lang link">中文 (简体) (zh-cn)</a>
+      
+    
+      
+        <a href="/zh-tw" lang="zh-tw" class="nav no-lang link">中文 (正體) (zh-tw)</a>
+      
+    
+      
+        <a href="/ja" lang="ja" class="nav no-lang link">日本語 (ja)</a>
+      
+    
+      
+        <a href="/nl" lang="nl" class="nav no-lang link">Nederlands (nl)</a>
+      
+    
+  
+</menu>
+
+  
+    <menu id="share-menu" class="flyout-menu menu">
+      <h1>Share Post</h1>
+      
+
+
+
+
+  
+    
+    <a href="//twitter.com/share?text=Practical%20Cue%20Example%2c%20Produce%20YAML%20Config%20from%20Go%20Types&amp;url=https%3a%2f%2fluth.io%2fblog%2f2022%2f01%2fpractical-cue-example%2f" target="_blank" rel="noopener" class="nav share-btn twitter">
+        <p>Twitter</p>
+      </a>
+  
+
+  
+      <a href="//www.facebook.com/sharer/sharer.php?u=https%3a%2f%2fluth.io%2fblog%2f2022%2f01%2fpractical-cue-example%2f" target="_blank" rel="noopener" class="nav share-btn facebook">
+        <p>Facebook</p>
+        </a>
+  
+
+  
+    <a href="//www.reddit.com/submit?url=https%3a%2f%2fluth.io%2fblog%2f2022%2f01%2fpractical-cue-example%2f&amp;title=Practical%20Cue%20Example%2c%20Produce%20YAML%20Config%20from%20Go%20Types" target="_blank" rel="noopener" class="nav share-btn reddit">
+          <p>Reddit</p>
+        </a>
+  
+
+  
+        <a href="//www.linkedin.com/shareArticle?url=https%3a%2f%2fluth.io%2fblog%2f2022%2f01%2fpractical-cue-example%2f&amp;title=Practical%20Cue%20Example%2c%20Produce%20YAML%20Config%20from%20Go%20Types" target="_blank" rel="noopener" class="nav share-btn linkedin">
+            <p>LinkedIn</p>
+          </a>
+  
+
+  
+        <a href="//www.pinterest.com/pin/create/button/?url=https%3a%2f%2fluth.io%2fblog%2f2022%2f01%2fpractical-cue-example%2f&amp;description=Practical%20Cue%20Example%2c%20Produce%20YAML%20Config%20from%20Go%20Types" target="_blank" rel="noopener" class="nav share-btn pinterest">
+          <p>Pinterest</p>
+        </a>
+  
+
+  
+        <a href="mailto:?subject=Check%20out%20this%20post%20by %7b%20%20%20%20%20%20%20%20map%5b%5d%7d&amp;body=https%3a%2f%2fluth.io%2fblog%2f2022%2f01%2fpractical-cue-example%2f" target="_blank" class="nav share-btn email" data-proofer-ignore>
+          <p>Email</p>
+        </a>
+  
+
+
+    </menu>
+  
+</header>
+
+    <div id="wrapper">
+      <section id="site-intro" >
+  <a href="/"><img src="/img/luther-monson-headshot.jpg" class="circle" width="100" alt="Luther Monson, Staff Software Engineer at SUSE" /></a>
+  <header>
+    <h1>Luther Monson</h1>
+  </header>
+  <main>
+    <p>Go by way of PHP &middot; Containers &middot; VMs &middot; Windows &middot; Kubernetes</p>
+  </main>
+  
+    <footer>
+      <ul class="socnet-icons">
+        
+
+        <li><a href="//github.com/luthermonson" target="_blank" rel="noopener" title="GitHub" class="fab fa-github"></a></li>
+
+
+
+
+
+
+
+
+
+
+
+<li><a href="//www.linkedin.com/in/luthermonson" target="_blank" rel="noopener" title="LinkedIn" class="fab fa-linkedin"></a></li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li><a href="//twitter.com/luthermonson" target="_blank" rel="noopener" title="Twitter" class="fab fa-twitter"></a></li>
+
+
+
+
+
+
+
+
+
+
+
+<li><a href="mailto:luther.monson@gmail.com" target="_blank" title="Email" class="far fa-envelope"></a></li>
+
+      </ul>
+    </footer>
+  
+</section>
+
+      <main id="site-main">
+        
+  <article>
+    <div class="post">
+      <header>
+  <div class="title">
+    
+      <h2><a href="/blog/2022/01/practical-cue-example/">Practical Cue Example, Produce YAML Config from Go Types</a></h2>
+    
+    
+  </div>
+  <div class="meta">
+    <time datetime="2022-02-01 09:57:26 -0700 MST">February 1, 2022</time>
+    
+    <p>5-Minute Read</p>
+  </div>
+</header>
+
+      <div id="socnet-share">
+        
+
+
+
+
+  
+    
+    <a href="//twitter.com/share?text=Practical%20Cue%20Example%2c%20Produce%20YAML%20Config%20from%20Go%20Types&amp;url=https%3a%2f%2fluth.io%2fblog%2f2022%2f01%2fpractical-cue-example%2f" target="_blank" rel="noopener" class="nav share-btn twitter">
+        <p>Twitter</p>
+      </a>
+  
+
+  
+      <a href="//www.facebook.com/sharer/sharer.php?u=https%3a%2f%2fluth.io%2fblog%2f2022%2f01%2fpractical-cue-example%2f" target="_blank" rel="noopener" class="nav share-btn facebook">
+        <p>Facebook</p>
+        </a>
+  
+
+  
+    <a href="//www.reddit.com/submit?url=https%3a%2f%2fluth.io%2fblog%2f2022%2f01%2fpractical-cue-example%2f&amp;title=Practical%20Cue%20Example%2c%20Produce%20YAML%20Config%20from%20Go%20Types" target="_blank" rel="noopener" class="nav share-btn reddit">
+          <p>Reddit</p>
+        </a>
+  
+
+  
+        <a href="//www.linkedin.com/shareArticle?url=https%3a%2f%2fluth.io%2fblog%2f2022%2f01%2fpractical-cue-example%2f&amp;title=Practical%20Cue%20Example%2c%20Produce%20YAML%20Config%20from%20Go%20Types" target="_blank" rel="noopener" class="nav share-btn linkedin">
+            <p>LinkedIn</p>
+          </a>
+  
+
+  
+        <a href="//www.pinterest.com/pin/create/button/?url=https%3a%2f%2fluth.io%2fblog%2f2022%2f01%2fpractical-cue-example%2f&amp;description=Practical%20Cue%20Example%2c%20Produce%20YAML%20Config%20from%20Go%20Types" target="_blank" rel="noopener" class="nav share-btn pinterest">
+          <p>Pinterest</p>
+        </a>
+  
+
+  
+        <a href="mailto:?subject=Check%20out%20this%20post%20by %7b%20%20%20%20%20%20%20%20map%5b%5d%7d&amp;body=https%3a%2f%2fluth.io%2fblog%2f2022%2f01%2fpractical-cue-example%2f" target="_blank" class="nav share-btn email" data-proofer-ignore>
+          <p>Email</p>
+        </a>
+  
+
+
+      </div>
+      <div class="content">
+        
+        
+          <nav id="TableOfContents">
+  <ul>
+    <li>
+      <ul>
+        <li><a href="#prerequisites">Prerequisites</a></li>
+        <li><a href="#go-types-to-config-yaml">Go Types to Config YAML</a></li>
+        <li><a href="#setting-up-the-cue-module">Setting Up the Cue Module</a></li>
+        <li><a href="#using-tags-in-cue-for-better-config-files">Using Tags in Cue for Better Config Files</a></li>
+        <li><a href="#conclusion">Conclusion</a></li>
+      </ul>
+    </li>
+  </ul>
+</nav>
+        
+        <p>I recently had to spend some time to learn <a href="https://cuelang.org/">Cue</a> and felt the examples/tutorials were a bit lacking
+and the paradigm shift to the entire language sort of messed with my head and some things Cue does were a bit foreign to me.
+To get started, note that the two places I spent all of my time to get this information came from their main <a href="https://cuelang.org/docs/">docs</a>
+and a community <a href="https://cuetorials.com/">Cuetorials</a> site. This will be a tutorial on how you can use Cue to generate
+two different YAML documents using Cue all starting with Go types to generate Cue files.</p>
+<p>As Cue changes this could become out of date, this was all done using Cue <strong>v0.4.1</strong>. All code for this tutorial can be
+found in this <a href="https://github.com/luthermonson/tutorials/tree/main/2022/01/cue">github repository</a>.</p>
+<h3 id="prerequisites">Prerequisites</h3>
+<p>You&rsquo;ll need to <a href="https://cuelang.org/docs/install/">install</a> Cue and I recommend you get some basic understanding of the
+cli commands as there is some power there for your project. I also recommend you get used to
+<a href="https://cuelang.org/docs/concepts/packages/#modules">modules</a> and the <code>mod</code> command and the directory structure it will
+create for you. Note the Cue takes a lot of it&rsquo;s packaging and generating inspiration from <a href="https://go.dev/">Go</a> itself so
+if you&rsquo;ve already done some of this in Go you may already recognize some of these features.</p>
+<h3 id="go-types-to-config-yaml">Go Types to Config YAML</h3>
+<p>Here is a simple scenario we will use to setup this example, we are building a server daemon in Go with a
+<code>--config</code> flag which is a file path to a YAML configuration document for database drive application with host/port configurations
+along with a worker pool setting for processing a work queue.</p>
+<p>Sample Config:</p>
+<pre tabindex="0"><code>app:
+    host: mydomain.com
+    post: 443
+    workers: 2
+    db-dsn: root:test@tcp(mysql.domain.com:3306)/test?charset=utf8&amp;parseTime=True&amp;loc=Local
+</code></pre><p>This idea is actually pretty simple from Cue&rsquo;s perspective if you write this up by hand but what makes your life
+easier is if the Go types generate your Cue files so you can import the types into your app and consume your generated config
+file via unmarshalling.</p>
+<h3 id="setting-up-the-cue-module">Setting Up the Cue Module</h3>
+<p>To get this project setup you&rsquo;ll probably want to use a sub-directory in your project and intialize it as a cue module and
+place a go file with some types at the root.</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash">$ cd config
+$ cue init mod github.com/username/project/config
+</code></pre></div><p>And put your types into the types.go file</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-go" data-lang="go"><span style="color:#f92672">package</span> <span style="color:#a6e22e">config</span>
+
+<span style="color:#66d9ef">type</span> <span style="color:#a6e22e">Config</span> <span style="color:#66d9ef">struct</span> {
+	<span style="color:#a6e22e">App</span> <span style="color:#a6e22e">App</span> <span style="color:#e6db74">`json:&#34;app&#34;`</span>
+}
+
+<span style="color:#66d9ef">type</span> <span style="color:#a6e22e">App</span> <span style="color:#66d9ef">struct</span> {
+	<span style="color:#a6e22e">Host</span>    <span style="color:#66d9ef">string</span> <span style="color:#e6db74">`json:&#34;host&#34;`</span>
+	<span style="color:#a6e22e">Port</span>    <span style="color:#66d9ef">int</span>    <span style="color:#e6db74">`json:&#34;port&#34;`</span>
+	<span style="color:#a6e22e">Workers</span> <span style="color:#66d9ef">int</span>    <span style="color:#e6db74">`json:&#34;workers&#34;`</span>
+	<span style="color:#a6e22e">DSN</span>     <span style="color:#66d9ef">string</span> <span style="color:#e6db74">`json:&#34;dsn&#34;`</span>
+}
+</code></pre></div><p>Your directory structure will look like the following:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash">./demo/config$ tree
+.
+├── cue.mod
+│   ├── module.cue
+│   ├── pkg
+│   └── usr
+└── types.go
+</code></pre></div><p>Now generate your Cue files from the go types&hellip;</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash">cue get go .
+</code></pre></div><p>Which will create a <code>gen</code> directory with some pathing to a <code>types_go_gen.cue</code> file which contains the following.</p>
+<pre tabindex="0"><code class="language-cue" data-lang="cue">// Code generated by cue get go. DO NOT EDIT.
+
+//cue:generate cue get go github.com/luthermonson/tutorials-2022-01-cue/config
+
+package config
+
+#Config: {
+	app: #App @go(App)
+}
+
+#App: {
+	host:    string @go(Host)
+	port:    int    @go(Port)
+	workers: int    @go(Workers)
+	dsn:     string @go(DSN)
+}
+</code></pre><p>Now let&rsquo;s use this newly generated file in a super basic cue file to generate our sample YAML document.</p>
+<pre tabindex="0"><code class="language-cue" data-lang="cue">package config
+
+import &quot;github.com/luthermonson/tutorials-2022-01-cue/config&quot;
+
+#config: config.#Config &amp; {
+    app: config.#App &amp; {
+        host: &quot;mydomain.com&quot;
+        port: 443
+        workers: 2
+        dsn: &quot;root:test@tcp(mysql.domain.com:3306)/test?charset=utf8&amp;parseTime=True&amp;loc=Local&quot;
+    }
+}
+
+#config
+</code></pre><p>I recommend you put this cue file in a sub-directory like <code>./config/cue</code> so you can do something like this&hellip;</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash">$ cd ./config
+$ cue export ./cue --out yaml
+app:
+  host: mydomain.com
+  port: <span style="color:#ae81ff">443</span>
+  workers: <span style="color:#ae81ff">2</span>
+  dsn: root:test@tcp<span style="color:#f92672">(</span>mysql.domain.com:3306<span style="color:#f92672">)</span>/test?charset<span style="color:#f92672">=</span>utf8&amp;parseTime<span style="color:#f92672">=</span>True&amp;loc<span style="color:#f92672">=</span>Local
+</code></pre></div><h3 id="using-tags-in-cue-for-better-config-files">Using Tags in Cue for Better Config Files</h3>
+<p>Tags are a construct in Cue to let you pass in variables at call time so let&rsquo;s change our Cue file to use tags and consume
+some environment files based on tag to generate two YAML files. Change the main.cue file to set host/workers/dsn as a variable&hellip;</p>
+<pre tabindex="0"><code class="language-cue" data-lang="cue">package config
+
+import &quot;github.com/luthermonson/tutorials-2022-01-cue/config&quot;
+
+#config: config.#Config &amp; {
+    app: config.#App &amp; {
+        host: #host
+        port: 443
+        workers: #workers
+        dsn: #dsn
+    }
+}
+
+#config
+</code></pre><p>add <code>prod.cue</code></p>
+<pre tabindex="0"><code class="language-cue" data-lang="cue">@if(prod)
+package config
+
+#host: &quot;mydomain.com&quot;
+#workers: 16
+#dsn: &quot;root:prod@tcp(mysql-prod.domain.com:3306)/test?charset=utf8&amp;parseTime=True&amp;loc=Local&quot;
+</code></pre><p>add <code>qa.cue</code></p>
+<pre tabindex="0"><code class="language-cue" data-lang="cue">@if(qa)
+package config
+
+#host: &quot;qa.mydomain.com&quot;
+#workers: 1
+#dsn: &quot;root:qa@tcp(mysql-qa.domain.com:3306)/test?charset=utf8&amp;parseTime=True&amp;loc=Local&quot;
+</code></pre><p>Now when you run <code>cue export</code> pass a <code>-t qa</code> or <code>-t prod</code>. The <code>@if()</code> at the top of the file will check if the tags are set
+and only include those files if the tag was passed. This is a different pattern than say only evaluating certain cue files
+like <code>cue eval main.cue prod.cue</code> and <code>cue eval main.cue qa.cue</code> which is a pattern outlined by this <a href="https://cuetorials.com/patterns/inject/">tutorial</a>.
+I like the benefits of evaluating cue on a directory of files and passing tags at call time instead of having to figure out
+which files within the directory need evaluating.</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash">$ cue export ./cue -t prod --out yaml
+app:
+  host: mydomain.com
+  port: <span style="color:#ae81ff">443</span>
+  workers: <span style="color:#ae81ff">16</span>
+  dsn: root:prod@tcp<span style="color:#f92672">(</span>mysql-prod.domain.com:3306<span style="color:#f92672">)</span>/test?charset<span style="color:#f92672">=</span>utf8&amp;parseTime<span style="color:#f92672">=</span>True&amp;loc<span style="color:#f92672">=</span>Local
+$  cue export ./cue -t qa --out yaml
+app:
+  host: qa.mydomain.com
+  port: <span style="color:#ae81ff">443</span>
+  workers: <span style="color:#ae81ff">1</span>
+  dsn: root:qa@tcp<span style="color:#f92672">(</span>mysql-qa.domain.com:3306<span style="color:#f92672">)</span>/test?charset<span style="color:#f92672">=</span>utf8&amp;parseTime<span style="color:#f92672">=</span>True&amp;loc<span style="color:#f92672">=</span>Local
+</code></pre></div><h3 id="conclusion">Conclusion</h3>
+<p>Please checkout the code for this tutorial on the <a href="https://github.com/luthermonson/tutorials/tree/main/2022/01/cue">github repository</a>.
+This was ultimately a very basic interpretation of the Cue language itself but gives you some ideas for structuring your Cue modules.
+The language is far more feature rich than this tutorial gives it credit and I will likely do followup blog post on the
+language itself after and using it to validate your configuration files before they ever hit your application runtime.</p>
+
+      </div>
+      <footer>
+        <div class="stats">
+  
+    <ul class="categories">
+      <li>None</li>
+    </ul>
+  
+  
+    <ul class="tags">
+      <li>None</li>
+    </ul>
+  
+</div>
+
+      </footer>
+    </div>
+    
+      
+  <div class='post'>
+    
+    <div>
+      <h2 id='say-something'>Say Something</h2>
+        <form id='comment-form' class='new-comment' method='POST'>
+          
+          <h3 class='reply-notice hidden'>
+            <span class='reply-name'></span>
+            <a class='reply-close-btn button'><i class='fas fa-times'></i></a>
+          </h3>
+
+          
+          <input type='hidden' name='options[entryId]' value='13b9df93e71822ca87b6ed21a521c0b5'>
+          <input type='hidden' name='fields[replyThread]' value=''>
+          <input type='hidden' name='fields[replyID]' value=''>
+          <input type='hidden' name='fields[replyName]' value=''>
+
+          
+          <input required name='fields[name]' type='text' placeholder='Your Name'>
+          <input name='fields[website]' type='text' placeholder='Your Website'>
+          <input required name='fields[email]' type='email' placeholder='Your Email'>
+          <textarea required name='fields[body]' placeholder='Your Message' rows='10'></textarea>
+
+          
+          
+
+          
+          <div class='submit-notice'>
+            <strong class='submit-notice-text submit-success hidden'>Thanks for your comment! It will be shown on the site once it has been approved.</strong>
+            <strong class='submit-notice-text submit-failed hidden'>Sorry, there was an error with your submission. Please make sure all required fields have been completed and try again.</strong>
+          </div>
+
+          
+          <button type='button' id="comment-form-submit" class='button'>Submit</button>
+          <button type='button' id="comment-form-submitted" class='hidden button' disabled>Submitted</button>
+          <button type='reset' id="comment-form-reset" class='button'>Reset</button>
+        </form>
+    </div>
+
+    
+    <div class='comments-container'>
+      <h2>Comments</h2>
+    </div>
+  </div>
+
+
+    
+  </article>
+  <div class="pagination">
+    
+    
+      <a href="/blog/2022/01/free-personal-blog-hugo-github-pages/" class="button right"><span>Free Blog Hosting Using Hugo &#43; Github Pages</span></a>
+    
+  </div>
+
+      </main>
+      <section id="site-sidebar">
+  
+    <section id="recent-posts">
+      <header>
+        <h1>Recent Posts</h1>
+      </header>
+      
+      <article class="mini-post">
+          
+        <header>
+          <h2><a href="/blog/2022/01/practical-cue-example/">Practical Cue Example, Produce YAML Config from Go Types</a></h2>
+          <time class="published" datetime="2022-02-01 09:57:26 -0700 MST">February 1, 2022</time>
+        </header>
+      </article>
+      
+      <article class="mini-post">
+          <a href="/blog/2022/01/free-personal-blog-hugo-github-pages/" class="image" style="--bg-image: url('/img/2022/01/github-pages-logo.png');">
+    <img class="" src="/img/2022/01/github-pages-logo.png" alt="Github Pages Logo">
+  </a>
+        <header>
+          <h2><a href="/blog/2022/01/free-personal-blog-hugo-github-pages/">Free Blog Hosting Using Hugo &#43; Github Pages</a></h2>
+          <time class="published" datetime="2022-01-27 11:51:20 -0700 MST">January 27, 2022</time>
+        </header>
+      </article>
+      
+      <article class="mini-post">
+          
+        <header>
+          <h2><a href="/blog/introduction/">Introduction</a></h2>
+          <time class="published" datetime="2022-01-27 10:11:05 -0700 MST">January 27, 2022</time>
+        </header>
+      </article>
+      
+      
+    </section>
+  
+
+  
+    
+
+      <section id="categories">
+        <header>
+          <h1><a href="/categories">Categories</a></h1>
+        </header>
+        <ul>
+          
+          
+          </li>
+        </ul>
+      </section>
+    
+  
+
+  
+    <section id="mini-bio">
+      <header>
+        <h1>About</h1>
+      </header>
+      <p>Luther is a 20+ year software veteran specializing in backend APIs and architecting products. Employed at <a href='https://www.suse.com'>SUSE</a> as the Team Lead for the <a href='https://github.com/rancher/windows/issues'>Containers on Windows Team</a> working on <a href='https://rancher.com/'>Rancher</a> + <a href='https://kubernetes.io/'>Kubernetes</a></p>
+      <footer>
+        <a href="/about" class="button">Learn More</a>
+      </footer>
+    </section>
+  
+</section>
+
+      <footer id="site-footer">
+  
+      <ul class="socnet-icons">
+        
+
+        <li><a href="//github.com/luthermonson" target="_blank" rel="noopener" title="GitHub" class="fab fa-github"></a></li>
+
+
+
+
+
+
+
+
+
+
+
+<li><a href="//www.linkedin.com/in/luthermonson" target="_blank" rel="noopener" title="LinkedIn" class="fab fa-linkedin"></a></li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li><a href="//twitter.com/luthermonson" target="_blank" rel="noopener" title="Twitter" class="fab fa-twitter"></a></li>
+
+
+
+
+
+
+
+
+
+
+
+<li><a href="mailto:luther.monson@gmail.com" target="_blank" title="Email" class="far fa-envelope"></a></li>
+
+      </ul>
+  
+  <p class="copyright">
+    © 2022 Luther Monson
+      <br>
+    Theme: <a href='https://github.com/pacollins/hugo-future-imperfect-slim' target='_blank' rel='noopener'>Hugo Future Imperfect Slim</a><br>A <a href='https://html5up.net/future-imperfect' target='_blank' rel='noopener'>HTML5 UP port</a> | Powered by <a href='https://gohugo.io/' title='0.92.0' target='_blank' rel='noopener'>Hugo</a>
+  </p>
+</footer>
+<a id="back-to-top" href="#" class="fas fa-arrow-up fa-2x"></a>
+
+      <script src="/js/highlight.js"></script>
+    
+    <script>hljs.highlightAll();</script><script src="/js/bundle.min.affa21bd64e761fba63c1eb954f76e46e43ca96b1ef71c742f058ed973ec6df2.js" integrity="sha256-r/ohvWTnYfumPB65VPduRuQ8qWse9xx0LwWO2XPsbfI="></script>
+    <script src="/js/add-on.js"></script>
+    </div>
+  </body>
+</html>
