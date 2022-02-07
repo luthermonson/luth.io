@@ -6,11 +6,20 @@
     <description>Recent content in Blog on Luther Monson</description>
     <generator>Hugo -- gohugo.io</generator>
     <language>en</language>
-    <lastBuildDate>Tue, 01 Feb 2022 09:57:26 -0700</lastBuildDate><atom:link href="https://luth.io/blog/index.xml" rel="self" type="application/rss+xml" />
+    <lastBuildDate>Sun, 06 Feb 2022 21:54:53 -0700</lastBuildDate><atom:link href="https://luth.io/blog/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>Recreating Proxmox Ve Xtermjs in Go</title>
+      <link>https://luth.io/blog/2022/02/recreating-proxmox-ve-xtermjs-in-go/</link>
+      <pubDate>Sun, 06 Feb 2022 21:54:53 -0700</pubDate>
+      
+      <guid>https://luth.io/blog/2022/02/recreating-proxmox-ve-xtermjs-in-go/</guid>
+      <description>Part of a hobby of mine is running a home lab and using on Proxmox VE to do the virtualization. Since I work in the space I&amp;rsquo;m slowly trying to build tooling around Proxmox that will let me use the home lab full time for work. Usually my work involves building Kubernetes management tooling, you can imagine waiting for public cloud APIs all day can take away hours of your day at cost to your employer for both your time and the compute resources.</description>
+    </item>
+    
     <item>
       <title>Practical Cue Example, Produce YAML Config from Go Types</title>
       <link>https://luth.io/blog/2022/01/practical-cue-example/</link>
-      <pubDate>Tue, 01 Feb 2022 09:57:26 -0700</pubDate>
+      <pubDate>Mon, 31 Jan 2022 09:57:26 -0700</pubDate>
       
       <guid>https://luth.io/blog/2022/01/practical-cue-example/</guid>
       <description>I recently had to spend some time to learn Cue and felt the examples/tutorials were a bit lacking and the paradigm shift to the entire language sort of messed with my head and some things Cue does were a bit foreign to me. To get started, note that the two places I spent all of my time to get this information came from their main docs and a community Cuetorials site.</description>

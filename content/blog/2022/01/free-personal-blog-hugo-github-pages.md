@@ -2,10 +2,14 @@
 title: "Free Blog Hosting Using Hugo + Github Pages"
 description: "Upgrade your Personal Blog Game with Apex Records for No Cost"
 date: 2022-01-27T11:51:20-07:00
+tags:
+ - hugo
+ - cloudflare
+ - github
 images:
-- src: img/2022/01/github-pages-logo.png
-  alt: "Github Pages Logo"
-  stretch: "none"
+ - src: img/2022/01/github-pages-logo.png
+   alt: "Github Pages Logo"
+   stretch: "none"
 ---
 
 Since I just rode this merry-go-round here is a quick overview of how you can achieve a professional

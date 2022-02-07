@@ -1,0 +1,801 @@
+<!doctype html>
+<html lang="en">
+  <head>
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-MSTSKGFWTX"></script>
+<script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+
+    gtag('config', 'G-MSTSKGFWTX');
+</script><meta charset="utf-8">
+<title>Recreating Proxmox Ve Xtermjs in Go - Luther Monson</title>
+<meta name="description" content="Luther Monson&#39;s Blog about Software Engineering mostly using the Go Programming language. Focusing on Containers and Virtualization with an emphasis on Kubernetes distributions and provisioning.">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<meta name="twitter:card" content="summary_large_image">
+
+<meta property="og:site_name" content="Luther Monson">
+<meta property="og:title" content="Recreating Proxmox Ve Xtermjs in Go">
+<meta property="og:description" content="Luther Monson&#39;s Blog about Software Engineering mostly using the Go Programming language. Focusing on Containers and Virtualization with an emphasis on Kubernetes distributions and provisioning.">
+<meta property="og:type" content="article">
+<meta property="og:url" content="https://luth.io/blog/2022/02/recreating-proxmox-ve-xtermjs-in-go/">
+    <meta property="og:image" content="https://luth.io/img/2022/02/proxmox-logo.png">
+    <meta property="og:image:alt" content="Proxmox VE Logo">
+
+
+  <link rel="manifest" href="/favicon/site.webmanifest?v=1">
+  <link rel="apple-touch-icon" sizes="180x180" href="/favicon/apple-touch-icon.png?v=1">
+  <link rel="icon" type="image/png" sizes="32x32" href="/favicon/favicon-32x32.png?v=1">
+  <link rel="icon" type="image/png" sizes="16x16" href="/favicon/favicon-16x16.png?v=1">
+  
+    <link rel="mask-icon" href="/favicon/safari-pinned-tab.svg?v=1" color="#ffffff">
+    <link rel="shortcut icon" href="/favicon/favicon.ico?v=1">
+    <meta name="msapplication-config" content="/favicon/browserconfig.xml?v=1">
+  
+  <meta name="msapplication-TileColor" content="#ffffff">
+  <meta name="theme-color" content="#ffffff">
+
+
+  <meta name="generator" content="Hugo 0.92.0" />
+  <link rel="stylesheet" href="/css/bundle.min.5233f2a4cd515395301b4154f6c1c621695e8cf53faa0935b76ac52fed7f4585.css" integrity="sha256-UjPypM1RU5UwG0FU9sHGIWlejPU/qgk1t2rFL&#43;1/RYU="><link rel="stylesheet" href="/css/add-on.css">
+</head>
+
+  <body>
+    
+
+<header id="site-header">
+  <nav id="site-nav">
+    <h1 class="nav-title">
+      <a href="/" class="nav">
+        
+          Blog
+        
+      </a>
+    </h1>
+    <menu id="site-nav-menu" class="flyout-menu menu">
+      
+        
+          
+          <a href="/" class="nav link"><i class='fa fa-home'></i> Home</a>
+        
+      
+        
+          
+          <a href="/about" class="nav link"><i class='far fa-id-card'></i> About</a>
+        
+      
+        
+          
+          <a href="/blog" class="nav link"><i class='far fa-newspaper'></i> Blog</a>
+        
+      
+        
+          
+          <a href="/categories" class="nav link"><i class='fas fa-sitemap'></i> Categories</a>
+        
+      
+      <a href="#share-menu" class="nav link share-toggle"><i class="fas fa-share-alt">&nbsp;</i>Share</a>
+      <a href="#search-input" class="nav link search-toggle"><i class="fas fa-search">&nbsp;</i>Search</a>
+    </menu>
+    <a href="#search-input" class="nav search-toggle"><i class="fas fa-search fa-2x">&nbsp;</i></a>
+    <a href="#share-menu" class="nav share-toggle"><i class="fas fa-share-alt fa-2x">&nbsp;</i></a>
+    <a href="#lang-menu" class="nav lang-toggle" lang="en">en</a>
+    <a href="#site-nav" class="nav nav-toggle"><i class="fas fa-bars fa-2x"></i></a>
+  </nav>
+  <menu id="search" class="menu"><input id="search-input" class="search-input menu"></input><div id="search-results" class="search-results menu"></div></menu>
+  <menu id="lang-menu" class="flyout-menu menu">
+  <a href="#" lang="en" class="nav link active">English (en)</a>
+  
+    
+      
+    
+      
+        <a href="/fr" lang="fr" class="nav no-lang link">Français (fr)</a>
+      
+    
+      
+        <a href="/pl" lang="pl" class="nav no-lang link">Polski (pl)</a>
+      
+    
+      
+        <a href="/pt" lang="pt" class="nav no-lang link">Português (pt)</a>
+      
+    
+      
+        <a href="/de" lang="de" class="nav no-lang link">Deutsche (de)</a>
+      
+    
+      
+        <a href="/es" lang="es" class="nav no-lang link">Española (es)</a>
+      
+    
+      
+        <a href="/zh-cn" lang="zh-cn" class="nav no-lang link">中文 (简体) (zh-cn)</a>
+      
+    
+      
+        <a href="/zh-tw" lang="zh-tw" class="nav no-lang link">中文 (正體) (zh-tw)</a>
+      
+    
+      
+        <a href="/ja" lang="ja" class="nav no-lang link">日本語 (ja)</a>
+      
+    
+      
+        <a href="/nl" lang="nl" class="nav no-lang link">Nederlands (nl)</a>
+      
+    
+  
+</menu>
+
+  
+    <menu id="share-menu" class="flyout-menu menu">
+      <h1>Share Post</h1>
+      
+
+
+
+
+  
+    
+    <a href="//twitter.com/share?text=Recreating%20Proxmox%20Ve%20Xtermjs%20in%20Go&amp;url=https%3a%2f%2fluth.io%2fblog%2f2022%2f02%2frecreating-proxmox-ve-xtermjs-in-go%2f" target="_blank" rel="noopener" class="nav share-btn twitter">
+        <p>Twitter</p>
+      </a>
+  
+
+  
+      <a href="//www.facebook.com/sharer/sharer.php?u=https%3a%2f%2fluth.io%2fblog%2f2022%2f02%2frecreating-proxmox-ve-xtermjs-in-go%2f" target="_blank" rel="noopener" class="nav share-btn facebook">
+        <p>Facebook</p>
+        </a>
+  
+
+  
+    <a href="//www.reddit.com/submit?url=https%3a%2f%2fluth.io%2fblog%2f2022%2f02%2frecreating-proxmox-ve-xtermjs-in-go%2f&amp;title=Recreating%20Proxmox%20Ve%20Xtermjs%20in%20Go" target="_blank" rel="noopener" class="nav share-btn reddit">
+          <p>Reddit</p>
+        </a>
+  
+
+  
+        <a href="//www.linkedin.com/shareArticle?url=https%3a%2f%2fluth.io%2fblog%2f2022%2f02%2frecreating-proxmox-ve-xtermjs-in-go%2f&amp;title=Recreating%20Proxmox%20Ve%20Xtermjs%20in%20Go" target="_blank" rel="noopener" class="nav share-btn linkedin">
+            <p>LinkedIn</p>
+          </a>
+  
+
+  
+        <a href="//www.pinterest.com/pin/create/button/?url=https%3a%2f%2fluth.io%2fblog%2f2022%2f02%2frecreating-proxmox-ve-xtermjs-in-go%2f&amp;description=Recreating%20Proxmox%20Ve%20Xtermjs%20in%20Go" target="_blank" rel="noopener" class="nav share-btn pinterest">
+          <p>Pinterest</p>
+        </a>
+  
+
+  
+        <a href="mailto:?subject=Check%20out%20this%20post%20by %7b%20%20%20%20%20%20%20%20map%5b%5d%7d&amp;body=https%3a%2f%2fluth.io%2fblog%2f2022%2f02%2frecreating-proxmox-ve-xtermjs-in-go%2f" target="_blank" class="nav share-btn email" data-proofer-ignore>
+          <p>Email</p>
+        </a>
+  
+
+
+    </menu>
+  
+</header>
+
+    <div id="wrapper">
+      <section id="site-intro" >
+  <a href="/"><img src="/img/luther-monson-headshot.jpg" class="circle" width="100" alt="Luther Monson, Staff Software Engineer at SUSE" /></a>
+  <header>
+    <h1>Luther Monson</h1>
+  </header>
+  <main>
+    <p>Go by way of PHP &middot; Containers &middot; VMs &middot; Windows &middot; Kubernetes</p>
+  </main>
+  
+    <footer>
+      <ul class="socnet-icons">
+        
+
+        <li><a href="//github.com/luthermonson" target="_blank" rel="noopener" title="GitHub" class="fab fa-github"></a></li>
+
+
+
+
+
+
+
+
+
+
+
+<li><a href="//www.linkedin.com/in/luthermonson" target="_blank" rel="noopener" title="LinkedIn" class="fab fa-linkedin"></a></li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li><a href="//twitter.com/luthermonson" target="_blank" rel="noopener" title="Twitter" class="fab fa-twitter"></a></li>
+
+
+
+
+
+
+
+
+
+
+
+<li><a href="mailto:luther.monson@gmail.com" target="_blank" title="Email" class="far fa-envelope"></a></li>
+
+      </ul>
+    </footer>
+  
+</section>
+
+      <main id="site-main">
+        
+  <article>
+    <div class="post">
+      <header>
+  <div class="title">
+    
+      <h2><a href="/blog/2022/02/recreating-proxmox-ve-xtermjs-in-go/">Recreating Proxmox Ve Xtermjs in Go</a></h2>
+    
+    
+  </div>
+  <div class="meta">
+    <time datetime="2022-02-06 21:54:53 -0700 MST">February 6, 2022</time>
+    
+    <p>9-Minute Read</p>
+  </div>
+</header>
+
+      <div id="socnet-share">
+        
+
+
+
+
+  
+    
+    <a href="//twitter.com/share?text=Recreating%20Proxmox%20Ve%20Xtermjs%20in%20Go&amp;url=https%3a%2f%2fluth.io%2fblog%2f2022%2f02%2frecreating-proxmox-ve-xtermjs-in-go%2f" target="_blank" rel="noopener" class="nav share-btn twitter">
+        <p>Twitter</p>
+      </a>
+  
+
+  
+      <a href="//www.facebook.com/sharer/sharer.php?u=https%3a%2f%2fluth.io%2fblog%2f2022%2f02%2frecreating-proxmox-ve-xtermjs-in-go%2f" target="_blank" rel="noopener" class="nav share-btn facebook">
+        <p>Facebook</p>
+        </a>
+  
+
+  
+    <a href="//www.reddit.com/submit?url=https%3a%2f%2fluth.io%2fblog%2f2022%2f02%2frecreating-proxmox-ve-xtermjs-in-go%2f&amp;title=Recreating%20Proxmox%20Ve%20Xtermjs%20in%20Go" target="_blank" rel="noopener" class="nav share-btn reddit">
+          <p>Reddit</p>
+        </a>
+  
+
+  
+        <a href="//www.linkedin.com/shareArticle?url=https%3a%2f%2fluth.io%2fblog%2f2022%2f02%2frecreating-proxmox-ve-xtermjs-in-go%2f&amp;title=Recreating%20Proxmox%20Ve%20Xtermjs%20in%20Go" target="_blank" rel="noopener" class="nav share-btn linkedin">
+            <p>LinkedIn</p>
+          </a>
+  
+
+  
+        <a href="//www.pinterest.com/pin/create/button/?url=https%3a%2f%2fluth.io%2fblog%2f2022%2f02%2frecreating-proxmox-ve-xtermjs-in-go%2f&amp;description=Recreating%20Proxmox%20Ve%20Xtermjs%20in%20Go" target="_blank" rel="noopener" class="nav share-btn pinterest">
+          <p>Pinterest</p>
+        </a>
+  
+
+  
+        <a href="mailto:?subject=Check%20out%20this%20post%20by %7b%20%20%20%20%20%20%20%20map%5b%5d%7d&amp;body=https%3a%2f%2fluth.io%2fblog%2f2022%2f02%2frecreating-proxmox-ve-xtermjs-in-go%2f" target="_blank" class="nav share-btn email" data-proofer-ignore>
+          <p>Email</p>
+        </a>
+  
+
+
+      </div>
+      <div class="content">
+        <a href="/blog/2022/02/recreating-proxmox-ve-xtermjs-in-go/" class="image">
+    <img class="" src="/img/2022/02/proxmox-logo.png" alt="Proxmox VE Logo">
+  </a>
+        
+          <nav id="TableOfContents">
+  <ul>
+    <li>
+      <ul>
+        <li><a href="#go-proxmox">go-proxmox</a></li>
+        <li><a href="#xtermjs-backwards-engineering">xterm.js Backwards Engineering</a></li>
+        <li><a href="#wrap-up">Wrap Up</a></li>
+      </ul>
+    </li>
+  </ul>
+</nav>
+        
+        <p>Part of a hobby of mine is running a home lab and using on <a href="https://www.proxmox.com/en/">Proxmox VE</a> to do the virtualization.
+Since I work in the space I&rsquo;m slowly trying to build tooling around Proxmox that will let me use the home lab full time for work.
+Usually my work involves building Kubernetes management tooling, you can imagine waiting for public cloud APIs all day
+can take away hours of your day at cost to your employer for both your time and the compute resources.</p>
+<p>There&rsquo;s also a real problem today with cloud offerings of Windows. Booting a Windows 2019 or 2022 server in Amazon EC2 today
+can take up to 4 or 5 minutes before you are given access to the Administrator password. If you build up and tear down constantly
+the waiting can get tiring. Proxmox just runs qemu under the hood and with snapshotting I Just get everything working
+and take a quick snapshot. When I want to roll back a cluster for another provision run I can simply shut down the VMs and
+restore from backup and up and running again in no time.</p>
+<h3 id="go-proxmox">go-proxmox</h3>
+<p>To accomplish everything I&rsquo;ll need I first started out building a Go <a href="https://github.com/luthermonson/go-proxmox">client for Proxmox</a>.
+Go is my primary language and gives everything will need to start from a well-built with proper Go types for all responses. This
+is in comparison to the most popular Go client which uses <code>map[string]interface{}</code> for everything. Beyond mapping REST endpoints
+to structs the real power of the client will be to build in functions to more easily automate things PVE gives you access too
+but forces you to the host cli as they haven&rsquo;t built the tooling into their API/UI yet.</p>
+<p>A great example of this is loading a VM from a <a href="https://en.wikipedia.org/wiki/Qcow">qcow disk image</a>. A wonderfully simple
+image format and the way we want to use them for work is to specify a local network storage URL and tell Proxmox to pull
+and build a VM from the image, all things possible in qemu directly on the host as per <a href="https://www.phillipsj.net/posts/proxmox-linux-templates/">Jamie Phillips' blog post</a>
+which outlines the idea.</p>
+<h3 id="xtermjs-backwards-engineering">xterm.js Backwards Engineering</h3>
+<p>I wanted to recreate what the UI was doing to get on to a host, it&rsquo;s native and works right out of the box with no extra
+additions to Proxmox after installation. Back tracing how some of this worked I went down some rabbit holes looking into
+implementing a VNC client in Go. There are some people who have built have some packages <a href="https://github.com/mitchellh/go-vnc">1</a>
+<a href="https://github.com/amitbet/vnc2video">2</a> but all I was trying to do is get on the Debian host and make some calls and this
+was overkill.</p>
+<p>I traced back the xterm.js functionality built into the UI and landed on exactly what I needed&hellip; for reference <a href="https://gist.github.com/luthermonson/9d2196725ecc1402ac01c7e835ab4f0f">here</a> is the
+entire `main.js file I found used and I&rsquo;ll walk you through how I backwards engineered it in Go and got exactly what I wanted.</p>
+<h4 id="step-1-websocket-connection">Step 1, websocket connection</h4>
+<p>Grab <a href="https://github.com/gorilla/websocket">gorilla/websocket</a> and negotiate the connection. While reading the implementation
+you notice quite quickly they reuse xterm.js for <a href="https://gist.github.com/luthermonson/9d2196725ecc1402ac01c7e835ab4f0f#file-main-js-L118-L134">nodes, qemu and lxc</a>.
+This was huge because it meant I could implement this code once and get triple the usage. There is a limitation to using
+this with qemu but the host nodes and lxc work right out of the box. I opened the shell to a node and started backwards
+engineering the UI requests.</p>
+<p><img src="/img/2022/02/vncwebsocket.png" alt="termproxy and vnc websocket"></p>
+<p>You can see in the bottom right there is a call to termproxy then immediately to vncwebsocket. This was easily confirmed
+by the <a href="https://pve.proxmox.com/pve-docs/api-viewer/index.html">Proxmox API docs</a> and validated my suspicious that this
+code could be reusable as node (<a href="https://pve.proxmox.com/pve-docs/api-viewer/index.html#/nodes/%7Bnode%7D/termproxy">termproxy</a>
+<a href="https://pve.proxmox.com/pve-docs/api-viewer/index.html#/nodes/%7Bnode%7D/vncwebsocket">vncwebsocket</a>), qemu
+(<a href="https://pve.proxmox.com/pve-docs/api-viewer/index.html#/nodes/%7Bnode%7D/qemu/%7Bvmid%7D/termproxy">termproxy</a>
+<a href="https://pve.proxmox.com/pve-docs/api-viewer/index.html#/nodes/%7Bnode%7D/qemu/%7Bvmid%7D/vncwebsocket">vncwebsocket</a>) and lxc
+(<a href="https://pve.proxmox.com/pve-docs/api-viewer/index.html#/nodes/%7Bnode%7D/lxc/%7Bvmid%7D/termproxy">termproxy</a>
+<a href="https://pve.proxmox.com/pve-docs/api-viewer/index.html#/nodes/%7Bnode%7D/lxc/%7Bvmid%7D/vncwebsocket">vncwebsocket</a>) all had
+duplicate API endpoints. Reading the main.js you can quite clearly see every where <code>socket.send()</code> is called and decode
+the <a href="https://gist.github.com/luthermonson/9d2196725ecc1402ac01c7e835ab4f0f#file-main-js-L192">login</a>, <a href="https://gist.github.com/luthermonson/9d2196725ecc1402ac01c7e835ab4f0f#file-main-js-L181">ping</a>
+and <a href="https://gist.github.com/luthermonson/9d2196725ecc1402ac01c7e835ab4f0f#file-main-js-L176">data send</a> along with what looks
+like a <a href="https://gist.github.com/luthermonson/9d2196725ecc1402ac01c7e835ab4f0f#file-main-js-L110">resizer</a> if you make your browser bigger or smaller.  This was perfect, everything I needed to get into the host and send shell commands!</p>
+<h4 id="step-2-recreating-the-login">Step 2, recreating the login</h4>
+<p>Recreating the login was trivial, call to the <code>termproxy</code> endpoint results in a response which includes a user and a ticket.
+Call to the web socket with those in the <a href="https://github.com/luthermonson/go-proxmox/blob/994cc14849773c502735682ac83d76c5d1308a54/nodes.go#L33-L34">get params</a>
+and the web socket boots right up, just make sure you pass the <a href="https://github.com/luthermonson/go-proxmox/blob/994cc14849773c502735682ac83d76c5d1308a54/proxmox.go#L209">PVEAuthCookie</a>
+header in the dialer.</p>
+<p>The socket only sends/receives binary messages so the next step is to start negotiating the web socket to elevate your permissions
+to send commands to the host. The first thing the Javascript did was <a href="https://gist.github.com/luthermonson/9d2196725ecc1402ac01c7e835ab4f0f#file-main-js-L192">login</a>
+again via the socket and in Go after connected simply do</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-go" data-lang="go"><span style="color:#a6e22e">err</span> <span style="color:#f92672">:=</span> <span style="color:#a6e22e">conn</span>.<span style="color:#a6e22e">WriteMessage</span>(<span style="color:#a6e22e">websocket</span>.<span style="color:#a6e22e">BinaryMessage</span>, []byte(<span style="color:#a6e22e">vnc</span>.<span style="color:#a6e22e">User</span><span style="color:#f92672">+</span><span style="color:#e6db74">&#34;:&#34;</span><span style="color:#f92672">+</span><span style="color:#a6e22e">vnc</span>.<span style="color:#a6e22e">Ticket</span><span style="color:#f92672">+</span><span style="color:#e6db74">&#34;\n&#34;</span>))
+<span style="color:#66d9ef">if</span> <span style="color:#a6e22e">err</span> <span style="color:#f92672">!=</span> <span style="color:#66d9ef">nil</span> {
+	<span style="color:#75715e">// handle
+</span><span style="color:#75715e"></span>}
+</code></pre></div><p>Read the next message for <code>OK</code> response from the server&hellip;</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-go" data-lang="go"><span style="color:#a6e22e">_</span>, <span style="color:#a6e22e">msg</span>, <span style="color:#a6e22e">err</span> <span style="color:#f92672">:=</span> <span style="color:#a6e22e">conn</span>.<span style="color:#a6e22e">ReadMessage</span>()
+<span style="color:#66d9ef">if</span> <span style="color:#a6e22e">err</span> <span style="color:#f92672">!=</span> <span style="color:#66d9ef">nil</span> <span style="color:#f92672">||</span> string(<span style="color:#a6e22e">msg</span>) <span style="color:#f92672">!=</span> <span style="color:#e6db74">&#34;OK&#34;</span> {
+    <span style="color:#75715e">// handle
+</span><span style="color:#75715e"></span>}
+</code></pre></div><p>That&rsquo;s it for connecting and logging into the websocket, you can now start sending commands</p>
+<h4 id="step-3-adding-functionality">Step 3, adding functionality</h4>
+<p>Go lets you effortlessly manage the concurrency of a web socket and give you some standard interfaces for someone implementing
+the client&rsquo;s VNC Web Socket feature. To do this I setup standard string channels for send/receive and an additional errors channel.
+Since you need to close everything when you&rsquo;re done I also added a helpful closer func to make sure everything is cleaned up
+and you&rsquo;re not leaking resources.</p>
+<p>The function signature looked like this:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-go" data-lang="go"><span style="color:#66d9ef">func</span> (<span style="color:#a6e22e">c</span> <span style="color:#f92672">*</span><span style="color:#a6e22e">Client</span>) <span style="color:#a6e22e">VNCWebSocket</span>(<span style="color:#a6e22e">path</span> <span style="color:#66d9ef">string</span>, <span style="color:#a6e22e">vnc</span> <span style="color:#f92672">*</span><span style="color:#a6e22e">VNC</span>) (<span style="color:#66d9ef">chan</span> <span style="color:#66d9ef">string</span>, <span style="color:#66d9ef">chan</span> <span style="color:#66d9ef">string</span>, <span style="color:#66d9ef">chan</span> <span style="color:#66d9ef">error</span>, <span style="color:#66d9ef">func</span>() <span style="color:#66d9ef">error</span>, <span style="color:#66d9ef">error</span>)
+</code></pre></div><p>And this will let the client manage things the consumer doesn&rsquo;t care about like the keep alive. To interface with the web
+socket you will need to spin off two go routines, one for reading the web socket and one for writing to the web socket.
+You can&rsquo;t concurrently write to a web socket or you&rsquo;ll panic so try and make sure you&rsquo;re keeping a clean <code>select</code> statement,
+or you will accidentally write to the socket twice.</p>
+<p>To perform the keep alive it was quite obvious they&rsquo;re sending a binary <code>2</code> for a <a href="https://gist.github.com/luthermonson/9d2196725ecc1402ac01c7e835ab4f0f#file-main-js-L181">ping</a>
+so to recreate that I simply added a case for a 30s ticker.</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-go" data-lang="go"><span style="color:#66d9ef">case</span> <span style="color:#f92672">&lt;-</span><span style="color:#a6e22e">ticker</span>.<span style="color:#a6e22e">C</span>:
+    <span style="color:#a6e22e">c</span>.<span style="color:#a6e22e">log</span>.<span style="color:#a6e22e">Debugf</span>(<span style="color:#e6db74">&#34;sending wss keep alive&#34;</span>)
+    <span style="color:#66d9ef">if</span> <span style="color:#a6e22e">err</span> <span style="color:#f92672">:=</span> <span style="color:#a6e22e">conn</span>.<span style="color:#a6e22e">WriteMessage</span>(<span style="color:#a6e22e">websocket</span>.<span style="color:#a6e22e">BinaryMessage</span>, []byte(<span style="color:#e6db74">&#34;2&#34;</span>)); <span style="color:#a6e22e">err</span> <span style="color:#f92672">!=</span> <span style="color:#66d9ef">nil</span> {
+        <span style="color:#a6e22e">errors</span> <span style="color:#f92672">&lt;-</span> <span style="color:#a6e22e">err</span>
+    }
+</code></pre></div><p>You also want to close the socket when youre done so another case is a simple <code>CloseMessage</code> with an empty <code>[]byte{}</code> which will
+only happen when the closer is called by the client implementor.</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-go" data-lang="go"><span style="color:#66d9ef">case</span> <span style="color:#f92672">&lt;-</span><span style="color:#a6e22e">done</span>:
+    <span style="color:#66d9ef">if</span> <span style="color:#a6e22e">err</span> <span style="color:#f92672">:=</span> <span style="color:#a6e22e">conn</span>.<span style="color:#a6e22e">WriteMessage</span>(<span style="color:#a6e22e">websocket</span>.<span style="color:#a6e22e">CloseMessage</span>, []<span style="color:#66d9ef">byte</span>{}); <span style="color:#a6e22e">err</span> <span style="color:#f92672">!=</span> <span style="color:#66d9ef">nil</span> {
+        <span style="color:#a6e22e">errors</span> <span style="color:#f92672">&lt;-</span> <span style="color:#a6e22e">err</span>
+    }
+    <span style="color:#66d9ef">return</span>
+</code></pre></div><p>To support terminal resizing I decided to add a height/width calculator and implement a watcher to notify the web socket
+in the event the user resizes the terminal. To get the terminal size I used <a href="https://github.com/buger/goterm">buger/goterm</a>.
+I simply captured the height/width when the func is called and pass it to a go routine to check every second and
+notify a channel if it changes and obeys the done channel closed by the closer.</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-go" data-lang="go"><span style="color:#66d9ef">type</span> <span style="color:#a6e22e">size</span> <span style="color:#66d9ef">struct</span> {
+    <span style="color:#a6e22e">height</span> <span style="color:#66d9ef">int</span>
+    <span style="color:#a6e22e">width</span>  <span style="color:#66d9ef">int</span>
+}
+<span style="color:#75715e">// start the session by sending user@realm:ticket
+</span><span style="color:#75715e"></span><span style="color:#a6e22e">tsize</span> <span style="color:#f92672">:=</span> <span style="color:#a6e22e">size</span>{
+    <span style="color:#a6e22e">height</span>: <span style="color:#a6e22e">goterm</span>.<span style="color:#a6e22e">Height</span>(),
+    <span style="color:#a6e22e">width</span>:  <span style="color:#a6e22e">goterm</span>.<span style="color:#a6e22e">Width</span>(),
+}
+
+<span style="color:#a6e22e">resize</span> <span style="color:#f92672">:=</span> make(<span style="color:#66d9ef">chan</span> <span style="color:#a6e22e">size</span>)
+
+<span style="color:#66d9ef">go</span> <span style="color:#66d9ef">func</span>(<span style="color:#a6e22e">tsize</span> <span style="color:#a6e22e">size</span>) {
+    <span style="color:#a6e22e">ticker</span> <span style="color:#f92672">:=</span> <span style="color:#a6e22e">time</span>.<span style="color:#a6e22e">NewTicker</span>(<span style="color:#ae81ff">1</span> <span style="color:#f92672">*</span> <span style="color:#a6e22e">time</span>.<span style="color:#a6e22e">Second</span>)
+    <span style="color:#66d9ef">defer</span> <span style="color:#a6e22e">ticker</span>.<span style="color:#a6e22e">Stop</span>()
+    <span style="color:#66d9ef">for</span> {
+        <span style="color:#66d9ef">select</span> {
+        <span style="color:#66d9ef">case</span> <span style="color:#f92672">&lt;-</span><span style="color:#a6e22e">done</span>:
+            <span style="color:#66d9ef">return</span>
+        <span style="color:#66d9ef">case</span> <span style="color:#f92672">&lt;-</span><span style="color:#a6e22e">ticker</span>.<span style="color:#a6e22e">C</span>:
+            <span style="color:#a6e22e">resized</span> <span style="color:#f92672">:=</span> <span style="color:#a6e22e">size</span>{
+                <span style="color:#a6e22e">height</span>: <span style="color:#a6e22e">goterm</span>.<span style="color:#a6e22e">Height</span>(),
+                <span style="color:#a6e22e">width</span>:  <span style="color:#a6e22e">goterm</span>.<span style="color:#a6e22e">Width</span>(),
+            }
+            <span style="color:#66d9ef">if</span> <span style="color:#a6e22e">tsize</span>.<span style="color:#a6e22e">height</span> <span style="color:#f92672">!=</span> <span style="color:#a6e22e">resized</span>.<span style="color:#a6e22e">height</span> <span style="color:#f92672">||</span> <span style="color:#a6e22e">tsize</span>.<span style="color:#a6e22e">width</span> <span style="color:#f92672">!=</span> <span style="color:#a6e22e">resized</span>.<span style="color:#a6e22e">width</span> {
+                <span style="color:#a6e22e">tsize</span> = <span style="color:#a6e22e">resized</span>
+                <span style="color:#a6e22e">resize</span> <span style="color:#f92672">&lt;-</span> <span style="color:#a6e22e">resized</span>
+            }
+        }
+    }
+}(<span style="color:#a6e22e">tsize</span>)
+</code></pre></div><p>And catch the resize in a case in the go routine for the web socket send&hellip;</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-go" data-lang="go"><span style="color:#66d9ef">case</span> <span style="color:#a6e22e">resized</span> <span style="color:#f92672">:=</span> <span style="color:#f92672">&lt;-</span><span style="color:#a6e22e">resize</span>:
+    <span style="color:#a6e22e">c</span>.<span style="color:#a6e22e">log</span>.<span style="color:#a6e22e">Debugf</span>(<span style="color:#e6db74">&#34;resizing terminal window: %d x %d&#34;</span>, <span style="color:#a6e22e">resized</span>.<span style="color:#a6e22e">height</span>, <span style="color:#a6e22e">resized</span>.<span style="color:#a6e22e">width</span>)
+    <span style="color:#66d9ef">if</span> <span style="color:#a6e22e">err</span> <span style="color:#f92672">:=</span> <span style="color:#a6e22e">conn</span>.<span style="color:#a6e22e">WriteMessage</span>(<span style="color:#a6e22e">websocket</span>.<span style="color:#a6e22e">BinaryMessage</span>, []byte(<span style="color:#a6e22e">fmt</span>.<span style="color:#a6e22e">Sprintf</span>(<span style="color:#e6db74">&#34;1:%d:%d:&#34;</span>, <span style="color:#a6e22e">resized</span>.<span style="color:#a6e22e">height</span>, <span style="color:#a6e22e">resized</span>.<span style="color:#a6e22e">width</span>))); <span style="color:#a6e22e">err</span> <span style="color:#f92672">!=</span> <span style="color:#66d9ef">nil</span> {
+        <span style="color:#a6e22e">errors</span> <span style="color:#f92672">&lt;-</span> <span style="color:#a6e22e">err</span>
+    }
+</code></pre></div><p>Finally, all we need to do is send/receive messages on the channel. I wanted the implementor to call the <code>VNCWebSocket</code> func
+and send and receive strings. I added the channels and handled them by converting to a <code>[]byte</code> and sending the message format as specified in the <a href="https://gist.github.com/luthermonson/9d2196725ecc1402ac01c7e835ab4f0f#file-main-js-L176">xterm.js version</a></p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-go" data-lang="go"><span style="color:#66d9ef">case</span> <span style="color:#a6e22e">msg</span> <span style="color:#f92672">:=</span> <span style="color:#f92672">&lt;-</span><span style="color:#a6e22e">send</span>:
+    <span style="color:#a6e22e">m</span> <span style="color:#f92672">:=</span> []byte(<span style="color:#a6e22e">msg</span>)
+    <span style="color:#a6e22e">send</span> <span style="color:#f92672">:=</span> append([]byte(<span style="color:#a6e22e">fmt</span>.<span style="color:#a6e22e">Sprintf</span>(<span style="color:#e6db74">&#34;0:%d:&#34;</span>, len(<span style="color:#a6e22e">m</span>))), <span style="color:#a6e22e">m</span><span style="color:#f92672">...</span>)
+    <span style="color:#66d9ef">if</span> <span style="color:#a6e22e">err</span> <span style="color:#f92672">:=</span> <span style="color:#a6e22e">conn</span>.<span style="color:#a6e22e">WriteMessage</span>(<span style="color:#a6e22e">websocket</span>.<span style="color:#a6e22e">BinaryMessage</span>, <span style="color:#a6e22e">send</span>); <span style="color:#a6e22e">err</span> <span style="color:#f92672">!=</span> <span style="color:#66d9ef">nil</span> {
+        <span style="color:#a6e22e">errors</span> <span style="color:#f92672">&lt;-</span> <span style="color:#a6e22e">err</span>
+    }
+    <span style="color:#66d9ef">if</span> <span style="color:#a6e22e">err</span> <span style="color:#f92672">:=</span> <span style="color:#a6e22e">conn</span>.<span style="color:#a6e22e">WriteMessage</span>(<span style="color:#a6e22e">websocket</span>.<span style="color:#a6e22e">BinaryMessage</span>, []byte(<span style="color:#e6db74">&#34;0:1:\n&#34;</span>)); <span style="color:#a6e22e">err</span> <span style="color:#f92672">!=</span> <span style="color:#66d9ef">nil</span> {
+        <span style="color:#a6e22e">errors</span> <span style="color:#f92672">&lt;-</span> <span style="color:#a6e22e">err</span>
+    }
+</code></pre></div><p>The entire receive go routine is pretty easy but has some nice to have added error checking and is as follows&hellip;</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-go" data-lang="go"><span style="color:#66d9ef">go</span> <span style="color:#66d9ef">func</span>() {
+    <span style="color:#66d9ef">for</span> {
+        <span style="color:#66d9ef">select</span> {
+        <span style="color:#66d9ef">case</span> <span style="color:#f92672">&lt;-</span><span style="color:#a6e22e">done</span>:
+            <span style="color:#66d9ef">return</span>
+        <span style="color:#66d9ef">default</span>:
+            <span style="color:#a6e22e">_</span>, <span style="color:#a6e22e">msg</span>, <span style="color:#a6e22e">err</span> <span style="color:#f92672">:=</span> <span style="color:#a6e22e">conn</span>.<span style="color:#a6e22e">ReadMessage</span>()
+            <span style="color:#66d9ef">if</span> <span style="color:#a6e22e">err</span> <span style="color:#f92672">!=</span> <span style="color:#66d9ef">nil</span> {
+                <span style="color:#66d9ef">if</span> <span style="color:#a6e22e">strings</span>.<span style="color:#a6e22e">Contains</span>(<span style="color:#a6e22e">err</span>.<span style="color:#a6e22e">Error</span>(), <span style="color:#e6db74">&#34;use of closed network connection&#34;</span>) {
+                    <span style="color:#66d9ef">return</span>
+                }
+                <span style="color:#66d9ef">if</span> !<span style="color:#a6e22e">websocket</span>.<span style="color:#a6e22e">IsUnexpectedCloseError</span>(<span style="color:#a6e22e">err</span>, <span style="color:#a6e22e">websocket</span>.<span style="color:#a6e22e">CloseGoingAway</span>, <span style="color:#a6e22e">websocket</span>.<span style="color:#a6e22e">CloseAbnormalClosure</span>) {
+                    <span style="color:#66d9ef">return</span>
+                }
+                <span style="color:#a6e22e">errors</span> <span style="color:#f92672">&lt;-</span> <span style="color:#a6e22e">err</span>
+            }
+            <span style="color:#a6e22e">recv</span> <span style="color:#f92672">&lt;-</span> string(<span style="color:#a6e22e">msg</span>)
+        }
+    }
+}()
+</code></pre></div><h4 id="step-4-using-the-string-channels">Step 4, using the string channels</h4>
+<p>For simple testing I just tried to gety <code>ls -la</code>, <code>hostname</code> and <code>exit</code> which was basically the following&hellip;</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-go" data-lang="go">
+<span style="color:#a6e22e">vnc</span>, <span style="color:#a6e22e">err</span> <span style="color:#f92672">:=</span> <span style="color:#a6e22e">node</span>.<span style="color:#a6e22e">TermProxy</span>()
+<span style="color:#a6e22e">assert</span>.<span style="color:#a6e22e">Nil</span>(<span style="color:#a6e22e">t</span>, <span style="color:#a6e22e">err</span>)
+<span style="color:#a6e22e">send</span>, <span style="color:#a6e22e">recv</span>, <span style="color:#a6e22e">errs</span>, <span style="color:#a6e22e">close</span>, <span style="color:#a6e22e">err</span> <span style="color:#f92672">:=</span> <span style="color:#a6e22e">node</span>.<span style="color:#a6e22e">VNCWebSocket</span>(<span style="color:#a6e22e">vnc</span>)
+<span style="color:#a6e22e">assert</span>.<span style="color:#a6e22e">Nil</span>(<span style="color:#a6e22e">t</span>, <span style="color:#a6e22e">err</span>)
+<span style="color:#66d9ef">defer</span> close()
+
+<span style="color:#66d9ef">go</span> <span style="color:#66d9ef">func</span>() {
+    <span style="color:#66d9ef">for</span> {
+        <span style="color:#66d9ef">select</span> {
+        <span style="color:#66d9ef">case</span> <span style="color:#a6e22e">msg</span> <span style="color:#f92672">:=</span> <span style="color:#f92672">&lt;-</span><span style="color:#a6e22e">recv</span>:
+            <span style="color:#66d9ef">if</span> <span style="color:#a6e22e">msg</span> <span style="color:#f92672">!=</span> <span style="color:#e6db74">&#34;&#34;</span> {
+                <span style="color:#a6e22e">fmt</span>.<span style="color:#a6e22e">Println</span>(<span style="color:#e6db74">&#34;MSG: &#34;</span> <span style="color:#f92672">+</span> <span style="color:#a6e22e">msg</span>)
+            }
+        <span style="color:#66d9ef">case</span> <span style="color:#a6e22e">err</span> <span style="color:#f92672">:=</span> <span style="color:#f92672">&lt;-</span><span style="color:#a6e22e">errs</span>:
+            <span style="color:#66d9ef">if</span> <span style="color:#a6e22e">err</span> <span style="color:#f92672">!=</span> <span style="color:#66d9ef">nil</span> {
+                <span style="color:#a6e22e">fmt</span>.<span style="color:#a6e22e">Println</span>(<span style="color:#e6db74">&#34;ERROR: &#34;</span> <span style="color:#f92672">+</span> <span style="color:#a6e22e">err</span>.<span style="color:#a6e22e">Error</span>())
+                <span style="color:#66d9ef">return</span>
+            }
+        }
+    }
+}()
+
+<span style="color:#a6e22e">send</span> <span style="color:#f92672">&lt;-</span> <span style="color:#e6db74">&#34;ls -la&#34;</span>
+<span style="color:#a6e22e">time</span>.<span style="color:#a6e22e">Sleep</span>(<span style="color:#ae81ff">10</span> <span style="color:#f92672">*</span> <span style="color:#a6e22e">time</span>.<span style="color:#a6e22e">Second</span>)
+<span style="color:#a6e22e">send</span> <span style="color:#f92672">&lt;-</span> <span style="color:#e6db74">&#34;hostname&#34;</span>
+<span style="color:#a6e22e">time</span>.<span style="color:#a6e22e">Sleep</span>(<span style="color:#ae81ff">10</span> <span style="color:#f92672">*</span> <span style="color:#a6e22e">time</span>.<span style="color:#a6e22e">Second</span>)
+<span style="color:#a6e22e">send</span> <span style="color:#f92672">&lt;-</span> <span style="color:#e6db74">&#34;exit&#34;</span>
+<span style="color:#a6e22e">time</span>.<span style="color:#a6e22e">Sleep</span>(<span style="color:#ae81ff">5</span> <span style="color:#f92672">*</span> <span style="color:#a6e22e">time</span>.<span style="color:#a6e22e">Second</span>)
+</code></pre></div><p>It ends up looking quite easy, just grab the <code>TermProxy</code> vnc response which includes the ticket, pass to <code>VNCWebSocket</code> and
+you get your string channels, error channel and a closer. Start a go routine to watch the receive and error channels and
+start sending messages to the send channel.</p>
+<h5 id="step-5-testing">Step 5, testing&hellip;</h5>
+<p>The output from my test looked like the following with all debug enabled and you can see you can interact with the host
+with no restrictions right from Go.</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash"><span style="color:#f92672">[</span>DEBUG<span style="color:#f92672">]</span> <span style="color:#f92672">[</span>WSS<span style="color:#f92672">]</span> wss://192.168.1.87:8006/api2/json/nodes/i7/vncwebsocket?port<span style="color:#f92672">=</span>5900&amp;vncticket<span style="color:#f92672">=</span>*****
+<span style="color:#f92672">[</span>DEBUG<span style="color:#f92672">]</span> sending terminal size: <span style="color:#ae81ff">55</span> x <span style="color:#ae81ff">134</span>
+<span style="color:#f92672">[</span>DEBUG<span style="color:#f92672">]</span> sending: ls -la
+MSG: ls -la
+
+MSG: Linux i7 5.13.19-2-pve <span style="color:#75715e">#1 SMP PVE 5.13.19-4 (Mon, 29 Nov 2021 12:10:09 +0100) x86_64</span>
+
+The programs included with the Debian GNU/Linux system are free software;
+the exact distribution terms <span style="color:#66d9ef">for</span> each program are described in the
+individual files in /usr/share/doc/*/copyright.
+
+Debian GNU/Linux comes with ABSOLUTELY NO WARRANTY, to the extent
+permitted by applicable law.
+
+MSG: Last login: Sun Feb  <span style="color:#ae81ff">6</span> 18:27:16 MST <span style="color:#ae81ff">2022</span> on pts/0
+
+MSG: root@i7:~# ls -la
+
+MSG: total <span style="color:#ae81ff">49</span>
+drwx------  <span style="color:#ae81ff">3</span> root root    <span style="color:#ae81ff">9</span> Dec  <span style="color:#ae81ff">9</span> 12:40 .
+drwxr-xr-x <span style="color:#ae81ff">18</span> root root   <span style="color:#ae81ff">24</span> Sep <span style="color:#ae81ff">10</span> 18:30 ..
+-rw-------  <span style="color:#ae81ff">1</span> root root <span style="color:#ae81ff">2279</span> Feb  <span style="color:#ae81ff">6</span> 18:27 .bash_history
+-rw-r--r--  <span style="color:#ae81ff">1</span> root root  <span style="color:#ae81ff">571</span> Apr <span style="color:#ae81ff">10</span>  <span style="color:#ae81ff">2021</span> .bashrc
+-rw-r--r--  <span style="color:#ae81ff">1</span> root root   <span style="color:#ae81ff">25</span> Sep <span style="color:#ae81ff">10</span> 18:29 .forward
+-rw-r--r--  <span style="color:#ae81ff">1</span> root root  <span style="color:#ae81ff">161</span> Jul  <span style="color:#ae81ff">9</span>  <span style="color:#ae81ff">2019</span> .profile
+-rw-------  <span style="color:#ae81ff">1</span> root root <span style="color:#ae81ff">1024</span> Sep <span style="color:#ae81ff">10</span> 18:34 .rnd
+drwxr-xr-x  <span style="color:#ae81ff">2</span> root root    <span style="color:#ae81ff">6</span> Sep <span style="color:#ae81ff">10</span> 18:31 .ssh
+-rw-r--r--  <span style="color:#ae81ff">1</span> root root  <span style="color:#ae81ff">206</span> Jan <span style="color:#ae81ff">23</span> 08:41 .wget-hsts
+
+MSG: root@i7:~#
+<span style="color:#f92672">[</span>DEBUG<span style="color:#f92672">]</span> sending: hostname
+MSG: hostname
+
+MSG: i7
+
+MSG: root@i7:~#
+<span style="color:#f92672">[</span>DEBUG<span style="color:#f92672">]</span> sending: exit
+MSG: exit
+MSG:
+
+MSG: logout
+
+--- PASS: TestNode_TermProxy <span style="color:#f92672">(</span>26.17s<span style="color:#f92672">)</span>
+</code></pre></div><h3 id="wrap-up">Wrap Up</h3>
+<p>Time to build more tooling on top of this which I&rsquo;m hoping one day will be a
+<a href="https://github.com/luthermonson/terraform-provider-proxmox">terraform provider</a>, a <a href="https://github.com/luthermonson/p9s">Terminal UI</a>
+and a <a href="https://github.com/luthermonson/docker-machine-driver-proxmox">Machine Driver</a>.</p>
+
+      </div>
+      <footer>
+        <div class="stats">
+  
+    <ul class="categories">
+      
+        
+          <li><a class="article-terms-link" href="/categories/programming/">programming</a></li>
+        
+      
+    </ul>
+  
+  
+    <ul class="tags">
+      
+        
+          <li><a class="article-terms-link" href="/tags/proxmox/">proxmox</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/go/">go</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/javascript/">javascript</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/websockets/">websockets</a></li>
+        
+      
+    </ul>
+  
+</div>
+
+      </footer>
+    </div>
+    
+      
+  <div class='post'>
+    
+    <div>
+      <h2 id='say-something'>Say Something</h2>
+        <form id='comment-form' class='new-comment' method='POST'>
+          
+          <h3 class='reply-notice hidden'>
+            <span class='reply-name'></span>
+            <a class='reply-close-btn button'><i class='fas fa-times'></i></a>
+          </h3>
+
+          
+          <input type='hidden' name='options[entryId]' value='eb50f33d2840af072f03e7f3279bb154'>
+          <input type='hidden' name='fields[replyThread]' value=''>
+          <input type='hidden' name='fields[replyID]' value=''>
+          <input type='hidden' name='fields[replyName]' value=''>
+
+          
+          <input required name='fields[name]' type='text' placeholder='Your Name'>
+          <input name='fields[website]' type='text' placeholder='Your Website'>
+          <input required name='fields[email]' type='email' placeholder='Your Email'>
+          <textarea required name='fields[body]' placeholder='Your Message' rows='10'></textarea>
+
+          
+          
+
+          
+          <div class='submit-notice'>
+            <strong class='submit-notice-text submit-success hidden'>Thanks for your comment! It will be shown on the site once it has been approved.</strong>
+            <strong class='submit-notice-text submit-failed hidden'>Sorry, there was an error with your submission. Please make sure all required fields have been completed and try again.</strong>
+          </div>
+
+          
+          <button type='button' id="comment-form-submit" class='button'>Submit</button>
+          <button type='button' id="comment-form-submitted" class='hidden button' disabled>Submitted</button>
+          <button type='reset' id="comment-form-reset" class='button'>Reset</button>
+        </form>
+    </div>
+
+    
+    <div class='comments-container'>
+      <h2>Comments</h2>
+    </div>
+  </div>
+
+
+    
+  </article>
+  <div class="pagination">
+    
+    
+      <a href="/blog/2022/01/practical-cue-example/" class="button right"><span>Practical Cue Example, Produce YAML Config from Go Types</span></a>
+    
+  </div>
+
+      </main>
+      <section id="site-sidebar">
+  
+    <section id="recent-posts">
+      <header>
+        <h1>Recent Posts</h1>
+      </header>
+      
+      <article class="mini-post">
+          <a href="/blog/2022/02/recreating-proxmox-ve-xtermjs-in-go/" class="image">
+    <img class="" src="/img/2022/02/proxmox-logo.png" alt="Proxmox VE Logo">
+  </a>
+        <header>
+          <h2><a href="/blog/2022/02/recreating-proxmox-ve-xtermjs-in-go/">Recreating Proxmox Ve Xtermjs in Go</a></h2>
+          <time class="published" datetime="2022-02-06 21:54:53 -0700 MST">February 6, 2022</time>
+        </header>
+      </article>
+      
+      <article class="mini-post">
+          
+        <header>
+          <h2><a href="/blog/2022/01/practical-cue-example/">Practical Cue Example, Produce YAML Config from Go Types</a></h2>
+          <time class="published" datetime="2022-01-31 09:57:26 -0700 MST">January 31, 2022</time>
+        </header>
+      </article>
+      
+      <article class="mini-post">
+          <a href="/blog/2022/01/free-personal-blog-hugo-github-pages/" class="image" style="--bg-image: url('/img/2022/01/github-pages-logo.png');">
+    <img class="" src="/img/2022/01/github-pages-logo.png" alt="Github Pages Logo">
+  </a>
+        <header>
+          <h2><a href="/blog/2022/01/free-personal-blog-hugo-github-pages/">Free Blog Hosting Using Hugo &#43; Github Pages</a></h2>
+          <time class="published" datetime="2022-01-27 11:51:20 -0700 MST">January 27, 2022</time>
+        </header>
+      </article>
+      
+      <article class="mini-post">
+          
+        <header>
+          <h2><a href="/blog/introduction/">Introduction</a></h2>
+          <time class="published" datetime="2022-01-27 10:11:05 -0700 MST">January 27, 2022</time>
+        </header>
+      </article>
+      
+      
+    </section>
+  
+
+  
+    
+
+      <section id="categories">
+        <header>
+          <h1><a href="/categories">Category</a></h1>
+        </header>
+        <ul>
+          
+          
+          <li>
+              <a href="/categories/programming/">programming<span class="count">2</span></a>
+          
+          </li>
+        </ul>
+      </section>
+    
+  
+
+  
+    <section id="mini-bio">
+      <header>
+        <h1>About</h1>
+      </header>
+      <p>Luther is a 20+ year software veteran specializing in backend APIs and architecting products. Employed at <a href='https://www.suse.com'>SUSE</a> as the Team Lead for the <a href='https://github.com/rancher/windows/issues'>Containers on Windows Team</a> working on <a href='https://rancher.com/'>Rancher</a> + <a href='https://kubernetes.io/'>Kubernetes</a></p>
+      <footer>
+        <a href="/about" class="button">Learn More</a>
+      </footer>
+    </section>
+  
+</section>
+
+      <footer id="site-footer">
+  
+      <ul class="socnet-icons">
+        
+
+        <li><a href="//github.com/luthermonson" target="_blank" rel="noopener" title="GitHub" class="fab fa-github"></a></li>
+
+
+
+
+
+
+
+
+
+
+
+<li><a href="//www.linkedin.com/in/luthermonson" target="_blank" rel="noopener" title="LinkedIn" class="fab fa-linkedin"></a></li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li><a href="//twitter.com/luthermonson" target="_blank" rel="noopener" title="Twitter" class="fab fa-twitter"></a></li>
+
+
+
+
+
+
+
+
+
+
+
+<li><a href="mailto:luther.monson@gmail.com" target="_blank" title="Email" class="far fa-envelope"></a></li>
+
+      </ul>
+  
+  <p class="copyright">
+    © 2022 Luther Monson
+      <br>
+    Theme: <a href='https://github.com/pacollins/hugo-future-imperfect-slim' target='_blank' rel='noopener'>Hugo Future Imperfect Slim</a><br>A <a href='https://html5up.net/future-imperfect' target='_blank' rel='noopener'>HTML5 UP port</a> | Powered by <a href='https://gohugo.io/' title='0.92.0' target='_blank' rel='noopener'>Hugo</a>
+  </p>
+</footer>
+<a id="back-to-top" href="#" class="fas fa-arrow-up fa-2x"></a>
+
+      <script src="/js/highlight.js"></script>
+    
+    <script>hljs.highlightAll();</script><script src="/js/bundle.min.affa21bd64e761fba63c1eb954f76e46e43ca96b1ef71c742f058ed973ec6df2.js" integrity="sha256-r/ohvWTnYfumPB65VPduRuQ8qWse9xx0LwWO2XPsbfI="></script>
+    <script src="/js/add-on.js"></script>
+    </div>
+  </body>
+</html>

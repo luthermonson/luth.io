@@ -3,74 +3,10 @@
   xmlns:xhtml="http://www.w3.org/1999/xhtml">
   <url>
     <loc>https://luth.io/blog/</loc>
-    <lastmod>2022-02-01T09:57:26-07:00</lastmod>
-  </url><url>
-    <loc>https://luth.io/</loc>
-    <lastmod>2022-02-01T09:57:26-07:00</lastmod>
-    <xhtml:link
-                rel="alternate"
-                hreflang="fr"
-                href="https://luth.io/fr/"
-                />
-    <xhtml:link
-                rel="alternate"
-                hreflang="pl"
-                href="https://luth.io/pl/"
-                />
-    <xhtml:link
-                rel="alternate"
-                hreflang="pt"
-                href="https://luth.io/pt/"
-                />
-    <xhtml:link
-                rel="alternate"
-                hreflang="de"
-                href="https://luth.io/de/"
-                />
-    <xhtml:link
-                rel="alternate"
-                hreflang="es"
-                href="https://luth.io/es/"
-                />
-    <xhtml:link
-                rel="alternate"
-                hreflang="zh-cn"
-                href="https://luth.io/zh-cn/"
-                />
-    <xhtml:link
-                rel="alternate"
-                hreflang="zh-tw"
-                href="https://luth.io/zh-tw/"
-                />
-    <xhtml:link
-                rel="alternate"
-                hreflang="ja"
-                href="https://luth.io/ja/"
-                />
-    <xhtml:link
-                rel="alternate"
-                hreflang="nl"
-                href="https://luth.io/nl/"
-                />
-    <xhtml:link
-                rel="alternate"
-                hreflang="en"
-                href="https://luth.io/"
-                />
-  </url><url>
-    <loc>https://luth.io/blog/2022/01/practical-cue-example/</loc>
-    <lastmod>2022-02-01T09:57:26-07:00</lastmod>
-  </url><url>
-    <loc>https://luth.io/blog/2022/01/free-personal-blog-hugo-github-pages/</loc>
-    <lastmod>2022-01-27T11:51:20-07:00</lastmod>
-  </url><url>
-    <loc>https://luth.io/blog/introduction/</loc>
-    <lastmod>2022-01-27T10:11:05-07:00</lastmod>
-  </url><url>
-    <loc>https://luth.io/about/</loc>
-    <lastmod>2022-01-26T08:26:16-07:00</lastmod>
+    <lastmod>2022-02-06T21:54:53-07:00</lastmod>
   </url><url>
     <loc>https://luth.io/categories/</loc>
+    <lastmod>2022-02-06T21:54:53-07:00</lastmod>
     <xhtml:link
                 rel="alternate"
                 hreflang="fr"
@@ -122,7 +58,76 @@
                 href="https://luth.io/categories/"
                 />
   </url><url>
+    <loc>https://luth.io/tags/go/</loc>
+    <lastmod>2022-02-06T21:54:53-07:00</lastmod>
+  </url><url>
+    <loc>https://luth.io/tags/javascript/</loc>
+    <lastmod>2022-02-06T21:54:53-07:00</lastmod>
+  </url><url>
+    <loc>https://luth.io/</loc>
+    <lastmod>2022-02-06T21:54:53-07:00</lastmod>
+    <xhtml:link
+                rel="alternate"
+                hreflang="fr"
+                href="https://luth.io/fr/"
+                />
+    <xhtml:link
+                rel="alternate"
+                hreflang="pl"
+                href="https://luth.io/pl/"
+                />
+    <xhtml:link
+                rel="alternate"
+                hreflang="pt"
+                href="https://luth.io/pt/"
+                />
+    <xhtml:link
+                rel="alternate"
+                hreflang="de"
+                href="https://luth.io/de/"
+                />
+    <xhtml:link
+                rel="alternate"
+                hreflang="es"
+                href="https://luth.io/es/"
+                />
+    <xhtml:link
+                rel="alternate"
+                hreflang="zh-cn"
+                href="https://luth.io/zh-cn/"
+                />
+    <xhtml:link
+                rel="alternate"
+                hreflang="zh-tw"
+                href="https://luth.io/zh-tw/"
+                />
+    <xhtml:link
+                rel="alternate"
+                hreflang="ja"
+                href="https://luth.io/ja/"
+                />
+    <xhtml:link
+                rel="alternate"
+                hreflang="nl"
+                href="https://luth.io/nl/"
+                />
+    <xhtml:link
+                rel="alternate"
+                hreflang="en"
+                href="https://luth.io/"
+                />
+  </url><url>
+    <loc>https://luth.io/categories/programming/</loc>
+    <lastmod>2022-02-06T21:54:53-07:00</lastmod>
+  </url><url>
+    <loc>https://luth.io/tags/proxmox/</loc>
+    <lastmod>2022-02-06T21:54:53-07:00</lastmod>
+  </url><url>
+    <loc>https://luth.io/blog/2022/02/recreating-proxmox-ve-xtermjs-in-go/</loc>
+    <lastmod>2022-02-06T21:54:53-07:00</lastmod>
+  </url><url>
     <loc>https://luth.io/tags/</loc>
+    <lastmod>2022-02-06T21:54:53-07:00</lastmod>
     <xhtml:link
                 rel="alternate"
                 hreflang="fr"
@@ -173,5 +178,32 @@
                 hreflang="en"
                 href="https://luth.io/tags/"
                 />
+  </url><url>
+    <loc>https://luth.io/tags/websockets/</loc>
+    <lastmod>2022-02-06T21:54:53-07:00</lastmod>
+  </url><url>
+    <loc>https://luth.io/tags/cue/</loc>
+    <lastmod>2022-01-31T09:57:26-07:00</lastmod>
+  </url><url>
+    <loc>https://luth.io/blog/2022/01/practical-cue-example/</loc>
+    <lastmod>2022-01-31T09:57:26-07:00</lastmod>
+  </url><url>
+    <loc>https://luth.io/tags/cloudflare/</loc>
+    <lastmod>2022-01-27T11:51:20-07:00</lastmod>
+  </url><url>
+    <loc>https://luth.io/blog/2022/01/free-personal-blog-hugo-github-pages/</loc>
+    <lastmod>2022-01-27T11:51:20-07:00</lastmod>
+  </url><url>
+    <loc>https://luth.io/tags/github/</loc>
+    <lastmod>2022-01-27T11:51:20-07:00</lastmod>
+  </url><url>
+    <loc>https://luth.io/tags/hugo/</loc>
+    <lastmod>2022-01-27T11:51:20-07:00</lastmod>
+  </url><url>
+    <loc>https://luth.io/blog/introduction/</loc>
+    <lastmod>2022-01-27T10:11:05-07:00</lastmod>
+  </url><url>
+    <loc>https://luth.io/about/</loc>
+    <lastmod>2022-01-26T08:26:16-07:00</lastmod>
   </url>
 </urlset>

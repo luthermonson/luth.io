@@ -1,6 +1,11 @@
 ---
 title: "Practical Cue Example, Produce YAML Config from Go Types"
-date: 2022-02-01T09:57:26-07:00
+date: 2022-01-31T09:57:26-07:00
+tags:
+ - cue
+ - go
+categories:
+ - programming
 ---
 
 I recently had to spend some time to learn [Cue](https://cuelang.org/) and felt the examples/tutorials were a bit lacking 

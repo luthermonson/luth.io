@@ -5,6 +5,79 @@
     <link>https://luth.io/tags/</link>
     <description>Recent content in Tags on Luther Monson</description>
     <generator>Hugo -- gohugo.io</generator>
-    <language>en</language><atom:link href="https://luth.io/tags/index.xml" rel="self" type="application/rss+xml" />
+    <language>en</language>
+    <lastBuildDate>Sun, 06 Feb 2022 21:54:53 -0700</lastBuildDate><atom:link href="https://luth.io/tags/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>go</title>
+      <link>https://luth.io/tags/go/</link>
+      <pubDate>Sun, 06 Feb 2022 21:54:53 -0700</pubDate>
+      
+      <guid>https://luth.io/tags/go/</guid>
+      <description></description>
+    </item>
+    
+    <item>
+      <title>javascript</title>
+      <link>https://luth.io/tags/javascript/</link>
+      <pubDate>Sun, 06 Feb 2022 21:54:53 -0700</pubDate>
+      
+      <guid>https://luth.io/tags/javascript/</guid>
+      <description></description>
+    </item>
+    
+    <item>
+      <title>proxmox</title>
+      <link>https://luth.io/tags/proxmox/</link>
+      <pubDate>Sun, 06 Feb 2022 21:54:53 -0700</pubDate>
+      
+      <guid>https://luth.io/tags/proxmox/</guid>
+      <description></description>
+    </item>
+    
+    <item>
+      <title>websockets</title>
+      <link>https://luth.io/tags/websockets/</link>
+      <pubDate>Sun, 06 Feb 2022 21:54:53 -0700</pubDate>
+      
+      <guid>https://luth.io/tags/websockets/</guid>
+      <description></description>
+    </item>
+    
+    <item>
+      <title>cue</title>
+      <link>https://luth.io/tags/cue/</link>
+      <pubDate>Mon, 31 Jan 2022 09:57:26 -0700</pubDate>
+      
+      <guid>https://luth.io/tags/cue/</guid>
+      <description></description>
+    </item>
+    
+    <item>
+      <title>cloudflare</title>
+      <link>https://luth.io/tags/cloudflare/</link>
+      <pubDate>Thu, 27 Jan 2022 11:51:20 -0700</pubDate>
+      
+      <guid>https://luth.io/tags/cloudflare/</guid>
+      <description></description>
+    </item>
+    
+    <item>
+      <title>github</title>
+      <link>https://luth.io/tags/github/</link>
+      <pubDate>Thu, 27 Jan 2022 11:51:20 -0700</pubDate>
+      
+      <guid>https://luth.io/tags/github/</guid>
+      <description></description>
+    </item>
+    
+    <item>
+      <title>hugo</title>
+      <link>https://luth.io/tags/hugo/</link>
+      <pubDate>Thu, 27 Jan 2022 11:51:20 -0700</pubDate>
+      
+      <guid>https://luth.io/tags/hugo/</guid>
+      <description></description>
+    </item>
+    
   </channel>
 </rss>
