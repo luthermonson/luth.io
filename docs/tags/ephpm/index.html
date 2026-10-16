@@ -222,7 +222,7 @@
     
   </div>
   <div class="meta">
-    <time datetime="2026-10-16 08:10:00 -0700 PDT">October 16, 2026</time>
+    <time datetime="2026-10-15 19:45:00 -0700 PDT">October 15, 2026</time>
     
     <p>5-Minute Read</p>
   </div>
@@ -268,6 +268,206 @@ and first on the database endpoint in both modes.</p>
           <li><a class="article-terms-link" href="/tags/benchmarking/">benchmarking</a></li>
         
           <li><a class="article-terms-link" href="/tags/mimalloc/">mimalloc</a></li>
+        
+      
+    </ul>
+  
+</div>
+
+  </footer>
+</article>
+
+  
+    <article class="post">
+  <header>
+  <div class="title">
+    
+      <h2><a href="/blog/2026/10/composer-without-php-vivacity/">Composer Without PHP: Embedding vivacity in ePHPm</a></h2>
+    
+    
+      <p>I embedded vivacity, a pure-Rust Composer-compatible installer, in ePHPm so one binary can install a PHP app&#39;s dependencies without PHP. This is what it took upstream and in ePHPm, and how it does against Composer on Windows.</p>
+    
+  </div>
+  <div class="meta">
+    <time datetime="2026-10-14 23:20:00 -0700 PDT">October 14, 2026</time>
+    
+    <p>10-Minute Read</p>
+  </div>
+</header>
+
+  <div class="content">
+    <a href="/blog/2026/10/composer-without-php-vivacity/" class="image" style="--bg-image: url('/img/2026/10/composer-without-php-vivacity-bench.svg');">
+    <img class="" src="/img/2026/10/composer-without-php-vivacity-bench.svg" alt="Bar chart comparing Composer 2.10.3 and ephpm composer on a Laravel install on native Windows">
+  </a>
+    
+    <p>The pitch for <a href="https://github.com/ephpm/ephpm">ePHPm</a> is one binary in place of php-fpm, nginx and Redis. There was
+always a hole in it though. To deploy a PHP app you still need to run <code>composer install</code>, and that drags PHP and
+<code>composer.phar</code> back onto the box, or into the container build, just for that one step. <code>ephpm composer install</code> now
+runs a pure-Rust, Composer-compatible installer called <a href="https://github.com/Adelagric/vivacity">vivacity</a> inside the
+ePHPm binary. One binary serves the app and installs its dependencies, and on Windows that works with no PHP installed&hellip;</p>
+  </div>
+  <footer>
+    <a href="/blog/2026/10/composer-without-php-vivacity/" class="button big">Read More</a>
+    <div class="stats">
+  
+    <ul class="categories">
+      
+        
+          <li><a class="article-terms-link" href="/categories/ephpm/">ephpm</a></li>
+        
+          <li><a class="article-terms-link" href="/categories/php/">php</a></li>
+        
+          <li><a class="article-terms-link" href="/categories/rust/">rust</a></li>
+        
+      
+    </ul>
+  
+  
+    <ul class="tags">
+      
+        
+          <li><a class="article-terms-link" href="/tags/php/">php</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/rust/">rust</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/ephpm/">ephpm</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/composer/">composer</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/vivacity/">vivacity</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/windows/">windows</a></li>
+        
+      
+    </ul>
+  
+</div>
+
+  </footer>
+</article>
+
+  
+    <article class="post">
+  <header>
+  <div class="title">
+    
+      <h2><a href="/blog/2026/10/a-lock-is-only-as-good-as-its-release/">A Lock Is Only as Good as Its Release</a></h2>
+    
+    
+      <p>SETNX gets all the attention, but most of the bugs in ePHPm&#39;s KV locks were on the release side. This is how blind deletes, a missing compare-and-delete, and a cluster where two nodes could both win got fixed.</p>
+    
+  </div>
+  <div class="meta">
+    <time datetime="2026-10-13 20:40:00 -0700 PDT">October 13, 2026</time>
+    
+    <p>9-Minute Read</p>
+  </div>
+</header>
+
+  <div class="content">
+    <a href="/blog/2026/10/a-lock-is-only-as-good-as-its-release/" class="image" style="--bg-image: url('/img/2026/10/a-lock-is-only-as-good-as-its-release-cover.svg');">
+    <img class="" src="/img/2026/10/a-lock-is-only-as-good-as-its-release-cover.svg" alt="Timeline: request A&#39;s lock expires, B acquires it, A&#39;s blind DEL frees B&#39;s lock and C gets in">
+  </a>
+    
+    <p>Every &ldquo;build a lock on Redis&rdquo; tutorial spends its time on acquisition: <code>SET key value NX PX 30000</code>, one winner, done. The
+release gets one line, <code>DEL key</code>, and that line is where most of the lock bugs I&rsquo;ve had in ePHPm lived. Over about three months
+the same mistake showed up in the native session handler, in two of the Composer wrapper packages, and finally in the
+cluster, each time in a slightly different costume.</p>
+  </div>
+  <footer>
+    <a href="/blog/2026/10/a-lock-is-only-as-good-as-its-release/" class="button big">Read More</a>
+    <div class="stats">
+  
+    <ul class="categories">
+      
+        
+          <li><a class="article-terms-link" href="/categories/ephpm/">ephpm</a></li>
+        
+          <li><a class="article-terms-link" href="/categories/php/">php</a></li>
+        
+      
+    </ul>
+  
+  
+    <ul class="tags">
+      
+        
+          <li><a class="article-terms-link" href="/tags/ephpm/">ephpm</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/php/">php</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/rust/">rust</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/locking/">locking</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/redis/">redis</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/clustering/">clustering</a></li>
+        
+      
+    </ul>
+  
+</div>
+
+  </footer>
+</article>
+
+  
+    <article class="post">
+  <header>
+  <div class="title">
+    
+      <h2><a href="/blog/2026/10/xdebug-worker-mode/">Step Debugging a Worker That Never Ends</a></h2>
+    
+    
+      <p>A persistent PHP worker never finishes its request, so Xdebug never sees your trigger. Here&#39;s how ePHPm routes the debugged request to its own fresh worker instead of trying to reset anything.</p>
+    
+  </div>
+  <div class="meta">
+    <time datetime="2026-10-12 21:10:00 -0700 PDT">October 12, 2026</time>
+    
+    <p>11-Minute Read</p>
+  </div>
+</header>
+
+  <div class="content">
+    <a href="/blog/2026/10/xdebug-worker-mode/" class="image" style="--bg-image: url('/img/2026/10/xdebug-worker-mode-cover.svg');">
+    <img class="" src="/img/2026/10/xdebug-worker-mode-cover.svg" alt="Diagram of the ePHPm router sending untriggered requests to the warm worker pool and Xdebug-triggered requests to a one-request debug lane">
+  </a>
+    
+    <p>Persistent workers are the big performance win in modern PHP. You boot Laravel or Symfony once, keep the container
+in memory, and serve thousands of requests out of the same process. <a href="https://github.com/ephpm/ephpm">ePHPm</a> has had
+a worker mode for a while, and like most worker runtimes it had a quiet hole in it: you couldn&rsquo;t step debug a request
+with Xdebug. I wanted that fixed without patching Xdebug and without giving up the warm pool, and the answer ended up
+being to stop fighting the constraint and route around it.&hellip;</p>
+  </div>
+  <footer>
+    <a href="/blog/2026/10/xdebug-worker-mode/" class="button big">Read More</a>
+    <div class="stats">
+  
+    <ul class="categories">
+      
+        
+          <li><a class="article-terms-link" href="/categories/ephpm/">ephpm</a></li>
+        
+          <li><a class="article-terms-link" href="/categories/php/">php</a></li>
+        
+      
+    </ul>
+  
+  
+    <ul class="tags">
+      
+        
+          <li><a class="article-terms-link" href="/tags/php/">php</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/xdebug/">xdebug</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/rust/">rust</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/ephpm/">ephpm</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/debugging/">debugging</a></li>
         
       
     </ul>
@@ -677,209 +877,6 @@ the primary&rsquo;s writes, and what happens when the primary dies with data on 
 </article>
 
   
-    <article class="post">
-  <header>
-  <div class="title">
-    
-      <h2><a href="/blog/2026/09/calling-rust-from-php-without-a-socket-part-1/">Calling Rust From PHP Without a Socket, Part 1: The Native Functions</a></h2>
-    
-    
-      <p>How ePHPm exposes its in-process KV store and SQLite bridge to PHP as plain functions, and what it took to make that safe under ZTS.</p>
-    
-  </div>
-  <div class="meta">
-    <time datetime="2026-09-14 20:40:00 -0700 PDT">September 14, 2026</time>
-    
-    <p>14-Minute Read</p>
-  </div>
-</header>
-
-  <div class="content">
-    <a href="/blog/2026/09/calling-rust-from-php-without-a-socket-part-1/" class="image" style="--bg-image: url('/img/2026/09/calling-rust-from-php-without-a-socket-part-1-cover.svg');">
-    <img class="" src="/img/2026/09/calling-rust-from-php-without-a-socket-part-1-cover.svg" alt="Two paths from PHP to the ePHPm KV store: over a RESP socket, or through a native function and a function pointer table">
-  </a>
-    
-    <p><a href="https://github.com/ephpm/ephpm">ePHPm</a> is a single Rust binary that embeds PHP, and it carries its own KV store and its
-own SQLite-backed database in the same process. For a long time the only way PHP code could reach that KV store was the
-same way it reaches Redis: open a TCP socket to the RESP listener ePHPm runs on localhost, encode a command, wait for the
-reply. That works, and every PHP Redis client in existence already speaks it, but it is a strange thing to do when the
-hash map you&rsquo;re talking to lives a few&hellip;</p>
-  </div>
-  <footer>
-    <a href="/blog/2026/09/calling-rust-from-php-without-a-socket-part-1/" class="button big">Read More</a>
-    <div class="stats">
-  
-    <ul class="categories">
-      
-        
-          <li><a class="article-terms-link" href="/categories/ephpm/">ephpm</a></li>
-        
-          <li><a class="article-terms-link" href="/categories/rust/">rust</a></li>
-        
-          <li><a class="article-terms-link" href="/categories/php/">php</a></li>
-        
-      
-    </ul>
-  
-  
-    <ul class="tags">
-      
-        
-          <li><a class="article-terms-link" href="/tags/ephpm/">ephpm</a></li>
-        
-          <li><a class="article-terms-link" href="/tags/php/">php</a></li>
-        
-          <li><a class="article-terms-link" href="/tags/rust/">rust</a></li>
-        
-          <li><a class="article-terms-link" href="/tags/ffi/">ffi</a></li>
-        
-          <li><a class="article-terms-link" href="/tags/redis/">redis</a></li>
-        
-          <li><a class="article-terms-link" href="/tags/sqlite/">sqlite</a></li>
-        
-          <li><a class="article-terms-link" href="/tags/zts/">zts</a></li>
-        
-      
-    </ul>
-  
-</div>
-
-  </footer>
-</article>
-
-  
-    <article class="post">
-  <header>
-  <div class="title">
-    
-      <h2><a href="/blog/2026/09/cross-tenant-breakout-field-guide/">Every Way a Tenant Escaped: A Cross-Tenant Breakout Field Guide</a></h2>
-    
-    
-      <p>Eight ways one site broke out of its sandbox on a multi-tenant PHP server, all found by attacking it on purpose, all fixed.</p>
-    
-  </div>
-  <div class="meta">
-    <time datetime="2026-09-13 16:20:00 -0700 PDT">September 13, 2026</time>
-    
-    <p>10-Minute Read</p>
-  </div>
-</header>
-
-  <div class="content">
-    <a href="/blog/2026/09/cross-tenant-breakout-field-guide/" class="image" style="--bg-image: url('/img/2026/09/cross-tenant-breakout-field-guide-cover.svg');">
-    <img class="" src="/img/2026/09/cross-tenant-breakout-field-guide-cover.svg" alt="Table of tenant isolation boundaries in ePHPm, how each was crossed, and the PR that fixed it">
-  </a>
-    
-    <p><a href="https://github.com/ephpm/ephpm">ePHPm</a> can serve a directory full of sites out of one process. Point <code>sites_dir</code> at
-a folder, every subdirectory is a virtual host, and the Host header decides which one you get. That&rsquo;s how the PR preview
-environment runs: every pull request gets a subdomain, and the code behind it is whatever somebody pushed. One process
-holding many tenants means every per-tenant boundary is something ePHPm enforces itself, in-process. There&rsquo;s no
-container wall between site A and site B unless you add&hellip;</p>
-  </div>
-  <footer>
-    <a href="/blog/2026/09/cross-tenant-breakout-field-guide/" class="button big">Read More</a>
-    <div class="stats">
-  
-    <ul class="categories">
-      
-        
-          <li><a class="article-terms-link" href="/categories/security/">security</a></li>
-        
-          <li><a class="article-terms-link" href="/categories/ephpm/">ephpm</a></li>
-        
-          <li><a class="article-terms-link" href="/categories/php/">php</a></li>
-        
-      
-    </ul>
-  
-  
-    <ul class="tags">
-      
-        
-          <li><a class="article-terms-link" href="/tags/php/">php</a></li>
-        
-          <li><a class="article-terms-link" href="/tags/rust/">rust</a></li>
-        
-          <li><a class="article-terms-link" href="/tags/ephpm/">ephpm</a></li>
-        
-          <li><a class="article-terms-link" href="/tags/security/">security</a></li>
-        
-          <li><a class="article-terms-link" href="/tags/multi-tenant/">multi-tenant</a></li>
-        
-      
-    </ul>
-  
-</div>
-
-  </footer>
-</article>
-
-  
-    <article class="post">
-  <header>
-  <div class="title">
-    
-      <h2><a href="/blog/2026/09/ephpm-php-cli-conformance/">Making ephpm php Byte-for-Byte Indistinguishable From php-cli</a></h2>
-    
-    
-      <p>A differential test harness against upstream php, and the bugs it found in an embedded PHP CLI on day one.</p>
-    
-  </div>
-  <div class="meta">
-    <time datetime="2026-09-10 20:25:00 -0700 PDT">September 10, 2026</time>
-    
-    <p>9-Minute Read</p>
-  </div>
-</header>
-
-  <div class="content">
-    <a href="/blog/2026/09/ephpm-php-cli-conformance/" class="image" style="--bg-image: url('/img/2026/09/ephpm-php-cli-conformance-results.svg');">
-    <img class="" src="/img/2026/09/ephpm-php-cli-conformance-results.svg" alt="Bar chart of conformance corpus results: 65 pass and 10 xfail when the harness landed, 79 pass and 1 xfail after the fixes">
-  </a>
-    
-    <p><a href="https://github.com/ephpm/ephpm">ePHPm</a> embeds PHP into a single Rust binary, and the obvious follow-up question from
-anybody deploying it is &ldquo;do I still need a <code>php</code> on the box?&rdquo; Composer, WP-CLI, artisan, PHPUnit and every build
-script in the world call <code>php</code>. If <code>ephpm php</code> can stand in for it then the answer is no, and the single binary actually
-means a single binary. &ldquo;Mostly works&rdquo; isn&rsquo;t good enough for that though. These tools parse PHP&rsquo;s output, check its exit
-codes and re-invoke it. So the&hellip;</p>
-  </div>
-  <footer>
-    <a href="/blog/2026/09/ephpm-php-cli-conformance/" class="button big">Read More</a>
-    <div class="stats">
-  
-    <ul class="categories">
-      
-        
-          <li><a class="article-terms-link" href="/categories/ephpm/">ephpm</a></li>
-        
-          <li><a class="article-terms-link" href="/categories/php/">php</a></li>
-        
-      
-    </ul>
-  
-  
-    <ul class="tags">
-      
-        
-          <li><a class="article-terms-link" href="/tags/php/">php</a></li>
-        
-          <li><a class="article-terms-link" href="/tags/rust/">rust</a></li>
-        
-          <li><a class="article-terms-link" href="/tags/ephpm/">ephpm</a></li>
-        
-          <li><a class="article-terms-link" href="/tags/testing/">testing</a></li>
-        
-          <li><a class="article-terms-link" href="/tags/cli/">cli</a></li>
-        
-      
-    </ul>
-  
-</div>
-
-  </footer>
-</article>
-
-  
   <div class="pagination">
     
     
@@ -901,7 +898,37 @@ codes and re-invoke it. So the&hellip;</p>
   </a>
         <header>
           <h2><a href="/blog/2026/10/ephpm-worker-mode-performance/">Fourth Place in Worker Mode, and Why It Wasn&#39;t PHP</a></h2>
-          <time class="published" datetime="2026-10-16 08:10:00 -0700 PDT">October 16, 2026</time>
+          <time class="published" datetime="2026-10-15 19:45:00 -0700 PDT">October 15, 2026</time>
+        </header>
+      </article>
+      
+      <article class="mini-post">
+          <a href="/blog/2026/10/composer-without-php-vivacity/" class="image" style="--bg-image: url('/img/2026/10/composer-without-php-vivacity-bench.svg');">
+    <img class="" src="/img/2026/10/composer-without-php-vivacity-bench.svg" alt="Bar chart comparing Composer 2.10.3 and ephpm composer on a Laravel install on native Windows">
+  </a>
+        <header>
+          <h2><a href="/blog/2026/10/composer-without-php-vivacity/">Composer Without PHP: Embedding vivacity in ePHPm</a></h2>
+          <time class="published" datetime="2026-10-14 23:20:00 -0700 PDT">October 14, 2026</time>
+        </header>
+      </article>
+      
+      <article class="mini-post">
+          <a href="/blog/2026/10/a-lock-is-only-as-good-as-its-release/" class="image" style="--bg-image: url('/img/2026/10/a-lock-is-only-as-good-as-its-release-cover.svg');">
+    <img class="" src="/img/2026/10/a-lock-is-only-as-good-as-its-release-cover.svg" alt="Timeline: request A&#39;s lock expires, B acquires it, A&#39;s blind DEL frees B&#39;s lock and C gets in">
+  </a>
+        <header>
+          <h2><a href="/blog/2026/10/a-lock-is-only-as-good-as-its-release/">A Lock Is Only as Good as Its Release</a></h2>
+          <time class="published" datetime="2026-10-13 20:40:00 -0700 PDT">October 13, 2026</time>
+        </header>
+      </article>
+      
+      <article class="mini-post">
+          <a href="/blog/2026/10/xdebug-worker-mode/" class="image" style="--bg-image: url('/img/2026/10/xdebug-worker-mode-cover.svg');">
+    <img class="" src="/img/2026/10/xdebug-worker-mode-cover.svg" alt="Diagram of the ePHPm router sending untriggered requests to the warm worker pool and Xdebug-triggered requests to a one-request debug lane">
+  </a>
+        <header>
+          <h2><a href="/blog/2026/10/xdebug-worker-mode/">Step Debugging a Worker That Never Ends</a></h2>
+          <time class="published" datetime="2026-10-12 21:10:00 -0700 PDT">October 12, 2026</time>
         </header>
       </article>
       
@@ -912,36 +939,6 @@ codes and re-invoke it. So the&hellip;</p>
         <header>
           <h2><a href="/blog/2026/10/ephpm-websockets-how-to/">WebSockets in ePHPm, From Zero to a Working Chat</a></h2>
           <time class="published" datetime="2026-10-11 17:30:00 -0700 PDT">October 11, 2026</time>
-        </header>
-      </article>
-      
-      <article class="mini-post">
-          <a href="/blog/2026/10/webhooks-out-of-order-scheduler/" class="image" style="--bg-image: url('/img/2026/10/webhooks-out-of-order-scheduler-timeline.svg');">
-    <img class="" src="/img/2026/10/webhooks-out-of-order-scheduler-timeline.svg" alt="Timeline of three same-label jobs where a runner executing a build is destroyed 2.3 seconds before its in_progress webhook arrives">
-  </a>
-        <header>
-          <h2><a href="/blog/2026/10/webhooks-out-of-order-scheduler/">Webhooks Arrive Out of Order: How My Scheduler Killed Live Builds</a></h2>
-          <time class="published" datetime="2026-10-07 21:10:00 -0700 PDT">October 7, 2026</time>
-        </header>
-      </article>
-      
-      <article class="mini-post">
-          <a href="/blog/2026/10/go-proxmox-five-years-to-v0-8/" class="image" style="--bg-image: url('/img/2026/10/go-proxmox-five-years-to-v0-8-apidiff.svg');">
-    <img class="" src="/img/2026/10/go-proxmox-five-years-to-v0-8-apidiff.svg" alt="Horizontal bar chart of apidiff incompatible and compatible changes for every go-proxmox release from v0.1.0 to v0.8.2">
-  </a>
-        <header>
-          <h2><a href="/blog/2026/10/go-proxmox-five-years-to-v0-8/">Breaking Changes Without Breaking Trust: Five Years to go-proxmox v0.8</a></h2>
-          <time class="published" datetime="2026-10-04 19:40:00 -0700 PDT">October 4, 2026</time>
-        </header>
-      </article>
-      
-      <article class="mini-post">
-          <a href="/blog/2026/10/windows-sigterm-sparse-files/" class="image" style="--bg-image: url('/img/2026/10/windows-sigterm-sparse-files-connections.svg');">
-    <img class="" src="/img/2026/10/windows-sigterm-sparse-files-connections.svg" alt="Bar chart: 96 Cloudflare edge connections held by orphaned cloudflared processes versus 4 for the live daemon">
-  </a>
-        <header>
-          <h2><a href="/blog/2026/10/windows-sigterm-sparse-files/">Windows Grab-Bag: SIGTERM That Doesn&#39;t Exist and Sparse Files That Break Docker</a></h2>
-          <time class="published" datetime="2026-10-03 14:30:00 -0700 PDT">October 3, 2026</time>
         </header>
       </article>
       
@@ -964,16 +961,16 @@ codes and re-invoke it. So the&hellip;</p>
           
           
           <li>
-              <a href="/categories/ephpm/">ephpm<span class="count">33</span></a>
+              <a href="/categories/ephpm/">ephpm<span class="count">36</span></a>
           
           <li>
               <a href="/categories/go/">go<span class="count">30</span></a>
           
           <li>
-              <a href="/categories/php/">php<span class="count">23</span></a>
+              <a href="/categories/php/">php<span class="count">26</span></a>
           
           <li>
-              <a href="/categories/rust/">rust<span class="count">15</span></a>
+              <a href="/categories/rust/">rust<span class="count">16</span></a>
           
           <li>
               <a href="/categories/homelab/">homelab<span class="count">14</span></a>

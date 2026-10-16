@@ -1,24 +1,22 @@
 ---
 title: "Composer Without PHP: Embedding vivacity in ePHPm"
-description: "Putting a pure-Rust, Composer-compatible installer inside a binary that statically links PHP, upstreaming what it needed, and finding out what drop-in really means"
-date: 2026-10-10T22:58:00-07:00
+description: "I embedded vivacity, a pure-Rust Composer-compatible installer, in ePHPm so one binary can install a PHP app's dependencies without PHP. This is what it took upstream and in ePHPm, and how it does against Composer on Windows."
+date: 2026-10-14T23:20:00-07:00
 tags: [ php, rust, ephpm, composer, vivacity, windows ]
 categories: [ ephpm, php, rust ]
 images:
  - src: img/2026/10/composer-without-php-vivacity-bench.svg
    alt: "Bar chart comparing Composer 2.10.3 and ephpm composer on a Laravel install on native Windows"
    stretch: "none"
-draft: true
+draft: false
 ---
-
-<!-- TODO(luther): ephpm #542, #558 and #561 are still open as of 2026-10-11 (ephpm/vivace #1 and #2 merged 2026-10-11). Re-date and publish after they merge; if upstream vivacity takes the global-flags change, drop the [patch.crates-io] paragraph. -->
 
 The pitch for [ePHPm](https://github.com/ephpm/ephpm) is one binary in place of php-fpm, nginx and Redis. There was
 always a hole in it though. To deploy a PHP app you still need to run `composer install`, and that drags PHP and
 `composer.phar` back onto the box, or into the container build, just for that one step. `ephpm composer install` now
 runs a pure-Rust, Composer-compatible installer called [vivacity](https://github.com/Adelagric/vivacity) inside the
 ePHPm binary. One binary serves the app and installs its dependencies, and on Windows that works with no PHP installed at
-all. Getting it right took four upstream PRs, a fork, a docs rewrite that took back claims we'd already made, and
+all. Getting it right took five upstream PRs, a fork, a docs rewrite that took back claims we'd already made, and
 teaching `ephpm` to pretend to be `php`.
 
 ### Why vivacity
@@ -66,10 +64,12 @@ error: could not compile `ephpm` (bin "ephpm")
 ```
 
 vivacity's own code never touched those libraries; they arrived through the `zip` crate's default features. Since
-extraction only ever decompresses, [vivacity #6](https://github.com/Adelagric/vivacity/pull/6) switched bzip2 to the
-pure-Rust `libbz2-rs-sys` backend (its exports carry a version prefix, so nothing collides), kept deflate and LZMA on
-their existing pure-Rust backends, and dropped the zip xz and zstd methods, which no Composer dist uses, instead of
-linking 219 colliding `lzma_*` symbols. Upstream had already prefixed PCRE2 in 0.11.0.
+extraction only ever decompresses, the fix was to switch bzip2 to the pure-Rust `libbz2-rs-sys` backend (its exports
+carry a version prefix, so nothing collides), keep deflate and LZMA on their existing pure-Rust backends, and drop the
+zip xz and zstd methods, which no Composer dist uses, instead of linking 219 colliding `lzma_*` symbols. Upstream and
+I landed on the same `zip` change 47 minutes apart: the maintainer's commit shipped as 0.11.1, and
+[vivacity #6](https://github.com/Adelagric/vivacity/pull/6) went in on top (released in 0.12.0) with a CI check that
+keeps C libraries out of the graph, plus the symbol measurements. Upstream had already prefixed PCRE2 in 0.11.0.
 
 TLS had the same shape of problem. vivacity hard-enabled reqwest's `rustls-tls`, which compiles in the `ring` crypto
 provider. ePHPm is pinned to `aws-lc-rs`, and with two providers compiled in rustls refuses to pick one and panics on the
@@ -80,8 +80,10 @@ now. Cargo features are additive and can't be subtracted from outside, so the kn
 
 And while I was in there, [vivacity #4](https://github.com/Adelagric/vivacity/pull/4) parallelized store-to-vendor
 materialization and the classmap scan with rayon, while keeping the output byte-identical. The classmap merge is replayed
-sequentially in Composer's exact order, so parallelism can't change a byte. On the upstream differential harness that
-was 2.24x on a warm-store Sylius install and 1.60x on Laravel, with 0 diff across all six fixtures.
+sequentially in Composer's exact order, so parallelism can't change a byte. Measured with hyperfine on WSL2 against
+v0.7.0, a wiped-`vendor/` install from a warm store was 2.24x faster on Sylius and 1.60x on Laravel, and the upstream
+differential harness stayed at 0 diff across all six fixtures. Upstream kept the file reads sequential on APFS, where
+the fan-out measured slower.
 
 The resulting dependency line in ePHPm says exactly why it looks the way it does:
 
@@ -105,7 +107,7 @@ or use a PAT or GitHub App token for the job.
 ### The honest docs rewrite
 
 The docs had been saying `ephpm composer` "needs no PHP runtime". [#542](https://github.com/ephpm/ephpm/pull/542)
-re-checked every claim against vivacity 0.17.0's source and real runs on a Windows box with no `php` and no `composer`
+(merged after v0.11.3, so its corrected `--help` text ships in the upcoming v0.12.0) re-checked every claim against vivacity 0.17.0's source and real runs on a Windows box with no `php` and no `composer`
 on `PATH`, and that one was wrong for `update`, `require` and `remove`. vivacity checks the platform by running an
 external `php`, never ePHPm's embedded one, and without one those commands exit 1 (`cannot run php: program not found`),
 even with `--ignore-platform-reqs`.
@@ -130,7 +132,7 @@ executable, which is correct. But Symfony Process, Composer `@php` scripts, PHPU
 all re-run `PHP_BINARY script.php`, and that hit ePHPm's own argument parser. Worse, a bare `PHP_BINARY` with a program
 on stdin *started the dev server*, since no subcommand means `ephpm dev`.
 
-[#558](https://github.com/ephpm/ephpm/pull/558) adds a "php personality", decided by a small pure function so the rules
+[#558](https://github.com/ephpm/ephpm/pull/558), still open as I write this, adds a "php personality", decided by a small pure function so the rules
 are unit-tested. `ephpm` hands all of argv to the embedded php-cli when:
 
 1. **argv[0] is named like php** (`php`, `php8.4`, `php84`, `.exe` ignored). So `ln -s ephpm /usr/local/bin/php` is a
@@ -146,18 +148,19 @@ I rejected pointing `PHP_BINARY` at a generated `php` symlink (filesystem side e
 Windows) and treating every unknown argument as php (you lose the typo diagnostics, and bare `ephpm` has to stay the dev
 server).
 
-The payoff is one line: `ephpm composer` sets `VIVACITY_PHP` to its own executable when the build links PHP. vivacity's
-platform probe then runs on the *embedded* PHP, which is the PHP that actually serves the app, and `update`, `require`
-and `remove` work with no system PHP. The new conformance case for re-invoking `PHP_BINARY` (script, `-r`, `-d`, stdin,
-exit status through `proc_open`) is byte-identical to upstream php 8.5.4.
+The payoff is one line: `ephpm composer` sets `VIVACITY_PHP` to its own executable when the build links PHP (and you
+haven't set it yourself). vivacity's platform probe then runs on the *embedded* PHP, which is the PHP that actually
+serves the app, and once #558 merges, `update`, `require` and `remove` work with no system PHP. The new conformance
+case for re-invoking `PHP_BINARY` (script, `-r`, `-d`, stdin, exit status through `proc_open`) is byte-identical to
+upstream php 8.5.4.
 
 ### Contributing the CI flags
 
 The last piece was making that standard CI line run. Composer accepts `-n`, `-q`, `-v` and `--no-ansi` as global flags
-on every command. vivacity only accepted some of them on some commands. The change is small, and it's carried as a
-commit on our fork ([ephpm/vivace#2](https://github.com/ephpm/vivace/pull/2)) applied through `[patch.crates-io]` in
-[#561](https://github.com/ephpm/ephpm/pull/561), together with the `--prefer-dist` upstream added in 0.19 (the pin
-moves to 0.20.0). With both,
+on every command. vivacity only accepted some of them on some commands. The change is small, and it went in
+first as a commit on our fork ([ephpm/vivace#2](https://github.com/ephpm/vivace/pull/2), merged) applied through
+`[patch.crates-io]` in [#561](https://github.com/ephpm/ephpm/pull/561), together with the `--prefer-dist` upstream
+added in 0.19 (the pin moves to 0.20.0). #561 is still open. With both,
 
 ```
 ephpm composer install --no-dev --no-interaction --no-ansi --prefer-dist -o
@@ -165,6 +168,9 @@ ephpm composer install --no-dev --no-interaction --no-ansi --prefer-dist -o
 
 exits 0 with no PHP on `PATH`. The exact pin stays, so Pin Watch keeps working: a bot bump to a newer crates.io version
 leaves the patch unused (Cargo warns), which is the cue to check whether upstream took the change and drop the patch.
+Upstream did take it: [vivacity #7](https://github.com/Adelagric/vivacity/pull/7) merged tonight and should be in the
+next release, and [#576](https://github.com/ephpm/ephpm/pull/576), a draft, drops the fork in favor of that release once
+it's on crates.io.
 
 ### How fast is it?
 
@@ -210,7 +216,7 @@ vivacity repo) put warm installs at roughly 10x to 14x faster than Composer.
 
 ### Links
 
-- Embed: [ephpm #523](https://github.com/ephpm/ephpm/pull/523); Pin Watch: [#532](https://github.com/ephpm/ephpm/pull/532)
-- Docs rewrite: [#542](https://github.com/ephpm/ephpm/pull/542); php personality: [#558](https://github.com/ephpm/ephpm/pull/558); CI flags: [#561](https://github.com/ephpm/ephpm/pull/561), [ephpm/vivace#2](https://github.com/ephpm/vivace/pull/2)
-- Upstream: [vivacity #2](https://github.com/Adelagric/vivacity/pull/2) (Windows), [#4](https://github.com/Adelagric/vivacity/pull/4) (parallel install), [#5](https://github.com/Adelagric/vivacity/pull/5) (TLS backend), [#6](https://github.com/Adelagric/vivacity/pull/6) (pure-Rust extraction)
+- Embed: [ephpm #523](https://github.com/ephpm/ephpm/pull/523) (v0.11.0); Pin Watch: [#532](https://github.com/ephpm/ephpm/pull/532) (v0.11.2)
+- Docs rewrite: [#542](https://github.com/ephpm/ephpm/pull/542) (merged, v0.12.0); php personality: [#558](https://github.com/ephpm/ephpm/pull/558) (open); CI flags: [#561](https://github.com/ephpm/ephpm/pull/561) (open), [ephpm/vivace#2](https://github.com/ephpm/vivace/pull/2); dropping the fork: [#576](https://github.com/ephpm/ephpm/pull/576) (draft)
+- Upstream, all merged: [vivacity #2](https://github.com/Adelagric/vivacity/pull/2) (Windows, 0.7.0), [#4](https://github.com/Adelagric/vivacity/pull/4) (parallel install, 0.9.0), [#5](https://github.com/Adelagric/vivacity/pull/5) (TLS backend, 0.9.0), [#6](https://github.com/Adelagric/vivacity/pull/6) (pure-Rust extraction, 0.12.0), [#7](https://github.com/Adelagric/vivacity/pull/7) (global CI flags, merged, not released yet)
 - [vivacity](https://github.com/Adelagric/vivacity) and [Composer](https://getcomposer.org/)

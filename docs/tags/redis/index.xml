@@ -6,8 +6,15 @@
     <description>Recent content in Redis on Luther Monson</description>
     <generator>Hugo</generator>
     <language>en</language>
-    <lastBuildDate>Mon, 21 Sep 2026 19:55:00 -0700</lastBuildDate>
+    <lastBuildDate>Tue, 13 Oct 2026 20:40:00 -0700</lastBuildDate>
     <atom:link href="https://luth.io/tags/redis/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>A Lock Is Only as Good as Its Release</title>
+      <link>https://luth.io/blog/2026/10/a-lock-is-only-as-good-as-its-release/</link>
+      <pubDate>Tue, 13 Oct 2026 20:40:00 -0700</pubDate>
+      <guid>https://luth.io/blog/2026/10/a-lock-is-only-as-good-as-its-release/</guid>
+      <description>&lt;p&gt;Every &amp;ldquo;build a lock on Redis&amp;rdquo; tutorial spends its time on acquisition: &lt;code&gt;SET key value NX PX 30000&lt;/code&gt;, one winner, done. The&#xA;release gets one line, &lt;code&gt;DEL key&lt;/code&gt;, and that line is where most of the lock bugs I&amp;rsquo;ve had in ePHPm lived. Over about three months&#xA;the same mistake showed up in the native session handler, in two of the Composer wrapper packages, and finally in the&#xA;cluster, each time in a slightly different costume.&lt;/p&gt;</description>
+    </item>
     <item>
       <title>Calling Rust From PHP Without a Socket, Part 2: Making Existing Code Use It</title>
       <link>https://luth.io/blog/2026/09/calling-rust-from-php-without-a-socket-part-2/</link>

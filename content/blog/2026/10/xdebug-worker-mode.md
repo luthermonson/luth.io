@@ -1,23 +1,22 @@
 ---
 title: "Step Debugging a Worker That Never Ends"
-description: "Xdebug in a persistent PHP runtime by routing the debugged request to its own worker instead of resetting anything"
-date: 2026-10-10T22:48:00-07:00
+description: "A persistent PHP worker never finishes its request, so Xdebug never sees your trigger. Here's how ePHPm routes the debugged request to its own fresh worker instead of trying to reset anything."
+date: 2026-10-12T21:10:00-07:00
 tags: [ php, xdebug, rust, ephpm, debugging ]
 categories: [ ephpm, php ]
 images:
  - src: img/2026/10/xdebug-worker-mode-cover.svg
    alt: "Diagram of the ePHPm router sending untriggered requests to the warm worker pool and Xdebug-triggered requests to a one-request debug lane"
    stretch: "none"
-draft: true
+draft: false
 ---
-
-<!-- TODO(luther): ephpm #554 (ephpm dev --xdebug) is still open as of 2026-10-11. Re-date and publish once it merges, and re-check the platform paragraph against the merged guide (it was rebased onto #566). Its review-fix live check says ext-8.5.7 now ships Xdebug 3.5.3. -->
 
 Persistent workers are the big performance win in modern PHP. You boot Laravel or Symfony once, keep the container
 in memory, and serve thousands of requests out of the same process. [ePHPm](https://github.com/ephpm/ephpm) has had
 a worker mode for a while, and like most worker runtimes it had a quiet hole in it: you couldn't step debug a request
 with Xdebug. I wanted that fixed without patching Xdebug and without giving up the warm pool, and the answer ended up
-being to stop fighting the constraint and route around it.
+being to stop fighting the constraint and route around it. The debug lane is merged on main and coming in the upcoming
+v0.12.0 release.
 
 ### Why worker mode breaks Xdebug
 
@@ -189,8 +188,8 @@ a control, so the lane is bounded:
 - The wait is bounded though: 16 waiters per slot, then an immediate 503.
 - A thread paused inside Xdebug can't be killed. If the request times out or the client goes away, the slot is freed
   right away (it's held by the HTTP request, not the thread), but the thread lives on until you resume it in the IDE.
-  So at most `2 x debug_workers` debug threads can be alive at once, and past that you get a 503 and a log line
-  telling you to go resume your abandoned sessions.
+  So at most `2 x debug_workers` debug threads can be alive at once. Past that, a triggered request waits two seconds
+  for one to finish, then gets a 503 and a log line telling you to go resume your abandoned sessions.
 - Startup logs a WARN whenever the lane is armed, another when `trigger_value` is empty, and another when
   `discover_client_host` is on.
 - Only the request *path* is logged for lane requests, never the query string, because it can carry the
@@ -229,8 +228,8 @@ req 4: HTTP 000 in 8.0028s
 
 The fix ([#541](https://github.com/ephpm/ephpm/pull/541)) split the request lifecycle into
 `ephpm_begin_request()`, `ephpm_run_request()` and `ephpm_finish_request()`. The pool sends the response first and
-then finishes the request, so teardown adds no latency, and it happens when the request actually ends. Same script
-after the fix:
+then finishes the request, so teardown adds no latency, and it happens when the request actually ends. That one
+already shipped in v0.11.3. Same script after the fix:
 
 ```
 req 1: HTTP 200 in 0.000865s  n=1 handler=files
@@ -249,7 +248,7 @@ All of the above still left a real wall for users. Xdebug has to be a ZTS build 
 `ZEND_MODULE_API_NO`, and the distro and Sury packages are NTS, so they won't load. Telling people to build Xdebug from
 source against matching headers is accurate and useless.
 
-So `ephpm dev` grew a flag ([#554](https://github.com/ephpm/ephpm/pull/554)):
+So `ephpm dev` is growing a flag ([#554](https://github.com/ephpm/ephpm/pull/554), in review):
 
 ```
 ephpm dev --xdebug                          # catalog build, cached, offline after first run
@@ -270,6 +269,8 @@ deadline so a paused breakpoint doesn't come back as a 504, and prints a banner 
     trigger:  http://127.0.0.1:18080/?XDEBUG_TRIGGER=1
               or cookie XDEBUG_SESSION=1, or a browser "Xdebug helper" extension
     timeouts: request deadline and max_execution_time lifted while debugging
+    vscode:   .vscode/launch.json → { "name": "Listen for Xdebug", "type": "php", "request": "launch", "port": 9003 }
+              (no pathMappings needed when the IDE and ephpm share the filesystem)
 ```
 
 One more papercut fell out of this. Xdebug is a Zend extension, so it has to be loaded with `zend_extension=` and an
@@ -277,19 +278,24 @@ absolute path. A relative path resolves against ePHPm's baked-in placeholder `ex
 `[php] extensions` reads each shared object's symbols, and anything that exports both `zend_extension_entry` and
 `extension_version_info` gets the right ini line written for it automatically.
 
-Platform reality: Linux glibc works, macOS has no catalog builds yet so it needs `--xdebug-path` (shared
-extensions can load there now that [#566](https://github.com/ephpm/ephpm/pull/566) exports the binary's symbols), and Windows can't do
-it at all today because the static `php8embed.lib` can't load extension DLLs.
+Platform reality: Linux glibc works straight from the catalog, which ships Xdebug 3.5.3 in `ext-8.5.7`. macOS arm64
+has catalog builds too, but it needs a binary newer than v0.11.3: shared extensions only load there now that
+[#566](https://github.com/ephpm/ephpm/pull/566) exports the binary's symbols. The default Windows binary can't
+do it, because the static `php8embed.lib` can't load extension DLLs. [#564](https://github.com/ephpm/ephpm/pull/564)
+(in review) adds an opt-in shared-engine build that links the official `php8ts.dll`, and with that one
+`ephpm dev --xdebug` pulls `php_xdebug.dll` from the catalog and works on Windows too.
 
-<!-- TODO(luther): when this was first drafted the php-sdk catalog did not ship xdebug, so the live download path ended in "no catalog release ships Xdebug for PHP 8.5.7". #554's review fixes report ext-8.5.7 now ships Xdebug 3.5.3; confirm before this goes out. -->
-
-The worker-mode side is merged and the `dev` flag is in review. Next up is getting a Windows build that can load
-`php8ts.dll`-style extensions, which would make this work on the platform where I'd most like to use it.
+The debug lane and the macOS fix are merged on main and coming in the upcoming v0.12.0 release. The `dev` flag
+and the Windows build are in review. Even once it lands, the Windows shared-engine build will be build-from-source at
+first (release artifacts ship the static build), so after that comes getting it published, since Windows is the
+platform where I'd most like to use this.
 
 ### Links
 
 - Worker-mode debug lane: [ephpm #552](https://github.com/ephpm/ephpm/pull/552) (`crates/ephpm-server/src/debug_lane.rs`, `xdebug_trigger.rs`)
-- `ephpm dev --xdebug`: [ephpm #554](https://github.com/ephpm/ephpm/pull/554)
+- `ephpm dev --xdebug`: [ephpm #554](https://github.com/ephpm/ephpm/pull/554) (in review)
 - Finish each request when it ends: [ephpm #541](https://github.com/ephpm/ephpm/pull/541)
+- Export symbols on macOS so shared extensions load: [ephpm #566](https://github.com/ephpm/ephpm/pull/566)
+- Windows shared-engine build: [ephpm #564](https://github.com/ephpm/ephpm/pull/564) (in review)
 - [Xdebug step debugging docs](https://xdebug.org/docs/step_debug)
 - [DBGp protocol](https://xdebug.org/docs/dbgp)

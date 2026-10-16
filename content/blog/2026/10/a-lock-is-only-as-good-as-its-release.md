@@ -1,21 +1,18 @@
 ---
 title: "A Lock Is Only as Good as Its Release"
-description: "SETNX gets all the attention, but the bugs in ePHPm's KV locks were all on the release side: blind deletes, a missing compare-and-delete, and a cluster where two nodes could both win."
-date: 2026-10-10T21:15:00-07:00
+description: "SETNX gets all the attention, but most of the bugs in ePHPm's KV locks were on the release side. This is how blind deletes, a missing compare-and-delete, and a cluster where two nodes could both win got fixed."
+date: 2026-10-13T20:40:00-07:00
 tags: [ ephpm, php, rust, locking, redis, clustering ]
 categories: [ ephpm, php ]
 images:
  - src: img/2026/10/a-lock-is-only-as-good-as-its-release-cover.svg
    alt: "Timeline: request A's lock expires, B acquires it, A's blind DEL frees B's lock and C gets in"
    stretch: "none"
-draft: true
+draft: false
 ---
 
-<!-- TODO(luther): this post depends on ephpm#562, which merged on 2026-10-11 (after this draft's date). Re-date to
-1-21 days after the merge, re-check the merged diff against the section on cluster routing, and flip draft to false. -->
-
 Every "build a lock on Redis" tutorial spends its time on acquisition: `SET key value NX PX 30000`, one winner, done. The
-release gets one line, `DEL key`, and that line is where every lock bug I've had in ePHPm lived. Over about three months
+release gets one line, `DEL key`, and that line is where most of the lock bugs I've had in ePHPm lived. Over about three months
 the same mistake showed up in the native session handler, in two of the Composer wrapper packages, and finally in the
 cluster, each time in a slightly different costume.
 
@@ -173,7 +170,7 @@ deleted the new holder's lock everywhere.
 
 [#562](https://github.com/ephpm/ephpm/pull/562) changes where the decision is made. Both `SETNX` and `DELIFEQ` go to the
 key's primary owner, `hash(key) % sorted alive nodes` (the same owner the large-value tier already used), and the owner
-decides under its own shard lock. The `Replicator` trait gets two hooks that default to "decide locally", which is still
+decides under its own shard lock. It merged after v0.11.3 was cut, so it ships in the upcoming v0.12.0 release. The `Replicator` trait gets two hooks that default to "decide locally", which is still
 right for a single node:
 
 ```rust
@@ -231,9 +228,6 @@ This is the part that's easy to forget. A primitive in the server doesn't fix an
 writing `cache-laravel`'s lock and the userland `session-handler` still release with a plain delete and still say there's
 no compare-and-delete, because they were written against the API as it was the day before. The acquisition side has
 mostly caught up (`cache-wordpress` moved `wp_cache_add()` to `setnx` in the same week), and the release side is next.
-
-<!-- TODO(luther): if cache-laravel / session-handler adopt ephpm_kv_del_if_eq before this goes out, replace this
-section with the change. -->
 
 The general lesson I took from it: when you review a lock, read the release first. Acquisition with `SETNX` is hard to
 get wrong. Release needs a token you generated, a compare-and-delete that's atomic where the decision is made, and in a

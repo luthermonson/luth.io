@@ -215,6 +215,202 @@
   <header>
   <div class="title">
     
+      <h2><a href="/blog/2026/06/escaping-wsl-hcs-linux-vm/">Escaping WSL: Booting My Own Linux VM Through Hyper-V&#39;s HCS API</a></h2>
+    
+    
+      <p>WSL2 refuses to run under LocalSystem, so ephemerd boots an Alpine kernel directly through vmcompute.dll instead.</p>
+    
+  </div>
+  <div class="meta">
+    <time datetime="2026-06-14 20:12:00 -0700 PDT">June 14, 2026</time>
+    
+    <p>9-Minute Read</p>
+  </div>
+</header>
+
+  <div class="content">
+    <a href="/blog/2026/06/escaping-wsl-hcs-linux-vm/" class="image" style="--bg-image: url('/img/2026/06/escaping-wsl-hcs-linux-vm-boot.svg');">
+    <img class="" src="/img/2026/06/escaping-wsl-hcs-linux-vm-boot.svg" alt="Diagram of ephemerd booting a Linux VM through HCS and reading its IP from the serial console">
+  </a>
+    
+    <p>I&rsquo;ve been building <a href="https://github.com/ephpm/ephemerd">ephemerd</a>, a daemon that runs self-hosted GitHub Actions runners
+with a fresh environment per job. On a Windows host, Windows jobs run in Hyper-V isolated containers, but Linux jobs still
+need a Linux kernel from somewhere. The obvious answer on Windows in 2026 is WSL2, and that&rsquo;s what I used first. It worked
+great from my terminal and fell over the moment ephemerd became a real Windows service.</p>
+  </div>
+  <footer>
+    <a href="/blog/2026/06/escaping-wsl-hcs-linux-vm/" class="button big">Read More</a>
+    <div class="stats">
+  
+    <ul class="categories">
+      
+        
+          <li><a class="article-terms-link" href="/categories/windows/">windows</a></li>
+        
+          <li><a class="article-terms-link" href="/categories/ci/">ci</a></li>
+        
+          <li><a class="article-terms-link" href="/categories/go/">go</a></li>
+        
+      
+    </ul>
+  
+  
+    <ul class="tags">
+      
+        
+          <li><a class="article-terms-link" href="/tags/go/">go</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/windows/">windows</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/hyper-v/">hyper-v</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/hcs/">hcs</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/linux/">linux</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/ephemerd/">ephemerd</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/github-actions/">github-actions</a></li>
+        
+      
+    </ul>
+  
+</div>
+
+  </footer>
+</article>
+
+  
+    <article class="post">
+  <header>
+  <div class="title">
+    
+      <h2><a href="/blog/2026/06/omitempty-zero-values-proxmox-defaults/">Your Zero Value Just Turned Off My TLS Verification: omitempty, Go Defaults and Proxmox</a></h2>
+    
+    
+      <p>A plain Go field can&#39;t tell unset from false. In go-proxmox the fix for one omitempty bug created the opposite bug, until an audit against the Proxmox schema found 75 fields and v0.7.0 moved them to pointers.</p>
+    
+  </div>
+  <div class="meta">
+    <time datetime="2026-06-13 19:52:00 -0700 PDT">June 13, 2026</time>
+    
+    <p>7-Minute Read</p>
+  </div>
+</header>
+
+  <div class="content">
+    <a href="/blog/2026/06/omitempty-zero-values-proxmox-defaults/" class="image" style="--bg-image: url('/img/2026/06/omitempty-zero-values-proxmox-defaults-table.svg');">
+    <img class="" src="/img/2026/06/omitempty-zero-values-proxmox-defaults-table.svg" alt="Table showing how verify-certificates was sent by go-proxmox before #210, between v0.2.3 and v0.6.x, and in v0.7.0">
+  </a>
+    
+    <p>Every Go developer knows <code>omitempty</code> drops zero values. What takes longer to sink in is that a plain <code>bool</code> only has two
+states and a caller filling in an options struct means one of three: &ldquo;set it true&rdquo;, &ldquo;set it false&rdquo;, and &ldquo;I didn&rsquo;t touch
+this, do whatever the server does by default&rdquo;. With <code>omitempty</code> you lose &ldquo;false&rdquo;. Without it you lose &ldquo;didn&rsquo;t touch it&rdquo;.
+In <a href="https://github.com/luthermonson/go-proxmox">go-proxmox</a> we managed to ship both bugs, in that order, and the&hellip;</p>
+  </div>
+  <footer>
+    <a href="/blog/2026/06/omitempty-zero-values-proxmox-defaults/" class="button big">Read More</a>
+    <div class="stats">
+  
+    <ul class="categories">
+      
+        
+          <li><a class="article-terms-link" href="/categories/go/">go</a></li>
+        
+          <li><a class="article-terms-link" href="/categories/homelab/">homelab</a></li>
+        
+      
+    </ul>
+  
+  
+    <ul class="tags">
+      
+        
+          <li><a class="article-terms-link" href="/tags/proxmox/">proxmox</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/go/">go</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/go-proxmox/">go-proxmox</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/json/">json</a></li>
+        
+      
+    </ul>
+  
+</div>
+
+  </footer>
+</article>
+
+  
+    <article class="post">
+  <header>
+  <div class="title">
+    
+      <h2><a href="/blog/2026/06/go-proxmox-endpoint-coverage/">From 52% to 100%: Measuring a Go Client Against the Proxmox API Schema</a></h2>
+    
+    
+      <p>A stdlib-only mage target that pulls Proxmox&#39;s own API schema, regex-scans go-proxmox for HTTP call sites, and reports coverage. The tool was wrong more often than the code was.</p>
+    
+  </div>
+  <div class="meta">
+    <time datetime="2026-06-07 21:36:00 -0700 PDT">June 7, 2026</time>
+    
+    <p>8-Minute Read</p>
+  </div>
+</header>
+
+  <div class="content">
+    <a href="/blog/2026/06/go-proxmox-endpoint-coverage/" class="image" style="--bg-image: url('/img/2026/06/go-proxmox-endpoint-coverage-history.svg');">
+    <img class="" src="/img/2026/06/go-proxmox-endpoint-coverage-history.svg" alt="Line chart of go-proxmox endpoint coverage from 4% in 2021 to 100% in May 2026">
+  </a>
+    
+    <p>For five years the honest answer to &ldquo;how much of the Proxmox API does go-proxmox cover?&rdquo; was &ldquo;a lot of it? the parts
+people asked for?&rdquo;. Issues would come in for endpoints that didn&rsquo;t exist in the client and I&rsquo;d have no idea how many more
+were missing. At the end of May I finally built the thing that answers the question, and three days after the first run the
+answer was 100%. The more interesting part is how many times the measuring stick was wrong on the way&hellip;</p>
+  </div>
+  <footer>
+    <a href="/blog/2026/06/go-proxmox-endpoint-coverage/" class="button big">Read More</a>
+    <div class="stats">
+  
+    <ul class="categories">
+      
+        
+          <li><a class="article-terms-link" href="/categories/go/">go</a></li>
+        
+          <li><a class="article-terms-link" href="/categories/homelab/">homelab</a></li>
+        
+      
+    </ul>
+  
+  
+    <ul class="tags">
+      
+        
+          <li><a class="article-terms-link" href="/tags/proxmox/">proxmox</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/go/">go</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/go-proxmox/">go-proxmox</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/mage/">mage</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/api/">api</a></li>
+        
+      
+    </ul>
+  
+</div>
+
+  </footer>
+</article>
+
+  
+    <article class="post">
+  <header>
+  <div class="title">
+    
       <h2><a href="/blog/2026/06/cloud-init-isos-pure-go-proxmox/">Cloud-Init ISOs in Pure Go with go-proxmox</a></h2>
     
     
@@ -682,192 +878,6 @@ documented as an integer comes back as <code>2048&hellip;</code></p>
 </article>
 
   
-    <article class="post">
-  <header>
-  <div class="title">
-    
-      <h2><a href="/blog/2023/08/proxmox-api-auth-tickets-tokens-go/">Logging In to Proxmox From Go: Tickets, CSRF Tokens and API Tokens</a></h2>
-    
-    
-      <p>The two ways to authenticate against the Proxmox VE API, how go-proxmox handles each one, and why the client is now configured entirely with functional options.</p>
-    
-  </div>
-  <div class="meta">
-    <time datetime="2023-08-27 19:18:00 -0700 PDT">August 27, 2023</time>
-    
-    <p>5-Minute Read</p>
-  </div>
-</header>
-
-  <div class="content">
-    <a href="/blog/2023/08/proxmox-api-auth-tickets-tokens-go/" class="image" style="--bg-image: url('/img/2023/08/proxmox-api-auth-tickets-tokens-go-flow.svg');">
-    <img class="" src="/img/2023/08/proxmox-api-auth-tickets-tokens-go-flow.svg" alt="Diagram of the ticket login flow and the API token header for the Proxmox VE API">
-  </a>
-    
-    <p>I just spent a week of evenings on the access side of <a href="https://github.com/luthermonson/go-proxmox">go-proxmox</a>: realms,
-groups, users and roles all landed, and before any of that I reworked how a client gets its credentials in
-the first place. Proxmox gives you two different ways to authenticate and they behave differently enough that it&rsquo;s worth
-writing down how each one works on the wire and what the client does with it.</p>
-  </div>
-  <footer>
-    <a href="/blog/2023/08/proxmox-api-auth-tickets-tokens-go/" class="button big">Read More</a>
-    <div class="stats">
-  
-    <ul class="categories">
-      
-        
-          <li><a class="article-terms-link" href="/categories/go/">go</a></li>
-        
-          <li><a class="article-terms-link" href="/categories/homelab/">homelab</a></li>
-        
-      
-    </ul>
-  
-  
-    <ul class="tags">
-      
-        
-          <li><a class="article-terms-link" href="/tags/proxmox/">proxmox</a></li>
-        
-          <li><a class="article-terms-link" href="/tags/go/">go</a></li>
-        
-          <li><a class="article-terms-link" href="/tags/go-proxmox/">go-proxmox</a></li>
-        
-          <li><a class="article-terms-link" href="/tags/authentication/">authentication</a></li>
-        
-      
-    </ul>
-  
-</div>
-
-  </footer>
-</article>
-
-  
-    <article class="post">
-  <header>
-  <div class="title">
-    
-      <h2><a href="/blog/2022/03/proxmox-tasks-upid-wait-go/">Waiting on Proxmox: UPIDs, Tasks and WaitFor in Go</a></h2>
-    
-    
-      <p>Most Proxmox VE API calls that change something hand you a UPID instead of a result. Here is how go-proxmox turns that string into something you can wait on.</p>
-    
-  </div>
-  <div class="meta">
-    <time datetime="2022-03-20 16:42:00 -0700 PDT">March 20, 2022</time>
-    
-    <p>6-Minute Read</p>
-  </div>
-</header>
-
-  <div class="content">
-    <a href="/blog/2022/03/proxmox-tasks-upid-wait-go/" class="image" style="--bg-image: url('/img/2022/03/proxmox-tasks-upid-wait-go-anatomy.svg');">
-    <img class="" src="/img/2022/03/proxmox-tasks-upid-wait-go-anatomy.svg" alt="Diagram breaking a Proxmox UPID string into node, pid, pstart, starttime, type, id and user">
-  </a>
-    
-    <p>If you start automating <a href="https://www.proxmox.com/en/">Proxmox VE</a> through the API, the first thing that trips you up is
-that almost nothing you ask it to do is finished when the HTTP call returns. Start a VM, clone a template, download an
-ISO to storage, delete a disk&hellip; the response is a single string that looks like a typo and the actual work is happening
-in a worker process on the node. If your next call depends on that work being done you have to go find out when it&rsquo;s done.</p>
-  </div>
-  <footer>
-    <a href="/blog/2022/03/proxmox-tasks-upid-wait-go/" class="button big">Read More</a>
-    <div class="stats">
-  
-    <ul class="categories">
-      
-        
-          <li><a class="article-terms-link" href="/categories/go/">go</a></li>
-        
-          <li><a class="article-terms-link" href="/categories/homelab/">homelab</a></li>
-        
-      
-    </ul>
-  
-  
-    <ul class="tags">
-      
-        
-          <li><a class="article-terms-link" href="/tags/proxmox/">proxmox</a></li>
-        
-          <li><a class="article-terms-link" href="/tags/go/">go</a></li>
-        
-          <li><a class="article-terms-link" href="/tags/go-proxmox/">go-proxmox</a></li>
-        
-          <li><a class="article-terms-link" href="/tags/homelab/">homelab</a></li>
-        
-      
-    </ul>
-  
-</div>
-
-  </footer>
-</article>
-
-  
-    <article class="post">
-  <header>
-  <div class="title">
-    
-      <h2><a href="/blog/2022/02/recreating-proxmox-ve-xtermjs-in-go/">Recreating Proxmox Ve Xtermjs in Go</a></h2>
-    
-    
-      <p>Proxmox&#39;s web console is xterm.js over a websocket. Here&#39;s how I reverse engineered that protocol and rebuilt the terminal connection in Go with go-proxmox.</p>
-    
-  </div>
-  <div class="meta">
-    <time datetime="2022-02-06 21:54:53 -0700 -0700">February 6, 2022</time>
-    
-    <p>9-Minute Read</p>
-  </div>
-</header>
-
-  <div class="content">
-    <a href="/blog/2022/02/recreating-proxmox-ve-xtermjs-in-go/" class="image">
-    <img class="" src="/img/2022/02/proxmox-logo.png" alt="Proxmox VE Logo">
-  </a>
-    
-    <p>Part of a hobby of mine is running a home lab and using on <a href="https://www.proxmox.com/en/">Proxmox VE</a> to do the virtualization.
-Since I work in the space I&rsquo;m slowly trying to build tooling around Proxmox that will let me use the home lab full time for work.
-Usually my work involves building Kubernetes management tooling, you can imagine waiting for public cloud APIs all day
-can take away hours of your day at cost to your employer for both your time and the compute resources.</p>
-  </div>
-  <footer>
-    <a href="/blog/2022/02/recreating-proxmox-ve-xtermjs-in-go/" class="button big">Read More</a>
-    <div class="stats">
-  
-    <ul class="categories">
-      
-        
-          <li><a class="article-terms-link" href="/categories/go/">go</a></li>
-        
-          <li><a class="article-terms-link" href="/categories/homelab/">homelab</a></li>
-        
-      
-    </ul>
-  
-  
-    <ul class="tags">
-      
-        
-          <li><a class="article-terms-link" href="/tags/proxmox/">proxmox</a></li>
-        
-          <li><a class="article-terms-link" href="/tags/go/">go</a></li>
-        
-          <li><a class="article-terms-link" href="/tags/javascript/">javascript</a></li>
-        
-          <li><a class="article-terms-link" href="/tags/websockets/">websockets</a></li>
-        
-      
-    </ul>
-  
-</div>
-
-  </footer>
-</article>
-
-  
   <div class="pagination">
     
       <a href="/blog/page/6/" class="button left"><span>Previous Page</span></a>
@@ -891,7 +901,37 @@ can take away hours of your day at cost to your employer for both your time and 
   </a>
         <header>
           <h2><a href="/blog/2026/10/ephpm-worker-mode-performance/">Fourth Place in Worker Mode, and Why It Wasn&#39;t PHP</a></h2>
-          <time class="published" datetime="2026-10-16 08:10:00 -0700 PDT">October 16, 2026</time>
+          <time class="published" datetime="2026-10-15 19:45:00 -0700 PDT">October 15, 2026</time>
+        </header>
+      </article>
+      
+      <article class="mini-post">
+          <a href="/blog/2026/10/composer-without-php-vivacity/" class="image" style="--bg-image: url('/img/2026/10/composer-without-php-vivacity-bench.svg');">
+    <img class="" src="/img/2026/10/composer-without-php-vivacity-bench.svg" alt="Bar chart comparing Composer 2.10.3 and ephpm composer on a Laravel install on native Windows">
+  </a>
+        <header>
+          <h2><a href="/blog/2026/10/composer-without-php-vivacity/">Composer Without PHP: Embedding vivacity in ePHPm</a></h2>
+          <time class="published" datetime="2026-10-14 23:20:00 -0700 PDT">October 14, 2026</time>
+        </header>
+      </article>
+      
+      <article class="mini-post">
+          <a href="/blog/2026/10/a-lock-is-only-as-good-as-its-release/" class="image" style="--bg-image: url('/img/2026/10/a-lock-is-only-as-good-as-its-release-cover.svg');">
+    <img class="" src="/img/2026/10/a-lock-is-only-as-good-as-its-release-cover.svg" alt="Timeline: request A&#39;s lock expires, B acquires it, A&#39;s blind DEL frees B&#39;s lock and C gets in">
+  </a>
+        <header>
+          <h2><a href="/blog/2026/10/a-lock-is-only-as-good-as-its-release/">A Lock Is Only as Good as Its Release</a></h2>
+          <time class="published" datetime="2026-10-13 20:40:00 -0700 PDT">October 13, 2026</time>
+        </header>
+      </article>
+      
+      <article class="mini-post">
+          <a href="/blog/2026/10/xdebug-worker-mode/" class="image" style="--bg-image: url('/img/2026/10/xdebug-worker-mode-cover.svg');">
+    <img class="" src="/img/2026/10/xdebug-worker-mode-cover.svg" alt="Diagram of the ePHPm router sending untriggered requests to the warm worker pool and Xdebug-triggered requests to a one-request debug lane">
+  </a>
+        <header>
+          <h2><a href="/blog/2026/10/xdebug-worker-mode/">Step Debugging a Worker That Never Ends</a></h2>
+          <time class="published" datetime="2026-10-12 21:10:00 -0700 PDT">October 12, 2026</time>
         </header>
       </article>
       
@@ -902,36 +942,6 @@ can take away hours of your day at cost to your employer for both your time and 
         <header>
           <h2><a href="/blog/2026/10/ephpm-websockets-how-to/">WebSockets in ePHPm, From Zero to a Working Chat</a></h2>
           <time class="published" datetime="2026-10-11 17:30:00 -0700 PDT">October 11, 2026</time>
-        </header>
-      </article>
-      
-      <article class="mini-post">
-          <a href="/blog/2026/10/webhooks-out-of-order-scheduler/" class="image" style="--bg-image: url('/img/2026/10/webhooks-out-of-order-scheduler-timeline.svg');">
-    <img class="" src="/img/2026/10/webhooks-out-of-order-scheduler-timeline.svg" alt="Timeline of three same-label jobs where a runner executing a build is destroyed 2.3 seconds before its in_progress webhook arrives">
-  </a>
-        <header>
-          <h2><a href="/blog/2026/10/webhooks-out-of-order-scheduler/">Webhooks Arrive Out of Order: How My Scheduler Killed Live Builds</a></h2>
-          <time class="published" datetime="2026-10-07 21:10:00 -0700 PDT">October 7, 2026</time>
-        </header>
-      </article>
-      
-      <article class="mini-post">
-          <a href="/blog/2026/10/go-proxmox-five-years-to-v0-8/" class="image" style="--bg-image: url('/img/2026/10/go-proxmox-five-years-to-v0-8-apidiff.svg');">
-    <img class="" src="/img/2026/10/go-proxmox-five-years-to-v0-8-apidiff.svg" alt="Horizontal bar chart of apidiff incompatible and compatible changes for every go-proxmox release from v0.1.0 to v0.8.2">
-  </a>
-        <header>
-          <h2><a href="/blog/2026/10/go-proxmox-five-years-to-v0-8/">Breaking Changes Without Breaking Trust: Five Years to go-proxmox v0.8</a></h2>
-          <time class="published" datetime="2026-10-04 19:40:00 -0700 PDT">October 4, 2026</time>
-        </header>
-      </article>
-      
-      <article class="mini-post">
-          <a href="/blog/2026/10/windows-sigterm-sparse-files/" class="image" style="--bg-image: url('/img/2026/10/windows-sigterm-sparse-files-connections.svg');">
-    <img class="" src="/img/2026/10/windows-sigterm-sparse-files-connections.svg" alt="Bar chart: 96 Cloudflare edge connections held by orphaned cloudflared processes versus 4 for the live daemon">
-  </a>
-        <header>
-          <h2><a href="/blog/2026/10/windows-sigterm-sparse-files/">Windows Grab-Bag: SIGTERM That Doesn&#39;t Exist and Sparse Files That Break Docker</a></h2>
-          <time class="published" datetime="2026-10-03 14:30:00 -0700 PDT">October 3, 2026</time>
         </header>
       </article>
       
@@ -954,16 +964,16 @@ can take away hours of your day at cost to your employer for both your time and 
           
           
           <li>
-              <a href="/categories/ephpm/">ephpm<span class="count">33</span></a>
+              <a href="/categories/ephpm/">ephpm<span class="count">36</span></a>
           
           <li>
               <a href="/categories/go/">go<span class="count">30</span></a>
           
           <li>
-              <a href="/categories/php/">php<span class="count">23</span></a>
+              <a href="/categories/php/">php<span class="count">26</span></a>
           
           <li>
-              <a href="/categories/rust/">rust<span class="count">15</span></a>
+              <a href="/categories/rust/">rust<span class="count">16</span></a>
           
           <li>
               <a href="/categories/homelab/">homelab<span class="count">14</span></a>

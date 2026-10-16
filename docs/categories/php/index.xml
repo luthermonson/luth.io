@@ -6,14 +6,35 @@
     <description>Recent content in PHP on Luther Monson</description>
     <generator>Hugo</generator>
     <language>en</language>
-    <lastBuildDate>Fri, 16 Oct 2026 08:10:00 -0700</lastBuildDate>
+    <lastBuildDate>Thu, 15 Oct 2026 19:45:00 -0700</lastBuildDate>
     <atom:link href="https://luth.io/categories/php/index.xml" rel="self" type="application/rss+xml" />
     <item>
       <title>Fourth Place in Worker Mode, and Why It Wasn&#39;t PHP</title>
       <link>https://luth.io/blog/2026/10/ephpm-worker-mode-performance/</link>
-      <pubDate>Fri, 16 Oct 2026 08:10:00 -0700</pubDate>
+      <pubDate>Thu, 15 Oct 2026 19:45:00 -0700</pubDate>
       <guid>https://luth.io/blog/2026/10/ephpm-worker-mode-performance/</guid>
       <description>&lt;p&gt;We added &lt;a href=&#34;https://github.com/ephpm/ephpm&#34;&gt;ePHPm&lt;/a&gt; to the&#xA;&lt;a href=&#34;https://github.com/Yii3-Benchmarks/app-api&#34;&gt;Yii3 runtime benchmark&lt;/a&gt;, which runs the same Yii3 API app on a bunch of&#xA;PHP runtimes and compares them (our fork with the ePHPm runner is &lt;a href=&#34;https://github.com/ephpm/app-api&#34;&gt;ephpm/app-api&lt;/a&gt;).&#xA;Most of the results were good. ePHPm came first in classic mode, the PHP-FPM style where every request starts fresh,&#xA;and first on the database endpoint in both modes.&lt;/p&gt;&#xA;&lt;p&gt;Worker mode was the surprise. That&amp;rsquo;s the mode where the app boots once and stays in memory, like Octane or&#xA;FrankenPHP&amp;rsquo;s worker mode. We came fourth of ten, at about 50.7k requests a second, behind Workerman (~65k) and&#xA;Swoole (~62k).&lt;/p&gt;</description>
+    </item>
+    <item>
+      <title>Composer Without PHP: Embedding vivacity in ePHPm</title>
+      <link>https://luth.io/blog/2026/10/composer-without-php-vivacity/</link>
+      <pubDate>Wed, 14 Oct 2026 23:20:00 -0700</pubDate>
+      <guid>https://luth.io/blog/2026/10/composer-without-php-vivacity/</guid>
+      <description>&lt;p&gt;The pitch for &lt;a href=&#34;https://github.com/ephpm/ephpm&#34;&gt;ePHPm&lt;/a&gt; is one binary in place of php-fpm, nginx and Redis. There was&#xA;always a hole in it though. To deploy a PHP app you still need to run &lt;code&gt;composer install&lt;/code&gt;, and that drags PHP and&#xA;&lt;code&gt;composer.phar&lt;/code&gt; back onto the box, or into the container build, just for that one step. &lt;code&gt;ephpm composer install&lt;/code&gt; now&#xA;runs a pure-Rust, Composer-compatible installer called &lt;a href=&#34;https://github.com/Adelagric/vivacity&#34;&gt;vivacity&lt;/a&gt; inside the&#xA;ePHPm binary. One binary serves the app and installs its dependencies, and on Windows that works with no PHP installed at&#xA;all. Getting it right took five upstream PRs, a fork, a docs rewrite that took back claims we&amp;rsquo;d already made, and&#xA;teaching &lt;code&gt;ephpm&lt;/code&gt; to pretend to be &lt;code&gt;php&lt;/code&gt;.&lt;/p&gt;</description>
+    </item>
+    <item>
+      <title>A Lock Is Only as Good as Its Release</title>
+      <link>https://luth.io/blog/2026/10/a-lock-is-only-as-good-as-its-release/</link>
+      <pubDate>Tue, 13 Oct 2026 20:40:00 -0700</pubDate>
+      <guid>https://luth.io/blog/2026/10/a-lock-is-only-as-good-as-its-release/</guid>
+      <description>&lt;p&gt;Every &amp;ldquo;build a lock on Redis&amp;rdquo; tutorial spends its time on acquisition: &lt;code&gt;SET key value NX PX 30000&lt;/code&gt;, one winner, done. The&#xA;release gets one line, &lt;code&gt;DEL key&lt;/code&gt;, and that line is where most of the lock bugs I&amp;rsquo;ve had in ePHPm lived. Over about three months&#xA;the same mistake showed up in the native session handler, in two of the Composer wrapper packages, and finally in the&#xA;cluster, each time in a slightly different costume.&lt;/p&gt;</description>
+    </item>
+    <item>
+      <title>Step Debugging a Worker That Never Ends</title>
+      <link>https://luth.io/blog/2026/10/xdebug-worker-mode/</link>
+      <pubDate>Mon, 12 Oct 2026 21:10:00 -0700</pubDate>
+      <guid>https://luth.io/blog/2026/10/xdebug-worker-mode/</guid>
+      <description>&lt;p&gt;Persistent workers are the big performance win in modern PHP. You boot Laravel or Symfony once, keep the container&#xA;in memory, and serve thousands of requests out of the same process. &lt;a href=&#34;https://github.com/ephpm/ephpm&#34;&gt;ePHPm&lt;/a&gt; has had&#xA;a worker mode for a while, and like most worker runtimes it had a quiet hole in it: you couldn&amp;rsquo;t step debug a request&#xA;with Xdebug. I wanted that fixed without patching Xdebug and without giving up the warm pool, and the answer ended up&#xA;being to stop fighting the constraint and route around it. The debug lane is merged on main and coming in the upcoming&#xA;v0.12.0 release.&lt;/p&gt;</description>
     </item>
     <item>
       <title>WebSockets in ePHPm, From Zero to a Working Chat</title>

@@ -3,22 +3,22 @@
   xmlns:xhtml="http://www.w3.org/1999/xhtml">
   <url>
     <loc>https://luth.io/tags/benchmarking/</loc>
-    <lastmod>2026-10-16T08:10:00-07:00</lastmod>
+    <lastmod>2026-10-15T19:45:00-07:00</lastmod>
   </url><url>
     <loc>https://luth.io/blog/</loc>
-    <lastmod>2026-10-16T08:10:00-07:00</lastmod>
+    <lastmod>2026-10-15T19:45:00-07:00</lastmod>
   </url><url>
     <loc>https://luth.io/categories/</loc>
-    <lastmod>2026-10-16T08:10:00-07:00</lastmod>
-    <xhtml:link
-                rel="alternate"
-                hreflang="pl"
-                href="https://luth.io/pl/categories/"
-                />
+    <lastmod>2026-10-15T19:45:00-07:00</lastmod>
     <xhtml:link
                 rel="alternate"
                 hreflang="fr"
                 href="https://luth.io/fr/categories/"
+                />
+    <xhtml:link
+                rel="alternate"
+                hreflang="pl"
+                href="https://luth.io/pl/categories/"
                 />
     <xhtml:link
                 rel="alternate"
@@ -62,16 +62,16 @@
                 />
   </url><url>
     <loc>https://luth.io/categories/ephpm/</loc>
-    <lastmod>2026-10-16T08:10:00-07:00</lastmod>
+    <lastmod>2026-10-15T19:45:00-07:00</lastmod>
   </url><url>
     <loc>https://luth.io/tags/ephpm/</loc>
-    <lastmod>2026-10-16T08:10:00-07:00</lastmod>
+    <lastmod>2026-10-15T19:45:00-07:00</lastmod>
   </url><url>
     <loc>https://luth.io/blog/2026/10/ephpm-worker-mode-performance/</loc>
-    <lastmod>2026-10-16T08:10:00-07:00</lastmod>
+    <lastmod>2026-10-15T19:45:00-07:00</lastmod>
   </url><url>
     <loc>https://luth.io/</loc>
-    <lastmod>2026-10-16T08:10:00-07:00</lastmod>
+    <lastmod>2026-10-15T19:45:00-07:00</lastmod>
     <xhtml:link
                 rel="alternate"
                 hreflang="fr"
@@ -124,22 +124,22 @@
                 />
   </url><url>
     <loc>https://luth.io/tags/mimalloc/</loc>
-    <lastmod>2026-10-16T08:10:00-07:00</lastmod>
+    <lastmod>2026-10-15T19:45:00-07:00</lastmod>
   </url><url>
     <loc>https://luth.io/tags/performance/</loc>
-    <lastmod>2026-10-16T08:10:00-07:00</lastmod>
+    <lastmod>2026-10-15T19:45:00-07:00</lastmod>
   </url><url>
     <loc>https://luth.io/tags/php/</loc>
-    <lastmod>2026-10-16T08:10:00-07:00</lastmod>
+    <lastmod>2026-10-15T19:45:00-07:00</lastmod>
   </url><url>
     <loc>https://luth.io/categories/php/</loc>
-    <lastmod>2026-10-16T08:10:00-07:00</lastmod>
+    <lastmod>2026-10-15T19:45:00-07:00</lastmod>
   </url><url>
     <loc>https://luth.io/tags/rust/</loc>
-    <lastmod>2026-10-16T08:10:00-07:00</lastmod>
+    <lastmod>2026-10-15T19:45:00-07:00</lastmod>
   </url><url>
     <loc>https://luth.io/tags/</loc>
-    <lastmod>2026-10-16T08:10:00-07:00</lastmod>
+    <lastmod>2026-10-15T19:45:00-07:00</lastmod>
     <xhtml:link
                 rel="alternate"
                 hreflang="fr"
@@ -190,6 +190,42 @@
                 hreflang="en"
                 href="https://luth.io/tags/"
                 />
+  </url><url>
+    <loc>https://luth.io/tags/composer/</loc>
+    <lastmod>2026-10-14T23:20:00-07:00</lastmod>
+  </url><url>
+    <loc>https://luth.io/blog/2026/10/composer-without-php-vivacity/</loc>
+    <lastmod>2026-10-14T23:20:00-07:00</lastmod>
+  </url><url>
+    <loc>https://luth.io/categories/rust/</loc>
+    <lastmod>2026-10-14T23:20:00-07:00</lastmod>
+  </url><url>
+    <loc>https://luth.io/tags/vivacity/</loc>
+    <lastmod>2026-10-14T23:20:00-07:00</lastmod>
+  </url><url>
+    <loc>https://luth.io/tags/windows/</loc>
+    <lastmod>2026-10-14T23:20:00-07:00</lastmod>
+  </url><url>
+    <loc>https://luth.io/blog/2026/10/a-lock-is-only-as-good-as-its-release/</loc>
+    <lastmod>2026-10-13T20:40:00-07:00</lastmod>
+  </url><url>
+    <loc>https://luth.io/tags/clustering/</loc>
+    <lastmod>2026-10-13T20:40:00-07:00</lastmod>
+  </url><url>
+    <loc>https://luth.io/tags/locking/</loc>
+    <lastmod>2026-10-13T20:40:00-07:00</lastmod>
+  </url><url>
+    <loc>https://luth.io/tags/redis/</loc>
+    <lastmod>2026-10-13T20:40:00-07:00</lastmod>
+  </url><url>
+    <loc>https://luth.io/tags/debugging/</loc>
+    <lastmod>2026-10-12T21:10:00-07:00</lastmod>
+  </url><url>
+    <loc>https://luth.io/blog/2026/10/xdebug-worker-mode/</loc>
+    <lastmod>2026-10-12T21:10:00-07:00</lastmod>
+  </url><url>
+    <loc>https://luth.io/tags/xdebug/</loc>
+    <lastmod>2026-10-12T21:10:00-07:00</lastmod>
   </url><url>
     <loc>https://luth.io/tags/websockets/</loc>
     <lastmod>2026-10-11T17:30:00-07:00</lastmod>
@@ -254,16 +290,10 @@
     <loc>https://luth.io/categories/windows/</loc>
     <lastmod>2026-10-03T14:30:00-07:00</lastmod>
   </url><url>
-    <loc>https://luth.io/tags/windows/</loc>
-    <lastmod>2026-10-03T14:30:00-07:00</lastmod>
-  </url><url>
     <loc>https://luth.io/blog/2026/10/windows-sigterm-sparse-files/</loc>
     <lastmod>2026-10-03T14:30:00-07:00</lastmod>
   </url><url>
     <loc>https://luth.io/blog/2026/10/php-jit-use-after-free/</loc>
-    <lastmod>2026-10-01T20:10:00-07:00</lastmod>
-  </url><url>
-    <loc>https://luth.io/tags/debugging/</loc>
     <lastmod>2026-10-01T20:10:00-07:00</lastmod>
   </url><url>
     <loc>https://luth.io/tags/jit/</loc>
@@ -338,13 +368,7 @@
     <loc>https://luth.io/blog/2026/09/calling-rust-from-php-without-a-socket-part-2/</loc>
     <lastmod>2026-09-21T19:55:00-07:00</lastmod>
   </url><url>
-    <loc>https://luth.io/tags/composer/</loc>
-    <lastmod>2026-09-21T19:55:00-07:00</lastmod>
-  </url><url>
     <loc>https://luth.io/tags/laravel/</loc>
-    <lastmod>2026-09-21T19:55:00-07:00</lastmod>
-  </url><url>
-    <loc>https://luth.io/tags/redis/</loc>
     <lastmod>2026-09-21T19:55:00-07:00</lastmod>
   </url><url>
     <loc>https://luth.io/tags/wordpress/</loc>
@@ -386,13 +410,7 @@
     <loc>https://luth.io/blog/2026/09/clustered-sqlite-cdc-cluster-channel/</loc>
     <lastmod>2026-09-15T21:08:00-07:00</lastmod>
   </url><url>
-    <loc>https://luth.io/tags/clustering/</loc>
-    <lastmod>2026-09-15T21:08:00-07:00</lastmod>
-  </url><url>
     <loc>https://luth.io/categories/databases/</loc>
-    <lastmod>2026-09-15T21:08:00-07:00</lastmod>
-  </url><url>
-    <loc>https://luth.io/categories/rust/</loc>
     <lastmod>2026-09-15T21:08:00-07:00</lastmod>
   </url><url>
     <loc>https://luth.io/tags/sqlite/</loc>

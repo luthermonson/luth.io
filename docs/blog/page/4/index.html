@@ -215,6 +215,209 @@
   <header>
   <div class="title">
     
+      <h2><a href="/blog/2026/08/php-middleware-elephc/">Middleware in PHP: Compiling It With elephc, Then Not Needing To</a></h2>
+    
+    
+      <p>Fitting PHP into ePHPm&#39;s native middleware ABI with an ahead-of-time compiler, and what that experiment said about where PHP middleware should actually run.</p>
+    
+  </div>
+  <div class="meta">
+    <time datetime="2026-08-31 20:50:00 -0700 PDT">August 31, 2026</time>
+    
+    <p>9-Minute Read</p>
+  </div>
+</header>
+
+  <div class="content">
+    <a href="/blog/2026/08/php-middleware-elephc/" class="image" style="--bg-image: url('/img/2026/08/php-middleware-elephc-cover.svg');">
+    <img class="" src="/img/2026/08/php-middleware-elephc-cover.svg" alt="Timeline of an ePHPm request showing the native middleware lane before the body read and php: mounts inside the PHP request">
+  </a>
+    
+    <p><a href="https://github.com/ephpm/ephpm">ePHPm</a> middleware runs <em>before</em> PHP. It&rsquo;s a small versioned C ABI, loaded with
+<code>dlopen</code>, that gets to look at a request and reject it before PHP boots or the request body is read. That&rsquo;s the
+right shape for a gateway, and it&rsquo;s the wrong shape for most PHP shops, who want to write their middleware in PHP.
+This is the story of compiling PHP into a native <code>.so</code> to fit that ABI, finding exactly where it broke, and then
+building the lane that should have existed in the first place.</p>
+  </div>
+  <footer>
+    <a href="/blog/2026/08/php-middleware-elephc/" class="button big">Read More</a>
+    <div class="stats">
+  
+    <ul class="categories">
+      
+        
+          <li><a class="article-terms-link" href="/categories/ephpm/">ephpm</a></li>
+        
+          <li><a class="article-terms-link" href="/categories/php/">php</a></li>
+        
+          <li><a class="article-terms-link" href="/categories/rust/">rust</a></li>
+        
+      
+    </ul>
+  
+  
+    <ul class="tags">
+      
+        
+          <li><a class="article-terms-link" href="/tags/php/">php</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/rust/">rust</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/ephpm/">ephpm</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/elephc/">elephc</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/middleware/">middleware</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/ffi/">ffi</a></li>
+        
+      
+    </ul>
+  
+</div>
+
+  </footer>
+</article>
+
+  
+    <article class="post">
+  <header>
+  <div class="title">
+    
+      <h2><a href="/blog/2026/08/opcache-on-windows-two-silent-failures/">OPcache on Windows: Two Silent Failures</a></h2>
+    
+    
+      <p>An ASLR fatal that looked like a memory-size lottery, and Windows PHP 8.3 builds that never had an opcode cache, with the fix sitting unpicked for three weeks.</p>
+    
+  </div>
+  <div class="meta">
+    <time datetime="2026-08-29 16:45:00 -0700 PDT">August 29, 2026</time>
+    
+    <p>8-Minute Read</p>
+  </div>
+</header>
+
+  <div class="content">
+    <a href="/blog/2026/08/opcache-on-windows-two-silent-failures/" class="image" style="--bg-image: url('/img/2026/08/opcache-windows-silent-failures-cover.svg');">
+    <img class="" src="/img/2026/08/opcache-windows-silent-failures-cover.svg" alt="Two ePHPm processes computing the same OPcache shared-memory name; the second reattaches and dies on the ASLR check">
+  </a>
+    
+    <p>Windows is the platform where <a href="https://github.com/ephpm/ephpm">ePHPm</a> gets the least traffic and the most surprises.
+Last week closed out two OPcache bugs that only exist there, and both were quiet in their own way. One killed the
+server at startup with nothing in our own logs. The other didn&rsquo;t kill anything: it just ran PHP 8.3 with no opcode
+cache at all, and for three weeks after a fixed SDK was published every check stayed green.</p>
+  </div>
+  <footer>
+    <a href="/blog/2026/08/opcache-on-windows-two-silent-failures/" class="button big">Read More</a>
+    <div class="stats">
+  
+    <ul class="categories">
+      
+        
+          <li><a class="article-terms-link" href="/categories/php/">php</a></li>
+        
+          <li><a class="article-terms-link" href="/categories/windows/">windows</a></li>
+        
+          <li><a class="article-terms-link" href="/categories/ephpm/">ephpm</a></li>
+        
+      
+    </ul>
+  
+  
+    <ul class="tags">
+      
+        
+          <li><a class="article-terms-link" href="/tags/php/">php</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/opcache/">opcache</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/windows/">windows</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/ephpm/">ephpm</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/debugging/">debugging</a></li>
+        
+      
+    </ul>
+  
+</div>
+
+  </footer>
+</article>
+
+  
+    <article class="post">
+  <header>
+  <div class="title">
+    
+      <h2><a href="/blog/2026/08/ephpm-ebpf-per-vhost-network-policy/">Per-Tenant Network Policy in One Process: ePHPm&#39;s eBPF Thread Tags</a></h2>
+    
+    
+      <p>Every site on an ePHPm server runs inside the same process, so a normal firewall can&#39;t tell them apart. A small eBPF program tags each thread with its site and keeps sites from reaching each other&#39;s local ports, at under a microsecond per connection.</p>
+    
+  </div>
+  <div class="meta">
+    <time datetime="2026-08-28 20:40:00 -0700 PDT">August 28, 2026</time>
+    
+    <p>17-Minute Read</p>
+  </div>
+</header>
+
+  <div class="content">
+    <a href="/blog/2026/08/ephpm-ebpf-per-vhost-network-policy/" class="image" style="--bg-image: url('/img/2026/08/ephpm-ebpf-per-vhost-network-flow.svg');">
+    <img class="" src="/img/2026/08/ephpm-ebpf-per-vhost-network-flow.svg" alt="Flow from a PHP pool thread writing its vhost tag into a BPF map, through the bind and connect cgroup hooks, to allow, rewrite or EPERM">
+  </a>
+    
+    <p>In multi-tenant mode <a href="https://github.com/ephpm/ephpm">ePHPm</a> serves every site in <code>sites_dir</code> from one process. Every
+tenant&rsquo;s PHP runs as the same OS user, on the same pool of ZTS threads, and a thread that just served <code>blog.example</code>
+will serve <code>shop.example</code> a few milliseconds later. That&rsquo;s the density win. It also means the kernel has no idea
+which tenant is behind a given <code>connect()</code>. As far as Linux is concerned it&rsquo;s all <code>ephpm-web</code>.</p>
+  </div>
+  <footer>
+    <a href="/blog/2026/08/ephpm-ebpf-per-vhost-network-policy/" class="button big">Read More</a>
+    <div class="stats">
+  
+    <ul class="categories">
+      
+        
+          <li><a class="article-terms-link" href="/categories/security/">security</a></li>
+        
+          <li><a class="article-terms-link" href="/categories/ephpm/">ephpm</a></li>
+        
+          <li><a class="article-terms-link" href="/categories/containers/">containers</a></li>
+        
+      
+    </ul>
+  
+  
+    <ul class="tags">
+      
+        
+          <li><a class="article-terms-link" href="/tags/rust/">rust</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/ephpm/">ephpm</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/ebpf/">ebpf</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/linux/">linux</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/multi-tenant/">multi-tenant</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/cgroups/">cgroups</a></li>
+        
+      
+    </ul>
+  
+</div>
+
+  </footer>
+</article>
+
+  
+    <article class="post">
+  <header>
+  <div class="title">
+    
       <h2><a href="/blog/2026/08/hardening-rust-database-proxy/">Security and Performance Hardening of a Rust Database Proxy</a></h2>
     
     
@@ -693,213 +896,6 @@ says so in capital letters in its README.</p>
 </article>
 
   
-    <article class="post">
-  <header>
-  <div class="title">
-    
-      <h2><a href="/blog/2026/08/clustered-sqlite-adding-turso/">Clustered SQLite in ePHPm, Part 2: Adding Turso</a></h2>
-    
-    
-      <p>Deciding a beta database engine is ready by testing it instead of reading its version number, and replacing both rusqlite and sqld with Turso in ePHPm v0.7.0.</p>
-    
-  </div>
-  <div class="meta">
-    <time datetime="2026-08-19 20:37:00 -0700 PDT">August 19, 2026</time>
-    
-    <p>9-Minute Read</p>
-  </div>
-</header>
-
-  <div class="content">
-    <a href="/blog/2026/08/clustered-sqlite-adding-turso/" class="image" style="--bg-image: url('/img/2026/08/clustered-sqlite-adding-turso-four-lanes.svg');">
-    <img class="" src="/img/2026/08/clustered-sqlite-adding-turso-four-lanes.svg" alt="Bar chart of four SQLite lanes at 16 concurrent connections: rusqlite and Turso single node, sqld and Turso CDC clustered">
-  </a>
-    
-    <p><a href="/blog/2026/08/clustered-sqlite-sqld-sidecar/">Part 1</a> ended with ePHPm running two SQLite engines: rusqlite in-process
-for a single node, and an embedded sqld child process for a cluster. The sidecar fell off a cliff past four concurrent
-writers and the best fix I could ship was a semaphore set to 1. This post is about replacing both engines with one, and
-about how I decided that engine was ready.</p>
-  </div>
-  <footer>
-    <a href="/blog/2026/08/clustered-sqlite-adding-turso/" class="button big">Read More</a>
-    <div class="stats">
-  
-    <ul class="categories">
-      
-        
-          <li><a class="article-terms-link" href="/categories/ephpm/">ephpm</a></li>
-        
-          <li><a class="article-terms-link" href="/categories/databases/">databases</a></li>
-        
-      
-    </ul>
-  
-  
-    <ul class="tags">
-      
-        
-          <li><a class="article-terms-link" href="/tags/ephpm/">ephpm</a></li>
-        
-          <li><a class="article-terms-link" href="/tags/sqlite/">sqlite</a></li>
-        
-          <li><a class="article-terms-link" href="/tags/turso/">turso</a></li>
-        
-          <li><a class="article-terms-link" href="/tags/rust/">rust</a></li>
-        
-          <li><a class="article-terms-link" href="/tags/benchmarks/">benchmarks</a></li>
-        
-          <li><a class="article-terms-link" href="/tags/php/">php</a></li>
-        
-      
-    </ul>
-  
-</div>
-
-  </footer>
-</article>
-
-  
-    <article class="post">
-  <header>
-  <div class="title">
-    
-      <h2><a href="/blog/2026/08/ephemerd-one-daemon-every-os/">ephemerd: One Daemon, a Fresh Runner Per Job, Every OS</a></h2>
-    
-    
-      <p>A single Go binary that runs self-hosted GitHub Actions runners on Linux, Windows and macOS, with a new container or VM for every job.</p>
-    
-  </div>
-  <div class="meta">
-    <time datetime="2026-08-18 21:05:00 -0700 PDT">August 18, 2026</time>
-    
-    <p>6-Minute Read</p>
-  </div>
-</header>
-
-  <div class="content">
-    <a href="/blog/2026/08/ephemerd-one-daemon-every-os/" class="image" style="--bg-image: url('/img/2026/08/ephemerd-one-daemon-every-os-arch.svg');">
-    <img class="" src="/img/2026/08/ephemerd-one-daemon-every-os-arch.svg" alt="ephemerd architecture across Linux, Windows and macOS hosts">
-  </a>
-    
-    <p>I have CI that needs Linux amd64, Linux arm64, Windows and macOS, and GitHub-hosted runners for all four get expensive fast,
-especially the arm64 and Mac minutes. Self-hosted runners fix the bill and create a different problem. A stock
-<code>actions/runner</code> on a box you own runs whatever the workflow says, keeps whatever the last job left behind, and is one fork
-PR away from somebody running code on your LAN.</p>
-  </div>
-  <footer>
-    <a href="/blog/2026/08/ephemerd-one-daemon-every-os/" class="button big">Read More</a>
-    <div class="stats">
-  
-    <ul class="categories">
-      
-        
-          <li><a class="article-terms-link" href="/categories/ci/">ci</a></li>
-        
-          <li><a class="article-terms-link" href="/categories/go/">go</a></li>
-        
-          <li><a class="article-terms-link" href="/categories/containers/">containers</a></li>
-        
-      
-    </ul>
-  
-  
-    <ul class="tags">
-      
-        
-          <li><a class="article-terms-link" href="/tags/go/">go</a></li>
-        
-          <li><a class="article-terms-link" href="/tags/github-actions/">github-actions</a></li>
-        
-          <li><a class="article-terms-link" href="/tags/containerd/">containerd</a></li>
-        
-          <li><a class="article-terms-link" href="/tags/kubernetes/">kubernetes</a></li>
-        
-          <li><a class="article-terms-link" href="/tags/hyper-v/">hyper-v</a></li>
-        
-          <li><a class="article-terms-link" href="/tags/macos/">macos</a></li>
-        
-          <li><a class="article-terms-link" href="/tags/ephemerd/">ephemerd</a></li>
-        
-      
-    </ul>
-  
-</div>
-
-  </footer>
-</article>
-
-  
-    <article class="post">
-  <header>
-  <div class="title">
-    
-      <h2><a href="/blog/2026/08/rolling-your-own-kv-store/">Rolling Your Own KV Store Instead of Embedding Redis</a></h2>
-    
-    
-      <p>Why ePHPm has its own Redis-compatible cache built in instead of running Redis, a bug that hid in it for four months, and how it compares to real Redis on the same machine.</p>
-    
-  </div>
-  <div class="meta">
-    <time datetime="2026-08-17 20:44:00 -0700 PDT">August 17, 2026</time>
-    
-    <p>10-Minute Read</p>
-  </div>
-</header>
-
-  <div class="content">
-    <a href="/blog/2026/08/rolling-your-own-kv-store/" class="image" style="--bg-image: url('/img/2026/09/rolling-your-own-kv-store-bench.svg');">
-    <img class="" src="/img/2026/09/rolling-your-own-kv-store-bench.svg" alt="Bar chart of redis-benchmark GET and SET throughput against Redis 7.4, ePHPm v0.5.2 and ePHPm v0.2.0">
-  </a>
-    
-    <p>Every PHP deployment I&rsquo;ve run eventually grew a Redis. Sessions, the WordPress object cache, Laravel&rsquo;s cache and locks,
-rate limiting. <a href="https://github.com/ephpm/ephpm">ePHPm</a> is supposed to be one binary that replaces nginx + php-fpm +
-Redis, so it needed a cache in the box. I didn&rsquo;t want to write one. This post is why I did anyway, how it&rsquo;s built, the
-bug that sat in its eviction code from March until last month, and how it holds up against a stock Redis on the same
-machine with <code>redis-benchmark</code> doing the&hellip;</p>
-  </div>
-  <footer>
-    <a href="/blog/2026/08/rolling-your-own-kv-store/" class="button big">Read More</a>
-    <div class="stats">
-  
-    <ul class="categories">
-      
-        
-          <li><a class="article-terms-link" href="/categories/ephpm/">ephpm</a></li>
-        
-          <li><a class="article-terms-link" href="/categories/rust/">rust</a></li>
-        
-          <li><a class="article-terms-link" href="/categories/databases/">databases</a></li>
-        
-      
-    </ul>
-  
-  
-    <ul class="tags">
-      
-        
-          <li><a class="article-terms-link" href="/tags/ephpm/">ephpm</a></li>
-        
-          <li><a class="article-terms-link" href="/tags/rust/">rust</a></li>
-        
-          <li><a class="article-terms-link" href="/tags/redis/">redis</a></li>
-        
-          <li><a class="article-terms-link" href="/tags/kv/">kv</a></li>
-        
-          <li><a class="article-terms-link" href="/tags/dashmap/">dashmap</a></li>
-        
-          <li><a class="article-terms-link" href="/tags/caching/">caching</a></li>
-        
-          <li><a class="article-terms-link" href="/tags/performance/">performance</a></li>
-        
-      
-    </ul>
-  
-</div>
-
-  </footer>
-</article>
-
-  
   <div class="pagination">
     
       <a href="/blog/page/3/" class="button left"><span>Previous Page</span></a>
@@ -923,7 +919,37 @@ machine with <code>redis-benchmark</code> doing the&hellip;</p>
   </a>
         <header>
           <h2><a href="/blog/2026/10/ephpm-worker-mode-performance/">Fourth Place in Worker Mode, and Why It Wasn&#39;t PHP</a></h2>
-          <time class="published" datetime="2026-10-16 08:10:00 -0700 PDT">October 16, 2026</time>
+          <time class="published" datetime="2026-10-15 19:45:00 -0700 PDT">October 15, 2026</time>
+        </header>
+      </article>
+      
+      <article class="mini-post">
+          <a href="/blog/2026/10/composer-without-php-vivacity/" class="image" style="--bg-image: url('/img/2026/10/composer-without-php-vivacity-bench.svg');">
+    <img class="" src="/img/2026/10/composer-without-php-vivacity-bench.svg" alt="Bar chart comparing Composer 2.10.3 and ephpm composer on a Laravel install on native Windows">
+  </a>
+        <header>
+          <h2><a href="/blog/2026/10/composer-without-php-vivacity/">Composer Without PHP: Embedding vivacity in ePHPm</a></h2>
+          <time class="published" datetime="2026-10-14 23:20:00 -0700 PDT">October 14, 2026</time>
+        </header>
+      </article>
+      
+      <article class="mini-post">
+          <a href="/blog/2026/10/a-lock-is-only-as-good-as-its-release/" class="image" style="--bg-image: url('/img/2026/10/a-lock-is-only-as-good-as-its-release-cover.svg');">
+    <img class="" src="/img/2026/10/a-lock-is-only-as-good-as-its-release-cover.svg" alt="Timeline: request A&#39;s lock expires, B acquires it, A&#39;s blind DEL frees B&#39;s lock and C gets in">
+  </a>
+        <header>
+          <h2><a href="/blog/2026/10/a-lock-is-only-as-good-as-its-release/">A Lock Is Only as Good as Its Release</a></h2>
+          <time class="published" datetime="2026-10-13 20:40:00 -0700 PDT">October 13, 2026</time>
+        </header>
+      </article>
+      
+      <article class="mini-post">
+          <a href="/blog/2026/10/xdebug-worker-mode/" class="image" style="--bg-image: url('/img/2026/10/xdebug-worker-mode-cover.svg');">
+    <img class="" src="/img/2026/10/xdebug-worker-mode-cover.svg" alt="Diagram of the ePHPm router sending untriggered requests to the warm worker pool and Xdebug-triggered requests to a one-request debug lane">
+  </a>
+        <header>
+          <h2><a href="/blog/2026/10/xdebug-worker-mode/">Step Debugging a Worker That Never Ends</a></h2>
+          <time class="published" datetime="2026-10-12 21:10:00 -0700 PDT">October 12, 2026</time>
         </header>
       </article>
       
@@ -934,36 +960,6 @@ machine with <code>redis-benchmark</code> doing the&hellip;</p>
         <header>
           <h2><a href="/blog/2026/10/ephpm-websockets-how-to/">WebSockets in ePHPm, From Zero to a Working Chat</a></h2>
           <time class="published" datetime="2026-10-11 17:30:00 -0700 PDT">October 11, 2026</time>
-        </header>
-      </article>
-      
-      <article class="mini-post">
-          <a href="/blog/2026/10/webhooks-out-of-order-scheduler/" class="image" style="--bg-image: url('/img/2026/10/webhooks-out-of-order-scheduler-timeline.svg');">
-    <img class="" src="/img/2026/10/webhooks-out-of-order-scheduler-timeline.svg" alt="Timeline of three same-label jobs where a runner executing a build is destroyed 2.3 seconds before its in_progress webhook arrives">
-  </a>
-        <header>
-          <h2><a href="/blog/2026/10/webhooks-out-of-order-scheduler/">Webhooks Arrive Out of Order: How My Scheduler Killed Live Builds</a></h2>
-          <time class="published" datetime="2026-10-07 21:10:00 -0700 PDT">October 7, 2026</time>
-        </header>
-      </article>
-      
-      <article class="mini-post">
-          <a href="/blog/2026/10/go-proxmox-five-years-to-v0-8/" class="image" style="--bg-image: url('/img/2026/10/go-proxmox-five-years-to-v0-8-apidiff.svg');">
-    <img class="" src="/img/2026/10/go-proxmox-five-years-to-v0-8-apidiff.svg" alt="Horizontal bar chart of apidiff incompatible and compatible changes for every go-proxmox release from v0.1.0 to v0.8.2">
-  </a>
-        <header>
-          <h2><a href="/blog/2026/10/go-proxmox-five-years-to-v0-8/">Breaking Changes Without Breaking Trust: Five Years to go-proxmox v0.8</a></h2>
-          <time class="published" datetime="2026-10-04 19:40:00 -0700 PDT">October 4, 2026</time>
-        </header>
-      </article>
-      
-      <article class="mini-post">
-          <a href="/blog/2026/10/windows-sigterm-sparse-files/" class="image" style="--bg-image: url('/img/2026/10/windows-sigterm-sparse-files-connections.svg');">
-    <img class="" src="/img/2026/10/windows-sigterm-sparse-files-connections.svg" alt="Bar chart: 96 Cloudflare edge connections held by orphaned cloudflared processes versus 4 for the live daemon">
-  </a>
-        <header>
-          <h2><a href="/blog/2026/10/windows-sigterm-sparse-files/">Windows Grab-Bag: SIGTERM That Doesn&#39;t Exist and Sparse Files That Break Docker</a></h2>
-          <time class="published" datetime="2026-10-03 14:30:00 -0700 PDT">October 3, 2026</time>
         </header>
       </article>
       
@@ -986,16 +982,16 @@ machine with <code>redis-benchmark</code> doing the&hellip;</p>
           
           
           <li>
-              <a href="/categories/ephpm/">ephpm<span class="count">33</span></a>
+              <a href="/categories/ephpm/">ephpm<span class="count">36</span></a>
           
           <li>
               <a href="/categories/go/">go<span class="count">30</span></a>
           
           <li>
-              <a href="/categories/php/">php<span class="count">23</span></a>
+              <a href="/categories/php/">php<span class="count">26</span></a>
           
           <li>
-              <a href="/categories/rust/">rust<span class="count">15</span></a>
+              <a href="/categories/rust/">rust<span class="count">16</span></a>
           
           <li>
               <a href="/categories/homelab/">homelab<span class="count">14</span></a>

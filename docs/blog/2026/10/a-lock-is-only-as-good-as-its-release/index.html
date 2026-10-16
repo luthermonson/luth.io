@@ -1,0 +1,727 @@
+<!doctype html>
+<html lang="en">
+  <head>
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-MSTSKGFWTX"></script>
+<script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+
+    gtag('config', 'G-MSTSKGFWTX');
+</script><meta charset="utf-8">
+<title>A Lock Is Only as Good as Its Release - Luther Monson</title>
+<meta name="description" content="SETNX gets all the attention, but most of the bugs in ePHPm&#39;s KV locks were on the release side. This is how blind deletes, a missing compare-and-delete, and a cluster where two nodes could both win got fixed.">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<meta name="twitter:card" content="summary_large_image"><meta name="twitter:site" content="@luthermonson">
+
+<meta property="og:site_name" content="Luther Monson">
+<meta property="og:title" content="A Lock Is Only as Good as Its Release">
+<meta property="og:description" content="SETNX gets all the attention, but most of the bugs in ePHPm&#39;s KV locks were on the release side. This is how blind deletes, a missing compare-and-delete, and a cluster where two nodes could both win got fixed.">
+<meta property="og:type" content="article">
+<meta property="og:url" content="https://luth.io/blog/2026/10/a-lock-is-only-as-good-as-its-release/">
+    <meta property="og:image" content="https://luth.io/img/2026/10/a-lock-is-only-as-good-as-its-release-cover.svg">
+    <meta property="og:image:alt" content="Timeline: request A&#39;s lock expires, B acquires it, A&#39;s blind DEL frees B&#39;s lock and C gets in">
+
+
+  <link rel="manifest" href="/favicon/site.webmanifest?v=1">
+  <link rel="apple-touch-icon" sizes="180x180" href="/favicon/apple-touch-icon.png?v=1">
+  <link rel="icon" type="image/png" sizes="32x32" href="/favicon/favicon-32x32.png?v=1">
+  <link rel="icon" type="image/png" sizes="16x16" href="/favicon/favicon-16x16.png?v=1">
+  
+    <link rel="mask-icon" href="/favicon/safari-pinned-tab.svg?v=1" color="#ffffff">
+    <link rel="shortcut icon" href="/favicon/favicon.ico?v=1">
+    <meta name="msapplication-config" content="/favicon/browserconfig.xml?v=1">
+  
+  <meta name="msapplication-TileColor" content="#ffffff">
+  <meta name="theme-color" content="#ffffff">
+
+
+  <meta name="generator" content="Hugo 0.160.1">
+  <link rel="alternate" type="application/rss+xml" href="https://luth.io/index.xml" title="Luther Monson">
+  <link rel="stylesheet" href="/css/bundle.min.e1ffed86714fbb7eff75eab221c0c61b8260be0c7d1c08db0fcb7a2bdb6af7c9.css" integrity="sha256-4f/thnFPu37/deqyIcDGG4Jgvgx9HAjbD8t6K9tq98k="><link rel="stylesheet" href="/css/add-on.css">
+        <link rel="stylesheet" href="/css/code.css">
+        <link rel="stylesheet" href="/css/mobile.css">
+</head>
+
+  <body>
+    
+
+<header id="site-header">
+  <nav id="site-nav">
+    <h1 class="nav-title">
+      <a href="/" class="nav">
+        <img class="nav-avatar" src="/img/luther-monson-headshot.jpg" alt="" width="32" height="32">
+        
+          Blog
+        
+      </a>
+    </h1>
+    <menu id="site-nav-menu" class="flyout-menu menu">
+      
+        
+          
+          <a href="/" class="nav link"><i class='fa fa-home'></i> Home</a>
+        
+      
+        
+          
+          <a href="/about" class="nav link"><i class='far fa-id-card'></i> About</a>
+        
+      
+        
+          
+          <a href="/blog" class="nav link"><i class='far fa-newspaper'></i> Blog</a>
+        
+      
+        
+          
+          <a href="/archive" class="nav link"><i class='far fa-calendar-alt'></i> Archive</a>
+        
+      
+        
+          
+          <a href="/categories" class="nav link"><i class='fas fa-sitemap'></i> Categories</a>
+        
+      
+      <a href="#share-menu" class="nav link share-toggle"><i class="fas fa-share-alt">&nbsp;</i>Share</a>
+      <a href="#search-input" class="nav link search-toggle"><i class="fas fa-search">&nbsp;</i>Search</a>
+    </menu>
+    <a href="#search-input" class="nav search-toggle"><i class="fas fa-search fa-2x">&nbsp;</i></a>
+    <a href="#share-menu" class="nav share-toggle"><i class="fas fa-share-alt fa-2x">&nbsp;</i></a>
+    
+    <a href="#site-nav" class="nav nav-toggle"><i class="fas fa-bars fa-2x"></i></a>
+  </nav>
+  <menu id="search" class="menu"><input id="search-input" class="search-input menu"></input><div id="search-results" class="search-results menu"></div></menu>
+  
+  
+    <menu id="share-menu" class="flyout-menu menu">
+      <h1>Share Post</h1>
+      
+
+
+
+
+  
+    
+    <a href="//twitter.com/share?text=A%20Lock%20Is%20Only%20as%20Good%20as%20Its%20Release&amp;url=https%3a%2f%2fluth.io%2fblog%2f2026%2f10%2fa-lock-is-only-as-good-as-its-release%2f" target="_blank" rel="noopener" class="nav share-btn twitter">
+        <p>Twitter</p>
+      </a>
+  
+
+  
+      <a href="//www.facebook.com/sharer/sharer.php?u=https%3a%2f%2fluth.io%2fblog%2f2026%2f10%2fa-lock-is-only-as-good-as-its-release%2f" target="_blank" rel="noopener" class="nav share-btn facebook">
+        <p>Facebook</p>
+        </a>
+  
+
+  
+    <a href="//www.reddit.com/submit?url=https%3a%2f%2fluth.io%2fblog%2f2026%2f10%2fa-lock-is-only-as-good-as-its-release%2f&amp;title=A%20Lock%20Is%20Only%20as%20Good%20as%20Its%20Release" target="_blank" rel="noopener" class="nav share-btn reddit">
+          <p>Reddit</p>
+        </a>
+  
+
+  
+        <a href="//www.linkedin.com/shareArticle?url=https%3a%2f%2fluth.io%2fblog%2f2026%2f10%2fa-lock-is-only-as-good-as-its-release%2f&amp;title=A%20Lock%20Is%20Only%20as%20Good%20as%20Its%20Release" target="_blank" rel="noopener" class="nav share-btn linkedin">
+            <p>LinkedIn</p>
+          </a>
+  
+
+  
+        <a href="//www.pinterest.com/pin/create/button/?url=https%3a%2f%2fluth.io%2fblog%2f2026%2f10%2fa-lock-is-only-as-good-as-its-release%2f&amp;description=A%20Lock%20Is%20Only%20as%20Good%20as%20Its%20Release" target="_blank" rel="noopener" class="nav share-btn pinterest">
+          <p>Pinterest</p>
+        </a>
+  
+
+  
+        <a href="mailto:?subject=Check%20out%20this%20post%20by Luther%20Monson&amp;body=https%3a%2f%2fluth.io%2fblog%2f2026%2f10%2fa-lock-is-only-as-good-as-its-release%2f" target="_blank" class="nav share-btn email" data-proofer-ignore>
+          <p>Email</p>
+        </a>
+  
+
+
+    </menu>
+  
+</header>
+
+    <div id="wrapper">
+      <section id="site-intro" class="hidden-single-column">
+  <a href="/"><img src="/img/luther-monson-headshot.jpg" class="circle" width="100" alt="Luther Monson, Staff Software Engineer at SUSE" /></a>
+  <header>
+    <h1>Luther Monson</h1>
+  </header>
+  <main>
+    <p>Go by way of PHP &middot; Containers &middot; VMs &middot; Windows &middot; Kubernetes</p>
+  </main>
+  
+    <footer>
+      <ul class="socnet-icons">
+        
+
+        <li><a href="//github.com/luthermonson" target="_blank" rel="noopener" title="GitHub" class="fab fa-github"></a></li>
+
+
+
+
+
+
+
+
+
+
+
+<li><a href="//www.linkedin.com/in/luthermonson" target="_blank" rel="noopener" title="LinkedIn" class="fab fa-linkedin"></a></li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li><a href="//twitter.com/luthermonson" target="_blank" rel="noopener" title="Twitter" class="fab fa-twitter"></a></li>
+
+
+
+
+
+
+
+
+
+
+
+<li><a href="mailto:luther.monson@gmail.com" target="_blank" title="Email" class="far fa-envelope"></a></li>
+
+      </ul>
+    </footer>
+  
+</section>
+
+      <main id="site-main">
+        
+  <article>
+    <div class="post">
+      <header>
+  <div class="title">
+    
+      <h2><a href="/blog/2026/10/a-lock-is-only-as-good-as-its-release/">A Lock Is Only as Good as Its Release</a></h2>
+    
+    
+      <p>SETNX gets all the attention, but most of the bugs in ePHPm&#39;s KV locks were on the release side. This is how blind deletes, a missing compare-and-delete, and a cluster where two nodes could both win got fixed.</p>
+    
+  </div>
+  <div class="meta">
+    <time datetime="2026-10-13 20:40:00 -0700 PDT">October 13, 2026</time>
+    
+    <p>9-Minute Read</p>
+  </div>
+</header>
+
+      <div id="socnet-share">
+        
+
+
+
+
+  
+    
+    <a href="//twitter.com/share?text=A%20Lock%20Is%20Only%20as%20Good%20as%20Its%20Release&amp;url=https%3a%2f%2fluth.io%2fblog%2f2026%2f10%2fa-lock-is-only-as-good-as-its-release%2f" target="_blank" rel="noopener" class="nav share-btn twitter">
+        <p>Twitter</p>
+      </a>
+  
+
+  
+      <a href="//www.facebook.com/sharer/sharer.php?u=https%3a%2f%2fluth.io%2fblog%2f2026%2f10%2fa-lock-is-only-as-good-as-its-release%2f" target="_blank" rel="noopener" class="nav share-btn facebook">
+        <p>Facebook</p>
+        </a>
+  
+
+  
+    <a href="//www.reddit.com/submit?url=https%3a%2f%2fluth.io%2fblog%2f2026%2f10%2fa-lock-is-only-as-good-as-its-release%2f&amp;title=A%20Lock%20Is%20Only%20as%20Good%20as%20Its%20Release" target="_blank" rel="noopener" class="nav share-btn reddit">
+          <p>Reddit</p>
+        </a>
+  
+
+  
+        <a href="//www.linkedin.com/shareArticle?url=https%3a%2f%2fluth.io%2fblog%2f2026%2f10%2fa-lock-is-only-as-good-as-its-release%2f&amp;title=A%20Lock%20Is%20Only%20as%20Good%20as%20Its%20Release" target="_blank" rel="noopener" class="nav share-btn linkedin">
+            <p>LinkedIn</p>
+          </a>
+  
+
+  
+        <a href="//www.pinterest.com/pin/create/button/?url=https%3a%2f%2fluth.io%2fblog%2f2026%2f10%2fa-lock-is-only-as-good-as-its-release%2f&amp;description=A%20Lock%20Is%20Only%20as%20Good%20as%20Its%20Release" target="_blank" rel="noopener" class="nav share-btn pinterest">
+          <p>Pinterest</p>
+        </a>
+  
+
+  
+        <a href="mailto:?subject=Check%20out%20this%20post%20by Luther%20Monson&amp;body=https%3a%2f%2fluth.io%2fblog%2f2026%2f10%2fa-lock-is-only-as-good-as-its-release%2f" target="_blank" class="nav share-btn email" data-proofer-ignore>
+          <p>Email</p>
+        </a>
+  
+
+
+      </div>
+      <div class="content">
+        
+        <p>Every &ldquo;build a lock on Redis&rdquo; tutorial spends its time on acquisition: <code>SET key value NX PX 30000</code>, one winner, done. The
+release gets one line, <code>DEL key</code>, and that line is where most of the lock bugs I&rsquo;ve had in ePHPm lived. Over about three months
+the same mistake showed up in the native session handler, in two of the Composer wrapper packages, and finally in the
+cluster, each time in a slightly different costume.</p>
+<h3 id="version-one-setnx-and-a-blind-del">Version one: SETNX and a blind DEL</h3>
+<p>The native session handler got locking in <a href="https://github.com/ephpm/ephpm/pull/111">#111</a> back in July. Without it, two
+concurrent requests with the same session cookie both read the blob, both change their copy, and the second write
+silently wins. The design is the one php-fpm&rsquo;s files handler uses, built on the KV store:</p>
+<ul>
+<li><code>PS_READ</code> takes <code>session_lock:&lt;sid&gt;</code> with <code>set_nx</code> and a 30 second TTL.</li>
+<li>On contention it spins with backoff, 10 ms doubling to a 100 ms cap, for up to 30 seconds.</li>
+<li>If it still can&rsquo;t get the lock it logs a warning and proceeds without it. A lost update is bad, a deadlocked PHP thread
+is worse.</li>
+<li><code>PS_CLOSE</code>, which PHP calls after the write even when the request bailed out, releases it.</li>
+</ul>
+<p>The release was this:</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-c" data-lang="c"><span class="line"><span class="cl"><span class="k">if</span> <span class="p">(</span><span class="n">g_kv_ops</span><span class="p">.</span><span class="n">del</span><span class="p">)</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">    <span class="kt">char</span> <span class="o">*</span><span class="n">lock_key</span> <span class="o">=</span> <span class="nf">ephpm_session_make_prefixed_key</span><span class="p">(</span>
+</span></span><span class="line"><span class="cl">        <span class="n">EPHPM_SESSION_LOCK_PREFIX</span><span class="p">,</span> <span class="n">EPHPM_SESSION_LOCK_PREFIX_LEN</span><span class="p">,</span>
+</span></span><span class="line"><span class="cl">        <span class="n">session_lock_sid</span><span class="p">,</span> <span class="n">session_lock_sid_len</span><span class="p">,</span>
+</span></span><span class="line"><span class="cl">        <span class="n">stack</span><span class="p">,</span> <span class="k">sizeof</span><span class="p">(</span><span class="n">stack</span><span class="p">),</span> <span class="o">&amp;</span><span class="n">used_heap</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">    <span class="p">(</span><span class="kt">void</span><span class="p">)</span><span class="n">g_kv_ops</span><span class="p">.</span><span class="nf">del</span><span class="p">(</span><span class="n">lock_key</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">    <span class="nf">ephpm_session_key_free</span><span class="p">(</span><span class="n">lock_key</span><span class="p">,</span> <span class="n">used_heap</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl"><span class="p">}</span>
+</span></span></code></pre></div><p>And the lock value was the string <code>&quot;1&quot;</code>. The comment above it was honest about it:</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-c" data-lang="c"><span class="line"><span class="cl"> <span class="o">*</span> <span class="n">KNOWN</span> <span class="nf">LIMITATION</span> <span class="p">(</span><span class="n">accepted</span> <span class="k">for</span> <span class="n">v1</span><span class="p">)</span><span class="o">:</span> <span class="k">if</span> <span class="n">a</span> <span class="n">holder</span> <span class="n">outlives</span> <span class="n">the</span> <span class="mi">30</span><span class="n">s</span> <span class="n">TTL</span><span class="p">,</span>
+</span></span><span class="line"><span class="cl"> <span class="o">*</span> <span class="n">the</span> <span class="n">lock</span> <span class="n">expires</span> <span class="n">and</span> <span class="n">another</span> <span class="n">request</span> <span class="n">may</span> <span class="n">acquire</span> <span class="n">it</span><span class="p">.</span> <span class="n">Our</span> <span class="n">release</span> <span class="n">path</span>
+</span></span><span class="line"><span class="cl"> <span class="o">*</span> <span class="n">is</span> <span class="n">an</span> <span class="n">unconditional</span> <span class="n">DEL</span> <span class="err">—</span> <span class="n">the</span> <span class="n">KV</span> <span class="n">ops</span> <span class="n">table</span> <span class="n">has</span> <span class="n">no</span> <span class="n">compare</span><span class="o">-</span><span class="n">and</span><span class="o">-</span><span class="n">delete</span> <span class="err">—</span>
+</span></span><span class="line"><span class="cl"> <span class="o">*</span> <span class="n">so</span> <span class="n">the</span> <span class="n">original</span> <span class="n">holder</span> <span class="n">would</span> <span class="n">then</span> <span class="n">release</span> <span class="n">the</span> <span class="o">*</span><span class="n">new</span><span class="o">*</span> <span class="n">holder</span><span class="err">&#39;</span><span class="n">s</span> <span class="n">lock</span><span class="p">,</span>
+</span></span><span class="line"><span class="cl"> <span class="o">*</span> <span class="n">letting</span> <span class="n">a</span> <span class="n">third</span> <span class="n">request</span> <span class="n">in</span> <span class="n">early</span><span class="p">.</span>
+</span></span></code></pre></div><p>That&rsquo;s the diagram at the top. A holds the lock and runs past its TTL. The lock expires, B acquires it and believes it
+has the session to itself. A finishes and deletes the key, which is now B&rsquo;s lock. C walks straight in while B is still
+working. A TTL lock already has the problem that A is running unlocked once it overruns. The blind release adds a second
+problem: it breaks the lock for B and C, who did everything right.</p>
+<h3 id="the-wrappers-made-the-same-choice">The wrappers made the same choice</h3>
+<p>The <a href="/blog/2026/09/calling-rust-from-php-without-a-socket-part-2/">wrapper packages</a> that put Laravel, Symfony and
+WordPress on the KV store needed locks too. <code>cache-laravel</code> got an atomic lock on September 10th, modelled on Laravel&rsquo;s
+own <code>MemcachedLock</code>. Acquisition goes through <code>ephpm_kv_setnx</code>. Release reads the owner and deletes if it matches:</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-php" data-lang="php"><span class="line"><span class="cl"><span class="k">public</span> <span class="k">function</span> <span class="nf">release</span><span class="p">()</span><span class="o">:</span> <span class="nx">bool</span>
+</span></span><span class="line"><span class="cl"><span class="p">{</span>
+</span></span><span class="line"><span class="cl">    <span class="k">if</span> <span class="p">(</span><span class="nv">$this</span><span class="o">-&gt;</span><span class="na">isOwnedByCurrentProcess</span><span class="p">())</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">        <span class="k">return</span> <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">ops</span><span class="o">-&gt;</span><span class="na">del</span><span class="p">(</span><span class="nv">$this</span><span class="o">-&gt;</span><span class="na">name</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">    <span class="p">}</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">    <span class="k">return</span> <span class="k">false</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl"><span class="p">}</span>
+</span></span></code></pre></div><p>That&rsquo;s better than a blind delete because it checks the owner, but the check and the delete are two calls. Between them
+the lock can expire and be re-acquired, and the delete removes the new holder&rsquo;s lock anyway. The docblock says so plainly:
+&ldquo;The ePHPm SAPI has no compare-and-delete / CAS primitive&rdquo;. The userland <code>session-handler</code> package&rsquo;s opt-in lock makes the
+same trade and documents it the same way.</p>
+<p>The fix for both sides of this already existed in Redis land. You can&rsquo;t fix release in PHP, so the store needs a
+primitive.</p>
+<h3 id="compare-and-delete">Compare-and-delete</h3>
+<p><a href="https://github.com/ephpm/ephpm/pull/501">#501</a> merged the day after the Laravel lock was written. It adds <code>del_if_eq</code>:
+delete the key only while its value is still exactly this token. It&rsquo;s on the <code>Store</code>, as a RESP command (<code>DELIFEQ key token</code>), and as <code>ephpm_kv_del_if_eq()</code> in PHP, appended to the end of the ops table like every other addition.</p>
+<p>The implementation is short because DashMap already has the right primitive. <code>remove_if</code> evaluates its predicate while
+holding the shard&rsquo;s write lock, so the compare and the delete are one step:</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-rust" data-lang="rust"><span class="line"><span class="cl"><span class="k">pub</span><span class="w"> </span><span class="k">fn</span> <span class="nf">del_if_eq</span><span class="p">(</span><span class="o">&amp;</span><span class="bp">self</span><span class="p">,</span><span class="w"> </span><span class="n">key</span>: <span class="kp">&amp;</span><span class="kt">str</span><span class="p">,</span><span class="w"> </span><span class="n">token</span>: <span class="kp">&amp;</span><span class="p">[</span><span class="kt">u8</span><span class="p">])</span><span class="w"> </span>-&gt; <span class="kt">bool</span> <span class="p">{</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="kd">let</span><span class="w"> </span><span class="n">removed</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="bp">self</span><span class="p">.</span><span class="n">data</span><span class="p">.</span><span class="n">remove_if</span><span class="p">(</span><span class="n">key</span><span class="p">,</span><span class="w"> </span><span class="o">|</span><span class="n">_</span><span class="p">,</span><span class="w"> </span><span class="n">entry</span><span class="o">|</span><span class="w"> </span><span class="p">{</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">        </span><span class="k">if</span><span class="w"> </span><span class="n">entry</span><span class="p">.</span><span class="n">is_expired</span><span class="p">()</span><span class="w"> </span><span class="p">{</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">            </span><span class="k">return</span><span class="w"> </span><span class="kc">false</span><span class="p">;</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">        </span><span class="p">}</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">        </span><span class="k">if</span><span class="w"> </span><span class="n">entry</span><span class="p">.</span><span class="n">compressed</span><span class="w"> </span><span class="p">{</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">            </span><span class="n">decompress_value</span><span class="p">(</span><span class="o">&amp;</span><span class="n">entry</span><span class="p">.</span><span class="n">data</span><span class="p">,</span><span class="w"> </span><span class="bp">self</span><span class="p">.</span><span class="n">config</span><span class="p">.</span><span class="n">compression</span><span class="p">.</span><span class="n">algo</span><span class="p">)</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">                </span><span class="p">.</span><span class="n">is_some_and</span><span class="p">(</span><span class="o">|</span><span class="n">plain</span><span class="o">|</span><span class="w"> </span><span class="n">plain</span><span class="p">.</span><span class="n">as_ref</span><span class="p">()</span><span class="w"> </span><span class="o">==</span><span class="w"> </span><span class="n">token</span><span class="p">)</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">        </span><span class="p">}</span><span class="w"> </span><span class="k">else</span><span class="w"> </span><span class="p">{</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">            </span><span class="n">entry</span><span class="p">.</span><span class="n">data</span><span class="p">.</span><span class="n">as_ref</span><span class="p">()</span><span class="w"> </span><span class="o">==</span><span class="w"> </span><span class="n">token</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">        </span><span class="p">}</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="p">});</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="kd">let</span><span class="w"> </span><span class="nb">Some</span><span class="p">((</span><span class="n">_</span><span class="p">,</span><span class="w"> </span><span class="n">old</span><span class="p">))</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">removed</span><span class="w"> </span><span class="k">else</span><span class="w"> </span><span class="p">{</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">        </span><span class="k">return</span><span class="w"> </span><span class="kc">false</span><span class="p">;</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="p">};</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="bp">self</span><span class="p">.</span><span class="n">mem_sub</span><span class="p">(</span><span class="n">old</span><span class="p">.</span><span class="n">mem_size</span><span class="p">);</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="bp">self</span><span class="p">.</span><span class="n">ttl_keys</span><span class="p">.</span><span class="n">remove</span><span class="p">(</span><span class="n">key</span><span class="p">);</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="bp">self</span><span class="p">.</span><span class="n">notify_write</span><span class="p">(</span><span class="n">key</span><span class="p">);</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="kd">let</span><span class="w"> </span><span class="nb">Some</span><span class="p">(</span><span class="n">rep</span><span class="p">)</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="bp">self</span><span class="p">.</span><span class="n">active_replicator</span><span class="p">()</span><span class="w"> </span><span class="p">{</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">        </span><span class="n">rep</span><span class="p">.</span><span class="n">replicate_remove_published</span><span class="p">(</span><span class="n">key</span><span class="p">.</span><span class="n">to_string</span><span class="p">());</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="p">}</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="kc">true</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="p">}</span><span class="w">
+</span></span></span></code></pre></div><p>Two details matter. An expired entry counts as absent and never matches, so a late release can&rsquo;t remove a lock that&rsquo;s
+logically gone and about to be reaped. And the compare is against the decompressed value, so turning on KV compression
+doesn&rsquo;t quietly make every release fail.</p>
+<p>The PHP pattern becomes: generate a random token per acquisition, store it as the value, release with the token.</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-php" data-lang="php"><span class="line"><span class="cl"><span class="nv">$token</span> <span class="o">=</span> <span class="nx">bin2hex</span><span class="p">(</span><span class="nx">random_bytes</span><span class="p">(</span><span class="mi">16</span><span class="p">));</span>
+</span></span><span class="line"><span class="cl"><span class="k">if</span> <span class="p">(</span><span class="nx">ephpm_kv_setnx</span><span class="p">(</span><span class="s1">&#39;lock:nightly-report&#39;</span><span class="p">,</span> <span class="nv">$token</span><span class="p">,</span> <span class="mi">30</span><span class="p">))</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">    <span class="k">try</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">        <span class="nx">build_report</span><span class="p">();</span>
+</span></span><span class="line"><span class="cl">    <span class="p">}</span> <span class="k">finally</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">        <span class="nx">ephpm_kv_del_if_eq</span><span class="p">(</span><span class="s1">&#39;lock:nightly-report&#39;</span><span class="p">,</span> <span class="nv">$token</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">    <span class="p">}</span>
+</span></span><span class="line"><span class="cl"><span class="p">}</span>
+</span></span></code></pre></div><p>Here&rsquo;s the scenario from the diagram as a real script against the v0.10.6 release: A takes the lock with a 1 second TTL,
+sleeps 1.2 seconds, B acquires, A releases, and C tries.</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-text" data-lang="text"><span class="line"><span class="cl">$ curl -s localhost:8131/lock.php?release=del
+</span></span><span class="line"><span class="cl">A acquires (1s TTL):     true
+</span></span><span class="line"><span class="cl">B acquires (30s TTL):    true
+</span></span><span class="line"><span class="cl">A releases with del:     1
+</span></span><span class="line"><span class="cl">C tries to acquire:      true
+</span></span><span class="line"><span class="cl">lock holder now:         &#39;c&#39;
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">$ curl -s localhost:8131/lock.php?release=del_if_eq
+</span></span><span class="line"><span class="cl">A acquires (1s TTL):     true
+</span></span><span class="line"><span class="cl">B acquires (30s TTL):    true
+</span></span><span class="line"><span class="cl">A releases with del_if_eq: false
+</span></span><span class="line"><span class="cl">C tries to acquire:      false
+</span></span><span class="line"><span class="cl">lock holder now:         &#39;B&#39;
+</span></span></code></pre></div><p>With <code>del</code>, A&rsquo;s release returns 1 (it deleted something, just not its own lock) and C gets in on top of B. With
+<code>del_if_eq</code>, A&rsquo;s release is a no-op, B keeps the lock and C is turned away.</p>
+<h3 id="then-the-cluster">Then the cluster</h3>
+<p>That fixed one node. ePHPm can also run as a cluster, with the KV store replicated between nodes over gossip and a data
+plane, and the clustering comment on <code>del_if_eq</code> was careful to say what it did and didn&rsquo;t promise: &ldquo;per-node atomic;
+cluster-wide it is last-arrival-wins&rdquo;. The same was true of <code>set_nx</code>. Each node ran the check-and-insert on its own map
+and then published the result.</p>
+<p>Spell that out for a lock and it&rsquo;s not a lock. Two nodes get a request for the same key at about the same time. Each
+checks its own map, each sees absent, each inserts, each publishes, and both callers were told they acquired it. The
+release side had the matching bug. A holder whose lock had expired and been granted to someone on another node still had
+its old token in its local copy, so <code>del_if_eq</code> matched against the stale copy, succeeded, and broadcast a tombstone that
+deleted the new holder&rsquo;s lock everywhere.</p>
+<p><a href="https://github.com/ephpm/ephpm/pull/562">#562</a> changes where the decision is made. Both <code>SETNX</code> and <code>DELIFEQ</code> go to the
+key&rsquo;s primary owner, <code>hash(key) % sorted alive nodes</code> (the same owner the large-value tier already used), and the owner
+decides under its own shard lock. It merged after v0.11.3 was cut, so it ships in the upcoming v0.12.0 release. The <code>Replicator</code> trait gets two hooks that default to &ldquo;decide locally&rdquo;, which is still
+right for a single node:</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-rust" data-lang="rust"><span class="line"><span class="cl"><span class="k">fn</span> <span class="nf">route_set_nx</span><span class="p">(</span><span class="o">&amp;</span><span class="bp">self</span><span class="p">,</span><span class="w"> </span><span class="n">key</span>: <span class="kp">&amp;</span><span class="kt">str</span><span class="p">,</span><span class="w"> </span><span class="n">value</span>: <span class="kp">&amp;</span><span class="p">[</span><span class="kt">u8</span><span class="p">],</span><span class="w"> </span><span class="n">ttl</span>: <span class="nb">Option</span><span class="o">&lt;</span><span class="n">Duration</span><span class="o">&gt;</span><span class="p">)</span><span class="w"> </span>-&gt; <span class="nc">Routed</span><span class="o">&lt;</span><span class="n">SetNxOutcome</span><span class="o">&gt;</span><span class="w"> </span><span class="p">{</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="kd">let</span><span class="w"> </span><span class="n">_</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">(</span><span class="n">key</span><span class="p">,</span><span class="w"> </span><span class="n">value</span><span class="p">,</span><span class="w"> </span><span class="n">ttl</span><span class="p">);</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="n">Routed</span>::<span class="n">Local</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="p">}</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="k">fn</span> <span class="nf">route_del_if_eq</span><span class="p">(</span><span class="o">&amp;</span><span class="bp">self</span><span class="p">,</span><span class="w"> </span><span class="n">key</span>: <span class="kp">&amp;</span><span class="kt">str</span><span class="p">,</span><span class="w"> </span><span class="n">token</span>: <span class="kp">&amp;</span><span class="p">[</span><span class="kt">u8</span><span class="p">])</span><span class="w"> </span>-&gt; <span class="nc">Routed</span><span class="o">&lt;</span><span class="kt">bool</span><span class="o">&gt;</span><span class="w"> </span><span class="p">{</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="kd">let</span><span class="w"> </span><span class="n">_</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">(</span><span class="n">key</span><span class="p">,</span><span class="w"> </span><span class="n">token</span><span class="p">);</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="n">Routed</span>::<span class="n">Local</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="p">}</span><span class="w">
+</span></span></span></code></pre></div><p>and <code>set_nx_outcome</code> asks before touching its own map:</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-rust" data-lang="rust"><span class="line"><span class="cl"><span class="k">if</span><span class="w"> </span><span class="kd">let</span><span class="w"> </span><span class="nb">Some</span><span class="p">(</span><span class="n">rep</span><span class="p">)</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="bp">self</span><span class="p">.</span><span class="n">active_replicator</span><span class="p">()</span><span class="w"> </span><span class="p">{</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="k">match</span><span class="w"> </span><span class="n">rep</span><span class="p">.</span><span class="n">route_set_nx</span><span class="p">(</span><span class="o">&amp;</span><span class="n">key</span><span class="p">,</span><span class="w"> </span><span class="o">&amp;</span><span class="n">value</span><span class="p">,</span><span class="w"> </span><span class="n">ttl</span><span class="p">)</span><span class="w"> </span><span class="p">{</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">        </span><span class="n">Routed</span>::<span class="n">Local</span><span class="w"> </span><span class="o">=&gt;</span><span class="w"> </span><span class="p">{}</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">        </span><span class="n">Routed</span>::<span class="n">Owner</span><span class="p">(</span><span class="n">outcome</span><span class="p">)</span><span class="w"> </span><span class="o">=&gt;</span><span class="w"> </span><span class="k">return</span><span class="w"> </span><span class="n">outcome</span><span class="p">,</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">        </span><span class="n">Routed</span>::<span class="n">OwnerUnreachable</span><span class="w"> </span><span class="o">=&gt;</span><span class="w"> </span><span class="k">return</span><span class="w"> </span><span class="n">SetNxOutcome</span>::<span class="n">OwnerUnreachable</span><span class="p">,</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="p">}</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="p">}</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="bp">self</span><span class="p">.</span><span class="n">set_nx_outcome_local</span><span class="p">(</span><span class="n">key</span><span class="p">,</span><span class="w"> </span><span class="n">value</span><span class="p">,</span><span class="w"> </span><span class="n">ttl</span><span class="p">)</span><span class="w">
+</span></span></span></code></pre></div><p>The owner runs the <code>_local</code> variant and never re-routes, so two nodes that briefly disagree about who owns a key can&rsquo;t
+bounce a request back and forth. When the owner can&rsquo;t be reached the caller gets a failure, not a guess: <code>set_nx</code>
+returns false and RESP answers <code>-CLUSTERDOWN ... the outcome is unknown</code> instead of <code>:0</code>, because a request that timed
+out may still have landed on the owner. Falling back to a local decision would bring back the exact bug the routing
+exists to fix.</p>
+<p>The PR&rsquo;s tests are the convincing part. A real three-node in-process cluster test, with routing stubbed back to <code>Local</code>,
+produces three winners for one lock, a stale release that returns <code>Ok(true)</code>, and an unreachable owner that still reports
+<code>Inserted</code>. With the routing in place all three pass, along with a 32-thread, four-&ldquo;node&rdquo; test that expects exactly one
+winner.</p>
+<p>I want to be precise about what this is: single-arbiter routing, not consensus. Every node computes the owner from its
+own view of live membership. During a join, a leave, or the few seconds it takes gossip to declare a node dead, two nodes
+can name different owners. A new owner only knows about locks that had already replicated to it. For session locks and
+cron de-duplication that&rsquo;s a fine trade. For anything where two holders would corrupt data, you want a fencing token or
+a real consensus store, and the docs now say that instead of implying it.</p>
+<p>The same PR finally closes the session handler&rsquo;s known limitation. The lock value is a random 128-bit token from PHP&rsquo;s
+CSPRNG, hex encoded, instead of <code>&quot;1&quot;</code>, and release (including the out-of-memory undo path) is <code>del_if_eq</code> against it.
+The new test <code>session_lock_release_cannot_delete_a_lock_it_no_longer_holds</code> fails against the old wrapper with
+<code>lock value ... got &quot;1&quot;</code>. Acquisition changed too: an unreachable owner is no longer treated as contention, so instead
+of retrying for up to 30 seconds the request proceeds after one timed-out attempt, with a warning. It still holds its
+token, so if the grant landed on the owner anyway, <code>PS_CLOSE</code> releases it.</p>
+<h3 id="the-wrappers-lag-the-server">The wrappers lag the server</h3>
+<p>This is the part that&rsquo;s easy to forget. A primitive in the server doesn&rsquo;t fix anything until callers use it. As of this
+writing <code>cache-laravel</code>&rsquo;s lock and the userland <code>session-handler</code> still release with a plain delete and still say there&rsquo;s
+no compare-and-delete, because they were written against the API as it was the day before. The acquisition side has
+mostly caught up (<code>cache-wordpress</code> moved <code>wp_cache_add()</code> to <code>setnx</code> in the same week), and the release side is next.</p>
+<p>The general lesson I took from it: when you review a lock, read the release first. Acquisition with <code>SETNX</code> is hard to
+get wrong. Release needs a token you generated, a compare-and-delete that&rsquo;s atomic where the decision is made, and in a
+cluster, agreement about where that is.</p>
+<h3 id="links">Links</h3>
+<ul>
+<li><a href="https://github.com/ephpm/ephpm/pull/111">ephpm #111: multi-tenant defaults and KV session locking</a></li>
+<li><a href="https://github.com/ephpm/ephpm/pull/501">ephpm #501: compare-and-delete (del_if_eq / DELIFEQ)</a></li>
+<li><a href="https://github.com/ephpm/ephpm/pull/562">ephpm #562: owner-arbitrated SETNX/DELIFEQ and the token-released session lock</a></li>
+<li><a href="https://github.com/ephpm/cache-laravel">ephpm/cache-laravel</a> and <a href="https://github.com/ephpm/session-handler">ephpm/session-handler</a></li>
+<li><a href="/blog/2026/09/calling-rust-from-php-without-a-socket-part-2/">Calling Rust From PHP Without a Socket, Part 2</a></li>
+<li><a href="https://redis.io/docs/latest/develop/use/patterns/distributed-locks/">Redis docs: distributed locks</a></li>
+</ul>
+
+      </div>
+      <footer>
+        <div class="stats">
+  
+    <ul class="categories">
+      
+        
+          <li><a class="article-terms-link" href="/categories/ephpm/">ephpm</a></li>
+        
+          <li><a class="article-terms-link" href="/categories/php/">php</a></li>
+        
+      
+    </ul>
+  
+  
+    <ul class="tags">
+      
+        
+          <li><a class="article-terms-link" href="/tags/ephpm/">ephpm</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/php/">php</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/rust/">rust</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/locking/">locking</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/redis/">redis</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/clustering/">clustering</a></li>
+        
+      
+    </ul>
+  
+</div>
+
+      </footer>
+    </div>
+    
+      
+  
+  <div class='post giscus-wrap'>
+    <script src='https://giscus.app/client.js'
+            data-repo='luthermonson/luth.io'
+            data-repo-id='R_kgDOGvFBXQ'
+            data-category='Announcements'
+            data-category-id='DIC_kwDOGvFBXc4DH_gv'
+            data-mapping='pathname'
+            data-strict='1'
+            data-reactions-enabled='1'
+            data-emit-metadata='0'
+            data-input-position='top'
+            data-theme='light'
+            data-lang='en'
+            data-loading='lazy'
+            crossorigin='anonymous'
+            async>
+    </script>
+  </div>
+  
+
+
+
+    
+  </article>
+  
+    <nav class="post-nav">
+      
+        <a href="/blog/2026/10/xdebug-worker-mode/" class="post-nav-link older">
+          <span class="post-nav-label">&larr; Older</span>
+          <span class="post-nav-title">Step Debugging a Worker That Never Ends</span>
+        </a>
+      
+      
+        <a href="/blog/2026/10/composer-without-php-vivacity/" class="post-nav-link newer">
+          <span class="post-nav-label">Newer &rarr;</span>
+          <span class="post-nav-title">Composer Without PHP: Embedding vivacity in ePHPm</span>
+        </a>
+      
+    </nav>
+  
+
+      </main>
+      <section id="site-sidebar">
+  
+    <section id="recent-posts">
+      <header>
+        <h1>Recent Posts</h1>
+      </header>
+      
+      <article class="mini-post">
+          <a href="/blog/2026/10/ephpm-worker-mode-performance/" class="image" style="--bg-image: url('/img/2026/10/ephpm-worker-mode-performance-cover.svg');">
+    <img class="" src="/img/2026/10/ephpm-worker-mode-performance-cover.svg" alt="Diagram: before, hyper/tokio hands each request to one shared bounded channel whose waiter list all 20 PHP threads contend on; after, a dispatcher hands the job straight into the mailbox of the most recently idle PHP thread and only queues it in a FIFO overflow queue when every thread is busy">
+  </a>
+        <header>
+          <h2><a href="/blog/2026/10/ephpm-worker-mode-performance/">Fourth Place in Worker Mode, and Why It Wasn&#39;t PHP</a></h2>
+          <time class="published" datetime="2026-10-15 19:45:00 -0700 PDT">October 15, 2026</time>
+        </header>
+      </article>
+      
+      <article class="mini-post">
+          <a href="/blog/2026/10/composer-without-php-vivacity/" class="image" style="--bg-image: url('/img/2026/10/composer-without-php-vivacity-bench.svg');">
+    <img class="" src="/img/2026/10/composer-without-php-vivacity-bench.svg" alt="Bar chart comparing Composer 2.10.3 and ephpm composer on a Laravel install on native Windows">
+  </a>
+        <header>
+          <h2><a href="/blog/2026/10/composer-without-php-vivacity/">Composer Without PHP: Embedding vivacity in ePHPm</a></h2>
+          <time class="published" datetime="2026-10-14 23:20:00 -0700 PDT">October 14, 2026</time>
+        </header>
+      </article>
+      
+      <article class="mini-post">
+          <a href="/blog/2026/10/a-lock-is-only-as-good-as-its-release/" class="image" style="--bg-image: url('/img/2026/10/a-lock-is-only-as-good-as-its-release-cover.svg');">
+    <img class="" src="/img/2026/10/a-lock-is-only-as-good-as-its-release-cover.svg" alt="Timeline: request A&#39;s lock expires, B acquires it, A&#39;s blind DEL frees B&#39;s lock and C gets in">
+  </a>
+        <header>
+          <h2><a href="/blog/2026/10/a-lock-is-only-as-good-as-its-release/">A Lock Is Only as Good as Its Release</a></h2>
+          <time class="published" datetime="2026-10-13 20:40:00 -0700 PDT">October 13, 2026</time>
+        </header>
+      </article>
+      
+      <article class="mini-post">
+          <a href="/blog/2026/10/xdebug-worker-mode/" class="image" style="--bg-image: url('/img/2026/10/xdebug-worker-mode-cover.svg');">
+    <img class="" src="/img/2026/10/xdebug-worker-mode-cover.svg" alt="Diagram of the ePHPm router sending untriggered requests to the warm worker pool and Xdebug-triggered requests to a one-request debug lane">
+  </a>
+        <header>
+          <h2><a href="/blog/2026/10/xdebug-worker-mode/">Step Debugging a Worker That Never Ends</a></h2>
+          <time class="published" datetime="2026-10-12 21:10:00 -0700 PDT">October 12, 2026</time>
+        </header>
+      </article>
+      
+      <article class="mini-post">
+          <a href="/blog/2026/10/ephpm-websockets-how-to/" class="image" style="--bg-image: url('/img/2026/10/ephpm-websockets-how-to-cover.svg');">
+    <img class="" src="/img/2026/10/ephpm-websockets-how-to-cover.svg" alt="Diagram: browsers hold sockets to ePHPm&#39;s Rust session tasks and registry; each connect, message and disconnect runs websocket.php once on the PHP thread pool, and ordinary HTTP requests push through ephpm_ws_broadcast">
+  </a>
+        <header>
+          <h2><a href="/blog/2026/10/ephpm-websockets-how-to/">WebSockets in ePHPm, From Zero to a Working Chat</a></h2>
+          <time class="published" datetime="2026-10-11 17:30:00 -0700 PDT">October 11, 2026</time>
+        </header>
+      </article>
+      
+      
+        <footer>
+          <a href="/blog" class="button">See More</a>
+        </footer>
+      
+    </section>
+  
+
+  
+    
+
+      <section id="categories">
+        <header>
+          <h1><a href="/categories">Categories</a></h1>
+        </header>
+        <ul>
+          
+          
+          <li>
+              <a href="/categories/ephpm/">ephpm<span class="count">36</span></a>
+          
+          <li>
+              <a href="/categories/go/">go<span class="count">30</span></a>
+          
+          <li>
+              <a href="/categories/php/">php<span class="count">26</span></a>
+          
+          <li>
+              <a href="/categories/rust/">rust<span class="count">16</span></a>
+          
+          <li>
+              <a href="/categories/homelab/">homelab<span class="count">14</span></a>
+          
+          <li>
+              <a href="/categories/windows/">windows<span class="count">14</span></a>
+          
+          <li>
+              <a href="/categories/ci/">ci<span class="count">9</span></a>
+          
+          <li>
+              <a href="/categories/databases/">databases<span class="count">9</span></a>
+          
+          <li>
+              <a href="/categories/security/">security<span class="count">9</span></a>
+          
+          <li>
+              <a href="/categories/containers/">containers<span class="count">7</span></a>
+          
+          <li>
+              <a href="/categories/tools/">tools<span class="count">5</span></a>
+          
+          <li>
+              <a href="/categories/ai-agents/">ai-agents<span class="count">4</span></a>
+          
+          </li>
+        </ul>
+      </section>
+    
+  
+
+  
+    <section id="mini-bio">
+      <header>
+        <h1>About</h1>
+      </header>
+      <p>Luther is a 20+ year software veteran specializing in backend APIs and architecting products. Employed at <a href='https://www.suse.com'>SUSE</a> as the Team Lead for the <a href='https://github.com/rancher/windows/issues'>Containers on Windows Team</a> working on <a href='https://rancher.com/'>Rancher</a> + <a href='https://kubernetes.io/'>Kubernetes</a></p>
+      <footer>
+        <a href="/about" class="button">Learn More</a>
+      </footer>
+    </section>
+  
+</section>
+
+      <footer id="site-footer">
+  
+      <ul class="socnet-icons">
+        
+
+        <li><a href="//github.com/luthermonson" target="_blank" rel="noopener" title="GitHub" class="fab fa-github"></a></li>
+
+
+
+
+
+
+
+
+
+
+
+<li><a href="//www.linkedin.com/in/luthermonson" target="_blank" rel="noopener" title="LinkedIn" class="fab fa-linkedin"></a></li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li><a href="//twitter.com/luthermonson" target="_blank" rel="noopener" title="Twitter" class="fab fa-twitter"></a></li>
+
+
+
+
+
+
+
+
+
+
+
+<li><a href="mailto:luther.monson@gmail.com" target="_blank" title="Email" class="far fa-envelope"></a></li>
+
+      </ul>
+  
+  <p class="copyright">
+    © 2026 Luther Monson
+      <br>
+    Theme: <a href='https://github.com/pacollins/hugo-future-imperfect-slim' target='_blank' rel='noopener'>Hugo Future Imperfect Slim</a><br>A <a href='https://html5up.net/future-imperfect' target='_blank' rel='noopener'>HTML5 UP port</a> | Powered by <a href='https://gohugo.io/' title='0.160.1' target='_blank' rel='noopener'>Hugo</a>
+  </p>
+</footer>
+<a id="back-to-top" href="#" class="fas fa-arrow-up fa-2x"></a>
+
+      <script src="/js/bundle.min.241b62ebc4792fe8c7a75879e5f710894f226f2b73342e9916b3a3b0526030cc.js" integrity="sha256-JBti68R5L&#43;jHp1h55fcQiU8ibytzNC6ZFrOjsFJgMMw="></script>
+    <script src="/js/add-on.js"></script>
+    </div>
+  </body>
+</html>

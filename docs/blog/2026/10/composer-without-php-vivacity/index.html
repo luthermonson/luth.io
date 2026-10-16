@@ -1,0 +1,744 @@
+<!doctype html>
+<html lang="en">
+  <head>
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-MSTSKGFWTX"></script>
+<script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+
+    gtag('config', 'G-MSTSKGFWTX');
+</script><meta charset="utf-8">
+<title>Composer Without PHP: Embedding vivacity in ePHPm - Luther Monson</title>
+<meta name="description" content="I embedded vivacity, a pure-Rust Composer-compatible installer, in ePHPm so one binary can install a PHP app&#39;s dependencies without PHP. This is what it took upstream and in ePHPm, and how it does against Composer on Windows.">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<meta name="twitter:card" content="summary_large_image"><meta name="twitter:site" content="@luthermonson">
+
+<meta property="og:site_name" content="Luther Monson">
+<meta property="og:title" content="Composer Without PHP: Embedding vivacity in ePHPm">
+<meta property="og:description" content="I embedded vivacity, a pure-Rust Composer-compatible installer, in ePHPm so one binary can install a PHP app&#39;s dependencies without PHP. This is what it took upstream and in ePHPm, and how it does against Composer on Windows.">
+<meta property="og:type" content="article">
+<meta property="og:url" content="https://luth.io/blog/2026/10/composer-without-php-vivacity/">
+    <meta property="og:image" content="https://luth.io/img/2026/10/composer-without-php-vivacity-bench.svg">
+    <meta property="og:image:alt" content="Bar chart comparing Composer 2.10.3 and ephpm composer on a Laravel install on native Windows">
+
+
+  <link rel="manifest" href="/favicon/site.webmanifest?v=1">
+  <link rel="apple-touch-icon" sizes="180x180" href="/favicon/apple-touch-icon.png?v=1">
+  <link rel="icon" type="image/png" sizes="32x32" href="/favicon/favicon-32x32.png?v=1">
+  <link rel="icon" type="image/png" sizes="16x16" href="/favicon/favicon-16x16.png?v=1">
+  
+    <link rel="mask-icon" href="/favicon/safari-pinned-tab.svg?v=1" color="#ffffff">
+    <link rel="shortcut icon" href="/favicon/favicon.ico?v=1">
+    <meta name="msapplication-config" content="/favicon/browserconfig.xml?v=1">
+  
+  <meta name="msapplication-TileColor" content="#ffffff">
+  <meta name="theme-color" content="#ffffff">
+
+
+  <meta name="generator" content="Hugo 0.160.1">
+  <link rel="alternate" type="application/rss+xml" href="https://luth.io/index.xml" title="Luther Monson">
+  <link rel="stylesheet" href="/css/bundle.min.e1ffed86714fbb7eff75eab221c0c61b8260be0c7d1c08db0fcb7a2bdb6af7c9.css" integrity="sha256-4f/thnFPu37/deqyIcDGG4Jgvgx9HAjbD8t6K9tq98k="><link rel="stylesheet" href="/css/add-on.css">
+        <link rel="stylesheet" href="/css/code.css">
+        <link rel="stylesheet" href="/css/mobile.css">
+</head>
+
+  <body>
+    
+
+<header id="site-header">
+  <nav id="site-nav">
+    <h1 class="nav-title">
+      <a href="/" class="nav">
+        <img class="nav-avatar" src="/img/luther-monson-headshot.jpg" alt="" width="32" height="32">
+        
+          Blog
+        
+      </a>
+    </h1>
+    <menu id="site-nav-menu" class="flyout-menu menu">
+      
+        
+          
+          <a href="/" class="nav link"><i class='fa fa-home'></i> Home</a>
+        
+      
+        
+          
+          <a href="/about" class="nav link"><i class='far fa-id-card'></i> About</a>
+        
+      
+        
+          
+          <a href="/blog" class="nav link"><i class='far fa-newspaper'></i> Blog</a>
+        
+      
+        
+          
+          <a href="/archive" class="nav link"><i class='far fa-calendar-alt'></i> Archive</a>
+        
+      
+        
+          
+          <a href="/categories" class="nav link"><i class='fas fa-sitemap'></i> Categories</a>
+        
+      
+      <a href="#share-menu" class="nav link share-toggle"><i class="fas fa-share-alt">&nbsp;</i>Share</a>
+      <a href="#search-input" class="nav link search-toggle"><i class="fas fa-search">&nbsp;</i>Search</a>
+    </menu>
+    <a href="#search-input" class="nav search-toggle"><i class="fas fa-search fa-2x">&nbsp;</i></a>
+    <a href="#share-menu" class="nav share-toggle"><i class="fas fa-share-alt fa-2x">&nbsp;</i></a>
+    
+    <a href="#site-nav" class="nav nav-toggle"><i class="fas fa-bars fa-2x"></i></a>
+  </nav>
+  <menu id="search" class="menu"><input id="search-input" class="search-input menu"></input><div id="search-results" class="search-results menu"></div></menu>
+  
+  
+    <menu id="share-menu" class="flyout-menu menu">
+      <h1>Share Post</h1>
+      
+
+
+
+
+  
+    
+    <a href="//twitter.com/share?text=Composer%20Without%20PHP%3a%20Embedding%20vivacity%20in%20ePHPm&amp;url=https%3a%2f%2fluth.io%2fblog%2f2026%2f10%2fcomposer-without-php-vivacity%2f" target="_blank" rel="noopener" class="nav share-btn twitter">
+        <p>Twitter</p>
+      </a>
+  
+
+  
+      <a href="//www.facebook.com/sharer/sharer.php?u=https%3a%2f%2fluth.io%2fblog%2f2026%2f10%2fcomposer-without-php-vivacity%2f" target="_blank" rel="noopener" class="nav share-btn facebook">
+        <p>Facebook</p>
+        </a>
+  
+
+  
+    <a href="//www.reddit.com/submit?url=https%3a%2f%2fluth.io%2fblog%2f2026%2f10%2fcomposer-without-php-vivacity%2f&amp;title=Composer%20Without%20PHP%3a%20Embedding%20vivacity%20in%20ePHPm" target="_blank" rel="noopener" class="nav share-btn reddit">
+          <p>Reddit</p>
+        </a>
+  
+
+  
+        <a href="//www.linkedin.com/shareArticle?url=https%3a%2f%2fluth.io%2fblog%2f2026%2f10%2fcomposer-without-php-vivacity%2f&amp;title=Composer%20Without%20PHP%3a%20Embedding%20vivacity%20in%20ePHPm" target="_blank" rel="noopener" class="nav share-btn linkedin">
+            <p>LinkedIn</p>
+          </a>
+  
+
+  
+        <a href="//www.pinterest.com/pin/create/button/?url=https%3a%2f%2fluth.io%2fblog%2f2026%2f10%2fcomposer-without-php-vivacity%2f&amp;description=Composer%20Without%20PHP%3a%20Embedding%20vivacity%20in%20ePHPm" target="_blank" rel="noopener" class="nav share-btn pinterest">
+          <p>Pinterest</p>
+        </a>
+  
+
+  
+        <a href="mailto:?subject=Check%20out%20this%20post%20by Luther%20Monson&amp;body=https%3a%2f%2fluth.io%2fblog%2f2026%2f10%2fcomposer-without-php-vivacity%2f" target="_blank" class="nav share-btn email" data-proofer-ignore>
+          <p>Email</p>
+        </a>
+  
+
+
+    </menu>
+  
+</header>
+
+    <div id="wrapper">
+      <section id="site-intro" class="hidden-single-column">
+  <a href="/"><img src="/img/luther-monson-headshot.jpg" class="circle" width="100" alt="Luther Monson, Staff Software Engineer at SUSE" /></a>
+  <header>
+    <h1>Luther Monson</h1>
+  </header>
+  <main>
+    <p>Go by way of PHP &middot; Containers &middot; VMs &middot; Windows &middot; Kubernetes</p>
+  </main>
+  
+    <footer>
+      <ul class="socnet-icons">
+        
+
+        <li><a href="//github.com/luthermonson" target="_blank" rel="noopener" title="GitHub" class="fab fa-github"></a></li>
+
+
+
+
+
+
+
+
+
+
+
+<li><a href="//www.linkedin.com/in/luthermonson" target="_blank" rel="noopener" title="LinkedIn" class="fab fa-linkedin"></a></li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li><a href="//twitter.com/luthermonson" target="_blank" rel="noopener" title="Twitter" class="fab fa-twitter"></a></li>
+
+
+
+
+
+
+
+
+
+
+
+<li><a href="mailto:luther.monson@gmail.com" target="_blank" title="Email" class="far fa-envelope"></a></li>
+
+      </ul>
+    </footer>
+  
+</section>
+
+      <main id="site-main">
+        
+  <article>
+    <div class="post">
+      <header>
+  <div class="title">
+    
+      <h2><a href="/blog/2026/10/composer-without-php-vivacity/">Composer Without PHP: Embedding vivacity in ePHPm</a></h2>
+    
+    
+      <p>I embedded vivacity, a pure-Rust Composer-compatible installer, in ePHPm so one binary can install a PHP app&#39;s dependencies without PHP. This is what it took upstream and in ePHPm, and how it does against Composer on Windows.</p>
+    
+  </div>
+  <div class="meta">
+    <time datetime="2026-10-14 23:20:00 -0700 PDT">October 14, 2026</time>
+    
+    <p>10-Minute Read</p>
+  </div>
+</header>
+
+      <div id="socnet-share">
+        
+
+
+
+
+  
+    
+    <a href="//twitter.com/share?text=Composer%20Without%20PHP%3a%20Embedding%20vivacity%20in%20ePHPm&amp;url=https%3a%2f%2fluth.io%2fblog%2f2026%2f10%2fcomposer-without-php-vivacity%2f" target="_blank" rel="noopener" class="nav share-btn twitter">
+        <p>Twitter</p>
+      </a>
+  
+
+  
+      <a href="//www.facebook.com/sharer/sharer.php?u=https%3a%2f%2fluth.io%2fblog%2f2026%2f10%2fcomposer-without-php-vivacity%2f" target="_blank" rel="noopener" class="nav share-btn facebook">
+        <p>Facebook</p>
+        </a>
+  
+
+  
+    <a href="//www.reddit.com/submit?url=https%3a%2f%2fluth.io%2fblog%2f2026%2f10%2fcomposer-without-php-vivacity%2f&amp;title=Composer%20Without%20PHP%3a%20Embedding%20vivacity%20in%20ePHPm" target="_blank" rel="noopener" class="nav share-btn reddit">
+          <p>Reddit</p>
+        </a>
+  
+
+  
+        <a href="//www.linkedin.com/shareArticle?url=https%3a%2f%2fluth.io%2fblog%2f2026%2f10%2fcomposer-without-php-vivacity%2f&amp;title=Composer%20Without%20PHP%3a%20Embedding%20vivacity%20in%20ePHPm" target="_blank" rel="noopener" class="nav share-btn linkedin">
+            <p>LinkedIn</p>
+          </a>
+  
+
+  
+        <a href="//www.pinterest.com/pin/create/button/?url=https%3a%2f%2fluth.io%2fblog%2f2026%2f10%2fcomposer-without-php-vivacity%2f&amp;description=Composer%20Without%20PHP%3a%20Embedding%20vivacity%20in%20ePHPm" target="_blank" rel="noopener" class="nav share-btn pinterest">
+          <p>Pinterest</p>
+        </a>
+  
+
+  
+        <a href="mailto:?subject=Check%20out%20this%20post%20by Luther%20Monson&amp;body=https%3a%2f%2fluth.io%2fblog%2f2026%2f10%2fcomposer-without-php-vivacity%2f" target="_blank" class="nav share-btn email" data-proofer-ignore>
+          <p>Email</p>
+        </a>
+  
+
+
+      </div>
+      <div class="content">
+        
+        <p>The pitch for <a href="https://github.com/ephpm/ephpm">ePHPm</a> is one binary in place of php-fpm, nginx and Redis. There was
+always a hole in it though. To deploy a PHP app you still need to run <code>composer install</code>, and that drags PHP and
+<code>composer.phar</code> back onto the box, or into the container build, just for that one step. <code>ephpm composer install</code> now
+runs a pure-Rust, Composer-compatible installer called <a href="https://github.com/Adelagric/vivacity">vivacity</a> inside the
+ePHPm binary. One binary serves the app and installs its dependencies, and on Windows that works with no PHP installed at
+all. Getting it right took five upstream PRs, a fork, a docs rewrite that took back claims we&rsquo;d already made, and
+teaching <code>ephpm</code> to pretend to be <code>php</code>.</p>
+<h3 id="why-vivacity">Why vivacity</h3>
+<p>vivacity&rsquo;s promise is a <strong>byte-for-byte identical <code>vendor/</code></strong> compared to real Composer. Not &ldquo;close enough&rdquo;, not
+&ldquo;works for the common cases&rdquo;, identical files. That&rsquo;s what makes it a drop-in: if the output is the same bytes, nothing
+downstream can tell the difference.</p>
+<p>The embed itself is small (<a href="https://github.com/ephpm/ephpm/pull/523">#523</a>). <code>ephpm composer</code> captures every argument
+after <code>composer</code> verbatim, prepends a program name, calls <code>vivacity::run(argv)</code> in-process and exits with whatever code
+it returns, so it drops straight into CI scripts:</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl">ephpm composer install --no-dev --optimize-autoloader
+</span></span><span class="line"><span class="cl">ephpm composer require monolog/monolog
+</span></span><span class="line"><span class="cl">ephpm composer --version
+</span></span></code></pre></div><h3 id="contributing-upstream-first">Contributing upstream first</h3>
+<p>vivacity didn&rsquo;t run on Windows, and it couldn&rsquo;t be linked into ePHPm. Both had to be fixed upstream before the embed
+was worth anything.</p>
+<p><strong>Windows support</strong> (<a href="https://github.com/Adelagric/vivacity/pull/2">vivacity #2</a>). The workspace already <em>compiled</em>
+on Windows, because every Unix-ism was <code>#[cfg(unix)]</code>-gated, but the Windows side of every gate was a silent no-op.
+Symlinks were dropped, there were no cmd-usable <code>vendor/bin</code> proxies, cache directories were wrong, and verbatim
+<code>\\?\</code> paths leaked into generated autoload files. The PR fills all of that in, and it ports Composer&rsquo;s <code>bin-compat</code>
+rule for the <code>.bat</code> proxies (written on Windows and WSL by default, everywhere with <code>bin-compat: full</code>), so <code>vendor/bin</code>
+matches what Composer produces on every platform.</p>
+<p>To prove it I built a small workbench, <code>vivace-bench</code>: official PHP 8.3.33 for Windows, Composer 2.10.3, and a test
+project pinning monolog, psr/log and nikic/php-parser (which ships a <code>vendor/bin</code> binary, so it exercises the <code>.bat</code>
+path). A script runs native Windows <code>composer install</code>, snapshots <code>vendor/</code>, wipes it, runs vivacity from the same lock
+and compares a sha256 manifest of every file. Result: 429 files each, every hash matching, and <code>dump-autoload -o</code>
+identical too. That includes <code>vendor/bin/php-parse.bat</code> with its CRLF line endings.</p>
+<p><strong>Making it embeddable.</strong> This is where it got interesting. ePHPm statically links <code>libphp</code>, and the PHP SDK already
+bundles bzip2, xz, zstd, zlib and PCRE2 as plain C symbols. Any Rust crate that pulls in a second copy of one of those C
+libraries collides at link time:</p>
+<pre tabindex="0"><code>rust-lld: error: duplicate symbol: BZ2_bzDecompress
+(...and the rest of BZ2_*)
+error: could not compile `ephpm` (bin &#34;ephpm&#34;)
+</code></pre><p>vivacity&rsquo;s own code never touched those libraries; they arrived through the <code>zip</code> crate&rsquo;s default features. Since
+extraction only ever decompresses, the fix was to switch bzip2 to the pure-Rust <code>libbz2-rs-sys</code> backend (its exports
+carry a version prefix, so nothing collides), keep deflate and LZMA on their existing pure-Rust backends, and drop the
+zip xz and zstd methods, which no Composer dist uses, instead of linking 219 colliding <code>lzma_*</code> symbols. Upstream and
+I landed on the same <code>zip</code> change 47 minutes apart: the maintainer&rsquo;s commit shipped as 0.11.1, and
+<a href="https://github.com/Adelagric/vivacity/pull/6">vivacity #6</a> went in on top (released in 0.12.0) with a CI check that
+keeps C libraries out of the graph, plus the symbol measurements. Upstream had already prefixed PCRE2 in 0.11.0.</p>
+<p>TLS had the same shape of problem. vivacity hard-enabled reqwest&rsquo;s <code>rustls-tls</code>, which compiles in the <code>ring</code> crypto
+provider. ePHPm is pinned to <code>aws-lc-rs</code>, and with two providers compiled in rustls refuses to pick one and panics on the
+first bare <code>ClientConfig::builder()</code>. That&rsquo;s a bug ePHPm had shipped once before, and there&rsquo;s a test guarding against it
+now. Cargo features are additive and can&rsquo;t be subtracted from outside, so the knob had to exist upstream:
+<a href="https://github.com/Adelagric/vivacity/pull/5">vivacity #5</a> added <code>rustls-tls-no-provider</code> alongside the default
+<code>rustls-tls-ring</code>.</p>
+<p>And while I was in there, <a href="https://github.com/Adelagric/vivacity/pull/4">vivacity #4</a> parallelized store-to-vendor
+materialization and the classmap scan with rayon, while keeping the output byte-identical. The classmap merge is replayed
+sequentially in Composer&rsquo;s exact order, so parallelism can&rsquo;t change a byte. Measured with hyperfine on WSL2 against
+v0.7.0, a wiped-<code>vendor/</code> install from a warm store was 2.24x faster on Sylius and 1.60x on Laravel, and the upstream
+differential harness stayed at 0 diff across all six fixtures. Upstream kept the file reads sequential on APFS, where
+the fan-out measured slower.</p>
+<p>The resulting dependency line in ePHPm says exactly why it looks the way it does:</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-toml" data-lang="toml"><span class="line"><span class="cl"><span class="nx">vivacity</span> <span class="p">=</span> <span class="p">{</span> <span class="nx">version</span> <span class="p">=</span> <span class="s2">&#34;=0.11.1&#34;</span><span class="p">,</span> <span class="nx">default-features</span> <span class="p">=</span> <span class="kc">false</span><span class="p">,</span> <span class="nx">features</span> <span class="p">=</span> <span class="p">[</span><span class="s2">&#34;rustls-tls-no-provider&#34;</span><span class="p">]</span> <span class="p">}</span>
+</span></span></code></pre></div><h3 id="keeping-up-with-a-crate-that-ships-daily">Keeping up with a crate that ships daily</h3>
+<p>vivacity moves fast. The pin went 0.11.1 to 0.15.0 two days after the embed merged, and 0.15 to 0.16 to 0.17 happened
+in three days. &ldquo;Vivacity Pin Watch&rdquo; (<a href="https://github.com/ephpm/ephpm/pull/532">#532</a>) is a daily job that opens a bump
+PR whenever crates.io is ahead of the exact <code>=</code> pin. It never auto-merges. The human gets a linking checklist instead:
+no new C-linking crate (a pure-Rust addition like <code>zlib-rs</code> is fine, <code>libz-sys</code> is not), still exactly one crypto
+provider, <code>vivacity::run()</code> unchanged. The pin is exact precisely so a release can&rsquo;t sneak a new <code>-sys</code> crate into a
+binary that statically links PHP.</p>
+<p>Side note worth knowing if you build one of these: PRs opened with the default <code>GITHUB_TOKEN</code> don&rsquo;t trigger CI.
+That&rsquo;s GitHub&rsquo;s recursion guard. It&rsquo;s documented, and it&rsquo;s still easy to forget. Close and reopen the PR, push to it,
+or use a PAT or GitHub App token for the job.</p>
+<h3 id="the-honest-docs-rewrite">The honest docs rewrite</h3>
+<p>The docs had been saying <code>ephpm composer</code> &ldquo;needs no PHP runtime&rdquo;. <a href="https://github.com/ephpm/ephpm/pull/542">#542</a>
+(merged after v0.11.3, so its corrected <code>--help</code> text ships in the upcoming v0.12.0) re-checked every claim against vivacity 0.17.0&rsquo;s source and real runs on a Windows box with no <code>php</code> and no <code>composer</code>
+on <code>PATH</code>, and that one was wrong for <code>update</code>, <code>require</code> and <code>remove</code>. vivacity checks the platform by running an
+external <code>php</code>, never ePHPm&rsquo;s embedded one, and without one those commands exit 1 (<code>cannot run php: program not found</code>),
+even with <code>--ignore-platform-reqs</code>.</p>
+<p>It also found the CI footgun. The completely standard</p>
+<pre tabindex="0"><code>composer install --no-dev --no-interaction --prefer-dist -o
+</code></pre><p><strong>exited 2</strong>, because <code>--no-interaction</code> and <code>--prefer-dist</code> were usage errors on <code>install</code>. Other gaps got documented
+instead of glossed over: scripts are skipped silently (so Laravel&rsquo;s <code>package:discover</code> needs a workaround), <code>vcs</code>
+repositories are a hard error, and unknown plugins, source installs and path repos on Windows fall back to a real
+Composer if one exists.</p>
+<p>I&rsquo;d rather ship a reference page full of caveats that are true than a short one that isn&rsquo;t.</p>
+<h3 id="ephpm-pretends-to-be-php">ePHPm pretends to be php</h3>
+<p>The platform-check gap had a better fix than documentation. Under <code>ephpm php</code>, <code>PHP_BINARY</code> is the <code>ephpm</code>
+executable, which is correct. But Symfony Process, Composer <code>@php</code> scripts, PHPUnit process isolation and spatie/async
+all re-run <code>PHP_BINARY script.php</code>, and that hit ePHPm&rsquo;s own argument parser. Worse, a bare <code>PHP_BINARY</code> with a program
+on stdin <em>started the dev server</em>, since no subcommand means <code>ephpm dev</code>.</p>
+<p><a href="https://github.com/ephpm/ephpm/pull/558">#558</a>, still open as I write this, adds a &ldquo;php personality&rdquo;, decided by a small pure function so the rules
+are unit-tested. <code>ephpm</code> hands all of argv to the embedded php-cli when:</p>
+<ol>
+<li><strong>argv[0] is named like php</strong> (<code>php</code>, <code>php8.4</code>, <code>php84</code>, <code>.exe</code> ignored). So <code>ln -s ephpm /usr/local/bin/php</code> is a
+complete PHP install.</li>
+<li><strong>It inherited an <code>EPHPM_PHP_CLI=1</code> marker</strong>, unless argv[1] is a real ePHPm subcommand. <code>ephpm php</code> and
+<code>ephpm composer</code> export the marker, so their children inherit it, and <code>ephpm kv ...</code> called from a PHP script still
+means ePHPm.</li>
+<li><strong>argv[1] is php-shaped</strong> with no marker: an option ePHPm doesn&rsquo;t have, or an existing file that isn&rsquo;t a
+subcommand name. Those shapes were all usage errors before, so nothing that used to work changes meaning, and
+<code>ephpm sevre</code> still gets &ldquo;did you mean <code>serve</code>&rdquo;.</li>
+</ol>
+<p>I rejected pointing <code>PHP_BINARY</code> at a generated <code>php</code> symlink (filesystem side effects, and it needs privileges on
+Windows) and treating every unknown argument as php (you lose the typo diagnostics, and bare <code>ephpm</code> has to stay the dev
+server).</p>
+<p>The payoff is one line: <code>ephpm composer</code> sets <code>VIVACITY_PHP</code> to its own executable when the build links PHP (and you
+haven&rsquo;t set it yourself). vivacity&rsquo;s platform probe then runs on the <em>embedded</em> PHP, which is the PHP that actually
+serves the app, and once #558 merges, <code>update</code>, <code>require</code> and <code>remove</code> work with no system PHP. The new conformance
+case for re-invoking <code>PHP_BINARY</code> (script, <code>-r</code>, <code>-d</code>, stdin, exit status through <code>proc_open</code>) is byte-identical to
+upstream php 8.5.4.</p>
+<h3 id="contributing-the-ci-flags">Contributing the CI flags</h3>
+<p>The last piece was making that standard CI line run. Composer accepts <code>-n</code>, <code>-q</code>, <code>-v</code> and <code>--no-ansi</code> as global flags
+on every command. vivacity only accepted some of them on some commands. The change is small, and it went in
+first as a commit on our fork (<a href="https://github.com/ephpm/vivace/pull/2">ephpm/vivace#2</a>, merged) applied through
+<code>[patch.crates-io]</code> in <a href="https://github.com/ephpm/ephpm/pull/561">#561</a>, together with the <code>--prefer-dist</code> upstream
+added in 0.19 (the pin moves to 0.20.0). #561 is still open. With both,</p>
+<pre tabindex="0"><code>ephpm composer install --no-dev --no-interaction --no-ansi --prefer-dist -o
+</code></pre><p>exits 0 with no PHP on <code>PATH</code>. The exact pin stays, so Pin Watch keeps working: a bot bump to a newer crates.io version
+leaves the patch unused (Cargo warns), which is the cue to check whether upstream took the change and drop the patch.
+Upstream did take it: <a href="https://github.com/Adelagric/vivacity/pull/7">vivacity #7</a> merged tonight and should be in the
+next release, and <a href="https://github.com/ephpm/ephpm/pull/576">#576</a>, a draft, drops the fork in favor of that release once
+it&rsquo;s on crates.io.</p>
+<h3 id="how-fast-is-it">How fast is it?</h3>
+<p>vivacity&rsquo;s own benchmarks were run on macOS and Linux. Since the Windows story was the reason I got involved, I
+measured it there: Composer 2.10.3 on PHP 8.3.33 against the released ePHPm v0.11.2 (embedding vivacity 0.17.0),
+installing vivacity&rsquo;s Laravel fixture, 109 packages, on native Windows.</p>
+<p><img src="/img/2026/10/composer-without-php-vivacity-bench.svg" alt="Composer vs ephpm composer on Windows"></p>
+<p>A fresh install from warm caches (delete <code>vendor/</code>, install from the lock) took a median of 107.3 seconds with
+Composer and 13.9 seconds with <code>ephpm composer</code>. A no-op install was 6.7 seconds versus 0.73, and <code>dump-autoload -o</code>
+was 6.5 seconds versus 0.38. Then the part that matters more than any of the timings: both <code>vendor/</code> trees were 8853
+files, and every sha256 matched.</p>
+<p>Take the absolute numbers as &ldquo;Windows with Defender on&rdquo;. Extracting 8853 files is where NTFS and real-time scanning
+hurt the most, and both tools pay that. vivacity&rsquo;s advantage is mostly that it extracts each package once into its
+store and materializes <code>vendor/</code> from there in parallel, where Composer unzips every archive again on every install.
+I didn&rsquo;t measure Linux or macOS for this post. Upstream&rsquo;s own numbers from a Mac Studio (<code>bench/M5-perf.md</code> in the
+vivacity repo) put warm installs at roughly 10x to 14x faster than Composer.</p>
+<h3 id="how-i-measured">How I measured</h3>
+<ul>
+<li>
+<p>AMD Ryzen 9 5950X, 128 GB RAM, ADATA LEGEND 860 SSD, Windows 11 Pro (build 26200), Windows Defender real-time
+protection on (as it would be on a developer machine).</p>
+</li>
+<li>
+<p>Composer 2.10.3 on the official PHP 8.3.33 NTS x64 build (<code>openssl</code>, <code>mbstring</code>, <code>curl</code>, <code>zip</code> enabled), run as
+<code>php composer.phar &lt;cmd&gt; --no-interaction --no-scripts -q</code>. <code>--no-scripts</code> because vivacity never runs scripts.</p>
+</li>
+<li>
+<p><code>ephpm.exe</code> from the v0.11.2 release (<code>ephpm-v0.11.2+php8.5.7-windows-x86_64.tar.gz</code>, sha256 checked against
+<code>SHA256SUMS</code>), <code>ephpm composer --version</code> reporting <code>vivacity 0.17.0</code>.</p>
+</li>
+<li>
+<p>Project: <code>fixtures/projects/laravel</code> from the vivacity repo (Laravel 13 skeleton with its lock). Both tools got
+<code>--ignore-platform-reqs</code> on install, since packages in the lock require PHP 8.4.1 and the Composer side ran on 8.3.</p>
+</li>
+<li>
+<p>Package caches warm for both (Composer&rsquo;s download cache, vivacity&rsquo;s store), separate project copies per tool.
+&ldquo;Fresh&rdquo; deletes <code>vendor/</code> before each run; &ldquo;no-op&rdquo; re-runs <code>install -o</code> on a complete <code>vendor/</code>; plus <code>dump-autoload -o</code>.
+Wall-clock per command from a bash loop: 3 fresh installs, then 2 no-op installs, then 2 dumps per tool, one tool at
+a time, nothing else benchmarking on the machine. Raw runs (ms):</p>
+<table>
+  <thead>
+      <tr>
+          <th></th>
+          <th>Composer</th>
+          <th>ephpm composer</th>
+      </tr>
+  </thead>
+  <tbody>
+      <tr>
+          <td>install, <code>vendor/</code> deleted</td>
+          <td>109975, 99507, 107324</td>
+          <td>14652, 13856, 13364</td>
+      </tr>
+      <tr>
+          <td>install, no-op</td>
+          <td>6667, 6790</td>
+          <td>759, 701</td>
+      </tr>
+      <tr>
+          <td><code>dump-autoload -o</code></td>
+          <td>6724, 6374</td>
+          <td>301, 458</td>
+      </tr>
+  </tbody>
+</table>
+</li>
+<li>
+<p>Afterwards I compared a sha256 manifest of every file in both <code>vendor/</code> trees: 8853 files each, byte-identical.</p>
+</li>
+</ul>
+<h3 id="links">Links</h3>
+<ul>
+<li>Embed: <a href="https://github.com/ephpm/ephpm/pull/523">ephpm #523</a> (v0.11.0); Pin Watch: <a href="https://github.com/ephpm/ephpm/pull/532">#532</a> (v0.11.2)</li>
+<li>Docs rewrite: <a href="https://github.com/ephpm/ephpm/pull/542">#542</a> (merged, v0.12.0); php personality: <a href="https://github.com/ephpm/ephpm/pull/558">#558</a> (open); CI flags: <a href="https://github.com/ephpm/ephpm/pull/561">#561</a> (open), <a href="https://github.com/ephpm/vivace/pull/2">ephpm/vivace#2</a>; dropping the fork: <a href="https://github.com/ephpm/ephpm/pull/576">#576</a> (draft)</li>
+<li>Upstream, all merged: <a href="https://github.com/Adelagric/vivacity/pull/2">vivacity #2</a> (Windows, 0.7.0), <a href="https://github.com/Adelagric/vivacity/pull/4">#4</a> (parallel install, 0.9.0), <a href="https://github.com/Adelagric/vivacity/pull/5">#5</a> (TLS backend, 0.9.0), <a href="https://github.com/Adelagric/vivacity/pull/6">#6</a> (pure-Rust extraction, 0.12.0), <a href="https://github.com/Adelagric/vivacity/pull/7">#7</a> (global CI flags, merged, not released yet)</li>
+<li><a href="https://github.com/Adelagric/vivacity">vivacity</a> and <a href="https://getcomposer.org/">Composer</a></li>
+</ul>
+
+      </div>
+      <footer>
+        <div class="stats">
+  
+    <ul class="categories">
+      
+        
+          <li><a class="article-terms-link" href="/categories/ephpm/">ephpm</a></li>
+        
+          <li><a class="article-terms-link" href="/categories/php/">php</a></li>
+        
+          <li><a class="article-terms-link" href="/categories/rust/">rust</a></li>
+        
+      
+    </ul>
+  
+  
+    <ul class="tags">
+      
+        
+          <li><a class="article-terms-link" href="/tags/php/">php</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/rust/">rust</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/ephpm/">ephpm</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/composer/">composer</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/vivacity/">vivacity</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/windows/">windows</a></li>
+        
+      
+    </ul>
+  
+</div>
+
+      </footer>
+    </div>
+    
+      
+  
+  <div class='post giscus-wrap'>
+    <script src='https://giscus.app/client.js'
+            data-repo='luthermonson/luth.io'
+            data-repo-id='R_kgDOGvFBXQ'
+            data-category='Announcements'
+            data-category-id='DIC_kwDOGvFBXc4DH_gv'
+            data-mapping='pathname'
+            data-strict='1'
+            data-reactions-enabled='1'
+            data-emit-metadata='0'
+            data-input-position='top'
+            data-theme='light'
+            data-lang='en'
+            data-loading='lazy'
+            crossorigin='anonymous'
+            async>
+    </script>
+  </div>
+  
+
+
+
+    
+  </article>
+  
+    <nav class="post-nav">
+      
+        <a href="/blog/2026/10/a-lock-is-only-as-good-as-its-release/" class="post-nav-link older">
+          <span class="post-nav-label">&larr; Older</span>
+          <span class="post-nav-title">A Lock Is Only as Good as Its Release</span>
+        </a>
+      
+      
+        <a href="/blog/2026/10/ephpm-worker-mode-performance/" class="post-nav-link newer">
+          <span class="post-nav-label">Newer &rarr;</span>
+          <span class="post-nav-title">Fourth Place in Worker Mode, and Why It Wasn&#39;t PHP</span>
+        </a>
+      
+    </nav>
+  
+
+      </main>
+      <section id="site-sidebar">
+  
+    <section id="recent-posts">
+      <header>
+        <h1>Recent Posts</h1>
+      </header>
+      
+      <article class="mini-post">
+          <a href="/blog/2026/10/ephpm-worker-mode-performance/" class="image" style="--bg-image: url('/img/2026/10/ephpm-worker-mode-performance-cover.svg');">
+    <img class="" src="/img/2026/10/ephpm-worker-mode-performance-cover.svg" alt="Diagram: before, hyper/tokio hands each request to one shared bounded channel whose waiter list all 20 PHP threads contend on; after, a dispatcher hands the job straight into the mailbox of the most recently idle PHP thread and only queues it in a FIFO overflow queue when every thread is busy">
+  </a>
+        <header>
+          <h2><a href="/blog/2026/10/ephpm-worker-mode-performance/">Fourth Place in Worker Mode, and Why It Wasn&#39;t PHP</a></h2>
+          <time class="published" datetime="2026-10-15 19:45:00 -0700 PDT">October 15, 2026</time>
+        </header>
+      </article>
+      
+      <article class="mini-post">
+          <a href="/blog/2026/10/composer-without-php-vivacity/" class="image" style="--bg-image: url('/img/2026/10/composer-without-php-vivacity-bench.svg');">
+    <img class="" src="/img/2026/10/composer-without-php-vivacity-bench.svg" alt="Bar chart comparing Composer 2.10.3 and ephpm composer on a Laravel install on native Windows">
+  </a>
+        <header>
+          <h2><a href="/blog/2026/10/composer-without-php-vivacity/">Composer Without PHP: Embedding vivacity in ePHPm</a></h2>
+          <time class="published" datetime="2026-10-14 23:20:00 -0700 PDT">October 14, 2026</time>
+        </header>
+      </article>
+      
+      <article class="mini-post">
+          <a href="/blog/2026/10/a-lock-is-only-as-good-as-its-release/" class="image" style="--bg-image: url('/img/2026/10/a-lock-is-only-as-good-as-its-release-cover.svg');">
+    <img class="" src="/img/2026/10/a-lock-is-only-as-good-as-its-release-cover.svg" alt="Timeline: request A&#39;s lock expires, B acquires it, A&#39;s blind DEL frees B&#39;s lock and C gets in">
+  </a>
+        <header>
+          <h2><a href="/blog/2026/10/a-lock-is-only-as-good-as-its-release/">A Lock Is Only as Good as Its Release</a></h2>
+          <time class="published" datetime="2026-10-13 20:40:00 -0700 PDT">October 13, 2026</time>
+        </header>
+      </article>
+      
+      <article class="mini-post">
+          <a href="/blog/2026/10/xdebug-worker-mode/" class="image" style="--bg-image: url('/img/2026/10/xdebug-worker-mode-cover.svg');">
+    <img class="" src="/img/2026/10/xdebug-worker-mode-cover.svg" alt="Diagram of the ePHPm router sending untriggered requests to the warm worker pool and Xdebug-triggered requests to a one-request debug lane">
+  </a>
+        <header>
+          <h2><a href="/blog/2026/10/xdebug-worker-mode/">Step Debugging a Worker That Never Ends</a></h2>
+          <time class="published" datetime="2026-10-12 21:10:00 -0700 PDT">October 12, 2026</time>
+        </header>
+      </article>
+      
+      <article class="mini-post">
+          <a href="/blog/2026/10/ephpm-websockets-how-to/" class="image" style="--bg-image: url('/img/2026/10/ephpm-websockets-how-to-cover.svg');">
+    <img class="" src="/img/2026/10/ephpm-websockets-how-to-cover.svg" alt="Diagram: browsers hold sockets to ePHPm&#39;s Rust session tasks and registry; each connect, message and disconnect runs websocket.php once on the PHP thread pool, and ordinary HTTP requests push through ephpm_ws_broadcast">
+  </a>
+        <header>
+          <h2><a href="/blog/2026/10/ephpm-websockets-how-to/">WebSockets in ePHPm, From Zero to a Working Chat</a></h2>
+          <time class="published" datetime="2026-10-11 17:30:00 -0700 PDT">October 11, 2026</time>
+        </header>
+      </article>
+      
+      
+        <footer>
+          <a href="/blog" class="button">See More</a>
+        </footer>
+      
+    </section>
+  
+
+  
+    
+
+      <section id="categories">
+        <header>
+          <h1><a href="/categories">Categories</a></h1>
+        </header>
+        <ul>
+          
+          
+          <li>
+              <a href="/categories/ephpm/">ephpm<span class="count">36</span></a>
+          
+          <li>
+              <a href="/categories/go/">go<span class="count">30</span></a>
+          
+          <li>
+              <a href="/categories/php/">php<span class="count">26</span></a>
+          
+          <li>
+              <a href="/categories/rust/">rust<span class="count">16</span></a>
+          
+          <li>
+              <a href="/categories/homelab/">homelab<span class="count">14</span></a>
+          
+          <li>
+              <a href="/categories/windows/">windows<span class="count">14</span></a>
+          
+          <li>
+              <a href="/categories/ci/">ci<span class="count">9</span></a>
+          
+          <li>
+              <a href="/categories/databases/">databases<span class="count">9</span></a>
+          
+          <li>
+              <a href="/categories/security/">security<span class="count">9</span></a>
+          
+          <li>
+              <a href="/categories/containers/">containers<span class="count">7</span></a>
+          
+          <li>
+              <a href="/categories/tools/">tools<span class="count">5</span></a>
+          
+          <li>
+              <a href="/categories/ai-agents/">ai-agents<span class="count">4</span></a>
+          
+          </li>
+        </ul>
+      </section>
+    
+  
+
+  
+    <section id="mini-bio">
+      <header>
+        <h1>About</h1>
+      </header>
+      <p>Luther is a 20+ year software veteran specializing in backend APIs and architecting products. Employed at <a href='https://www.suse.com'>SUSE</a> as the Team Lead for the <a href='https://github.com/rancher/windows/issues'>Containers on Windows Team</a> working on <a href='https://rancher.com/'>Rancher</a> + <a href='https://kubernetes.io/'>Kubernetes</a></p>
+      <footer>
+        <a href="/about" class="button">Learn More</a>
+      </footer>
+    </section>
+  
+</section>
+
+      <footer id="site-footer">
+  
+      <ul class="socnet-icons">
+        
+
+        <li><a href="//github.com/luthermonson" target="_blank" rel="noopener" title="GitHub" class="fab fa-github"></a></li>
+
+
+
+
+
+
+
+
+
+
+
+<li><a href="//www.linkedin.com/in/luthermonson" target="_blank" rel="noopener" title="LinkedIn" class="fab fa-linkedin"></a></li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li><a href="//twitter.com/luthermonson" target="_blank" rel="noopener" title="Twitter" class="fab fa-twitter"></a></li>
+
+
+
+
+
+
+
+
+
+
+
+<li><a href="mailto:luther.monson@gmail.com" target="_blank" title="Email" class="far fa-envelope"></a></li>
+
+      </ul>
+  
+  <p class="copyright">
+    © 2026 Luther Monson
+      <br>
+    Theme: <a href='https://github.com/pacollins/hugo-future-imperfect-slim' target='_blank' rel='noopener'>Hugo Future Imperfect Slim</a><br>A <a href='https://html5up.net/future-imperfect' target='_blank' rel='noopener'>HTML5 UP port</a> | Powered by <a href='https://gohugo.io/' title='0.160.1' target='_blank' rel='noopener'>Hugo</a>
+  </p>
+</footer>
+<a id="back-to-top" href="#" class="fas fa-arrow-up fa-2x"></a>
+
+      <script src="/js/bundle.min.241b62ebc4792fe8c7a75879e5f710894f226f2b73342e9916b3a3b0526030cc.js" integrity="sha256-JBti68R5L&#43;jHp1h55fcQiU8ibytzNC6ZFrOjsFJgMMw="></script>
+    <script src="/js/add-on.js"></script>
+    </div>
+  </body>
+</html>

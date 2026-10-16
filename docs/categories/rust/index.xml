@@ -6,8 +6,15 @@
     <description>Recent content in Rust on Luther Monson</description>
     <generator>Hugo</generator>
     <language>en</language>
-    <lastBuildDate>Tue, 15 Sep 2026 21:08:00 -0700</lastBuildDate>
+    <lastBuildDate>Wed, 14 Oct 2026 23:20:00 -0700</lastBuildDate>
     <atom:link href="https://luth.io/categories/rust/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>Composer Without PHP: Embedding vivacity in ePHPm</title>
+      <link>https://luth.io/blog/2026/10/composer-without-php-vivacity/</link>
+      <pubDate>Wed, 14 Oct 2026 23:20:00 -0700</pubDate>
+      <guid>https://luth.io/blog/2026/10/composer-without-php-vivacity/</guid>
+      <description>&lt;p&gt;The pitch for &lt;a href=&#34;https://github.com/ephpm/ephpm&#34;&gt;ePHPm&lt;/a&gt; is one binary in place of php-fpm, nginx and Redis. There was&#xA;always a hole in it though. To deploy a PHP app you still need to run &lt;code&gt;composer install&lt;/code&gt;, and that drags PHP and&#xA;&lt;code&gt;composer.phar&lt;/code&gt; back onto the box, or into the container build, just for that one step. &lt;code&gt;ephpm composer install&lt;/code&gt; now&#xA;runs a pure-Rust, Composer-compatible installer called &lt;a href=&#34;https://github.com/Adelagric/vivacity&#34;&gt;vivacity&lt;/a&gt; inside the&#xA;ePHPm binary. One binary serves the app and installs its dependencies, and on Windows that works with no PHP installed at&#xA;all. Getting it right took five upstream PRs, a fork, a docs rewrite that took back claims we&amp;rsquo;d already made, and&#xA;teaching &lt;code&gt;ephpm&lt;/code&gt; to pretend to be &lt;code&gt;php&lt;/code&gt;.&lt;/p&gt;</description>
+    </item>
     <item>
       <title>Clustered SQLite in ePHPm, Part 3: CDC Over the Cluster Channel</title>
       <link>https://luth.io/blog/2026/09/clustered-sqlite-cdc-cluster-channel/</link>

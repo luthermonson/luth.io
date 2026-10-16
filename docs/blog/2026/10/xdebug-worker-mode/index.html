@@ -1,0 +1,781 @@
+<!doctype html>
+<html lang="en">
+  <head>
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-MSTSKGFWTX"></script>
+<script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+
+    gtag('config', 'G-MSTSKGFWTX');
+</script><meta charset="utf-8">
+<title>Step Debugging a Worker That Never Ends - Luther Monson</title>
+<meta name="description" content="A persistent PHP worker never finishes its request, so Xdebug never sees your trigger. Here&#39;s how ePHPm routes the debugged request to its own fresh worker instead of trying to reset anything.">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<meta name="twitter:card" content="summary_large_image"><meta name="twitter:site" content="@luthermonson">
+
+<meta property="og:site_name" content="Luther Monson">
+<meta property="og:title" content="Step Debugging a Worker That Never Ends">
+<meta property="og:description" content="A persistent PHP worker never finishes its request, so Xdebug never sees your trigger. Here&#39;s how ePHPm routes the debugged request to its own fresh worker instead of trying to reset anything.">
+<meta property="og:type" content="article">
+<meta property="og:url" content="https://luth.io/blog/2026/10/xdebug-worker-mode/">
+    <meta property="og:image" content="https://luth.io/img/2026/10/xdebug-worker-mode-cover.svg">
+    <meta property="og:image:alt" content="Diagram of the ePHPm router sending untriggered requests to the warm worker pool and Xdebug-triggered requests to a one-request debug lane">
+
+
+  <link rel="manifest" href="/favicon/site.webmanifest?v=1">
+  <link rel="apple-touch-icon" sizes="180x180" href="/favicon/apple-touch-icon.png?v=1">
+  <link rel="icon" type="image/png" sizes="32x32" href="/favicon/favicon-32x32.png?v=1">
+  <link rel="icon" type="image/png" sizes="16x16" href="/favicon/favicon-16x16.png?v=1">
+  
+    <link rel="mask-icon" href="/favicon/safari-pinned-tab.svg?v=1" color="#ffffff">
+    <link rel="shortcut icon" href="/favicon/favicon.ico?v=1">
+    <meta name="msapplication-config" content="/favicon/browserconfig.xml?v=1">
+  
+  <meta name="msapplication-TileColor" content="#ffffff">
+  <meta name="theme-color" content="#ffffff">
+
+
+  <meta name="generator" content="Hugo 0.160.1">
+  <link rel="alternate" type="application/rss+xml" href="https://luth.io/index.xml" title="Luther Monson">
+  <link rel="stylesheet" href="/css/bundle.min.e1ffed86714fbb7eff75eab221c0c61b8260be0c7d1c08db0fcb7a2bdb6af7c9.css" integrity="sha256-4f/thnFPu37/deqyIcDGG4Jgvgx9HAjbD8t6K9tq98k="><link rel="stylesheet" href="/css/add-on.css">
+        <link rel="stylesheet" href="/css/code.css">
+        <link rel="stylesheet" href="/css/mobile.css">
+</head>
+
+  <body>
+    
+
+<header id="site-header">
+  <nav id="site-nav">
+    <h1 class="nav-title">
+      <a href="/" class="nav">
+        <img class="nav-avatar" src="/img/luther-monson-headshot.jpg" alt="" width="32" height="32">
+        
+          Blog
+        
+      </a>
+    </h1>
+    <menu id="site-nav-menu" class="flyout-menu menu">
+      
+        
+          
+          <a href="/" class="nav link"><i class='fa fa-home'></i> Home</a>
+        
+      
+        
+          
+          <a href="/about" class="nav link"><i class='far fa-id-card'></i> About</a>
+        
+      
+        
+          
+          <a href="/blog" class="nav link"><i class='far fa-newspaper'></i> Blog</a>
+        
+      
+        
+          
+          <a href="/archive" class="nav link"><i class='far fa-calendar-alt'></i> Archive</a>
+        
+      
+        
+          
+          <a href="/categories" class="nav link"><i class='fas fa-sitemap'></i> Categories</a>
+        
+      
+      <a href="#share-menu" class="nav link share-toggle"><i class="fas fa-share-alt">&nbsp;</i>Share</a>
+      <a href="#search-input" class="nav link search-toggle"><i class="fas fa-search">&nbsp;</i>Search</a>
+    </menu>
+    <a href="#search-input" class="nav search-toggle"><i class="fas fa-search fa-2x">&nbsp;</i></a>
+    <a href="#share-menu" class="nav share-toggle"><i class="fas fa-share-alt fa-2x">&nbsp;</i></a>
+    
+    <a href="#site-nav" class="nav nav-toggle"><i class="fas fa-bars fa-2x"></i></a>
+  </nav>
+  <menu id="search" class="menu"><input id="search-input" class="search-input menu"></input><div id="search-results" class="search-results menu"></div></menu>
+  
+  
+    <menu id="share-menu" class="flyout-menu menu">
+      <h1>Share Post</h1>
+      
+
+
+
+
+  
+    
+    <a href="//twitter.com/share?text=Step%20Debugging%20a%20Worker%20That%20Never%20Ends&amp;url=https%3a%2f%2fluth.io%2fblog%2f2026%2f10%2fxdebug-worker-mode%2f" target="_blank" rel="noopener" class="nav share-btn twitter">
+        <p>Twitter</p>
+      </a>
+  
+
+  
+      <a href="//www.facebook.com/sharer/sharer.php?u=https%3a%2f%2fluth.io%2fblog%2f2026%2f10%2fxdebug-worker-mode%2f" target="_blank" rel="noopener" class="nav share-btn facebook">
+        <p>Facebook</p>
+        </a>
+  
+
+  
+    <a href="//www.reddit.com/submit?url=https%3a%2f%2fluth.io%2fblog%2f2026%2f10%2fxdebug-worker-mode%2f&amp;title=Step%20Debugging%20a%20Worker%20That%20Never%20Ends" target="_blank" rel="noopener" class="nav share-btn reddit">
+          <p>Reddit</p>
+        </a>
+  
+
+  
+        <a href="//www.linkedin.com/shareArticle?url=https%3a%2f%2fluth.io%2fblog%2f2026%2f10%2fxdebug-worker-mode%2f&amp;title=Step%20Debugging%20a%20Worker%20That%20Never%20Ends" target="_blank" rel="noopener" class="nav share-btn linkedin">
+            <p>LinkedIn</p>
+          </a>
+  
+
+  
+        <a href="//www.pinterest.com/pin/create/button/?url=https%3a%2f%2fluth.io%2fblog%2f2026%2f10%2fxdebug-worker-mode%2f&amp;description=Step%20Debugging%20a%20Worker%20That%20Never%20Ends" target="_blank" rel="noopener" class="nav share-btn pinterest">
+          <p>Pinterest</p>
+        </a>
+  
+
+  
+        <a href="mailto:?subject=Check%20out%20this%20post%20by Luther%20Monson&amp;body=https%3a%2f%2fluth.io%2fblog%2f2026%2f10%2fxdebug-worker-mode%2f" target="_blank" class="nav share-btn email" data-proofer-ignore>
+          <p>Email</p>
+        </a>
+  
+
+
+    </menu>
+  
+</header>
+
+    <div id="wrapper">
+      <section id="site-intro" class="hidden-single-column">
+  <a href="/"><img src="/img/luther-monson-headshot.jpg" class="circle" width="100" alt="Luther Monson, Staff Software Engineer at SUSE" /></a>
+  <header>
+    <h1>Luther Monson</h1>
+  </header>
+  <main>
+    <p>Go by way of PHP &middot; Containers &middot; VMs &middot; Windows &middot; Kubernetes</p>
+  </main>
+  
+    <footer>
+      <ul class="socnet-icons">
+        
+
+        <li><a href="//github.com/luthermonson" target="_blank" rel="noopener" title="GitHub" class="fab fa-github"></a></li>
+
+
+
+
+
+
+
+
+
+
+
+<li><a href="//www.linkedin.com/in/luthermonson" target="_blank" rel="noopener" title="LinkedIn" class="fab fa-linkedin"></a></li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li><a href="//twitter.com/luthermonson" target="_blank" rel="noopener" title="Twitter" class="fab fa-twitter"></a></li>
+
+
+
+
+
+
+
+
+
+
+
+<li><a href="mailto:luther.monson@gmail.com" target="_blank" title="Email" class="far fa-envelope"></a></li>
+
+      </ul>
+    </footer>
+  
+</section>
+
+      <main id="site-main">
+        
+  <article>
+    <div class="post">
+      <header>
+  <div class="title">
+    
+      <h2><a href="/blog/2026/10/xdebug-worker-mode/">Step Debugging a Worker That Never Ends</a></h2>
+    
+    
+      <p>A persistent PHP worker never finishes its request, so Xdebug never sees your trigger. Here&#39;s how ePHPm routes the debugged request to its own fresh worker instead of trying to reset anything.</p>
+    
+  </div>
+  <div class="meta">
+    <time datetime="2026-10-12 21:10:00 -0700 PDT">October 12, 2026</time>
+    
+    <p>11-Minute Read</p>
+  </div>
+</header>
+
+      <div id="socnet-share">
+        
+
+
+
+
+  
+    
+    <a href="//twitter.com/share?text=Step%20Debugging%20a%20Worker%20That%20Never%20Ends&amp;url=https%3a%2f%2fluth.io%2fblog%2f2026%2f10%2fxdebug-worker-mode%2f" target="_blank" rel="noopener" class="nav share-btn twitter">
+        <p>Twitter</p>
+      </a>
+  
+
+  
+      <a href="//www.facebook.com/sharer/sharer.php?u=https%3a%2f%2fluth.io%2fblog%2f2026%2f10%2fxdebug-worker-mode%2f" target="_blank" rel="noopener" class="nav share-btn facebook">
+        <p>Facebook</p>
+        </a>
+  
+
+  
+    <a href="//www.reddit.com/submit?url=https%3a%2f%2fluth.io%2fblog%2f2026%2f10%2fxdebug-worker-mode%2f&amp;title=Step%20Debugging%20a%20Worker%20That%20Never%20Ends" target="_blank" rel="noopener" class="nav share-btn reddit">
+          <p>Reddit</p>
+        </a>
+  
+
+  
+        <a href="//www.linkedin.com/shareArticle?url=https%3a%2f%2fluth.io%2fblog%2f2026%2f10%2fxdebug-worker-mode%2f&amp;title=Step%20Debugging%20a%20Worker%20That%20Never%20Ends" target="_blank" rel="noopener" class="nav share-btn linkedin">
+            <p>LinkedIn</p>
+          </a>
+  
+
+  
+        <a href="//www.pinterest.com/pin/create/button/?url=https%3a%2f%2fluth.io%2fblog%2f2026%2f10%2fxdebug-worker-mode%2f&amp;description=Step%20Debugging%20a%20Worker%20That%20Never%20Ends" target="_blank" rel="noopener" class="nav share-btn pinterest">
+          <p>Pinterest</p>
+        </a>
+  
+
+  
+        <a href="mailto:?subject=Check%20out%20this%20post%20by Luther%20Monson&amp;body=https%3a%2f%2fluth.io%2fblog%2f2026%2f10%2fxdebug-worker-mode%2f" target="_blank" class="nav share-btn email" data-proofer-ignore>
+          <p>Email</p>
+        </a>
+  
+
+
+      </div>
+      <div class="content">
+        
+        <p>Persistent workers are the big performance win in modern PHP. You boot Laravel or Symfony once, keep the container
+in memory, and serve thousands of requests out of the same process. <a href="https://github.com/ephpm/ephpm">ePHPm</a> has had
+a worker mode for a while, and like most worker runtimes it had a quiet hole in it: you couldn&rsquo;t step debug a request
+with Xdebug. I wanted that fixed without patching Xdebug and without giving up the warm pool, and the answer ended up
+being to stop fighting the constraint and route around it. The debug lane is merged on main and coming in the upcoming
+v0.12.0 release.</p>
+<h3 id="why-worker-mode-breaks-xdebug">Why worker mode breaks Xdebug</h3>
+<p>To PHP, a worker&rsquo;s entire life is one request. Request startup (RINIT) runs when the worker boots, then the script
+sits in a loop pulling HTTP requests off ePHPm, and request shutdown (RSHUTDOWN) only runs when the worker retires.
+A minimal worker looks like this:</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-php" data-lang="php"><span class="line"><span class="cl"><span class="o">&lt;?</span><span class="nx">php</span>
+</span></span><span class="line"><span class="cl"><span class="c1">// boot once: build the kernel, container, config
+</span></span></span><span class="line"><span class="cl"><span class="nv">$served</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="k">while</span> <span class="p">((</span><span class="nv">$envelope</span> <span class="o">=</span> <span class="nx">\Ephpm\Worker\take_request</span><span class="p">())</span> <span class="o">!==</span> <span class="k">null</span><span class="p">)</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">    <span class="nv">$served</span><span class="o">++</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">    <span class="nv">$vars</span> <span class="o">=</span> <span class="nv">$envelope</span><span class="o">-&gt;</span><span class="na">serverVars</span><span class="p">();</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">    <span class="nx">\Ephpm\Worker\send_response</span><span class="p">(</span>
+</span></span><span class="line"><span class="cl">        <span class="mi">200</span><span class="p">,</span>
+</span></span><span class="line"><span class="cl">        <span class="p">[</span><span class="s1">&#39;Content-Type&#39;</span> <span class="o">=&gt;</span> <span class="s1">&#39;text/plain&#39;</span><span class="p">],</span>
+</span></span><span class="line"><span class="cl">        <span class="s2">&#34;hello </span><span class="si">{</span><span class="nv">$vars</span><span class="p">[</span><span class="s1">&#39;REQUEST_URI&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2"> (request #</span><span class="si">$served</span><span class="s2">)</span><span class="se">\n</span><span class="s2">&#34;</span><span class="p">,</span>
+</span></span><span class="line"><span class="cl">    <span class="p">);</span>
+</span></span><span class="line"><span class="cl"><span class="p">}</span>
+</span></span></code></pre></div><p>Xdebug decides whether to open a DBGp session at RINIT. It looks for <code>XDEBUG_TRIGGER</code> or <code>XDEBUG_SESSION</code> in
+<code>$_GET</code>, <code>$_POST</code> and <code>$_COOKIE</code>, connects to your IDE if it finds one, and closes the session at RSHUTDOWN.
+On a warm worker none of that lines up. The &ldquo;request&rdquo; Xdebug saw at RINIT was the boot, which had no HTTP data at all,
+so it never sees your trigger. And if it did open a session, that session would last for the entire life of the worker.</p>
+<p>The first idea everybody has is &ldquo;reset Xdebug between loop iterations&rdquo;. That&rsquo;s a dead end. While the worker is parked
+in <code>take_request()</code> its own PHP frames are still live on the stack, so there&rsquo;s no clean point where you can tear down
+and restart Xdebug&rsquo;s per-request state without pulling the floor out from under the script.</p>
+<h3 id="route-dont-reset">Route, don&rsquo;t reset</h3>
+<p>The design that worked flips the problem. Instead of making a warm worker behave like a fresh request, give the
+debugged request an actual fresh request.</p>
+<p><img src="/img/2026/10/xdebug-worker-mode-cover.svg" alt="Worker mode debug lane"></p>
+<ol>
+<li>The router decides <em>before any PHP runs</em> whether Xdebug would start a session for this request.</li>
+<li>If it would, the request skips the warm pool and goes to a fresh, one-request worker thread. That thread&rsquo;s
+<code>SG(request_info)</code> is filled in from the triggering HTTP request before <code>php_request_startup()</code>. Xdebug&rsquo;s own
+RINIT sees the trigger natively and connects to the IDE before the first line of PHP runs.</li>
+<li>The worker script boots <em>inside</em> the debug session, so breakpoints in container setup and service providers
+actually hit. That&rsquo;s something you don&rsquo;t usually get without some fiddling even under php-fpm.</li>
+<li>The thread serves exactly that one request through the normal <code>take_request()</code> / <code>send_response()</code> loop with
+<code>max_requests = 1</code>. You step through the same code path production uses, not a debug-only copy.</li>
+<li>The loop ends, <code>php_request_shutdown()</code> runs, and Xdebug sends a clean DBGp <code>stopping</code>, same as php-fpm.</li>
+</ol>
+<p>The C side of step 2 is short. It registers the thread with TSRM, points PHP&rsquo;s request globals at the triggering
+request, and only then starts the PHP request:</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-c" data-lang="c"><span class="line"><span class="cl"><span class="kt">int</span> <span class="nf">ephpm_thread_init_preseeded</span><span class="p">(</span><span class="k">const</span> <span class="kt">char</span> <span class="o">*</span><span class="n">method</span><span class="p">,</span> <span class="k">const</span> <span class="kt">char</span> <span class="o">*</span><span class="n">uri</span><span class="p">,</span>
+</span></span><span class="line"><span class="cl">    <span class="k">const</span> <span class="kt">char</span> <span class="o">*</span><span class="n">query_string</span><span class="p">,</span> <span class="k">const</span> <span class="kt">char</span> <span class="o">*</span><span class="n">content_type</span><span class="p">,</span> <span class="k">const</span> <span class="kt">char</span> <span class="o">*</span><span class="n">cookie</span><span class="p">,</span>
+</span></span><span class="line"><span class="cl">    <span class="kt">size_t</span> <span class="n">content_length</span><span class="p">,</span> <span class="k">const</span> <span class="kt">char</span> <span class="o">*</span><span class="n">path_translated</span><span class="p">,</span>
+</span></span><span class="line"><span class="cl">    <span class="k">const</span> <span class="kt">char</span> <span class="o">*</span><span class="n">post_data</span><span class="p">,</span> <span class="kt">size_t</span> <span class="n">post_data_len</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl"><span class="p">{</span>
+</span></span><span class="line"><span class="cl">    <span class="nf">ts_resource</span><span class="p">(</span><span class="mi">0</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">    <span class="cm">/* ...thread-local mirrors for the read_cookies / read_post callbacks... */</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">    <span class="nf">SG</span><span class="p">(</span><span class="n">request_info</span><span class="p">).</span><span class="n">request_method</span> <span class="o">=</span> <span class="p">(</span><span class="kt">char</span> <span class="o">*</span><span class="p">)</span><span class="n">method</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">    <span class="nf">SG</span><span class="p">(</span><span class="n">request_info</span><span class="p">).</span><span class="n">request_uri</span> <span class="o">=</span> <span class="p">(</span><span class="kt">char</span> <span class="o">*</span><span class="p">)</span><span class="n">uri</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">    <span class="nf">SG</span><span class="p">(</span><span class="n">request_info</span><span class="p">).</span><span class="n">query_string</span> <span class="o">=</span> <span class="p">(</span><span class="kt">char</span> <span class="o">*</span><span class="p">)</span><span class="n">query_string</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">    <span class="nf">SG</span><span class="p">(</span><span class="n">request_info</span><span class="p">).</span><span class="n">content_type</span> <span class="o">=</span> <span class="n">content_type</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">    <span class="nf">SG</span><span class="p">(</span><span class="n">request_info</span><span class="p">).</span><span class="n">cookie_data</span> <span class="o">=</span> <span class="p">(</span><span class="kt">char</span> <span class="o">*</span><span class="p">)</span><span class="n">cookie</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">    <span class="nf">SG</span><span class="p">(</span><span class="n">request_info</span><span class="p">).</span><span class="n">content_length</span> <span class="o">=</span> <span class="p">(</span><span class="n">zend_long</span><span class="p">)</span><span class="n">content_length</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">    <span class="nf">SG</span><span class="p">(</span><span class="n">request_info</span><span class="p">).</span><span class="n">path_translated</span> <span class="o">=</span> <span class="p">(</span><span class="kt">char</span> <span class="o">*</span><span class="p">)</span><span class="n">path_translated</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">    <span class="cm">/* Only for a buffered urlencoded POST: let sapi_activate() parse $_POST. */</span>
+</span></span><span class="line"><span class="cl">    <span class="nf">SG</span><span class="p">(</span><span class="n">server_context</span><span class="p">)</span> <span class="o">=</span> <span class="n">post_data</span> <span class="o">?</span> <span class="p">(</span><span class="kt">void</span> <span class="o">*</span><span class="p">)</span><span class="o">&amp;</span><span class="nl">ephpm_server_context_marker</span> <span class="p">:</span> <span class="nb">NULL</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">    <span class="kt">int</span> <span class="n">ret</span> <span class="o">=</span> <span class="nf">php_request_startup</span><span class="p">();</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">    <span class="cm">/* Back to the pool-worker state, success or not. */</span>
+</span></span><span class="line"><span class="cl">    <span class="nf">SG</span><span class="p">(</span><span class="n">server_context</span><span class="p">)</span> <span class="o">=</span> <span class="nb">NULL</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">    <span class="cm">/* ... */</span>
+</span></span><span class="line"><span class="cl">    <span class="n">request_active</span> <span class="o">=</span> <span class="mi">1</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">    <span class="k">return</span> <span class="n">ret</span> <span class="o">==</span> <span class="n">SUCCESS</span> <span class="o">?</span> <span class="mi">0</span> <span class="o">:</span> <span class="o">-</span><span class="mi">1</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl"><span class="p">}</span>
+</span></span></code></pre></div><p>For a form POST trigger, PHP gets a private copy of the body during startup only. The app still receives the whole
+body when it calls <code>take_request()</code>, and the end-to-end test checks the md5 to prove it.</p>
+<p>Every other request stays on the warm pool. In the PR&rsquo;s end-to-end run I held a debug session paused on a breakpoint
+for 6 seconds and kept hitting the server; the warm pool answered in 0.58 to 0.67 ms per request the whole time, from
+the same two boot ids it had before the session started.</p>
+<p>The honest cost is one framework boot per debugged request, which is what php-fpm pays on every request anyway.
+Paying it also means a bug that only shows up on a warm worker&rsquo;s Nth request (a leaked static, a stale cache) won&rsquo;t
+reproduce on a debugged one. The lane can&rsquo;t help with that class of bug and the docs say so.</p>
+<h3 id="reimplementing-xdebugs-trigger-logic-in-rust-exactly">Reimplementing Xdebug&rsquo;s trigger logic in Rust, exactly</h3>
+<p>The routing decision has to match Xdebug&rsquo;s own decision. If the router says yes and Xdebug says no, you wasted a
+framework boot. If the router says no and Xdebug would have said yes, the request silently doesn&rsquo;t debug, which is the
+worst kind of developer experience. So <code>xdebug_trigger.rs</code> is a port of Xdebug 3.5.3&rsquo;s <code>trigger_enabled()</code>,
+<code>xdebug_lib_find_in_globals()</code> and <code>xdebug_debug_init_if_requested_at_startup()</code>, checked against php-src 8.5.7&rsquo;s
+<code>php_variables.c</code> for the decoding rules.</p>
+<p>The corner cases are the fun part:</p>
+<ul>
+<li><code>XDEBUG_TRIGGER</code> is looked up first, then the legacy <code>XDEBUG_SESSION</code>, in <code>$_GET</code>, then <code>$_POST</code>, then <code>$_COOKIE</code>
+(Xdebug also falls back to the environment, which can&rsquo;t vary per request, so the router ignores it). The <em>first</em>
+place a name shows up decides.</li>
+<li><code>XDEBUG_IGNORE</code> vetoes everything (unless its value is <code>no</code> or <code>0</code>).</li>
+<li>With <code>xdebug.trigger_value</code> set (a shared secret, optionally a comma-separated list), the trimmed trigger value has
+to match, and the legacy <code>XDEBUG_SESSION_START</code> is refused outright.</li>
+<li>Under <code>start_with_request=yes</code>, any trigger <em>name</em> counts and its value is ignored.</li>
+</ul>
+<p>Here&rsquo;s the core of it:</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-rust" data-lang="rust"><span class="line"><span class="cl"><span class="k">pub</span><span class="w"> </span><span class="k">fn</span> <span class="nf">routes</span><span class="p">(</span><span class="o">&amp;</span><span class="bp">self</span><span class="p">,</span><span class="w"> </span><span class="n">input</span>: <span class="kp">&amp;</span><span class="nc">TriggerInput</span><span class="o">&lt;</span><span class="nb">&#39;_</span><span class="o">&gt;</span><span class="p">)</span><span class="w"> </span>-&gt; <span class="kt">bool</span> <span class="p">{</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="c1">// Cheap pre-filter: a request mentioning none of the raw bytes
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="c1">// (and no % escape that could spell them) cannot match.
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="o">!</span><span class="n">might_mention</span><span class="p">(</span><span class="n">input</span><span class="p">.</span><span class="n">query_string</span><span class="p">.</span><span class="n">as_bytes</span><span class="p">())</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">        </span><span class="o">&amp;&amp;</span><span class="w"> </span><span class="o">!</span><span class="n">might_mention</span><span class="p">(</span><span class="n">input</span><span class="p">.</span><span class="n">cookie_data</span><span class="p">.</span><span class="n">as_bytes</span><span class="p">())</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">        </span><span class="o">&amp;&amp;</span><span class="w"> </span><span class="o">!</span><span class="n">input</span><span class="p">.</span><span class="n">buffered_body</span><span class="p">.</span><span class="n">is_some_and</span><span class="p">(</span><span class="n">might_mention</span><span class="p">)</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="p">{</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">        </span><span class="k">return</span><span class="w"> </span><span class="kc">false</span><span class="p">;</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="p">}</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="kd">let</span><span class="w"> </span><span class="n">lookup</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">Lookup</span>::<span class="n">build</span><span class="p">(</span><span class="n">input</span><span class="p">);</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="kd">let</span><span class="w"> </span><span class="nb">Some</span><span class="p">(</span><span class="n">value</span><span class="p">)</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">lookup</span><span class="p">.</span><span class="n">first_found</span><span class="p">(</span><span class="no">XDEBUG_IGNORE</span><span class="p">)</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">        </span><span class="o">&amp;&amp;</span><span class="w"> </span><span class="o">!</span><span class="fm">matches!</span><span class="p">(</span><span class="n">value</span><span class="p">,</span><span class="w"> </span><span class="n">Value</span>::<span class="n">Str</span><span class="p">(</span><span class="n">v</span><span class="p">)</span><span class="w"> </span><span class="k">if</span><span class="w"> </span><span class="n">v</span><span class="w"> </span><span class="o">==</span><span class="w"> </span><span class="sa">b</span><span class="s">&#34;no&#34;</span><span class="w"> </span><span class="o">||</span><span class="w"> </span><span class="n">v</span><span class="w"> </span><span class="o">==</span><span class="w"> </span><span class="sa">b</span><span class="s">&#34;0&#34;</span><span class="p">)</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="p">{</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">        </span><span class="k">return</span><span class="w"> </span><span class="kc">false</span><span class="p">;</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="p">}</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="k">match</span><span class="w"> </span><span class="bp">self</span><span class="p">.</span><span class="n">start_with_request</span><span class="w"> </span><span class="p">{</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">        </span><span class="n">StartWithRequest</span>::<span class="n">No</span><span class="w"> </span><span class="o">=&gt;</span><span class="w"> </span><span class="kc">false</span><span class="p">,</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">        </span><span class="n">StartWithRequest</span>::<span class="n">Yes</span><span class="w"> </span><span class="o">=&gt;</span><span class="w"> </span><span class="p">{</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">            </span><span class="n">lookup</span><span class="p">.</span><span class="n">first_found</span><span class="p">(</span><span class="no">XDEBUG_TRIGGER</span><span class="p">).</span><span class="n">is_some</span><span class="p">()</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">                </span><span class="o">||</span><span class="w"> </span><span class="n">lookup</span><span class="p">.</span><span class="n">first_found</span><span class="p">(</span><span class="no">XDEBUG_SESSION</span><span class="p">).</span><span class="n">is_some</span><span class="p">()</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">                </span><span class="o">||</span><span class="w"> </span><span class="n">lookup</span><span class="p">.</span><span class="n">session_start</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">        </span><span class="p">}</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">        </span><span class="n">StartWithRequest</span>::<span class="nb">Default</span><span class="w"> </span><span class="o">|</span><span class="w"> </span><span class="n">StartWithRequest</span>::<span class="n">Trigger</span><span class="w"> </span><span class="o">=&gt;</span><span class="w"> </span><span class="p">{</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">            </span><span class="bp">self</span><span class="p">.</span><span class="n">trigger_enabled</span><span class="p">(</span><span class="o">&amp;</span><span class="n">lookup</span><span class="p">)</span><span class="w"> </span><span class="o">||</span><span class="w"> </span><span class="p">(</span><span class="bp">self</span><span class="p">.</span><span class="n">secrets</span><span class="p">.</span><span class="n">is_none</span><span class="p">()</span><span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span><span class="n">lookup</span><span class="p">.</span><span class="n">session_start</span><span class="p">)</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">        </span><span class="p">}</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="p">}</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="p">}</span><span class="w">
+</span></span></span></code></pre></div><p>The part that took the longest wasn&rsquo;t the decision, it was building <code>Lookup</code> so it decodes names and values the
+way PHP does. <code>+</code> is a space in query strings and form bodies but not in cookies. Duplicate GET and POST keys are
+last-wins, duplicate cookies are first-wins. PHP mangles variable names (<code>.</code> and space become <code>_</code>, <code>[...]</code> makes an
+array). If any of that is off, an encoding trick could route a request Xdebug would refuse, or the reverse. Even
+Xdebug&rsquo;s mode parser got ported, because it matches each item as a prefix (<code>xdebug.mode=d</code> means <code>develop</code>, not
+<code>debug</code>).</p>
+<p>Ini values are per-thread under ZTS, so <code>xdebug.mode</code>, <code>start_with_request</code> and <code>trigger_value</code> are read once on the
+<code>php_embed_init()</code> thread and frozen into a <code>TriggerPolicy</code>. The router never touches PHP state.</p>
+<h3 id="a-debugger-is-an-attack-surface">A debugger is an attack surface</h3>
+<p>The lane is reachable by any client that can reach the server. Anyone who can send a trigger can force a fresh
+framework boot, and with <code>xdebug.discover_client_host</code> on they can point the debugger at a host they control, where a
+debugger can run arbitrary code. Xdebug is a dev tool and should never be loaded in production, but &ldquo;should never&rdquo; isn&rsquo;t
+a control, so the lane is bounded:</p>
+<ul>
+<li><code>[php.worker] debug_workers</code> (default 1) is separate from <code>[php] concurrency</code>, so a developer paused on a
+breakpoint never takes a serving slot.</li>
+<li>Over the cap, triggered requests <em>wait</em> instead of getting a 503. With a browser helper extension every AJAX call
+from your tab carries the trigger cookie, and failing them would break the page you&rsquo;re debugging.</li>
+<li>The wait is bounded though: 16 waiters per slot, then an immediate 503.</li>
+<li>A thread paused inside Xdebug can&rsquo;t be killed. If the request times out or the client goes away, the slot is freed
+right away (it&rsquo;s held by the HTTP request, not the thread), but the thread lives on until you resume it in the IDE.
+So at most <code>2 x debug_workers</code> debug threads can be alive at once. Past that, a triggered request waits two seconds
+for one to finish, then gets a 503 and a log line telling you to go resume your abandoned sessions.</li>
+<li>Startup logs a WARN whenever the lane is armed, another when <code>trigger_value</code> is empty, and another when
+<code>discover_client_host</code> is on.</li>
+<li>Only the request <em>path</em> is logged for lane requests, never the query string, because it can carry the
+<code>trigger_value</code> secret.</li>
+</ul>
+<p>The abandoned-session case from the end-to-end run shows the slot handoff working with a 2 second request timeout:</p>
+<pre tabindex="0"><code>[+0.010s] session A: status=break (holding it paused)
+[+2.009s] HTTP A: status=504 after 2.009s
+[+2.015s] session B connected 0.003s after request B was sent (A still paused)
+[+2.016s] HTTP B: status=200 after 0.003s
+[+2.016s] session A resumed: status=stopping ; stop -&gt; stopped ; engine closed connection
+</code></pre><p>Mirroring Xdebug instead of &ldquo;route any trigger and let Xdebug sort it out&rdquo; matters here too. With <code>trigger_value</code> set,
+a client without the secret can&rsquo;t make the server boot a debug worker at all.</p>
+<h3 id="the-bug-xdebug-flushed-out">The bug Xdebug flushed out</h3>
+<p>Building this exposed something that had nothing to do with worker mode. In per-request mode (the default), ePHPm ran
+<code>php_request_shutdown()</code> <em>lazily, at the start of the thread&rsquo;s next request</em>. That was left over from an older
+thread-reuse model and nothing depended on it.</p>
+<p>Under Xdebug that meant the <code>stopping</code> packet, the socket close and any profiler output waited for some unrelated
+later request to land on the same thread. The same root cause made sessions hang under the multi-thread pool, because
+the session module writes the session and releases its lock in RSHUTDOWN. The idle thread held the lock while the
+next request for that session blocked on it on another thread. Reproduced on the released v0.11.2:</p>
+<pre tabindex="0"><code>req 1: HTTP 200 in 0.0018s  n=1 handler=files
+req 2: HTTP 000 in 8.0027s
+req 3: HTTP 000 in 8.0028s
+req 4: HTTP 000 in 8.0028s
+</code></pre><p>The fix (<a href="https://github.com/ephpm/ephpm/pull/541">#541</a>) split the request lifecycle into
+<code>ephpm_begin_request()</code>, <code>ephpm_run_request()</code> and <code>ephpm_finish_request()</code>. The pool sends the response first and
+then finishes the request, so teardown adds no latency, and it happens when the request actually ends. That one
+already shipped in v0.11.3. Same script after the fix:</p>
+<pre tabindex="0"><code>req 1: HTTP 200 in 0.000865s  n=1 handler=files
+req 2: HTTP 200 in 0.001767s  n=2 handler=files
+req 3: HTTP 200 in 0.000727s  n=3 handler=files
+req 4: HTTP 200 in 0.000707s  n=4 handler=files
+</code></pre><p>It also had a cross-tenant side, since tenant A&rsquo;s destructors were running under whatever tenant reached the thread
+next. That deserves its own write-up, but I like this as a story about a debugger exposing a bug that had nothing to do
+with debugging.</p>
+<h3 id="making-it-one-flag-ephpm-dev---xdebug">Making it one flag: <code>ephpm dev --xdebug</code></h3>
+<p>All of the above still left a real wall for users. Xdebug has to be a ZTS build that matches the embedded PHP&rsquo;s
+<code>ZEND_MODULE_API_NO</code>, and the distro and Sury packages are NTS, so they won&rsquo;t load. Telling people to build Xdebug from
+source against matching headers is accurate and useless.</p>
+<p>So <code>ephpm dev</code> is growing a flag (<a href="https://github.com/ephpm/ephpm/pull/554">#554</a>, in review):</p>
+<pre tabindex="0"><code>ephpm dev --xdebug                          # catalog build, cached, offline after first run
+ephpm dev --xdebug-path ./xdebug.so         # local build, no network (implies --xdebug)
+          --xdebug-client-host &lt;HOST&gt;       # default 127.0.0.1 (WSL -&gt; Windows IDE: host IP)
+          --xdebug-client-port &lt;PORT&gt;       # default 9003
+</code></pre><p><code>--xdebug</code> reads the binary&rsquo;s own PHP version, API number, ZTS flag and arch, pulls the matching build from the
+php-sdk extension catalog, checks the manifest&rsquo;s ABI fields and the sha256 of every file, and caches the result so later
+runs need no network. A mismatch is a hard refusal, never a quiet skip to another release. It also lifts the request
+deadline so a paused breakpoint doesn&rsquo;t come back as a 504, and prints a banner with the IDE address and a VS Code
+<code>launch.json</code> hint:</p>
+<pre tabindex="0"><code>  Xdebug 3.5.3 loaded (dev only: never load Xdebug in production)
+    ide:      DBGp to 127.0.0.1:9003 (start the IDE listening first)
+    trigger:  http://127.0.0.1:18080/?XDEBUG_TRIGGER=1
+              or cookie XDEBUG_SESSION=1, or a browser &#34;Xdebug helper&#34; extension
+    timeouts: request deadline and max_execution_time lifted while debugging
+    vscode:   .vscode/launch.json → { &#34;name&#34;: &#34;Listen for Xdebug&#34;, &#34;type&#34;: &#34;php&#34;, &#34;request&#34;: &#34;launch&#34;, &#34;port&#34;: 9003 }
+              (no pathMappings needed when the IDE and ephpm share the filesystem)
+</code></pre><p>One more papercut fell out of this. Xdebug is a Zend extension, so it has to be loaded with <code>zend_extension=</code> and an
+absolute path. A relative path resolves against ePHPm&rsquo;s baked-in placeholder <code>extension_dir</code> and fails. Now
+<code>[php] extensions</code> reads each shared object&rsquo;s symbols, and anything that exports both <code>zend_extension_entry</code> and
+<code>extension_version_info</code> gets the right ini line written for it automatically.</p>
+<p>Platform reality: Linux glibc works straight from the catalog, which ships Xdebug 3.5.3 in <code>ext-8.5.7</code>. macOS arm64
+has catalog builds too, but it needs a binary newer than v0.11.3: shared extensions only load there now that
+<a href="https://github.com/ephpm/ephpm/pull/566">#566</a> exports the binary&rsquo;s symbols. The default Windows binary can&rsquo;t
+do it, because the static <code>php8embed.lib</code> can&rsquo;t load extension DLLs. <a href="https://github.com/ephpm/ephpm/pull/564">#564</a>
+(in review) adds an opt-in shared-engine build that links the official <code>php8ts.dll</code>, and with that one
+<code>ephpm dev --xdebug</code> pulls <code>php_xdebug.dll</code> from the catalog and works on Windows too.</p>
+<p>The debug lane and the macOS fix are merged on main and coming in the upcoming v0.12.0 release. The <code>dev</code> flag
+and the Windows build are in review. Even once it lands, the Windows shared-engine build will be build-from-source at
+first (release artifacts ship the static build), so after that comes getting it published, since Windows is the
+platform where I&rsquo;d most like to use this.</p>
+<h3 id="links">Links</h3>
+<ul>
+<li>Worker-mode debug lane: <a href="https://github.com/ephpm/ephpm/pull/552">ephpm #552</a> (<code>crates/ephpm-server/src/debug_lane.rs</code>, <code>xdebug_trigger.rs</code>)</li>
+<li><code>ephpm dev --xdebug</code>: <a href="https://github.com/ephpm/ephpm/pull/554">ephpm #554</a> (in review)</li>
+<li>Finish each request when it ends: <a href="https://github.com/ephpm/ephpm/pull/541">ephpm #541</a></li>
+<li>Export symbols on macOS so shared extensions load: <a href="https://github.com/ephpm/ephpm/pull/566">ephpm #566</a></li>
+<li>Windows shared-engine build: <a href="https://github.com/ephpm/ephpm/pull/564">ephpm #564</a> (in review)</li>
+<li><a href="https://xdebug.org/docs/step_debug">Xdebug step debugging docs</a></li>
+<li><a href="https://xdebug.org/docs/dbgp">DBGp protocol</a></li>
+</ul>
+
+      </div>
+      <footer>
+        <div class="stats">
+  
+    <ul class="categories">
+      
+        
+          <li><a class="article-terms-link" href="/categories/ephpm/">ephpm</a></li>
+        
+          <li><a class="article-terms-link" href="/categories/php/">php</a></li>
+        
+      
+    </ul>
+  
+  
+    <ul class="tags">
+      
+        
+          <li><a class="article-terms-link" href="/tags/php/">php</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/xdebug/">xdebug</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/rust/">rust</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/ephpm/">ephpm</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/debugging/">debugging</a></li>
+        
+      
+    </ul>
+  
+</div>
+
+      </footer>
+    </div>
+    
+      
+  
+  <div class='post giscus-wrap'>
+    <script src='https://giscus.app/client.js'
+            data-repo='luthermonson/luth.io'
+            data-repo-id='R_kgDOGvFBXQ'
+            data-category='Announcements'
+            data-category-id='DIC_kwDOGvFBXc4DH_gv'
+            data-mapping='pathname'
+            data-strict='1'
+            data-reactions-enabled='1'
+            data-emit-metadata='0'
+            data-input-position='top'
+            data-theme='light'
+            data-lang='en'
+            data-loading='lazy'
+            crossorigin='anonymous'
+            async>
+    </script>
+  </div>
+  
+
+
+
+    
+  </article>
+  
+    <nav class="post-nav">
+      
+        <a href="/blog/2026/10/ephpm-websockets-how-to/" class="post-nav-link older">
+          <span class="post-nav-label">&larr; Older</span>
+          <span class="post-nav-title">WebSockets in ePHPm, From Zero to a Working Chat</span>
+        </a>
+      
+      
+        <a href="/blog/2026/10/a-lock-is-only-as-good-as-its-release/" class="post-nav-link newer">
+          <span class="post-nav-label">Newer &rarr;</span>
+          <span class="post-nav-title">A Lock Is Only as Good as Its Release</span>
+        </a>
+      
+    </nav>
+  
+
+      </main>
+      <section id="site-sidebar">
+  
+    <section id="recent-posts">
+      <header>
+        <h1>Recent Posts</h1>
+      </header>
+      
+      <article class="mini-post">
+          <a href="/blog/2026/10/ephpm-worker-mode-performance/" class="image" style="--bg-image: url('/img/2026/10/ephpm-worker-mode-performance-cover.svg');">
+    <img class="" src="/img/2026/10/ephpm-worker-mode-performance-cover.svg" alt="Diagram: before, hyper/tokio hands each request to one shared bounded channel whose waiter list all 20 PHP threads contend on; after, a dispatcher hands the job straight into the mailbox of the most recently idle PHP thread and only queues it in a FIFO overflow queue when every thread is busy">
+  </a>
+        <header>
+          <h2><a href="/blog/2026/10/ephpm-worker-mode-performance/">Fourth Place in Worker Mode, and Why It Wasn&#39;t PHP</a></h2>
+          <time class="published" datetime="2026-10-15 19:45:00 -0700 PDT">October 15, 2026</time>
+        </header>
+      </article>
+      
+      <article class="mini-post">
+          <a href="/blog/2026/10/composer-without-php-vivacity/" class="image" style="--bg-image: url('/img/2026/10/composer-without-php-vivacity-bench.svg');">
+    <img class="" src="/img/2026/10/composer-without-php-vivacity-bench.svg" alt="Bar chart comparing Composer 2.10.3 and ephpm composer on a Laravel install on native Windows">
+  </a>
+        <header>
+          <h2><a href="/blog/2026/10/composer-without-php-vivacity/">Composer Without PHP: Embedding vivacity in ePHPm</a></h2>
+          <time class="published" datetime="2026-10-14 23:20:00 -0700 PDT">October 14, 2026</time>
+        </header>
+      </article>
+      
+      <article class="mini-post">
+          <a href="/blog/2026/10/a-lock-is-only-as-good-as-its-release/" class="image" style="--bg-image: url('/img/2026/10/a-lock-is-only-as-good-as-its-release-cover.svg');">
+    <img class="" src="/img/2026/10/a-lock-is-only-as-good-as-its-release-cover.svg" alt="Timeline: request A&#39;s lock expires, B acquires it, A&#39;s blind DEL frees B&#39;s lock and C gets in">
+  </a>
+        <header>
+          <h2><a href="/blog/2026/10/a-lock-is-only-as-good-as-its-release/">A Lock Is Only as Good as Its Release</a></h2>
+          <time class="published" datetime="2026-10-13 20:40:00 -0700 PDT">October 13, 2026</time>
+        </header>
+      </article>
+      
+      <article class="mini-post">
+          <a href="/blog/2026/10/xdebug-worker-mode/" class="image" style="--bg-image: url('/img/2026/10/xdebug-worker-mode-cover.svg');">
+    <img class="" src="/img/2026/10/xdebug-worker-mode-cover.svg" alt="Diagram of the ePHPm router sending untriggered requests to the warm worker pool and Xdebug-triggered requests to a one-request debug lane">
+  </a>
+        <header>
+          <h2><a href="/blog/2026/10/xdebug-worker-mode/">Step Debugging a Worker That Never Ends</a></h2>
+          <time class="published" datetime="2026-10-12 21:10:00 -0700 PDT">October 12, 2026</time>
+        </header>
+      </article>
+      
+      <article class="mini-post">
+          <a href="/blog/2026/10/ephpm-websockets-how-to/" class="image" style="--bg-image: url('/img/2026/10/ephpm-websockets-how-to-cover.svg');">
+    <img class="" src="/img/2026/10/ephpm-websockets-how-to-cover.svg" alt="Diagram: browsers hold sockets to ePHPm&#39;s Rust session tasks and registry; each connect, message and disconnect runs websocket.php once on the PHP thread pool, and ordinary HTTP requests push through ephpm_ws_broadcast">
+  </a>
+        <header>
+          <h2><a href="/blog/2026/10/ephpm-websockets-how-to/">WebSockets in ePHPm, From Zero to a Working Chat</a></h2>
+          <time class="published" datetime="2026-10-11 17:30:00 -0700 PDT">October 11, 2026</time>
+        </header>
+      </article>
+      
+      
+        <footer>
+          <a href="/blog" class="button">See More</a>
+        </footer>
+      
+    </section>
+  
+
+  
+    
+
+      <section id="categories">
+        <header>
+          <h1><a href="/categories">Categories</a></h1>
+        </header>
+        <ul>
+          
+          
+          <li>
+              <a href="/categories/ephpm/">ephpm<span class="count">36</span></a>
+          
+          <li>
+              <a href="/categories/go/">go<span class="count">30</span></a>
+          
+          <li>
+              <a href="/categories/php/">php<span class="count">26</span></a>
+          
+          <li>
+              <a href="/categories/rust/">rust<span class="count">16</span></a>
+          
+          <li>
+              <a href="/categories/homelab/">homelab<span class="count">14</span></a>
+          
+          <li>
+              <a href="/categories/windows/">windows<span class="count">14</span></a>
+          
+          <li>
+              <a href="/categories/ci/">ci<span class="count">9</span></a>
+          
+          <li>
+              <a href="/categories/databases/">databases<span class="count">9</span></a>
+          
+          <li>
+              <a href="/categories/security/">security<span class="count">9</span></a>
+          
+          <li>
+              <a href="/categories/containers/">containers<span class="count">7</span></a>
+          
+          <li>
+              <a href="/categories/tools/">tools<span class="count">5</span></a>
+          
+          <li>
+              <a href="/categories/ai-agents/">ai-agents<span class="count">4</span></a>
+          
+          </li>
+        </ul>
+      </section>
+    
+  
+
+  
+    <section id="mini-bio">
+      <header>
+        <h1>About</h1>
+      </header>
+      <p>Luther is a 20+ year software veteran specializing in backend APIs and architecting products. Employed at <a href='https://www.suse.com'>SUSE</a> as the Team Lead for the <a href='https://github.com/rancher/windows/issues'>Containers on Windows Team</a> working on <a href='https://rancher.com/'>Rancher</a> + <a href='https://kubernetes.io/'>Kubernetes</a></p>
+      <footer>
+        <a href="/about" class="button">Learn More</a>
+      </footer>
+    </section>
+  
+</section>
+
+      <footer id="site-footer">
+  
+      <ul class="socnet-icons">
+        
+
+        <li><a href="//github.com/luthermonson" target="_blank" rel="noopener" title="GitHub" class="fab fa-github"></a></li>
+
+
+
+
+
+
+
+
+
+
+
+<li><a href="//www.linkedin.com/in/luthermonson" target="_blank" rel="noopener" title="LinkedIn" class="fab fa-linkedin"></a></li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li><a href="//twitter.com/luthermonson" target="_blank" rel="noopener" title="Twitter" class="fab fa-twitter"></a></li>
+
+
+
+
+
+
+
+
+
+
+
+<li><a href="mailto:luther.monson@gmail.com" target="_blank" title="Email" class="far fa-envelope"></a></li>
+
+      </ul>
+  
+  <p class="copyright">
+    © 2026 Luther Monson
+      <br>
+    Theme: <a href='https://github.com/pacollins/hugo-future-imperfect-slim' target='_blank' rel='noopener'>Hugo Future Imperfect Slim</a><br>A <a href='https://html5up.net/future-imperfect' target='_blank' rel='noopener'>HTML5 UP port</a> | Powered by <a href='https://gohugo.io/' title='0.160.1' target='_blank' rel='noopener'>Hugo</a>
+  </p>
+</footer>
+<a id="back-to-top" href="#" class="fas fa-arrow-up fa-2x"></a>
+
+      <script src="/js/bundle.min.241b62ebc4792fe8c7a75879e5f710894f226f2b73342e9916b3a3b0526030cc.js" integrity="sha256-JBti68R5L&#43;jHp1h55fcQiU8ibytzNC6ZFrOjsFJgMMw="></script>
+    <script src="/js/add-on.js"></script>
+    </div>
+  </body>
+</html>

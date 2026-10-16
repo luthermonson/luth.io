@@ -1,7 +1,7 @@
 ---
 title: "Fourth Place in Worker Mode, and Why It Wasn't PHP"
 description: "ePHPm placed fourth in worker mode on the Yii3 benchmark. The slow part was the Rust layer, not PHP, and three fixes cut most of the gap."
-date: 2026-10-16T08:10:00-07:00
+date: 2026-10-15T19:45:00-07:00
 tags: [ php, ephpm, rust, performance, benchmarking, mimalloc ]
 categories: [ ephpm, php ]
 images:
