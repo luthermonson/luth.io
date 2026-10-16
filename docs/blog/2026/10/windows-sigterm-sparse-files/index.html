@@ -10,14 +10,14 @@
     gtag('config', 'G-MSTSKGFWTX');
 </script><meta charset="utf-8">
 <title>Windows Grab-Bag: SIGTERM That Doesn&#39;t Exist and Sparse Files That Break Docker - Luther Monson</title>
-<meta name="description" content="Two Windows-only bugs from ephemerd: Go can&#39;t SIGTERM a child on Windows, so cloudflared processes piled up, and Delivery Optimization&#39;s sparse temp files broke image layer commits.">
+<meta name="description" content="Go can&#39;t SIGTERM a child on Windows, so ephemerd&#39;s cloudflared processes piled up. Separately, Delivery Optimization&#39;s sparse temp files broke its Windows image layer commits.">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
 <meta name="twitter:card" content="summary_large_image"><meta name="twitter:site" content="@luthermonson">
 
 <meta property="og:site_name" content="Luther Monson">
 <meta property="og:title" content="Windows Grab-Bag: SIGTERM That Doesn&#39;t Exist and Sparse Files That Break Docker">
-<meta property="og:description" content="Two Windows-only bugs from ephemerd: Go can&#39;t SIGTERM a child on Windows, so cloudflared processes piled up, and Delivery Optimization&#39;s sparse temp files broke image layer commits.">
+<meta property="og:description" content="Go can&#39;t SIGTERM a child on Windows, so ephemerd&#39;s cloudflared processes piled up. Separately, Delivery Optimization&#39;s sparse temp files broke its Windows image layer commits.">
 <meta property="og:type" content="article">
 <meta property="og:url" content="https://luth.io/blog/2026/10/windows-sigterm-sparse-files/">
     <meta property="og:image" content="https://luth.io/img/2026/10/windows-sigterm-sparse-files-connections.svg">
@@ -215,7 +215,7 @@
       <h2><a href="/blog/2026/10/windows-sigterm-sparse-files/">Windows Grab-Bag: SIGTERM That Doesn&#39;t Exist and Sparse Files That Break Docker</a></h2>
     
     
-      <p>Two Windows-only bugs from ephemerd: Go can&#39;t SIGTERM a child on Windows, so cloudflared processes piled up, and Delivery Optimization&#39;s sparse temp files broke image layer commits.</p>
+      <p>Go can&#39;t SIGTERM a child on Windows, so ephemerd&#39;s cloudflared processes piled up. Separately, Delivery Optimization&#39;s sparse temp files broke its Windows image layer commits.</p>
     
   </div>
   <div class="meta">
@@ -286,11 +286,12 @@ managed subprocess. On Linux the child is tied to ephemerd&rsquo;s lifetime by t
 </span></span></span><span class="line"><span class="cl"><span class="w">	</span><span class="nx">cmd</span><span class="p">.</span><span class="nx">SysProcAttr</span><span class="p">.</span><span class="nx">Setpgid</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="kc">true</span><span class="w">
 </span></span></span><span class="line"><span class="cl"><span class="p">}</span><span class="w">
 </span></span></span></code></pre></div><p>If ephemerd exits for any reason (clean stop, panic, <code>SIGKILL</code>) the kernel sends <code>cloudflared</code> a SIGTERM. On Windows
-<code>SysProcAttr</code> has no <code>Pdeathsig</code>, and the comment in the non-Linux file said the graceful <code>Close()</code> path was the sole shutdown
-mechanism there. Both the context-cancel hook and <code>close()</code> did the same thing, <code>cmd.Process.Signal(syscall.SIGTERM)</code>:</p>
+<code>SysProcAttr</code> has no <code>Pdeathsig</code>. The comment in the non-Linux file said the graceful <code>Close()</code> path was the sole
+shutdown mechanism there. Both the context-cancel hook and <code>close()</code> did the same thing,
+<code>cmd.Process.Signal(syscall.SIGTERM)</code>:</p>
 <div class="highlight"><pre tabindex="0" class="chroma"><code class="language-go" data-lang="go"><span class="line"><span class="cl"><span class="nx">cmd</span><span class="p">.</span><span class="nx">Cancel</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="kd">func</span><span class="p">()</span><span class="w"> </span><span class="kt">error</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="k">return</span><span class="w"> </span><span class="nx">cmd</span><span class="p">.</span><span class="nx">Process</span><span class="p">.</span><span class="nf">Signal</span><span class="p">(</span><span class="nx">syscall</span><span class="p">.</span><span class="nx">SIGTERM</span><span class="p">)</span><span class="w"> </span><span class="p">}</span><span class="w">
 </span></span></span></code></pre></div><p>Go&rsquo;s <code>os.Process.Signal</code> on Windows supports exactly one signal, <code>os.Kill</code>. Everything else returns an error. That error was
-logged at <code>Debug</code> and dropped. On top of that, every config push and every upgrade on that node stops the service, and in
+logged at <code>Debug</code> and dropped. On top of that, every config push and every upgrade on that node stops the service. In
 practice each restart left a <code>cloudflared</code> behind. Measured on the node on 2026-09-22:</p>
 <pre tabindex="0"><code>live ephemerd pid : 6908
 children of live  : 1
@@ -301,13 +302,14 @@ orphan RAM MB     : 868
 tunnel config and holding live connections to Cloudflare&rsquo;s edge:</p>
 <p><img src="/img/2026/10/windows-sigterm-sparse-files-connections.svg" alt="Edge connections"></p>
 <p>Cloudflare load-balances incoming requests across every connection registered for a tunnel. 96 of the 100 connections
-belonged to processes whose ephemerd was gone, so most webhook deliveries were being handed to clients that had nowhere to
-forward them. That makes it the prime suspect for something I&rsquo;d been chasing separately: the webhook listener on that node
-seemed to go deaf for hours after an upgrade.</p>
+belonged to processes whose ephemerd was gone. Most webhook deliveries were being handed to clients that had nowhere to
+forward them. That makes it the prime suspect for something I&rsquo;d been chasing separately. The webhook listener on that
+node seemed to go deaf for hours after an upgrade.</p>
 <h4 id="job-objects-are-windows-pdeathsig">Job Objects are Windows&rsquo; Pdeathsig</h4>
-<p>The Windows answer is a Job Object with <code>JOB_OBJECT_LIMIT_KILL_ON_JOB_CLOSE</code>. Put the child in the job, hold the job handle,
-and when the last handle closes the kernel kills everything in it. A process&rsquo;s handles close when it exits by any means, so
-this covers service stop, crash and <code>taskkill</code> the same way (<a href="https://github.com/ephpm/ephemerd/pull/206">#206</a>):</p>
+<p>The Windows answer is a Job Object with <code>JOB_OBJECT_LIMIT_KILL_ON_JOB_CLOSE</code>. Put the child in the job and hold the job
+handle. When the last handle closes, the kernel kills everything in it. A process&rsquo;s handles close when it exits by any
+means. So this covers service stop, crash and <code>taskkill</code> the same way
+(<a href="https://github.com/ephpm/ephemerd/pull/206">#206</a>):</p>
 <div class="highlight"><pre tabindex="0" class="chroma"><code class="language-go" data-lang="go"><span class="line"><span class="cl"><span class="kd">func</span><span class="w"> </span><span class="nf">bindChildLifetime</span><span class="p">(</span><span class="nx">cmd</span><span class="w"> </span><span class="o">*</span><span class="nx">exec</span><span class="p">.</span><span class="nx">Cmd</span><span class="p">)</span><span class="w"> </span><span class="p">(</span><span class="nx">io</span><span class="p">.</span><span class="nx">Closer</span><span class="p">,</span><span class="w"> </span><span class="kt">error</span><span class="p">)</span><span class="w"> </span><span class="p">{</span><span class="w">
 </span></span></span><span class="line"><span class="cl"><span class="w">	</span><span class="nx">job</span><span class="p">,</span><span class="w"> </span><span class="nx">err</span><span class="w"> </span><span class="o">:=</span><span class="w"> </span><span class="nx">windows</span><span class="p">.</span><span class="nf">CreateJobObject</span><span class="p">(</span><span class="kc">nil</span><span class="p">,</span><span class="w"> </span><span class="kc">nil</span><span class="p">)</span><span class="w">
 </span></span></span><span class="line"><span class="cl"><span class="w">	</span><span class="k">if</span><span class="w"> </span><span class="nx">err</span><span class="w"> </span><span class="o">!=</span><span class="w"> </span><span class="kc">nil</span><span class="w"> </span><span class="p">{</span><span class="w">
@@ -342,17 +344,17 @@ this covers service stop, crash and <code>taskkill</code> the same way (<a href=
 </span></span></span><span class="line"><span class="cl"><span class="w">	</span><span class="p">}</span><span class="w">
 </span></span></span><span class="line"><span class="cl"><span class="w">	</span><span class="k">return</span><span class="w"> </span><span class="o">&amp;</span><span class="nx">jobHandle</span><span class="p">{</span><span class="nx">h</span><span class="p">:</span><span class="w"> </span><span class="nx">job</span><span class="p">},</span><span class="w"> </span><span class="kc">nil</span><span class="w">
 </span></span></span><span class="line"><span class="cl"><span class="p">}</span><span class="w">
-</span></span></span></code></pre></div><p>Two small decisions in there. Closing the job is itself a guaranteed kill, so <code>close()</code> releases it <em>after</em> the graceful
-attempts rather than instead of them, which lets a clean shutdown close its edge connections properly. And if binding the
-job fails, ephemerd warns and keeps the tunnel running. A tunnel that might leak beats no tunnel, but it&rsquo;s a <code>Warn</code>, not a
-<code>Debug</code>, because it&rsquo;s the difference between one stray process and one per restart forever.</p>
-<p>The test is revert-verified: reduce <code>bindChildLifetime</code> to the old no-op and it fails with &ldquo;the child is unbound&rdquo;.</p>
+</span></span></span></code></pre></div><p>Two small decisions in there. Closing the job is itself a guaranteed kill. So <code>close()</code> releases it <em>after</em> the graceful
+attempts rather than instead of them. That lets a clean shutdown close its edge connections properly. And if binding the
+job fails, ephemerd warns and keeps the tunnel running. A tunnel that might leak beats no tunnel. But it&rsquo;s a <code>Warn</code>, not
+a <code>Debug</code>. It&rsquo;s the difference between one stray process and one per restart forever.</p>
+<p>The test is revert-verified. Reduce <code>bindChildLifetime</code> to the old no-op and it fails with &ldquo;the child is unbound&rdquo;.</p>
 <h4 id="cleaning-up-the-ones-already-running">Cleaning up the ones already running</h4>
-<p>A Job Object only covers children this binary starts. It can&rsquo;t adopt the 25 already running. Left alone they&rsquo;d survive until
-a reboot, and they weren&rsquo;t idle: each one kept re-registering edge connections for the same tunnel, and past some count
-Cloudflare started refusing. The node was logging <code>unknown error registering the connection</code> about 300 times an hour while
-the live daemon limped along on 3 of its 4 connections. PR #207 adds a
-sweep at startup, before spawning:</p>
+<p>A Job Object only covers children this binary starts. It can&rsquo;t adopt the 25 already running. Left alone they&rsquo;d survive
+until a reboot. They weren&rsquo;t idle either. Each one kept re-registering edge connections for the same tunnel, and past
+some count Cloudflare started refusing. The node was logging <code>unknown error registering the connection</code> about 300 times
+an hour. Meanwhile the live daemon limped along on 3 of its 4 connections. PR #207 adds a sweep at startup, before
+spawning:</p>
 <div class="highlight"><pre tabindex="0" class="chroma"><code class="language-go" data-lang="go"><span class="line"><span class="cl"><span class="k">for</span><span class="w"> </span><span class="nx">_</span><span class="p">,</span><span class="w"> </span><span class="nx">pid</span><span class="w"> </span><span class="o">:=</span><span class="w"> </span><span class="k">range</span><span class="w"> </span><span class="nx">pids</span><span class="w"> </span><span class="p">{</span><span class="w">
 </span></span></span><span class="line"><span class="cl"><span class="w">	</span><span class="k">if</span><span class="w"> </span><span class="nx">pid</span><span class="w"> </span><span class="o">==</span><span class="w"> </span><span class="mi">0</span><span class="w"> </span><span class="o">||</span><span class="w"> </span><span class="nx">pid</span><span class="w"> </span><span class="o">==</span><span class="w"> </span><span class="nx">self</span><span class="w"> </span><span class="p">{</span><span class="w">
 </span></span></span><span class="line"><span class="cl"><span class="w">		</span><span class="k">continue</span><span class="w">
@@ -370,19 +372,22 @@ sweep at startup, before spawning:</p>
 </span></span></span><span class="line"><span class="cl"><span class="w">	</span><span class="p">}</span><span class="w">
 </span></span></span><span class="line"><span class="cl"><span class="w">	</span><span class="nx">killed</span><span class="o">++</span><span class="w">
 </span></span></span><span class="line"><span class="cl"><span class="p">}</span><span class="w">
-</span></span></span></code></pre></div><p>The important line is the image path match. It only touches <code>cloudflared</code> running out of <em>this</em> ephemerd&rsquo;s data directory,
-never by process name, so somebody&rsquo;s own tunnel on the same box is safe. Killing an operator&rsquo;s unrelated tunnel would be a
-worse bug than the leak.</p>
+</span></span></span></code></pre></div><p>The important line is the image path match. It only touches <code>cloudflared</code> running out of <em>this</em> ephemerd&rsquo;s data
+directory, never by process name. Somebody&rsquo;s own tunnel on the same box is safe. Killing an operator&rsquo;s unrelated tunnel
+would be a worse bug than the leak.</p>
 <p>Here&rsquo;s what the errors did around the reap, from the hours recorded in the PR:</p>
 <p><img src="/img/2026/10/windows-sigterm-sparse-files-errors.svg" alt="Registration errors per hour"></p>
-<p>Testing this one had a trap I fell right into. To test an orphan reaper you need real orphans, and if the test spawns
-<code>cloudflared</code> stand-ins directly, they&rsquo;re the test process&rsquo;s own children, which the reaper deliberately skips. My first
-version did exactly that and passed while proving nothing. The test now spawns them through a launcher that exits, which
-makes them genuine orphans, and it&rsquo;s revert-verified twice: a no-op reaper fails with <code>stray pid 41292 survived the reap</code>,
-and matching on name instead of path fails with <code>killed an unrelated cloudflared</code>.</p>
+<p>Testing this one had a trap I fell right into. To test an orphan reaper you need real orphans. If the test spawns
+<code>cloudflared</code> stand-ins directly, they&rsquo;re the test process&rsquo;s own children. The reaper deliberately skips those. My first
+version did exactly that and passed while proving nothing. The test now spawns them through a launcher that exits. That
+makes them genuine orphans. It&rsquo;s revert-verified twice:</p>
+<ul>
+<li>a no-op reaper fails with <code>stray pid 41292 survived the reap</code></li>
+<li>matching on name instead of path fails with <code>killed an unrelated cloudflared</code></li>
+</ul>
 <h3 id="part-2-sparse-files-and-unknown-stream-id-9">Part 2: sparse files and &ldquo;unknown stream ID 9&rdquo;</h3>
-<p>The other one came from building a Windows CI image with the MSVC toolchain baked in, so Windows jobs stop installing Visual
-Studio Build Tools every run. The build failed three times, for three different reasons:</p>
+<p>The other one came from building a Windows CI image with the MSVC toolchain baked in. That way Windows jobs stop
+installing Visual Studio Build Tools every run. The build failed three times, for three different reasons:</p>
 <ol>
 <li>the checkout was killed by an unrelated teardown incident on the node</li>
 <li>the shell-form <code>RUN</code> for the <code>rustup</code> step lost its double quotes to Windows command-line parsing before PowerShell
@@ -391,29 +396,29 @@ ever saw them (<a href="https://github.com/ephpm/ephemerd/pull/191">#191</a>)</l
 </ol>
 <pre tabindex="0"><code>failed to commit ... during finalize: failed to reimport snapshot:
 Files/Windows/Temp/DO32B1.tmp: unknown stream ID 9
-</code></pre><p><code>DO*.tmp</code> in <code>C:\Windows\Temp</code> belongs to the Delivery Optimization service (DoSvc), the thing that peer-to-peer distributes
-Windows updates. It runs inside Server Core containers and writes <strong>sparse</strong> temp files on its own schedule. When a layer
-commits, the Windows snapshotter serializes the layer with go-winio&rsquo;s backuptar, which reads files through the Win32 backup
-stream API. Stream ID 9 is <code>BACKUP_SPARSE_BLOCK</code>, and the go-winio in that stack (v0.6.2) rejects it in its layer-export pass with
-exactly that error. Upstream merged a fix for that path in September, but it isn&rsquo;t in a tagged release yet. Until it is, whichever <code>RUN</code> step happens to
-be live when DoSvc drops a file loses its commit.</p>
-<p>That&rsquo;s why it was nondeterministic. Earlier runs committed the same steps fine; the failing step was a read-only
+</code></pre><p><code>DO*.tmp</code> in <code>C:\Windows\Temp</code> belongs to the Delivery Optimization service (DoSvc). That&rsquo;s the thing that peer-to-peer
+distributes Windows updates. It runs inside Server Core containers and writes <strong>sparse</strong> temp files on its own schedule.
+When a layer commits, the Windows snapshotter serializes the layer with go-winio&rsquo;s backuptar. That reads files through
+the Win32 backup stream API. Stream ID 9 is <code>BACKUP_SPARSE_BLOCK</code>. The go-winio in that stack (v0.6.2) rejects it in its
+layer-export pass with exactly that error. Upstream merged a fix for that path in September, but it isn&rsquo;t in a tagged
+release yet. Until it is, whichever <code>RUN</code> step happens to be live when DoSvc drops a file loses its commit.</p>
+<p>That&rsquo;s why it was nondeterministic. Earlier runs committed the same steps fine. The failing step was a read-only
 verification <code>RUN</code> that didn&rsquo;t write anything itself.</p>
-<p>The fix (<a href="https://github.com/ephpm/ephemerd/pull/192">#192</a>) is one early layer, right after <code>SHELL</code>, that turns the service
-off before anything else happens:</p>
+<p>The fix (<a href="https://github.com/ephpm/ephemerd/pull/192">#192</a>) is one early layer, right after <code>SHELL</code>. It turns the
+service off before anything else happens:</p>
 <div class="highlight"><pre tabindex="0" class="chroma"><code class="language-dockerfile" data-lang="dockerfile"><span class="line"><span class="cl"><span class="k">RUN</span> Stop-Service DoSvc -Force -ErrorAction SilentlyContinue<span class="p">;</span> <span class="sb">`</span><span class="err">
 </span></span></span><span class="line"><span class="cl">    Set-Service DoSvc -StartupType Disabled -ErrorAction SilentlyContinue<span class="p">;</span> <span class="sb">`</span><span class="err">
 </span></span></span><span class="line"><span class="cl">    Remove-Item -Path <span class="s1">&#39;C:\Windows\Temp\DO*.tmp&#39;</span> -Force -ErrorAction SilentlyContinue<span class="p">;</span> <span class="sb">`</span><span class="err">
 </span></span></span><span class="line"><span class="cl">    Write-Host <span class="s1">&#39;Delivery Optimization disabled (sparse DO*.tmp files break Windows layer commits)&#39;</span><span class="err">
-</span></span></span></code></pre></div><p>Service start type is registry state, so it persists into every later layer. <code>SilentlyContinue</code> on all of it, because a
-future base image without DoSvc should count as success. The cost was one rebuild of the cached Build Tools layer (about 25
-minutes), and that cache would have been poisoned by the same bug sooner or later anyway.</p>
-<p>If you build Windows images with BuildKit or containerd and see <code>unknown stream ID 9</code>, look for a background service writing
-sparse files (and a go-winio without that September fix) before you look at your own steps.</p>
+</span></span></span></code></pre></div><p>Service start type is registry state, so it persists into every later layer. <code>SilentlyContinue</code> is on all of it, because
+a future base image without DoSvc should count as success. The cost was one rebuild of the cached Build Tools layer
+(about 25 minutes). That cache would have been poisoned by the same bug sooner or later anyway.</p>
+<p>Say you build Windows images with BuildKit or containerd and see <code>unknown stream ID 9</code>. Look for a background service
+writing sparse files (and a go-winio without that September fix) before you look at your own steps.</p>
 <h3 id="the-common-thread">The common thread</h3>
-<p>Both of these were the platform quietly not doing what the code assumed. <code>Signal(SIGTERM)</code> returned an error into a debug
-log, and a service I&rsquo;d never heard of wrote a file type the layer archiver can&rsquo;t handle. In both cases the fix was small and
-the expensive part was noticing.</p>
+<p>Both of these were the platform quietly not doing what the code assumed. <code>Signal(SIGTERM)</code> returned an error into a
+debug log. A service I&rsquo;d never heard of wrote a file type the layer archiver can&rsquo;t handle. In both cases the fix was
+small and the expensive part was noticing.</p>
 <h3 id="links">Links</h3>
 <ul>
 <li><a href="https://github.com/ephpm/ephemerd/pull/206">#206 Job Object for cloudflared</a></li>

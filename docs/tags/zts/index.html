@@ -233,11 +233,11 @@
     <img class="" src="/img/2026/09/calling-rust-from-php-without-a-socket-part-1-cover.svg" alt="Two paths from PHP to the ePHPm KV store: over a RESP socket, or through a native function and a function pointer table">
   </a>
     
-    <p><a href="https://github.com/ephpm/ephpm">ePHPm</a> is a single Rust binary that embeds PHP, and it carries its own KV store and its
-own SQLite-backed database in the same process. For a long time the only way PHP code could reach that KV store was the
-same way it reaches Redis: open a TCP socket to the RESP listener ePHPm runs on localhost, encode a command, wait for the
-reply. That works, and every PHP Redis client in existence already speaks it, but it is a strange thing to do when the
-hash map you&rsquo;re talking to lives a few&hellip;</p>
+    <p><a href="https://github.com/ephpm/ephpm">ePHPm</a> is a single Rust binary that embeds PHP. It carries its own KV store and its own
+SQLite-backed database in the same process. For a long time PHP code could only reach that KV store the same way it
+reaches Redis. It opened a TCP socket to the RESP listener ePHPm runs on localhost, encoded a command and waited for the
+reply. That works, and every PHP Redis client in existence already speaks it. But it is a strange thing to do when the
+hash map you&rsquo;re talking to lives a few pointers&hellip;</p>
   </div>
   <footer>
     <a href="/blog/2026/09/calling-rust-from-php-without-a-socket-part-1/" class="button big">Read More</a>

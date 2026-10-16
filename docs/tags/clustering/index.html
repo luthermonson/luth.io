@@ -218,7 +218,7 @@
       <h2><a href="/blog/2026/10/a-lock-is-only-as-good-as-its-release/">A Lock Is Only as Good as Its Release</a></h2>
     
     
-      <p>SETNX gets all the attention, but most of the bugs in ePHPm&#39;s KV locks were on the release side. This is how blind deletes, a missing compare-and-delete, and a cluster where two nodes could both win got fixed.</p>
+      <p>SETNX gets all the attention, but most of the bugs in ePHPm&#39;s KV locks were on the release side. This is how blind deletes, a missing compare-and-delete and a cluster where two nodes could both win got fixed.</p>
     
   </div>
   <div class="meta">
@@ -234,9 +234,9 @@
   </a>
     
     <p>Every &ldquo;build a lock on Redis&rdquo; tutorial spends its time on acquisition: <code>SET key value NX PX 30000</code>, one winner, done. The
-release gets one line, <code>DEL key</code>, and that line is where most of the lock bugs I&rsquo;ve had in ePHPm lived. Over about three months
-the same mistake showed up in the native session handler, in two of the Composer wrapper packages, and finally in the
-cluster, each time in a slightly different costume.</p>
+release gets one line, <code>DEL key</code>. That line is where most of the lock bugs I&rsquo;ve had in ePHPm lived. Over about three
+months the same mistake showed up in three places. First the native session handler, then two of the Composer wrapper
+packages, and finally the cluster. Each time it wore a slightly different costume.</p>
   </div>
   <footer>
     <a href="/blog/2026/10/a-lock-is-only-as-good-as-its-release/" class="button big">Read More</a>
@@ -284,7 +284,7 @@ cluster, each time in a slightly different costume.</p>
       <h2><a href="/blog/2026/09/clustered-sqlite-cdc-cluster-channel/">Clustered SQLite in ePHPm, Part 3: CDC Over the Cluster Channel</a></h2>
     
     
-      <p>Shipping Turso&#39;s change data capture stream between ePHPm nodes over one authenticated, multiplexed TCP connection, and the two failover bugs that showed up when the e2e suite killed the primary.</p>
+      <p>ePHPm ships Turso&#39;s change data capture stream between nodes over one authenticated, multiplexed TCP connection. This covers how that works and the two failover bugs that showed up when the e2e suite killed the primary.</p>
     
   </div>
   <div class="meta">
@@ -299,9 +299,9 @@ cluster, each time in a slightly different costume.</p>
     <img class="" src="/img/2026/09/clustered-sqlite-cluster-channel-topology.svg" alt="Two ePHPm nodes connected by gossip on UDP 7946, the KV data plane on TCP 7947 and the cluster channel on TCP 7948 carrying cdc, snapshot and sql streams">
   </a>
     
-    <p>By the end of <a href="/blog/2026/08/clustered-sqlite-adding-turso/">Part 2</a> ePHPm v0.7.0 ran exactly one SQLite engine, Turso, in
-process, for single-node and clustered mode alike. The sidecar was gone. What I skipped over is how a replica actually gets
-the primary&rsquo;s writes, and what happens when the primary dies with data on it. That&rsquo;s this post.</p>
+    <p>By the end of <a href="/blog/2026/08/clustered-sqlite-adding-turso/">Part 2</a> ePHPm v0.7.0 ran exactly one SQLite engine in
+process. That was Turso, for single-node and clustered mode alike. The sidecar was gone. What I skipped over is how a
+replica actually gets the primary&rsquo;s writes, and what happens when the primary dies with data on it. That&rsquo;s this post.</p>
   </div>
   <footer>
     <a href="/blog/2026/09/clustered-sqlite-cdc-cluster-channel/" class="button big">Read More</a>
@@ -368,11 +368,11 @@ the primary&rsquo;s writes, and what happens when the primary dies with data on 
     <img class="" src="/img/2026/09/clustered-acme-three-bugs-cover.svg" alt="Diagram comparing a sharded KV write that leaves one of three nodes without the certificate to a broadcast write that reaches all three">
   </a>
     
-    <p><a href="https://github.com/ephpm/ephpm">ePHPm</a> gets its own certificates from Let&rsquo;s Encrypt, and in a cluster only one node
-should be talking to the CA. The nodes elect an ACME leader over the shared KV store, the leader orders the cert, and
-everybody else installs it from KV. That all had unit tests and had worked on single nodes for months. Then I tried to
-move wildcard TLS termination for our preview environment off a separate proxy and onto the 3-node cluster itself, and
-in about two days it found three separate bugs that&hellip;</p>
+    <p><a href="https://github.com/ephpm/ephpm">ePHPm</a> gets its own certificates from Let&rsquo;s Encrypt. In a cluster only one node should
+be talking to the CA. The nodes elect an ACME leader over the shared KV store. The leader orders the cert, and everybody
+else installs it from KV. That all had unit tests and had worked on single nodes for months. Then I tried to move
+wildcard TLS termination for our preview environment off a separate proxy and onto the 3-node cluster itself. In about
+two days it found three separate bugs that each took&hellip;</p>
   </div>
   <footer>
     <a href="/blog/2026/09/clustered-acme-three-bugs/" class="button big">Read More</a>
@@ -422,13 +422,13 @@ in about two days it found three separate bugs that&hellip;</p>
       <h2><a href="/blog/2026/08/clustered-sqlite-sqld-sidecar/">Clustered SQLite in ePHPm, Part 1: Replication by Sidecar</a></h2>
     
     
-      <p>How ePHPm first made SQLite highly available by embedding sqld as a child process, and the list of things that went wrong with it.</p>
+      <p>ePHPm first made SQLite highly available by embedding sqld as a child process. This is how that worked and the list of things that went wrong with it.</p>
     
   </div>
   <div class="meta">
     <time datetime="2026-08-08 20:14:00 -0700 PDT">August 8, 2026</time>
     
-    <p>8-Minute Read</p>
+    <p>9-Minute Read</p>
   </div>
 </header>
 
@@ -439,9 +439,9 @@ in about two days it found three separate bugs that&hellip;</p>
     
     <p>Most PHP sites I have run in the last twenty years did not need a MySQL server. They needed <em>a</em> database, and MySQL was the
 one every framework spoke. With <a href="https://github.com/ephpm/ephpm">ePHPm</a> I have been trying to get rid of that server for
-the common case, and the piece that makes it possible is <a href="https://github.com/ephpm/litewire">litewire</a>: PHP connects with
-plain <code>pdo_mysql</code>, litewire speaks the MySQL wire protocol, and the queries land in a SQLite file. WordPress and Laravel
-don&rsquo;t know the difference. No <code>mysqld</code>, no child processes, just <code>ephpm</code> and a <code>.db&hellip;</code></p>
+the common case. The piece that makes it possible is <a href="https://github.com/ephpm/litewire">litewire</a>. PHP connects with
+plain <code>pdo_mysql</code>. litewire speaks the MySQL wire protocol, and the queries land in a SQLite file. WordPress and Laravel
+don&rsquo;t know the difference. No <code>mysqld</code>, no child processes, just <code>ephpm</code> and a <code>.db</code> file.</p>
   </div>
   <footer>
     <a href="/blog/2026/08/clustered-sqlite-sqld-sidecar/" class="button big">Read More</a>
@@ -491,7 +491,7 @@ don&rsquo;t know the difference. No <code>mysqld</code>, no child processes, jus
       <h2><a href="/blog/2026/08/gossip-clustering-for-php/">Gossip-Based Clustering for PHP Apps</a></h2>
     
     
-      <p>How ePHPm servers find each other and share data, what happens when a server joins or leaves, how fast a write reaches the other servers, and a bug I found while measuring it.</p>
+      <p>How ePHPm servers find each other, share data and handle a server joining or leaving. It also measures how fast a write reaches the other servers and covers a bug I found while measuring it.</p>
     
   </div>
   <div class="meta">
@@ -506,10 +506,10 @@ don&rsquo;t know the difference. No <code>mysqld</code>, no child processes, jus
     <img class="" src="/img/2026/08/gossip-clustering-php-cover.svg" alt="Three ePHPm nodes: small values replicated to every node over gossip, a large value stored on its owner and one replica over a TCP data plane">
   </a>
     
-    <p>Most PHP developers never touch clustering primitives, and that&rsquo;s by design. PHP is share-nothing: each request starts
-from zero, and anything shared lives somewhere else. Sessions go in Redis, cache goes in Redis or Memcached, locks go in
-Redis, and when you run two app servers the &ldquo;cluster&rdquo; is really two stateless boxes pointed at the same Redis. That works
-until Redis is the thing you&rsquo;re trying not to run.</p>
+    <p>Most PHP developers never touch clustering primitives. That&rsquo;s by design. PHP is share-nothing. Each request starts
+from zero, and anything shared lives somewhere else. Sessions go in Redis. Cache goes in Redis or Memcached. Locks go
+in Redis. When you run two app servers, the &ldquo;cluster&rdquo; is really two stateless boxes pointed at the same Redis. That
+works until Redis is the thing you&rsquo;re trying not to run.</p>
   </div>
   <footer>
     <a href="/blog/2026/08/gossip-clustering-for-php/" class="button big">Read More</a>

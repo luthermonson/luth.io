@@ -233,11 +233,11 @@
     <img class="" src="/img/2026/04/why-rust-for-php-embedding-cover.svg" alt="Diagram of a request flowing from hyper/tokio through a Rust blocking thread, a C wrapper with setjmp, and libphp, with SAPI callbacks writing into thread-local C buffers">
   </a>
     
-    <p>Go is my primary language and has been for a long time, so when I started building <a href="https://github.com/ephpm/ephpm">ePHPm</a>
-a few weeks ago the obvious move was to write it in Go. ePHPm is a PHP application server: one binary that embeds the
-real PHP interpreter (<code>libphp</code>, the Zend engine) and puts an HTTP server, TLS, a KV cache and a database proxy around it,
-so a PHP app doesn&rsquo;t need nginx + php-fpm + Redis to run. <a href="https://frankenphp.dev/">FrankenPHP</a> already proved the
-&ldquo;PHP inside a Go web server&rdquo; idea works, and it works well. I wrote&hellip;</p>
+    <p>Go is my primary language and has been for a long time. When I started building <a href="https://github.com/ephpm/ephpm">ePHPm</a>
+a few weeks ago the obvious move was to write it in Go. ePHPm is a PHP application server. It&rsquo;s one binary that embeds
+the real PHP interpreter (<code>libphp</code>, the Zend engine) and puts an HTTP server, TLS, a KV cache and a database proxy
+around it. A PHP app doesn&rsquo;t need nginx + php-fpm + Redis to run. <a href="https://frankenphp.dev/">FrankenPHP</a> already proved
+the &ldquo;PHP inside a Go web server&rdquo; idea works, and it works well. I&hellip;</p>
   </div>
   <footer>
     <a href="/blog/2026/04/why-rust-for-php-embedding/" class="button big">Read More</a>

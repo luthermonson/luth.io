@@ -234,10 +234,11 @@
   </a>
     
     <p>The pitch for <a href="https://github.com/ephpm/ephpm">ePHPm</a> is one binary in place of php-fpm, nginx and Redis. There was
-always a hole in it though. To deploy a PHP app you still need to run <code>composer install</code>, and that drags PHP and
-<code>composer.phar</code> back onto the box, or into the container build, just for that one step. <code>ephpm composer install</code> now
+always a hole in it though. To deploy a PHP app you still need to run <code>composer install</code>. That drags PHP and
+<code>composer.phar</code> back onto the box or into the container build, just for that one step. <code>ephpm composer install</code> now
 runs a pure-Rust, Composer-compatible installer called <a href="https://github.com/Adelagric/vivacity">vivacity</a> inside the
-ePHPm binary. One binary serves the app and installs its dependencies, and on Windows that works with no PHP installed&hellip;</p>
+ePHPm binary. One binary serves the app and installs its dependencies. On Windows that works with no PHP installed at
+all.&hellip;</p>
   </div>
   <footer>
     <a href="/blog/2026/10/composer-without-php-vivacity/" class="button big">Read More</a>
@@ -287,7 +288,7 @@ ePHPm binary. One binary serves the app and installs its dependencies, and on Wi
       <h2><a href="/blog/2026/09/calling-rust-from-php-without-a-socket-part-2/">Calling Rust From PHP Without a Socket, Part 2: Making Existing Code Use It</a></h2>
     
     
-      <p>Thirteen Composer packages that let existing Redis and database code in WordPress, Laravel and Symfony use ePHPm&#39;s built-in versions, and the bugs they turned up.</p>
+      <p>Thirteen Composer packages let existing Redis and database code in WordPress, Laravel and Symfony use ePHPm&#39;s built-in versions. This post covers what&#39;s in them and the bugs they turned up.</p>
     
   </div>
   <div class="meta">
@@ -302,11 +303,11 @@ ePHPm binary. One binary serves the app and installs its dependencies, and on Wi
     <img class="" src="/img/2026/09/calling-rust-from-php-without-a-socket-part-2-cover.svg" alt="The APIs PHP apps already call, mapped through ePHPm wrapper packages onto ephpm_kv_* and ephpm_db_*">
   </a>
     
-    <p><a href="/blog/2026/09/calling-rust-from-php-without-a-socket-part-1/">Part 1</a> covered the plumbing: ePHPm registers
-<code>ephpm_kv_*</code> and <code>ephpm_db_*</code> functions that call straight into Rust, and a cache read through one costs about a tenth of
-a microsecond instead of a loopback round trip. That&rsquo;s nice and also useless on its own, because nobody is going to rewrite
-their WordPress object cache or their Laravel cache store around a function called <code>ephpm_kv_set()</code>. Applications talk to
-Redis through phpredis or Predis, to the cache through PSR-6/16 or <code>wp_cache_*</code>, and to&hellip;</p>
+    <p><a href="/blog/2026/09/calling-rust-from-php-without-a-socket-part-1/">Part 1</a> covered the plumbing. ePHPm registers
+<code>ephpm_kv_*</code> and <code>ephpm_db_*</code> functions that call straight into Rust. A cache read through one costs about a tenth of a
+microsecond instead of a loopback round trip. That&rsquo;s nice and also useless on its own. Nobody is going to rewrite their
+WordPress object cache or their Laravel cache store around a function called <code>ephpm_kv_set()</code>. Applications talk to
+existing APIs instead:</p>
   </div>
   <footer>
     <a href="/blog/2026/09/calling-rust-from-php-without-a-socket-part-2/" class="button big">Read More</a>

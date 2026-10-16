@@ -13,7 +13,7 @@
       <link>https://luth.io/blog/2026/08/what-does-one-more-wordpress-site-cost/</link>
       <pubDate>Tue, 25 Aug 2026 20:20:00 -0700</pubDate>
       <guid>https://luth.io/blog/2026/08/what-does-one-more-wordpress-site-cost/</guid>
-      <description>&lt;p&gt;ePHPm v0.7.0 shipped per-site multi-tenancy: point &lt;code&gt;[server] sites_dir&lt;/code&gt; at a directory, every &lt;code&gt;Host&lt;/code&gt; maps to its own&#xA;docroot and its own Turso database file, and one process serves all of them. The first question anybody asks about&#xA;that is &amp;ldquo;how many sites fit on a box?&amp;rdquo;, and the honest way to answer it is to turn the question around. What does&#xA;&lt;strong&gt;one more&lt;/strong&gt; site cost? If you know the marginal RAM, file descriptors, CPU and disk for a tenant, the box size falls&#xA;out of arithmetic.&lt;/p&gt;</description>
+      <description>&lt;p&gt;ePHPm v0.7.0 shipped per-site multi-tenancy. Point &lt;code&gt;[server] sites_dir&lt;/code&gt; at a directory and every &lt;code&gt;Host&lt;/code&gt; maps to its own&#xA;docroot and its own Turso database file. One process serves all of them. The first question anybody asks about that is&#xA;&amp;ldquo;how many sites fit on a box?&amp;rdquo; The honest way to answer it is to turn the question around. What does &lt;strong&gt;one more&lt;/strong&gt; site&#xA;cost? If you know the marginal RAM, file descriptors, CPU and disk for a tenant, the box size falls out of arithmetic.&lt;/p&gt;</description>
     </item>
   </channel>
 </rss>

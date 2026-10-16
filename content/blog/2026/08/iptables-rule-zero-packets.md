@@ -14,13 +14,13 @@ draft: false
 
 After a week of Windows firewall rules that [listed fine and enforced nothing](/blog/2026/08/windows-container-egress-firewall/),
 I went back to the Linux side of [ephemerd](https://github.com/ephpm/ephemerd) feeling pretty good about it. iptables is
-the boring, well-understood one. Then I looked at the packet counters on a live node and found a rule that had never
-matched a packet in its life, on a node that had pushed 9.8 GB through the same chain.
+the boring, well-understood one. Then I looked at the packet counters on a live node. I found a rule that had never
+matched a packet in its life. That node had pushed 9.8 GB through the same chain.
 
 ### The rules I thought I had
 
 Job containers sit on a CNI bridge, `10.88.0.0/16`, with the host on `10.88.0.1`. ephemerd puts its egress policy in its
-own chain, `EPHEMERD-FORWARD`, jumped to from `FORWARD` for anything to or from the container subnet. From a live node:
+own chain, `EPHEMERD-FORWARD`. `FORWARD` jumps to it for anything to or from the container subnet. From a live node:
 
 ```
 -P INPUT ACCEPT
@@ -40,8 +40,8 @@ own chain, `EPHEMERD-FORWARD`, jumped to from `FORWARD` for anything to or from 
 -A EPHEMERD-FORWARD -j ACCEPT
 ```
 
-Reads well. DNS and the Go module proxy (tcp/8082) on the gateway are allowed, the private ranges are rejected, the
-internet is open. The `GatewayPorts` config setting is the allow-list of host ports a job may reach, and the security docs
+Reads well. DNS and the Go module proxy (tcp/8082) on the gateway are allowed. The private ranges are rejected. The
+internet is open. The `GatewayPorts` config setting is the allow-list of host ports a job may reach. The security docs
 said containers can't reach `10.0.0.0/8`.
 
 ### The counters
@@ -60,7 +60,7 @@ num   pkts bytes target   prot  source        destination
 ```
 
 Rule 5 is the module proxy allow. Zero packets, zero bytes, next to 9.8 GB of established traffic in rule 1. And the module
-proxy isn't idle, it's in daily use.
+proxy isn't idle. It's in daily use.
 
 ![Netfilter flow](/img/2026/08/iptables-rule-zero-packets-flow.svg)
 
@@ -70,38 +70,37 @@ This one is in every netfilter diagram, and I still walked right past it. After 
 decision. If the destination is an address the host itself owns, the packet is delivered locally and goes through `INPUT`.
 Only packets the host is going to route somewhere else go through `FORWARD`.
 
-The bridge gateway `10.88.0.1` is an address the host owns. So a container talking to the module proxy, DNS on the gateway,
-or anything else listening on the host goes PREROUTING, routing decision, INPUT, local socket. It never touches `FORWARD`,
-and nothing in `EPHEMERD-FORWARD` can match it. Rules 3, 4 and 5 weren't allowing anything; the traffic was getting through
-because nothing was looking at it.
+The bridge gateway `10.88.0.1` is an address the host owns. Say a container talks to the module proxy, DNS on the
+gateway or another service listening on the host. That packet goes PREROUTING, routing decision, INPUT, local socket. It
+never touches `FORWARD`, so nothing in `EPHEMERD-FORWARD` can match it. Rules 3, 4 and 5 weren't allowing anything. The
+traffic was getting through because nothing was looking at it.
 
 That had two worse consequences than a dead allow rule:
 
 1. **The allow-list wasn't a list.** Anything ephemerd or the operator bound on the gateway was reachable from every job,
-   whatever `GatewayPorts` said. The only `INPUT` rules ephemerd ever wrote were drops for its own control ports, and those
-   were only configured on the in-VM worker path. A bare-metal Linux node installed no `INPUT` rules at all, and the distro
-   default is `INPUT` policy `ACCEPT`.
+   whatever `GatewayPorts` said. The only `INPUT` rules ephemerd ever wrote were drops for its own control ports. Those
+   were only configured on the in-VM worker path. A bare-metal Linux node installed no `INPUT` rules at all, and the
+   distro default is `INPUT` policy `ACCEPT`.
 2. **The RFC1918 block had a host-shaped hole.** The node's own LAN address (something like `10.0.0.44/24`) is inside
-   `10.0.0.0/8`. Containers couldn't reach *other* machines on `10.0.0.0/8`, but they could reach the host itself on every
-   port, because that's local delivery too.
+   `10.0.0.0/8`. Containers couldn't reach *other* machines on `10.0.0.0/8`. But they could reach the host itself on
+   every port, because that's local delivery too.
 
-There was a third, smaller one inside the Linux VM on Windows and macOS hosts. The control-port drops matched `-d <gateway>`,
-but the in-VM dispatch gRPC server binds `0.0.0.0`, so it was also listening on the VM's `eth0` address where that drop
-doesn't apply.
+There was a third, smaller one inside the Linux VM on Windows and macOS hosts. The control-port drops matched
+`-d <gateway>`. But the in-VM dispatch gRPC server binds `0.0.0.0`. So it was also listening on the VM's `eth0` address,
+where that drop doesn't apply.
 
 ### How I found it
 
 Sideways, at first. Getting the Docker API to work under Kata meant moving it from a unix socket to a TCP port on the
-gateway, and that port had to be scoped to the one container that owns it, since the Docker API authenticates nothing. That
-per-job chain (`EPHEMERD-DIND`) had to be jumped from `INPUT` as well as `FORWARD`, because `INPUT` is where
-gateway-addressed packets actually land, and the Kata PR noted that this meant `GatewayPorts` alone wasn't constraining
-anything. A later security sweep pinned it down with the counters above (issue #156).
+gateway. The Docker API authenticates nothing, so that port had to be scoped to the one container that owns it. That
+per-job chain (`EPHEMERD-DIND`) had to be jumped from `INPUT` as well as `FORWARD`. `INPUT` is where gateway-addressed
+packets land. The Kata PR noted that this meant `GatewayPorts` alone wasn't constraining anything. A later security
+sweep pinned it down with the counters above (issue #156).
 
 ### The fix: EPHEMERD-INPUT
 
-PR #158 adds a second chain for the
-container-to-host path. It's jumped from `INPUT` position 1 for anything sourced from the container subnet, and it ends in
-an unconditional `DROP`:
+PR #158 adds a second chain for the container-to-host path. `INPUT` jumps to it at position 1 for anything sourced from
+the container subnet. It ends in an unconditional `DROP`:
 
 ```go
 func containerInputRules(gateway string, gatewayPorts, controlPorts []int) [][]string {
@@ -133,9 +132,10 @@ The details that make it hold up:
 - **Every allow is scoped `-d <gateway>`.** An unscoped port allow would also open that port on the host's LAN address, and
   a test asserts none exist.
 - **The `lo` accept is deliberate.** The host reaching its own module proxy on the bridge address goes out `lo` with a
-  source inside the container subnet. A container can't forge that; it has its own network namespace and arrives on the bridge.
-- **The jump goes in last.** A chain that's half-built when `INPUT` already points at it ends at the implicit `RETURN`, not
-  the `DROP`, and fails open for as long as the install takes:
+  source inside the container subnet. A container can't forge that. It has its own network namespace and arrives on the
+  bridge.
+- **The jump goes in last.** Say a chain is half-built when `INPUT` already points at it. It ends at the implicit
+  `RETURN`, not the `DROP`, and fails open for as long as the install takes:
 
 ```go
 // Jump last, so the chain is never half-built while INPUT already points
@@ -150,21 +150,23 @@ if err := iptables(append([]string{"-C"}, jump...)...); err != nil {
 ```
 
 There's deliberately no IPv6 mirror. The CNI bridge is IPv4-only, so containers have no v6 address and no v6 path to the
-host. A v6 default-deny would have to match on destination, since there's no v6 container subnet to match a source against,
-and would take out the host's own link-local and NDP traffic on any dual-stack node. That would be a real outage to close
-a hole that doesn't exist.
+host. A v6 default-deny would have to match on destination, since there's no v6 container subnet to match a source
+against. It would take out the host's own link-local and NDP traffic on any dual-stack node. That would be a real outage
+to close a hole that doesn't exist.
 
-The old `GatewayPorts` allows in `EPHEMERD-FORWARD` stayed, with a comment saying they aren't the enforcement point. I like
-the chain being a complete statement of intent even where it's redundant.
+The old `GatewayPorts` allows in `EPHEMERD-FORWARD` stayed, with a comment saying they aren't the enforcement point. I
+like the chain being a complete statement of intent even where it's redundant.
 
-Before merging, the generated iptables argv was replayed inside a throwaway `ip netns` on a fleet node to check real-kernel
-syntax and that `-C` made it idempotent, then torn down and the node's real chains diffed to make sure nothing changed.
+Before merging, the generated iptables argv was replayed inside a throwaway `ip netns` on a fleet node. That checked
+real-kernel syntax and that `-C` made it idempotent. Then the namespace was torn down and the node's real chains diffed
+to make sure nothing changed.
 
 ### And if the rules don't install, don't run jobs
 
-Looking at all this made me notice the other half of the problem. If `InstallFirewallRules()` failed on Linux (missing
-`iptables`, no `CAP_NET_ADMIN`), ephemerd logged a warning and kept going. A node with no containment at all would happily
-run fork PRs. [#179](https://github.com/ephpm/ephemerd/pull/179) makes that fatal before the scheduler starts:
+Looking at all this made me notice the other half of the problem. `InstallFirewallRules()` could fail on Linux from
+missing `iptables` or no `CAP_NET_ADMIN`. When it did, ephemerd logged a warning and kept going. A node with no
+containment at all would happily run fork PRs. [#179](https://github.com/ephpm/ephemerd/pull/179) makes that fatal
+before the scheduler starts:
 
 ```go
 func enforceFirewallInstall(goos string, install func() error, log *slog.Logger) error {
@@ -179,15 +181,15 @@ func enforceFirewallInstall(goos string, install func() error, log *slog.Logger)
 ```
 
 `serve()` returns before `sched.Run`, so there's no code path that dispatches a job without the chains present. systemd
-shows a failed unit, which is a lot easier to notice than a log line. It's the same stance as the Kata preflight: if the
+shows a failed unit, which is a lot easier to notice than a log line. It's the same stance as the Kata preflight. If the
 config promises isolation and the host can't deliver it, refuse to start rather than quietly downgrading.
 
 ### Check the counters
 
-The lesson I'm keeping from this one: a rule that never matches looks exactly like a rule that works. `iptables -S` showed
-me a correct policy. The `-v` counters showed me that half of it was decoration. When I add a firewall rule now, I generate
-the traffic it's meant to match and watch the counter move, the same way I'd want to see a test fail before I trust it
-passing.
+The lesson I'm keeping from this one: a rule that never matches looks exactly like a rule that works. `iptables -S`
+showed me a correct policy. The `-v` counters showed me that half of it was decoration. When I add a firewall rule now, I
+generate the traffic it's meant to match and watch the counter move. It's the same way I'd want to see a test fail
+before I trust it passing.
 
 ```bash
 iptables -L EPHEMERD-INPUT -v -n --line-numbers

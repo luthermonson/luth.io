@@ -357,6 +357,7 @@ Linux only. macOS and Windows stay as they were.</p>
   </tbody>
 </table>
 <p>* Before the fixes, ePHPm was already past its limit at this load. Requests kept piling up.</p>
+<p><img src="/img/2026/10/ephpm-worker-mode-performance-results.svg" alt="Bar charts of requests/sec and peak memory: ePHPm rises from 50,855 to 58,122 requests/sec with all three fixes, below Swoole’s 61,580 and Workerman’s 64,521, while peak memory drops from 307 MiB to 170 MiB against Swoole’s 838 MiB"></p>
 <p>In short:</p>
 <ul>
 <li><strong>About 15% faster</strong> than before. The slowest requests are answered far sooner.</li>

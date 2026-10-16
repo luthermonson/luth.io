@@ -13,7 +13,7 @@
       <link>https://luth.io/blog/2026/08/what-an-overloaded-php-server-actually-returns/</link>
       <pubDate>Mon, 24 Aug 2026 19:40:00 -0700</pubDate>
       <guid>https://luth.io/blog/2026/08/what-an-overloaded-php-server-actually-returns/</guid>
-      <description>&lt;p&gt;Ask most people what their PHP server does when it&amp;rsquo;s overloaded and you&amp;rsquo;ll hear &amp;ldquo;it returns 503s.&amp;rdquo; Ask them how they&#xA;know and it usually comes down to a config setting they read about. I was in that camp for &lt;a href=&#34;https://github.com/ephpm/ephpm&#34;&gt;ePHPm&lt;/a&gt;.&#xA;We had a &lt;code&gt;[server.limits] max_connections&lt;/code&gt; knob, the docs said it returned 503 at the cap, and every benchmark we had&#xA;ever run reported zero errors under heavy load. Then I wrote a load generator that could actually produce overload,&#xA;and the honest answer was that an overloaded ePHPm returned nothing at all.&lt;/p&gt;</description>
+      <description>&lt;p&gt;Ask most people what their PHP server does when it&amp;rsquo;s overloaded and you&amp;rsquo;ll hear &amp;ldquo;it returns 503s.&amp;rdquo; Ask them how they&#xA;know and it usually comes down to a config setting they read about. I was in that camp for &lt;a href=&#34;https://github.com/ephpm/ephpm&#34;&gt;ePHPm&lt;/a&gt;.&#xA;We had a &lt;code&gt;[server.limits] max_connections&lt;/code&gt; knob, and the docs said it returned 503 at the cap. Every benchmark we had&#xA;ever run reported zero errors under heavy load. Then I wrote a load generator that could produce overload. The honest&#xA;answer was that an overloaded ePHPm returned nothing at all.&lt;/p&gt;</description>
     </item>
   </channel>
 </rss>

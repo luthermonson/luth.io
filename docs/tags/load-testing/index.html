@@ -235,9 +235,9 @@
     
     <p>Ask most people what their PHP server does when it&rsquo;s overloaded and you&rsquo;ll hear &ldquo;it returns 503s.&rdquo; Ask them how they
 know and it usually comes down to a config setting they read about. I was in that camp for <a href="https://github.com/ephpm/ephpm">ePHPm</a>.
-We had a <code>[server.limits] max_connections</code> knob, the docs said it returned 503 at the cap, and every benchmark we had
-ever run reported zero errors under heavy load. Then I wrote a load generator that could actually produce overload,
-and the honest answer was&hellip;</p>
+We had a <code>[server.limits] max_connections</code> knob, and the docs said it returned 503 at the cap. Every benchmark we had
+ever run reported zero errors under heavy load. Then I wrote a load generator that could produce overload. The honest
+answer was that an&hellip;</p>
   </div>
   <footer>
     <a href="/blog/2026/08/what-an-overloaded-php-server-actually-returns/" class="button big">Read More</a>

@@ -10,14 +10,14 @@
     gtag('config', 'G-MSTSKGFWTX');
 </script><meta charset="utf-8">
 <title>My Benchmark Was 4x Wrong Because of WSL - Luther Monson</title>
-<meta name="description" content="Launching the server with its working directory on /mnt/c cost ePHPm about 4x on a light workload, and the report built a wrong explanation on top of it. Here&#39;s the strace that shows why.">
+<meta name="description" content="Launching the server with its working directory on /mnt/c cost ePHPm about 4x on a light workload. The report built a wrong explanation on top of it, and the strace shows why.">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
 <meta name="twitter:card" content="summary_large_image"><meta name="twitter:site" content="@luthermonson">
 
 <meta property="og:site_name" content="Luther Monson">
 <meta property="og:title" content="My Benchmark Was 4x Wrong Because of WSL">
-<meta property="og:description" content="Launching the server with its working directory on /mnt/c cost ePHPm about 4x on a light workload, and the report built a wrong explanation on top of it. Here&#39;s the strace that shows why.">
+<meta property="og:description" content="Launching the server with its working directory on /mnt/c cost ePHPm about 4x on a light workload. The report built a wrong explanation on top of it, and the strace shows why.">
 <meta property="og:type" content="article">
 <meta property="og:url" content="https://luth.io/blog/2026/08/benchmark-4x-wrong-wsl-drvfs-cwd/">
     <meta property="og:image" content="https://luth.io/img/2026/08/benchmark-4x-wrong-wsl-drvfs-cwd-depth.svg">
@@ -215,7 +215,7 @@
       <h2><a href="/blog/2026/08/benchmark-4x-wrong-wsl-drvfs-cwd/">My Benchmark Was 4x Wrong Because of WSL</a></h2>
     
     
-      <p>Launching the server with its working directory on /mnt/c cost ePHPm about 4x on a light workload, and the report built a wrong explanation on top of it. Here&#39;s the strace that shows why.</p>
+      <p>Launching the server with its working directory on /mnt/c cost ePHPm about 4x on a light workload. The report built a wrong explanation on top of it, and the strace shows why.</p>
     
   </div>
   <div class="meta">
@@ -272,38 +272,39 @@
       </div>
       <div class="content">
         
-        <p>I do most of my benchmarking on a Windows box in WSL2, because it&rsquo;s the machine with 32 threads and 62 GB of RAM on
-my desk. Everybody who does that learns the first rule early: don&rsquo;t put your data on <code>/mnt/c</code>. DrvFs, the 9p-backed
-mount that exposes the Windows drives inside WSL, is slow for file-heavy work, so the databases, the docroot and the
-build output all live on the WSL ext4 disk. My scaling harness for <a href="https://github.com/ephpm/ephpm">ePHPm</a> even
-says so in capital letters in its README.</p>
-<p>Then I published a multi-tenant scaling report with a headline number that was off by almost 4x, and the cause was
-one file-system path I hadn&rsquo;t thought of as data at all: the server&rsquo;s <strong>working directory</strong>.</p>
+        <p>I do most of my benchmarking on a Windows box in WSL2. It&rsquo;s the machine on my desk with 32 threads and 62 GB of RAM.
+Everybody who does that learns the first rule early: don&rsquo;t put your data on <code>/mnt/c</code>. DrvFs is the 9p-backed mount that
+exposes the Windows drives inside WSL, and it&rsquo;s slow for file-heavy work. So the databases, the docroot and the build
+output all live on the WSL ext4 disk. My scaling harness for <a href="https://github.com/ephpm/ephpm">ePHPm</a> even says so in
+capital letters in its README.</p>
+<p>Then I published a multi-tenant scaling report with a headline number that was off by almost 4x. The cause was one
+file-system path I hadn&rsquo;t thought of as data at all: the server&rsquo;s <strong>working directory</strong>.</p>
 <h3 id="the-wrong-story">The wrong story</h3>
 <p><a href="https://github.com/ephpm/multitenant-scalebench">multitenant-scalebench</a> measures one ePHPm instance serving N
-WordPress-shaped sites. The light workload (wp-lite) plateaued at about 4.7k RPS with only about 5 of 32 cores busy,
-no matter how many sites I served. Low CPU plus a flat ceiling looks like lock contention, and there was a perfect
-suspect: the per-site database registry was a single <code>tokio::sync::Mutex</code> held across every database open. So the
-report said the registry mutex capped every instance near 4.7k RPS regardless of core count, and the sizing sheet
+WordPress-shaped sites. The light workload (wp-lite) plateaued at about 4.7k RPS with only about 5 of 32 cores busy.
+That held no matter how many sites I served. Low CPU plus a flat ceiling looks like lock contention, and there was a
+perfect suspect. The per-site database registry was a single <code>tokio::sync::Mutex</code> held across every database open. So
+the report said the registry mutex capped every instance near 4.7k RPS regardless of core count. The sizing sheet
 repeated it.</p>
-<p>That story was plausible, it fit the data, and it was wrong.</p>
+<p>That story was plausible and it fit the data. It was also wrong.</p>
 <h3 id="how-it-fell-apart">How it fell apart</h3>
-<p>The fix for the mutex was <a href="https://github.com/ephpm/ephpm/pull/303">ePHPm #303</a>, which replaced the global map with
-per-site slots each holding their own lock. If the mutex was the ceiling, #303 should have lifted it. Under the
-harness, it didn&rsquo;t: about 4.0k RPS on the warm point before and after. The churn case (more sites than the LRU cap)
-did improve, and a bistable collapse went away, but the warm ceiling sat exactly where it was.</p>
-<p>So I started the server by hand to poke at it, from a shell in <code>/root</code>, and got <strong>15,900 RPS</strong> on the same point.
-Same binary, same config, same provisioned databases. Back in the harness: <strong>4,164 RPS</strong>. The only difference was
-where the process was started from. The harness lived in the repo checkout on <code>/mnt/c/Users/luther/multitenant-scalebench</code>,
-and it launched the server like this:</p>
+<p>The fix for the mutex was <a href="https://github.com/ephpm/ephpm/pull/303">ePHPm #303</a>. It replaced the global map with
+per-site slots, each holding its own lock. If the mutex was the ceiling, #303 should have lifted it. Under the harness
+it didn&rsquo;t. The warm point was about 4.0k RPS before and after. The churn case (more sites than the LRU cap) did
+improve, and a bistable collapse went away. But the warm ceiling sat exactly where it was.</p>
+<p>So I started the server by hand from a shell in <code>/root</code> to poke at it. I got <strong>15,900 RPS</strong> on the same point. Same
+binary, same config, same provisioned databases. Back in the harness: <strong>4,164 RPS</strong>. The only difference was where the
+process was started from. The harness lived in the repo checkout on <code>/mnt/c/Users/luther/multitenant-scalebench</code>, and
+it launched the server like this:</p>
 <div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl">start_server<span class="o">()</span> <span class="o">{</span>
 </span></span><span class="line"><span class="cl">  : &gt; <span class="s2">&#34;</span><span class="nv">$LOG</span><span class="s2">&#34;</span>
 </span></span><span class="line"><span class="cl">  <span class="s2">&#34;</span><span class="nv">$BIN</span><span class="s2">&#34;</span> serve --config <span class="s2">&#34;</span><span class="nv">$CFG</span><span class="s2">&#34;</span> &gt;&gt;<span class="s2">&#34;</span><span class="nv">$LOG</span><span class="s2">&#34;</span> 2&gt;<span class="p">&amp;</span><span class="m">1</span> <span class="p">&amp;</span>
 </span></span><span class="line"><span class="cl">  <span class="nv">SRV_PID</span><span class="o">=</span><span class="nv">$!</span>
-</span></span></code></pre></div><p>Everything the server <em>read</em> was on ext4. The docroot was staged to the native run dir, the per-site databases lived
-there, the config was rendered there. But the process inherited the shell&rsquo;s working directory, and that was on DrvFs.</p>
-<p>The fix (<a href="https://github.com/ephpm/multitenant-scalebench/commit/e92483e"><code>e92483e</code></a>) is two lines of intent: start
-the server from the native run dir, and refuse to run at all if the run dir itself is on <code>/mnt/*</code>.</p>
+</span></span></code></pre></div><p>Everything the server <em>read</em> was on ext4. The docroot was staged to the native run dir. The per-site databases lived
+there and the config was rendered there. But the process inherited the shell&rsquo;s working directory, and that was on
+DrvFs.</p>
+<p>The fix (<a href="https://github.com/ephpm/multitenant-scalebench/commit/e92483e"><code>e92483e</code></a>) is two lines of intent. Start
+the server from the native run dir. Refuse to run at all if the run dir itself is on <code>/mnt/*</code>.</p>
 <div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl"><span class="k">case</span> <span class="s2">&#34;</span><span class="nv">$RUN</span><span class="s2">&#34;</span> in
 </span></span><span class="line"><span class="cl">  /mnt/*<span class="o">)</span> <span class="nb">echo</span> <span class="s2">&#34;RUN=</span><span class="nv">$RUN</span><span class="s2"> is on DrvFs (/mnt/*) — use a WSL-native path&#34;</span> &gt;<span class="p">&amp;</span>2<span class="p">;</span> <span class="nb">exit</span> <span class="m">1</span> <span class="p">;;</span>
 </span></span><span class="line"><span class="cl"><span class="k">esac</span>
@@ -313,9 +314,9 @@ the server from the native run dir, and refuse to run at all if the run dir itse
 </span></span><span class="line"><span class="cl">  <span class="o">(</span> <span class="nb">cd</span> <span class="s2">&#34;</span><span class="nv">$RUN</span><span class="s2">&#34;</span> <span class="o">&amp;&amp;</span> <span class="nb">exec</span> <span class="s2">&#34;</span><span class="nv">$BIN</span><span class="s2">&#34;</span> serve --config <span class="s2">&#34;</span><span class="nv">$CFG</span><span class="s2">&#34;</span> <span class="o">)</span> &gt;&gt;<span class="s2">&#34;</span><span class="nv">$LOG</span><span class="s2">&#34;</span> 2&gt;<span class="p">&amp;</span><span class="m">1</span> <span class="p">&amp;</span>
 </span></span><span class="line"><span class="cl">  <span class="nv">SRV_PID</span><span class="o">=</span><span class="nv">$!</span>
 </span></span></code></pre></div><h3 id="why-a-working-directory-costs-anything">Why a working directory costs anything</h3>
-<p>I wanted to know why a directory the server never reads from could cost 4x, so I re-ran it under <code>strace</code>. Same
-setup as the report (the v0.7.0 release binary, wp-lite, 50 sites), one instance started from ext4 and one from a
-DrvFs directory, a light 4-worker load for 3 seconds while <code>strace -f</code> recorded every syscall.</p>
+<p>I wanted to know why a directory the server never reads from could cost 4x, so I re-ran it under <code>strace</code>. The setup
+matched the report: the v0.7.0 release binary, wp-lite, 50 sites. One instance started from ext4 and one from a DrvFs
+directory. Each got a light 4-worker load for 3 seconds while <code>strace -f</code> recorded every syscall.</p>
 <p>On the DrvFs run, every single request ends with this:</p>
 <pre tabindex="0"><code>lstat(&#34;/mnt/c/Users/luther/AppData/Local/Temp/.../bench/drvfs-cwd&#34;, ...) = 0
 lstat(&#34;/mnt/c/Users/luther/AppData/Local/Temp/.../bench&#34;, ...) = 0
@@ -326,11 +327,11 @@ lstat(&#34;/mnt/c/Users&#34;, ...) = 0
 lstat(&#34;/mnt/c&#34;, ...) = 0
 lstat(&#34;/mnt&#34;, ...) = 0
 stat(&#34;/mnt/c/Users/luther/AppData/Local/Temp/.../bench/drvfs-cwd&#34;, ...) = 0
-</code></pre><p>One <code>lstat</code> per path component, walking from the leaf up to <code>/</code>, then a <code>stat</code> of the full path. It happened 759
-times for 755 requests: once per request. The same walk happens on the native run too, it&rsquo;s just <code>/root</code> and one
-directory under it, on ext4, and costs nothing.</p>
-<p>That walk is PHP. <code>php_execute_script</code> in <code>main/main.c</code> saves the current directory, <code>chdir</code>s into the script&rsquo;s
-directory so relative includes work, runs the script, and then changes back:</p>
+</code></pre><p>That&rsquo;s one <code>lstat</code> per path component, walking from the leaf up to <code>/</code>, then a <code>stat</code> of the full path. It happened 759
+times for 755 requests, so once per request. The same walk happens on the native run too. There it&rsquo;s just <code>/root</code> and
+one directory under it, on ext4, and it costs nothing.</p>
+<p>That walk is PHP. <code>php_execute_script</code> in <code>main/main.c</code> saves the current directory and <code>chdir</code>s into the script&rsquo;s
+directory so relative includes work. It runs the script and then changes back:</p>
 <div class="highlight"><pre tabindex="0" class="chroma"><code class="language-c" data-lang="c"><span class="line"><span class="cl"><span class="k">if</span> <span class="p">(</span><span class="n">primary_file</span><span class="o">-&gt;</span><span class="n">filename</span> <span class="o">&amp;&amp;</span> <span class="o">!</span><span class="p">(</span><span class="nf">SG</span><span class="p">(</span><span class="n">options</span><span class="p">)</span> <span class="o">&amp;</span> <span class="n">SAPI_OPTION_NO_CHDIR</span><span class="p">))</span> <span class="p">{</span>
 </span></span><span class="line"><span class="cl">	<span class="nf">php_ignore_value</span><span class="p">(</span><span class="nf">VCWD_GETCWD</span><span class="p">(</span><span class="n">old_cwd</span><span class="p">,</span> <span class="n">OLD_CWD_SIZE</span><span class="o">-</span><span class="mi">1</span><span class="p">));</span>
 </span></span><span class="line"><span class="cl">	<span class="nf">VCWD_CHDIR_FILE</span><span class="p">(</span><span class="nf">ZSTR_VAL</span><span class="p">(</span><span class="n">primary_file</span><span class="o">-&gt;</span><span class="n">filename</span><span class="p">));</span>
@@ -339,17 +340,17 @@ directory so relative includes work, runs the script, and then changes back:</p>
 </span></span><span class="line"><span class="cl"><span class="k">if</span> <span class="p">(</span><span class="n">old_cwd</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">!=</span> <span class="sc">&#39;\0&#39;</span><span class="p">)</span> <span class="p">{</span>
 </span></span><span class="line"><span class="cl">	<span class="nf">php_ignore_value</span><span class="p">(</span><span class="nf">VCWD_CHDIR</span><span class="p">(</span><span class="n">old_cwd</span><span class="p">));</span>
 </span></span><span class="line"><span class="cl"><span class="p">}</span>
-</span></span></code></pre></div><p>In a ZTS build (which ePHPm is, because it runs PHP on many threads in one process) <code>VCWD_CHDIR</code> goes through PHP&rsquo;s
-virtual CWD layer, which resolves the path component by component with <code>lstat</code>, leaf first. In this trace nothing
-cached it; the walk ran on every request. Each of those components below <code>/mnt/c</code> is a round trip over 9p to the
-Windows host. (<code>SAPI_OPTION_NO_CHDIR</code> is the escape hatch, it&rsquo;s what <code>php-cgi -C</code> sets, but PHP apps expect the cwd to be
-the script&rsquo;s directory, so turning it off would be a behavior change, not a perf fix.)</p>
+</span></span></code></pre></div><p>ePHPm is a ZTS build because it runs PHP on many threads in one process. In a ZTS build <code>VCWD_CHDIR</code> goes through PHP&rsquo;s
+virtual CWD layer. That layer resolves the path component by component with <code>lstat</code>, leaf first. In this trace nothing
+cached it, so the walk ran on every request. Each of those components below <code>/mnt/c</code> is a round trip over 9p to the
+Windows host. <code>SAPI_OPTION_NO_CHDIR</code> is the escape hatch. It&rsquo;s what <code>php-cgi -C</code> sets. But PHP apps expect the cwd to
+be the script&rsquo;s directory, so turning it off would be a behavior change, not a perf fix.</p>
 <p>A handful of extra <code>lstat</code>s per request shouldn&rsquo;t cost 4x on its own. What makes it expensive is that DrvFs behaves
-like a shared, serialized resource under concurrency. CPU on the DrvFs run <em>dropped</em> to about 2 cores, which is the
-signature of threads waiting rather than working, and exactly the signature I had blamed on the mutex.</p>
+like a shared, serialized resource under concurrency. CPU on the DrvFs run <em>dropped</em> to about 2 cores. That&rsquo;s the
+signature of threads waiting rather than working. It&rsquo;s exactly the signature I had blamed on the mutex.</p>
 <h3 id="it-scales-with-the-depth-of-the-path">It scales with the depth of the path</h3>
-<p>That suggested a test: if the cost is per path component on DrvFs, a deeper working directory should be slower.
-So I ran the same 50-site point from four working directories, interleaved, two runs each.</p>
+<p>That suggested a test. If the cost is per path component on DrvFs, a deeper working directory should be slower. So I
+ran the same 50-site point from four working directories, interleaved, two runs each.</p>
 <p><img src="/img/2026/08/benchmark-4x-wrong-wsl-drvfs-cwd-depth.svg" alt="Requests per second by server working directory"></p>
 <table>
   <thead>
@@ -392,32 +393,33 @@ So I ran the same 50-site point from four working directories, interleaved, two 
       </tr>
   </tbody>
 </table>
-<p>&ldquo;DrvFs ops per request&rdquo; counts the <code>lstat</code>s for path components at or below <code>/mnt/c</code>, plus the final <code>stat</code> (<code>/mnt</code>
-itself isn&rsquo;t DrvFs). Multiply it by RPS and the three DrvFs rows land in the same neighborhood: about 17k, 21k and
-25k metadata operations per second. It looks like this box tops out somewhere around 20k DrvFs path lookups a
-second across all threads, and the server&rsquo;s throughput becomes that number divided by how many lookups each request
+<p>&ldquo;DrvFs ops per request&rdquo; counts the <code>lstat</code>s for path components at or below <code>/mnt/c</code>, plus the final <code>stat</code>. <code>/mnt</code>
+itself isn&rsquo;t DrvFs. Multiply it by RPS and the three DrvFs rows land in the same neighborhood. That&rsquo;s about 17k, 21k
+and 25k metadata operations per second. It looks like this box tops out somewhere around 20k DrvFs path lookups a
+second across all threads. The server&rsquo;s throughput becomes that number divided by how many lookups each request
 costs. Throughput and CPU fell together, which is what &ldquo;everybody&rsquo;s waiting on the same thing&rdquo; looks like.</p>
-<p>The 4-level row is the path the original harness ran from, and it lands at 4,239 RPS, right on top of the 4,164 from
-the #303 validation. The deep path is just my scratch directory for this re-run, and it&rsquo;s 10x slower than native.
-An earlier session of the same native-vs-deep comparison (three interleaved pairs) gave 15.0-15.4k vs 1.41-1.48k
-RPS, so the absolute numbers move with whatever else the box is doing, but the ratio held.</p>
+<p>The 4-level row is the path the original harness ran from. It lands at 4,239 RPS, right on top of the 4,164 from
+the #303 validation. The deep path is just my scratch directory for this re-run, and it&rsquo;s 10x slower than native. An
+earlier session ran the same native-vs-deep comparison as three interleaved pairs. It gave 15.0-15.4k vs 1.41-1.48k
+RPS. The absolute numbers move with whatever else the box is doing, but the ratio held.</p>
 <p>So &ldquo;4x&rdquo; was never a property of DrvFs. It was a property of how deep my checkout happened to be.</p>
 <h3 id="what-it-changed">What it changed</h3>
 <p>Re-basing everything on the fixed harness (<a href="https://github.com/ephpm/multitenant-scalebench/blob/main/report/BEFORE-AFTER.md">BEFORE-AFTER.md</a>)
 moved some conclusions and left others alone:</p>
 <ul>
-<li><strong>The warm ceiling wasn&rsquo;t ~4.7k RPS at 5 cores.</strong> It was 14.9k RPS at 16.5 cores on the pre-#303 binary and 18.9k at
-22.8 cores on main with #297, #302 and #303. The &ldquo;registry mutex caps every instance&rdquo; claim was withdrawn from the
-report and the sizing sheet.</li>
+<li><strong>The warm ceiling wasn&rsquo;t ~4.7k RPS at 5 cores.</strong> It was 14.9k RPS at 16.5 cores on the pre-#303 binary. On main
+with #297, #302 and #303 it was 18.9k at 22.8 cores. The &ldquo;registry mutex caps every instance&rdquo; claim was withdrawn
+from the report and the sizing sheet.</li>
 <li><strong>The churn collapse was real.</strong> More active sites than <code>max_open_dbs</code> still cratered to ~1.4k RPS at ~2 cores on
 the fixed harness. That one really was the mutex, and #303 lifted it 2.3x.</li>
 <li><strong>Real WordPress barely moved.</strong> It&rsquo;s CPU-bound at ~105 ms per request, so a fraction of a millisecond of <code>lstat</code>
-was lost in the noise: 243-253 RPS tainted vs 266-272 fixed, about 7%. The ~9.5 req/s per core sizing constant held.</li>
+was lost in the noise. It went from 243-253 RPS tainted to 266-272 fixed, about 7%. The ~9.5 req/s per core sizing
+constant held.</li>
 <li><strong>The cwd bug never touched RSS, fd counts or correctness</strong>, since the sampler reads <code>/proc</code> directly. The re-base
-did replace one wp-real RSS anchor, but that was a low-outlier run, unrelated to the cwd.</li>
+did replace one wp-real RSS anchor. That was a low-outlier run, unrelated to the cwd.</li>
 </ul>
 <p>The original report keeps its tables with inline <code>[ERRATUM: ...]</code> annotations instead of being rewritten. I&rsquo;d rather
-leave the wrong numbers visible next to the right ones than pretend they never existed, and the
+leave the wrong numbers visible next to the right ones than pretend they never existed. The
 <a href="https://github.com/ephpm/lab">ephpm/lab</a> README now has a &ldquo;Traps That Taint A Run&rdquo; section with this as the first
 entry.</p>
 <h3 id="the-rules-i-took-away">The rules I took away</h3>
@@ -427,7 +429,7 @@ request. Check <code>/proc/&lt;pid&gt;/cwd</code>, not just where your data live
 <li><strong>Make the harness refuse bad environments</strong>, don&rsquo;t document them. A <code>case &quot;$RUN&quot; in /mnt/*)</code> guard is worth more
 than a paragraph in a README.</li>
 <li><strong>Low CPU plus a flat ceiling doesn&rsquo;t prove lock contention.</strong> It proves something is waiting. Before you name the
-thing, take the most obvious step and change one variable at a time against the same binary.</li>
+thing, take the most obvious step. Change one variable at a time against the same binary.</li>
 <li><strong>When a fix doesn&rsquo;t move the number it should have moved, believe it.</strong> #303 not lifting the warm ceiling was the
 clue that the ceiling wasn&rsquo;t the mutex.</li>
 </ul>
@@ -436,9 +438,9 @@ clue that the ceiling wasn&rsquo;t the mutex.</li>
 <li>Host: AMD Ryzen 9 5950X (16 cores / 32 threads), Windows 11, WSL2 kernel <code>6.18.33.2-microsoft-standard-WSL2</code>, 62 GB
 available to WSL.</li>
 <li>Binary: the ePHPm v0.7.0 release (<code>ephpm-v0.7.0+php8.5.7-linux-x86_64.tar.gz</code>, sha256 <code>a79adefa...61fcee</code>).</li>
-<li>Workload: wp-lite from multitenant-scalebench, N=50 sites, <code>max_open_dbs = 4096</code>, per-site Turso DBs re-copied from
-one seeded template before every run, docroot and DBs on ext4. Only the server&rsquo;s cwd changed.</li>
-<li>Load: the multitenant-scalebench loadgen, closed-loop, <code>-c 128</code>, 5 s warmup, 15 s measured, fresh instance per run,
+<li>Workload: wp-lite from multitenant-scalebench, N=50 sites, <code>max_open_dbs = 4096</code>. Per-site Turso DBs were re-copied
+from one seeded template before every run. Docroot and DBs were on ext4. Only the server&rsquo;s cwd changed.</li>
+<li>Load: the multitenant-scalebench loadgen, closed-loop, <code>-c 128</code>, 5 s warmup, 15 s measured. Fresh instance per run,
 runs interleaved.</li>
 <li>Trace: <code>strace -f -qq -p &lt;pid&gt;</code> for ~5 s during a <code>-c 4</code> run.</li>
 <li>The original 4,164 vs 15,900 RPS figures are from the #303 validation, quoted in the PR body and in commit <code>e92483e</code>.</li>

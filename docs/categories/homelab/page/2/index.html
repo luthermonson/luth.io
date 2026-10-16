@@ -218,7 +218,7 @@
       <h2><a href="/blog/2023/11/proxmox-doesnt-know-what-type-a-number-is/">Proxmox Doesn&#39;t Know What Type a Number Is</a></h2>
     
     
-      <p>The Proxmox VE API returns the same field as 1234 in one place and &#34;1234&#34; in another. Why go-proxmox has StringOrInt, StringOrUint64, StringOrFloat64 and IntOrBool instead of plain Go types.</p>
+      <p>The Proxmox VE API returns the same field as 1234 in one place and &#34;1234&#34; in another. This is why go-proxmox has StringOrInt, StringOrUint64, StringOrFloat64 and IntOrBool instead of plain Go types.</p>
     
   </div>
   <div class="meta">
@@ -233,11 +233,11 @@
     <img class="" src="/img/2022/02/proxmox-logo.png" alt="Proxmox VE Logo">
   </a>
     
-    <p>Every couple of months somebody opens an issue on <a href="https://github.com/luthermonson/go-proxmox">go-proxmox</a> with a title
-that starts with <code>json: cannot unmarshal string into Go struct field</code>. The most recent one was fixed last week, and it&rsquo;s the same
-root cause every time: the Proxmox VE API is backed by Perl, Perl doesn&rsquo;t really care whether a scalar is a number or a
-string, and the JSON encoder on the other end writes whatever the scalar happens to be at the time. So a field that is
-documented as an integer comes back as <code>2048&hellip;</code></p>
+    <p>Every couple of months somebody opens an issue on <a href="https://github.com/luthermonson/go-proxmox">go-proxmox</a> with a
+title that starts with <code>json: cannot unmarshal string into Go struct field</code>. The most recent one was fixed last week.
+It&rsquo;s the same root cause every time. The Proxmox VE API is backed by Perl, and Perl doesn&rsquo;t really care whether a
+scalar is a number or a string. The JSON encoder on the other end writes whatever the scalar happens to be at the time.
+So a field that is documented as an integer comes back as <code>2048</code> from&hellip;</p>
   </div>
   <footer>
     <a href="/blog/2023/11/proxmox-doesnt-know-what-type-a-number-is/" class="button big">Read More</a>
@@ -281,7 +281,7 @@ documented as an integer comes back as <code>2048&hellip;</code></p>
       <h2><a href="/blog/2023/08/proxmox-api-auth-tickets-tokens-go/">Logging In to Proxmox From Go: Tickets, CSRF Tokens and API Tokens</a></h2>
     
     
-      <p>The two ways to authenticate against the Proxmox VE API, how go-proxmox handles each one, and why the client is now configured entirely with functional options.</p>
+      <p>Proxmox VE has two ways to authenticate against its API. Here&#39;s how go-proxmox handles each one and why the client is now configured entirely with functional options.</p>
     
   </div>
   <div class="meta">
@@ -296,9 +296,9 @@ documented as an integer comes back as <code>2048&hellip;</code></p>
     <img class="" src="/img/2023/08/proxmox-api-auth-tickets-tokens-go-flow.svg" alt="Diagram of the ticket login flow and the API token header for the Proxmox VE API">
   </a>
     
-    <p>I just spent a week of evenings on the access side of <a href="https://github.com/luthermonson/go-proxmox">go-proxmox</a>: realms,
-groups, users and roles all landed, and before any of that I reworked how a client gets its credentials in
-the first place. Proxmox gives you two different ways to authenticate and they behave differently enough that it&rsquo;s worth
+    <p>I just spent a week of evenings on the access side of <a href="https://github.com/luthermonson/go-proxmox">go-proxmox</a>.
+Realms, groups, users and roles all landed. Before any of that, I reworked how a client gets its credentials in the
+first place. Proxmox gives you two different ways to authenticate. They behave differently enough that it&rsquo;s worth
 writing down how each one works on the wire and what the client does with it.</p>
   </div>
   <footer>
@@ -358,10 +358,10 @@ writing down how each one works on the wire and what the client does with it.</p
     <img class="" src="/img/2022/03/proxmox-tasks-upid-wait-go-anatomy.svg" alt="Diagram breaking a Proxmox UPID string into node, pid, pstart, starttime, type, id and user">
   </a>
     
-    <p>If you start automating <a href="https://www.proxmox.com/en/">Proxmox VE</a> through the API, the first thing that trips you up is
-that almost nothing you ask it to do is finished when the HTTP call returns. Start a VM, clone a template, download an
-ISO to storage, delete a disk&hellip; the response is a single string that looks like a typo and the actual work is happening
-in a worker process on the node. If your next call depends on that work being done you have to go find out when it&rsquo;s done.</p>
+    <p>If you start automating <a href="https://www.proxmox.com/en/">Proxmox VE</a> through the API, one thing trips you up first.
+Almost nothing you ask it to do is finished when the HTTP call returns. Start a VM, clone a template, download an ISO
+to storage, delete a disk&hellip; the response is a single string that looks like a typo. The actual work is happening in a
+worker process on the node. If your next call depends on that work being done, you have to go find out when it&rsquo;s done.</p>
   </div>
   <footer>
     <a href="/blog/2022/03/proxmox-tasks-upid-wait-go/" class="button big">Read More</a>
@@ -422,8 +422,8 @@ in a worker process on the node. If your next call depends on that work being do
     
     <p>Part of a hobby of mine is running a home lab and using on <a href="https://www.proxmox.com/en/">Proxmox VE</a> to do the virtualization.
 Since I work in the space I&rsquo;m slowly trying to build tooling around Proxmox that will let me use the home lab full time for work.
-Usually my work involves building Kubernetes management tooling, you can imagine waiting for public cloud APIs all day
-can take away hours of your day at cost to your employer for both your time and the compute resources.</p>
+Usually my work involves building Kubernetes management tooling. You can imagine waiting for public cloud APIs all day
+can take away hours of your day. That&rsquo;s at cost to your employer for both your time and the compute resources.</p>
   </div>
   <footer>
     <a href="/blog/2022/02/recreating-proxmox-ve-xtermjs-in-go/" class="button big">Read More</a>

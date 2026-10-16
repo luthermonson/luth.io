@@ -218,7 +218,7 @@
       <h2><a href="/blog/2026/10/windows-sigterm-sparse-files/">Windows Grab-Bag: SIGTERM That Doesn&#39;t Exist and Sparse Files That Break Docker</a></h2>
     
     
-      <p>Two Windows-only bugs from ephemerd: Go can&#39;t SIGTERM a child on Windows, so cloudflared processes piled up, and Delivery Optimization&#39;s sparse temp files broke image layer commits.</p>
+      <p>Go can&#39;t SIGTERM a child on Windows, so ephemerd&#39;s cloudflared processes piled up. Separately, Delivery Optimization&#39;s sparse temp files broke its Windows image layer commits.</p>
     
   </div>
   <div class="meta">
@@ -300,11 +300,11 @@ long way from the cause.</p>
     <img class="" src="/img/2026/09/bind-mounts-across-mount-namespaces-toctou.svg" alt="Sequence diagram of the bind mount TOCTOU race and the openat2 plus staging fix">
   </a>
     
-    <p>GitHub Actions has a <code>container:</code> key that runs a job&rsquo;s steps inside an image of your choosing. It&rsquo;s popular because it
-gives you a reproducible toolchain without building a custom runner image. On a self-hosted runner it works by having the
-runner drive Docker, and on <a href="/blog/2026/08/ephemerd-one-daemon-every-os/">ephemerd</a> &ldquo;Docker&rdquo; is a shim that speaks the
-Docker API and creates containers in containerd. Getting bind mounts right through that shim took four PRs in a week. A
-couple of months later the version that&hellip;</p>
+    <p>GitHub Actions has a <code>container:</code> key that runs a job&rsquo;s steps inside an image of your choosing. It&rsquo;s popular because
+it gives you a reproducible toolchain without building a custom runner image. On a self-hosted runner it works by
+having the runner drive Docker. On <a href="/blog/2026/08/ephemerd-one-daemon-every-os/">ephemerd</a>, &ldquo;Docker&rdquo; is a shim that
+speaks the Docker API and creates containers in containerd. Getting bind mounts right through that shim took four PRs
+in a week. A couple of months later the version that worked&hellip;</p>
   </div>
   <footer>
     <a href="/blog/2026/09/bind-mounts-across-mount-namespaces/" class="button big">Read More</a>
@@ -358,7 +358,7 @@ couple of months later the version that&hellip;</p>
       <h2><a href="/blog/2026/09/single-binary-wordpress/">Zero-Dependency Deployments - Single Binary for WordPress</a></h2>
     
     
-      <p>WordPress with no nginx, no php-fpm, no Redis and no MySQL: one ePHPm binary, a SQLite file, and a distroless container image. What&#39;s in the binary, how it gets built, and what it actually takes to run.</p>
+      <p>WordPress with no nginx, no php-fpm, no Redis and no MySQL. It runs from one ePHPm binary, a SQLite file and a distroless container image.</p>
     
   </div>
   <div class="meta">
@@ -373,11 +373,7 @@ couple of months later the version that&hellip;</p>
     <img class="" src="/img/2026/09/single-binary-wordpress-cover.svg" alt="Side by side: nginx, php-fpm, Redis and MySQL as four services, versus one ephpm process containing the HTTP server, embedded PHP, KV store and SQLite">
   </a>
     
-    <p>The standard way to run a WordPress site is four services: nginx for HTTP and TLS, php-fpm to run PHP, MySQL for data,
-and Redis once the site gets slow enough that someone installs an object cache plugin. That&rsquo;s four processes, four
-config files, three sockets between them, and four things to upgrade. For a big site that&rsquo;s fine. For a brochure site, a
-staging copy, a PR preview, a CI job that needs a real WordPress to test a plugin against, or a box at the edge, it&rsquo;s
-absurd.</p>
+    <p>The standard way to run a WordPress site is four services:</p>
   </div>
   <footer>
     <a href="/blog/2026/09/single-binary-wordpress/" class="button big">Read More</a>
@@ -444,8 +440,8 @@ absurd.</p>
     
     <p>After a week of Windows firewall rules that <a href="/blog/2026/08/windows-container-egress-firewall/">listed fine and enforced nothing</a>,
 I went back to the Linux side of <a href="https://github.com/ephpm/ephemerd">ephemerd</a> feeling pretty good about it. iptables is
-the boring, well-understood one. Then I looked at the packet counters on a live node and found a rule that had never
-matched a packet in its life, on a node that had pushed 9.8 GB through the same chain.</p>
+the boring, well-understood one. Then I looked at the packet counters on a live node. I found a rule that had never
+matched a packet in its life. That node had pushed 9.8 GB through the same chain.</p>
   </div>
   <footer>
     <a href="/blog/2026/08/iptables-rule-zero-packets/" class="button big">Read More</a>

@@ -234,10 +234,9 @@
   </a>
     
     <p>Back in 2023 I wrote up <a href="/blog/2023/08/proxmox-api-auth-tickets-tokens-go/">how go-proxmox logs in</a> and ended it with a
-shrug: once a session existed the client never logged in again, so a ticket-based client died at the two hour mark and
-my advice was &ldquo;use an API token for anything long running&rdquo;. It took until this month to actually fix that properly, and
-it took three PRs from two of us to get there. Here&rsquo;s the whole arc, plus the one place where an API token
-isn&rsquo;t an option at all.</p>
+shrug. Once a session existed the client never logged in again. A ticket-based client died at the two hour mark. My
+advice was &ldquo;use an API token for anything long running&rdquo;. It took until this month to fix that properly. It took three
+PRs from two of us to get there. Here&rsquo;s the whole arc, plus the one place where an API token isn&rsquo;t an option at all.</p>
   </div>
   <footer>
     <a href="/blog/2026/05/staying-logged-in-to-proxmox/" class="button big">Read More</a>
@@ -283,7 +282,7 @@ isn&rsquo;t an option at all.</p>
       <h2><a href="/blog/2023/08/proxmox-api-auth-tickets-tokens-go/">Logging In to Proxmox From Go: Tickets, CSRF Tokens and API Tokens</a></h2>
     
     
-      <p>The two ways to authenticate against the Proxmox VE API, how go-proxmox handles each one, and why the client is now configured entirely with functional options.</p>
+      <p>Proxmox VE has two ways to authenticate against its API. Here&#39;s how go-proxmox handles each one and why the client is now configured entirely with functional options.</p>
     
   </div>
   <div class="meta">
@@ -298,9 +297,9 @@ isn&rsquo;t an option at all.</p>
     <img class="" src="/img/2023/08/proxmox-api-auth-tickets-tokens-go-flow.svg" alt="Diagram of the ticket login flow and the API token header for the Proxmox VE API">
   </a>
     
-    <p>I just spent a week of evenings on the access side of <a href="https://github.com/luthermonson/go-proxmox">go-proxmox</a>: realms,
-groups, users and roles all landed, and before any of that I reworked how a client gets its credentials in
-the first place. Proxmox gives you two different ways to authenticate and they behave differently enough that it&rsquo;s worth
+    <p>I just spent a week of evenings on the access side of <a href="https://github.com/luthermonson/go-proxmox">go-proxmox</a>.
+Realms, groups, users and roles all landed. Before any of that, I reworked how a client gets its credentials in the
+first place. Proxmox gives you two different ways to authenticate. They behave differently enough that it&rsquo;s worth
 writing down how each one works on the wire and what the client does with it.</p>
   </div>
   <footer>

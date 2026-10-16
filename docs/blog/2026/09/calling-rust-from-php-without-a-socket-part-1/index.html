@@ -272,21 +272,27 @@
       </div>
       <div class="content">
         
-        <p><a href="https://github.com/ephpm/ephpm">ePHPm</a> is a single Rust binary that embeds PHP, and it carries its own KV store and its
-own SQLite-backed database in the same process. For a long time the only way PHP code could reach that KV store was the
-same way it reaches Redis: open a TCP socket to the RESP listener ePHPm runs on localhost, encode a command, wait for the
-reply. That works, and every PHP Redis client in existence already speaks it, but it is a strange thing to do when the
+        <p><a href="https://github.com/ephpm/ephpm">ePHPm</a> is a single Rust binary that embeds PHP. It carries its own KV store and its own
+SQLite-backed database in the same process. For a long time PHP code could only reach that KV store the same way it
+reaches Redis. It opened a TCP socket to the RESP listener ePHPm runs on localhost, encoded a command and waited for the
+reply. That works, and every PHP Redis client in existence already speaks it. But it is a strange thing to do when the
 hash map you&rsquo;re talking to lives a few pointers away in the same address space.</p>
 <p>So ePHPm registers its own PHP functions: <code>ephpm_kv_get()</code>, <code>ephpm_kv_set()</code>, <code>ephpm_db_query()</code> and friends. Calling one
 is a C function call that hops through a function pointer into Rust and back. This is part one of two. This post is the
-plumbing: how the functions get registered, how C and Rust share a table of function pointers, who owns which bytes, and
-the thread-teardown bugs that came with it. <a href="/blog/2026/09/calling-rust-from-php-without-a-socket-part-2/">Part 2</a> is the
-13 Composer packages that let phpredis, Predis, WordPress and Laravel code use them without being rewritten.</p>
+plumbing:</p>
+<ul>
+<li>how the functions get registered</li>
+<li>how C and Rust share a table of function pointers</li>
+<li>who owns which bytes</li>
+<li>the thread-teardown bugs that came with it</li>
+</ul>
+<p><a href="/blog/2026/09/calling-rust-from-php-without-a-socket-part-2/">Part 2</a> is the 13 Composer packages that let phpredis,
+Predis, WordPress and Laravel code use them without being rewritten.</p>
 <h3 id="is-it-worth-it">Is it worth it?</h3>
 <p>Before writing a post about avoiding a socket I wanted my own numbers, not the ones in the docs. I took the
-<a href="https://github.com/ephpm/lab">ephpm-lab</a> KV harness (one PHP request that loops over the operation and times it with
-<code>hrtime()</code>), ran it against the v0.10.6 release, and pointed the same raw-socket RESP client at two servers: ePHPm&rsquo;s own
-RESP listener and a stock Redis 7 in a container.</p>
+<a href="https://github.com/ephpm/lab">ephpm-lab</a> KV harness and ran it against the v0.10.6 release. The harness is one PHP
+request that loops over the operation and times it with <code>hrtime()</code>. I pointed the same raw-socket RESP client at two
+servers. One was ePHPm&rsquo;s own RESP listener and the other was a stock Redis 7 in a container.</p>
 <p><img src="/img/2026/09/calling-rust-from-php-without-a-socket-part-1-kv-get.svg" alt="KV GET latency: native function vs ePHPm RESP vs Redis"></p>
 <p>Medians of three interleaved runs:</p>
 <table>
@@ -325,17 +331,17 @@ RESP listener and a stock Redis 7 in a container.</p>
       </tr>
   </tbody>
 </table>
-<p>A small <code>get</code> through the native function is about 105 ns. The same <code>get</code> over a socket is about 83 µs, roughly 790
-times slower, and it barely matters which server is on the other end. Real Redis comes in within 5% of ePHPm&rsquo;s
-own listener. That&rsquo;s the useful result: the cost isn&rsquo;t the server, it&rsquo;s the round trip.</p>
+<p>A small <code>get</code> through the native function is about 105 ns. The same <code>get</code> over a socket is about 83 µs. That&rsquo;s roughly
+790 times slower, and it barely matters which server is on the other end. Real Redis comes in within 5% of ePHPm&rsquo;s own
+listener. That&rsquo;s the useful result. The cost isn&rsquo;t the server, it&rsquo;s the round trip.</p>
 <p>I&rsquo;d be careful with the absolute socket number. It&rsquo;s high because this is WSL2, where a loopback round trip is
-expensive. To check it wasn&rsquo;t my PHP client, I ran <code>redis-benchmark -c 1</code> inside the Redis container, which is plain C
+expensive. To check it wasn&rsquo;t my PHP client, I ran <code>redis-benchmark -c 1</code> inside the Redis container. That&rsquo;s plain C
 with no PHP involved, and it got a p50 of 79 µs. On bare-metal Linux loopback is a lot cheaper, so expect the gap to
-shrink by some factor there. It doesn&rsquo;t go away, though, because a native call doesn&rsquo;t have a round trip at all.</p>
+shrink by some factor there. It doesn&rsquo;t go away, though. A native call doesn&rsquo;t have a round trip at all.</p>
 <p>The other thing the table shows is that &ldquo;no serialization&rdquo; isn&rsquo;t &ldquo;no copy&rdquo;. At 64 KB the native <code>get</code> is memcpy-bound at
-about 2 µs, because the value is copied out of the store and then copied again into a PHP string.</p>
+about 2 µs. The value is copied out of the store and then copied again into a PHP string.</p>
 <h3 id="what-php-sees">What PHP sees</h3>
-<p>Everything is registered from one macro in <code>ephpm_wrapper.c</code>, so the server and <code>ephpm php</code> (the CLI mode) get the same
+<p>Everything is registered from one macro in <code>ephpm_wrapper.c</code>. The server and the CLI mode, <code>ephpm php</code>, get the same
 list:</p>
 <div class="highlight"><pre tabindex="0" class="chroma"><code class="language-c" data-lang="c"><span class="line"><span class="cl"><span class="cp">#define EPHPM_COMMON_FUNCTION_ENTRIES \
 </span></span></span><span class="line"><span class="cl"><span class="cp">    PHP_FE(ephpm_kv_get,       arginfo_ephpm_kv_get) \
@@ -352,26 +358,28 @@ list:</p>
 </span></span></span><span class="line"><span class="cl"><span class="cp">    </span><span class="cm">/* ... eight more ephpm_ws_* */</span><span class="cp"> \
 </span></span></span><span class="line"><span class="cl"><span class="cp">    PHP_FE(ephpm_middleware_config, arginfo_ephpm_middleware_config)
 </span></span></span></code></pre></div><p>That&rsquo;s 14 KV functions, 8 database functions, 9 WebSocket functions and the middleware config accessor. On top of those
-there&rsquo;s a small module with the <code>\Ephpm\Worker\*</code> functions for worker mode, and a native session save handler you turn
-on with <code>session.save_handler = ephpm</code>. Every one of them follows the same pattern, so I&rsquo;ll stick to the KV and DB side.</p>
-<p>One function worth calling out is <code>ephpm_kv_wait()</code>. It blocks until a key&rsquo;s version changes, which you can&rsquo;t do over
-RESP without pub/sub. It replaced a poll-and-<code>usleep</code> loop in the Datastar demo, and in
-<a href="https://github.com/ephpm/ephpm/pull/184">#184</a> eight idle SSE clients went from 0.35% of a core to 0.02%, with
-event latency going from a p50 of 100 ms (the poll interval) to 1.2 ms.</p>
+there&rsquo;s a small module with the <code>\Ephpm\Worker\*</code> functions for worker mode. There&rsquo;s also a native session save handler
+you turn on with <code>session.save_handler = ephpm</code>. Every one of them follows the same pattern, so I&rsquo;ll stick to the KV and
+DB side.</p>
+<p>One function worth calling out is <code>ephpm_kv_wait()</code>. It blocks until a key&rsquo;s version changes. You can&rsquo;t do that over
+RESP without pub/sub. It replaced a poll-and-<code>usleep</code> loop in the Datastar demo. In
+<a href="https://github.com/ephpm/ephpm/pull/184">#184</a> eight idle SSE clients went from 0.35% of a core to 0.02%. Event latency
+went from a p50 of 100 ms, the poll interval, to 1.2 ms.</p>
 <h3 id="getting-the-functions-registered-at-all">Getting the functions registered at all</h3>
-<p>This took three tries, and the first two looked fine in the code and failed in the e2e suite.</p>
+<p>This took three tries. The first two looked fine in the code and failed in the e2e suite.</p>
 <p>The obvious move is to set <code>additional_functions</code> on the SAPI module struct before calling <code>php_embed_init()</code>. That does
-nothing, because <code>php_embed_init()</code> overwrites <code>php_embed_module.additional_functions</code> with its own one-entry array (just
-<code>dl()</code>) at <code>sapi/embed/php_embed.c:219</code>, after <code>sapi_startup()</code> and before module startup. Every request died with
-&ldquo;Call to undefined function ephpm_kv_get()&rdquo;.</p>
+nothing. <code>php_embed_init()</code> overwrites <code>php_embed_module.additional_functions</code> with its own one-entry array, just
+<code>dl()</code>. That happens at <code>sapi/embed/php_embed.c:219</code>, after <code>sapi_startup()</code> and before module startup. Every request
+died with &ldquo;Call to undefined function ephpm_kv_get()&rdquo;.</p>
 <p>The second attempt (<code>752890eb</code>) called <code>zend_register_functions()</code> right after <code>php_embed_init()</code> returned. On a non-ZTS
-build that&rsquo;s fine. ePHPm runs PHP threaded (ZTS), and in ZTS <code>zend_post_startup()</code> (the tail of <code>php_module_startup()</code>)
-copies the main thread&rsquo;s <code>CG(function_table)</code> into a static <code>GLOBAL_FUNCTION_TABLE</code> and frees the original. Every new PHP thread builds its
-function table by copying from <code>GLOBAL_FUNCTION_TABLE</code> in <code>compiler_globals_ctor</code>. Register a function after that point
-and it lands in a table no worker thread will ever look at.</p>
+build that&rsquo;s fine. But ePHPm runs PHP threaded (ZTS). In ZTS, <code>zend_post_startup()</code> runs at the tail of
+<code>php_module_startup()</code>. It copies the main thread&rsquo;s <code>CG(function_table)</code> into a static <code>GLOBAL_FUNCTION_TABLE</code> and frees
+the original. Every new PHP thread builds its function table by copying from <code>GLOBAL_FUNCTION_TABLE</code> in
+<code>compiler_globals_ctor</code>. Register a function after that point and it lands in a table no worker thread will ever look
+at.</p>
 <p>The window that works is &ldquo;after the embed SAPI wipes <code>additional_functions</code>, before <code>php_module_startup()</code> reads it&rdquo;.
-<code>php_embed_init()</code> rewrites <code>additional_functions</code> but leaves the <code>startup</code> hook alone, so the fix (<code>a50a69ba</code>) swaps
-the startup hook for a shim:</p>
+<code>php_embed_init()</code> rewrites <code>additional_functions</code> but leaves the <code>startup</code> hook alone. So the fix (<code>a50a69ba</code>) swaps the
+startup hook for a shim:</p>
 <div class="highlight"><pre tabindex="0" class="chroma"><code class="language-c" data-lang="c"><span class="line"><span class="cl"><span class="k">static</span> <span class="kt">int</span> <span class="nf">ephpm_module_startup</span><span class="p">(</span><span class="n">sapi_module_struct</span> <span class="o">*</span><span class="n">sm</span><span class="p">)</span>
 </span></span><span class="line"><span class="cl"><span class="p">{</span>
 </span></span><span class="line"><span class="cl">    <span class="n">sm</span><span class="o">-&gt;</span><span class="n">additional_functions</span> <span class="o">=</span> <span class="n">g_cli_mode</span> <span class="o">?</span> <span class="nl">ephpm_cli_functions</span> <span class="p">:</span> <span class="n">ephpm_kv_functions</span><span class="p">;</span>
@@ -392,8 +400,8 @@ the startup hook for a shim:</p>
 </span></span><span class="line"><span class="cl"><span class="p">{</span>
 </span></span><span class="line"><span class="cl">    <span class="n">php_embed_module</span><span class="p">.</span><span class="n">startup</span> <span class="o">=</span> <span class="n">ephpm_module_startup</span><span class="p">;</span>
 </span></span><span class="line"><span class="cl"><span class="p">}</span>
-</span></span></code></pre></div><p>The same window turned out to be the right place for several later things (the CLI&rsquo;s <code>-d</code> directives and <code>PHP_BINARY</code>
-are spliced in there too), which says something about how much of the embed SAPI&rsquo;s setup happens in that one call.</p>
+</span></span></code></pre></div><p>The same window turned out to be the right place for several later things. The CLI&rsquo;s <code>-d</code> directives and <code>PHP_BINARY</code>
+are spliced in there too. That says something about how much of the embed SAPI&rsquo;s setup happens in that one call.</p>
 <h3 id="the-ops-table">The ops table</h3>
 <p>The C side doesn&rsquo;t know anything about Rust types. It declares a struct of function pointers and keeps one static copy:</p>
 <div class="highlight"><pre tabindex="0" class="chroma"><code class="language-c" data-lang="c"><span class="line"><span class="cl"><span class="k">typedef</span> <span class="k">struct</span> <span class="p">{</span>
@@ -415,8 +423,8 @@ are spliced in there too), which says something about how much of the embed SAPI
 </span></span><span class="line"><span class="cl">        <span class="n">g_kv_ops</span> <span class="o">=</span> <span class="o">*</span><span class="n">ops</span><span class="p">;</span>
 </span></span><span class="line"><span class="cl">    <span class="p">}</span>
 </span></span><span class="line"><span class="cl"><span class="p">}</span>
-</span></span></code></pre></div><p>Rust mirrors it field for field as a <code>#[repr(C)]</code> struct of <code>Option&lt;unsafe extern &quot;C&quot; fn(...)&gt;</code> (an <code>Option</code> of a
-function pointer has the same layout as a nullable C pointer) and fills in a <code>static</code>:</p>
+</span></span></code></pre></div><p>Rust mirrors it field for field as a <code>#[repr(C)]</code> struct of <code>Option&lt;unsafe extern &quot;C&quot; fn(...)&gt;</code> and fills in a
+<code>static</code>. An <code>Option</code> of a function pointer has the same layout as a nullable C pointer:</p>
 <div class="highlight"><pre tabindex="0" class="chroma"><code class="language-rust" data-lang="rust"><span class="line"><span class="cl"><span class="cp">#[repr(C)]</span><span class="w">
 </span></span></span><span class="line"><span class="cl"><span class="k">pub</span><span class="w"> </span><span class="k">struct</span> <span class="nc">EphpmKvOps</span><span class="w"> </span><span class="p">{</span><span class="w">
 </span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="k">pub</span><span class="w"> </span><span class="n">get</span>: <span class="nb">Option</span><span class="o">&lt;</span><span class="k">unsafe</span><span class="w"> </span><span class="k">extern</span><span class="w"> </span><span class="s">&#34;C&#34;</span><span class="w"> </span><span class="k">fn</span><span class="p">(</span><span class="n">key</span>: <span class="o">*</span><span class="k">const</span><span class="w"> </span><span class="n">c_char</span><span class="p">)</span><span class="w"> </span>-&gt; <span class="nc">c_int</span><span class="o">&gt;</span><span class="p">,</span><span class="w">
@@ -434,16 +442,16 @@ function pointer has the same layout as a nullable C pointer) and fills in a <co
 </span></span></span><span class="line"><span class="cl"><span class="w">
 </span></span></span><span class="line"><span class="cl"><span class="c1">// at startup, before any PHP thread runs a script
 </span></span></span><span class="line"><span class="cl"><span class="k">unsafe</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">ffi</span>::<span class="n">ephpm_set_kv_ops</span><span class="p">(</span><span class="o">&amp;</span><span class="n">kv_bridge</span>::<span class="no">KV_OPS</span><span class="p">)</span><span class="w"> </span><span class="p">};</span><span class="w">
-</span></span></span></code></pre></div><p>The table is copied into the C global once, before any PHP thread runs, and never written again. That&rsquo;s the entire
-thread-safety story: a struct that&rsquo;s read-only after startup needs no lock, no atomics, nothing. Each <code>PHP_FUNCTION</code>
-checks its pointer for NULL first, so a build where the KV store isn&rsquo;t wired returns a miss instead of crashing.</p>
-<p>Since C and Rust each declare the layout by hand, the rule is append-only. New operations go at the end, and the last
-field carries a &ldquo;must stay LAST-appended&rdquo; comment on both sides. <code>wait</code> was added after <code>flush_all</code>, and <code>del_if_eq</code>
-after <code>wait</code>. The DB table has the same comment on <code>available</code>. It&rsquo;s the same discipline as ePHPm&rsquo;s native middleware
-ABI, and it&rsquo;s boring on purpose.</p>
+</span></span></span></code></pre></div><p>The table is copied into the C global once, before any PHP thread runs. It&rsquo;s never written again. That&rsquo;s the entire
+thread-safety story. A struct that&rsquo;s read-only after startup needs no lock, no atomics, nothing. Each <code>PHP_FUNCTION</code>
+checks its pointer for NULL first. A build where the KV store isn&rsquo;t wired returns a miss instead of crashing.</p>
+<p>C and Rust each declare the layout by hand, so the rule is append-only. New operations go at the end. The last field
+carries a &ldquo;must stay LAST-appended&rdquo; comment on both sides. <code>wait</code> was added after <code>flush_all</code>, and <code>del_if_eq</code> after
+<code>wait</code>. The DB table has the same comment on <code>available</code>. It&rsquo;s the same discipline as ePHPm&rsquo;s native middleware ABI.
+It&rsquo;s boring on purpose.</p>
 <h3 id="no-malloc-crosses-the-boundary">No malloc crosses the boundary</h3>
-<p>The rule I care about most: memory allocated by Rust is freed by Rust, and memory allocated by PHP is freed by PHP. Nothing
-crosses.</p>
+<p>This is the rule I care about most. Memory allocated by Rust is freed by Rust. Memory allocated by PHP is freed by PHP.
+Nothing crosses.</p>
 <p>For a <code>get</code>, Rust copies the value into a thread-local buffer and returns 1. C then asks for a pointer and length into
 that buffer and copies the bytes into a PHP string:</p>
 <div class="highlight"><pre tabindex="0" class="chroma"><code class="language-c" data-lang="c"><span class="line"><span class="cl"><span class="nf">PHP_FUNCTION</span><span class="p">(</span><span class="n">ephpm_kv_get</span><span class="p">)</span>
@@ -460,18 +468,18 @@ that buffer and copies the bytes into a PHP string:</p>
 </span></span><span class="line"><span class="cl">    <span class="n">g_kv_ops</span><span class="p">.</span><span class="nf">get_result</span><span class="p">(</span><span class="o">&amp;</span><span class="n">ptr</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">len</span><span class="p">);</span>
 </span></span><span class="line"><span class="cl">    <span class="nf">RETURN_STRINGL</span><span class="p">(</span><span class="n">ptr</span><span class="p">,</span> <span class="n">len</span><span class="p">);</span>
 </span></span><span class="line"><span class="cl"><span class="p">}</span>
-</span></span></code></pre></div><p>The borrowed pointer is valid until the next <code>get</code> on the same thread, and since PHP is single-threaded per request
-there is no next <code>get</code> until this one returns. That&rsquo;s one copy out of the store into the buffer and one copy into the
-zval, which is why a 64 KB value costs a couple of microseconds and a 64-byte value doesn&rsquo;t.</p>
-<p>The DB side stages more. A statement&rsquo;s rows go in one thread-local and are released by <code>finish()</code> as soon as C has
-turned them into zvals. Its metadata (did it return rows, the column names and declared types, affected rows, last insert
-id) and any error go in a separate &ldquo;last call&rdquo; record that survives <code>finish()</code>. That split is what made
-<a href="https://github.com/ephpm/ephpm/pull/357">#357</a> possible: <code>ephpm_db_errno()</code> still works after the exception was caught,
-and <code>ephpm_db_columns()</code> can describe a <code>SELECT</code> that matched zero rows.</p>
+</span></span></code></pre></div><p>The borrowed pointer is valid until the next <code>get</code> on the same thread. PHP is single-threaded per request, so there is
+no next <code>get</code> until this one returns. That&rsquo;s one copy out of the store into the buffer and one copy into the zval. It&rsquo;s
+why a 64 KB value costs a couple of microseconds and a 64-byte value doesn&rsquo;t.</p>
+<p>The DB side stages more. A statement&rsquo;s rows go in one thread-local. <code>finish()</code> releases them as soon as C has turned them
+into zvals. The metadata goes in a separate &ldquo;last call&rdquo; record that survives <code>finish()</code>. That covers whether it returned
+rows, the column names and declared types, affected rows and last insert id. Any error goes in that record too. That
+split is what made <a href="https://github.com/ephpm/ephpm/pull/357">#357</a> possible. <code>ephpm_db_errno()</code> still works after the
+exception was caught. <code>ephpm_db_columns()</code> can describe a <code>SELECT</code> that matched zero rows.</p>
 <h3 id="errors-stay-on-the-c-side">Errors stay on the C side</h3>
-<p>Rust callbacks never call into Zend. That&rsquo;s deliberate: a PHP fatal unwinds with <code>longjmp</code>, and a <code>longjmp</code> through Rust
-frames skips their destructors, which is undefined behavior. So errors come back as return codes and C decides what to do
-with them. For the DB functions that means throwing an exception, which doesn&rsquo;t <code>longjmp</code>:</p>
+<p>Rust callbacks never call into Zend. That&rsquo;s deliberate. A PHP fatal unwinds with <code>longjmp</code>. A <code>longjmp</code> through Rust
+frames skips their destructors, which is undefined behavior. So errors come back as return codes and C decides what to
+do with them. For the DB functions that means throwing an exception, which doesn&rsquo;t <code>longjmp</code>:</p>
 <div class="highlight"><pre tabindex="0" class="chroma"><code class="language-c" data-lang="c"><span class="line"><span class="cl"><span class="kt">int</span> <span class="n">rc</span> <span class="o">=</span> <span class="n">g_db_ops</span><span class="p">.</span><span class="nf">run</span><span class="p">(</span><span class="n">sql</span><span class="p">,</span> <span class="n">sql_len</span><span class="p">);</span>
 </span></span><span class="line"><span class="cl"><span class="k">if</span> <span class="p">(</span><span class="n">rc</span> <span class="o">==</span> <span class="o">-</span><span class="mi">2</span><span class="p">)</span> <span class="p">{</span>
 </span></span><span class="line"><span class="cl">    <span class="nf">zend_throw_exception</span><span class="p">(</span><span class="n">zend_ce_exception</span><span class="p">,</span> <span class="n">EPHPM_DB_UNAVAILABLE_MSG</span><span class="p">,</span>
@@ -486,13 +494,20 @@ with them. For the DB functions that means throwing an exception, which doesn&rs
 </span></span><span class="line"><span class="cl">    <span class="n">g_db_ops</span><span class="p">.</span><span class="nf">finish</span><span class="p">();</span>
 </span></span><span class="line"><span class="cl">    <span class="k">return</span> <span class="n">EPHPM_DB_THREW</span><span class="p">;</span>
 </span></span><span class="line"><span class="cl"><span class="p">}</span>
-</span></span></code></pre></div><p>SQL errors carry the MySQL server error code litewire mapped them to (1062 for a duplicate key, 1064 for a syntax
-error). Infrastructure failures (no database configured, no site context, can&rsquo;t connect, unbindable parameter, thread
-shutting down) use 2000 through 2004. Those sit in MySQL&rsquo;s client-error range, which a server never sends, so an adapter
-can tell &ldquo;your SQL is wrong&rdquo; from &ldquo;the bridge isn&rsquo;t there&rdquo; by number instead of by matching message text.</p>
+</span></span></code></pre></div><p>SQL errors carry the MySQL server error code litewire mapped them to. That&rsquo;s 1062 for a duplicate key and 1064 for a
+syntax error. Infrastructure failures use 2000 through 2004:</p>
+<ul>
+<li>no database configured</li>
+<li>no site context</li>
+<li>can&rsquo;t connect</li>
+<li>unbindable parameter</li>
+<li>thread shutting down</li>
+</ul>
+<p>Those sit in MySQL&rsquo;s client-error range, which a server never sends. An adapter can tell &ldquo;your SQL is wrong&rdquo; from &ldquo;the
+bridge isn&rsquo;t there&rdquo; by number instead of by matching message text.</p>
 <h3 id="which-keyspace">Which keyspace?</h3>
 <p>ePHPm can serve many sites from one process, and each site gets its own KV store. The C side never sees that. Before PHP
-runs, the router calls <code>set_site_store()</code> for the request, and every Rust callback resolves its store through a
+runs, the router calls <code>set_site_store()</code> for the request. Every Rust callback resolves its store through a
 thread-local:</p>
 <div class="highlight"><pre tabindex="0" class="chroma"><code class="language-rust" data-lang="rust"><span class="line"><span class="cl"><span class="k">fn</span> <span class="nf">effective_store</span><span class="p">()</span><span class="w"> </span>-&gt; <span class="nb">Option</span><span class="o">&lt;</span><span class="n">Arc</span><span class="o">&lt;</span><span class="n">Store</span><span class="o">&gt;&gt;</span><span class="w"> </span><span class="p">{</span><span class="w">
 </span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="no">KV_SITE_STORE</span><span class="w">
@@ -506,50 +521,56 @@ thread-local:</p>
 </span></span></span><span class="line"><span class="cl"><span class="w">        </span><span class="p">})</span><span class="w">
 </span></span></span><span class="line"><span class="cl"><span class="w">        </span><span class="p">.</span><span class="n">unwrap_or</span><span class="p">(</span><span class="nb">None</span><span class="p">)</span><span class="w">
 </span></span></span><span class="line"><span class="cl"><span class="p">}</span><span class="w">
-</span></span></span></code></pre></div><p>The DB bridge does the same with the site key, and in per-site mode a query with no site context fails instead of falling
+</span></span></span></code></pre></div><p>The DB bridge does the same with the site key. In per-site mode a query with no site context fails instead of falling
 back to a shared database.</p>
 <p>This had a bug that&rsquo;s worth knowing about if you build something similar. <a href="https://github.com/ephpm/ephpm/pull/208">#208</a>
-found two separate <code>MultiTenantStore</code> instances: one built by the router for the PHP path, one built by the RESP listener.
-Each lazily created its own per-hostname <code>Store</code>. So in vhost mode <code>ephpm_kv_set()</code> from PHP and a Predis <code>SET</code> for the
-same site landed in different keyspaces, and neither could see the other&rsquo;s writes. Single-site mode was fine, which is why
-it lived for a while. The fix is the obvious one: build it once and hand the same instance to both.</p>
+found two separate <code>MultiTenantStore</code> instances. The router built one for the PHP path and the RESP listener built the
+other. Each lazily created its own per-hostname <code>Store</code>. So in vhost mode <code>ephpm_kv_set()</code> from PHP and a Predis <code>SET</code> for
+the same site landed in different keyspaces. Neither could see the other&rsquo;s writes. Single-site mode was fine, which is
+why it lived for a while. The fix is the obvious one: build it once and hand the same instance to both.</p>
 <h3 id="thread-teardown">Thread teardown</h3>
-<p>The nastiest bugs in the bridge weren&rsquo;t in calls, they were in thread exit.</p>
+<p>The nastiest bugs in the bridge weren&rsquo;t in calls. They were in thread exit.</p>
 <p>The DB bridge keeps one litewire session per PHP thread, in a <code>thread_local!</code>. When tokio retired an idle blocking
-thread, that thread-local&rsquo;s destructor dropped the session, which dropped the Turso connection, which dropped pager
-buffers, and <code>Buffer::drop</code> recycles into Turso&rsquo;s own thread-local buffer cache. TLS destructors run in reverse
-registration order, and Turso&rsquo;s cache was registered after ours (inside our first query), so it was already gone.
-<code>LocalKey::with</code> on a destroyed thread-local panics, a panic in a TLS destructor aborts the process, and every tenant on
-the box went down. <a href="https://github.com/ephpm/ephpm/issues/300">#300</a> was found by an overload test where 3 of 10 flooded
-instances died this way, at different points: mid-flood, during the post-flood cooldown, and at SIGTERM.</p>
-<p>There&rsquo;s no <code>try_with</code> I can add to fix that, because the panicking <code>with</code> is several frames down inside Turso. What I can
-do is not run that drop on a dying thread. The session is parked in a process-wide &ldquo;graveyard&rdquo; instead, and the next
-request on any live thread drains and drops it. In steady state the graveyard is empty and the drain is a single relaxed
-atomic load.</p>
-<p><a href="https://github.com/ephpm/ephpm/issues/269">#269</a> is the mirror image. Thread exit runs <code>php_request_shutdown()</code>, which
-runs <code>register_shutdown_function()</code> callbacks and destructors, and those can call <code>ephpm_kv_*</code> or <code>ephpm_db_*</code> after the
-bridge&rsquo;s own thread-locals are destroyed. Every access reachable from PHP now uses <code>try_with</code> and degrades: a KV call
-reports a miss, a DB call returns <code>-3</code> and C throws a distinctly worded exception. And it fails closed. When the per-site
-slot is gone, <code>effective_store()</code> returns <code>None</code>, not the global store, because falling back to the global store would let
-one tenant&rsquo;s shutdown function write into another tenant&rsquo;s keyspace.</p>
+thread, that thread-local&rsquo;s destructor set off a chain of drops:</p>
+<ul>
+<li>it dropped the session</li>
+<li>the session dropped the Turso connection</li>
+<li>the connection dropped pager buffers</li>
+<li><code>Buffer::drop</code> recycles into Turso&rsquo;s own thread-local buffer cache</li>
+</ul>
+<p>TLS destructors run in reverse registration order. Turso&rsquo;s cache was registered after ours, inside our first query. So it
+was already gone. <code>LocalKey::with</code> on a destroyed thread-local panics. A panic in a TLS destructor aborts the process, and
+every tenant on the box went down. <a href="https://github.com/ephpm/ephpm/issues/300">#300</a> was found by an overload test where
+3 of 10 flooded instances died this way. They died at different points: mid-flood, during the post-flood cooldown and at
+SIGTERM.</p>
+<p>There&rsquo;s no <code>try_with</code> I can add to fix that. The panicking <code>with</code> is several frames down inside Turso. What I can do is
+not run that drop on a dying thread. The session is parked in a process-wide &ldquo;graveyard&rdquo; instead. The next request on
+any live thread drains and drops it. In steady state the graveyard is empty and the drain is a single relaxed atomic
+load.</p>
+<p><a href="https://github.com/ephpm/ephpm/issues/269">#269</a> is the mirror image. Thread exit runs <code>php_request_shutdown()</code>. That
+runs <code>register_shutdown_function()</code> callbacks and destructors. Those can call <code>ephpm_kv_*</code> or <code>ephpm_db_*</code> after the
+bridge&rsquo;s own thread-locals are destroyed. Every access reachable from PHP now uses <code>try_with</code> and degrades. A KV call
+reports a miss. A DB call returns <code>-3</code> and C throws a distinctly worded exception. And it fails closed. When the per-site
+slot is gone, <code>effective_store()</code> returns <code>None</code>, not the global store. Falling back to the global store would let one
+tenant&rsquo;s shutdown function write into another tenant&rsquo;s keyspace.</p>
 <h3 id="the-db-bridge">The DB bridge</h3>
-<p><code>ephpm_db_*</code> goes through the same litewire <code>Session</code> the MySQL wire frontend uses, so the same MySQL-dialect translation,
-<code>SHOW</code>/<code>DESCRIBE</code> emulation and transaction tracking apply. There&rsquo;s one session per PHP thread per site, and a thread that
+<p><code>ephpm_db_*</code> goes through the same litewire <code>Session</code> the MySQL wire frontend uses. The same MySQL-dialect translation,
+<code>SHOW</code>/<code>DESCRIBE</code> emulation and transaction tracking apply. There&rsquo;s one session per PHP thread per site. A thread that
 moves to a different site gets a new session.</p>
-<p><code>Session::query</code> is async and PHP callbacks are synchronous, so the bridge pins the server&rsquo;s tokio <code>Handle</code> and uses
+<p><code>Session::query</code> is async and PHP callbacks are synchronous. So the bridge pins the server&rsquo;s tokio <code>Handle</code> and uses
 <code>block_on</code>. That&rsquo;s only legal because these callbacks always run on PHP OS threads, never inside an async task. If one
-ever did, tokio would panic, which is a much better failure than a deadlock.</p>
-<p>Thread-scoped sessions have one obvious trap, and I fell into it. The session outlives the request, so a script that ran
-<code>BEGIN</code> and then fataled (or just forgot to <code>COMMIT</code>) left the transaction open on that thread. The next, unrelated request
-on the same thread silently joined it, and its writes could later be rolled back with someone else&rsquo;s.
-<a href="https://github.com/ephpm/ephpm/pull/258">#258</a> added <code>on_request_end()</code>, which runs at request teardown in both execution
-modes and rolls back whatever is still open with a warning in the log.</p>
+ever did, tokio would panic. That&rsquo;s a much better failure than a deadlock.</p>
+<p>Thread-scoped sessions have one obvious trap, and I fell into it. The session outlives the request. A script that ran
+<code>BEGIN</code> and then fataled left the transaction open on that thread. So did one that just forgot to <code>COMMIT</code>. The next
+unrelated request on the same thread silently joined it. Its writes could later be rolled back with someone else&rsquo;s.
+<a href="https://github.com/ephpm/ephpm/pull/258">#258</a> added <code>on_request_end()</code>. It runs at request teardown in both execution
+modes and rolls back whatever is still open, with a warning in the log.</p>
 <h3 id="a-worked-example-the-session-handler">A worked example: the session handler</h3>
-<p>The native session handler (<code>17493149</code>) shows the whole thing end to end, because it&rsquo;s written in C against the ops
-table directly with no PHP in between. Sessions live at <code>session:&lt;sid&gt;</code>, the TTL comes from <code>session.gc_maxlifetime</code>, and GC is
-a no-op because the store expires keys itself.</p>
-<p>Two details took real debugging. With <code>session.lazy_write</code> on (the default), PHP calls <code>update_timestamp</code> instead of
-<code>write</code> when the data didn&rsquo;t change, and the handler refreshes the TTL with <code>expire</code> instead of rewriting the blob. And
+<p>The native session handler (<code>17493149</code>) shows the whole thing end to end. It&rsquo;s written in C against the ops table
+directly, with no PHP in between. Sessions live at <code>session:&lt;sid&gt;</code>. The TTL comes from <code>session.gc_maxlifetime</code>. GC is a
+no-op because the store expires keys itself.</p>
+<p>Two details took real debugging. <code>session.lazy_write</code> is on by default. With it on, PHP calls <code>update_timestamp</code> instead
+of <code>write</code> when the data didn&rsquo;t change. The handler refreshes the TTL with <code>expire</code> instead of rewriting the blob. And
 <code>open</code> has to set <code>*mod_data</code> to something non-NULL:</p>
 <div class="highlight"><pre tabindex="0" class="chroma"><code class="language-c" data-lang="c"><span class="line"><span class="cl"><span class="k">static</span> <span class="kt">int</span> <span class="n">ephpm_session_mod_data_marker</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
 </span></span><span class="line"><span class="cl">
@@ -561,37 +582,38 @@ a no-op because the store expires keys itself.</p>
 </span></span><span class="line"><span class="cl">    <span class="k">return</span> <span class="n">SUCCESS</span><span class="p">;</span>
 </span></span><span class="line"><span class="cl"><span class="p">}</span>
 </span></span></code></pre></div><p>ext/session only calls a handler&rsquo;s <code>write</code> and <code>close</code> when <code>PS(mod_data)</code> is set. A native handler that keeps no state
-and leaves it NULL never gets written. There&rsquo;s no error, just a warning that it failed to write session data and nothing
-persisted. The marker is never dereferenced, it just has to exist.</p>
+and leaves it NULL never gets written. There&rsquo;s no error. You get a warning that it failed to write session data, and
+nothing persisted. The marker is never dereferenced. It just has to exist.</p>
 <h3 id="known-limitations">Known limitations</h3>
 <p>Keys cross the boundary as C strings. <code>PHP_FUNCTION</code> parses the key with <code>Z_PARAM_STRING</code>, which gives a pointer and a
-length, but only the pointer goes through the ops table, and Rust reads it with <code>CStr::from_ptr</code> and then requires valid
+length. But only the pointer goes through the ops table. Rust reads it with <code>CStr::from_ptr</code> and then requires valid
 UTF-8:</p>
 <div class="highlight"><pre tabindex="0" class="chroma"><code class="language-rust" data-lang="rust"><span class="line"><span class="cl"><span class="kd">let</span><span class="w"> </span><span class="n">key_str</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">unsafe</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">CStr</span>::<span class="n">from_ptr</span><span class="p">(</span><span class="n">key</span><span class="p">)</span><span class="w"> </span><span class="p">};</span><span class="w">
 </span></span></span><span class="line"><span class="cl"><span class="kd">let</span><span class="w"> </span><span class="nb">Ok</span><span class="p">(</span><span class="n">key_str</span><span class="p">)</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">key_str</span><span class="p">.</span><span class="n">to_str</span><span class="p">()</span><span class="w"> </span><span class="k">else</span><span class="w"> </span><span class="p">{</span><span class="w">
 </span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="mi">0</span><span class="p">;</span><span class="w">
 </span></span></span><span class="line"><span class="cl"><span class="p">};</span><span class="w">
-</span></span></span></code></pre></div><p>So a key with an embedded NUL byte (<code>&quot;a\0b&quot;</code>) addresses the key <code>&quot;a&quot;</code>, and a key that isn&rsquo;t valid UTF-8 comes back as a
+</span></span></span></code></pre></div><p>So a key with an embedded NUL byte (<code>&quot;a\0b&quot;</code>) addresses the key <code>&quot;a&quot;</code>. A key that isn&rsquo;t valid UTF-8 comes back as a
 miss or a failed write with no error. Values are binary-safe, since they go through as pointer and length. Real
-application keys are almost always ASCII, but if you hash something into a raw binary key, hex it first.</p>
+application keys are almost always ASCII. But if you hash something into a raw binary key, hex it first.</p>
 <h3 id="how-i-measured">How I measured</h3>
 <ul>
 <li>Hardware: AMD Ryzen 9 5950X, WSL2 on Windows 11 (kernel 6.18.33.2-microsoft-standard-WSL2, 32 vCPU, 62 GiB).</li>
-<li>ePHPm: the published v0.10.6 release, <code>ephpm-v0.10.6+php8.5.7-linux-x86_64</code>, run as a bare process in
+<li>ePHPm: the published v0.10.6 release, <code>ephpm-v0.10.6+php8.5.7-linux-x86_64</code>. It ran as a bare process in
 <code>per_request</code> mode, with <code>[kv.redis_compat]</code> listening on <code>127.0.0.1</code> and no AUTH or compression.</li>
 <li>Redis: <code>redis:7-alpine</code> (7.4.11) under Podman with <code>--network host</code>, persistence off.</li>
 <li>Harness: the <code>kv/fixtures/kv_sapi.php</code> and <code>kv_resp.php</code> scripts from <a href="https://github.com/ephpm/lab/tree/main/kv">ephpm/lab</a>.
-Native lane: 200,000 ops per loop, timed with <code>hrtime()</code> inside a single request, so it&rsquo;s a bare-loop number with
-no request dispatch in it. Socket lanes: 20,000 strict ping-pong round trips over one raw PHP stream socket with
-<code>tcp_nodelay</code>, same fixture pointed at each port. Client libraries like Predis add their own overhead on top.</li>
-<li>Each fixture checks the value it read back, so a loop that got optimized into nothing would fail instead of looking
+The native lane is 200,000 ops per loop, timed with <code>hrtime()</code> inside a single request. It&rsquo;s a bare-loop number with
+no request dispatch in it. The socket lanes are 20,000 strict ping-pong round trips over one raw PHP stream socket
+with <code>tcp_nodelay</code>. The same fixture is pointed at each port. Client libraries like Predis add their own overhead on
+top.</li>
+<li>Each fixture checks the value it read back. A loop that got optimized into nothing would fail instead of looking
 fast. Three reps, lanes interleaved, median reported.</li>
 </ul>
 <h3 id="whats-next">What&rsquo;s next</h3>
 <p>The functions are only half of it. Nobody wants to rewrite their WordPress object cache or their Laravel cache store
 around <code>ephpm_kv_set()</code>. <a href="/blog/2026/09/calling-rust-from-php-without-a-socket-part-2/">Part 2</a> covers the wrapper
-packages that make existing phpredis, Predis, <code>WP_Object_Cache</code> and <code>wpdb</code> code use the native path unmodified, and the
-semantics bugs that showed up once real applications ran on them.</p>
+packages. They make existing phpredis, Predis, <code>WP_Object_Cache</code> and <code>wpdb</code> code use the native path unmodified. It
+also covers the semantics bugs that showed up once real applications ran on them.</p>
 <h3 id="links">Links</h3>
 <ul>
 <li><a href="https://github.com/ephpm/ephpm">ephpm/ephpm</a>, <code>crates/ephpm-php/ephpm_wrapper.c</code>, <code>kv_bridge.rs</code> and <code>db_bridge.rs</code></li>

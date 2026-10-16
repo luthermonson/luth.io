@@ -233,10 +233,10 @@
     <img class="" src="/img/2026/08/building-a-custom-php-sapi-cover.svg" alt="Table mapping PHP operations like echo, header(), $_POST, $_COOKIE and $_SERVER to SAPI callbacks and to the Rust side of ePHPm">
   </a>
     
-    <p>If you&rsquo;ve only ever run PHP behind nginx you&rsquo;ve probably never had to think about how <code>echo</code> reaches a socket. When you
-embed PHP, as <a href="https://github.com/ephpm/ephpm">ePHPm</a> does, it&rsquo;s the first thing you have to answer, and the answer is a
-SAPI. There is very little written about implementing one. Most of what I know came from reading <code>sapi/cli</code>,
-<code>sapi/cgi</code> and <code>sapi/embed</code> in php-src and then finding out which parts I&rsquo;d misread. This is the write-up I wanted back
+    <p>If you&rsquo;ve only ever run PHP behind nginx, you&rsquo;ve probably never had to think about how <code>echo</code> reaches a socket. When
+you embed PHP like <a href="https://github.com/ephpm/ephpm">ePHPm</a> does, it&rsquo;s the first thing you have to answer. The answer
+is a SAPI. There is very little written about implementing one. Most of what I know came from reading <code>sapi/cli</code>,
+<code>sapi/cgi</code> and <code>sapi/embed</code> in php-src. Then I found out which parts I&rsquo;d misread. This is the write-up I wanted back
 in March.</p>
   </div>
   <footer>

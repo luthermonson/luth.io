@@ -1,6 +1,6 @@
 ---
 title: "Faking MySQL's Quirks Well Enough to Fool WordPress"
-description: "Passing WordPress's install tests didn't mean litewire behaved like MySQL. This is the second round of fixes: the small MySQL behaviors that WordPress and Laravel quietly depend on."
+description: "Passing WordPress's install tests didn't mean litewire behaved like MySQL. This is the second round of fixes, for the small MySQL behaviors that WordPress and Laravel quietly depend on."
 date: 2026-08-16T15:50:00-07:00
 tags: [ litewire, ephpm, sqlite, mysql, rust, wordpress ]
 categories: [ databases, ephpm, php ]
@@ -12,16 +12,20 @@ draft: false
 ---
 
 Last month I wrote about [running SQLite behind a MySQL socket](/blog/2026/07/sqlite-production-database-protocol-translation/)
-with [litewire](https://github.com/ephpm/litewire), and ended on "passing an install suite is not the same thing as
-behaving like MySQL". That turned out to be accurate. On August 10th a few things happened at once: I put a real
-WordPress 7.0.3 site through a benchmark on ePHPm, A/B tested the new in-process database bridge against the wire path, and started building
-[ephpm/db-wordpress](https://github.com/ephpm/db-wordpress), a `wpdb` drop-in that talks to the database in-process
-instead of over a socket. Between them they produced six litewire issues in about three hours. None of them broke
-the install. All of them made WordPress quietly do the wrong thing.
+with [litewire](https://github.com/ephpm/litewire). I ended on "passing an install suite is not the same thing as
+behaving like MySQL". That turned out to be accurate. On August 10th a few things happened at once:
+
+- I put a real WordPress 7.0.3 site through a benchmark on ePHPm.
+- I A/B tested the new in-process database bridge against the wire path.
+- I started building [ephpm/db-wordpress](https://github.com/ephpm/db-wordpress), a `wpdb` drop-in that talks to the
+  database in-process instead of over a socket.
+
+Between them they produced six litewire issues in about three hours. None of them broke the install. All of them made
+WordPress quietly do the wrong thing.
 
 The common thread is that the client is code I don't control. WordPress, Laravel, Doctrine and PDO all make decisions
-based on what MySQL says back, and some of those decisions are made by matching strings. If litewire answers in the
-wrong shape, the app doesn't crash. It just takes the wrong branch.
+based on what MySQL says back. Some of those decisions are made by matching strings. If litewire answers in the wrong
+shape, the app doesn't crash. It just takes the wrong branch.
 
 ### FOUND_ROWS() was always zero
 
@@ -32,8 +36,8 @@ SELECT SQL_CALC_FOUND_ROWS wp_posts.ID FROM wp_posts WHERE ... ORDER BY wp_posts
 SELECT FOUND_ROWS();
 ```
 
-MySQL 8 deprecates the hint, WordPress still uses it unconditionally, and the second statement is how `found_posts`
-gets set. In July the translator stripped the hint (sqlparser can't parse it) and rewrote `FOUND_ROWS()` into
+MySQL 8 deprecates the hint, but WordPress still uses it unconditionally. The second statement is how `found_posts`
+gets set. In July the translator stripped the hint, since sqlparser can't parse it. It also rewrote `FOUND_ROWS()` into
 something SQLite would accept, which got the install suite past it. Here's what it did with that second statement:
 
 ```text
@@ -42,14 +46,14 @@ OUT: SELECT abs(0)
 ```
 
 So the benchmark probe ran a calc query that returned 56 rows and got `0` back from `FOUND_ROWS()`. That's
-`found_posts = 0` on every WordPress running on ePHPm: `X-WP-Total: 0` on every REST list response and broken totals on
-every archive page ([litewire#23](https://github.com/ephpm/litewire/issues/23)). The fix that made the install pass was
-the one that hid the bug.
+`found_posts = 0` on every WordPress running on ePHPm. Every REST list response said `X-WP-Total: 0` and every archive
+page had broken totals ([litewire#23](https://github.com/ephpm/litewire/issues/23)). The fix that made the install pass
+was the one that hid the bug.
 
 `FOUND_ROWS()` is per-connection state, so it can't live in the stateless translator. It lives in
-`litewire-session`'s `Session`, next to `in_transaction`, which means the wire path and ePHPm's in-process bridge both
+`litewire-session`'s `Session`, next to `in_transaction`. That means the wire path and ePHPm's in-process bridge both
 get it. After a statement carrying the hint succeeds, the session runs one extra `COUNT(*)`. The count statement is
-derived through the AST, not by string surgery: take the fully translated statement, remove `LIMIT`, `ORDER BY` and
+derived through the AST, not by string surgery. Take the fully translated statement, remove `LIMIT`, `ORDER BY` and
 `FETCH`, and wrap it.
 
 ```rust
@@ -77,12 +81,14 @@ SELECT COUNT(*) FROM (SELECT wp_posts.ID FROM wp_posts WHERE 1 = 1
 
 It's bound with the same parameter list, so `WHERE` placeholders keep working. A bare `SELECT FOUND_ROWS()` is then
 answered from session state without touching the backend. Statements without the hint pay one allocation-free ASCII
-scan and zero extra round trips, and there's a counting-backend test that pins that down. Two cases fall back to the
-returned row count instead: the hint inside multi-statement input, and a `LIMIT` bound as a placeholder, since stripping
-it would desynchronize the positional parameters.
+scan and zero extra round trips. A counting-backend test pins that down. Two cases fall back to the returned row count
+instead:
+
+- the hint inside multi-statement input
+- a `LIMIT` bound as a placeholder, since stripping it would desynchronize the positional parameters
 
 The end-to-end tests for this immediately found a worse bug. `rewrite_limit_clause` took the limit clause out of the
-AST to check for MySQL's `LIMIT offset, count` form, and only put it back if it matched:
+AST to check for MySQL's `LIMIT offset, count` form. It only put it back if it matched:
 
 ```rust
 fn rewrite_limit_clause(query: &mut sqlparser::ast::Query) {
@@ -101,29 +107,29 @@ SELECT * FROM wp_posts LIMIT 10, 5        => SELECT * FROM wp_posts LIMIT 5 OFFS
 ```
 
 WordPress mostly emits the comma form, which is how this hid. An existing test even hedged with "sqlparser may or may
-not preserve LIMIT". The fix is one `other => query.limit_clause = other` arm, and it rode along in
+not preserve LIMIT". The fix is one `other => query.limit_clause = other` arm. It rode along in
 [litewire#26](https://github.com/ephpm/litewire/pull/26) because `FOUND_ROWS()` is meaningless if `LIMIT` doesn't apply.
 
 ### Error codes are an API
 
 SQLite's `no such table: wp_foo` fell through to MySQL's catch-all, 1105 / `HY000`. That carries no information, and
-frameworks branch on the real code: Doctrine raises `TableNotFoundException` off 1146, and MySQL clients expect
-`42S02` to come with it. Mapping it was a substring match, and it also catches the Turso engine's wording, which
-prefixes the same text with `Parse error: `.
+frameworks branch on the real code. Doctrine raises `TableNotFoundException` off 1146, and MySQL clients expect `42S02`
+to come with it. Mapping it was a substring match. It also catches the Turso engine's wording, which prefixes the same
+text with `Parse error: `.
 
-Duplicate keys were already 1062 / `23000`, but with SQLite's message, and that's the more interesting failure.
-Frameworks mostly key off the code, so 1062 / `23000` already got Laravel and Doctrine onto the right branch, but
-anything that greps the message for MySQL's `Duplicate entry '...' for key '...'` shape never matched
+Duplicate keys were already 1062 / `23000`, but with SQLite's message. That's the more interesting failure. Frameworks
+mostly key off the code, so 1062 / `23000` already got Laravel and Doctrine onto the right branch. But some code greps
+the message for MySQL's `Duplicate entry '...' for key '...'` shape. That never matched
 `UNIQUE constraint failed: users.email`. Now the message gets a MySQL-shaped prefix and keeps SQLite's words:
 
 ```
 Duplicate entry '<unknown>' for key 'users.email' (UNIQUE constraint failed: users.email)
 ```
 
-There are two honest gaps in that line. SQLite's message doesn't include the duplicated value and the statement's
-parameters aren't available at this layer, so the slot says `<unknown>` instead of inventing one. And MySQL names the
-index where SQLite names the columns. For a single-column unique index, and for the name-the-index-after-the-column
-convention WordPress and Laravel both follow, those are the same thing.
+There are two honest gaps in that line. SQLite's message doesn't include the duplicated value. The statement's
+parameters aren't available at this layer either. So the slot says `<unknown>` instead of inventing one. And MySQL
+names the index where SQLite names the columns. For a single-column unique index, those are the same thing. The same
+goes for the name-the-index-after-the-column convention WordPress and Laravel both follow.
 
 The unit tests passed the first time and the real-backend tests didn't:
 
@@ -154,14 +160,15 @@ SQLite error: wrong number of arguments to function coalesce()
 in SELECT coalesce('8.0.0-litewire') at offset 7
 ```
 
-The rewrite pass only sees the `Function` node, not its parent expression, so a MySQL built-in with no SQLite analogue
-can't become a bare literal. It has to stay a function call that returns a constant, and the call chosen was
-`coalesce()`, which SQLite rejects with fewer than two arguments. `VERSION`, `DATABASE`, `SCHEMA`, `USER`,
-`CURRENT_USER`, `SESSION_USER`, `SYSTEM_USER` and `CONNECTION_ID` were all emitted that way. The funny part is that the
-`FOUND_ROWS` arm sitting between the broken ones had a comment explaining exactly this ("coalesce and max need >= 2
-args") and used `abs(0)`. The unit tests asserted on the emitted SQL string and never executed it. Constant folding
-now goes through two helpers, `constant_text` (`trim('...')`) and `constant_number` (`abs(n)`), so the single-argument
-rule lives in one place ([litewire#30](https://github.com/ephpm/litewire/pull/30)):
+The rewrite pass only sees the `Function` node, not its parent expression. So a MySQL built-in with no SQLite analogue
+can't become a bare literal. It has to stay a function call that returns a constant. The call chosen was `coalesce()`,
+which SQLite rejects with fewer than two arguments. `VERSION`, `DATABASE`, `SCHEMA`, `USER`, `CURRENT_USER`,
+`SESSION_USER`, `SYSTEM_USER` and `CONNECTION_ID` were all emitted that way.
+
+The funny part is the `FOUND_ROWS` arm sitting between the broken ones. It had a comment explaining exactly this
+("coalesce and max need >= 2 args") and used `abs(0)`. The unit tests asserted on the emitted SQL string and never
+executed it. Constant folding now goes through two helpers, `constant_text` (`trim('...')`) and `constant_number`
+(`abs(n)`). The single-argument rule lives in one place ([litewire#30](https://github.com/ephpm/litewire/pull/30)):
 
 ```text
 IN : SELECT VERSION()
@@ -180,26 +187,26 @@ Packets out of order. Expected 1 received 2
 ```
 
 opensrv-mysql 0.7.0 parses nine client commands. Every other command byte falls into one catch-all that writes a
-default OK packet and logs nothing. OK is the right reply to some of those and the wrong shape for others, and mysqlnd
-sends housekeeping commands on persistent handles. A reply of the wrong shape leaves the client one packet behind, and
-every response after that belongs to the previous command. `Received 7` is exactly the size of that OK payload.
+default OK packet and logs nothing. OK is the right reply to some of those and the wrong shape for others. mysqlnd sends
+housekeeping commands on persistent handles. A reply of the wrong shape leaves the client one packet behind. Every
+response after that belongs to the previous command. `Received 7` is exactly the size of that OK payload.
 
-litewire can't change opensrv's command loop, so [litewire#28](https://github.com/ephpm/litewire/pull/28) puts a
-`CommandFilter` between the socket and opensrv's reader that looks at the first byte of every command packet:
+litewire can't change opensrv's command loop. So [litewire#28](https://github.com/ephpm/litewire/pull/28) puts a
+`CommandFilter` between the socket and opensrv's reader. It looks at the first byte of every command packet:
 
 - Commands opensrv handles go through byte for byte.
-- `COM_STMT_RESET`, `COM_RESET_CONNECTION` and `COM_CHANGE_USER` are rewritten into a `COM_PING`, which is opensrv's own
+- `COM_STMT_RESET`, `COM_RESET_CONNECTION` and `COM_CHANGE_USER` are rewritten into a `COM_PING`. That's opensrv's own
   OK path, so the reply is encoded for whatever capability flags the connection negotiated. The reset ones also raise
-  a flag the handler drains before the next statement, rolling back an open transaction and dropping prepared
+  a flag the handler drains before the next statement. Draining it rolls back an open transaction and drops prepared
   statements. Before this, a reset was acknowledged and did nothing.
 - Anything else gets `ER_UNKNOWN_COM_ERROR` (1047), which is what a real server sends, and a `warn` log with the byte.
 
 Command packets are told apart from handshake and continuation packets by sequence id, which resets to 0 at the start
-of every command. `COM_CHANGE_USER` is only a no-op on the single-backend path. When litewire is choosing a backend per
-tenant during the handshake, answering OK would tell the client it's someone else while the connection keeps talking
-to the original tenant's database, so there it's refused.
+of every command. `COM_CHANGE_USER` is only a no-op on the single-backend path. Sometimes litewire chooses a backend per
+tenant during the handshake. There, answering OK would tell the client it's someone else while the connection keeps
+talking to the original tenant's database. So in that case it's refused.
 
-I want to be straight about this one: the original desync was probabilistic and never reduced to a repro, so the PR
+I want to be straight about this one. The original desync was probabilistic and never reduced to a repro. So the PR
 doesn't claim to fix that specific trace. What it does guarantee is that no command reaches the catch-all anymore.
 
 ### REGEXP, YEAR() and LIKE
@@ -207,15 +214,15 @@ doesn't claim to fix that specific trace. What it does guarantee is that no comm
 The last three were feature degradations WordPress logged and moved past.
 
 `populate_options()` cleans up stale RSS transients at install time with
-`WHERE option_name REGEXP '^rss_[0-9a-f]{32}(_ts)?$'`. SQLite parses `REGEXP` but ships nothing behind it: the operator
+`WHERE option_name REGEXP '^rss_[0-9a-f]{32}(_ts)?$'`. SQLite parses `REGEXP` but ships nothing behind it. The operator
 calls a `regexp(pattern, subject)` function the host has to register. I could have translated anchored patterns to
-`GLOB`, but that covers only the patterns that happen to be expressible and silently mis-answers the rest. Registering a
-real function is faithful for the whole pattern language, so every rusqlite session now gets one backed by the `regex`
-crate, with the compiled pattern cached in SQLite's aux-data slot so a constant pattern compiles once per statement
+`GLOB`. But that covers only the patterns that happen to be expressible and silently mis-answers the rest. Registering a
+real function is faithful for the whole pattern language. So every rusqlite session now gets one backed by the `regex`
+crate. The compiled pattern is cached in SQLite's aux-data slot, so a constant pattern compiles once per statement
 instead of once per row. The Turso engine already registers an equivalent built-in on the same crate. The differences
-from MySQL are documented: `regex` syntax rather than ICU, and case-sensitive, where MySQL usually isn't under
-`utf8mb4_general_ci`. I picked matching Turso over matching MySQL so one query can't mean two things depending on the
-backend.
+from MySQL are documented. It uses `regex` syntax rather than ICU. It's also case-sensitive, where MySQL usually isn't
+under `utf8mb4_general_ci`. I picked matching Turso over matching MySQL so one query can't mean two things depending on
+the backend.
 
 `YEAR()`, `MONTH()` and `DAYOFMONTH()` are used by `wp_old_slug_redirect` and the 404 permalink guesser. The cast is
 the part that matters:
@@ -227,13 +234,14 @@ OUT: SELECT * FROM wp_posts WHERE CAST(strftime('%Y', post_date) AS INTEGER) = 2
 ```
 
 `strftime` returns text, and SQLite applies no affinity to a function result, so `'2024' = 2024` is false. A bare
-`strftime` translation would parse, run without error and match nothing, which is worse than the error it replaced
+`strftime` translation would parse, run without error and match nothing. That's worse than the error it replaced
 ([litewire#29](https://github.com/ephpm/litewire/pull/29)).
 
-And `LIKE`. MySQL's `LIKE` uses backslash as its escape character by default (only `NO_BACKSLASH_ESCAPES` turns it
-off); SQLite has no default escape character at all. `wpdb::esc_like('50%')` produces `50\%`, which on SQLite matched a
-literal backslash followed by a live wildcard. Every MySQL-dialect `LIKE` without an explicit `ESCAPE` now gets one, through the AST visitor so it reaches
-subqueries and `UPDATE`/`DELETE` predicates too ([litewire#25](https://github.com/ephpm/litewire/pull/25)):
+And `LIKE`. MySQL's `LIKE` uses backslash as its escape character by default. Only `NO_BACKSLASH_ESCAPES` turns it off.
+SQLite has no default escape character at all. `wpdb::esc_like('50%')` produces `50\%`, which on SQLite matched a
+literal backslash followed by a live wildcard. Every MySQL-dialect `LIKE` without an explicit `ESCAPE` now gets one. It
+goes through the AST visitor so it reaches subqueries and `UPDATE`/`DELETE` predicates too
+([litewire#25](https://github.com/ephpm/litewire/pull/25)):
 
 ```text
 IN : SELECT option_name FROM wp_options WHERE option_name LIKE '50\%'
@@ -243,11 +251,12 @@ OUT: SELECT option_name FROM wp_options WHERE option_name LIKE '50\%' ESCAPE '\'
 ### What I took away from it
 
 Every one of these had unit tests around it that passed. The translator tests asserted on the SQL string that came
-out; the error map tests fed it the string SQLite was supposed to produce. What found the bugs was executing the
-statement against a real backend or driving a real `mysql_async` client over the wire and asserting on what came back.
+out. The error map tests fed it the string SQLite was supposed to produce. What found the bugs was executing the
+statement against a real backend, or driving a real `mysql_async` client over the wire, and asserting on what came back.
 That's now the rule in the repo: a wire-visible fix lands with a wire-level test reproducing what the client saw.
 
-ePHPm picked these up in two pin bumps, [ephpm#265](https://github.com/ephpm/ephpm/pull/265) and [ephpm#297](https://github.com/ephpm/ephpm/pull/297). Next is the other half of the August work, which was less about
+ePHPm picked these up in two pin bumps, [ephpm#265](https://github.com/ephpm/ephpm/pull/265) and
+[ephpm#297](https://github.com/ephpm/ephpm/pull/297). Next is the other half of the August work. That was less about
 WordPress and more about not shipping a use-after-free.
 
 ### Links

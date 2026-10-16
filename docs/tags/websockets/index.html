@@ -218,7 +218,7 @@
       <h2><a href="/blog/2026/10/ephpm-websockets-how-to/">WebSockets in ePHPm, From Zero to a Working Chat</a></h2>
     
     
-      <p>How to run WebSockets in ePHPm with a single PHP file: turning them on, sharing the login session, pushing messages from normal HTTP requests, serving it over TLS, and the limits to know about.</p>
+      <p>How to run WebSockets in ePHPm with a single PHP file. It covers turning them on, sharing the login session, pushing messages from normal HTTP requests, serving over TLS and the limits to know about.</p>
     
   </div>
   <div class="meta">
@@ -233,11 +233,11 @@
     <img class="" src="/img/2026/10/ephpm-websockets-how-to-cover.svg" alt="Diagram: browsers hold sockets to ePHPm&#39;s Rust session tasks and registry; each connect, message and disconnect runs websocket.php once on the PHP thread pool, and ordinary HTTP requests push through ephpm_ws_broadcast">
   </a>
     
-    <p>I covered the design of <a href="https://github.com/ephpm/ephpm">ePHPm</a>&rsquo;s native WebSockets in a few paragraphs of the
-<a href="/blog/2026/09/ephpm-smaller-angles/">odds and ends post</a>: Rust owns the socket, PHP runs once per event, and an idle
+    <p>I covered the design of <a href="https://github.com/ephpm/ephpm">ePHPm</a>&rsquo;s native WebSockets in a few paragraphs of the <a href="/blog/2026/09/ephpm-smaller-angles/">odds
+and ends post</a>. Rust owns the socket and PHP runs once per event. An idle
 connection never costs you a PHP thread. That was the why. This post is the how. We&rsquo;ll build a small chat app with
-login, per-user push notifications from ordinary HTTP requests, and a browser client. Then we&rsquo;ll serve it over TLS
-and look at the limits, the sharp edges, and how to debug it when the browser only tells you&hellip;</p>
+login, per-user push notifications from ordinary HTTP requests and a browser client. Then we&rsquo;ll serve it over TLS.
+Last come the limits, the sharp edges and how to debug it when the browser only tells you <code>1006</code>.</p>
   </div>
   <footer>
     <a href="/blog/2026/10/ephpm-websockets-how-to/" class="button big">Read More</a>
@@ -296,8 +296,8 @@ and look at the limits, the sharp edges, and how to debug it when the browser on
     <img class="" src="/img/2026/09/ephpm-smaller-angles-nodelay.svg" alt="Bar chart: db.php p50 at c=1 dropped from 444 ms on v0.4.0 to 4.4 ms on v0.4.1">
   </a>
     
-    <p>Not every fix in <a href="https://github.com/ephpm/ephpm">ePHPm</a> earns a full write-up, but a few of the smaller ones have
-stuck with me because the lesson in each was bigger than the diff. Here are four from this summer.</p>
+    <p>Not every fix in <a href="https://github.com/ephpm/ephpm">ePHPm</a> earns a full write-up. A few of the smaller ones have stuck
+with me because the lesson in each was bigger than the diff. Here are four from this summer.</p>
   </div>
   <footer>
     <a href="/blog/2026/09/ephpm-smaller-angles/" class="button big">Read More</a>
@@ -361,10 +361,9 @@ stuck with me because the lesson in each was bigger than the diff. Here are four
   </a>
     
     <p>Back in 2023 I wrote up <a href="/blog/2023/08/proxmox-api-auth-tickets-tokens-go/">how go-proxmox logs in</a> and ended it with a
-shrug: once a session existed the client never logged in again, so a ticket-based client died at the two hour mark and
-my advice was &ldquo;use an API token for anything long running&rdquo;. It took until this month to actually fix that properly, and
-it took three PRs from two of us to get there. Here&rsquo;s the whole arc, plus the one place where an API token
-isn&rsquo;t an option at all.</p>
+shrug. Once a session existed the client never logged in again. A ticket-based client died at the two hour mark. My
+advice was &ldquo;use an API token for anything long running&rdquo;. It took until this month to fix that properly. It took three
+PRs from two of us to get there. Here&rsquo;s the whole arc, plus the one place where an API token isn&rsquo;t an option at all.</p>
   </div>
   <footer>
     <a href="/blog/2026/05/staying-logged-in-to-proxmox/" class="button big">Read More</a>
@@ -427,8 +426,8 @@ isn&rsquo;t an option at all.</p>
     
     <p>Part of a hobby of mine is running a home lab and using on <a href="https://www.proxmox.com/en/">Proxmox VE</a> to do the virtualization.
 Since I work in the space I&rsquo;m slowly trying to build tooling around Proxmox that will let me use the home lab full time for work.
-Usually my work involves building Kubernetes management tooling, you can imagine waiting for public cloud APIs all day
-can take away hours of your day at cost to your employer for both your time and the compute resources.</p>
+Usually my work involves building Kubernetes management tooling. You can imagine waiting for public cloud APIs all day
+can take away hours of your day. That&rsquo;s at cost to your employer for both your time and the compute resources.</p>
   </div>
   <footer>
     <a href="/blog/2022/02/recreating-proxmox-ve-xtermjs-in-go/" class="button big">Read More</a>

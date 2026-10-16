@@ -218,7 +218,7 @@
       <h2><a href="/blog/2026/09/linode-tui/">Building k9s for Linode With Bubble Tea</a></h2>
     
     
-      <p>A k9s-style terminal app for managing Linode: search for any resource, browse it, and jump straight into k9s, a database shell or SSH.</p>
+      <p>A k9s-style terminal app for managing Linode. Search for any resource, browse it, and jump straight into k9s, a database shell or SSH.</p>
     
   </div>
   <div class="meta">
@@ -233,11 +233,9 @@
     <img class="" src="/img/2026/09/linode-tui-linodes.svg" alt="linode-tui showing the Linodes view with the command bar open and tab completion suggesting lke">
   </a>
     
-    <p>A lot of my day is spent in <a href="https://k9scli.io/">k9s</a>, and when I need something from the Linode side of the house (a node that won&rsquo;t
-boot, a volume nobody cleaned up, the kubeconfig for a cluster I just made) I&rsquo;m back in a browser tab or typing <code>linode-cli</code> incantations.
-I wanted the k9s workflow for the Linode API itself: <code>:</code> to jump to a resource type, <code>/</code> to filter, single-key actions on the selected row,
-and Enter to go deeper. That turned into <a href="https://github.com/luthermonson/linode-tui">linode-tui</a>, a Go TUI built on
-<a href="https://github.com/charmbracelet/bubbletea">Bubble Tea</a>, <a href="https://github.com/linode/linodego">linodego</a> and&hellip;</p>
+    <p>A lot of my day is spent in <a href="https://k9scli.io/">k9s</a>. Sometimes I need something from the Linode side of the house. Maybe it&rsquo;s a
+node that won&rsquo;t boot, a volume nobody cleaned up or the kubeconfig for a cluster I just made. Then I&rsquo;m back in a browser tab or typing
+<code>linode-cli</code> incantations. I wanted the k9s workflow for the Linode API itself:</p>
   </div>
   <footer>
     <a href="/blog/2026/09/linode-tui/" class="button big">Read More</a>
@@ -300,10 +298,7 @@ and Enter to go deeper. That turned into <a href="https://github.com/luthermonso
     <img class="" src="/img/2026/06/tail-gunner-filtered.svg" alt="tail-gunner in gunner mode showing only ERROR lines with a highlight on request durations">
   </a>
     
-    <p>Here&rsquo;s a loop I end up in all the time: <code>tail -f app.log</code>, something scrolls by that looks wrong, Ctrl-C, <code>tail -f app.log | grep ERROR</code>,
-wait for it to happen again, decide I also want to drop the health checks, Ctrl-C, <code>| grep -v healthz</code>, wait again. Every filter tweak
-throws away the stream and every line that already went past. I got tired of it and wrote <a href="https://github.com/luthermonson/tail-gunner">tail-gunner</a>,
-a <code>tail</code> replacement that you can promote into a filtering TUI with one keystroke and drop back out of without the stream ever&hellip;</p>
+    <p>Here&rsquo;s a loop I end up in all the time:</p>
   </div>
   <footer>
     <a href="/blog/2026/06/tail-gunner/" class="button big">Read More</a>

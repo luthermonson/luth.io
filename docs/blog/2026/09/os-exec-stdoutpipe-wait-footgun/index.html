@@ -271,13 +271,16 @@
 
       </div>
       <div class="content">
+              <figure class="post-cover">
+                <img src="/img/2026/09/os-exec-stdoutpipe-wait-footgun-cover.svg" alt="Timeline of a child process exiting, Wait closing the pipe, and the reader losing buffered frames">
+              </figure>
         
-        <p><a href="/blog/2026/08/shipmates-persona-based-ai-coding-crews/">shipmates</a> spends most of its life spawning <code>claude</code> (and <code>codex</code>)
-processes and reading newline-delimited JSON off their stdout. The last frame of a turn is the important one, a
-<code>result</code> frame with the cost, the model and the final text. Stderr matters too, because that&rsquo;s where Claude Code
-tells you <code>Invalid API key · Please run /login</code>. For a while I was throwing both away under load, and the cause is
-documented right there in the <code>os/exec</code> godoc. I fixed it in one package and then found the exact same bug again
-a month later in another.</p>
+        <p><a href="/blog/2026/08/shipmates-persona-based-ai-coding-crews/">shipmates</a> spends most of its life spawning <code>claude</code> (and
+<code>codex</code>) processes and reading newline-delimited JSON off their stdout. The last frame of a turn is the important one.
+It&rsquo;s a <code>result</code> frame with the cost, the model and the final text. Stderr matters too, because that&rsquo;s where Claude Code
+tells you <code>Invalid API key · Please run /login</code>. For a while I was throwing both away under load. The cause is
+documented right there in the <code>os/exec</code> godoc. I fixed it in one package and then found the exact same bug again a
+month later in another.</p>
 <h3 id="the-symptoms">The symptoms</h3>
 <p>It started as a flaky test. <code>TestSpawnCapturesChildStderr</code> failed on the linux-arm64 CI leg with a terminal event
 that had no stderr in it, just <code>exited exit status 1</code>. It passed 20 times in a row locally. The <a href="https://github.com/luthermonson/shipmates/issues/41">issue I
@@ -288,32 +291,32 @@ filed</a> blamed a 2 second drain grace:</p>
 </span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="k">case</span><span class="w"> </span><span class="o">&lt;-</span><span class="nx">time</span><span class="p">.</span><span class="nf">After</span><span class="p">(</span><span class="nx">stderrDrainGrace</span><span class="p">):</span><span class="w"> </span><span class="c1">// = 2 * time.Second</span><span class="w">
 </span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="p">}</span><span class="w">
 </span></span></span><span class="line"><span class="cl"><span class="p">}</span><span class="w">
-</span></span></span></code></pre></div><p>The theory was that on a loaded runner the stderr reader didn&rsquo;t finish inside 2 seconds, so the terminal event went
-out with an empty tail. That&rsquo;s plausible, and it&rsquo;s wrong. Raising the timeout would have made the flake rarer and
-fixed nothing.</p>
+</span></span></span></code></pre></div><p>The theory was that on a loaded runner the stderr reader didn&rsquo;t finish inside 2 seconds. So the terminal event went out
+with an empty tail. That&rsquo;s plausible, and it&rsquo;s wrong. Raising the timeout would have made the flake rarer and fixed
+nothing.</p>
 <p>There was a second symptom that looked unrelated. Every so often the stdout scanner died with
 <code>read |0: file already closed</code>, which the read loop reported as a framing failure. That meant the terminal event got
-published as a <code>string</code> instead of the <code>Terminal</code> struct consumers expected, so anything type-switching on the payload
-quietly took a different branch. A third test in the codex adapter reported <code>unexpected_eof</code> for a frame the child
-had definitely written.</p>
+published as a <code>string</code> instead of the <code>Terminal</code> struct consumers expected. Anything type-switching on the payload
+quietly took a different branch. A third test in the codex adapter reported <code>unexpected_eof</code> for a frame the child had
+definitely written.</p>
 <p>Same race, three different losers.</p>
 <h3 id="what-the-docs-actually-say">What the docs actually say</h3>
-<p>Both packages read the child with <code>cmd.StdoutPipe()</code> and <code>cmd.StderrPipe()</code>, and the supervisor called <code>cmd.Wait()</code>
-on its own goroutine, concurrently with the readers. Here&rsquo;s the <a href="https://pkg.go.dev/os/exec#Cmd.StdoutPipe"><code>StdoutPipe</code> doc</a>:</p>
+<p>Both packages read the child with <code>cmd.StdoutPipe()</code> and <code>cmd.StderrPipe()</code>. The supervisor called <code>cmd.Wait()</code> on its
+own goroutine, concurrently with the readers. Here&rsquo;s the <a href="https://pkg.go.dev/os/exec#Cmd.StdoutPipe"><code>StdoutPipe</code> doc</a>:</p>
 <blockquote>
 <p>Wait will close the pipe after seeing the command exit, so most callers need not close it themselves.
 It is thus incorrect to call Wait before all reads from the pipe have completed.</p>
 </blockquote>
-<p><code>os/exec</code> owns the parent&rsquo;s end of any pipe it creates for you, and <code>Wait</code> closes it the moment the child is reaped.
-Whatever the kernel still had buffered in that pipe goes with it. The child&rsquo;s last words weren&rsquo;t late, they were
-gone, and <code>io.Copy</code> had already returned with <code>os.ErrClosed</code> before the drain grace was even consulted. That&rsquo;s why
-a longer timeout couldn&rsquo;t help. <code>stderrDone</code> was closing <em>early</em>, with nothing in it.</p>
-<p>It&rsquo;s very easy to write. You start the process, kick off a goroutine per pipe, and somebody has to call <code>Wait</code>
+<p><code>os/exec</code> owns the parent&rsquo;s end of any pipe it creates for you. <code>Wait</code> closes it the moment the child is reaped.
+Whatever the kernel still had buffered in that pipe goes with it. The child&rsquo;s last words weren&rsquo;t late. They were gone.
+<code>io.Copy</code> had already returned with <code>os.ErrClosed</code> before the drain grace was even consulted. That&rsquo;s why a longer
+timeout couldn&rsquo;t help. <code>stderrDone</code> was closing <em>early</em>, with nothing in it.</p>
+<p>It&rsquo;s very easy to write. You start the process and kick off a goroutine per pipe. Somebody has to call <code>Wait</code>
 eventually so you don&rsquo;t leak a zombie. If that somebody isn&rsquo;t sequenced after the readers, you have this bug.</p>
 <h3 id="a-reproducer-you-can-run">A reproducer you can run</h3>
-<p>I wanted to see it fail on demand, not once a week on an arm64 runner. The child writes 200 JSON lines with a
-<code>result</code> frame last and exits immediately. The parent reads slowly (1 ms per frame, standing in for real work) and
-calls <code>Wait</code> concurrently, the same shape shipmates had.</p>
+<p>I wanted to see it fail on demand, not once a week on an arm64 runner. The child writes 200 JSON lines with a <code>result</code>
+frame last and exits immediately. The parent reads slowly, at 1 ms per frame, standing in for real work. It calls
+<code>Wait</code> concurrently, the same shape shipmates had.</p>
 <div class="highlight"><pre tabindex="0" class="chroma"><code class="language-go" data-lang="go"><span class="line"><span class="cl"><span class="c1">// go run . stdoutpipe   # the footgun</span><span class="w">
 </span></span></span><span class="line"><span class="cl"><span class="c1">// go run . ospipe       # own the pipe, drain, then Wait</span><span class="w">
 </span></span></span><span class="line"><span class="cl"><span class="kn">package</span><span class="w"> </span><span class="nx">main</span><span class="w">
@@ -404,21 +407,21 @@ stdoutpipe wait=&lt;nil&gt; frames=136/200 result=false scanErr=read |0: file al
 ospipe     wait=&lt;nil&gt; frames=200/200 result=true scanErr=&lt;nil&gt;
 ospipe     wait=&lt;nil&gt; frames=200/200 result=true scanErr=&lt;nil&gt;
 ospipe     wait=&lt;nil&gt; frames=200/200 result=true scanErr=&lt;nil&gt;
-</code></pre><p>The reader gets whatever the scanner had already pulled into its buffer before <code>Wait</code> closed the pipe, then
-<code>file already closed</code>. The <code>result</code> frame, the one with the cost in it, never arrives. Note that <code>Wait</code> returns <code>nil</code>,
-because the child exited 0, so nothing at the process level tells you anything went wrong.</p>
-<p>One thing surprised me. The PR that fixed this in shipmates says the flakes were Linux-only because on Windows
-<code>internal/poll</code> defers <code>CloseHandle</code> until a blocked read returns. That holds when the reader is parked inside
-<code>Read</code> at the moment of the close. In this reproducer the reader is sleeping between frames, so there&rsquo;s no read in
-flight to protect it, and Windows 11 with Go 1.26.5 loses the same frames:</p>
+</code></pre><p>The reader gets whatever the scanner had already pulled into its buffer before <code>Wait</code> closed the pipe. Then it gets
+<code>file already closed</code>. The <code>result</code> frame, the one with the cost in it, never arrives. Note that <code>Wait</code> returns <code>nil</code>
+because the child exited 0. Nothing at the process level tells you anything went wrong.</p>
+<p>One thing surprised me. The PR that fixed this in shipmates says the flakes were Linux-only. The reasoning was that on
+Windows <code>internal/poll</code> defers <code>CloseHandle</code> until a blocked read returns. That holds when the reader is parked inside
+<code>Read</code> at the moment of the close. In this reproducer the reader is sleeping between frames. There&rsquo;s no read in flight
+to protect it, and Windows 11 with Go 1.26.5 loses the same frames:</p>
 <pre tabindex="0"><code>stdoutpipe wait=&lt;nil&gt; frames=136/200 result=false scanErr=read |0: file already closed
 ospipe     wait=&lt;nil&gt; frames=200/200 result=true scanErr=&lt;nil&gt;
 </code></pre><p>So don&rsquo;t count on the platform to save you. A reader that does any work between reads is exposed everywhere.</p>
 <h3 id="the-fix-own-the-pipes-one-reaper-closes-them">The fix: own the pipes, one reaper closes them</h3>
 <p>The fix in <a href="https://github.com/luthermonson/shipmates/pull/44">PR #44</a> is the <code>ospipe</code> branch above, grown up. Create
 the pipes with <code>os.Pipe()</code> and wire the write ends onto <code>cmd.Stdout</code> and <code>cmd.Stderr</code>. When you hand <code>os/exec</code> an
-<code>*os.File</code>, it passes it straight to the child and never tracks it, so <code>Wait</code> can&rsquo;t close it. Close your copies of the
-write ends right after <code>Start</code>, and the read ends hit a clean EOF once every writer is gone.</p>
+<code>*os.File</code>, it passes it straight to the child and never tracks it. So <code>Wait</code> can&rsquo;t close it. Close your copies of the
+write ends right after <code>Start</code>. The read ends hit a clean EOF once every writer is gone.</p>
 <p>From <code>internal/runtime/claude/claude.go</code>:</p>
 <div class="highlight"><pre tabindex="0" class="chroma"><code class="language-go" data-lang="go"><span class="line"><span class="cl"><span class="nx">stdoutR</span><span class="p">,</span><span class="w"> </span><span class="nx">stdoutW</span><span class="p">,</span><span class="w"> </span><span class="nx">err</span><span class="w"> </span><span class="o">:=</span><span class="w"> </span><span class="nx">os</span><span class="p">.</span><span class="nf">Pipe</span><span class="p">()</span><span class="w">
 </span></span></span><span class="line"><span class="cl"><span class="k">if</span><span class="w"> </span><span class="nx">err</span><span class="w"> </span><span class="o">!=</span><span class="w"> </span><span class="kc">nil</span><span class="w"> </span><span class="p">{</span><span class="w">
@@ -455,10 +458,10 @@ write ends right after <code>Start</code>, and the read ends hit a clean EOF onc
 </span></span></span><span class="line"><span class="cl"><span class="w">	</span><span class="nx">p</span><span class="p">.</span><span class="nf">closePipes</span><span class="p">()</span><span class="w">
 </span></span></span><span class="line"><span class="cl"><span class="p">}</span><span class="w">
 </span></span></span></code></pre></div><p>There&rsquo;s a cost, and it&rsquo;s the reason <code>StderrPipe</code> gets picked in the first place. With your own pipe, EOF needs <em>every</em>
-writer gone, and a grandchild that inherited the child&rsquo;s stdout can hold it open long after the child is dead.
-<code>readerDrainGrace</code> is 10 seconds and exists only for that case. In the normal path the child has been reaped, the
-pipe is already at EOF, and draining takes microseconds. If the backstop does fire, the terminal event now says
-&ldquo;stderr not collected&rdquo; instead of implying the child said nothing. Those used to be spelled the same way.</p>
+writer gone. A grandchild that inherited the child&rsquo;s stdout can hold it open long after the child is dead.
+<code>readerDrainGrace</code> is 10 seconds and exists only for that case. In the normal path the child has been reaped and the
+pipe is already at EOF. Draining takes microseconds. If the backstop does fire, the terminal event now says &ldquo;stderr not
+collected&rdquo; instead of implying the child said nothing. Those used to be spelled the same way.</p>
 <p>Two smaller pieces finished it off:</p>
 <ul>
 <li>A scan error that is <code>os.ErrClosed</code> or <code>io.ErrClosedPipe</code> is classified as EOF, not a malformed stream. A
@@ -466,24 +469,25 @@ genuinely broken stream still shows up as <code>bufio.ErrTooLong</code> or a rea
 <li>The read loop waits on <code>stderrDone</code> unconditionally once the terminal event arrives. The leftover timeout is a
 deadlock guard, not a budget.</li>
 </ul>
-<p>Each symptom got a test with the timing forced instead of hoped for. <code>TestReadLoopWaitsForTheStderrDrainBeforePublishing</code>
-holds the stderr reader past the old 2 s bound, and <code>TestReapDoesNotDiscardFramesTheChildAlreadyWrote</code> puts the frame in
-the pipe, completes the reap, and only then starts the read loop. Both fail on the old code.</p>
+<p>Each symptom got a test with the timing forced instead of hoped for.
+<code>TestReadLoopWaitsForTheStderrDrainBeforePublishing</code> holds the stderr reader past the old 2 s bound.
+<code>TestReapDoesNotDiscardFramesTheChildAlreadyWrote</code> puts the frame in the pipe and completes the reap. Only then does it
+start the read loop. Both fail on the old code.</p>
 <h3 id="twice">Twice</h3>
 <p>That was mid-August and went out in v0.5.0. Then a cross-platform sweep after v0.6.0 turned up
-<a href="https://github.com/luthermonson/shipmates/pull/60">PR #60</a>: the server&rsquo;s own spawn path for live crew members,
-<code>spawnCrewLive</code>, still used <code>StdoutPipe</code>/<code>StderrPipe</code> with a concurrent <code>Wait</code>. Same bug, different file. On the
-resume path a <code>claude -p</code> that exited would lose its final <code>result</code> frame and the tail of its stderr.</p>
-<p>It had a second bug riding along. <code>Wait</code> was only called on the resume path. Every <em>fresh</em> spawn was never reaped,
-which is a zombie per mate on Unix and a leaked process handle on Windows, piling up for the life of a long-running
-ship. The fix mirrors <code>reapPipes</code>: a single <code>reapLive</code> goroutine is the only caller of <code>cmd.Wait()</code> and the only
-closer of the read ends, and it starts unconditionally so both paths get reaped.</p>
+<a href="https://github.com/luthermonson/shipmates/pull/60">PR #60</a>. The server&rsquo;s own spawn path for live crew members,
+<code>spawnCrewLive</code>, still used <code>StdoutPipe</code>/<code>StderrPipe</code> with a concurrent <code>Wait</code>. Same bug, different file. On the resume
+path a <code>claude -p</code> that exited would lose its final <code>result</code> frame and the tail of its stderr.</p>
+<p>It had a second bug riding along. <code>Wait</code> was only called on the resume path. Every <em>fresh</em> spawn was never reaped. That&rsquo;s
+a zombie per mate on Unix and a leaked process handle on Windows, piling up for the life of a long-running ship. The fix
+mirrors <code>reapPipes</code>. A single <code>reapLive</code> goroutine is the only caller of <code>cmd.Wait()</code> and the only closer of the read
+ends. It starts unconditionally so both paths get reaped.</p>
 <div class="highlight"><pre tabindex="0" class="chroma"><code class="language-go" data-lang="go"><span class="line"><span class="cl"><span class="c1">// The single reaper: the ONLY caller of cmd.Wait() and the ONLY closer of</span><span class="w">
 </span></span></span><span class="line"><span class="cl"><span class="c1">// the pipe read ends. Started here so it runs on BOTH the fresh and resume</span><span class="w">
 </span></span></span><span class="line"><span class="cl"><span class="c1">// paths.</span><span class="w">
 </span></span></span><span class="line"><span class="cl"><span class="k">go</span><span class="w"> </span><span class="nx">s</span><span class="p">.</span><span class="nf">reapLive</span><span class="p">(</span><span class="nx">lp</span><span class="p">)</span><span class="w">
 </span></span></span></code></pre></div><p>The test for that one uses a fake <code>claude</code> (via <code>TestMain</code>) that writes a terminal <code>result</code> frame and exits
-immediately, then asserts the frame arrives on both paths and that the fresh child gets reaped.</p>
+immediately. It asserts the frame arrives on both paths and that the fresh child gets reaped.</p>
 <h3 id="what-i-took-away-from-it">What I took away from it</h3>
 <ul>
 <li>If you call <code>Wait</code> from anywhere other than &ldquo;after every reader returned&rdquo;, don&rsquo;t use <code>StdoutPipe</code>/<code>StderrPipe</code>.
@@ -491,13 +495,13 @@ Use <code>os.Pipe</code> or <code>cmd.Stdout = someWriter</code> and let <code>o
 <li>One goroutine owns <code>Wait</code> and one goroutine owns closing the read ends. Ideally the same one.</li>
 <li>A timeout around a drain is a deadlock guard. If it&rsquo;s the thing that decides whether you have the data, you have a
 race, not a slow reader.</li>
-<li>When you fix a bug class, grep for the rest of it. I fixed <code>internal/runtime/claude</code> and <code>internal/codexapp</code> and
+<li>When you fix a bug class, grep for the rest of it. I fixed <code>internal/runtime/claude</code> and <code>internal/codexapp</code>. I
 didn&rsquo;t look at <code>internal/server</code>, which had been doing the same thing the whole time.</li>
 </ul>
 <h3 id="how-i-measured">How I measured</h3>
-<p>The reproducer above, built with Go 1.26.5 on Windows 11 Pro (AMD Ryzen 9 5950X, 128 GB) and cross-compiled for
-Linux, then run under WSL2 (kernel 6.18.33.2-microsoft-standard-WSL2). Three runs of each mode on Linux, one of each
-on Windows; every run produced the same numbers shown above.</p>
+<p>I built the reproducer above with Go 1.26.5 on Windows 11 Pro (AMD Ryzen 9 5950X, 128 GB). I also cross-compiled it
+for Linux and ran it under WSL2 (kernel 6.18.33.2-microsoft-standard-WSL2). That was three runs of each mode on Linux
+and one of each on Windows. Every run produced the same numbers shown above.</p>
 <h3 id="links">Links</h3>
 <ul>
 <li><a href="https://github.com/luthermonson/shipmates/issues/41">shipmates issue #41</a> and <a href="https://github.com/luthermonson/shipmates/pull/44">PR #44</a> (the first fix)</li>

@@ -218,7 +218,7 @@
       <h2><a href="/blog/2026/06/go-proxmox-agents-md/">Maintaining an Open-Source Library With AI Agents: AGENTS.md and the Rule They Kept Breaking</a></h2>
     
     
-      <p>Six weeks of go-proxmox with coding agents doing most of the typing: what went into AGENTS.md, the API shape five parallel agents got wrong the same way, and how a coverage metric bent the code around it.</p>
+      <p>Six weeks of go-proxmox with coding agents doing most of the typing taught me what belongs in AGENTS.md. Five parallel agents got the same API shape wrong, and a coverage metric bent the code around it.</p>
     
   </div>
   <div class="meta">
@@ -233,12 +233,12 @@
     <img class="" src="/img/2026/06/go-proxmox-agents-md-rule.svg" alt="Decision diagram: endpoints without an id in the path become methods on the parent, endpoints with an id get a handle type">
   </a>
     
-    <p>On May 9th I merged <a href="https://github.com/luthermonson/go-proxmox/pull/264">#264</a>, which added an <code>AGENTS.md</code> to
-<a href="https://github.com/luthermonson/go-proxmox">go-proxmox</a> and a stub <code>CLAUDE.md</code> that just points at it. Over the
-next six weeks, through the v0.8.0 migration guide on June 15th, <code>main</code> took 77 commits, +31,794 / -1,144 lines, went from
-84 to 186 <code>.go</code> files, and endpoint coverage went from 30% to <a href="/blog/2026/06/go-proxmox-endpoint-coverage/">100% of the Proxmox API</a>.
-Most of that code was typed by coding agents, a lot of it by several at once. This is what that looked like from the
-maintainer&rsquo;s chair, mostly the parts that went&hellip;</p>
+    <p>On May 9th I merged <a href="https://github.com/luthermonson/go-proxmox/pull/264">#264</a>. It added an <code>AGENTS.md</code> to
+<a href="https://github.com/luthermonson/go-proxmox">go-proxmox</a> and a stub <code>CLAUDE.md</code> that just points at it. The next six
+weeks ran through the v0.8.0 migration guide on June 15th. In that time <code>main</code> took 77 commits and +31,794 / -1,144
+lines. The repo went from 84 to 186 <code>.go</code> files. Endpoint coverage went from 30% to
+<a href="/blog/2026/06/go-proxmox-endpoint-coverage/">100% of the Proxmox API</a>. Most of that code was typed by coding agents,
+a lot of it by several at once. This is what that looked like from the maintainer&rsquo;s chair. It&rsquo;s&hellip;</p>
   </div>
   <footer>
     <a href="/blog/2026/06/go-proxmox-agents-md/" class="button big">Read More</a>

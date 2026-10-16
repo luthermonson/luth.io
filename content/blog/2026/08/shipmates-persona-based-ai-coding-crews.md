@@ -1,6 +1,6 @@
 ---
 title: "shipmates: Persona-Based AI Coding Crews That Remember"
-description: "A Go CLI and daemon that runs crews of AI coding agents across machines, with per-project memory, a shared task graph, voice control and a real permission model."
+description: "shipmates is a Go CLI and daemon that runs crews of AI coding agents across machines. It adds per-project memory, a shared task graph, voice control and a real permission model."
 date: 2026-08-21T21:18:00-07:00
 tags: [ go, ai-agents, claude-code, shipmates, open-source ]
 categories: [ ai-agents, go ]
@@ -14,30 +14,31 @@ draft: false
 
 Since June most of my evenings have gone into [shipmates](https://github.com/luthermonson/shipmates), a Go CLI and daemon
 for running crews of AI coding agents. I tagged [v0.5.0](https://github.com/luthermonson/shipmates/releases/tag/v0.5.0)
-on August 17th, two months and about 240 commits after the first architecture doc, so it's a good time to write down what
-it is and why it exists.
+on August 17th. That was two months and about 240 commits after the first architecture doc. So it's a good time to write
+down what it is and why it exists.
 
 ### The problem
 
-I run a lot of agent sessions. On a normal night this workstation has four or five projects going at once, each with a
+I run a lot of agent sessions. On a normal night this workstation has four or five projects going at once. Each has a
 few Claude Code sessions doing different jobs: one reviewing, one writing tests, one chasing a bug. Two things kept
 annoying me.
 
 First, every session starts from zero. The "security reviewer" prompt you found on the internet is a headless expert:
-a role description and a tool allowlist. It doesn't remember that you rejected a pattern three weeks ago, or which
-constant is load-bearing for reasons the code doesn't explain. You end up re-explaining the project in every prompt, and
-the reviewer gives you generic best-practice advice you mostly already knew.
+a role description and a tool allowlist. It doesn't remember that you rejected a pattern three weeks ago. It doesn't
+know which constant is load-bearing for reasons the code doesn't explain. You end up re-explaining the project in
+every prompt. And the reviewer gives you generic best-practice advice you mostly already knew.
 
-Second, coordination. Several projects, more than one machine, and I was the message bus between all of them, alt-tabbing through terminals to see who was waiting on a permission prompt.
+Second, coordination. I had several projects on more than one machine, and I was the message bus between all of them.
+I'd alt-tab through terminals to see who was waiting on a permission prompt.
 
 ### The pitch
 
-Each persona gets a per-project memory directory. It reads it at session start and writes to it as it learns. Two weeks
-in, the architect reviewing a PR doesn't just see the diff, it sees the diff against a remembered project: "this
+Each persona gets a per-project memory directory. It reads it at session start and writes to it as it learns. Two
+weeks in, the architect reviewing a PR doesn't just see the diff. It sees the diff against a remembered project: "this
 re-introduces the pattern we rejected in #45, has anything changed?"
 
-Then Fleet Command adds the second dimension: coordinate ships on multiple machines from one browser, dispatch work across
-them, and talk to the whole fleet by voice.
+Then Fleet Command adds the second dimension. You coordinate ships on multiple machines from one browser, dispatch
+work across them and talk to the whole fleet by voice.
 
 ### The naval bit
 
@@ -45,8 +46,8 @@ I leaned into the metaphor because it maps cleanly onto roles:
 
 - **Admiral**: me, giving direction.
 - **Fleet Command**: one coordinator node that hosts the web UI, the voice loop and the shared task graph.
-- **Commodore**: the AI officer at Fleet Command that turns spoken orders into fleet tool calls (list captains, tell a
-  captain, assign work, approve a pending request).
+- **Commodore**: the AI officer at Fleet Command. It turns spoken orders into fleet tool calls like list captains,
+  tell a captain, assign work or approve a pending request.
 - **Ship**: one per project. A machine can run several.
 - **Captain**: the per-ship lead persona, coordinating that ship's crew.
 - **Mates**: the individual agents, `architect`, `security`, `frontend`, `backend`, `tester` and so on.
@@ -60,11 +61,15 @@ cd my-project
 shipmates init --crew captain,architect,security,frontend,backend,tester
 ```
 
-That vendors persona files into `.claude/agents/<name>.md`, which Claude Code reads natively, seeds each persona's
-memory under `.shipmates/memory/<name>/`, drops a `policy.yaml` overlay for the personas that ship one, and wires a `SessionStart` hook into
-`.claude/settings.json`. The hook shells out to `shipmates hook load-memory`, which reads the persona's memory and
-injects it as session context. That's deliberate: memory loading shouldn't depend on the model deciding to go read a
-file first.
+That does four things:
+
+- Vendors persona files into `.claude/agents/<name>.md`, which Claude Code reads natively.
+- Seeds each persona's memory under `.shipmates/memory/<name>/`.
+- Drops a `policy.yaml` overlay for the personas that ship one.
+- Wires a `SessionStart` hook into `.claude/settings.json`.
+
+The hook shells out to `shipmates hook load-memory`, which reads the persona's memory and injects it as session
+context. That's deliberate. Memory loading shouldn't depend on the model deciding to go read a file first.
 
 Then you talk to the crew three ways:
 
@@ -80,41 +85,48 @@ shipmates feed
 shipmates open captain
 ```
 
-There's also `shipmates bridge`, a tabbed terminal UI (Bubble Tea) over every live mate on the machine, with a live PTY
-per tab and one-key approvals.
+There's also `shipmates bridge`, a tabbed terminal UI (Bubble Tea) over every live mate on the machine. It has a live
+PTY per tab and one-key approvals.
 
 ### The fleet
 
-Ships open **outbound** websocket tunnels to Fleet Command, so nothing on the ship side is exposed and it works from
+Ships open **outbound** websocket tunnels to Fleet Command. Nothing on the ship side is exposed, and it works from
 behind NAT. The tunnels are [rancher/remotedialer](https://github.com/rancher/remotedialer), which I know well from my
-Rancher days. (It also produced the first real bug story of the project, more on that soon.) Fleet Command can sit
+Rancher days. (It also produced the first real bug story of the project. More on that soon.) Fleet Command can sit
 behind cloudflared or any TLS proxy.
 
-Coordination between ships goes through a shared task graph, [beads](https://github.com/gastownhall/beads), a
-Dolt-backed SQL database that rides on hidden git refs inside the project's own repo. The fleet's work is versioned,
-merge-safe, and stored somewhere I already trust instead of in another service.
+Coordination between ships goes through a shared task graph called [beads](https://github.com/gastownhall/beads). It's
+a Dolt-backed SQL database that rides on hidden git refs inside the project's own repo. The fleet's work is versioned
+and merge-safe. It's stored somewhere I already trust instead of in another service.
 
-In the browser you get every captain in a sidebar, a live terminal per mate, an event stream per captain, the task
-graph, and an approval queue. You can drag a screenshot in and it lands in the target ship's inbox, and the mate reads
-it with Claude Code's own multimodal Read tool.
+In the browser you get every captain in a sidebar and a live terminal per mate. There's also an event stream per
+captain, the task graph and an approval queue. You can drag a screenshot in and it lands in the target ship's inbox.
+The mate reads it with Claude Code's own multimodal Read tool.
 
-Voice is the part that makes it feel like a fleet. Press the mic, speak an order, and it goes speech-to-text (whisper.cpp
-or anything OpenAI-compatible), into an LLM backend that plays the Commodore and calls fleet tools, then out through
-text-to-speech (Kokoro, Edge voices, or OpenAI-compatible). Every stage is a pluggable endpoint, so the whole voice stack
-can run on a local GPU.
+Voice is the part that makes it feel like a fleet. Press the mic and speak an order. It goes through speech-to-text
+(whisper.cpp or anything OpenAI-compatible). Then it goes into an LLM backend that plays the Commodore and calls fleet
+tools. The answer comes back out through text-to-speech (Kokoro, Edge voices or OpenAI-compatible). Every stage is a
+pluggable endpoint, so the whole voice stack can run on a local GPU.
 
 ### Permissions, the Brig, and containment
 
 Agents running shell commands on my machines need a real permission model, not vibes. shipmates evaluates every tool
-call through layered rules in Claude Code's own syntax: a fleet-wide deny list pushed from Fleet Command (which binds
-even personas running in bypass mode), per-persona policy, project settings, user settings. Deny beats ask beats allow.
+call through layered rules in Claude Code's own syntax:
 
-On top of that sits the Brig: fifteen "Ship's Articles" (no piped execution, no self-escalation, stay aboard, and so on)
-bound to every persona the moment it's installed, ten of them compiled into deny and ask rules, plus `shipmates freeze` to stop every write-class tool
-call across a ship without killing sessions, and an append-only denial log.
+- A fleet-wide deny list pushed from Fleet Command. It binds even personas running in bypass mode.
+- Per-persona policy.
+- Project settings.
+- User settings.
 
-And every agent process runs under containment: Windows Job Objects, Unix process groups, and an RSS/CPU watchdog, so a
-turn that ends takes its whole process tree with it and an optional memory or CPU budget gets enforced.
+Deny beats ask beats allow.
+
+On top of that sits the Brig. Fifteen "Ship's Articles" are bound to every persona the moment it's installed. Examples
+are no piped execution, no self-escalation and stay aboard. Ten of them are compiled into deny and ask rules. There's
+also `shipmates freeze`, which stops every write-class tool call across a ship without killing sessions. And there's
+an append-only denial log.
+
+And every agent process runs under containment: Windows Job Objects, Unix process groups and an RSS/CPU watchdog. A
+turn that ends takes its whole process tree with it. An optional memory or CPU budget gets enforced too.
 
 ### What v0.5.0 added
 
@@ -125,31 +137,31 @@ The v0.5.0 release was big:
 - **Multi-runtime**: `--runtime claude|codex|openai` across the command surface. Claude Code is still the main one, but
   Codex and any OpenAI-compatible endpoint work too.
 - **The Brig** landed in this release.
-- **A security pass** that changed where several settings are allowed to live. Persona execution config (which binary to
-  spawn, whether to skip permissions) moved out of the checkout into `~/.shipmates/personas.yaml`, because anything in the
-  repo arrives with `git clone` and is attacker-controlled on an unreviewed repo. The captain's local API now requires a
-  token, plaintext fleet URLs to non-loopback hosts are refused, and the permission gate stopped trusting the first word of
-  a shell command.
+- **A security pass** that changed where several settings are allowed to live. Persona execution config moved out of
+  the checkout into `~/.shipmates/personas.yaml`. That config covers which binary to spawn and whether to skip
+  permissions. It moved because anything in the repo arrives with `git clone` and is attacker-controlled on an
+  unreviewed repo. The captain's local API now requires a token. Plaintext fleet URLs to non-loopback hosts are
+  refused. And the permission gate stopped trusting the first word of a shell command.
 
-If you run a GitHub-routed crew on a public repo, everything an outsider can write (issue titles, bodies, comments, diffs,
-branch names) is treated as data to evaluate, never instructions to follow.
+If you run a GitHub-routed crew on a public repo, everything an outsider can write is treated as data to evaluate,
+never instructions to follow. That covers issue titles, bodies, comments, diffs and branch names.
 
 ### How it's built
 
-It's all Go (1.26), a single binary for macOS, Linux and Windows on amd64 and arm64, released with goreleaser. CI runs on
-my own [ephemerd](/blog/2026/08/ephemerd-one-daemon-every-os/) runners across linux-x64, linux-arm64, macOS arm64 and
-Windows x64, with a dedicated race-detector job. Development happens on Windows first, which has turned out to be a great
-way to find cross-platform bugs, and a terrible way to find the ones that only show up on Linux.
+It's all Go (1.26), a single binary for macOS, Linux and Windows on amd64 and arm64. It's released with goreleaser. CI
+runs on my own [ephemerd](/blog/2026/08/ephemerd-one-daemon-every-os/) runners across linux-x64, linux-arm64, macOS
+arm64 and Windows x64, with a dedicated race-detector job. Development happens on Windows first. That has turned out
+to be a great way to find cross-platform bugs, and a terrible way to find the ones that only show up on Linux.
 
-One install caveat for now: `go install github.com/luthermonson/shipmates@latest` doesn't work, because shipmates pins a
+One install caveat for now. `go install github.com/luthermonson/shipmates@latest` doesn't work, because shipmates pins a
 fork of remotedialer with a `replace` directive. Grab a [release binary](https://github.com/luthermonson/shipmates/releases)
 or `git clone` and `go build -o shipmates .`.
 
 ### What's next
 
 I've got a backlog of posts out of the last two months, mostly about the things that broke. Next up is the data race in
-remotedialer that my CI found and how I managed to pin only two-thirds of my own fix. After that, NTFS and atomic file
-replacement, and a fun one about `os/exec`.
+remotedialer that my CI found and how I managed to pin only two-thirds of my own fix. After that comes NTFS and atomic
+file replacement, then a fun one about `os/exec`.
 
 ### Links
 

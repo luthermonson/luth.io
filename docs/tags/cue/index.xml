@@ -13,7 +13,7 @@
       <link>https://luth.io/blog/2022/01/practical-cue-example/</link>
       <pubDate>Mon, 31 Jan 2022 09:57:26 -0700</pubDate>
       <guid>https://luth.io/blog/2022/01/practical-cue-example/</guid>
-      <description>&lt;p&gt;I recently had to spend some time to learn &lt;a href=&#34;https://cuelang.org/&#34;&gt;Cue&lt;/a&gt; and felt the examples/tutorials were a bit lacking&#xA;and the paradigm shift to the entire language sort of messed with my head and some things Cue does were a bit foreign to me.&#xA;To get started, note that the two places I spent all of my time to get this information came from their main &lt;a href=&#34;https://cuelang.org/docs/&#34;&gt;docs&lt;/a&gt;&#xA;and a community &lt;a href=&#34;https://cuetorials.com/&#34;&gt;Cuetorials&lt;/a&gt; site. This will be a tutorial on how you can use Cue to generate&#xA;two different YAML documents using Cue all starting with Go types to generate Cue files.&lt;/p&gt;</description>
+      <description>&lt;p&gt;I recently had to spend some time to learn &lt;a href=&#34;https://cuelang.org/&#34;&gt;Cue&lt;/a&gt; and felt the examples/tutorials were a bit lacking.&#xA;The paradigm shift to the entire language sort of messed with my head, and some things Cue does were a bit foreign to me.&#xA;To get started, note that I spent all of my time getting this information from two places: their main&#xA;&lt;a href=&#34;https://cuelang.org/docs/&#34;&gt;docs&lt;/a&gt; and a community &lt;a href=&#34;https://cuetorials.com/&#34;&gt;Cuetorials&lt;/a&gt; site. This will be a tutorial on&#xA;how you can use Cue to generate two different YAML documents, all starting with Go types to generate Cue files.&lt;/p&gt;</description>
     </item>
   </channel>
 </rss>

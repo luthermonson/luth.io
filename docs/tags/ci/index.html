@@ -233,8 +233,8 @@
     <img class="" src="/img/2026/09/ephpm-smaller-angles-nodelay.svg" alt="Bar chart: db.php p50 at c=1 dropped from 444 ms on v0.4.0 to 4.4 ms on v0.4.1">
   </a>
     
-    <p>Not every fix in <a href="https://github.com/ephpm/ephpm">ePHPm</a> earns a full write-up, but a few of the smaller ones have
-stuck with me because the lesson in each was bigger than the diff. Here are four from this summer.</p>
+    <p>Not every fix in <a href="https://github.com/ephpm/ephpm">ePHPm</a> earns a full write-up. A few of the smaller ones have stuck
+with me because the lesson in each was bigger than the diff. Here are four from this summer.</p>
   </div>
   <footer>
     <a href="/blog/2026/09/ephpm-smaller-angles/" class="button big">Read More</a>
@@ -282,7 +282,7 @@ stuck with me because the lesson in each was bigger than the diff. Here are four
       <h2><a href="/blog/2026/09/shipmates-short-ones-setup-go-and-voice/">shipmates Short Ones: 8 Minutes Extracting Go, and Three Voice-Loop Bugs</a></h2>
     
     
-      <p>Four small stories from shipmates: setup-go stuck extracting on Windows CI, Cloudflare&#39;s 100 second timeout, a voice loop that transcribed itself, and events lost to a timestamp watermark.</p>
+      <p>Four small stories from shipmates, starting with setup-go stuck extracting on Windows CI and Cloudflare&#39;s 100 second timeout. The other two are a voice loop that transcribed itself and events lost to a timestamp watermark.</p>
     
   </div>
   <div class="meta">
@@ -297,8 +297,8 @@ stuck with me because the lesson in each was bigger than the diff. Here are four
     <img class="" src="/img/2026/09/shipmates-short-ones-setup-go-and-voice-cover.svg" alt="setup-go on Windows CI: 7 seconds to download, 473 seconds extracting before the timeout">
   </a>
     
-    <p>A few <a href="/blog/2026/08/shipmates-persona-based-ai-coding-crews/">shipmates</a> bugs that don&rsquo;t need a whole post each but
-were too good to leave in commit messages.</p>
+    <p>A few <a href="/blog/2026/08/shipmates-persona-based-ai-coding-crews/">shipmates</a> bugs don&rsquo;t need a whole post each. They were
+too good to leave in commit messages, though.</p>
   </div>
   <footer>
     <a href="/blog/2026/09/shipmates-short-ones-setup-go-and-voice/" class="button big">Read More</a>
@@ -350,7 +350,7 @@ were too good to leave in commit messages.</p>
       <h2><a href="/blog/2026/09/kata-containers-for-ci/">Kata Containers for CI: Boot Cost Isn&#39;t the Problem, File I/O Is</a></h2>
     
     
-      <p>Kata containers are safer for CI, but slower. Starting one takes 12x longer, which is fine, and reading small files is about 40x slower for the entire job, which isn&#39;t.</p>
+      <p>Kata containers are safer for CI, but slower. Starting one takes 12x longer, which is fine. Reading small files is about 40x slower for the entire job, which isn&#39;t.</p>
     
   </div>
   <div class="meta">
@@ -366,11 +366,11 @@ were too good to leave in commit messages.</p>
   </a>
     
     <p>Of the three platforms <a href="/blog/2026/08/ephemerd-one-daemon-every-os/">ephemerd</a> runs jobs on, Linux has the weakest
-isolation. Windows jobs get a Hyper-V isolated container with its own kernel, macOS jobs get a whole VM, and a Linux job is
+isolation. Windows jobs get a Hyper-V isolated container with its own kernel. macOS jobs get a whole VM. A Linux job is
 an ordinary runc container sharing the host kernel. A kernel escape from a Linux job is a host compromise.
-<a href="https://katacontainers.io/">Kata Containers</a> fixes that by putting each container in a lightweight VM with its own kernel,
-and it plugs into containerd as just another runtime handler. So I added it in
-<a href="https://github.com/ephpm/ephemerd/pull/155">#155</a>, measured it, and left&hellip;</p>
+<a href="https://katacontainers.io/">Kata Containers</a> fixes that by putting each container in a lightweight VM with its own
+kernel. It plugs into containerd as just another runtime handler. So I added it in
+<a href="https://github.com/ephpm/ephemerd/pull/155">#155</a>, measured it, and left it off&hellip;</p>
   </div>
   <footer>
     <a href="/blog/2026/09/kata-containers-for-ci/" class="button big">Read More</a>

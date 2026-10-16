@@ -218,7 +218,7 @@
       <h2><a href="/blog/2026/06/proxmox-numbers-null-scientific-notation-net10/">Proxmox JSON, Part 2: null PIDs, 1.12589990684262e&#43;15 and net10</a></h2>
     
     
-      <p>Three more ways the Proxmox VE API&#39;s JSON doesn&#39;t fit Go&#39;s encoding/json: a null I fixed and then broke, petabyte storage in scientific notation, and devices past index 9 that were silently dropped.</p>
+      <p>The Proxmox VE API found three more ways for its JSON not to fit Go&#39;s encoding/json. There&#39;s a null I fixed and then broke, petabyte storage in scientific notation, and devices past index 9 that were silently dropped.</p>
     
   </div>
   <div class="meta">
@@ -233,10 +233,10 @@
     <img class="" src="/img/2022/02/proxmox-logo.png" alt="Proxmox VE Logo">
   </a>
     
-    <p>In 2023 I wrote about <a href="/blog/2023/11/proxmox-doesnt-know-what-type-a-number-is/">why go-proxmox has <code>StringOrInt</code> and friends</a>:
+    <p>In 2023 I wrote about <a href="/blog/2023/11/proxmox-doesnt-know-what-type-a-number-is/">why go-proxmox has <code>StringOrInt</code> and friends</a>.
 Proxmox sends the same number quoted in one place and bare in another, so the client has types that accept both. That
 post ended on a pretty confident note. Since then three more shapes of &ldquo;the JSON is valid and Go still won&rsquo;t take it&rdquo;
-have come in, and one of them is a bug I&rsquo;d already fixed once and then reintroduced myself.</p>
+have come in. One of them is a bug I&rsquo;d already fixed once and then reintroduced myself.</p>
   </div>
   <footer>
     <a href="/blog/2026/06/proxmox-numbers-null-scientific-notation-net10/" class="button big">Read More</a>
@@ -295,10 +295,8 @@ have come in, and one of them is a bug I&rsquo;d already fixed once and then rei
     <img class="" src="/img/2026/06/omitempty-zero-values-proxmox-defaults-table.svg" alt="Table showing how verify-certificates was sent by go-proxmox before #210, between v0.2.3 and v0.6.x, and in v0.7.0">
   </a>
     
-    <p>Every Go developer knows <code>omitempty</code> drops zero values. What takes longer to sink in is that a plain <code>bool</code> only has two
-states and a caller filling in an options struct means one of three: &ldquo;set it true&rdquo;, &ldquo;set it false&rdquo;, and &ldquo;I didn&rsquo;t touch
-this, do whatever the server does by default&rdquo;. With <code>omitempty</code> you lose &ldquo;false&rdquo;. Without it you lose &ldquo;didn&rsquo;t touch it&rdquo;.
-In <a href="https://github.com/luthermonson/go-proxmox">go-proxmox</a> we managed to ship both bugs, in that order, and the&hellip;</p>
+    <p>Every Go developer knows <code>omitempty</code> drops zero values. What takes longer to sink in is that a plain <code>bool</code> only has
+two states. A caller filling in an options struct means one of three:</p>
   </div>
   <footer>
     <a href="/blog/2026/06/omitempty-zero-values-proxmox-defaults/" class="button big">Read More</a>
@@ -342,7 +340,7 @@ In <a href="https://github.com/luthermonson/go-proxmox">go-proxmox</a> we manage
       <h2><a href="/blog/2023/11/proxmox-doesnt-know-what-type-a-number-is/">Proxmox Doesn&#39;t Know What Type a Number Is</a></h2>
     
     
-      <p>The Proxmox VE API returns the same field as 1234 in one place and &#34;1234&#34; in another. Why go-proxmox has StringOrInt, StringOrUint64, StringOrFloat64 and IntOrBool instead of plain Go types.</p>
+      <p>The Proxmox VE API returns the same field as 1234 in one place and &#34;1234&#34; in another. This is why go-proxmox has StringOrInt, StringOrUint64, StringOrFloat64 and IntOrBool instead of plain Go types.</p>
     
   </div>
   <div class="meta">
@@ -357,11 +355,11 @@ In <a href="https://github.com/luthermonson/go-proxmox">go-proxmox</a> we manage
     <img class="" src="/img/2022/02/proxmox-logo.png" alt="Proxmox VE Logo">
   </a>
     
-    <p>Every couple of months somebody opens an issue on <a href="https://github.com/luthermonson/go-proxmox">go-proxmox</a> with a title
-that starts with <code>json: cannot unmarshal string into Go struct field</code>. The most recent one was fixed last week, and it&rsquo;s the same
-root cause every time: the Proxmox VE API is backed by Perl, Perl doesn&rsquo;t really care whether a scalar is a number or a
-string, and the JSON encoder on the other end writes whatever the scalar happens to be at the time. So a field that is
-documented as an integer comes back as <code>2048&hellip;</code></p>
+    <p>Every couple of months somebody opens an issue on <a href="https://github.com/luthermonson/go-proxmox">go-proxmox</a> with a
+title that starts with <code>json: cannot unmarshal string into Go struct field</code>. The most recent one was fixed last week.
+It&rsquo;s the same root cause every time. The Proxmox VE API is backed by Perl, and Perl doesn&rsquo;t really care whether a
+scalar is a number or a string. The JSON encoder on the other end writes whatever the scalar happens to be at the time.
+So a field that is documented as an integer comes back as <code>2048</code> from&hellip;</p>
   </div>
   <footer>
     <a href="/blog/2023/11/proxmox-doesnt-know-what-type-a-number-is/" class="button big">Read More</a>

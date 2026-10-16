@@ -218,7 +218,7 @@
       <h2><a href="/blog/2026/09/agent-shell-allowlist-bypassable/">Your Agent&#39;s Shell Allowlist Is Bypassable</a></h2>
     
     
-      <p>A permission gate for AI agents&#39; shell commands judged spellings instead of commands. The classes of bypass I found in shipmates&#39; own gate, and the one idea that fixes most of them.</p>
+      <p>A permission gate for AI agents&#39; shell commands judged spellings instead of commands. I found several classes of bypass in shipmates&#39; own gate, and one idea fixes most of them.</p>
     
   </div>
   <div class="meta">
@@ -233,11 +233,9 @@
     <img class="" src="/img/2026/09/agent-shell-allowlist-bypassable-cover.svg" alt="A shell command decomposed into the nested command lines the permission gate has to judge">
   </a>
     
-    <p>Every <a href="/blog/2026/08/shipmates-persona-based-ai-coding-crews/">shipmates</a> crew member runs shell commands, and before any
-of them runs it goes through a permission gate. The gate uses the same rule syntax as Claude Code settings,
-<code>Bash(git status)</code>, <code>Bash(rm *)</code>, <code>Write(**/.claude/settings.json)</code>, merged from several layers: a fleet-wide deny list
-pushed from Fleet Command, per-persona policy files, project settings, and the Brig, which compiles shipmates&rsquo; fifteen
-&ldquo;Ship&rsquo;s Articles&rdquo; into deny and ask rules. Deny beats ask, ask beats&hellip;</p>
+    <p>Every <a href="/blog/2026/08/shipmates-persona-based-ai-coding-crews/">shipmates</a> crew member runs shell commands. Before any of
+them runs, it goes through a permission gate. The gate uses the same rule syntax as Claude Code settings:
+<code>Bash(git status)</code>, <code>Bash(rm *)</code>, <code>Write(**/.claude/settings.json)</code>. The rules are merged from several layers:</p>
   </div>
   <footer>
     <a href="/blog/2026/09/agent-shell-allowlist-bypassable/" class="button big">Read More</a>
@@ -287,7 +285,7 @@ pushed from Fleet Command, per-persona policy files, project settings, and the B
       <h2><a href="/blog/2026/09/shipmates-short-ones-setup-go-and-voice/">shipmates Short Ones: 8 Minutes Extracting Go, and Three Voice-Loop Bugs</a></h2>
     
     
-      <p>Four small stories from shipmates: setup-go stuck extracting on Windows CI, Cloudflare&#39;s 100 second timeout, a voice loop that transcribed itself, and events lost to a timestamp watermark.</p>
+      <p>Four small stories from shipmates, starting with setup-go stuck extracting on Windows CI and Cloudflare&#39;s 100 second timeout. The other two are a voice loop that transcribed itself and events lost to a timestamp watermark.</p>
     
   </div>
   <div class="meta">
@@ -302,8 +300,8 @@ pushed from Fleet Command, per-persona policy files, project settings, and the B
     <img class="" src="/img/2026/09/shipmates-short-ones-setup-go-and-voice-cover.svg" alt="setup-go on Windows CI: 7 seconds to download, 473 seconds extracting before the timeout">
   </a>
     
-    <p>A few <a href="/blog/2026/08/shipmates-persona-based-ai-coding-crews/">shipmates</a> bugs that don&rsquo;t need a whole post each but
-were too good to leave in commit messages.</p>
+    <p>A few <a href="/blog/2026/08/shipmates-persona-based-ai-coding-crews/">shipmates</a> bugs don&rsquo;t need a whole post each. They were
+too good to leave in commit messages, though.</p>
   </div>
   <footer>
     <a href="/blog/2026/09/shipmates-short-ones-setup-go-and-voice/" class="button big">Read More</a>
@@ -355,13 +353,13 @@ were too good to leave in commit messages.</p>
       <h2><a href="/blog/2026/08/shipmates-persona-based-ai-coding-crews/">shipmates: Persona-Based AI Coding Crews That Remember</a></h2>
     
     
-      <p>A Go CLI and daemon that runs crews of AI coding agents across machines, with per-project memory, a shared task graph, voice control and a real permission model.</p>
+      <p>shipmates is a Go CLI and daemon that runs crews of AI coding agents across machines. It adds per-project memory, a shared task graph, voice control and a real permission model.</p>
     
   </div>
   <div class="meta">
     <time datetime="2026-08-21 21:18:00 -0700 PDT">August 21, 2026</time>
     
-    <p>6-Minute Read</p>
+    <p>7-Minute Read</p>
   </div>
 </header>
 
@@ -372,8 +370,8 @@ were too good to leave in commit messages.</p>
     
     <p>Since June most of my evenings have gone into <a href="https://github.com/luthermonson/shipmates">shipmates</a>, a Go CLI and daemon
 for running crews of AI coding agents. I tagged <a href="https://github.com/luthermonson/shipmates/releases/tag/v0.5.0">v0.5.0</a>
-on August 17th, two months and about 240 commits after the first architecture doc, so it&rsquo;s a good time to write down what
-it is and why it exists.</p>
+on August 17th. That was two months and about 240 commits after the first architecture doc. So it&rsquo;s a good time to write
+down what it is and why it exists.</p>
   </div>
   <footer>
     <a href="/blog/2026/08/shipmates-persona-based-ai-coding-crews/" class="button big">Read More</a>
@@ -419,7 +417,7 @@ it is and why it exists.</p>
       <h2><a href="/blog/2026/06/go-proxmox-agents-md/">Maintaining an Open-Source Library With AI Agents: AGENTS.md and the Rule They Kept Breaking</a></h2>
     
     
-      <p>Six weeks of go-proxmox with coding agents doing most of the typing: what went into AGENTS.md, the API shape five parallel agents got wrong the same way, and how a coverage metric bent the code around it.</p>
+      <p>Six weeks of go-proxmox with coding agents doing most of the typing taught me what belongs in AGENTS.md. Five parallel agents got the same API shape wrong, and a coverage metric bent the code around it.</p>
     
   </div>
   <div class="meta">
@@ -434,12 +432,12 @@ it is and why it exists.</p>
     <img class="" src="/img/2026/06/go-proxmox-agents-md-rule.svg" alt="Decision diagram: endpoints without an id in the path become methods on the parent, endpoints with an id get a handle type">
   </a>
     
-    <p>On May 9th I merged <a href="https://github.com/luthermonson/go-proxmox/pull/264">#264</a>, which added an <code>AGENTS.md</code> to
-<a href="https://github.com/luthermonson/go-proxmox">go-proxmox</a> and a stub <code>CLAUDE.md</code> that just points at it. Over the
-next six weeks, through the v0.8.0 migration guide on June 15th, <code>main</code> took 77 commits, +31,794 / -1,144 lines, went from
-84 to 186 <code>.go</code> files, and endpoint coverage went from 30% to <a href="/blog/2026/06/go-proxmox-endpoint-coverage/">100% of the Proxmox API</a>.
-Most of that code was typed by coding agents, a lot of it by several at once. This is what that looked like from the
-maintainer&rsquo;s chair, mostly the parts that went&hellip;</p>
+    <p>On May 9th I merged <a href="https://github.com/luthermonson/go-proxmox/pull/264">#264</a>. It added an <code>AGENTS.md</code> to
+<a href="https://github.com/luthermonson/go-proxmox">go-proxmox</a> and a stub <code>CLAUDE.md</code> that just points at it. The next six
+weeks ran through the v0.8.0 migration guide on June 15th. In that time <code>main</code> took 77 commits and +31,794 / -1,144
+lines. The repo went from 84 to 186 <code>.go</code> files. Endpoint coverage went from 30% to
+<a href="/blog/2026/06/go-proxmox-endpoint-coverage/">100% of the Proxmox API</a>. Most of that code was typed by coding agents,
+a lot of it by several at once. This is what that looked like from the maintainer&rsquo;s chair. It&rsquo;s&hellip;</p>
   </div>
   <footer>
     <a href="/blog/2026/06/go-proxmox-agents-md/" class="button big">Read More</a>

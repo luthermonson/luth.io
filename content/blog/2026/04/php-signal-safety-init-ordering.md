@@ -13,14 +13,14 @@ draft: false
 
 Last week I wrote about [why ePHPm embeds PHP from Rust](/blog/2026/04/why-rust-for-php-embedding/) and promised the
 signal bug its own post. Here it is. It's the kind of bug where the fix is about ten lines and the explanation is the
-whole post, because nothing in PHP's embed documentation (there's barely any) tells you that initializing PHP has
-process-wide side effects that assume PHP is the only thing in the process.
+whole post. Nothing in PHP's embed documentation (there's barely any) tells you that initializing PHP has
+process-wide side effects. Those side effects assume PHP is the only thing in the process.
 
 ### The setup
 
-The first working version of `ephpm serve` looked like every async Rust program: `#[tokio::main]`-style, build the
-runtime, then inside it load config, initialize PHP, start the HTTP server. PHP requests run on `spawn_blocking`
-threads. Simplified:
+The first working version of `ephpm serve` looked like every async Rust program. It was `#[tokio::main]`-style. Build
+the runtime, then inside it load config, initialize PHP and start the HTTP server. PHP requests run on
+`spawn_blocking` threads. Simplified:
 
 ```rust
 async fn run_serve(command: Option<Commands>) -> anyhow::Result<ExitCode> {
@@ -35,20 +35,20 @@ async fn run_serve(command: Option<Commands>) -> anyhow::Result<ExitCode> {
 ```
 
 It served pages. It also took a `SIGSEGV` inside a signal handler, on a thread that had never executed a line of PHP.
-The stack under the handler was tokio's, not mine and not Zend's, which is a confusing thing to stare at. I blamed
-PHP's `SIGPROF` timer and built the fix around that theory. Going back through php-src to write this up,
-the theory was too simple: init doesn't arm that timer at all. The hazard is real, but it's narrower than I thought,
-and knowing which builds it applies to is the useful part.
+The stack under the handler was tokio's, not mine and not Zend's. That's a confusing thing to stare at. I blamed PHP's
+`SIGPROF` timer and built the fix around that theory. Going back through php-src to write this up, I found the theory
+was too simple. Init doesn't arm that timer at all. The hazard is real, but it's narrower than I thought. Knowing
+which builds it applies to is the useful part.
 
 ### What php_embed_init() does that you didn't ask for
 
 `php_embed_init()` does module startup and then starts a request. Module startup sets the `LC_CTYPE` locale. Request
-startup activates PHP's `zend_signal` layer, which installs deferred handlers for `SIGPROF`, `SIGHUP`, `SIGINT`,
-`SIGQUIT`, `SIGTERM`, `SIGUSR1` and `SIGUSR2`, and then calls `zend_set_timeout()` to enforce `max_execution_time`.
-The embed SAPI hard-codes `max_execution_time=0` (it overrides whatever php.ini says), so at init that call only
-installs the timeout handler. The timer gets armed later, by the first `set_time_limit()` or
-`ini_set('max_execution_time', ...)` with a non-zero value, from whatever thread is running that script. On Linux
-builds without per-thread execution timers, the arming path is, trimmed down, this:
+startup activates PHP's `zend_signal` layer. That installs deferred handlers for `SIGPROF`, `SIGHUP`, `SIGINT`,
+`SIGQUIT`, `SIGTERM`, `SIGUSR1` and `SIGUSR2`. Then it calls `zend_set_timeout()` to enforce `max_execution_time`.
+The embed SAPI hard-codes `max_execution_time=0` (it overrides whatever php.ini says). So at init that call only
+installs the timeout handler. The timer gets armed later by the first `set_time_limit()` or
+`ini_set('max_execution_time', ...)` with a non-zero value. That happens from whatever thread is running that script.
+Here's the arming path on Linux builds without per-thread execution timers, trimmed down:
 
 ```c
 /* Zend/zend_execute_API.c, the setitimer branch of zend_set_timeout_ex() */
@@ -69,24 +69,24 @@ Two process-wide things are in play:
 1. **Process-wide signal handlers**, installed at init: `SIGPROF` plus the `zend_signal` list above. Signal
    dispositions belong to the process, not to the thread that set them.
 2. **A process-wide CPU timer**, once anything sets a non-zero limit. `ITIMER_PROF` counts CPU time consumed by the
-   *whole process*, every thread, user and system. With a 30-second limit, it fires after 30 seconds of CPU across all
-   threads.
+   *whole process*. That's every thread, user and system. With a 30-second limit, it fires after 30 seconds of CPU
+   across all threads.
 
-That second point also means the bug is load-dependent, which is what makes it slippery. An idle server burns almost no
+That second point also means the bug is load-dependent. That's what makes it slippery. An idle server burns almost no
 CPU, so the timer barely moves. A busy one with 32 threads chewing through requests can burn 30 CPU-seconds in about a
 second of wall time.
 
 ### Which thread gets the signal
 
-A process-directed signal on Linux is delivered to *one* thread that doesn't have it blocked, and the kernel picks. It
-is not "the thread that called `setitimer`." PHP was written for a world where the process has one thread (CLI,
-php-fpm, mod_php prefork) or where every thread is a PHP thread (ZTS under a threaded Apache MPM), so that distinction
-never mattered to it.
+A process-directed signal on Linux is delivered to *one* thread that doesn't have it blocked. The kernel picks. It is
+not "the thread that called `setitimer`." PHP was written for two kinds of world. In one the process has one thread
+(CLI, php-fpm, mod_php prefork). In the other every thread is a PHP thread (ZTS under a threaded Apache MPM). So that
+distinction never mattered to it.
 
-You can watch the kernel make that choice with a page of C. `main()` plays the PHP thread: it installs a
-`SIGPROF` handler and arms `ITIMER_PROF` (10ms, repeating, so we get plenty of samples). Then it starts eight threads
-that burn CPU, like busy tokio workers, and goes to sleep. The handler increments a counter for whatever thread it
-happens to run on:
+You can watch the kernel make that choice with a page of C. `main()` plays the PHP thread. It installs a `SIGPROF`
+handler and arms `ITIMER_PROF` (10ms, repeating, so we get plenty of samples). Then it starts eight threads that burn
+CPU, like busy tokio workers, and goes to sleep. The handler increments a counter for whatever thread it happens to
+run on:
 
 ```c
 static atomic_int hits[WORKERS + 1];       // [0] = main thread
@@ -125,45 +125,50 @@ worker-8         75
 total           853
 ```
 
-The thread that installed the handler and armed the timer got none of them, in this run and in a second one (the split
-across workers moved around, main stayed at 0). It was asleep, like a PHP thread waiting on a database, and all 853
-deliveries landed on threads that had nothing to do with the timer. In this toy the handler only touches a thread-local
-`int`, so it's harmless. PHP's handler isn't.
+The thread that installed the handler and armed the timer got none of them. That held in this run and in a second one
+(the split across workers moved around, main stayed at 0). It was asleep, like a PHP thread waiting on a database. All
+853 deliveries landed on threads that had nothing to do with the timer. In this toy the handler only touches a
+thread-local `int`, so it's harmless. PHP's handler isn't.
 
 ### What that does to PHP
 
-PHP's timeout handler isn't a counter bump. It reaches into engine state: the executor globals, the flags that tell the
-VM to stop at the next opcode. What happens when it runs on the wrong thread depends on how PHP was built.
+PHP's timeout handler isn't a counter bump. It reaches into engine state. That means the executor globals and the
+flags that tell the VM to stop at the next opcode. What happens when it runs on the wrong thread depends on how PHP
+was built.
 
-On the NTS build I started with, the globals are real globals, so a handler running on a tokio worker sets the flags
-just fine and the PHP thread dies with "Maximum execution time exceeded" at its next opcode. The problem is the clock.
-Under php-fpm a worker blocked on a database query burns no CPU, so `ITIMER_PROF` stands still while it waits. In ePHPm
-the other 31 threads keep burning CPU, so a script with a 30-second limit can be killed after a second of wall time
-for CPU it never used. It gets worse: NTS PHP re-arms the same timer for `hard_timeout` (2 seconds by default), and if
-it fires again while the PHP thread is still stuck somewhere that doesn't check the flag, the handler calls
-`_exit(124)`. On a busy box two process CPU-seconds go by in well under a tenth of a second, and that `_exit` takes the
-whole server down, not one request.
+On the NTS build I started with, the globals are real globals. A handler running on a tokio worker sets the flags just
+fine. The PHP thread dies with "Maximum execution time exceeded" at its next opcode. The problem is the clock. Under
+php-fpm a worker blocked on a database query burns no CPU, so `ITIMER_PROF` stands still while it waits. In ePHPm the
+other 31 threads keep burning CPU. A script with a 30-second limit can be killed after a second of wall time for CPU
+it never used. It gets worse. NTS PHP re-arms the same timer for `hard_timeout` (2 seconds by default). Say it fires
+again while the PHP thread is still stuck somewhere that doesn't check the flag. Then the handler calls `_exit(124)`.
+On a busy box two process CPU-seconds go by in well under a tenth of a second. That `_exit` takes the whole server
+down, not one request.
 
-Since last week ePHPm runs ZTS PHP, where the question is whether the handler can find its globals at all. Every
-"global" lives in a per-thread slot handed out by TSRM. A thread gets a slot when it registers with `ts_resource(0)`,
-which ePHPm does on the first PHP request a blocking thread runs, and a tokio worker that only accepts sockets never
+Since last week ePHPm runs ZTS PHP. There the question is whether the handler can find its globals at all. Every
+"global" lives in a per-thread slot handed out by TSRM. A thread gets a slot when it registers with `ts_resource(0)`.
+ePHPm does that on the first PHP request a blocking thread runs. A tokio worker that only accepts sockets never
 registers. PHP 8.2 and earlier went looking for that slot anyway. PHP 8.3 added a `tsrm_is_managed_thread()` check to
-both handlers: the deferred signal handler forwards to the original disposition, and the timeout handler prints
+both handlers. The deferred signal handler forwards to the original disposition. The timeout handler prints
 "zend_timeout_handler() called in a thread not managed by PHP" to stderr and returns. So on a current ZTS build the
 symptom is a timeout that silently never happens, not a crash.
 
 And on Linux, PHP 8.3+ turns on per-thread execution timers for ZTS builds by default
-(`--enable-zend-max-execution-timers`): a POSIX timer per thread, aimed at that thread with `SIGRTMIN`, so the kernel
-isn't picking a thread at all. The ZTS libphp I switched to last week has them; static-php-cli passes the flag
-explicitly as well. So the `SIGPROF` problem is real for NTS builds, for ZTS builds older than 8.3 or built without
-those timers, and for platforms that don't have them. It is not a problem for the build ePHPm runs today, which matters
-for the second half of the fix.
+(`--enable-zend-max-execution-timers`). That's a POSIX timer per thread, aimed at that thread with `SIGRTMIN`. The
+kernel isn't picking a thread at all. The ZTS libphp I switched to last week has them. static-php-cli passes the flag
+explicitly as well. So the `SIGPROF` problem is real for three cases:
+
+- NTS builds
+- ZTS builds older than 8.3 or built without those timers
+- platforms that don't have them
+
+It is not a problem for the build ePHPm runs today. That matters for the second half of the fix.
 
 ### The fix, part one: do the global stuff while you're alone
 
-The first rule I took from this: anything that touches process-global state (signal dispositions, timers, `atexit`,
-locale) has to happen before there's a second thread. So PHP init moved out of the async world entirely. `main` is
-synchronous again, and the tokio runtime is built only after PHP is up:
+Here's the first rule I took from this. Anything that touches process-global state (signal dispositions, timers,
+`atexit`, locale) has to happen before there's a second thread. So PHP init moved out of the async world entirely.
+`main` is synchronous again. The tokio runtime is built only after PHP is up:
 
 ```rust
 /// PHP must be initialized BEFORE the tokio runtime is created. PHP's
@@ -189,23 +194,22 @@ fn run_serve_sync(command: Option<Commands>) -> anyhow::Result<ExitCode> {
 }
 ```
 
-The comment overstates it. With `max_execution_time` at 0, init installs the handler and leaves the timer alone; I'd
-lumped init together with the first script that sets a limit. The ordering rule it enforces is still right: signal
+The comment overstates it. With `max_execution_time` at 0, init installs the handler and leaves the timer alone. I'd
+lumped init together with the first script that sets a limit. The ordering rule it enforces is still right. Signal
 dispositions, the locale and the rest of PHP's process state get set up while nothing else is running.
-(`finalize_for_http()` actually just closes out the embed's initial request; the timer is dealt with by the linker
-trick below.)
+(`finalize_for_http()` just closes out the embed's initial request. The linker trick below deals with the timer.)
 
-That fixes init. It isn't enough on its own, because init isn't the only time PHP touches the timer, so the same change
-also took the timer away from PHP entirely.
+That fixes init. It isn't enough on its own, because init isn't the only time PHP touches the timer. So the same
+change also took the timer away from PHP entirely.
 
 ### The fix, part two: take the timer away from PHP
 
-Every `php_request_startup()` calls `zend_set_timeout()` again, and a script's `set_time_limit()` does too, so on a
+Every `php_request_startup()` calls `zend_set_timeout()` again. A script's `set_time_limit()` does too. So on a
 `SIGPROF` build the timer can be re-armed from a worker thread long after `main` was alone.
 
 ePHPm links `libphp.a` statically, which means the linker gets a say. GNU ld's `--wrap=symbol` rewrites every
-undefined reference to `symbol` into `__wrap_symbol`, so if the binary provides `__wrap_zend_set_timeout`, PHP's own
-calls go there instead. That has to go in the *binary* crate's `build.rs`, because `rustc-link-arg` from a library crate
+undefined reference to `symbol` into `__wrap_symbol`. If the binary provides `__wrap_zend_set_timeout`, PHP's own
+calls go there instead. That has to go in the *binary* crate's `build.rs`. `rustc-link-arg` from a library crate
 doesn't reach the final link (trimmed):
 
 ```rust
@@ -246,44 +250,43 @@ void __wrap_zend_set_timeout(long seconds, int reset_signals)
 void __wrap_zend_unset_timeout(void) { }
 ```
 
-The original definitions are still in the archive under their own names; `__real_zend_set_timeout` is how you'd reach
-one if you wanted to, and nothing does.
+The original definitions are still in the archive under their own names. `__real_zend_set_timeout` is how you'd reach
+one if you wanted to. Nothing does.
 
 ### What that costs
 
 Being honest about the trade, because it's not free:
 
-- **`max_execution_time` is not enforced by PHP anymore.** A runaway script is bounded by ePHPm's HTTP request timeout
-  instead, which returns a 504 to the client. The PHP thread itself keeps running until the script finishes. That's
+- **`max_execution_time` is not enforced by PHP anymore.** ePHPm's HTTP request timeout bounds a runaway script
+  instead. It returns a 504 to the client. The PHP thread itself keeps running until the script finishes. That's
   worse than php-fpm. PHP 8.3+ can use per-thread execution timers instead (`--enable-zend-max-execution-timers`,
-  POSIX timers aimed at the owning thread via `SIGRTMIN`), and it turns them on by default for ZTS builds on Linux, so
-  the ZTS libphp I switched to last week already has them. The wrap above still covers the NTS build, but on the ZTS
-  build it is now throwing away a timer that was already thread-safe; letting PHP keep it is the real fix and it's on
-  the list.
+  POSIX timers aimed at the owning thread via `SIGRTMIN`). It turns them on by default for ZTS builds on Linux. So the
+  ZTS libphp I switched to last week already has them. The wrap above still covers the NTS build. On the ZTS build it
+  is now throwing away a timer that was already thread-safe. Letting PHP keep it is the real fix and it's on the list.
 - **`pcntl_signal()` doesn't do anything useful.** I'm fine with this for a web server. FrankenPHP has had to work
-  around the same problem (it blocks the pcntl-style signals on all of Go's threads and only lets its CLI mode see
-  them).
+  around the same problem. It blocks the pcntl-style signals on all of Go's threads and only lets its CLI mode see
+  them.
 - **`--wrap` is a GNU ld feature.** macOS's linker doesn't have it, so the macOS build will need a different answer.
 
 ### Why nobody warns you
 
 The embed SAPI has very few serious users. Most of PHP's process-level assumptions are documented implicitly by
-php-fpm's architecture: one process, one request at a time, so a process-directed signal can only ever land on the PHP
-thread. The moment you put PHP in a process that has its own threads, those assumptions don't hold, and nothing in
-the API tells you which functions carry process-wide side effects. You find out from a crash, or from a timeout that
-makes no sense.
+php-fpm's architecture. One process handles one request at a time, so a process-directed signal can only ever land on
+the PHP thread. Those assumptions stop holding the moment you put PHP in a process that has its own threads. Nothing
+in the API tells you which functions carry process-wide side effects. You find out from a crash, or from a timeout
+that makes no sense.
 
-The broader lesson, which I've now written on a sticky note: when you embed a C runtime in your process, you inherit
-all of its global side effects. Signal handlers, timers, `atexit` hooks, `setlocale`, environment reads, thread-locals
-it expects someone to initialize. The runtime doesn't know it's not alone anymore. Do its global init while your process
-is still single-threaded, then go through what it does per-request and decide which of those global effects you're
-willing to let it keep.
+Here's the broader lesson, which I've now written on a sticky note. When you embed a C runtime in your process, you
+inherit all of its global side effects. Signal handlers, timers, `atexit` hooks, `setlocale`, environment reads,
+thread-locals it expects someone to initialize. The runtime doesn't know it's not alone anymore. Do its global init
+while your process is still single-threaded. Then go through what it does per-request. Decide which of those global
+effects you're willing to let it keep.
 
 ### How I ran the repro
 
 Ubuntu under WSL2 on a Ryzen 9 5950X, gcc 15.2, `gcc -O2 -pthread -o sigprof sigprof.c && ./sigprof`. The full file is
-55 lines including the printing; the excerpt above is the part that matters. Exact counts will differ from run to
-run and machine to machine. The point is the distribution, not the numbers.
+55 lines including the printing. The excerpt above is the part that matters. Exact counts will differ from run to run
+and machine to machine. The point is the distribution, not the numbers.
 
 ### Links
 

@@ -233,10 +233,10 @@
     <img class="" src="/img/2022/03/proxmox-tasks-upid-wait-go-anatomy.svg" alt="Diagram breaking a Proxmox UPID string into node, pid, pstart, starttime, type, id and user">
   </a>
     
-    <p>If you start automating <a href="https://www.proxmox.com/en/">Proxmox VE</a> through the API, the first thing that trips you up is
-that almost nothing you ask it to do is finished when the HTTP call returns. Start a VM, clone a template, download an
-ISO to storage, delete a disk&hellip; the response is a single string that looks like a typo and the actual work is happening
-in a worker process on the node. If your next call depends on that work being done you have to go find out when it&rsquo;s done.</p>
+    <p>If you start automating <a href="https://www.proxmox.com/en/">Proxmox VE</a> through the API, one thing trips you up first.
+Almost nothing you ask it to do is finished when the HTTP call returns. Start a VM, clone a template, download an ISO
+to storage, delete a disk&hellip; the response is a single string that looks like a typo. The actual work is happening in a
+worker process on the node. If your next call depends on that work being done, you have to go find out when it&rsquo;s done.</p>
   </div>
   <footer>
     <a href="/blog/2022/03/proxmox-tasks-upid-wait-go/" class="button big">Read More</a>
@@ -297,8 +297,8 @@ in a worker process on the node. If your next call depends on that work being do
     
     <p>Part of a hobby of mine is running a home lab and using on <a href="https://www.proxmox.com/en/">Proxmox VE</a> to do the virtualization.
 Since I work in the space I&rsquo;m slowly trying to build tooling around Proxmox that will let me use the home lab full time for work.
-Usually my work involves building Kubernetes management tooling, you can imagine waiting for public cloud APIs all day
-can take away hours of your day at cost to your employer for both your time and the compute resources.</p>
+Usually my work involves building Kubernetes management tooling. You can imagine waiting for public cloud APIs all day
+can take away hours of your day. That&rsquo;s at cost to your employer for both your time and the compute resources.</p>
   </div>
   <footer>
     <a href="/blog/2022/02/recreating-proxmox-ve-xtermjs-in-go/" class="button big">Read More</a>

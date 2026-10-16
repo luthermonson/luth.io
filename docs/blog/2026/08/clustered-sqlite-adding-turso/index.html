@@ -10,14 +10,14 @@
     gtag('config', 'G-MSTSKGFWTX');
 </script><meta charset="utf-8">
 <title>Clustered SQLite in ePHPm, Part 2: Adding Turso - Luther Monson</title>
-<meta name="description" content="Deciding a beta database engine is ready by testing it instead of reading its version number, and replacing both rusqlite and sqld with Turso in ePHPm v0.7.0.">
+<meta name="description" content="How I decided a beta database engine was ready by testing it instead of reading its version number. ePHPm v0.7.0 replaces both rusqlite and sqld with Turso.">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
 <meta name="twitter:card" content="summary_large_image"><meta name="twitter:site" content="@luthermonson">
 
 <meta property="og:site_name" content="Luther Monson">
 <meta property="og:title" content="Clustered SQLite in ePHPm, Part 2: Adding Turso">
-<meta property="og:description" content="Deciding a beta database engine is ready by testing it instead of reading its version number, and replacing both rusqlite and sqld with Turso in ePHPm v0.7.0.">
+<meta property="og:description" content="How I decided a beta database engine was ready by testing it instead of reading its version number. ePHPm v0.7.0 replaces both rusqlite and sqld with Turso.">
 <meta property="og:type" content="article">
 <meta property="og:url" content="https://luth.io/blog/2026/08/clustered-sqlite-adding-turso/">
     <meta property="og:image" content="https://luth.io/img/2026/08/clustered-sqlite-adding-turso-four-lanes.svg">
@@ -215,7 +215,7 @@
       <h2><a href="/blog/2026/08/clustered-sqlite-adding-turso/">Clustered SQLite in ePHPm, Part 2: Adding Turso</a></h2>
     
     
-      <p>Deciding a beta database engine is ready by testing it instead of reading its version number, and replacing both rusqlite and sqld with Turso in ePHPm v0.7.0.</p>
+      <p>How I decided a beta database engine was ready by testing it instead of reading its version number. ePHPm v0.7.0 replaces both rusqlite and sqld with Turso.</p>
     
   </div>
   <div class="meta">
@@ -272,26 +272,31 @@
       </div>
       <div class="content">
         
-        <p><a href="/blog/2026/08/clustered-sqlite-sqld-sidecar/">Part 1</a> ended with ePHPm running two SQLite engines: rusqlite in-process
-for a single node, and an embedded sqld child process for a cluster. The sidecar fell off a cliff past four concurrent
-writers and the best fix I could ship was a semaphore set to 1. This post is about replacing both engines with one, and
-about how I decided that engine was ready.</p>
+        <p><a href="/blog/2026/08/clustered-sqlite-sqld-sidecar/">Part 1</a> ended with ePHPm running two SQLite engines. rusqlite ran
+in-process for a single node, and an embedded sqld child process ran for a cluster. The sidecar fell off a cliff past
+four concurrent writers. The best fix I could ship was a semaphore set to 1. This post is about replacing both engines
+with one, and about how I decided that engine was ready.</p>
 <ul>
 <li><a href="/blog/2026/08/clustered-sqlite-sqld-sidecar/">Part 1: Replication by sidecar with sqld</a></li>
 <li>Part 2: Adding Turso (this post)</li>
 <li><a href="/blog/2026/09/clustered-sqlite-cdc-cluster-channel/">Part 3: CDC over the cluster channel</a></li>
 </ul>
 <h3 id="the-thesis">The thesis</h3>
-<p><a href="https://github.com/tursodatabase/turso">Turso Database</a> is a rewrite of SQLite in Rust, MIT licensed, file-format
-compatible, with MVCC for concurrent writers and change data capture built into the engine. Read that list again from the
-perspective of Part 1. An in-process engine means no child process and no Hrana hop. MVCC means writers don&rsquo;t queue up
-behind one lock. Built-in CDC means the engine itself can tell me what changed, so ePHPm&rsquo;s existing cluster layer can ship
-it. One engine for both modes, and clustered SQLite with zero child processes.</p>
-<p>I wrote that down as a roadmap page on 2026-07-10 (<a href="https://github.com/ephpm/ephpm/pull/166">#166</a>). At the time Turso was
-on its v0.7.0-pre line and labeled beta. I&rsquo;m comfortable running a mature beta. The engine is MIT, the sync protocol is
-open, it has a real user base, and it holds to SQLite&rsquo;s file format. What I&rsquo;m not comfortable with is a label deciding for
-me in either direction. &ldquo;Beta&rdquo; doesn&rsquo;t tell you whether it&rsquo;s safe for your workload, and neither does &ldquo;1.0&rdquo;. So the roadmap
-set five gates:</p>
+<p><a href="https://github.com/tursodatabase/turso">Turso Database</a> is a rewrite of SQLite in Rust:</p>
+<ul>
+<li>MIT licensed</li>
+<li>file-format compatible</li>
+<li>MVCC for concurrent writers</li>
+<li>change data capture built into the engine</li>
+</ul>
+<p>Read that list again from the perspective of Part 1. An in-process engine means no child process and no Hrana hop.
+MVCC means writers don&rsquo;t queue up behind one lock. Built-in CDC means the engine itself can tell me what changed, so
+ePHPm&rsquo;s existing cluster layer can ship it. One engine for both modes, and clustered SQLite with zero child processes.</p>
+<p>I wrote that down as a roadmap page on 2026-07-10 (<a href="https://github.com/ephpm/ephpm/pull/166">#166</a>). At the time Turso
+was on its v0.7.0-pre line and labeled beta. I&rsquo;m comfortable running a mature beta. The engine is MIT and the sync
+protocol is open. It has a real user base, and it holds to SQLite&rsquo;s file format. What I&rsquo;m not comfortable with is a
+label deciding for me in either direction. &ldquo;Beta&rdquo; doesn&rsquo;t tell you whether it&rsquo;s safe for your workload, and neither
+does &ldquo;1.0&rdquo;. So the roadmap set five gates:</p>
 <ol>
 <li>Upstream GA</li>
 <li>Performance at parity or better on my matrix, tails included</li>
@@ -304,11 +309,12 @@ set five gates:</p>
 <p>The first PR (<a href="https://github.com/ephpm/ephpm/pull/183">#183</a>) added exactly one setting:</p>
 <div class="highlight"><pre tabindex="0" class="chroma"><code class="language-toml" data-lang="toml"><span class="line"><span class="cl"><span class="p">[</span><span class="nx">db</span><span class="p">.</span><span class="nx">sqlite</span><span class="p">]</span>
 </span></span><span class="line"><span class="cl"><span class="nx">engine</span> <span class="p">=</span> <span class="s2">&#34;turso&#34;</span>   <span class="c"># default &#34;sqlite&#34;</span>
-</span></span></code></pre></div><p>Single node only, a warning at startup that it&rsquo;s experimental, and clustered plus Turso was a hard startup error. Unknown
-values are also a startup error rather than a quiet fallback to the default. If you typo the engine name you should find
-out at boot, not after a week of writing data into the engine you didn&rsquo;t pick.</p>
-<p>litewire got a Turso backend (<a href="https://github.com/ephpm/litewire/pull/9">litewire#9</a>) behind the same <code>Backend</code> trait the
-other engines use, so the gate measurements could run at that seam: same SQL, same harness, back to back, on WSL2.</p>
+</span></span></code></pre></div><p>It was single node only, with a warning at startup that it&rsquo;s experimental. Clustered plus Turso was a hard startup
+error. Unknown values are also a startup error rather than a quiet fallback to the default. If you typo the engine
+name, you should find out at boot. You shouldn&rsquo;t find out after a week of writing data into the engine you didn&rsquo;t
+pick.</p>
+<p>litewire got a Turso backend (<a href="https://github.com/ephpm/litewire/pull/9">litewire#9</a>) behind the same <code>Backend</code> trait
+the other engines use. So the gate measurements could run at that seam: same SQL, same harness, back to back, on WSL2.</p>
 <table>
   <thead>
       <tr>
@@ -340,40 +346,50 @@ other engines use, so the gate measurements could run at that seam: same SQL, sa
       </tr>
   </tbody>
 </table>
-<p>Before anybody quotes the 28x on point SELECT: most of that gap is litewire&rsquo;s rusqlite backend paying a <code>spawn_blocking</code>
-round trip (about 80 µs on that host) that the async-native Turso backend doesn&rsquo;t pay. It&rsquo;s a real cost ePHPm was paying,
-but it&rsquo;s not &ldquo;Turso reads 28x faster than SQLite.&rdquo; The INSERT gap and the concurrent writers number are the engine. Eight
-writers, 2,000 rows, zero busy errors on either side, and MVCC did about 4x the throughput.</p>
-<p>Gate 3 was a round trip with 500 rows of hostile data (<code>i64::MIN</code>/<code>MAX</code>, floats near ±1e308, NULLs in every column, CJK and
-combining characters, BLOBs, a UNIQUE index), written by one engine and read by the other in both directions, checksums
-compared. Both matched. Gate 4 got a smoke test: <code>kill -9</code> mid-write ten times, ten clean recoveries. That is a smoke test
-and not the soak the gate asks for, and the gate stayed open.</p>
+<p><img src="/img/2026/08/clustered-sqlite-adding-turso-micro.svg" alt="Grouped bar charts comparing litewire’s rusqlite and Turso backends: Turso has lower p50 latency on point SELECT (2.9 vs 81.2 µs), autocommit INSERT (17.3 vs 138.5 µs) and a 10-query page (30.2 vs 840.1 µs) on a log scale, and higher throughput with 8 concurrent writers (14,451 vs 3,609 inserts/s)"></p>
+<p>Before anybody quotes the 28x on point SELECT: most of that gap is litewire&rsquo;s rusqlite backend paying a
+<code>spawn_blocking</code> round trip. That&rsquo;s about 80 µs on that host, and the async-native Turso backend doesn&rsquo;t pay it. It&rsquo;s
+a real cost ePHPm was paying, but it&rsquo;s not &ldquo;Turso reads 28x faster than SQLite.&rdquo; The INSERT gap and the concurrent
+writers number are the engine. That run was eight writers and 2,000 rows, with zero busy errors on either side. MVCC
+did about 4x the throughput.</p>
+<p>Gate 3 was a round trip with 500 rows of hostile data. One engine wrote it and the other read it, in both directions,
+and the checksums were compared. The data had:</p>
+<ul>
+<li><code>i64::MIN</code>/<code>MAX</code></li>
+<li>floats near ±1e308</li>
+<li>NULLs in every column</li>
+<li>CJK and combining characters</li>
+<li>BLOBs</li>
+<li>a UNIQUE index</li>
+</ul>
+<p>Both matched. Gate 4 got a smoke test: <code>kill -9</code> mid-write ten times, ten clean recoveries. That is a smoke test and
+not the soak the gate asks for. The gate stayed open.</p>
 <h3 id="benchmark-the-defaults-before-you-benchmark-the-engines">Benchmark the defaults before you benchmark the engines</h3>
-<p>The first run of that matrix made Turso look terrible on writes: an autocommit INSERT p50 of 1,815 µs, and 351 inserts/s
-for the eight writers. That&rsquo;s 41x slower than the number in the table above.</p>
-<p>The cause was in the Turso source, not my harness. Turso&rsquo;s default sync mode is <code>FULL</code>. litewire&rsquo;s rusqlite backend had
-always set <code>synchronous=NORMAL</code> per session, so I was comparing an engine that fsyncs every commit to one that doesn&rsquo;t.
-The Turso backend now sets <code>PRAGMA synchronous = NORMAL</code> per session, the same as the rusqlite one. If you are about to
-compare Turso to a tuned SQLite, check this first. Otherwise you are benchmarking two durability settings and calling it an
-engine comparison.</p>
+<p>The first run of that matrix made Turso look terrible on writes. An autocommit INSERT p50 was 1,815 µs, and the eight
+writers did 351 inserts/s. That&rsquo;s 41x slower than the number in the table above.</p>
+<p>The cause was in the Turso source, not my harness. Turso&rsquo;s default sync mode is <code>FULL</code>. litewire&rsquo;s rusqlite backend
+had always set <code>synchronous=NORMAL</code> per session. So I was comparing an engine that fsyncs every commit to one that
+doesn&rsquo;t. The Turso backend now sets <code>PRAGMA synchronous = NORMAL</code> per session, the same as the rusqlite one. If you
+are about to compare Turso to a tuned SQLite, check this first. Otherwise you are benchmarking two durability settings
+and calling it an engine comparison.</p>
 <h3 id="gate-5-the-failures-werent-tursos">Gate 5: the failures weren&rsquo;t Turso&rsquo;s</h3>
 <p>Gate 5 (<a href="https://github.com/ephpm/ephpm/pull/188">#188</a>) installed WordPress and Laravel on both engines through
 <code>pdo_mysql</code>, with rusqlite as the control. As pinned, it failed. Neither app installed on <em>either</em> engine. Running the
-control first is what made that easy to read: all nine blockers were in litewire&rsquo;s MySQL frontend and SQL translation
-layer, and they fired before any engine code ran. With a local litewire patch for those nine, both apps went green on both
-engines, and Turso matched the control on all 20 matrix rows.</p>
+control first is what made that easy to read. All nine blockers were in litewire&rsquo;s MySQL frontend and SQL translation
+layer, and they fired before any engine code ran. With a local litewire patch for those nine, both apps went green on
+both engines. Turso matched the control on all 20 matrix rows.</p>
 <p>The one Turso-specific thing it found was a real bug. Selecting from <code>pragma_table_info()</code> left the connection in a
 phantom transaction state. Later writes reported success and were never durable. WordPress &ldquo;installed&rdquo; into a 4 KB
 database with an empty WAL. Turso already had this as
-<a href="https://github.com/tursodatabase/turso/issues/7466">issue #7466</a>, so I traced it into the VDBE, found that virtual table
-cursors weren&rsquo;t closed before transaction finalization, and sent the fix upstream as
-<a href="https://github.com/tursodatabase/turso/pull/7855">turso#7855</a>. It was merged the next day.</p>
-<p>That&rsquo;s what I mean by a mature beta. The failures in my integration were mostly mine, the one engine bug was already
-reported upstream, and a fix from an outside contributor went from PR to merged in about a day. That tells me more about
+<a href="https://github.com/tursodatabase/turso/issues/7466">issue #7466</a>. I traced it into the VDBE and found that virtual table
+cursors weren&rsquo;t closed before transaction finalization. I sent the fix upstream as
+<a href="https://github.com/tursodatabase/turso/pull/7855">turso#7855</a>, and it was merged the next day.</p>
+<p>That&rsquo;s what I mean by a mature beta. The failures in my integration were mostly mine. The one engine bug was already
+reported upstream. A fix from an outside contributor went from PR to merged in about a day. That tells me more about
 whether I can depend on a project than the word &ldquo;beta&rdquo; does.</p>
 <h3 id="the-benchmark-that-made-the-case">The benchmark that made the case</h3>
-<p>For v0.6.0 I measured four lanes with the same fixtures, one machine, one session, <code>--cpus 1</code> per node, 100% 2xx checked
-on every cell (<a href="https://github.com/ephpm/ephpm/pull/216">#216</a>, release numbers in the
+<p>For v0.6.0 I measured four lanes with the same fixtures on one machine in one session. Each node got <code>--cpus 1</code>, and
+every cell was checked for 100% 2xx (<a href="https://github.com/ephpm/ephpm/pull/216">#216</a>, release numbers in the
 <a href="https://ephpm.dev/benchmarking/results/">benchmark results</a>):</p>
 <ul>
 <li><strong>A</strong>: rusqlite, single node</li>
@@ -428,13 +444,13 @@ on every cell (<a href="https://github.com/ephpm/ephpm/pull/216">#216</a>, relea
       </tr>
   </tbody>
 </table>
-<p>Reads are the 10-SELECT <code>db.php</code> fixture, writes are one INSERT per request. The zero for lane C is not a rounding error.
-That cell completed nothing in both 20 second reps.</p>
+<p>Reads are the 10-SELECT <code>db.php</code> fixture. Writes are one INSERT per request. The zero for lane C is not a rounding
+error. That cell completed nothing in both 20 second reps.</p>
 <p>Three things I take from this:</p>
 <ul>
-<li><strong>Single node is a wash on writes and a win on read tails.</strong> Writes are even (rusqlite has a slightly better c=16 p99,
-within this harness&rsquo;s run-to-run spread). Reads are 15% more throughput at c=1 (371 vs 322 RPS in
-the release tables) and a much steadier c=16 tail.</li>
+<li><strong>Single node is a wash on writes and a win on read tails.</strong> Writes are even. rusqlite has a slightly better c=16 p99,
+within this harness&rsquo;s run-to-run spread. Reads get 15% more throughput at c=1 (371 vs 322 RPS in the release tables)
+and a much steadier c=16 tail.</li>
 <li><strong>Clustered is not close.</strong> CDC replication does 2.5x the read throughput of the sidecar with a third of the p99.</li>
 <li><strong>Cost of replication against each engine&rsquo;s own baseline.</strong> At c=16 writes, clustered Turso keeps 78% of single-node
 Turso&rsquo;s throughput while shipping every change to a replica. Clustered rusqlite keeps 0%.</li>
@@ -442,12 +458,12 @@ Turso&rsquo;s throughput while shipping every change to a replica. Clustered rus
 <p>These are A/B numbers on one box under podman on WSL2. The absolute RPS won&rsquo;t transfer to your hardware. The deltas are
 the claim.</p>
 <h3 id="v070-turso-only">v0.7.0: Turso only</h3>
-<p>Gate 2 was substantially evidenced and gate 3 was met. Gate 5 had the matrix, plus a live WordPress and WooCommerce demo
-on Turso, but not yet an automated suite in CI. Gates 1 and 4 were open. Then a pen-test of multi-site mode turned up
-<a href="https://github.com/ephpm/ephpm/issues/274">#274</a>: <code>ATTACH DATABASE</code> from one tenant&rsquo;s PHP could write a PHP file into
-another tenant&rsquo;s docroot and execute it. Cross-tenant RCE, through the rusqlite path. That changed the trade-off. Keeping
-an engine with that primitive around was more dangerous than adopting a beta engine that had passed my gates, so the
-remaining gates now gate the GA label, not the ship.</p>
+<p>Gate 2 was substantially evidenced and gate 3 was met. Gate 5 had the matrix, plus a live WordPress and WooCommerce
+demo on Turso. It didn&rsquo;t have an automated suite in CI yet. Gates 1 and 4 were open. Then a pen-test of multi-site
+mode turned up <a href="https://github.com/ephpm/ephpm/issues/274">#274</a>. <code>ATTACH DATABASE</code> from one tenant&rsquo;s PHP could write
+a PHP file into another tenant&rsquo;s docroot and execute it. Cross-tenant RCE, through the rusqlite path. That changed the
+trade-off. Keeping an engine with that primitive around was more dangerous than adopting a beta engine that had passed
+my gates. So the remaining gates now gate the GA label, not the ship.</p>
 <p><a href="https://github.com/ephpm/ephpm/pull/278">#278</a> is the demolition, +681 / -2075 lines. Gone:</p>
 <ul>
 <li>the <code>ephpm-sqld</code> crate, the <code>include_bytes!</code> embedding, the extract/chmod/spawn/health/SIGTERM state machine</li>
@@ -455,27 +471,31 @@ remaining gates now gate the GA label, not the ship.</p>
 <li>the rusqlite single-node path in ePHPm (litewire still ships the backend for its other users)</li>
 <li><code>[db.sqlite.sqld]</code> and <code>write_permits</code>, kept as parsed-but-warned shims so an old config tells you what happened</li>
 </ul>
-<p>The <code>engine</code> knob now defaults to <code>&quot;turso&quot;</code> and that&rsquo;s the only accepted value. <code>engine = &quot;sqlite&quot;</code> is a hard startup
-error that points you at the v0.7.0 upgrade notes. The reasoning in the PR: a silent fallback would have run Turso on
-data the user thought was rusqlite, which is exactly the failure mode the error exists to prevent. A silent swap would
-be worse than an error you have to read once.</p>
-<p>The migration got verified rather than assumed. Standard SQLite files made by the <code>sqlite3</code> CLI 3.46.1, in WAL and in
-rollback journal mode, with non-ASCII text, BLOBs and an index, opened through ePHPm&rsquo;s actual Turso path with
-<code>PRAGMA integrity_check</code> returning <code>ok</code> and every row intact. So a cleanly shut down 0.6.x database upgrades in place, with
-no dump and reload. There are two caveats in the docs: a database with a hot, uncheckpointed <code>-wal</code> left by a crash wasn&rsquo;t
-verified to replay (shut down cleanly before you upgrade), and non-UTF-8 TEXT may not round trip because Turso surfaces
-TEXT as a Rust <code>String</code>.</p>
-<p>v0.7.0 was tagged on 2026-08-18 with <code>turso_core</code> 0.7.2, which includes the #7855 fix. Clustering now always goes through
-the CDC path, and the cluster channel binds whenever SQLite resolves to clustered mode. Windows doesn&rsquo;t have a sqld
-blocker anymore, but clustered on Windows is untested so the docs don&rsquo;t claim it.</p>
+<p>The <code>engine</code> knob now defaults to <code>&quot;turso&quot;</code>, and that&rsquo;s the only accepted value. <code>engine = &quot;sqlite&quot;</code> is a hard startup
+error that points you at the v0.7.0 upgrade notes. The PR explains why. A silent fallback would have run Turso on data
+the user thought was rusqlite. That&rsquo;s exactly the failure mode the error exists to prevent. A silent swap would be
+worse than an error you have to read once.</p>
+<p>The migration got verified rather than assumed. The test used standard SQLite files made by the <code>sqlite3</code> CLI 3.46.1,
+in WAL and in rollback journal mode. They had non-ASCII text, BLOBs and an index. They were opened through ePHPm&rsquo;s
+actual Turso path. <code>PRAGMA integrity_check</code> returned <code>ok</code>, and every row was intact. So a cleanly shut down 0.6.x
+database upgrades in place, with no dump and reload. There are two caveats in the docs:</p>
+<ul>
+<li>A database with a hot, uncheckpointed <code>-wal</code> left by a crash wasn&rsquo;t verified to replay. Shut down cleanly before you
+upgrade.</li>
+<li>Non-UTF-8 TEXT may not round trip, because Turso surfaces TEXT as a Rust <code>String</code>.</li>
+</ul>
+<p>v0.7.0 was tagged on 2026-08-18 with <code>turso_core</code> 0.7.2, which includes the #7855 fix. Clustering now always goes
+through the CDC path. The cluster channel binds whenever SQLite resolves to clustered mode. Windows doesn&rsquo;t have a
+sqld blocker anymore. But clustered on Windows is untested, so the docs don&rsquo;t claim it.</p>
 <h3 id="whats-next">What&rsquo;s next</h3>
 <p>The engine is in-process now and so is replication, so one binary is actually one process. But the replication path in
-v0.7.0 has only been exercised the friendly way: bring up nodes, write, watch rows show up. Nobody has killed the primary
-in a test with data on it yet. That, plus the cluster channel that carries the CDC stream, is
-<a href="/blog/2026/09/clustered-sqlite-cdc-cluster-channel/">Part 3</a>.</p>
+v0.7.0 has only been exercised the friendly way: bring up nodes, write, watch rows show up. Nobody has killed the
+primary in a test with data on it yet. That&rsquo;s in <a href="/blog/2026/09/clustered-sqlite-cdc-cluster-channel/">Part 3</a>, along
+with the cluster channel that carries the CDC stream.</p>
 <h3 id="links">Links</h3>
 <ul>
-<li><a href="https://github.com/tursodatabase/turso">Turso Database</a> and <a href="https://github.com/tursodatabase/turso/pull/7855">turso#7855</a></li>
+<li><a href="https://github.com/tursodatabase/turso">Turso Database</a> and
+<a href="https://github.com/tursodatabase/turso/pull/7855">turso#7855</a></li>
 <li><a href="https://github.com/ephpm/ephpm/pull/166">#166 roadmap: Turso engine</a></li>
 <li><a href="https://github.com/ephpm/ephpm/pull/183">#183 Phase 1 engine knob and gate evidence</a></li>
 <li><a href="https://github.com/ephpm/ephpm/pull/188">#188 gate 5: WordPress and Laravel on Turso</a></li>

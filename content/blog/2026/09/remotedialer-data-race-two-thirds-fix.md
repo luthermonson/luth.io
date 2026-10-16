@@ -13,17 +13,18 @@ draft: false
 ---
 
 [shipmates](/blog/2026/08/shipmates-persona-based-ai-coding-crews/) ships connect to Fleet Command over outbound
-websocket tunnels so nothing on the ship side has to be exposed to the internet. I didn't write that tunnel layer,
-I used [rancher/remotedialer](https://github.com/rancher/remotedialer), the same library Rancher uses to reach
+websocket tunnels. That way nothing on the ship side has to be exposed to the internet. I didn't write that tunnel
+layer. I used [rancher/remotedialer](https://github.com/rancher/remotedialer), the same library Rancher uses to reach
 downstream cluster agents. I spent years around that code at Rancher, so it was the obvious pick. What I didn't
 expect was for my CI's race job to find two data races in it in the first week.
 
 ### CI was the only place -race could run
 
-`-race` needs cgo, which needs a C compiler. Neither machine I was writing shipmates on had one at the time, and every
-agent session that tried `go test -race` hit `cgo: C compiler "gcc" not found`. So when I moved shipmates CI onto my
-[ephemerd](/blog/2026/08/ephemerd-one-daemon-every-os/) runners in [PR #26](https://github.com/luthermonson/shipmates/pull/26),
-I added a dedicated race job on linux-x64. Today it runs in a `golang:1.26.6-bookworm` container, which ships gcc:
+`-race` needs cgo, which needs a C compiler. Neither machine I was writing shipmates on had one at the time. Every
+agent session that tried `go test -race` hit `cgo: C compiler "gcc" not found`. So I moved shipmates CI onto my
+[ephemerd](/blog/2026/08/ephemerd-one-daemon-every-os/) runners in [PR #26](https://github.com/luthermonson/shipmates/pull/26).
+At the same time I added a dedicated race job on linux-x64. Today it runs in a `golang:1.26.6-bookworm` container,
+which ships gcc:
 
 ```yaml
 race:
@@ -38,8 +39,8 @@ race:
       run: go test -race -count=1 ./...
 ```
 
-The shipmates fleet tests open and tear down real tunnels quickly, and that job went red inside remotedialer
-v0.6.1, not in my code.
+The shipmates fleet tests open and tear down real tunnels quickly. That job went red inside remotedialer v0.6.1, not in
+my code.
 
 ### Race 1: Session.pingCancel
 
@@ -73,27 +74,31 @@ func (s *Session) stopPings() {
 ```
 
 `Session` already embeds a `sync.RWMutex` and the neighboring fields use it. `pingCancel` just never got put under
-it. In production the write and the read are separated by the lifetime of a session, so you only see it when sessions
-open and close quickly: a reconnect storm, or a test suite driving real tunnels.
+it. In production the write and the read are separated by the lifetime of a session. You only see it when sessions
+open and close quickly, like in a reconnect storm or a test suite driving real tunnels.
 
 ### Race 2: connection.err
 
-`doTunnelClose` does an unguarded check-then-set on `c.err`, and it can be called at the same time from a pipe copy
-noticing its peer failed, from `Session.Close` tearing everything down, and from `serveMessage` on a protocol error.
+`doTunnelClose` does an unguarded check-then-set on `c.err`. Three callers can hit it at the same time:
+
+- a pipe copy noticing its peer failed
+- `Session.Close` tearing everything down
+- `serveMessage` on a protocol error
+
 `connection` had no synchronization at all. The kicker is that remotedialer's own `TestExceedBuffer` trips this
-race as soon as you turn the detector on. Upstream's Makefile `test` target didn't use `-race`, which is how both of
+race as soon as you turn the detector on. Upstream's Makefile `test` target didn't use `-race`. That's how both of
 these survived.
 
 ### Fork, reproduce first, then fix
 
-I forked it and did the red/green thing on purpose so the detector's report against unfixed code would be on record:
+I forked it and did the red/green thing on purpose. I wanted the detector's report against unfixed code on record:
 
 - [`cf2b335`](https://github.com/luthermonson/remotedialer/commit/cf2b3354b0f9f6eac268f08f81fe8c980a9e6aa0): add
   `TestSessionCloseDoesNotRaceServeStartup` and turn on `-race` in `make test`. This commit fails.
 - [`7e65b78`](https://github.com/luthermonson/remotedialer/commit/7e65b789c52478b79589c8f1e8f63d0b3943dfac): lock
   `pingCancel`, add an `errMu` around `connection.err`. Green.
 
-The test does what `ConnectToProxyWithDialer` does, in a loop, so the detector gets repeated shots at the startup
+The test does what `ConnectToProxyWithDialer` does in a loop. That gives the detector repeated shots at the startup
 window:
 
 ```go
@@ -120,9 +125,9 @@ func TestSessionCloseDoesNotRaceServeStartup(t *testing.T) {
 }
 ```
 
-The fix for `stopPings` grabs the cancel func under the lock and releases the lock *before* cancelling, so
-`pingWait.Wait()` is never awaited while holding a lock the ping goroutine's callees (`getSessionKeys` via
-`sendSyncConnections`) also take. Nil-ing the field makes a second `Close` a no-op.
+The fix for `stopPings` grabs the cancel func under the lock and releases the lock *before* cancelling. The ping
+goroutine's callees also take that lock (`getSessionKeys` via `sendSyncConnections`). So `pingWait.Wait()` is never
+awaited while holding it. Nil-ing the field makes a second `Close` a no-op.
 
 Then in shipmates, [`84e0d0e`](https://github.com/luthermonson/shipmates/commit/84e0d0e) pointed the dependency at the
 fork:
@@ -131,14 +136,15 @@ fork:
 replace github.com/rancher/remotedialer => github.com/luthermonson/remotedialer v0.2.6-0.20260805014355-7e65b789c524
 ```
 
-v0.6.1 and upstream main had zero Go-file difference at that point, so the fork was exactly the pinned version plus
+v0.6.1 and upstream main had zero Go-file difference at that point. So the fork was exactly the pinned version plus
 these fixes. Upstream PR to follow, drop the replace when it lands. Done, I thought.
 
 ### The third commit
 
-About three hours after those two commits, and a minute after pinning shipmates to them, I opened
-[rancher/remotedialer#265](https://github.com/rancher/remotedialer/pull/265) with them, and within the hour the new test caught one more thing on a machine with more hardware threads
-(it failed about half of runs at 32). Look at what `7e65b78` did to `startPings`:
+About three hours after those two commits, I opened
+[rancher/remotedialer#265](https://github.com/rancher/remotedialer/pull/265) with them. That was a minute after pinning
+shipmates to them. Within the hour the new test caught one more thing on a machine with more hardware threads. It
+failed about half of runs at 32. Look at what `7e65b78` did to `startPings`:
 
 ```go
 s.Lock()
@@ -147,10 +153,11 @@ s.Unlock()
 s.pingWait.Add(1)   // still outside the lock
 ```
 
-`stopPings` now reads `pingCancel` under the lock, sees it non-nil, and goes on to `pingWait.Wait()`. But nothing says
+`stopPings` now reads `pingCancel` under the lock, sees it non-nil and goes on to `pingWait.Wait()`. But nothing says
 the `Add(1)` has happened yet. A `Close` that lands between the `Unlock` and the `Add` calls `Wait` concurrently with
-`Add` on a zero counter. The race detector flags it, and at runtime it can panic with
-`sync: WaitGroup misuse: Add called concurrently with Wait`, in exactly the reconnect storm the PR was supposed to fix.
+`Add` on a zero counter. The race detector flags it. At runtime it can panic with
+`sync: WaitGroup misuse: Add called concurrently with Wait`. That happens in exactly the reconnect storm the PR was
+supposed to fix.
 
 The third commit, `00b5151`, moves the `Add` inside the same critical section:
 
@@ -163,22 +170,22 @@ s.Unlock()
 
 Now observing a non-nil cancel implies the `Add` happened-before the `Wait`. I pushed it to the PR branch and moved on.
 
-What I didn't do was bump the `replace`. shipmates stayed pinned to `7e65b789`, the *middle* commit of the PR, stamped
-about three hours before the PR even existed. I had the `connection.err` fix in full and two-thirds of the
-`pingCancel` fix. It took until a review pass right before the v0.5.0 release, thirteen days later, to notice, and
+What I didn't do was bump the `replace`. shipmates stayed pinned to `7e65b789`, the *middle* commit of the PR. Its
+stamp was about three hours before the PR even existed. I had the `connection.err` fix in full and two-thirds of the
+`pingCancel` fix. I didn't notice until a review pass right before the v0.5.0 release, thirteen days later.
 [PR #50](https://github.com/luthermonson/shipmates/pull/50) bumped it to the PR head:
 
 ```
 replace github.com/rancher/remotedialer => github.com/luthermonson/remotedialer v0.2.6-0.20260805053951-00b5151280f8
 ```
 
-and I checked that the resolved module actually carries `Add(1)` between `s.Lock()` and `s.Unlock()` rather than
-trusting the pseudo-version.
+Then I checked that the resolved module carries `Add(1)` between `s.Lock()` and `s.Unlock()`. I didn't trust the
+pseudo-version.
 
 ### Seeing all three states
 
-To write this up I ran the same reproducer against all three versions straight out of the module cache: upstream
-v0.6.1, the middle commit, and the PR head, 20 iterations each with `-race` on Linux.
+To write this up I ran the same reproducer against all three versions straight out of the module cache. That's
+upstream v0.6.1, the middle commit and the PR head. Each got 20 iterations with `-race` on Linux.
 
 v0.6.1 is race 1, exactly as described. Write in `startPings`, read in `stopPings`:
 
@@ -200,7 +207,7 @@ Previous read at 0x00c000416de0 by goroutine 1614:
     testing.go:1712: race detected during execution of test
 ```
 
-The middle commit, the one I'd been shipping, still fails, but now it's the WaitGroup. `session.go:231` is
+The middle commit, the one I'd been shipping, still fails. But now it's the WaitGroup. `session.go:231` is
 `s.pingWait.Wait()` and `session.go:179` is the `s.pingWait.Add(1)` that sat outside the lock:
 
 ```
@@ -232,7 +239,7 @@ ok  	github.com/rancher/remotedialer	1.218s
 ```
 
 The lesson I keep relearning: a `replace` to a pseudo-version is a pin to a commit, not to "my fix". If the branch
-moves after you pin, you're on whatever you pinned, and nothing will tell you.
+moves after you pin, you're on whatever you pinned. Nothing will tell you.
 
 ### Side effect: go install stops working
 
@@ -246,10 +253,10 @@ go: github.com/luthermonson/shipmates@v0.5.0 (in github.com/luthermonson/shipmat
 	it to be interpreted differently than if it were the main module.
 ```
 
-Release binaries are fine, goreleaser builds in the module so it honors the replace. So the README and the v0.5.0
-release notes ([`f2c4bdf`](https://github.com/luthermonson/shipmates/commit/f2c4bdf)) say to grab a release binary or
-`git clone` and `go build` until #265 merges. As of this writing the upstream PR is open, has no reviews, and is
-showing merge conflicts, so the fork stays for now.
+Release binaries are fine. goreleaser builds in the module, so it honors the replace. The README and the v0.5.0
+release notes ([`f2c4bdf`](https://github.com/luthermonson/shipmates/commit/f2c4bdf)) say to grab a release binary. The
+other option is `git clone` and `go build` until #265 merges. As of this writing the upstream PR is open with no
+reviews. It's showing merge conflicts, so the fork stays for now.
 
 ### Takeaways
 
@@ -261,10 +268,15 @@ showing merge conflicts, so the fork stays for now.
 
 ### How I measured
 
-The race output above came from copying each version of the module out of my Go module cache (`rancher/remotedialer@v0.6.1`,
-`luthermonson/remotedialer@...-7e65b789c524` and `@...-00b5151280f8`), dropping the fork's `session_close_race_test.go`
-into the two that didn't have it, and running `go test -race -count=20 -run TestSessionCloseDoesNotRaceServeStartup .`
-in each under WSL2 (Go 1.26.0, gcc 15.2, 32 hardware threads on a Ryzen 9 5950X). Paths in the output are trimmed.
+The race output above came from three steps:
+
+- copy each version of the module out of my Go module cache (`rancher/remotedialer@v0.6.1`,
+  `luthermonson/remotedialer@...-7e65b789c524` and `@...-00b5151280f8`)
+- drop the fork's `session_close_race_test.go` into the two that didn't have it
+- run `go test -race -count=20 -run TestSessionCloseDoesNotRaceServeStartup .` in each
+
+That ran under WSL2 with Go 1.26.0, gcc 15.2 and 32 hardware threads on a Ryzen 9 5950X. Paths in the output are
+trimmed.
 
 ### Links
 

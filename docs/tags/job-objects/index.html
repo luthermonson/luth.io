@@ -218,7 +218,7 @@
       <h2><a href="/blog/2026/09/process-containment-job-objects-process-groups-cgroups/">Cross-Platform Process Containment: Job Objects vs Process Groups vs cgroups</a></h2>
     
     
-      <p>How shipmates bounds and tears down agent process trees on Windows, Linux and macOS, why I deleted 1,206 lines of cgroup code, and the grandchild that escaped the memory cap everywhere except my dev box.</p>
+      <p>How shipmates bounds and tears down agent process trees on Windows, Linux and macOS. It also covers why I deleted 1,206 lines of cgroup code and the grandchild that escaped the memory cap everywhere except my dev box.</p>
     
   </div>
   <div class="meta">
@@ -233,8 +233,8 @@
     <img class="" src="/img/2026/09/process-containment-job-objects-process-groups-cgroups-cover.svg" alt="Agent process tree with the scope of kill and measurement on Windows, Linux and macOS">
   </a>
     
-    <p>Every turn a <a href="/blog/2026/08/shipmates-persona-based-ai-coding-crews/">shipmates</a> crew member takes is a subprocess:
-<code>claude</code> or the <code>codex</code> app-server, which in turn spawns shells, <code>go test</code>, <code>npm</code>, whatever the task calls for. Two
+    <p>Every turn a <a href="/blog/2026/08/shipmates-persona-based-ai-coding-crews/">shipmates</a> crew member takes is a subprocess. It&rsquo;s
+<code>claude</code> or the <code>codex</code> app-server. That in turn spawns shells, <code>go test</code>, <code>npm</code> or whatever the task calls for. Two
 things have to be true about that tree. When a turn ends or gets killed, the <em>whole</em> tree goes, including the
 grandchildren. And if somebody sets a memory or CPU budget, the budget applies to the whole tree, not just the
 process I happened to start.</p>

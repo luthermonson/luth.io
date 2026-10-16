@@ -274,31 +274,32 @@
         
         <p>Part of a hobby of mine is running a home lab and using on <a href="https://www.proxmox.com/en/">Proxmox VE</a> to do the virtualization.
 Since I work in the space I&rsquo;m slowly trying to build tooling around Proxmox that will let me use the home lab full time for work.
-Usually my work involves building Kubernetes management tooling, you can imagine waiting for public cloud APIs all day
-can take away hours of your day at cost to your employer for both your time and the compute resources.</p>
+Usually my work involves building Kubernetes management tooling. You can imagine waiting for public cloud APIs all day
+can take away hours of your day. That&rsquo;s at cost to your employer for both your time and the compute resources.</p>
 <p>There&rsquo;s also a real problem today with cloud offerings of Windows. Booting a Windows 2019 or 2022 server in Amazon EC2 today
 can take up to 4 or 5 minutes before you are given access to the Administrator password. If you build up and tear down constantly
 the waiting can get tiring. Proxmox just runs qemu under the hood and with snapshotting I Just get everything working
 and take a quick snapshot. When I want to roll back a cluster for another provision run I can simply shut down the VMs and
-restore from backup and up and running again in no time.</p>
+restore from backup. I&rsquo;m up and running again in no time.</p>
 <h3 id="go-proxmox">go-proxmox</h3>
 <p>To accomplish everything I&rsquo;ll need I first started out building a Go <a href="https://github.com/luthermonson/go-proxmox">client for Proxmox</a>.
 Go is my primary language and gives everything will need to start from a well-built with proper Go types for all responses. This
 is in comparison to the most popular Go client which uses <code>map[string]interface{}</code> for everything. Beyond mapping REST endpoints
-to structs the real power of the client will be to build in functions to more easily automate things PVE gives you access too
-but forces you to the host cli as they haven&rsquo;t built the tooling into their API/UI yet.</p>
-<p>A great example of this is loading a VM from a <a href="https://en.wikipedia.org/wiki/Qcow">qcow disk image</a>. A wonderfully simple
-image format and the way we want to use them for work is to specify a local network storage URL and tell Proxmox to pull
-and build a VM from the image, all things possible in qemu directly on the host as per <a href="https://www.phillipsj.net/posts/proxmox-linux-templates/">Jamie Phillips&rsquo; blog post</a>
-which outlines the idea.</p>
+to structs, the real power of the client will be to build in functions to more easily automate things. PVE gives you access to
+these but forces you to the host cli, as they haven&rsquo;t built the tooling into their API/UI yet.</p>
+<p>A great example of this is loading a VM from a <a href="https://en.wikipedia.org/wiki/Qcow">qcow disk image</a>. It&rsquo;s a wonderfully
+simple image format. The way we want to use them for work is to specify a local network storage URL and tell Proxmox to pull
+and build a VM from the image. All of that is possible in qemu directly on the host, as per
+<a href="https://www.phillipsj.net/posts/proxmox-linux-templates/">Jamie Phillips&rsquo; blog post</a> which outlines the idea.</p>
 <h3 id="xtermjs-backwards-engineering">xterm.js Backwards Engineering</h3>
-<p>I wanted to recreate what the UI was doing to get on to a host, it&rsquo;s native and works right out of the box with no extra
+<p>I wanted to recreate what the UI was doing to get on to a host. It&rsquo;s native and works right out of the box with no extra
 additions to Proxmox after installation. Back tracing how some of this worked I went down some rabbit holes looking into
-implementing a VNC client in Go. There are some people who have built have some packages <a href="https://github.com/mitchellh/go-vnc">1</a>
-<a href="https://github.com/amitbet/vnc2video">2</a> but all I was trying to do is get on the Debian host and make some calls and this
+implementing a VNC client in Go. There are some people who have built some packages <a href="https://github.com/mitchellh/go-vnc">1</a>
+<a href="https://github.com/amitbet/vnc2video">2</a>. But all I was trying to do is get on the Debian host and make some calls, and this
 was overkill.</p>
-<p>I traced back the xterm.js functionality built into the UI and landed on exactly what I needed&hellip; for reference <a href="https://gist.github.com/luthermonson/9d2196725ecc1402ac01c7e835ab4f0f">here</a> is the
-entire `main.js file I found used and I&rsquo;ll walk you through how I backwards engineered it in Go and got exactly what I wanted.</p>
+<p>I traced back the xterm.js functionality built into the UI and landed on exactly what I needed. For reference,
+<a href="https://gist.github.com/luthermonson/9d2196725ecc1402ac01c7e835ab4f0f">here</a> is the entire `main.js file I found used.
+I&rsquo;ll walk you through how I backwards engineered it in Go and got exactly what I wanted.</p>
 <h4 id="step-1-websocket-connection">Step 1, websocket connection</h4>
 <p>Grab <a href="https://github.com/gorilla/websocket">gorilla/websocket</a> and negotiate the connection. While reading the implementation
 you notice quite quickly they reuse xterm.js for <a href="https://gist.github.com/luthermonson/9d2196725ecc1402ac01c7e835ab4f0f#file-main-js-L118-L134">nodes, qemu and lxc</a>.
@@ -307,25 +308,26 @@ this with qemu but the host nodes and lxc work right out of the box. I opened th
 engineering the UI requests.</p>
 <p><img src="/img/2022/02/vncwebsocket.png" alt="termproxy and vnc websocket"></p>
 <p>You can see in the bottom right there is a call to termproxy then immediately to vncwebsocket. This was easily confirmed
-by the <a href="https://pve.proxmox.com/pve-docs/api-viewer/index.html">Proxmox API docs</a> and validated my suspicious that this
-code could be reusable as node (<a href="https://pve.proxmox.com/pve-docs/api-viewer/index.html#/nodes/%7Bnode%7D/termproxy">termproxy</a>
+by the <a href="https://pve.proxmox.com/pve-docs/api-viewer/index.html">Proxmox API docs</a>. It validated my suspicion that this
+code could be reusable, as node (<a href="https://pve.proxmox.com/pve-docs/api-viewer/index.html#/nodes/%7Bnode%7D/termproxy">termproxy</a>
 <a href="https://pve.proxmox.com/pve-docs/api-viewer/index.html#/nodes/%7Bnode%7D/vncwebsocket">vncwebsocket</a>), qemu
 (<a href="https://pve.proxmox.com/pve-docs/api-viewer/index.html#/nodes/%7Bnode%7D/qemu/%7Bvmid%7D/termproxy">termproxy</a>
 <a href="https://pve.proxmox.com/pve-docs/api-viewer/index.html#/nodes/%7Bnode%7D/qemu/%7Bvmid%7D/vncwebsocket">vncwebsocket</a>) and lxc
 (<a href="https://pve.proxmox.com/pve-docs/api-viewer/index.html#/nodes/%7Bnode%7D/lxc/%7Bvmid%7D/termproxy">termproxy</a>
 <a href="https://pve.proxmox.com/pve-docs/api-viewer/index.html#/nodes/%7Bnode%7D/lxc/%7Bvmid%7D/vncwebsocket">vncwebsocket</a>) all had
-duplicate API endpoints. Reading the main.js you can quite clearly see every where <code>socket.send()</code> is called and decode
+duplicate API endpoints. Reading the main.js you can quite clearly see every where <code>socket.send()</code> is called. You can decode
 the <a href="https://gist.github.com/luthermonson/9d2196725ecc1402ac01c7e835ab4f0f#file-main-js-L192">login</a>, <a href="https://gist.github.com/luthermonson/9d2196725ecc1402ac01c7e835ab4f0f#file-main-js-L181">ping</a>
-and <a href="https://gist.github.com/luthermonson/9d2196725ecc1402ac01c7e835ab4f0f#file-main-js-L176">data send</a> along with what looks
-like a <a href="https://gist.github.com/luthermonson/9d2196725ecc1402ac01c7e835ab4f0f#file-main-js-L110">resizer</a> if you make your browser bigger or smaller.  This was perfect, everything I needed to get into the host and send shell commands!</p>
+and <a href="https://gist.github.com/luthermonson/9d2196725ecc1402ac01c7e835ab4f0f#file-main-js-L176">data send</a>, along with what looks
+like a <a href="https://gist.github.com/luthermonson/9d2196725ecc1402ac01c7e835ab4f0f#file-main-js-L110">resizer</a> if you make your
+browser bigger or smaller. This was perfect. It was everything I needed to get into the host and send shell commands!</p>
 <h4 id="step-2-recreating-the-login">Step 2, recreating the login</h4>
-<p>Recreating the login was trivial, call to the <code>termproxy</code> endpoint results in a response which includes a user and a ticket.
-Call to the web socket with those in the <a href="https://github.com/luthermonson/go-proxmox/blob/994cc14849773c502735682ac83d76c5d1308a54/nodes.go#L33-L34">get params</a>
-and the web socket boots right up, just make sure you pass the <a href="https://github.com/luthermonson/go-proxmox/blob/994cc14849773c502735682ac83d76c5d1308a54/proxmox.go#L209">PVEAuthCookie</a>
+<p>Recreating the login was trivial. A call to the <code>termproxy</code> endpoint results in a response which includes a user and a
+ticket. Call the web socket with those in the <a href="https://github.com/luthermonson/go-proxmox/blob/994cc14849773c502735682ac83d76c5d1308a54/nodes.go#L33-L34">get params</a>
+and the web socket boots right up. Just make sure you pass the <a href="https://github.com/luthermonson/go-proxmox/blob/994cc14849773c502735682ac83d76c5d1308a54/proxmox.go#L209">PVEAuthCookie</a>
 header in the dialer.</p>
-<p>The socket only sends/receives binary messages so the next step is to start negotiating the web socket to elevate your permissions
-to send commands to the host. The first thing the Javascript did was <a href="https://gist.github.com/luthermonson/9d2196725ecc1402ac01c7e835ab4f0f#file-main-js-L192">login</a>
-again via the socket and in Go after connected simply do</p>
+<p>The socket only sends/receives binary messages. The next step is to start negotiating the web socket to elevate your
+permissions to send commands to the host. The first thing the Javascript did was <a href="https://gist.github.com/luthermonson/9d2196725ecc1402ac01c7e835ab4f0f#file-main-js-L192">login</a>
+again via the socket. In Go after connecting simply do</p>
 <div class="highlight"><pre tabindex="0" class="chroma"><code class="language-go" data-lang="go"><span class="line"><span class="cl"><span class="nx">err</span><span class="w"> </span><span class="o">:=</span><span class="w"> </span><span class="nx">conn</span><span class="p">.</span><span class="nf">WriteMessage</span><span class="p">(</span><span class="nx">websocket</span><span class="p">.</span><span class="nx">BinaryMessage</span><span class="p">,</span><span class="w"> </span><span class="p">[]</span><span class="nb">byte</span><span class="p">(</span><span class="nx">vnc</span><span class="p">.</span><span class="nx">User</span><span class="o">+</span><span class="s">&#34;:&#34;</span><span class="o">+</span><span class="nx">vnc</span><span class="p">.</span><span class="nx">Ticket</span><span class="o">+</span><span class="s">&#34;\n&#34;</span><span class="p">))</span><span class="w">
 </span></span></span><span class="line"><span class="cl"><span class="k">if</span><span class="w"> </span><span class="nx">err</span><span class="w"> </span><span class="o">!=</span><span class="w"> </span><span class="kc">nil</span><span class="w"> </span><span class="p">{</span><span class="w">
 </span></span></span><span class="line"><span class="cl"><span class="w">	</span><span class="c1">// handle</span><span class="w">
@@ -345,17 +347,17 @@ and you&rsquo;re not leaking resources.</p>
 <div class="highlight"><pre tabindex="0" class="chroma"><code class="language-go" data-lang="go"><span class="line"><span class="cl"><span class="kd">func</span><span class="w"> </span><span class="p">(</span><span class="nx">c</span><span class="w"> </span><span class="o">*</span><span class="nx">Client</span><span class="p">)</span><span class="w"> </span><span class="nf">VNCWebSocket</span><span class="p">(</span><span class="nx">path</span><span class="w"> </span><span class="kt">string</span><span class="p">,</span><span class="w"> </span><span class="nx">vnc</span><span class="w"> </span><span class="o">*</span><span class="nx">VNC</span><span class="p">)</span><span class="w"> </span><span class="p">(</span><span class="kd">chan</span><span class="w"> </span><span class="kt">string</span><span class="p">,</span><span class="w"> </span><span class="kd">chan</span><span class="w"> </span><span class="kt">string</span><span class="p">,</span><span class="w"> </span><span class="kd">chan</span><span class="w"> </span><span class="kt">error</span><span class="p">,</span><span class="w"> </span><span class="kd">func</span><span class="p">()</span><span class="w"> </span><span class="kt">error</span><span class="p">,</span><span class="w"> </span><span class="kt">error</span><span class="p">)</span><span class="w">
 </span></span></span></code></pre></div><p>And this will let the client manage things the consumer doesn&rsquo;t care about like the keep alive. To interface with the web
 socket you will need to spin off two go routines, one for reading the web socket and one for writing to the web socket.
-You can&rsquo;t concurrently write to a web socket or you&rsquo;ll panic so try and make sure you&rsquo;re keeping a clean <code>select</code> statement,
-or you will accidentally write to the socket twice.</p>
-<p>To perform the keep alive it was quite obvious they&rsquo;re sending a binary <code>2</code> for a <a href="https://gist.github.com/luthermonson/9d2196725ecc1402ac01c7e835ab4f0f#file-main-js-L181">ping</a>
-so to recreate that I simply added a case for a 30s ticker.</p>
+You can&rsquo;t concurrently write to a web socket or you&rsquo;ll panic. So try and make sure you&rsquo;re keeping a clean <code>select</code>
+statement, or you will accidentally write to the socket twice.</p>
+<p>To perform the keep alive it was quite obvious they&rsquo;re sending a binary <code>2</code> for a <a href="https://gist.github.com/luthermonson/9d2196725ecc1402ac01c7e835ab4f0f#file-main-js-L181">ping</a>.
+To recreate that I simply added a case for a 30s ticker.</p>
 <div class="highlight"><pre tabindex="0" class="chroma"><code class="language-go" data-lang="go"><span class="line"><span class="cl"><span class="k">case</span><span class="w"> </span><span class="o">&lt;-</span><span class="nx">ticker</span><span class="p">.</span><span class="nx">C</span><span class="p">:</span><span class="w">
 </span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="nx">c</span><span class="p">.</span><span class="nx">log</span><span class="p">.</span><span class="nf">Debugf</span><span class="p">(</span><span class="s">&#34;sending wss keep alive&#34;</span><span class="p">)</span><span class="w">
 </span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="nx">err</span><span class="w"> </span><span class="o">:=</span><span class="w"> </span><span class="nx">conn</span><span class="p">.</span><span class="nf">WriteMessage</span><span class="p">(</span><span class="nx">websocket</span><span class="p">.</span><span class="nx">BinaryMessage</span><span class="p">,</span><span class="w"> </span><span class="p">[]</span><span class="nb">byte</span><span class="p">(</span><span class="s">&#34;2&#34;</span><span class="p">));</span><span class="w"> </span><span class="nx">err</span><span class="w"> </span><span class="o">!=</span><span class="w"> </span><span class="kc">nil</span><span class="w"> </span><span class="p">{</span><span class="w">
 </span></span></span><span class="line"><span class="cl"><span class="w">        </span><span class="nx">errors</span><span class="w"> </span><span class="o">&lt;-</span><span class="w"> </span><span class="nx">err</span><span class="w">
 </span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="p">}</span><span class="w">
-</span></span></span></code></pre></div><p>You also want to close the socket when youre done so another case is a simple <code>CloseMessage</code> with an empty <code>[]byte{}</code> which will
-only happen when the closer is called by the client implementor.</p>
+</span></span></span></code></pre></div><p>You also want to close the socket when you&rsquo;re done. So another case is a simple <code>CloseMessage</code> with an empty <code>[]byte{}</code>,
+which will only happen when the closer is called by the client implementor.</p>
 <div class="highlight"><pre tabindex="0" class="chroma"><code class="language-go" data-lang="go"><span class="line"><span class="cl"><span class="k">case</span><span class="w"> </span><span class="o">&lt;-</span><span class="nx">done</span><span class="p">:</span><span class="w">
 </span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="nx">err</span><span class="w"> </span><span class="o">:=</span><span class="w"> </span><span class="nx">conn</span><span class="p">.</span><span class="nf">WriteMessage</span><span class="p">(</span><span class="nx">websocket</span><span class="p">.</span><span class="nx">CloseMessage</span><span class="p">,</span><span class="w"> </span><span class="p">[]</span><span class="kt">byte</span><span class="p">{});</span><span class="w"> </span><span class="nx">err</span><span class="w"> </span><span class="o">!=</span><span class="w"> </span><span class="kc">nil</span><span class="w"> </span><span class="p">{</span><span class="w">
 </span></span></span><span class="line"><span class="cl"><span class="w">        </span><span class="nx">errors</span><span class="w"> </span><span class="o">&lt;-</span><span class="w"> </span><span class="nx">err</span><span class="w">
@@ -363,8 +365,8 @@ only happen when the closer is called by the client implementor.</p>
 </span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="k">return</span><span class="w">
 </span></span></span></code></pre></div><p>To support terminal resizing I decided to add a height/width calculator and implement a watcher to notify the web socket
 in the event the user resizes the terminal. To get the terminal size I used <a href="https://github.com/buger/goterm">buger/goterm</a>.
-I simply captured the height/width when the func is called and pass it to a go routine to check every second and
-notify a channel if it changes and obeys the done channel closed by the closer.</p>
+I simply captured the height/width when the func is called and pass it to a go routine. It checks every second and
+notifies a channel if it changes. It also obeys the done channel closed by the closer.</p>
 <div class="highlight"><pre tabindex="0" class="chroma"><code class="language-go" data-lang="go"><span class="line"><span class="cl"><span class="kd">type</span><span class="w"> </span><span class="nx">size</span><span class="w"> </span><span class="kd">struct</span><span class="w"> </span><span class="p">{</span><span class="w">
 </span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="nx">height</span><span class="w"> </span><span class="kt">int</span><span class="w">
 </span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="nx">width</span><span class="w">  </span><span class="kt">int</span><span class="w">
@@ -403,7 +405,8 @@ notify a channel if it changes and obeys the done channel closed by the closer.<
 </span></span></span><span class="line"><span class="cl"><span class="w">        </span><span class="nx">errors</span><span class="w"> </span><span class="o">&lt;-</span><span class="w"> </span><span class="nx">err</span><span class="w">
 </span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="p">}</span><span class="w">
 </span></span></span></code></pre></div><p>Finally, all we need to do is send/receive messages on the channel. I wanted the implementor to call the <code>VNCWebSocket</code> func
-and send and receive strings. I added the channels and handled them by converting to a <code>[]byte</code> and sending the message format as specified in the <a href="https://gist.github.com/luthermonson/9d2196725ecc1402ac01c7e835ab4f0f#file-main-js-L176">xterm.js version</a></p>
+and send and receive strings. I added the channels and handled them by converting to a <code>[]byte</code>. Then I send the message
+format as specified in the <a href="https://gist.github.com/luthermonson/9d2196725ecc1402ac01c7e835ab4f0f#file-main-js-L176">xterm.js version</a>.</p>
 <div class="highlight"><pre tabindex="0" class="chroma"><code class="language-go" data-lang="go"><span class="line"><span class="cl"><span class="k">case</span><span class="w"> </span><span class="nx">msg</span><span class="w"> </span><span class="o">:=</span><span class="w"> </span><span class="o">&lt;-</span><span class="nx">send</span><span class="p">:</span><span class="w">
 </span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="nx">m</span><span class="w"> </span><span class="o">:=</span><span class="w"> </span><span class="p">[]</span><span class="nb">byte</span><span class="p">(</span><span class="nx">msg</span><span class="p">)</span><span class="w">
 </span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="nx">send</span><span class="w"> </span><span class="o">:=</span><span class="w"> </span><span class="nb">append</span><span class="p">([]</span><span class="nb">byte</span><span class="p">(</span><span class="nx">fmt</span><span class="p">.</span><span class="nf">Sprintf</span><span class="p">(</span><span class="s">&#34;0:%d:&#34;</span><span class="p">,</span><span class="w"> </span><span class="nb">len</span><span class="p">(</span><span class="nx">m</span><span class="p">))),</span><span class="w"> </span><span class="nx">m</span><span class="o">...</span><span class="p">)</span><span class="w">
@@ -465,11 +468,11 @@ and send and receive strings. I added the channels and handled them by convertin
 </span></span></span><span class="line"><span class="cl"><span class="nx">time</span><span class="p">.</span><span class="nf">Sleep</span><span class="p">(</span><span class="mi">10</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="nx">time</span><span class="p">.</span><span class="nx">Second</span><span class="p">)</span><span class="w">
 </span></span></span><span class="line"><span class="cl"><span class="nx">send</span><span class="w"> </span><span class="o">&lt;-</span><span class="w"> </span><span class="s">&#34;exit&#34;</span><span class="w">
 </span></span></span><span class="line"><span class="cl"><span class="nx">time</span><span class="p">.</span><span class="nf">Sleep</span><span class="p">(</span><span class="mi">5</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="nx">time</span><span class="p">.</span><span class="nx">Second</span><span class="p">)</span><span class="w">
-</span></span></span></code></pre></div><p>It ends up looking quite easy, just grab the <code>TermProxy</code> vnc response which includes the ticket, pass to <code>VNCWebSocket</code> and
-you get your string channels, error channel and a closer. Start a go routine to watch the receive and error channels and
-start sending messages to the send channel.</p>
+</span></span></span></code></pre></div><p>It ends up looking quite easy. Just grab the <code>TermProxy</code> vnc response which includes the ticket and pass it to
+<code>VNCWebSocket</code>. You get your string channels, error channel and a closer. Start a go routine to watch the receive and
+error channels and start sending messages to the send channel.</p>
 <h5 id="step-5-testing">Step 5, testing&hellip;</h5>
-<p>The output from my test looked like the following with all debug enabled and you can see you can interact with the host
+<p>The output from my test looked like the following with all debug enabled. You can see you can interact with the host
 with no restrictions right from Go.</p>
 <div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl"><span class="o">[</span>DEBUG<span class="o">]</span> <span class="o">[</span>WSS<span class="o">]</span> wss://192.168.1.87:8006/api2/json/nodes/i7/vncwebsocket?port<span class="o">=</span>5900<span class="p">&amp;</span><span class="nv">vncticket</span><span class="o">=</span>*****
 </span></span><span class="line"><span class="cl"><span class="o">[</span>DEBUG<span class="o">]</span> sending terminal size: <span class="m">55</span> x <span class="m">134</span>

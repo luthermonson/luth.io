@@ -218,7 +218,7 @@
       <h2><a href="/blog/2026/09/agent-shell-allowlist-bypassable/">Your Agent&#39;s Shell Allowlist Is Bypassable</a></h2>
     
     
-      <p>A permission gate for AI agents&#39; shell commands judged spellings instead of commands. The classes of bypass I found in shipmates&#39; own gate, and the one idea that fixes most of them.</p>
+      <p>A permission gate for AI agents&#39; shell commands judged spellings instead of commands. I found several classes of bypass in shipmates&#39; own gate, and one idea fixes most of them.</p>
     
   </div>
   <div class="meta">
@@ -233,11 +233,9 @@
     <img class="" src="/img/2026/09/agent-shell-allowlist-bypassable-cover.svg" alt="A shell command decomposed into the nested command lines the permission gate has to judge">
   </a>
     
-    <p>Every <a href="/blog/2026/08/shipmates-persona-based-ai-coding-crews/">shipmates</a> crew member runs shell commands, and before any
-of them runs it goes through a permission gate. The gate uses the same rule syntax as Claude Code settings,
-<code>Bash(git status)</code>, <code>Bash(rm *)</code>, <code>Write(**/.claude/settings.json)</code>, merged from several layers: a fleet-wide deny list
-pushed from Fleet Command, per-persona policy files, project settings, and the Brig, which compiles shipmates&rsquo; fifteen
-&ldquo;Ship&rsquo;s Articles&rdquo; into deny and ask rules. Deny beats ask, ask beats&hellip;</p>
+    <p>Every <a href="/blog/2026/08/shipmates-persona-based-ai-coding-crews/">shipmates</a> crew member runs shell commands. Before any of
+them runs, it goes through a permission gate. The gate uses the same rule syntax as Claude Code settings:
+<code>Bash(git status)</code>, <code>Bash(rm *)</code>, <code>Write(**/.claude/settings.json)</code>. The rules are merged from several layers:</p>
   </div>
   <footer>
     <a href="/blog/2026/09/agent-shell-allowlist-bypassable/" class="button big">Read More</a>
@@ -303,9 +301,9 @@ pushed from Fleet Command, per-persona policy files, project settings, and the B
   </a>
     
     <p>On August 16th a <code>server.test.exe</code> from <a href="/blog/2026/08/shipmates-persona-based-ai-coding-crews/">shipmates</a> climbed to
-roughly <strong>1 TB of commit charge</strong> on my Windows workstation. Windows Terminal, which was hosting several agent sessions
-in tabs, hard-faulted with <code>E_OUTOFMEMORY</code> and every one of those sessions died at the same moment. It wasn&rsquo;t the first
-time either. An earlier one hit about 236 GB through an infinite <code>filepath.Dir</code> loop.</p>
+roughly <strong>1 TB of commit charge</strong> on my Windows workstation. Windows Terminal was hosting several agent sessions in
+tabs. It hard-faulted with <code>E_OUTOFMEMORY</code>, and every one of those sessions died at the same moment. It wasn&rsquo;t the
+first time either. An earlier one hit about 236 GB through an infinite <code>filepath.Dir</code> loop.</p>
   </div>
   <footer>
     <a href="/blog/2026/09/memory-watchdog-for-go-test/" class="button big">Read More</a>

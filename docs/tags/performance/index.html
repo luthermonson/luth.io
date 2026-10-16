@@ -283,7 +283,7 @@ runtimes and compares them. Our fork with the ePHPm runner is <a href="https://g
       <h2><a href="/blog/2026/09/kata-containers-for-ci/">Kata Containers for CI: Boot Cost Isn&#39;t the Problem, File I/O Is</a></h2>
     
     
-      <p>Kata containers are safer for CI, but slower. Starting one takes 12x longer, which is fine, and reading small files is about 40x slower for the entire job, which isn&#39;t.</p>
+      <p>Kata containers are safer for CI, but slower. Starting one takes 12x longer, which is fine. Reading small files is about 40x slower for the entire job, which isn&#39;t.</p>
     
   </div>
   <div class="meta">
@@ -299,11 +299,11 @@ runtimes and compares them. Our fork with the ePHPm runner is <a href="https://g
   </a>
     
     <p>Of the three platforms <a href="/blog/2026/08/ephemerd-one-daemon-every-os/">ephemerd</a> runs jobs on, Linux has the weakest
-isolation. Windows jobs get a Hyper-V isolated container with its own kernel, macOS jobs get a whole VM, and a Linux job is
+isolation. Windows jobs get a Hyper-V isolated container with its own kernel. macOS jobs get a whole VM. A Linux job is
 an ordinary runc container sharing the host kernel. A kernel escape from a Linux job is a host compromise.
-<a href="https://katacontainers.io/">Kata Containers</a> fixes that by putting each container in a lightweight VM with its own kernel,
-and it plugs into containerd as just another runtime handler. So I added it in
-<a href="https://github.com/ephpm/ephemerd/pull/155">#155</a>, measured it, and left&hellip;</p>
+<a href="https://katacontainers.io/">Kata Containers</a> fixes that by putting each container in a lightweight VM with its own
+kernel. It plugs into containerd as just another runtime handler. So I added it in
+<a href="https://github.com/ephpm/ephemerd/pull/155">#155</a>, measured it, and left it off&hellip;</p>
   </div>
   <footer>
     <a href="/blog/2026/09/kata-containers-for-ci/" class="button big">Read More</a>
@@ -355,7 +355,7 @@ and it plugs into containerd as just another runtime handler. So I added it in
       <h2><a href="/blog/2026/08/hardening-rust-database-proxy/">Security and Performance Hardening of a Rust Database Proxy</a></h2>
     
     
-      <p>One week of hardening litewire: a memory bug in a dependency, a site that could open its neighbor&#39;s database, a security rule that lived only in a comment, and a needless 1 MB clear on every query.</p>
+      <p>What a week of hardening litewire turned up. A dependency had a memory bug, one site could open its neighbor&#39;s database, a security rule lived only in a comment and every query paid for a needless 1 MB clear.</p>
     
   </div>
   <div class="meta">
@@ -371,10 +371,8 @@ and it plugs into containerd as just another runtime handler. So I added it in
   </a>
     
     <p><a href="https://github.com/ephpm/litewire">litewire</a> is the piece of ePHPm that lets PHP apps talk MySQL to a SQLite file. I
-wrote about <a href="/blog/2026/07/sqlite-production-database-protocol-translation/">how it works</a> and about
-<a href="/blog/2026/08/faking-mysql-quirks-wordpress/">the MySQL quirks WordPress depends on</a>. This one is the less visible
-half of August: an audit pass on litewire, a multi-tenant mode that turned a database proxy into a security boundary,
-and a performance regression I shipped and then had to go find.</p>
+wrote about <a href="/blog/2026/07/sqlite-production-database-protocol-translation/">how it works</a> and about <a href="/blog/2026/08/faking-mysql-quirks-wordpress/">the MySQL quirks
+WordPress depends on</a>. This one is the less visible half of August:</p>
   </div>
   <footer>
     <a href="/blog/2026/08/hardening-rust-database-proxy/" class="button big">Read More</a>
@@ -426,13 +424,13 @@ and a performance regression I shipped and then had to go find.</p>
       <h2><a href="/blog/2026/08/rolling-your-own-kv-store/">Rolling Your Own KV Store Instead of Embedding Redis</a></h2>
     
     
-      <p>Why ePHPm has its own Redis-compatible cache built in instead of running Redis, a bug that hid in it for four months, and how it compares to real Redis on the same machine.</p>
+      <p>Why ePHPm has its own Redis-compatible cache built in instead of running Redis. It also covers a bug that hid in it for four months and how it compares to real Redis on the same machine.</p>
     
   </div>
   <div class="meta">
     <time datetime="2026-08-17 20:44:00 -0700 PDT">August 17, 2026</time>
     
-    <p>10-Minute Read</p>
+    <p>11-Minute Read</p>
   </div>
 </header>
 
@@ -443,9 +441,9 @@ and a performance regression I shipped and then had to go find.</p>
     
     <p>Every PHP deployment I&rsquo;ve run eventually grew a Redis. Sessions, the WordPress object cache, Laravel&rsquo;s cache and locks,
 rate limiting. <a href="https://github.com/ephpm/ephpm">ePHPm</a> is supposed to be one binary that replaces nginx + php-fpm +
-Redis, so it needed a cache in the box. I didn&rsquo;t want to write one. This post is why I did anyway, how it&rsquo;s built, the
-bug that sat in its eviction code from March until last month, and how it holds up against a stock Redis on the same
-machine with <code>redis-benchmark</code> doing the&hellip;</p>
+Redis, so it needed a cache in the box. I didn&rsquo;t want to write one. This post covers why I did anyway and how it&rsquo;s
+built. It also covers the bug that sat in its eviction code from March until last month. Then I compare it against a
+stock Redis on the same machine with&hellip;</p>
   </div>
   <footer>
     <a href="/blog/2026/08/rolling-your-own-kv-store/" class="button big">Read More</a>
@@ -497,7 +495,7 @@ machine with <code>redis-benchmark</code> doing the&hellip;</p>
       <h2><a href="/blog/2026/08/db-connection-pooling-smart-reset/">Database Connection Pooling with Smart Reset</a></h2>
     
     
-      <p>PHP opens a new MySQL connection on every request. ePHPm reuses them and cleans up only the ones that need it. How it works, two bugs it had, and how much load it takes off MySQL.</p>
+      <p>PHP opens a new MySQL connection on every request, but ePHPm reuses them and cleans up only the ones that need it. Here&#39;s how that works, two bugs it had and how much load it takes off MySQL.</p>
     
   </div>
   <div class="meta">
@@ -512,11 +510,11 @@ machine with <code>redis-benchmark</code> doing the&hellip;</p>
     <img class="" src="/img/2026/08/db-connection-pooling-smart-reset-cover.svg" alt="PHP request connecting to the ePHPm MySQL proxy, which lends it a pooled backend connection and resets it only if the session was dirtied">
   </a>
     
-    <p>PHP&rsquo;s share-nothing model is one of its best properties and it has one expensive side effect: a request can&rsquo;t keep a
-database connection for the next request. php-fpm gives you <code>PDO::ATTR_PERSISTENT</code> and <code>mysqli</code>&rsquo;s <code>p:</code> hosts, but
-those are per-worker-process, PDO&rsquo;s keep whatever session state the last request left behind (mysqli at least resets
-the session with <code>COM_CHANGE_USER</code> on reuse), and almost nobody turns them on. So in practice every PHP request does a
-TCP connect, a&hellip;</p>
+    <p>PHP&rsquo;s share-nothing model is one of its best properties. It has one expensive side effect: a request can&rsquo;t keep a
+database connection for the next request. php-fpm gives you <code>PDO::ATTR_PERSISTENT</code> and <code>mysqli</code>&rsquo;s <code>p:</code> hosts. But
+those are per-worker-process. PDO&rsquo;s keep whatever session state the last request left behind. mysqli at least resets
+the session with <code>COM_CHANGE_USER</code> on reuse. And almost nobody turns them on. So in practice every PHP request does a
+TCP connect, a MySQL&hellip;</p>
   </div>
   <footer>
     <a href="/blog/2026/08/db-connection-pooling-smart-reset/" class="button big">Read More</a>

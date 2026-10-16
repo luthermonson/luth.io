@@ -224,7 +224,7 @@
   <div class="meta">
     <time datetime="2026-10-12 21:10:00 -0700 PDT">October 12, 2026</time>
     
-    <p>11-Minute Read</p>
+    <p>12-Minute Read</p>
   </div>
 </header>
 
@@ -235,9 +235,9 @@
     
     <p>Persistent workers are the big performance win in modern PHP. You boot Laravel or Symfony once, keep the container
 in memory, and serve thousands of requests out of the same process. <a href="https://github.com/ephpm/ephpm">ePHPm</a> has had
-a worker mode for a while, and like most worker runtimes it had a quiet hole in it: you couldn&rsquo;t step debug a request
-with Xdebug. I wanted that fixed without patching Xdebug and without giving up the warm pool, and the answer ended up
-being to stop fighting the constraint and route around it.&hellip;</p>
+a worker mode for a while. Like most worker runtimes it had a quiet hole in it. You couldn&rsquo;t step debug a request with
+Xdebug. I wanted that fixed without patching Xdebug and without giving up the warm pool. The answer ended up being to
+stop fighting the constraint and route around it. The debug&hellip;</p>
   </div>
   <footer>
     <a href="/blog/2026/10/xdebug-worker-mode/" class="button big">Read More</a>
@@ -283,13 +283,13 @@ being to stop fighting the constraint and route around it.&hellip;</p>
       <h2><a href="/blog/2026/10/php-jit-use-after-free/">An Upstream PHP JIT Use-After-Free, and Why Our Default Flipped Twice</a></h2>
     
     
-      <p>ePHPm turned PHP&#39;s tracing JIT on by default, then off three days later when stock Laravel died after three requests. The bug was upstream; here is the bisect, the root cause and where the fix landed.</p>
+      <p>ePHPm turned PHP&#39;s tracing JIT on by default, then off three days later when stock Laravel died after three requests. The bug was upstream, and this is the bisect, the root cause and where the fix landed.</p>
     
   </div>
   <div class="meta">
     <time datetime="2026-10-01 20:10:00 -0700 PDT">October 1, 2026</time>
     
-    <p>9-Minute Read</p>
+    <p>10-Minute Read</p>
   </div>
 </header>
 
@@ -299,10 +299,10 @@ being to stop fighting the constraint and route around it.&hellip;</p>
   </a>
     
     <p>In August, <a href="https://github.com/ephpm/ephpm">ePHPm</a> turned PHP&rsquo;s tracing JIT on by default in single-site serve mode.
-Three days later it went back off, on every platform, and it&rsquo;s still off. The reason turned out to be a
-use-after-free in PHP&rsquo;s tracing JIT that has nothing to do with ePHPm: stock <code>php -S</code> with a stock Laravel skeleton
-dies on it in a couple of requests. The fix is now released upstream, so this seemed like the right time to write up
-how we got there, and what still has to happen before the&hellip;</p>
+Three days later it went back off on every platform, and it&rsquo;s still off. The reason turned out to be a use-after-free
+in PHP&rsquo;s tracing JIT that has nothing to do with ePHPm. Stock <code>php -S</code> with a stock Laravel skeleton dies on it in a
+couple of requests. The fix is now released upstream. So this seemed like the right time to write up how we got there,
+and what still has to happen before the default&hellip;</p>
   </div>
   <footer>
     <a href="/blog/2026/10/php-jit-use-after-free/" class="button big">Read More</a>
@@ -367,11 +367,11 @@ how we got there, and what still has to happen before the&hellip;</p>
     <img class="" src="/img/2026/09/os-exec-stdoutpipe-wait-footgun-cover.svg" alt="Timeline of a child process exiting, Wait closing the pipe, and the reader losing buffered frames">
   </a>
     
-    <p><a href="/blog/2026/08/shipmates-persona-based-ai-coding-crews/">shipmates</a> spends most of its life spawning <code>claude</code> (and <code>codex</code>)
-processes and reading newline-delimited JSON off their stdout. The last frame of a turn is the important one, a
-<code>result</code> frame with the cost, the model and the final text. Stderr matters too, because that&rsquo;s where Claude Code
-tells you <code>Invalid API key · Please run /login</code>. For a while I was throwing both away under load, and the cause is
-documented right there in the <code>os/exec</code> godoc. I fixed it in one package and then found the exact&hellip;</p>
+    <p><a href="/blog/2026/08/shipmates-persona-based-ai-coding-crews/">shipmates</a> spends most of its life spawning <code>claude</code> (and
+<code>codex</code>) processes and reading newline-delimited JSON off their stdout. The last frame of a turn is the important one.
+It&rsquo;s a <code>result</code> frame with the cost, the model and the final text. Stderr matters too, because that&rsquo;s where Claude Code
+tells you <code>Invalid API key · Please run /login</code>. For a while I was throwing both away under load. The cause is
+documented right there in the <code>os/exec</code> godoc. I fixed it in one package and then found the&hellip;</p>
   </div>
   <footer>
     <a href="/blog/2026/09/os-exec-stdoutpipe-wait-footgun/" class="button big">Read More</a>
@@ -415,7 +415,7 @@ documented right there in the <code>os/exec</code> godoc. I fixed it in one pack
       <h2><a href="/blog/2026/08/opcache-on-windows-two-silent-failures/">OPcache on Windows: Two Silent Failures</a></h2>
     
     
-      <p>An ASLR fatal that looked like a memory-size lottery, and Windows PHP 8.3 builds that never had an opcode cache, with the fix sitting unpicked for three weeks.</p>
+      <p>An ASLR fatal on Windows looked like a memory-size lottery. Separately, Windows PHP 8.3 builds never had an opcode cache, and the fix sat unpicked for three weeks.</p>
     
   </div>
   <div class="meta">
@@ -431,9 +431,9 @@ documented right there in the <code>os/exec</code> godoc. I fixed it in one pack
   </a>
     
     <p>Windows is the platform where <a href="https://github.com/ephpm/ephpm">ePHPm</a> gets the least traffic and the most surprises.
-Last week closed out two OPcache bugs that only exist there, and both were quiet in their own way. One killed the
-server at startup with nothing in our own logs. The other didn&rsquo;t kill anything: it just ran PHP 8.3 with no opcode
-cache at all, and for three weeks after a fixed SDK was published every check stayed green.</p>
+Last week closed out two OPcache bugs that only exist there. Both were quiet in their own way. One killed the server
+at startup with nothing in our own logs. The other didn&rsquo;t kill anything. It just ran PHP 8.3 with no opcode cache at
+all. For three weeks after a fixed SDK was published, every check stayed green.</p>
   </div>
   <footer>
     <a href="/blog/2026/08/opcache-on-windows-two-silent-failures/" class="button big">Read More</a>
@@ -481,7 +481,7 @@ cache at all, and for three weeks after a fixed SDK was published every check st
       <h2><a href="/blog/2026/08/requests-that-end-wrong/">Requests That End Wrong: A 200 That Was Really a Crash</a></h2>
     
     
-      <p>Three ePHPm bugs in how an embedded PHP request starts and ends: a bailout that returned 200, an empty $_POST, and a SIGTERM that corrupted the heap.</p>
+      <p>Three ePHPm bugs lived in how an embedded PHP request starts and ends. A bailout returned 200, $_POST came up empty and a SIGTERM corrupted the heap.</p>
     
   </div>
   <div class="meta">
@@ -496,9 +496,9 @@ cache at all, and for three weeks after a fixed SDK was published every check st
     <img class="" src="/img/2026/08/requests-that-end-wrong-cover.svg" alt="Diagram of a bare zend_bailout being absorbed by php_execute_script&#39;s own zend_try instead of reaching ePHPm&#39;s guard">
   </a>
     
-    <p>The scariest response a server can send isn&rsquo;t a 500. It&rsquo;s a 200 that should have been a 500. A crash is loud: the
-pod restarts, an alert fires, somebody looks. A truncated page with a success status code gets cached by your CDN,
-the health check calls the box healthy, and a client parses half a document as if it were the whole thing.</p>
+    <p>The scariest response a server can send isn&rsquo;t a 500. It&rsquo;s a 200 that should have been a 500. A crash is loud. The pod
+restarts, an alert fires, somebody looks. A truncated page with a success status code is quiet. Your CDN caches it and
+the health check calls the box healthy. A client parses half a document as if it were the whole thing.</p>
   </div>
   <footer>
     <a href="/blog/2026/08/requests-that-end-wrong/" class="button big">Read More</a>
@@ -561,10 +561,10 @@ the health check calls the box healthy, and a client parses half a document as i
     <img class="" src="/img/2026/08/windows-dynamic-disk-usb-wsl2-usbip-layout.svg" alt="GPT layout of the 1 TB drive with LDM metadata and a 930 GiB LDM data partition, and the two paths: the Windows storage stack refusing it and usbipd passing it to WSL2">
   </a>
     
-    <p>I pulled a 1 TB NVMe out of an old Windows box, dropped it in a USB enclosure, plugged it in, and Windows showed nothing.
-No drive letter, no &ldquo;initialize this disk&rdquo; prompt, nothing in Explorer. Disk Management listed it as <code>Invalid</code>, and the
-enclosure&rsquo;s booklet said to &ldquo;bring the disk online&rdquo;, which silently did nothing. The data was completely intact. Windows was
-refusing on <strong>policy</strong> grounds, not because anything was broken, and getting it back meant going around the&hellip;</p>
+    <p>I pulled a 1 TB NVMe out of an old Windows box, dropped it in a USB enclosure and plugged it in. Windows showed nothing.
+No drive letter, no &ldquo;initialize this disk&rdquo; prompt, nothing in Explorer. Disk Management listed it as <code>Invalid</code>. The
+enclosure&rsquo;s booklet said to &ldquo;bring the disk online&rdquo;, which silently did nothing. The data was completely intact. Windows
+was refusing on <strong>policy</strong> grounds, not because anything was broken. Getting it back meant going around the Windows&hellip;</p>
   </div>
   <footer>
     <a href="/blog/2026/08/windows-dynamic-disk-usb-wsl2-usbip/" class="button big">Read More</a>
@@ -633,8 +633,8 @@ refusing on <strong>policy</strong> grounds, not because anything was broken, an
     
     <p>Last week I wrote about <a href="/blog/2026/04/why-rust-for-php-embedding/">why ePHPm embeds PHP from Rust</a> and promised the
 signal bug its own post. Here it is. It&rsquo;s the kind of bug where the fix is about ten lines and the explanation is the
-whole post, because nothing in PHP&rsquo;s embed documentation (there&rsquo;s barely any) tells you that initializing PHP has
-process-wide side effects that assume PHP is the only thing in the process.</p>
+whole post. Nothing in PHP&rsquo;s embed documentation (there&rsquo;s barely any) tells you that initializing PHP has
+process-wide side effects. Those side effects assume PHP is the only thing in the process.</p>
   </div>
   <footer>
     <a href="/blog/2026/04/php-signal-safety-init-ordering/" class="button big">Read More</a>

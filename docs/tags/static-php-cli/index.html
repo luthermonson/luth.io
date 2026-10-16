@@ -233,9 +233,9 @@
     <img class="" src="/img/2026/08/libxml2-214-php-windows-def-missing-symbols.svg" alt="Bar chart: legacy php_libxml2.def entries missing from libxml2 headers - 0 for 2.11.9 and 2.13.0, 294 for 2.14.0 and 2.15.0">
   </a>
     
-    <p>Back in April I was getting the embed SAPI building on Windows through my fork of
-<a href="https://github.com/crazywhalecc/static-php-cli">static-php-cli</a> (SPC) for <a href="https://github.com/ephpm/ephpm">ePHPm</a>, and the
-link step for <code>php8ts.dll</code> fell over with a wall of errors that all looked like this:</p>
+    <p>Back in April I was getting the embed SAPI building on Windows for <a href="https://github.com/ephpm/ephpm">ePHPm</a>. I was
+using my fork of <a href="https://github.com/crazywhalecc/static-php-cli">static-php-cli</a> (SPC). The link step for
+<code>php8ts.dll</code> fell over with a wall of errors that all looked like this:</p>
   </div>
   <footer>
     <a href="/blog/2026/08/libxml2-2-14-broke-php-windows-builds/" class="button big">Read More</a>
@@ -300,7 +300,7 @@ link step for <code>php8ts.dll</code> fell over with a wall of errors that all l
     
     <p>One of the first things that broke when I started building PHP on Windows with
 <a href="https://github.com/crazywhalecc/static-php-cli">static-php-cli</a> (SPC) wasn&rsquo;t PHP at all. It was unpacking the source
-tarballs. libxml2, xz, a couple of others would die partway through extraction with:</p>
+tarballs. libxml2, xz and a couple of others would die partway through extraction with:</p>
   </div>
   <footer>
     <a href="/blog/2026/07/spc-windows-archive-extraction/" class="button big">Read More</a>

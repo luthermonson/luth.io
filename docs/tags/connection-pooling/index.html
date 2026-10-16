@@ -218,7 +218,7 @@
       <h2><a href="/blog/2026/08/db-connection-pooling-smart-reset/">Database Connection Pooling with Smart Reset</a></h2>
     
     
-      <p>PHP opens a new MySQL connection on every request. ePHPm reuses them and cleans up only the ones that need it. How it works, two bugs it had, and how much load it takes off MySQL.</p>
+      <p>PHP opens a new MySQL connection on every request, but ePHPm reuses them and cleans up only the ones that need it. Here&#39;s how that works, two bugs it had and how much load it takes off MySQL.</p>
     
   </div>
   <div class="meta">
@@ -233,11 +233,11 @@
     <img class="" src="/img/2026/08/db-connection-pooling-smart-reset-cover.svg" alt="PHP request connecting to the ePHPm MySQL proxy, which lends it a pooled backend connection and resets it only if the session was dirtied">
   </a>
     
-    <p>PHP&rsquo;s share-nothing model is one of its best properties and it has one expensive side effect: a request can&rsquo;t keep a
-database connection for the next request. php-fpm gives you <code>PDO::ATTR_PERSISTENT</code> and <code>mysqli</code>&rsquo;s <code>p:</code> hosts, but
-those are per-worker-process, PDO&rsquo;s keep whatever session state the last request left behind (mysqli at least resets
-the session with <code>COM_CHANGE_USER</code> on reuse), and almost nobody turns them on. So in practice every PHP request does a
-TCP connect, a&hellip;</p>
+    <p>PHP&rsquo;s share-nothing model is one of its best properties. It has one expensive side effect: a request can&rsquo;t keep a
+database connection for the next request. php-fpm gives you <code>PDO::ATTR_PERSISTENT</code> and <code>mysqli</code>&rsquo;s <code>p:</code> hosts. But
+those are per-worker-process. PDO&rsquo;s keep whatever session state the last request left behind. mysqli at least resets
+the session with <code>COM_CHANGE_USER</code> on reuse. And almost nobody turns them on. So in practice every PHP request does a
+TCP connect, a MySQL&hellip;</p>
   </div>
   <footer>
     <a href="/blog/2026/08/db-connection-pooling-smart-reset/" class="button big">Read More</a>

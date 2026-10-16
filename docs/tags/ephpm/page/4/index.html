@@ -218,13 +218,13 @@
       <h2><a href="/blog/2026/08/clustered-sqlite-sqld-sidecar/">Clustered SQLite in ePHPm, Part 1: Replication by Sidecar</a></h2>
     
     
-      <p>How ePHPm first made SQLite highly available by embedding sqld as a child process, and the list of things that went wrong with it.</p>
+      <p>ePHPm first made SQLite highly available by embedding sqld as a child process. This is how that worked and the list of things that went wrong with it.</p>
     
   </div>
   <div class="meta">
     <time datetime="2026-08-08 20:14:00 -0700 PDT">August 8, 2026</time>
     
-    <p>8-Minute Read</p>
+    <p>9-Minute Read</p>
   </div>
 </header>
 
@@ -235,9 +235,9 @@
     
     <p>Most PHP sites I have run in the last twenty years did not need a MySQL server. They needed <em>a</em> database, and MySQL was the
 one every framework spoke. With <a href="https://github.com/ephpm/ephpm">ePHPm</a> I have been trying to get rid of that server for
-the common case, and the piece that makes it possible is <a href="https://github.com/ephpm/litewire">litewire</a>: PHP connects with
-plain <code>pdo_mysql</code>, litewire speaks the MySQL wire protocol, and the queries land in a SQLite file. WordPress and Laravel
-don&rsquo;t know the difference. No <code>mysqld</code>, no child processes, just <code>ephpm</code> and a <code>.db&hellip;</code></p>
+the common case. The piece that makes it possible is <a href="https://github.com/ephpm/litewire">litewire</a>. PHP connects with
+plain <code>pdo_mysql</code>. litewire speaks the MySQL wire protocol, and the queries land in a SQLite file. WordPress and Laravel
+don&rsquo;t know the difference. No <code>mysqld</code>, no child processes, just <code>ephpm</code> and a <code>.db</code> file.</p>
   </div>
   <footer>
     <a href="/blog/2026/08/clustered-sqlite-sqld-sidecar/" class="button big">Read More</a>
@@ -287,7 +287,7 @@ don&rsquo;t know the difference. No <code>mysqld</code>, no child processes, jus
       <h2><a href="/blog/2026/08/gossip-clustering-for-php/">Gossip-Based Clustering for PHP Apps</a></h2>
     
     
-      <p>How ePHPm servers find each other and share data, what happens when a server joins or leaves, how fast a write reaches the other servers, and a bug I found while measuring it.</p>
+      <p>How ePHPm servers find each other, share data and handle a server joining or leaving. It also measures how fast a write reaches the other servers and covers a bug I found while measuring it.</p>
     
   </div>
   <div class="meta">
@@ -302,10 +302,10 @@ don&rsquo;t know the difference. No <code>mysqld</code>, no child processes, jus
     <img class="" src="/img/2026/08/gossip-clustering-php-cover.svg" alt="Three ePHPm nodes: small values replicated to every node over gossip, a large value stored on its owner and one replica over a TCP data plane">
   </a>
     
-    <p>Most PHP developers never touch clustering primitives, and that&rsquo;s by design. PHP is share-nothing: each request starts
-from zero, and anything shared lives somewhere else. Sessions go in Redis, cache goes in Redis or Memcached, locks go in
-Redis, and when you run two app servers the &ldquo;cluster&rdquo; is really two stateless boxes pointed at the same Redis. That works
-until Redis is the thing you&rsquo;re trying not to run.</p>
+    <p>Most PHP developers never touch clustering primitives. That&rsquo;s by design. PHP is share-nothing. Each request starts
+from zero, and anything shared lives somewhere else. Sessions go in Redis. Cache goes in Redis or Memcached. Locks go
+in Redis. When you run two app servers, the &ldquo;cluster&rdquo; is really two stateless boxes pointed at the same Redis. That
+works until Redis is the thing you&rsquo;re trying not to run.</p>
   </div>
   <footer>
     <a href="/blog/2026/08/gossip-clustering-for-php/" class="button big">Read More</a>
@@ -368,10 +368,10 @@ until Redis is the thing you&rsquo;re trying not to run.</p>
     <img class="" src="/img/2026/08/building-a-custom-php-sapi-cover.svg" alt="Table mapping PHP operations like echo, header(), $_POST, $_COOKIE and $_SERVER to SAPI callbacks and to the Rust side of ePHPm">
   </a>
     
-    <p>If you&rsquo;ve only ever run PHP behind nginx you&rsquo;ve probably never had to think about how <code>echo</code> reaches a socket. When you
-embed PHP, as <a href="https://github.com/ephpm/ephpm">ePHPm</a> does, it&rsquo;s the first thing you have to answer, and the answer is a
-SAPI. There is very little written about implementing one. Most of what I know came from reading <code>sapi/cli</code>,
-<code>sapi/cgi</code> and <code>sapi/embed</code> in php-src and then finding out which parts I&rsquo;d misread. This is the write-up I wanted back
+    <p>If you&rsquo;ve only ever run PHP behind nginx, you&rsquo;ve probably never had to think about how <code>echo</code> reaches a socket. When
+you embed PHP like <a href="https://github.com/ephpm/ephpm">ePHPm</a> does, it&rsquo;s the first thing you have to answer. The answer
+is a SAPI. There is very little written about implementing one. Most of what I know came from reading <code>sapi/cli</code>,
+<code>sapi/cgi</code> and <code>sapi/embed</code> in php-src. Then I found out which parts I&rsquo;d misread. This is the write-up I wanted back
 in March.</p>
   </div>
   <footer>
@@ -422,7 +422,7 @@ in March.</p>
       <h2><a href="/blog/2026/07/sqlite-production-database-protocol-translation/">SQLite as a Production Database via Protocol Translation</a></h2>
     
     
-      <p>litewire speaks the MySQL wire protocol on one side and SQLite on the other, so WordPress and Laravel run against a .db file without a code change. Here&#39;s how it works and what it took.</p>
+      <p>litewire speaks the MySQL wire protocol on one side and SQLite on the other. That lets WordPress and Laravel run against a .db file without a code change.</p>
     
   </div>
   <div class="meta">
@@ -437,11 +437,11 @@ in March.</p>
     <img class="" src="/img/2026/07/sqlite-production-database-protocol-translation-cover.svg" alt="A PHP app connecting over the MySQL wire protocol on port 3306 to litewire, which translates the SQL and runs it against a SQLite file">
   </a>
     
-    <p>Most of the PHP sites I&rsquo;d put on <a href="https://github.com/ephpm/ephpm">ePHPm</a> don&rsquo;t need a MySQL server. A brochure WordPress,
-an internal Laravel tool, a preview environment that lives for an afternoon. What they do need is something that
-<em>looks</em> like MySQL, because <code>mysqli</code> and <code>pdo_mysql</code> are the only database drivers their code has ever been pointed at.
-I mentioned this in the <a href="/blog/2026/06/ephpm-pragmatism/">ePHPm pragmatism post</a> as a one-paragraph &ldquo;because&rdquo;. This is the
-longer version, now that WordPress 7.0 and Laravel 13 both install and&hellip;</p>
+    <p>Most of the PHP sites I&rsquo;d put on <a href="https://github.com/ephpm/ephpm">ePHPm</a> don&rsquo;t need a MySQL server. A brochure
+WordPress, an internal Laravel tool, a preview environment that lives for an afternoon. What they do need is something
+that <em>looks</em> like MySQL, because <code>mysqli</code> and <code>pdo_mysql</code> are the only database drivers their code has ever been
+pointed at. I mentioned this in the <a href="/blog/2026/06/ephpm-pragmatism/">ePHPm pragmatism post</a> as a one-paragraph
+&ldquo;because&rdquo;. This is the longer version, now that WordPress 7.0 and Laravel 13 both install and&hellip;</p>
   </div>
   <footer>
     <a href="/blog/2026/07/sqlite-production-database-protocol-translation/" class="button big">Read More</a>
@@ -510,8 +510,8 @@ longer version, now that WordPress 7.0 and Laravel 13 both install and&hellip;</
     
     <p><a href="https://github.com/ephpm/ephpm">ePHPm</a> tagged <a href="https://github.com/ephpm/ephpm/releases/tag/v0.1.0">v0.1.0</a> this
 week, three months after the first commit. Before the feature list grows any further I want to write down how
-decisions get made on it, mostly for myself, because the easiest way to ruin a project like this is to let it turn into
-a checklist of things other projects have.</p>
+decisions get made on it. This is mostly for myself. The easiest way to ruin a project like this is to let it turn
+into a checklist of things other projects have.</p>
   </div>
   <footer>
     <a href="/blog/2026/06/ephpm-pragmatism/" class="button big">Read More</a>
@@ -576,8 +576,8 @@ a checklist of things other projects have.</p>
     
     <p>Last week I wrote about <a href="/blog/2026/04/why-rust-for-php-embedding/">why ePHPm embeds PHP from Rust</a> and promised the
 signal bug its own post. Here it is. It&rsquo;s the kind of bug where the fix is about ten lines and the explanation is the
-whole post, because nothing in PHP&rsquo;s embed documentation (there&rsquo;s barely any) tells you that initializing PHP has
-process-wide side effects that assume PHP is the only thing in the process.</p>
+whole post. Nothing in PHP&rsquo;s embed documentation (there&rsquo;s barely any) tells you that initializing PHP has
+process-wide side effects. Those side effects assume PHP is the only thing in the process.</p>
   </div>
   <footer>
     <a href="/blog/2026/04/php-signal-safety-init-ordering/" class="button big">Read More</a>
@@ -644,11 +644,11 @@ process-wide side effects that assume PHP is the only thing in the process.</p>
     <img class="" src="/img/2026/04/why-rust-for-php-embedding-cover.svg" alt="Diagram of a request flowing from hyper/tokio through a Rust blocking thread, a C wrapper with setjmp, and libphp, with SAPI callbacks writing into thread-local C buffers">
   </a>
     
-    <p>Go is my primary language and has been for a long time, so when I started building <a href="https://github.com/ephpm/ephpm">ePHPm</a>
-a few weeks ago the obvious move was to write it in Go. ePHPm is a PHP application server: one binary that embeds the
-real PHP interpreter (<code>libphp</code>, the Zend engine) and puts an HTTP server, TLS, a KV cache and a database proxy around it,
-so a PHP app doesn&rsquo;t need nginx + php-fpm + Redis to run. <a href="https://frankenphp.dev/">FrankenPHP</a> already proved the
-&ldquo;PHP inside a Go web server&rdquo; idea works, and it works well. I wrote&hellip;</p>
+    <p>Go is my primary language and has been for a long time. When I started building <a href="https://github.com/ephpm/ephpm">ePHPm</a>
+a few weeks ago the obvious move was to write it in Go. ePHPm is a PHP application server. It&rsquo;s one binary that embeds
+the real PHP interpreter (<code>libphp</code>, the Zend engine) and puts an HTTP server, TLS, a KV cache and a database proxy
+around it. A PHP app doesn&rsquo;t need nginx + php-fpm + Redis to run. <a href="https://frankenphp.dev/">FrankenPHP</a> already proved
+the &ldquo;PHP inside a Go web server&rdquo; idea works, and it works well. I&hellip;</p>
   </div>
   <footer>
     <a href="/blog/2026/04/why-rust-for-php-embedding/" class="button big">Read More</a>

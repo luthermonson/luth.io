@@ -1,0 +1,75 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 840 640" font-family="system-ui, -apple-system, Segoe UI, Roboto, sans-serif">
+  <title>How 1 PiB of storage arrives in go-proxmox four bytes short</title>
+  <desc>A FUSE-backed Proxmox storage reports 1125899906842624 bytes (2 to the 50th). Proxmox's Perl storage code turns it into a float and prints it with 15 significant digits, so the JSON says 1.12589990684262e+15. Before the fix, decoding into a uint64 failed and json.Number Int64 failed with invalid syntax. After #237, Storage.UnmarshalJSON decodes the field as json.Number, tries Int64, falls back to Float64 and converts to uint64, giving 1125899906842620. The missing 4 bytes were lost on the server and cannot be recovered by the client.</desc>
+  <defs>
+    <marker id="a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#57606a"/></marker>
+  </defs>
+  <rect width="840" height="640" fill="#ffffff"/>
+  <text x="420" y="34" text-anchor="middle" font-size="20" font-weight="600" fill="#1f2328">How 1 PiB reaches go-proxmox 4 bytes short</text>
+
+  <!-- server side -->
+  <text x="20" y="70" font-size="13" font-weight="600" fill="#57606a">ON THE PROXMOX SERVER</text>
+
+  <rect x="20" y="82" width="250" height="120" rx="8" fill="#f6f8fa" stroke="#0550ae" stroke-width="2"/>
+  <text x="145" y="108" text-anchor="middle" font-size="15" font-weight="600" fill="#0550ae">FUSE storage (MinIO)</text>
+  <text x="145" y="130" text-anchor="middle" font-size="13" fill="#1f2328">reports 1 PiB = 2⁵⁰ bytes</text>
+  <text x="145" y="162" text-anchor="middle" font-size="16" font-weight="600" fill="#1f2328" font-family="ui-monospace, Consolas, Menlo, monospace">1125899906842624</text>
+  <text x="145" y="188" text-anchor="middle" font-size="12" fill="#57606a">what pvesh shows</text>
+
+  <line x1="270" y1="142" x2="296" y2="142" stroke="#57606a" stroke-width="2" marker-end="url(#a)"/>
+
+  <rect x="300" y="82" width="240" height="120" rx="8" fill="#f6f8fa" stroke="#a34700" stroke-width="2"/>
+  <text x="420" y="108" text-anchor="middle" font-size="15" font-weight="600" fill="#a34700">Perl floating point</text>
+  <text x="420" y="132" text-anchor="middle" font-size="13" fill="#1f2328">printed with 15</text>
+  <text x="420" y="150" text-anchor="middle" font-size="13" fill="#1f2328">significant digits</text>
+  <text x="420" y="184" text-anchor="middle" font-size="13" font-weight="600" fill="#a34700">the last 4 bytes go here</text>
+
+  <line x1="540" y1="142" x2="566" y2="142" stroke="#57606a" stroke-width="2" marker-end="url(#a)"/>
+
+  <rect x="570" y="82" width="250" height="120" rx="8" fill="#f6f8fa" stroke="#57606a" stroke-width="2"/>
+  <text x="695" y="108" text-anchor="middle" font-size="15" font-weight="600" fill="#1f2328">JSON on the wire</text>
+  <text x="695" y="146" text-anchor="middle" font-size="16" font-weight="600" fill="#1f2328" font-family="ui-monospace, Consolas, Menlo, monospace">1.12589990684262e+15</text>
+  <text x="695" y="176" text-anchor="middle" font-size="13" fill="#1f2328">valid JSON,</text>
+  <text x="695" y="193" text-anchor="middle" font-size="13" fill="#1f2328">not a valid uint64</text>
+
+  <!-- bus down to client -->
+  <polyline points="695,202 695,224 215,224 215,260" fill="none" stroke="#57606a" stroke-width="2" marker-end="url(#a)"/>
+  <line x1="625" y1="224" x2="625" y2="260" stroke="#57606a" stroke-width="2" marker-end="url(#a)"/>
+
+  <text x="20" y="248" font-size="13" font-weight="600" fill="#57606a">IN THE GO CLIENT</text>
+
+  <!-- before -->
+  <rect x="20" y="264" width="390" height="208" rx="8" fill="#f6f8fa" stroke="#57606a" stroke-width="2" stroke-dasharray="7 5"/>
+  <text x="40" y="290" font-size="15" font-weight="600" fill="#1f2328">Before: Total is a plain uint64</text>
+  <text x="40" y="318" font-size="13" fill="#1f2328">encoding/json:</text>
+  <g font-family="ui-monospace, Consolas, Menlo, monospace" font-size="12.5" fill="#1f2328">
+    <text x="40" y="340">cannot unmarshal number</text>
+    <text x="40" y="358">1.12589990684262e+15 into</text>
+    <text x="40" y="376">Storage.Total of type uint64</text>
+  </g>
+  <text x="40" y="406" font-size="13" fill="#1f2328">json.Number.Int64():</text>
+  <text x="40" y="426" font-size="12.5" fill="#1f2328" font-family="ui-monospace, Consolas, Menlo, monospace">invalid syntax</text>
+  <text x="40" y="456" font-size="14" font-weight="600" fill="#a34700">✗ result: unmarshal error</text>
+
+  <!-- after -->
+  <rect x="430" y="264" width="390" height="208" rx="8" fill="#ffffff" stroke="#0550ae" stroke-width="2.5"/>
+  <text x="450" y="290" font-size="15" font-weight="600" fill="#0550ae">After #237: Storage.UnmarshalJSON</text>
+  <rect x="450" y="302" width="350" height="30" rx="5" fill="#f6f8fa" stroke="#d0d7de"/>
+  <text x="462" y="322" font-size="13" fill="#1f2328">1. decode the field as json.Number</text>
+  <rect x="450" y="340" width="350" height="30" rx="5" fill="#f6f8fa" stroke="#d0d7de"/>
+  <text x="462" y="360" font-size="13" fill="#1f2328">2. try Int64(): invalid syntax</text>
+  <rect x="450" y="378" width="350" height="30" rx="5" fill="#f6f8fa" stroke="#d0d7de"/>
+  <text x="462" y="398" font-size="13" fill="#1f2328">3. fall back to Float64(), then uint64(val)</text>
+  <text x="450" y="436" font-size="13" fill="#1f2328">✓ s.Total =</text>
+  <text x="450" y="458" font-size="16" font-weight="600" fill="#0550ae" font-family="ui-monospace, Consolas, Menlo, monospace">1125899906842620</text>
+
+  <!-- comparison -->
+  <rect x="20" y="492" width="800" height="134" rx="8" fill="#f6f8fa" stroke="#d0d7de"/>
+  <text x="300" y="526" text-anchor="end" font-size="14" fill="#1f2328">client reads</text>
+  <text x="320" y="527" font-size="18" font-weight="600" fill="#0550ae" font-family="ui-monospace, Consolas, Menlo, monospace">1,125,899,906,842,62<tspan fill="#a34700" text-decoration="underline">0</tspan></text>
+  <text x="300" y="556" text-anchor="end" font-size="14" fill="#1f2328">actual bytes (2⁵⁰)</text>
+  <text x="320" y="557" font-size="18" font-weight="600" fill="#1f2328" font-family="ui-monospace, Consolas, Menlo, monospace">1,125,899,906,842,62<tspan fill="#a34700" text-decoration="underline">4</tspan></text>
+  <text x="600" y="542" font-size="14" font-weight="600" fill="#a34700">4 bytes short</text>
+  <text x="420" y="590" text-anchor="middle" font-size="13" fill="#57606a">Lost when the server printed 15 digits. No client-side parsing brings them back.</text>
+  <text x="420" y="610" text-anchor="middle" font-size="13" fill="#57606a">Proxmox capacity numbers above 10¹⁵ are approximate.</text>
+</svg>

@@ -272,80 +272,81 @@
       </div>
       <div class="content">
         
-        <p>I have CI that needs Linux amd64, Linux arm64, Windows and macOS, and GitHub-hosted runners for all four get expensive fast,
+        <p>I have CI that needs Linux amd64, Linux arm64, Windows and macOS. GitHub-hosted runners for all four get expensive fast,
 especially the arm64 and Mac minutes. Self-hosted runners fix the bill and create a different problem. A stock
-<code>actions/runner</code> on a box you own runs whatever the workflow says, keeps whatever the last job left behind, and is one fork
-PR away from somebody running code on your LAN.</p>
-<p>The usual answers didn&rsquo;t fit. <a href="https://github.com/actions/actions-runner-controller">ARC</a> wants a Kubernetes cluster, and
-realistically Linux nodes: Windows only works in its legacy mode if you bring Windows Kubernetes nodes and build your
-own runner image, and macOS isn&rsquo;t on the table. The Firecracker-based runners are Linux only. I wanted one thing I could
-install on every box in the rack, Windows and Mac included, that gives each job a brand new environment and throws it
-away afterwards. That turned into <a href="https://github.com/ephpm/ephemerd">ephemerd</a>, which I&rsquo;ve been building since April
-and which now runs all of my CI.</p>
+<code>actions/runner</code> on a box you own runs whatever the workflow says. It keeps whatever the last job left behind. And it&rsquo;s
+one fork PR away from somebody running code on your LAN.</p>
+<p>The usual answers didn&rsquo;t fit. <a href="https://github.com/actions/actions-runner-controller">ARC</a> wants a Kubernetes cluster,
+and realistically Linux nodes. Windows only works in its legacy mode if you bring Windows Kubernetes nodes and build
+your own runner image. macOS isn&rsquo;t on the table. The Firecracker-based runners are Linux only. I wanted one thing I
+could install on every box in the rack, Windows and Mac included. It should give each job a brand new environment and
+throw it away afterwards. That turned into <a href="https://github.com/ephpm/ephemerd">ephemerd</a>. I&rsquo;ve been building it since
+April and it now runs all of my CI.</p>
 <p><img src="/img/2026/08/ephemerd-one-daemon-every-os-arch.svg" alt="ephemerd architecture"></p>
 <h3 id="what-it-is">What it is</h3>
-<p>ephemerd is a single Go binary (MIT licensed) that runs as a system service. It watches your forge for queued jobs, either by
-polling the API every 30 seconds or by receiving webhooks, and for each job it:</p>
+<p>ephemerd is a single Go binary (MIT licensed) that runs as a system service. It watches your forge for queued jobs. It
+either polls the API every 30 seconds or receives webhooks. For each job it:</p>
 <ol>
 <li>asks GitHub for a just-in-time runner config, good for exactly one job</li>
 <li>creates a fresh container or VM for that job</li>
 <li>starts the embedded Actions runner inside it with the JIT config</li>
 <li>destroys the whole environment when the job completes</li>
 </ol>
-<p>There&rsquo;s no runner pool sitting around between jobs and nothing carries over from one job to the next. GitHub is the main
+<p>There&rsquo;s no runner pool sitting around between jobs. Nothing carries over from one job to the next. GitHub is the main
 provider, and there are providers for Forgejo, Gitea, GitLab and Woodpecker too.</p>
-<p>The part I&rsquo;m happiest with is that it embeds containerd as a Go library instead of talking to a containerd you installed. If
-you&rsquo;ve used <a href="https://k3s.io">k3s</a> or RKE2 that pattern will look familiar, and after my years at Rancher it was the obvious
-way to go. It means one binary, one version of containerd, and no &ldquo;which containerd is on this host&rdquo; support questions.</p>
+<p>The part I&rsquo;m happiest with is that it embeds containerd as a Go library. It doesn&rsquo;t talk to a containerd you installed.
+If you&rsquo;ve used <a href="https://k3s.io">k3s</a> or RKE2 that pattern will look familiar. After my years at Rancher it was the
+obvious way to go. It means one binary, one version of containerd, and no &ldquo;which containerd is on this host&rdquo; support
+questions.</p>
 <h3 id="linux-containerd-and-runc">Linux: containerd and runc</h3>
-<p>On Linux the job is an OCI container on the host, created through the embedded containerd with runc. This is the fast path,
-a couple hundred milliseconds to get a job container up. The runner image is a normal OCI image, so the same Dockerfile
-builds the job environment for every Linux host.</p>
-<p>Since v0.2.2 there&rsquo;s also an opt-in <a href="https://katacontainers.io/">Kata Containers</a> runtime, which gives each job its own kernel
-in a lightweight VM:</p>
+<p>On Linux the job is an OCI container on the host, created through the embedded containerd with runc. This is the fast
+path. It takes a couple hundred milliseconds to get a job container up. The runner image is a normal OCI image, so the
+same Dockerfile builds the job environment for every Linux host.</p>
+<p>Since v0.2.2 there&rsquo;s also an opt-in <a href="https://katacontainers.io/">Kata Containers</a> runtime. It gives each job its own
+kernel in a lightweight VM:</p>
 <div class="highlight"><pre tabindex="0" class="chroma"><code class="language-toml" data-lang="toml"><span class="line"><span class="cl"><span class="p">[</span><span class="nx">runner</span><span class="p">.</span><span class="nx">linux</span><span class="p">]</span>
 </span></span><span class="line"><span class="cl"><span class="nx">runtime</span> <span class="p">=</span> <span class="s2">&#34;kata&#34;</span>   <span class="c"># default is &#34;runc&#34;</span>
-</span></span></code></pre></div><p>It&rsquo;s not the default because it isn&rsquo;t free. I measured it before merging and the file I/O cost is a lot bigger than the boot
-cost, which is a story for its own post. If you set <code>kata</code> and the shim or <code>/dev/kvm</code> is missing, ephemerd refuses to start
-rather than quietly running your jobs on runc.</p>
+</span></span></code></pre></div><p>It&rsquo;s not the default because it isn&rsquo;t free. I measured it before merging. The file I/O cost is a lot bigger than the
+boot cost, which is a story for its own post. If you set <code>kata</code> and the shim or <code>/dev/kvm</code> is missing, ephemerd refuses
+to start. It won&rsquo;t quietly run your jobs on runc.</p>
 <h3 id="windows-hyper-v-isolated-containers-plus-a-linux-vm">Windows: Hyper-V isolated containers, plus a Linux VM</h3>
-<p>On a Windows host, Windows jobs run in Hyper-V isolated containers. Every job gets its own utility VM and kernel, which is
+<p>On a Windows host, Windows jobs run in Hyper-V isolated containers. Every job gets its own utility VM and kernel. That&rsquo;s
 the isolation level I want for untrusted code on Windows.</p>
-<p>Linux jobs on the same Windows box go to a Linux VM that ephemerd boots itself. It started out on WSL2, which can&rsquo;t run under
-<code>LocalSystem</code>, so ephemerd now boots an Alpine kernel directly through the Host Compute Service API. I wrote that up
-in <a href="/blog/2026/06/escaping-wsl-hcs-linux-vm/">Escaping WSL: Booting My Own Linux VM Through Hyper-V&rsquo;s HCS API</a>. The Windows
-daemon keeps the GitHub credentials and the scheduler, and sends container lifecycle calls to the ephemerd inside the VM
-over gRPC.</p>
+<p>Linux jobs on the same Windows box go to a Linux VM that ephemerd boots itself. It started out on WSL2, which can&rsquo;t run
+under <code>LocalSystem</code>. So ephemerd now boots an Alpine kernel directly through the Host Compute Service API. I wrote that
+up in <a href="/blog/2026/06/escaping-wsl-hcs-linux-vm/">Escaping WSL: Booting My Own Linux VM Through Hyper-V&rsquo;s HCS API</a>. The
+Windows daemon keeps the GitHub credentials and the scheduler. It sends container lifecycle calls to the ephemerd inside
+the VM over gRPC.</p>
 <h3 id="macos-a-vm-per-job">macOS: a VM per job</h3>
-<p>On Apple silicon there are two kinds of jobs. macOS jobs (Xcode, Swift, anything that needs a real macOS) get their own
-macOS VM through Virtualization.framework. The base disk comes from one of Cirrus Labs'
-<a href="https://tart.run">Tart</a> macOS images, pulled as an OCI artifact, and each job&rsquo;s disk is an APFS clone of it. A clone is
-copy-on-write, so creating one is instant and costs no disk until the job writes something. When the job is done the clone
-is deleted.</p>
-<p>Linux jobs on the Mac go to a long-lived Linux VM (also Virtualization.framework) running containerd, the same model as the
-Windows host. The same Linux runner image works on all three.</p>
+<p>On Apple silicon there are two kinds of jobs. macOS jobs get their own macOS VM through Virtualization.framework. That
+covers Xcode, Swift and anything else that needs a real macOS. The base disk comes from one of Cirrus Labs'
+<a href="https://tart.run">Tart</a> macOS images, pulled as an OCI artifact. Each job&rsquo;s disk is an APFS clone of it. A clone is
+copy-on-write, so creating one is instant and costs no disk until the job writes something. When the job is done the
+clone is deleted.</p>
+<p>Linux jobs on the Mac go to a long-lived Linux VM (also Virtualization.framework) running containerd. That&rsquo;s the same
+model as the Windows host. The same Linux runner image works on all three.</p>
 <h3 id="the-parts-jobs-actually-notice">The parts jobs actually notice</h3>
-<p>A lot of the work wasn&rsquo;t about isolation at all, it was about making real workflows run unmodified inside it.</p>
-<p><strong>A Docker API.</strong> Half of all workflows run <code>docker build</code> or <code>docker run</code> somewhere, and <code>container:</code> jobs need a Docker
-daemon for the runner to drive. Rather than run Docker-in-Docker, ephemerd serves a Docker-compatible API per job (backed by
-containerd in a per-job namespace) and points the job at it, with BuildKit embedded for <code>docker build</code>. Sibling containers a
-job starts are torn down with the job.</p>
-<p><strong>Pull-through caches.</strong> Every job starting from nothing means every job downloads the world. ephemerd runs pull-through
-caches for Go modules, npm, pip, cargo and pub, and injects the right environment variables (<code>GOPROXY</code> and friends) into the
-job. Container pulls can be routed through a registry mirror on your LAN. The motivation is in the registry mirror&rsquo;s own
-package docs: one Linux node pulled 294 GB in 4.1 days, and the single biggest contributor was one 1.1 GB CI image pulled
-163 times in a week.</p>
-<p><strong>An egress fence.</strong> A job container can reach the internet and nothing on the private ranges: <code>10.0.0.0/8</code>,
-<code>172.16.0.0/12</code>, <code>192.168.0.0/16</code> and <code>169.254.0.0/16</code> are blocked. On Linux that&rsquo;s iptables. On Windows it turned out to
-be a long fight, and since v0.2.0 the working answer is an opt-in L2Bridge network with VFP ACLs.</p>
+<p>A lot of the work wasn&rsquo;t about isolation at all. It was about making real workflows run unmodified inside it.</p>
+<p><strong>A Docker API.</strong> Half of all workflows run <code>docker build</code> or <code>docker run</code> somewhere. <code>container:</code> jobs need a Docker
+daemon for the runner to drive. Rather than run Docker-in-Docker, ephemerd serves a Docker-compatible API per job and
+points the job at it. It&rsquo;s backed by containerd in a per-job namespace, with BuildKit embedded for <code>docker build</code>.
+Sibling containers a job starts are torn down with the job.</p>
+<p><strong>Pull-through caches.</strong> Every job starting from nothing means every job downloads the world. ephemerd runs
+pull-through caches for Go modules, npm, pip, cargo and pub. It injects the right environment variables (<code>GOPROXY</code> and
+friends) into the job. Container pulls can be routed through a registry mirror on your LAN. The motivation is in the
+registry mirror&rsquo;s own package docs. One Linux node pulled 294 GB in 4.1 days. The single biggest contributor was one
+1.1 GB CI image pulled 163 times in a week.</p>
+<p><strong>An egress fence.</strong> A job container can reach the internet and nothing on the private ranges. <code>10.0.0.0/8</code>,
+<code>172.16.0.0/12</code>, <code>192.168.0.0/16</code> and <code>169.254.0.0/16</code> are blocked. On Linux that&rsquo;s iptables. On Windows it turned out
+to be a long fight. Since v0.2.0 the working answer is an opt-in L2Bridge network with VFP ACLs.</p>
 <h3 id="getting-started">Getting started</h3>
-<p>Installation is the same command on all three platforms, and it registers the right kind of service (systemd, launchd or the
-Windows SCM):</p>
+<p>Installation is the same command on all three platforms. It registers the right kind of service (systemd, launchd or
+the Windows SCM):</p>
 <div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl">ephemerd install
 </span></span><span class="line"><span class="cl">ephemerd start
 </span></span><span class="line"><span class="cl">ephemerd status
-</span></span></code></pre></div><p>The minimum config is the owner you want runners for, plus credentials (a token in the environment, or GitHub App
-credentials in the config):</p>
+</span></span></code></pre></div><p>The minimum config is the owner you want runners for, plus credentials. That&rsquo;s a token in the environment or GitHub App
+credentials in the config:</p>
 <div class="highlight"><pre tabindex="0" class="chroma"><code class="language-toml" data-lang="toml"><span class="line"><span class="cl"><span class="p">[</span><span class="nx">github</span><span class="p">]</span>
 </span></span><span class="line"><span class="cl"><span class="nx">owner</span> <span class="p">=</span> <span class="s2">&#34;your-org&#34;</span>
 </span></span><span class="line"><span class="cl"><span class="c"># repos = [&#34;repo1&#34;, &#34;repo2&#34;]   # omit for org-level runners</span>
@@ -356,12 +357,18 @@ credentials in the config):</p>
 </span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="nt">steps</span><span class="p">:</span><span class="w">
 </span></span></span><span class="line"><span class="cl"><span class="w">      </span>- <span class="nt">uses</span><span class="p">:</span><span class="w"> </span><span class="l">actions/checkout@v4</span><span class="w">
 </span></span></span><span class="line"><span class="cl"><span class="w">      </span>- <span class="nt">run</span><span class="p">:</span><span class="w"> </span><span class="l">echo &#34;Running on ephemerd&#34;</span><span class="w">
-</span></span></span></code></pre></div><p>If you&rsquo;d rather not expose anything to the internet, the default polling mode needs no inbound ports at all. For instant
-dispatch it can run a Cloudflare tunnel, ngrok or localtunnel as a managed subprocess and register the webhooks itself.</p>
+</span></span></span></code></pre></div><p>If you&rsquo;d rather not expose anything to the internet, the default polling mode needs no inbound ports at all. For
+instant dispatch it can run a Cloudflare tunnel, ngrok or localtunnel as a managed subprocess. It registers the webhooks
+itself.</p>
 <h3 id="where-its-at">Where it&rsquo;s at</h3>
-<p>It&rsquo;s at v0.2.3 as I write this, and it runs my whole fleet: Linux amd64 and arm64 nodes, a Windows Server 2025
-node and a Mac mini. The repo has a containment test suite that runs from inside a real job and tries to reach things it
-shouldn&rsquo;t, which has been the most useful thing in the project for finding out which of my assumptions were wrong.</p>
+<p>It&rsquo;s at v0.2.3 as I write this, and it runs my whole fleet:</p>
+<ul>
+<li>Linux amd64 and arm64 nodes</li>
+<li>a Windows Server 2025 node</li>
+<li>a Mac mini</li>
+</ul>
+<p>The repo has a containment test suite that runs from inside a real job and tries to reach things it shouldn&rsquo;t. That has
+been the most useful thing in the project for finding out which of my assumptions were wrong.</p>
 <p>There&rsquo;s a Hugo docs site in the repo, and <code>ephemerd doctor</code> checks the host prerequisites for whatever platform it&rsquo;s on.
 There&rsquo;s no Windows arm64 build yet. Next up is writing down some of the more painful lessons from the last few months,
 starting with Windows networking.</p>

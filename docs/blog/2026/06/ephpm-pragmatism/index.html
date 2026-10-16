@@ -271,66 +271,84 @@
 
       </div>
       <div class="content">
+              <figure class="post-cover">
+                <img src="/img/2026/06/ephpm-pragmatism-cover.svg" alt="ePHPm in the center with six boxes: Rust and C wrapper, KV store, chitchat gossip, static-php-cli upstream fixes, litewire, and a dashed box of features not built yet">
+              </figure>
         
         <p><a href="https://github.com/ephpm/ephpm">ePHPm</a> tagged <a href="https://github.com/ephpm/ephpm/releases/tag/v0.1.0">v0.1.0</a> this
 week, three months after the first commit. Before the feature list grows any further I want to write down how
-decisions get made on it, mostly for myself, because the easiest way to ruin a project like this is to let it turn into
-a checklist of things other projects have.</p>
-<p>The pitch is simple: one binary that runs a PHP app with fewer moving parts than nginx + php-fpm + Redis + MySQL. Every
+decisions get made on it. This is mostly for myself. The easiest way to ruin a project like this is to let it turn
+into a checklist of things other projects have.</p>
+<p>The pitch is simple. One binary that runs a PHP app with fewer moving parts than nginx + php-fpm + Redis + MySQL. Every
 feature has to trace back to that. If I can&rsquo;t finish the sentence &ldquo;this exists because&hellip;&rdquo; with a real problem from
 running PHP in production, it doesn&rsquo;t go in.</p>
 <h3 id="rust-because-i-measured-cgo">Rust, because I measured cgo</h3>
-<p>This isn&rsquo;t a &ldquo;rewrite it in Rust&rdquo; project. I write Go for a living and I&rsquo;d have been faster in Go. I picked Rust because
-PHP calls <em>back into</em> its host constantly (every <code>echo</code>, every header, every cache read once the KV functions exist),
-and I wanted that direction to be a plain function call. When I <a href="/blog/2026/04/why-rust-for-php-embedding/">actually measured it</a>
-the cgo tax turned out to be a lot smaller than my own design doc claimed (about 24ns per call on Go 1.26, not 200), and
-I said so. The decision survived the correction because the reasons were never only that one number: one runtime in the
-process, no GC next to Zend, and no second project to upstream into before I can change how a request is dispatched.</p>
+<p>This isn&rsquo;t a &ldquo;rewrite it in Rust&rdquo; project. I write Go for a living and I&rsquo;d have been faster in Go. I picked Rust
+because PHP calls <em>back into</em> its host constantly. Every <code>echo</code>, every header, every cache read once the KV functions
+exist. I wanted that direction to be a plain function call. When I
+<a href="/blog/2026/04/why-rust-for-php-embedding/">actually measured it</a> the cgo tax turned out to be a lot smaller than my
+own design doc claimed. It was about 24ns per call on Go 1.26, not 200, and I said so. The decision survived the
+correction because the reasons were never only that one number:</p>
+<ul>
+<li>One runtime in the process.</li>
+<li>No GC next to Zend.</li>
+<li>No second project to upstream into before I can change how a request is dispatched.</li>
+</ul>
 <p>The part I didn&rsquo;t get to pick is the C wrapper. PHP&rsquo;s error handling is <code>setjmp</code>/<code>longjmp</code>, and that has to live in C
 regardless of what language is on the other side. So the answer to &ldquo;is it Rust?&rdquo; is &ldquo;it&rsquo;s Rust plus about 1,900 lines of
 C that I&rsquo;d rather not have.&rdquo;</p>
 <h3 id="a-kv-store-because-there-was-nothing-to-embed">A KV store, because there was nothing to embed</h3>
 <p>I did not want to write a KV store. Building databases isn&rsquo;t the fun part of this for me. But a PHP app server without a
-cache just means the user runs Redis next to it, and then the single binary pitch is gone.</p>
+cache just means the user runs Redis next to it. Then the single binary pitch is gone.</p>
 <p>So I went looking for something to embed:</p>
 <ul>
 <li><strong>Redis</strong> isn&rsquo;t a library. It&rsquo;s a server that wants to own a process and its event loop. There&rsquo;s no <code>libredis.a</code>.
 (Its licensing also changed in 2024, which made me even less interested in building a product on top of it.)</li>
-<li><strong>Dragonfly</strong> is also a standalone server, and its BSL 1.1 license explicitly excludes use in an &ldquo;in-memory data store
-product or service.&rdquo; A PHP server with a built-in clustered cache is close enough to that line that I&rsquo;m not going near it.</li>
+<li><strong>Dragonfly</strong> is also a standalone server. Its BSL 1.1 license explicitly excludes use in an &ldquo;in-memory data store
+product or service.&rdquo; A PHP server with a built-in clustered cache is close enough to that line that I&rsquo;m not going
+near it.</li>
 <li><strong>KeyDB, Garnet, Valkey</strong>: different licenses, same shape. Servers, not libraries. Dragonfly&rsquo;s shared-nothing model
-(each thread owns a slice of the keyspace) is also the opposite of what ePHPm needs, where any PHP thread has to be
-able to read any key.</li>
+(each thread owns a slice of the keyspace) is also the opposite of what ePHPm needs. Any PHP thread has to be able to
+read any key.</li>
 </ul>
-<p>What PHP apps actually use Redis for is caching, sessions and counters. Strings, a few hashes, TTLs. That&rsquo;s a
-<code>DashMap</code>, a RESP2 parser so existing clients work, lazy expiry plus a sweeper, and an eviction policy. A few thousand
-lines of Rust instead of a second daemon. It&rsquo;s not Redis and it doesn&rsquo;t pretend to be: no lists, no sets, no pub/sub, no
+<p>What PHP apps use Redis for is caching, sessions and counters. Strings, a few hashes, TTLs. That&rsquo;s a <code>DashMap</code> and a
+RESP2 parser so existing clients work. Add lazy expiry plus a sweeper and an eviction policy. A few thousand lines of
+Rust instead of a second daemon. It&rsquo;s not Redis and it doesn&rsquo;t pretend to be. No lists, no sets, no pub/sub, no
 persistence. If you need a queue, run a real Redis.</p>
 <h3 id="gossip-because-etcd-would-be-a-second-thing-to-run">Gossip, because etcd would be a second thing to run</h3>
-<p>Multi-node is where it&rsquo;d be easiest to reach for etcd or Consul. Both are excellent and both are another cluster you
+<p>Multi-node is where it&rsquo;d be easiest to reach for etcd or Consul. Both are excellent. Both are also another cluster you
 have to operate, which defeats the point. I also didn&rsquo;t write a membership protocol, because that&rsquo;s a solved problem.
 Quickwit&rsquo;s <a href="https://github.com/quickwit-oss/chitchat">chitchat</a> crate does scuttlebutt gossip with a phi-accrual failure
-detector, it&rsquo;s a library, it&rsquo;s MIT licensed, and it runs on tokio, which ePHPm already has. Nodes find each other from a
+detector. It&rsquo;s a library and it&rsquo;s MIT licensed. It runs on tokio, which ePHPm already has. Nodes find each other from a
 seed list and that&rsquo;s the entire control plane.</p>
-<p>That&rsquo;s the general rule for what gets borrowed: if a well-maintained crate does the job and fits the runtime and the
+<p>That&rsquo;s the general rule for what gets borrowed. If a well-maintained crate does the job and fits the runtime and the
 license, use it. hyper, rustls, tokio and chitchat are all in that bucket.</p>
 <h3 id="sqlite-behind-a-mysql-socket-because-the-code-only-speaks-pdo_mysql">SQLite behind a MySQL socket, because the code only speaks pdo_mysql</h3>
 <p>A lot of the sites I&rsquo;d want to run on this don&rsquo;t need a MySQL server. A brochure WordPress, an internal Laravel tool,
-something on an edge box. They do need MySQL <em>as far as their code knows</em>, because that&rsquo;s what <code>pdo_mysql</code> and
-<code>mysqli</code> talk to. <a href="https://github.com/ephpm/litewire">litewire</a> speaks the MySQL wire protocol on one side and SQLite on
-the other, so the app&rsquo;s config says <code>DB_HOST=127.0.0.1</code> and nothing else changes. It exists because the alternative is
-asking people to port their database layer, and they won&rsquo;t. It&rsquo;s not there because SQLite is fashionable, and it&rsquo;s
-optional: point the proxy at a real MySQL and it pools connections instead.</p>
+something on an edge box. They do need MySQL <em>as far as their code knows</em>. That&rsquo;s what <code>pdo_mysql</code> and <code>mysqli</code> talk
+to. <a href="https://github.com/ephpm/litewire">litewire</a> speaks the MySQL wire protocol on one side and SQLite on the other.
+The app&rsquo;s config says <code>DB_HOST=127.0.0.1</code> and nothing else changes. It exists because the alternative is asking people
+to port their database layer, and they won&rsquo;t. It&rsquo;s not there because SQLite is fashionable. It&rsquo;s also optional. Point
+the proxy at a real MySQL and it pools connections instead.</p>
 <h3 id="upstream-because-a-fork-is-forever">Upstream, because a fork is forever</h3>
-<p>ePHPm needs a static <code>libphp</code> for every OS and architecture it ships on, and
-<a href="https://github.com/crazywhalecc/static-php-cli">static-php-cli</a> is the project that builds those. When it broke for me,
-the fix went upstream rather than into a private fork: test fixes for Windows path separators, a <code>vswhere</code> fix for
-Windows static builds, dropping <code>-fno-plt</code> from macOS static CFLAGS, a GNU mirror change, a log filter so GitHub tokens
-don&rsquo;t end up in CI logs, a mongodb build fix. Two more Windows build fixes are still open, and the Windows embed SAPI work itself moved to php-src, where it&rsquo;s still under review. Everyone building
-static PHP hits the same bugs, and every patch I carry privately is a patch I have to rebase forever.</p>
+<p>ePHPm needs a static <code>libphp</code> for every OS and architecture it ships on.
+<a href="https://github.com/crazywhalecc/static-php-cli">static-php-cli</a> is the project that builds those. When it broke for
+me, the fix went upstream rather than into a private fork:</p>
+<ul>
+<li>Test fixes for Windows path separators.</li>
+<li>A <code>vswhere</code> fix for Windows static builds.</li>
+<li>Dropping <code>-fno-plt</code> from macOS static CFLAGS.</li>
+<li>A GNU mirror change.</li>
+<li>A log filter so GitHub tokens don&rsquo;t end up in CI logs.</li>
+<li>A mongodb build fix.</li>
+</ul>
+<p>Two more Windows build fixes are still open. The Windows embed SAPI work itself moved to php-src, where it&rsquo;s still
+under review. Everyone building static PHP hits the same bugs. Every patch I carry privately is a patch I have to
+rebase forever.</p>
 <p>The other half of that is not rebuilding PHP on every CI run. Compiling PHP and its libraries from source on each build
-was the slowest thing in the pipeline, so the builds moved into a separate repo, <a href="https://github.com/ephpm/php-sdk">ephpm/php-sdk</a>,
-that publishes prebuilt SDKs per OS/arch/PHP version. ePHPm&rsquo;s build downloads one and links against it.</p>
+was the slowest thing in the pipeline. So the builds moved into a separate repo,
+<a href="https://github.com/ephpm/php-sdk">ephpm/php-sdk</a>, that publishes prebuilt SDKs per OS/arch/PHP version. ePHPm&rsquo;s build
+downloads one and links against it.</p>
 <p>So the three-way split I keep coming back to:</p>
 <ul>
 <li><strong>Contribute upstream</strong> when the thing is shared infrastructure that others are already maintaining (SPC).</li>
@@ -341,28 +359,34 @@ that publishes prebuilt SDKs per OS/arch/PHP version. ePHPm&rsquo;s build downlo
 <p>The list of things that don&rsquo;t exist matters as much as the list of things that do. As of v0.1.0:</p>
 <ul>
 <li><strong>No admin UI.</strong> Early docs listed an embedded dashboard as an advantage over FrankenPHP and RoadRunner. In May I
-pulled those rows out of the comparison pages, because claiming something you haven&rsquo;t shipped as a feature is how
-docs turn into marketing. It&rsquo;s on the roadmap. It&rsquo;ll get built when there&rsquo;s something worth looking at that
-Prometheus and Grafana don&rsquo;t already show.</li>
+pulled those rows out of the comparison pages. Claiming something you haven&rsquo;t shipped as a feature is how docs turn
+into marketing. It&rsquo;s on the roadmap. It&rsquo;ll get built when there&rsquo;s something worth looking at that Prometheus and
+Grafana don&rsquo;t already show.</li>
 <li><strong>No OpenTelemetry.</strong> Prometheus metrics exist because I use them. Tracing will come when I need a trace to debug
 something real.</li>
 <li><strong>No KV persistence, no lists or sets.</strong> It&rsquo;s a cache.</li>
-<li><strong>Some knobs are parsed and not implemented</strong>, and the config reference says so in bold: <code>auto_explain</code>, the
-<code>lag-aware</code> read/write split strategy, <code>max_replica_lag</code>, and the Unix socket for the Redis-compatible KV listener. Read/write splitting itself is
-the one feature I&rsquo;ll admit went in early on a hunch rather than a need, and the half-built strategy options next to it
-are what that looks like. I&rsquo;d rather label those honestly than either delete the parsing or pretend they work.</li>
+<li><strong>Some knobs are parsed and not implemented</strong>, and the config reference says so in bold. That covers
+<code>auto_explain</code>, the <code>lag-aware</code> read/write split strategy, <code>max_replica_lag</code>, and the Unix socket for the
+Redis-compatible KV listener. Read/write splitting itself is the one feature I&rsquo;ll admit went in early on a hunch
+rather than a need. The half-built strategy options next to it are what that looks like. I&rsquo;d rather label those
+honestly than either delete the parsing or pretend they work.</li>
 </ul>
-<p>That&rsquo;s the contrast I&rsquo;m trying to avoid: projects that chase a competitor&rsquo;s feature matrix, or build the thing that
-makes a good conference demo. The feature matrix in ePHPm&rsquo;s docs is there to be honest about status, not to win rows.</p>
+<p>That&rsquo;s the contrast I&rsquo;m trying to avoid. Some projects chase a competitor&rsquo;s feature matrix or build the thing that makes
+a good conference demo. The feature matrix in ePHPm&rsquo;s docs is there to be honest about status, not to win rows.</p>
 <h3 id="real-apps-not-hello-world">Real apps, not hello world</h3>
-<p>The proving ground is my home lab and real applications: WordPress, Laravel, the stuff people actually deploy,
-installed and clicked through on boxes I can break, on top of the e2e suite that covers the server itself. Synthetic &ldquo;hello world&rdquo; benchmarks are good for exactly one thing,
-which is measuring dispatch overhead. Every interesting bug I&rsquo;ve hit so far (the <a href="/blog/2026/04/php-signal-safety-init-ordering/">SIGPROF crash</a>
-is the best example) showed up in a real app or under real load, never in a 200-byte PHP file.</p>
+<p>The proving ground is my home lab and real applications. WordPress, Laravel, the stuff people deploy. They get
+installed and clicked through on boxes I can break. That&rsquo;s on top of the e2e suite that covers the server itself.
+Synthetic &ldquo;hello world&rdquo; benchmarks are good for exactly one thing, which is measuring dispatch overhead. Every
+interesting bug I&rsquo;ve hit so far showed up in a real app or under real load, never in a 200-byte PHP file. The
+<a href="/blog/2026/04/php-signal-safety-init-ordering/">SIGPROF crash</a> is the best example.</p>
 <h3 id="whats-next">What&rsquo;s next</h3>
-<p>The next stretch is about correctness under real apps rather than new boxes on the diagram: request isolation,
-WordPress end to end, and making the KV store fast enough that nobody misses Redis. If something new shows up, it&rsquo;ll come
-with its &ldquo;because.&rdquo;</p>
+<p>The next stretch is about correctness under real apps rather than new boxes on the diagram:</p>
+<ul>
+<li>Request isolation.</li>
+<li>WordPress end to end.</li>
+<li>Making the KV store fast enough that nobody misses Redis.</li>
+</ul>
+<p>If something new shows up, it&rsquo;ll come with its &ldquo;because.&rdquo;</p>
 <h3 id="links">Links</h3>
 <ul>
 <li><a href="https://github.com/ephpm/ephpm">ePHPm</a> and the <a href="https://github.com/ephpm/ephpm/releases/tag/v0.1.0">v0.1.0 release</a></li>

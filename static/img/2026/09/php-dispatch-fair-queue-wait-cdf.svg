@@ -1,0 +1,63 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 820 500" role="img" aria-labelledby="t d" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif">
+  <title id="t">Cumulative dispatch wait: 42.7% of requests never waited</title>
+  <desc id="d">Line chart of the cumulative share of requests by time spent waiting in dispatch, on a log wait axis. At most 1 ms: 42.7%. At most 25 ms: 47.7%. At most 50 ms: 66.1%. At most 100 ms: 86.1%. At most 250 ms: 98.8%. At most 500 ms: 99.9%.</desc>
+  <rect width="820" height="500" fill="#ffffff"/>
+  <text x="410" y="36" text-anchor="middle" font-size="20" font-weight="600" fill="#222">Time spent waiting in dispatch().await</text>
+  <text x="410" y="62" text-anchor="middle" font-size="15" fill="#555">ephpm_worker_request_wait_seconds, cumulative, over a 70,083-request run</text>
+
+  <!-- grid -->
+  <g stroke="#e0e0e0" stroke-width="1">
+    <line x1="110" y1="110" x2="780" y2="110"/>
+    <line x1="110" y1="270" x2="780" y2="270"/>
+    <line x1="456.7" y1="110" x2="456.7" y2="430"/>
+    <line x1="531.3" y1="110" x2="531.3" y2="430"/>
+    <line x1="606" y1="110" x2="606" y2="430"/>
+    <line x1="704.7" y1="110" x2="704.7" y2="430"/>
+    <line x1="779.3" y1="110" x2="779.3" y2="430"/>
+  </g>
+  <g stroke="#333" stroke-width="1.5">
+    <line x1="110" y1="110" x2="110" y2="430"/>
+    <line x1="110" y1="430" x2="780" y2="430"/>
+  </g>
+  <g font-size="14" fill="#555" text-anchor="end">
+    <text x="102" y="115">100%</text>
+    <text x="102" y="275">50%</text>
+    <text x="102" y="435">0%</text>
+  </g>
+  <g font-size="15" fill="#222" text-anchor="middle">
+    <text x="110" y="452">≤ 1</text>
+    <text x="456.7" y="452">≤ 25</text>
+    <text x="531.3" y="452">≤ 50</text>
+    <text x="606" y="452">≤ 100</text>
+    <text x="704.7" y="452">≤ 250</text>
+    <text x="779.3" y="452">≤ 500</text>
+  </g>
+  <text x="445" y="482" text-anchor="middle" font-size="15" fill="#555">wait, ms (log scale)</text>
+  <text transform="translate(34 270) rotate(-90)" text-anchor="middle" font-size="15" fill="#555">requests, cumulative</text>
+
+  <!-- data -->
+  <polyline points="110,293.4 456.7,277.4 531.3,218.5 606,154.5 704.7,113.8 779.3,110.3" fill="none" stroke="#0550ae" stroke-width="3" stroke-linejoin="round"/>
+  <g fill="#0550ae" stroke="#ffffff" stroke-width="2">
+    <circle cx="110" cy="293.4" r="7"/>
+    <circle cx="456.7" cy="277.4" r="5.5"/>
+    <circle cx="531.3" cy="218.5" r="5.5"/>
+    <circle cx="606" cy="154.5" r="5.5"/>
+    <circle cx="704.7" cy="113.8" r="5.5"/>
+    <circle cx="779.3" cy="110.3" r="5.5"/>
+  </g>
+  <g font-size="15" fill="#222" text-anchor="end">
+    <text x="448" y="267">47.7%</text>
+    <text x="523" y="210">66.1%</text>
+    <text x="598" y="146">86.1%</text>
+    <text x="697" y="102">98.8%</text>
+    <text x="776" y="96">99.9%</text>
+  </g>
+
+  <!-- annotation -->
+  <line x1="114" y1="300" x2="138" y2="334" stroke="#a34700" stroke-width="1.5"/>
+  <text x="144" y="344" font-size="17" fill="#a34700"><tspan font-size="20" font-weight="700">42.7%</tspan> waited ≤ 1 ms: the barging winners</text>
+  <g font-size="15" fill="#222">
+    <text x="144" y="368">A fair FIFO at this saturation is never empty,</text>
+    <text x="144" y="389">so sub-millisecond waits should be impossible.</text>
+  </g>
+</svg>

@@ -218,7 +218,7 @@
       <h2><a href="/blog/2026/09/process-containment-job-objects-process-groups-cgroups/">Cross-Platform Process Containment: Job Objects vs Process Groups vs cgroups</a></h2>
     
     
-      <p>How shipmates bounds and tears down agent process trees on Windows, Linux and macOS, why I deleted 1,206 lines of cgroup code, and the grandchild that escaped the memory cap everywhere except my dev box.</p>
+      <p>How shipmates bounds and tears down agent process trees on Windows, Linux and macOS. It also covers why I deleted 1,206 lines of cgroup code and the grandchild that escaped the memory cap everywhere except my dev box.</p>
     
   </div>
   <div class="meta">
@@ -233,8 +233,8 @@
     <img class="" src="/img/2026/09/process-containment-job-objects-process-groups-cgroups-cover.svg" alt="Agent process tree with the scope of kill and measurement on Windows, Linux and macOS">
   </a>
     
-    <p>Every turn a <a href="/blog/2026/08/shipmates-persona-based-ai-coding-crews/">shipmates</a> crew member takes is a subprocess:
-<code>claude</code> or the <code>codex</code> app-server, which in turn spawns shells, <code>go test</code>, <code>npm</code>, whatever the task calls for. Two
+    <p>Every turn a <a href="/blog/2026/08/shipmates-persona-based-ai-coding-crews/">shipmates</a> crew member takes is a subprocess. It&rsquo;s
+<code>claude</code> or the <code>codex</code> app-server. That in turn spawns shells, <code>go test</code>, <code>npm</code> or whatever the task calls for. Two
 things have to be true about that tree. When a turn ends or gets killed, the <em>whole</em> tree goes, including the
 grandchildren. And if somebody sets a memory or CPU budget, the budget applies to the whole tree, not just the
 process I happened to start.</p>
@@ -306,11 +306,11 @@ process I happened to start.</p>
     <img class="" src="/img/2026/09/bind-mounts-across-mount-namespaces-toctou.svg" alt="Sequence diagram of the bind mount TOCTOU race and the openat2 plus staging fix">
   </a>
     
-    <p>GitHub Actions has a <code>container:</code> key that runs a job&rsquo;s steps inside an image of your choosing. It&rsquo;s popular because it
-gives you a reproducible toolchain without building a custom runner image. On a self-hosted runner it works by having the
-runner drive Docker, and on <a href="/blog/2026/08/ephemerd-one-daemon-every-os/">ephemerd</a> &ldquo;Docker&rdquo; is a shim that speaks the
-Docker API and creates containers in containerd. Getting bind mounts right through that shim took four PRs in a week. A
-couple of months later the version that&hellip;</p>
+    <p>GitHub Actions has a <code>container:</code> key that runs a job&rsquo;s steps inside an image of your choosing. It&rsquo;s popular because
+it gives you a reproducible toolchain without building a custom runner image. On a self-hosted runner it works by
+having the runner drive Docker. On <a href="/blog/2026/08/ephemerd-one-daemon-every-os/">ephemerd</a>, &ldquo;Docker&rdquo; is a shim that
+speaks the Docker API and creates containers in containerd. Getting bind mounts right through that shim took four PRs
+in a week. A couple of months later the version that worked&hellip;</p>
   </div>
   <footer>
     <a href="/blog/2026/09/bind-mounts-across-mount-namespaces/" class="button big">Read More</a>
@@ -380,9 +380,9 @@ couple of months later the version that&hellip;</p>
   </a>
     
     <p>On August 16th a <code>server.test.exe</code> from <a href="/blog/2026/08/shipmates-persona-based-ai-coding-crews/">shipmates</a> climbed to
-roughly <strong>1 TB of commit charge</strong> on my Windows workstation. Windows Terminal, which was hosting several agent sessions
-in tabs, hard-faulted with <code>E_OUTOFMEMORY</code> and every one of those sessions died at the same moment. It wasn&rsquo;t the first
-time either. An earlier one hit about 236 GB through an infinite <code>filepath.Dir</code> loop.</p>
+roughly <strong>1 TB of commit charge</strong> on my Windows workstation. Windows Terminal was hosting several agent sessions in
+tabs. It hard-faulted with <code>E_OUTOFMEMORY</code>, and every one of those sessions died at the same moment. It wasn&rsquo;t the
+first time either. An earlier one hit about 236 GB through an infinite <code>filepath.Dir</code> loop.</p>
   </div>
   <footer>
     <a href="/blog/2026/09/memory-watchdog-for-go-test/" class="button big">Read More</a>
@@ -430,7 +430,7 @@ time either. An earlier one hit about 236 GB through an infinite <code>filepath.
       <h2><a href="/blog/2026/09/calling-rust-from-php-without-a-socket-part-2/">Calling Rust From PHP Without a Socket, Part 2: Making Existing Code Use It</a></h2>
     
     
-      <p>Thirteen Composer packages that let existing Redis and database code in WordPress, Laravel and Symfony use ePHPm&#39;s built-in versions, and the bugs they turned up.</p>
+      <p>Thirteen Composer packages let existing Redis and database code in WordPress, Laravel and Symfony use ePHPm&#39;s built-in versions. This post covers what&#39;s in them and the bugs they turned up.</p>
     
   </div>
   <div class="meta">
@@ -445,11 +445,11 @@ time either. An earlier one hit about 236 GB through an infinite <code>filepath.
     <img class="" src="/img/2026/09/calling-rust-from-php-without-a-socket-part-2-cover.svg" alt="The APIs PHP apps already call, mapped through ePHPm wrapper packages onto ephpm_kv_* and ephpm_db_*">
   </a>
     
-    <p><a href="/blog/2026/09/calling-rust-from-php-without-a-socket-part-1/">Part 1</a> covered the plumbing: ePHPm registers
-<code>ephpm_kv_*</code> and <code>ephpm_db_*</code> functions that call straight into Rust, and a cache read through one costs about a tenth of
-a microsecond instead of a loopback round trip. That&rsquo;s nice and also useless on its own, because nobody is going to rewrite
-their WordPress object cache or their Laravel cache store around a function called <code>ephpm_kv_set()</code>. Applications talk to
-Redis through phpredis or Predis, to the cache through PSR-6/16 or <code>wp_cache_*</code>, and to&hellip;</p>
+    <p><a href="/blog/2026/09/calling-rust-from-php-without-a-socket-part-1/">Part 1</a> covered the plumbing. ePHPm registers
+<code>ephpm_kv_*</code> and <code>ephpm_db_*</code> functions that call straight into Rust. A cache read through one costs about a tenth of a
+microsecond instead of a loopback round trip. That&rsquo;s nice and also useless on its own. Nobody is going to rewrite their
+WordPress object cache or their Laravel cache store around a function called <code>ephpm_kv_set()</code>. Applications talk to
+existing APIs instead:</p>
   </div>
   <footer>
     <a href="/blog/2026/09/calling-rust-from-php-without-a-socket-part-2/" class="button big">Read More</a>
@@ -512,8 +512,8 @@ Redis through phpredis or Predis, to the cache through PSR-6/16 or <code>wp_cach
     <img class="" src="/img/2026/09/ephpm-smaller-angles-nodelay.svg" alt="Bar chart: db.php p50 at c=1 dropped from 444 ms on v0.4.0 to 4.4 ms on v0.4.1">
   </a>
     
-    <p>Not every fix in <a href="https://github.com/ephpm/ephpm">ePHPm</a> earns a full write-up, but a few of the smaller ones have
-stuck with me because the lesson in each was bigger than the diff. Here are four from this summer.</p>
+    <p>Not every fix in <a href="https://github.com/ephpm/ephpm">ePHPm</a> earns a full write-up. A few of the smaller ones have stuck
+with me because the lesson in each was bigger than the diff. Here are four from this summer.</p>
   </div>
   <footer>
     <a href="/blog/2026/09/ephpm-smaller-angles/" class="button big">Read More</a>
@@ -576,11 +576,11 @@ stuck with me because the lesson in each was bigger than the diff. Here are four
     <img class="" src="/img/2026/09/os-exec-stdoutpipe-wait-footgun-cover.svg" alt="Timeline of a child process exiting, Wait closing the pipe, and the reader losing buffered frames">
   </a>
     
-    <p><a href="/blog/2026/08/shipmates-persona-based-ai-coding-crews/">shipmates</a> spends most of its life spawning <code>claude</code> (and <code>codex</code>)
-processes and reading newline-delimited JSON off their stdout. The last frame of a turn is the important one, a
-<code>result</code> frame with the cost, the model and the final text. Stderr matters too, because that&rsquo;s where Claude Code
-tells you <code>Invalid API key · Please run /login</code>. For a while I was throwing both away under load, and the cause is
-documented right there in the <code>os/exec</code> godoc. I fixed it in one package and then found the exact&hellip;</p>
+    <p><a href="/blog/2026/08/shipmates-persona-based-ai-coding-crews/">shipmates</a> spends most of its life spawning <code>claude</code> (and
+<code>codex</code>) processes and reading newline-delimited JSON off their stdout. The last frame of a turn is the important one.
+It&rsquo;s a <code>result</code> frame with the cost, the model and the final text. Stderr matters too, because that&rsquo;s where Claude Code
+tells you <code>Invalid API key · Please run /login</code>. For a while I was throwing both away under load. The cause is
+documented right there in the <code>os/exec</code> godoc. I fixed it in one package and then found the&hellip;</p>
   </div>
   <footer>
     <a href="/blog/2026/09/os-exec-stdoutpipe-wait-footgun/" class="button big">Read More</a>
@@ -624,7 +624,7 @@ documented right there in the <code>os/exec</code> godoc. I fixed it in one pack
       <h2><a href="/blog/2026/09/php-timeout-linker-wraps/">The Bugs Were Our Own Linker Wraps: Making a PHP Timeout Actually Time Out</a></h2>
     
     
-      <p>max_execution_time did nothing in ePHPm because we had wrapped zend_set_timeout to a no-op. The SDK already had per-thread timers; we just had to stop switching them off.</p>
+      <p>max_execution_time did nothing in ePHPm because we had wrapped zend_set_timeout to a no-op. The SDK already had per-thread timers. We just had to stop switching them off.</p>
     
   </div>
   <div class="meta">
@@ -641,9 +641,9 @@ documented right there in the <code>os/exec</code> godoc. I fixed it in one pack
     
     <p>In <a href="/blog/2026/09/php-stack-guard-segfault-containment/">the stack guard post</a> the villain was a <code>-Wl,--wrap</code> linker
 flag that turned off PHP&rsquo;s C-stack overflow guard. It wasn&rsquo;t the only one. Until August, <code>max_execution_time</code> did
-nothing in <a href="https://github.com/ephpm/ephpm">ePHPm</a> on Linux, for the same reason: we had wrapped the function that
-arms it to a no-op. A runaway script ran until the HTTP layer&rsquo;s request timeout gave up on it and sent a 504, and the
-PHP thread kept burning CPU after that.</p>
+nothing in <a href="https://github.com/ephpm/ephpm">ePHPm</a> on Linux, for the same reason. We had wrapped the function that arms
+it to a no-op. A runaway script ran until the HTTP layer&rsquo;s request timeout gave up on it and sent a 504. The PHP thread
+kept burning CPU after that.</p>
   </div>
   <footer>
     <a href="/blog/2026/09/php-timeout-linker-wraps/" class="button big">Read More</a>
@@ -691,7 +691,7 @@ PHP thread kept burning CPU after that.</p>
       <h2><a href="/blog/2026/09/clustered-sqlite-cdc-cluster-channel/">Clustered SQLite in ePHPm, Part 3: CDC Over the Cluster Channel</a></h2>
     
     
-      <p>Shipping Turso&#39;s change data capture stream between ePHPm nodes over one authenticated, multiplexed TCP connection, and the two failover bugs that showed up when the e2e suite killed the primary.</p>
+      <p>ePHPm ships Turso&#39;s change data capture stream between nodes over one authenticated, multiplexed TCP connection. This covers how that works and the two failover bugs that showed up when the e2e suite killed the primary.</p>
     
   </div>
   <div class="meta">
@@ -706,9 +706,9 @@ PHP thread kept burning CPU after that.</p>
     <img class="" src="/img/2026/09/clustered-sqlite-cluster-channel-topology.svg" alt="Two ePHPm nodes connected by gossip on UDP 7946, the KV data plane on TCP 7947 and the cluster channel on TCP 7948 carrying cdc, snapshot and sql streams">
   </a>
     
-    <p>By the end of <a href="/blog/2026/08/clustered-sqlite-adding-turso/">Part 2</a> ePHPm v0.7.0 ran exactly one SQLite engine, Turso, in
-process, for single-node and clustered mode alike. The sidecar was gone. What I skipped over is how a replica actually gets
-the primary&rsquo;s writes, and what happens when the primary dies with data on it. That&rsquo;s this post.</p>
+    <p>By the end of <a href="/blog/2026/08/clustered-sqlite-adding-turso/">Part 2</a> ePHPm v0.7.0 ran exactly one SQLite engine in
+process. That was Turso, for single-node and clustered mode alike. The sidecar was gone. What I skipped over is how a
+replica actually gets the primary&rsquo;s writes, and what happens when the primary dies with data on it. That&rsquo;s this post.</p>
   </div>
   <footer>
     <a href="/blog/2026/09/clustered-sqlite-cdc-cluster-channel/" class="button big">Read More</a>
@@ -775,11 +775,11 @@ the primary&rsquo;s writes, and what happens when the primary dies with data on 
     <img class="" src="/img/2026/09/calling-rust-from-php-without-a-socket-part-1-cover.svg" alt="Two paths from PHP to the ePHPm KV store: over a RESP socket, or through a native function and a function pointer table">
   </a>
     
-    <p><a href="https://github.com/ephpm/ephpm">ePHPm</a> is a single Rust binary that embeds PHP, and it carries its own KV store and its
-own SQLite-backed database in the same process. For a long time the only way PHP code could reach that KV store was the
-same way it reaches Redis: open a TCP socket to the RESP listener ePHPm runs on localhost, encode a command, wait for the
-reply. That works, and every PHP Redis client in existence already speaks it, but it is a strange thing to do when the
-hash map you&rsquo;re talking to lives a few&hellip;</p>
+    <p><a href="https://github.com/ephpm/ephpm">ePHPm</a> is a single Rust binary that embeds PHP. It carries its own KV store and its own
+SQLite-backed database in the same process. For a long time PHP code could only reach that KV store the same way it
+reaches Redis. It opened a TCP socket to the RESP listener ePHPm runs on localhost, encoded a command and waited for the
+reply. That works, and every PHP Redis client in existence already speaks it. But it is a strange thing to do when the
+hash map you&rsquo;re talking to lives a few pointers&hellip;</p>
   </div>
   <footer>
     <a href="/blog/2026/09/calling-rust-from-php-without-a-socket-part-1/" class="button big">Read More</a>
@@ -847,10 +847,10 @@ hash map you&rsquo;re talking to lives a few&hellip;</p>
   </a>
     
     <p><a href="https://github.com/ephpm/ephpm">ePHPm</a> can serve a directory full of sites out of one process. Point <code>sites_dir</code> at
-a folder, every subdirectory is a virtual host, and the Host header decides which one you get. That&rsquo;s how the PR preview
-environment runs: every pull request gets a subdomain, and the code behind it is whatever somebody pushed. One process
-holding many tenants means every per-tenant boundary is something ePHPm enforces itself, in-process. There&rsquo;s no
-container wall between site A and site B unless you add&hellip;</p>
+a folder and every subdirectory is a virtual host. The Host header decides which one you get. That&rsquo;s how the PR preview
+environment runs. Every pull request gets a subdomain, and the code behind it is whatever somebody pushed. One process
+holding many tenants means ePHPm enforces every per-tenant boundary itself, in-process. There&rsquo;s no container wall
+between site A and site B unless you add one.</p>
   </div>
   <footer>
     <a href="/blog/2026/09/cross-tenant-breakout-field-guide/" class="button big">Read More</a>

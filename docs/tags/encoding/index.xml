@@ -13,7 +13,7 @@
       <link>https://luth.io/blog/2026/07/five-ways-to-url-encode-an-ssh-key/</link>
       <pubDate>Tue, 28 Jul 2026 20:12:00 -0700</pubDate>
       <guid>https://luth.io/blog/2026/07/five-ways-to-url-encode-an-ssh-key/</guid>
-      <description>&lt;p&gt;&lt;a href=&#34;https://github.com/luthermonson/go-proxmox/issues/144&#34;&gt;Issue #144&lt;/a&gt; on go-proxmox was opened in April 2024 with the title&#xA;&amp;ldquo;Weird sshkeys SSH public key validation error&amp;rdquo; and it is one of my less proud threads. Thirteen comments of people,&#xA;including me, trying to get a public key into a cloud-init VM through the API, and the working answer took more than a&#xA;year to show up. The fix that finally landed in May is one line. Here&amp;rsquo;s why it took so long.&lt;/p&gt;</description>
+      <description>&lt;p&gt;&lt;a href=&#34;https://github.com/luthermonson/go-proxmox/issues/144&#34;&gt;Issue #144&lt;/a&gt; on go-proxmox was opened in April 2024 with the&#xA;title &amp;ldquo;Weird sshkeys SSH public key validation error&amp;rdquo;. It is one of my less proud threads. It&amp;rsquo;s thirteen comments of&#xA;people, including me, trying to get a public key into a cloud-init VM through the API. The working answer took more&#xA;than a year to show up. The fix that finally landed in May is one line. Here&amp;rsquo;s why it took so long.&lt;/p&gt;</description>
     </item>
   </channel>
 </rss>

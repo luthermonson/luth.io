@@ -234,10 +234,10 @@
   </a>
     
     <p>A third-party Laravel runtime comparison put <a href="https://github.com/ephpm/ephpm">ePHPm</a>&rsquo;s worker mode at the top on
-throughput, about 19% ahead of FrankenPHP on <code>/api/static</code>, and at the bottom of the fast group on tail latency: P99 of
-157 ms against FrankenPHP&rsquo;s 57 ms. Best throughput plus the fattest tail is a shape worth chasing, because fast
-execution can&rsquo;t produce it. Making requests faster lowers the mean <em>and</em> the tail. Only waiting can pull them apart,
-and specifically, unfair waiting.</p>
+throughput. It was about 19% ahead of FrankenPHP on <code>/api/static</code>. It was also at the bottom of the fast group on tail
+latency, with a P99 of 157 ms against FrankenPHP&rsquo;s 57 ms. Best throughput plus the fattest tail is a shape worth
+chasing, because fast execution can&rsquo;t produce it. Making requests faster lowers the mean <em>and</em> the tail. Only waiting
+can pull them apart. Specifically, unfair waiting.</p>
   </div>
   <footer>
     <a href="/blog/2026/09/php-dispatch-fair-queue-p99/" class="button big">Read More</a>

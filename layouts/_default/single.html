@@ -6,6 +6,17 @@
         {{ partial "share-buttons" . }}
       </div>
       <div class="content">
+        {{- /* Post pages don't render the cover (see the header), so when the body has no image of its own,
+               show the cover diagram here. Logos are skipped. */ -}}
+        {{- if not (in .Content "<img") }}
+          {{- with index (.Params.images | default slice) 0 }}
+            {{- if not (in .src "logo") }}
+              <figure class="post-cover">
+                <img src="{{ .src | relURL }}" alt="{{ .alt }}">
+              </figure>
+            {{- end }}
+          {{- end }}
+        {{- end }}
         {{ if and (gt .WordCount .Site.Params.tocWords) ( .Site.Params.toc ) }}
           {{ .TableOfContents }}
         {{ end }}

@@ -13,7 +13,7 @@
       <link>https://luth.io/blog/2026/09/process-containment-job-objects-process-groups-cgroups/</link>
       <pubDate>Sat, 26 Sep 2026 16:20:00 -0700</pubDate>
       <guid>https://luth.io/blog/2026/09/process-containment-job-objects-process-groups-cgroups/</guid>
-      <description>&lt;p&gt;Every turn a &lt;a href=&#34;https://luth.io/blog/2026/08/shipmates-persona-based-ai-coding-crews/&#34;&gt;shipmates&lt;/a&gt; crew member takes is a subprocess:&#xA;&lt;code&gt;claude&lt;/code&gt; or the &lt;code&gt;codex&lt;/code&gt; app-server, which in turn spawns shells, &lt;code&gt;go test&lt;/code&gt;, &lt;code&gt;npm&lt;/code&gt;, whatever the task calls for. Two&#xA;things have to be true about that tree. When a turn ends or gets killed, the &lt;em&gt;whole&lt;/em&gt; tree goes, including the&#xA;grandchildren. And if somebody sets a memory or CPU budget, the budget applies to the whole tree, not just the&#xA;process I happened to start.&lt;/p&gt;</description>
+      <description>&lt;p&gt;Every turn a &lt;a href=&#34;https://luth.io/blog/2026/08/shipmates-persona-based-ai-coding-crews/&#34;&gt;shipmates&lt;/a&gt; crew member takes is a subprocess. It&amp;rsquo;s&#xA;&lt;code&gt;claude&lt;/code&gt; or the &lt;code&gt;codex&lt;/code&gt; app-server. That in turn spawns shells, &lt;code&gt;go test&lt;/code&gt;, &lt;code&gt;npm&lt;/code&gt; or whatever the task calls for. Two&#xA;things have to be true about that tree. When a turn ends or gets killed, the &lt;em&gt;whole&lt;/em&gt; tree goes, including the&#xA;grandchildren. And if somebody sets a memory or CPU budget, the budget applies to the whole tree, not just the&#xA;process I happened to start.&lt;/p&gt;</description>
     </item>
   </channel>
 </rss>

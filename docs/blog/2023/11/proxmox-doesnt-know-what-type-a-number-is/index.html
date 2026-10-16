@@ -10,14 +10,14 @@
     gtag('config', 'G-MSTSKGFWTX');
 </script><meta charset="utf-8">
 <title>Proxmox Doesn&#39;t Know What Type a Number Is - Luther Monson</title>
-<meta name="description" content="The Proxmox VE API returns the same field as 1234 in one place and &#34;1234&#34; in another. Why go-proxmox has StringOrInt, StringOrUint64, StringOrFloat64 and IntOrBool instead of plain Go types.">
+<meta name="description" content="The Proxmox VE API returns the same field as 1234 in one place and &#34;1234&#34; in another. This is why go-proxmox has StringOrInt, StringOrUint64, StringOrFloat64 and IntOrBool instead of plain Go types.">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
 <meta name="twitter:card" content="summary_large_image"><meta name="twitter:site" content="@luthermonson">
 
 <meta property="og:site_name" content="Luther Monson">
 <meta property="og:title" content="Proxmox Doesn&#39;t Know What Type a Number Is">
-<meta property="og:description" content="The Proxmox VE API returns the same field as 1234 in one place and &#34;1234&#34; in another. Why go-proxmox has StringOrInt, StringOrUint64, StringOrFloat64 and IntOrBool instead of plain Go types.">
+<meta property="og:description" content="The Proxmox VE API returns the same field as 1234 in one place and &#34;1234&#34; in another. This is why go-proxmox has StringOrInt, StringOrUint64, StringOrFloat64 and IntOrBool instead of plain Go types.">
 <meta property="og:type" content="article">
 <meta property="og:url" content="https://luth.io/blog/2023/11/proxmox-doesnt-know-what-type-a-number-is/">
     <meta property="og:image" content="https://luth.io/img/2022/02/proxmox-logo.png">
@@ -215,7 +215,7 @@
       <h2><a href="/blog/2023/11/proxmox-doesnt-know-what-type-a-number-is/">Proxmox Doesn&#39;t Know What Type a Number Is</a></h2>
     
     
-      <p>The Proxmox VE API returns the same field as 1234 in one place and &#34;1234&#34; in another. Why go-proxmox has StringOrInt, StringOrUint64, StringOrFloat64 and IntOrBool instead of plain Go types.</p>
+      <p>The Proxmox VE API returns the same field as 1234 in one place and &#34;1234&#34; in another. This is why go-proxmox has StringOrInt, StringOrUint64, StringOrFloat64 and IntOrBool instead of plain Go types.</p>
     
   </div>
   <div class="meta">
@@ -272,19 +272,19 @@
       </div>
       <div class="content">
         
-        <p>Every couple of months somebody opens an issue on <a href="https://github.com/luthermonson/go-proxmox">go-proxmox</a> with a title
-that starts with <code>json: cannot unmarshal string into Go struct field</code>. The most recent one was fixed last week, and it&rsquo;s the same
-root cause every time: the Proxmox VE API is backed by Perl, Perl doesn&rsquo;t really care whether a scalar is a number or a
-string, and the JSON encoder on the other end writes whatever the scalar happens to be at the time. So a field that is
-documented as an integer comes back as <code>2048</code> from one endpoint and <code>&quot;2048&quot;</code> from another, and sometimes from the same
-endpoint depending on how the value got into the config.</p>
+        <p>Every couple of months somebody opens an issue on <a href="https://github.com/luthermonson/go-proxmox">go-proxmox</a> with a
+title that starts with <code>json: cannot unmarshal string into Go struct field</code>. The most recent one was fixed last week.
+It&rsquo;s the same root cause every time. The Proxmox VE API is backed by Perl, and Perl doesn&rsquo;t really care whether a
+scalar is a number or a string. The JSON encoder on the other end writes whatever the scalar happens to be at the time.
+So a field that is documented as an integer comes back as <code>2048</code> from one endpoint and <code>&quot;2048&quot;</code> from another.
+Sometimes it changes on the same endpoint depending on how the value got into the config.</p>
 <p>Go&rsquo;s <code>encoding/json</code> does care, a lot. Here&rsquo;s how the client deals with it.</p>
+<p><img src="/img/2023/11/proxmox-number-shapes.svg" alt="The same field arriving as 2048, “2048” or 2048.0 lands in StringOrInt as 2048; 0.4, “0.4” or an empty string lands in StringOrFloat64 as 0.4 or 0; 1 or true lands in IntOrBool as true"></p>
 <h3 id="the-cpulimit-report">The cpulimit report</h3>
 <p>The cleanest example is <a href="https://github.com/luthermonson/go-proxmox/issues/66">#66</a> and its follow up
-<a href="https://github.com/luthermonson/go-proxmox/issues/69">#69</a>. <code>CPULimit</code> was an <code>int</code> in <code>VirtualMachineConfig</code>, which is
-wrong on its face because the Proxmox docs describe it as a float (<code>1.0</code> is 100% of a core, <code>0.4</code> is 40%). So it became
-a <code>float32</code>, and then the reporter came back with the actual response from
-<code>/nodes/{node}/qemu/{vmid}/config</code>:</p>
+<a href="https://github.com/luthermonson/go-proxmox/issues/69">#69</a>. <code>CPULimit</code> was an <code>int</code> in <code>VirtualMachineConfig</code>. That&rsquo;s
+wrong on its face because the Proxmox docs describe it as a float (<code>1.0</code> is 100% of a core, <code>0.4</code> is 40%). So it
+became a <code>float32</code>. Then the reporter came back with the actual response from <code>/nodes/{node}/qemu/{vmid}/config</code>:</p>
 <div class="highlight"><pre tabindex="0" class="chroma"><code class="language-json" data-lang="json"><span class="line"><span class="cl"><span class="p">{</span>
 </span></span><span class="line"><span class="cl">  <span class="nt">&#34;data&#34;</span><span class="p">:</span> <span class="p">{</span>
 </span></span><span class="line"><span class="cl">    <span class="nt">&#34;cores&#34;</span><span class="p">:</span> <span class="mi">2</span><span class="p">,</span>
@@ -293,12 +293,13 @@ a <code>float32</code>, and then the reporter came back with the actual response
 </span></span><span class="line"><span class="cl">    <span class="nt">&#34;scsihw&#34;</span><span class="p">:</span> <span class="s2">&#34;virtio-scsi-pci&#34;</span>
 </span></span><span class="line"><span class="cl">  <span class="p">}</span>
 </span></span><span class="line"><span class="cl"><span class="p">}</span>
-</span></span></code></pre></div><p>(trimmed, the real payload has the rest of the VM config in it). <code>cores</code> and <code>memory</code> are numbers. <code>cpulimit</code> is a
-string. Same object, same endpoint.</p>
+</span></span></code></pre></div><p>That&rsquo;s trimmed. The real payload has the rest of the VM config in it. <code>cores</code> and <code>memory</code> are numbers. <code>cpulimit</code> is
+a string. Same object, same endpoint.</p>
 <h3 id="why-not-string">Why not <code>,string</code></h3>
-<p>The reporter&rsquo;s first suggestion was the <code>,string</code> struct tag option, which tells <code>encoding/json</code> the value is a number
-wrapped in quotes. That handles exactly one shape. I tried it and it was a mess, so here is the comparison as a little
-program you can run, three inputs against a plain <code>float64</code>, a <code>float64</code> with <code>,string</code>, and the type we ended up with:</p>
+<p>The reporter&rsquo;s first suggestion was the <code>,string</code> struct tag option. It tells <code>encoding/json</code> the value is a number
+wrapped in quotes. That handles exactly one shape. I tried it and it was a mess. Here is the comparison as a little
+program you can run. It feeds three inputs to a plain <code>float64</code>, a <code>float64</code> with <code>,string</code>, and the type we ended up
+with:</p>
 <div class="highlight"><pre tabindex="0" class="chroma"><code class="language-go" data-lang="go"><span class="line"><span class="cl"><span class="kd">type</span><span class="w"> </span><span class="nx">plain</span><span class="w"> </span><span class="kd">struct</span><span class="w"> </span><span class="p">{</span><span class="w">
 </span></span></span><span class="line"><span class="cl"><span class="w">	</span><span class="nx">CPULimit</span><span class="w"> </span><span class="kt">float64</span><span class="w"> </span><span class="s">`json:&#34;cpulimit&#34;`</span><span class="w">
 </span></span></span><span class="line"><span class="cl"><span class="p">}</span><span class="w">
@@ -317,12 +318,13 @@ program you can run, three inputs against a plain <code>float64</code>, a <code>
 {&#34;cpulimit&#34;:&#34;&#34;}      float64: 0      err=json: cannot unmarshal string into Go struct field plain.cpulimit of type float64
                      ,string: 0      err=json: invalid use of ,string struct tag, trying to unmarshal &#34;&#34; into float64
                      StringOrFloat64: 0      err=&lt;nil&gt;
-</code></pre><p>(Go 1.21.4.) <code>,string</code> fixes the quoted case and breaks the unquoted one, and it can&rsquo;t cope with an empty string, which
-Proxmox also sends. If the same struct is used for two endpoints that disagree, and in this client a lot of structs are,
-a tag can&rsquo;t help you. You need a type that accepts both.</p>
+</code></pre><p>(Go 1.21.4.) <code>,string</code> fixes the quoted case and breaks the unquoted one. It also can&rsquo;t cope with an empty string,
+which Proxmox also sends. In this client a lot of structs are used for two endpoints that disagree. A tag can&rsquo;t help
+you there. You need a type that accepts both.</p>
 <h3 id="the-stringor-types">The StringOr types</h3>
-<p>The idea goes back to the first version of the client: a named numeric type with its own <code>UnmarshalJSON</code> that strips any
-quotes and parses what&rsquo;s left. One type per Go numeric kind we need. The float version I wrote for #69:</p>
+<p>The idea goes back to the first version of the client. It&rsquo;s a named numeric type with its own <code>UnmarshalJSON</code> that
+strips any quotes and parses what&rsquo;s left. There&rsquo;s one type per Go numeric kind we need. Here&rsquo;s the float version I
+wrote for #69:</p>
 <div class="highlight"><pre tabindex="0" class="chroma"><code class="language-go" data-lang="go"><span class="line"><span class="cl"><span class="kd">var</span><span class="w"> </span><span class="p">(</span><span class="w">
 </span></span></span><span class="line"><span class="cl"><span class="w">	</span><span class="nx">isFloat</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="nx">regexp</span><span class="p">.</span><span class="nf">MustCompile</span><span class="p">(</span><span class="s">`^[0-9.]*$`</span><span class="p">)</span><span class="w">
 </span></span></span><span class="line"><span class="cl"><span class="p">)</span><span class="w">
@@ -347,29 +349,29 @@ quotes and parses what&rsquo;s left. One type per Go numeric kind we need. The f
 </span></span></span><span class="line"><span class="cl"><span class="w">	</span><span class="o">*</span><span class="nx">d</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="nf">StringOrFloat64</span><span class="p">(</span><span class="nx">parsed</span><span class="p">)</span><span class="w">
 </span></span></span><span class="line"><span class="cl"><span class="w">	</span><span class="k">return</span><span class="w"> </span><span class="kc">nil</span><span class="w">
 </span></span></span><span class="line"><span class="cl"><span class="p">}</span><span class="w">
-</span></span></span></code></pre></div><p><code>StringOrInt</code> and <code>StringOrUint64</code> are the same thing with a <code>math.Trunc</code> before the conversion, so <code>&quot;2048&quot;</code>, <code>2048</code> and
-<code>2048.0</code> all land as <code>2048</code>. Before that change the integer versions used <code>strconv.ParseUint</code>, which chokes on a decimal
-point, so moving everything to <code>ParseFloat</code> and truncating fixed a second class of report for free. The regex is there so
-garbage fails loudly with the offending value in the error instead of quietly becoming zero.</p>
-<p><a href="https://github.com/luthermonson/go-proxmox/issues/59">#59</a> asked the obvious question back in May: wouldn&rsquo;t it be easier
-to always convert to <code>uint64</code>? My answer then is still my answer now. The API was returning <code>1234</code> and <code>&quot;1234&quot;</code> and
-interchanging them a lot, and one unmarshaller on a <code>StringOrUint64</code> means you don&rsquo;t write a custom <code>UnmarshalJSON</code> for
+</span></span></span></code></pre></div><p><code>StringOrInt</code> and <code>StringOrUint64</code> are the same thing with a <code>math.Trunc</code> before the conversion. So <code>&quot;2048&quot;</code>, <code>2048</code>
+and <code>2048.0</code> all land as <code>2048</code>. Before that change the integer versions used <code>strconv.ParseUint</code>, which chokes on a
+decimal point. Moving everything to <code>ParseFloat</code> and truncating fixed a second class of report for free. The regex is
+there so garbage fails loudly with the offending value in the error instead of quietly becoming zero.</p>
+<p><a href="https://github.com/luthermonson/go-proxmox/issues/59">#59</a> asked the obvious question back in May. Wouldn&rsquo;t it be
+easier to always convert to <code>uint64</code>? My answer then is still my answer now. The API was returning <code>1234</code> and <code>&quot;1234&quot;</code>
+and interchanging them a lot. One unmarshaller on a <code>StringOrUint64</code> means you don&rsquo;t write a custom <code>UnmarshalJSON</code> for
 every struct that has a numeric field which might show up quoted. The cost is that you have to convert at the edges
 (<code>uint64(vm.VMID)</code>), which I&rsquo;ll take.</p>
-<p>Going the other way is a non-issue. None of these types have a <code>MarshalJSON</code>, so they serialize as plain numbers, and
+<p>Going the other way is a non-issue. None of these types have a <code>MarshalJSON</code>, so they serialize as plain numbers.
 Proxmox is perfectly happy to accept a number for a field it would hand back to you as a string.</p>
 <h3 id="when-upstream-changes-the-type-under-you">When upstream changes the type under you</h3>
-<p><a href="https://github.com/luthermonson/go-proxmox/pull/105">#105</a>, merged last week, is the other way this bites. Reading a VM
-config started failing on <code>memory</code> after a Proxmox update. Johann tracked it down to
-<a href="https://git.proxmox.com/?p=qemu-server.git;a=commit;h=7f8c808772979f274cdfac1dc7264771a3b7a7ae">qemu-server 8.0.8</a>,
-where <code>memory</code> got its own property-string parser (<code>[current=]&lt;integer&gt;</code>) &ldquo;in preparation to add more properties to the
-memory configuration&rdquo;, and from then on the API returns it quoted. The fix was one line:</p>
+<p><a href="https://github.com/luthermonson/go-proxmox/pull/105">#105</a>, merged last week, is the other way this bites. Reading a
+VM config started failing on <code>memory</code> after a Proxmox update. Johann tracked it down to
+<a href="https://git.proxmox.com/?p=qemu-server.git;a=commit;h=7f8c808772979f274cdfac1dc7264771a3b7a7ae">qemu-server 8.0.8</a>.
+That release gave <code>memory</code> its own property-string parser (<code>[current=]&lt;integer&gt;</code>) &ldquo;in preparation to add more
+properties to the memory configuration&rdquo;. From then on the API returns it quoted. The fix was one line:</p>
 <div class="highlight"><pre tabindex="0" class="chroma"><code class="language-go" data-lang="go"><span class="line"><span class="cl"><span class="nx">Memory</span><span class="w">    </span><span class="nx">StringOrInt</span><span class="w"> </span><span class="s">`json:&#34;memory,omitempty&#34;`</span><span class="w"> </span><span class="c1">// See commit 7f8c808772979f274cdfac1dc7264771a3b7a7ae on qemu-server</span><span class="w">
-</span></span></span></code></pre></div><p>That&rsquo;s the real argument for the StringOr types over hand-picking <code>int</code> vs <code>string</code> per field. A field can flip between
-Proxmox point releases, and when it does you want a type that already accepts both rather than a broken release for
-everyone who upgraded their cluster.</p>
+</span></span></span></code></pre></div><p>That&rsquo;s the real argument for the StringOr types over hand-picking <code>int</code> vs <code>string</code> per field. A field can flip
+between Proxmox point releases. When it does, you want a type that already accepts both rather than a broken release
+for everyone who upgraded their cluster.</p>
 <h3 id="booleans-have-the-same-problem">Booleans have the same problem</h3>
-<p>Booleans are their own flavor. Some endpoints return <code>true</code>/<code>false</code>, most return <code>1</code>/<code>0</code>, and the config files on disk
+<p>Booleans are their own flavor. Some endpoints return <code>true</code>/<code>false</code> and most return <code>1</code>/<code>0</code>. The config files on disk
 are all <code>1</code>/<code>0</code>. <code>IntOrBool</code> leans on the fact that <code>strconv.ParseBool</code> already accepts <code>1</code>, <code>0</code>, <code>true</code> and <code>false</code>:</p>
 <div class="highlight"><pre tabindex="0" class="chroma"><code class="language-go" data-lang="go"><span class="line"><span class="cl"><span class="kd">type</span><span class="w"> </span><span class="nx">IntOrBool</span><span class="w"> </span><span class="kt">bool</span><span class="w">
 </span></span></span><span class="line"><span class="cl"><span class="w">
@@ -389,9 +391,9 @@ are all <code>1</code>/<code>0</code>. <code>IntOrBool</code> leans on the fact 
 </span></span></span><span class="line"><span class="cl"><span class="w">	</span><span class="k">return</span><span class="w"> </span><span class="p">[]</span><span class="nb">byte</span><span class="p">(</span><span class="s">&#34;0&#34;</span><span class="p">),</span><span class="w"> </span><span class="kc">nil</span><span class="w">
 </span></span></span><span class="line"><span class="cl"><span class="p">}</span><span class="w">
 </span></span></span></code></pre></div><p>This one does marshal, and always as <code>1</code>/<code>0</code>, because that&rsquo;s the form every write endpoint accepts.</p>
-<p>The rule I follow now when adding a field: if Proxmox documents it as a number, use the matching <code>StringOr</code> type unless
-I&rsquo;ve seen it come back unquoted from every endpoint that shares the struct. It&rsquo;s a little uglier in the struct
-definitions and it means far fewer <code>cannot unmarshal string</code> issues.</p>
+<p>I follow one rule now when adding a field. If Proxmox documents it as a number, use the matching <code>StringOr</code> type. The
+exception is when I&rsquo;ve seen it come back unquoted from every endpoint that shares the struct. It&rsquo;s a little uglier in
+the struct definitions and it means far fewer <code>cannot unmarshal string</code> issues.</p>
 <h3 id="links">Links</h3>
 <ul>
 <li><a href="https://github.com/luthermonson/go-proxmox">go-proxmox</a></li>

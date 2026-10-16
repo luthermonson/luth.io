@@ -11,6 +11,16 @@
   transform: none;
 }
 
+/* Cover diagram shown at the top of a post whose body has no image (layouts/_default/single.html). */
+.post-cover {
+  margin: 0 0 2em 0;
+  text-align: center;
+}
+.post-cover img {
+  height: auto;
+  max-width: 100%;
+}
+
 /* Older / newer links under a post (layouts/_default/single.html). */
 .post-nav {
   display: flex;

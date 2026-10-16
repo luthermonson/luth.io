@@ -234,10 +234,11 @@
   </a>
     
     <p>The pitch for <a href="https://github.com/ephpm/ephpm">ePHPm</a> is one binary in place of php-fpm, nginx and Redis. There was
-always a hole in it though. To deploy a PHP app you still need to run <code>composer install</code>, and that drags PHP and
-<code>composer.phar</code> back onto the box, or into the container build, just for that one step. <code>ephpm composer install</code> now
+always a hole in it though. To deploy a PHP app you still need to run <code>composer install</code>. That drags PHP and
+<code>composer.phar</code> back onto the box or into the container build, just for that one step. <code>ephpm composer install</code> now
 runs a pure-Rust, Composer-compatible installer called <a href="https://github.com/Adelagric/vivacity">vivacity</a> inside the
-ePHPm binary. One binary serves the app and installs its dependencies, and on Windows that works with no PHP installed&hellip;</p>
+ePHPm binary. One binary serves the app and installs its dependencies. On Windows that works with no PHP installed at
+all.&hellip;</p>
   </div>
   <footer>
     <a href="/blog/2026/10/composer-without-php-vivacity/" class="button big">Read More</a>
@@ -287,7 +288,7 @@ ePHPm binary. One binary serves the app and installs its dependencies, and on Wi
       <h2><a href="/blog/2026/09/clustered-sqlite-cdc-cluster-channel/">Clustered SQLite in ePHPm, Part 3: CDC Over the Cluster Channel</a></h2>
     
     
-      <p>Shipping Turso&#39;s change data capture stream between ePHPm nodes over one authenticated, multiplexed TCP connection, and the two failover bugs that showed up when the e2e suite killed the primary.</p>
+      <p>ePHPm ships Turso&#39;s change data capture stream between nodes over one authenticated, multiplexed TCP connection. This covers how that works and the two failover bugs that showed up when the e2e suite killed the primary.</p>
     
   </div>
   <div class="meta">
@@ -302,9 +303,9 @@ ePHPm binary. One binary serves the app and installs its dependencies, and on Wi
     <img class="" src="/img/2026/09/clustered-sqlite-cluster-channel-topology.svg" alt="Two ePHPm nodes connected by gossip on UDP 7946, the KV data plane on TCP 7947 and the cluster channel on TCP 7948 carrying cdc, snapshot and sql streams">
   </a>
     
-    <p>By the end of <a href="/blog/2026/08/clustered-sqlite-adding-turso/">Part 2</a> ePHPm v0.7.0 ran exactly one SQLite engine, Turso, in
-process, for single-node and clustered mode alike. The sidecar was gone. What I skipped over is how a replica actually gets
-the primary&rsquo;s writes, and what happens when the primary dies with data on it. That&rsquo;s this post.</p>
+    <p>By the end of <a href="/blog/2026/08/clustered-sqlite-adding-turso/">Part 2</a> ePHPm v0.7.0 ran exactly one SQLite engine in
+process. That was Turso, for single-node and clustered mode alike. The sidecar was gone. What I skipped over is how a
+replica actually gets the primary&rsquo;s writes, and what happens when the primary dies with data on it. That&rsquo;s this post.</p>
   </div>
   <footer>
     <a href="/blog/2026/09/clustered-sqlite-cdc-cluster-channel/" class="button big">Read More</a>
@@ -371,11 +372,11 @@ the primary&rsquo;s writes, and what happens when the primary dies with data on 
     <img class="" src="/img/2026/09/calling-rust-from-php-without-a-socket-part-1-cover.svg" alt="Two paths from PHP to the ePHPm KV store: over a RESP socket, or through a native function and a function pointer table">
   </a>
     
-    <p><a href="https://github.com/ephpm/ephpm">ePHPm</a> is a single Rust binary that embeds PHP, and it carries its own KV store and its
-own SQLite-backed database in the same process. For a long time the only way PHP code could reach that KV store was the
-same way it reaches Redis: open a TCP socket to the RESP listener ePHPm runs on localhost, encode a command, wait for the
-reply. That works, and every PHP Redis client in existence already speaks it, but it is a strange thing to do when the
-hash map you&rsquo;re talking to lives a few&hellip;</p>
+    <p><a href="https://github.com/ephpm/ephpm">ePHPm</a> is a single Rust binary that embeds PHP. It carries its own KV store and its own
+SQLite-backed database in the same process. For a long time PHP code could only reach that KV store the same way it
+reaches Redis. It opened a TCP socket to the RESP listener ePHPm runs on localhost, encoded a command and waited for the
+reply. That works, and every PHP Redis client in existence already speaks it. But it is a strange thing to do when the
+hash map you&rsquo;re talking to lives a few pointers&hellip;</p>
   </div>
   <footer>
     <a href="/blog/2026/09/calling-rust-from-php-without-a-socket-part-1/" class="button big">Read More</a>
@@ -443,10 +444,10 @@ hash map you&rsquo;re talking to lives a few&hellip;</p>
   </a>
     
     <p>A third-party Laravel runtime comparison put <a href="https://github.com/ephpm/ephpm">ePHPm</a>&rsquo;s worker mode at the top on
-throughput, about 19% ahead of FrankenPHP on <code>/api/static</code>, and at the bottom of the fast group on tail latency: P99 of
-157 ms against FrankenPHP&rsquo;s 57 ms. Best throughput plus the fattest tail is a shape worth chasing, because fast
-execution can&rsquo;t produce it. Making requests faster lowers the mean <em>and</em> the tail. Only waiting can pull them apart,
-and specifically, unfair waiting.</p>
+throughput. It was about 19% ahead of FrankenPHP on <code>/api/static</code>. It was also at the bottom of the fast group on tail
+latency, with a P99 of 157 ms against FrankenPHP&rsquo;s 57 ms. Best throughput plus the fattest tail is a shape worth
+chasing, because fast execution can&rsquo;t produce it. Making requests faster lowers the mean <em>and</em> the tail. Only waiting
+can pull them apart. Specifically, unfair waiting.</p>
   </div>
   <footer>
     <a href="/blog/2026/09/php-dispatch-fair-queue-p99/" class="button big">Read More</a>
@@ -496,7 +497,7 @@ and specifically, unfair waiting.</p>
       <h2><a href="/blog/2026/09/own-your-php-thread-pool/">Stop Running PHP on tokio&#39;s spawn_blocking - Own Your Thread Pool</a></h2>
     
     
-      <p>Why ePHPm moved PHP execution off tokio&#39;s generic blocking pool onto threads it owns, how the switch was rolled out behind a knob, and what it did to memory, throughput and overload.</p>
+      <p>Why ePHPm moved PHP execution off tokio&#39;s generic blocking pool onto threads it owns. How the switch rolled out behind a knob and what it did to memory, throughput and overload.</p>
     
   </div>
   <div class="meta">
@@ -512,10 +513,10 @@ and specifically, unfair waiting.</p>
   </a>
     
     <p>For most of its life, <a href="https://github.com/ephpm/ephpm">ePHPm</a> ran every PHP request on tokio&rsquo;s <code>spawn_blocking</code>
-pool. It works. It passes tests, it serves benchmarks fine, and it&rsquo;s the first thing anybody reaches for when they
-need to call blocking code from async Rust. It&rsquo;s also quietly wrong for a language runtime, in ways that only show up
-under overload or after a crash. Over the last three weeks it got replaced with a pool of OS threads that ePHPm owns,
-first behind a config flag, then as the default, and as&hellip;</p>
+pool. It works. It passes tests and it serves benchmarks fine. It&rsquo;s the first thing anybody reaches for when they need
+to call blocking code from async Rust. It&rsquo;s also quietly wrong for a language runtime. The problems only show up under
+overload or after a crash. Over the last three weeks it got replaced with a pool of OS threads that ePHPm owns. That
+pool shipped first behind a config flag, then as&hellip;</p>
   </div>
   <footer>
     <a href="/blog/2026/09/own-your-php-thread-pool/" class="button big">Read More</a>
@@ -578,11 +579,11 @@ first behind a config flag, then as the default, and as&hellip;</p>
     <img class="" src="/img/2026/09/clustered-acme-three-bugs-cover.svg" alt="Diagram comparing a sharded KV write that leaves one of three nodes without the certificate to a broadcast write that reaches all three">
   </a>
     
-    <p><a href="https://github.com/ephpm/ephpm">ePHPm</a> gets its own certificates from Let&rsquo;s Encrypt, and in a cluster only one node
-should be talking to the CA. The nodes elect an ACME leader over the shared KV store, the leader orders the cert, and
-everybody else installs it from KV. That all had unit tests and had worked on single nodes for months. Then I tried to
-move wildcard TLS termination for our preview environment off a separate proxy and onto the 3-node cluster itself, and
-in about two days it found three separate bugs that&hellip;</p>
+    <p><a href="https://github.com/ephpm/ephpm">ePHPm</a> gets its own certificates from Let&rsquo;s Encrypt. In a cluster only one node should
+be talking to the CA. The nodes elect an ACME leader over the shared KV store. The leader orders the cert, and everybody
+else installs it from KV. That all had unit tests and had worked on single nodes for months. Then I tried to move
+wildcard TLS termination for our preview environment off a separate proxy and onto the 3-node cluster itself. In about
+two days it found three separate bugs that each took&hellip;</p>
   </div>
   <footer>
     <a href="/blog/2026/09/clustered-acme-three-bugs/" class="button big">Read More</a>
@@ -649,9 +650,9 @@ in about two days it found three separate bugs that&hellip;</p>
     
     <p><a href="https://github.com/ephpm/ephpm">ePHPm</a> middleware runs <em>before</em> PHP. It&rsquo;s a small versioned C ABI, loaded with
 <code>dlopen</code>, that gets to look at a request and reject it before PHP boots or the request body is read. That&rsquo;s the
-right shape for a gateway, and it&rsquo;s the wrong shape for most PHP shops, who want to write their middleware in PHP.
-This is the story of compiling PHP into a native <code>.so</code> to fit that ABI, finding exactly where it broke, and then
-building the lane that should have existed in the first place.</p>
+right shape for a gateway. It&rsquo;s the wrong shape for most PHP shops, who want to write their middleware in PHP. This is
+the story of compiling PHP into a native <code>.so</code> to fit that ABI and finding exactly where it broke. Then I built the lane
+that should have existed in the first place.</p>
   </div>
   <footer>
     <a href="/blog/2026/08/php-middleware-elephc/" class="button big">Read More</a>
@@ -701,7 +702,7 @@ building the lane that should have existed in the first place.</p>
       <h2><a href="/blog/2026/08/hardening-rust-database-proxy/">Security and Performance Hardening of a Rust Database Proxy</a></h2>
     
     
-      <p>One week of hardening litewire: a memory bug in a dependency, a site that could open its neighbor&#39;s database, a security rule that lived only in a comment, and a needless 1 MB clear on every query.</p>
+      <p>What a week of hardening litewire turned up. A dependency had a memory bug, one site could open its neighbor&#39;s database, a security rule lived only in a comment and every query paid for a needless 1 MB clear.</p>
     
   </div>
   <div class="meta">
@@ -717,10 +718,8 @@ building the lane that should have existed in the first place.</p>
   </a>
     
     <p><a href="https://github.com/ephpm/litewire">litewire</a> is the piece of ePHPm that lets PHP apps talk MySQL to a SQLite file. I
-wrote about <a href="/blog/2026/07/sqlite-production-database-protocol-translation/">how it works</a> and about
-<a href="/blog/2026/08/faking-mysql-quirks-wordpress/">the MySQL quirks WordPress depends on</a>. This one is the less visible
-half of August: an audit pass on litewire, a multi-tenant mode that turned a database proxy into a security boundary,
-and a performance regression I shipped and then had to go find.</p>
+wrote about <a href="/blog/2026/07/sqlite-production-database-protocol-translation/">how it works</a> and about <a href="/blog/2026/08/faking-mysql-quirks-wordpress/">the MySQL quirks
+WordPress depends on</a>. This one is the less visible half of August:</p>
   </div>
   <footer>
     <a href="/blog/2026/08/hardening-rust-database-proxy/" class="button big">Read More</a>
@@ -772,13 +771,13 @@ and a performance regression I shipped and then had to go find.</p>
       <h2><a href="/blog/2026/08/rolling-your-own-kv-store/">Rolling Your Own KV Store Instead of Embedding Redis</a></h2>
     
     
-      <p>Why ePHPm has its own Redis-compatible cache built in instead of running Redis, a bug that hid in it for four months, and how it compares to real Redis on the same machine.</p>
+      <p>Why ePHPm has its own Redis-compatible cache built in instead of running Redis. It also covers a bug that hid in it for four months and how it compares to real Redis on the same machine.</p>
     
   </div>
   <div class="meta">
     <time datetime="2026-08-17 20:44:00 -0700 PDT">August 17, 2026</time>
     
-    <p>10-Minute Read</p>
+    <p>11-Minute Read</p>
   </div>
 </header>
 
@@ -789,9 +788,9 @@ and a performance regression I shipped and then had to go find.</p>
     
     <p>Every PHP deployment I&rsquo;ve run eventually grew a Redis. Sessions, the WordPress object cache, Laravel&rsquo;s cache and locks,
 rate limiting. <a href="https://github.com/ephpm/ephpm">ePHPm</a> is supposed to be one binary that replaces nginx + php-fpm +
-Redis, so it needed a cache in the box. I didn&rsquo;t want to write one. This post is why I did anyway, how it&rsquo;s built, the
-bug that sat in its eviction code from March until last month, and how it holds up against a stock Redis on the same
-machine with <code>redis-benchmark</code> doing the&hellip;</p>
+Redis, so it needed a cache in the box. I didn&rsquo;t want to write one. This post covers why I did anyway and how it&rsquo;s
+built. It also covers the bug that sat in its eviction code from March until last month. Then I compare it against a
+stock Redis on the same machine with&hellip;</p>
   </div>
   <footer>
     <a href="/blog/2026/08/rolling-your-own-kv-store/" class="button big">Read More</a>
@@ -843,7 +842,7 @@ machine with <code>redis-benchmark</code> doing the&hellip;</p>
       <h2><a href="/blog/2026/08/requests-that-end-wrong/">Requests That End Wrong: A 200 That Was Really a Crash</a></h2>
     
     
-      <p>Three ePHPm bugs in how an embedded PHP request starts and ends: a bailout that returned 200, an empty $_POST, and a SIGTERM that corrupted the heap.</p>
+      <p>Three ePHPm bugs lived in how an embedded PHP request starts and ends. A bailout returned 200, $_POST came up empty and a SIGTERM corrupted the heap.</p>
     
   </div>
   <div class="meta">
@@ -858,9 +857,9 @@ machine with <code>redis-benchmark</code> doing the&hellip;</p>
     <img class="" src="/img/2026/08/requests-that-end-wrong-cover.svg" alt="Diagram of a bare zend_bailout being absorbed by php_execute_script&#39;s own zend_try instead of reaching ePHPm&#39;s guard">
   </a>
     
-    <p>The scariest response a server can send isn&rsquo;t a 500. It&rsquo;s a 200 that should have been a 500. A crash is loud: the
-pod restarts, an alert fires, somebody looks. A truncated page with a success status code gets cached by your CDN,
-the health check calls the box healthy, and a client parses half a document as if it were the whole thing.</p>
+    <p>The scariest response a server can send isn&rsquo;t a 500. It&rsquo;s a 200 that should have been a 500. A crash is loud. The pod
+restarts, an alert fires, somebody looks. A truncated page with a success status code is quiet. Your CDN caches it and
+the health check calls the box healthy. A client parses half a document as if it were the whole thing.</p>
   </div>
   <footer>
     <a href="/blog/2026/08/requests-that-end-wrong/" class="button big">Read More</a>

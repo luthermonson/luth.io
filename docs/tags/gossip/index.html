@@ -218,7 +218,7 @@
       <h2><a href="/blog/2026/08/gossip-clustering-for-php/">Gossip-Based Clustering for PHP Apps</a></h2>
     
     
-      <p>How ePHPm servers find each other and share data, what happens when a server joins or leaves, how fast a write reaches the other servers, and a bug I found while measuring it.</p>
+      <p>How ePHPm servers find each other, share data and handle a server joining or leaving. It also measures how fast a write reaches the other servers and covers a bug I found while measuring it.</p>
     
   </div>
   <div class="meta">
@@ -233,10 +233,10 @@
     <img class="" src="/img/2026/08/gossip-clustering-php-cover.svg" alt="Three ePHPm nodes: small values replicated to every node over gossip, a large value stored on its owner and one replica over a TCP data plane">
   </a>
     
-    <p>Most PHP developers never touch clustering primitives, and that&rsquo;s by design. PHP is share-nothing: each request starts
-from zero, and anything shared lives somewhere else. Sessions go in Redis, cache goes in Redis or Memcached, locks go in
-Redis, and when you run two app servers the &ldquo;cluster&rdquo; is really two stateless boxes pointed at the same Redis. That works
-until Redis is the thing you&rsquo;re trying not to run.</p>
+    <p>Most PHP developers never touch clustering primitives. That&rsquo;s by design. PHP is share-nothing. Each request starts
+from zero, and anything shared lives somewhere else. Sessions go in Redis. Cache goes in Redis or Memcached. Locks go
+in Redis. When you run two app servers, the &ldquo;cluster&rdquo; is really two stateless boxes pointed at the same Redis. That
+works until Redis is the thing you&rsquo;re trying not to run.</p>
   </div>
   <footer>
     <a href="/blog/2026/08/gossip-clustering-for-php/" class="button big">Read More</a>

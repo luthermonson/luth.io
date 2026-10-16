@@ -10,14 +10,14 @@
     gtag('config', 'G-MSTSKGFWTX');
 </script><meta charset="utf-8">
 <title>Clustered SQLite in ePHPm, Part 3: CDC Over the Cluster Channel - Luther Monson</title>
-<meta name="description" content="Shipping Turso&#39;s change data capture stream between ePHPm nodes over one authenticated, multiplexed TCP connection, and the two failover bugs that showed up when the e2e suite killed the primary.">
+<meta name="description" content="ePHPm ships Turso&#39;s change data capture stream between nodes over one authenticated, multiplexed TCP connection. This covers how that works and the two failover bugs that showed up when the e2e suite killed the primary.">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
 <meta name="twitter:card" content="summary_large_image"><meta name="twitter:site" content="@luthermonson">
 
 <meta property="og:site_name" content="Luther Monson">
 <meta property="og:title" content="Clustered SQLite in ePHPm, Part 3: CDC Over the Cluster Channel">
-<meta property="og:description" content="Shipping Turso&#39;s change data capture stream between ePHPm nodes over one authenticated, multiplexed TCP connection, and the two failover bugs that showed up when the e2e suite killed the primary.">
+<meta property="og:description" content="ePHPm ships Turso&#39;s change data capture stream between nodes over one authenticated, multiplexed TCP connection. This covers how that works and the two failover bugs that showed up when the e2e suite killed the primary.">
 <meta property="og:type" content="article">
 <meta property="og:url" content="https://luth.io/blog/2026/09/clustered-sqlite-cdc-cluster-channel/">
     <meta property="og:image" content="https://luth.io/img/2026/09/clustered-sqlite-cluster-channel-topology.svg">
@@ -215,7 +215,7 @@
       <h2><a href="/blog/2026/09/clustered-sqlite-cdc-cluster-channel/">Clustered SQLite in ePHPm, Part 3: CDC Over the Cluster Channel</a></h2>
     
     
-      <p>Shipping Turso&#39;s change data capture stream between ePHPm nodes over one authenticated, multiplexed TCP connection, and the two failover bugs that showed up when the e2e suite killed the primary.</p>
+      <p>ePHPm ships Turso&#39;s change data capture stream between nodes over one authenticated, multiplexed TCP connection. This covers how that works and the two failover bugs that showed up when the e2e suite killed the primary.</p>
     
   </div>
   <div class="meta">
@@ -272,9 +272,9 @@
       </div>
       <div class="content">
         
-        <p>By the end of <a href="/blog/2026/08/clustered-sqlite-adding-turso/">Part 2</a> ePHPm v0.7.0 ran exactly one SQLite engine, Turso, in
-process, for single-node and clustered mode alike. The sidecar was gone. What I skipped over is how a replica actually gets
-the primary&rsquo;s writes, and what happens when the primary dies with data on it. That&rsquo;s this post.</p>
+        <p>By the end of <a href="/blog/2026/08/clustered-sqlite-adding-turso/">Part 2</a> ePHPm v0.7.0 ran exactly one SQLite engine in
+process. That was Turso, for single-node and clustered mode alike. The sidecar was gone. What I skipped over is how a
+replica actually gets the primary&rsquo;s writes, and what happens when the primary dies with data on it. That&rsquo;s this post.</p>
 <ul>
 <li><a href="/blog/2026/08/clustered-sqlite-sqld-sidecar/">Part 1: Replication by sidecar with sqld</a></li>
 <li><a href="/blog/2026/08/clustered-sqlite-adding-turso/">Part 2: Adding Turso</a></li>
@@ -282,18 +282,20 @@ the primary&rsquo;s writes, and what happens when the primary dies with data on 
 </ul>
 <h3 id="cdc-from-the-engine-itself">CDC from the engine itself</h3>
 <p>Turso has change data capture built in. Turn it on for a connection and every committed change lands in a <code>turso_cdc</code>
-table with a monotonically increasing <code>change_id</code>, the table, the rowid, and before/after images of the record. The
-primary tails that table and ships transaction batches. Replicas apply them. That&rsquo;s the whole design, and it landed as an
-experimental path in <a href="https://github.com/ephpm/ephpm/pull/186">#186</a> at the end of July, with the tailer and applier in
-litewire (<a href="https://github.com/ephpm/litewire/pull/10">litewire#10</a>).</p>
+table. Each row has a monotonically increasing <code>change_id</code>, the table, the rowid, and before/after images of the record.
+The primary tails that table and ships transaction batches. Replicas apply them. That&rsquo;s the whole design. It landed as
+an experimental path in <a href="https://github.com/ephpm/ephpm/pull/186">#186</a> at the end of July. The tailer and applier live
+in litewire (<a href="https://github.com/ephpm/litewire/pull/10">litewire#10</a>).</p>
 <p>The best surprise of the whole series came out of the first integration test: <strong>Turso&rsquo;s CDC captures DDL.</strong>
-<code>CREATE TABLE</code>, <code>CREATE INDEX</code>, <code>ALTER TABLE ... ADD COLUMN</code> and <code>DROP TABLE</code> all show up in the same <code>turso_cdc</code> stream as
-the row changes, as mutations on <code>sqlite_schema</code>. The after-image&rsquo;s <code>sql</code> column carries the <code>CREATE</code> text, so the replica
-just runs it. That means replication is one ordered stream with no separate schema sync channel to keep in step with it.
-WordPress creates and alters tables at runtime (plugins do it all the time) and that flows through the normal path.</p>
+<code>CREATE TABLE</code>, <code>CREATE INDEX</code>, <code>ALTER TABLE ... ADD COLUMN</code> and <code>DROP TABLE</code> all show up in the same <code>turso_cdc</code>
+stream as the row changes. They appear as mutations on <code>sqlite_schema</code>. The after-image&rsquo;s <code>sql</code> column carries the
+<code>CREATE</code> text, so the replica just runs it. That means replication is one ordered stream. There&rsquo;s no separate schema
+sync channel to keep in step with it. WordPress creates and alters tables at runtime (plugins do it all the time) and
+that flows through the normal path.</p>
 <p>That convenience is also an injection point, since the replica runs SQL text a peer sent it. Replayed DDL is parsed and
-allowlisted before it runs (litewire#17, in v0.6.2): exactly one <code>CREATE TABLE</code>, <code>CREATE [UNIQUE] INDEX</code>, <code>CREATE VIEW</code> or
-<code>CREATE TRIGGER</code>, which is everything <code>sqlite_schema.sql</code> can legitimately hold. <code>ATTACH</code> and <code>PRAGMA</code> don&rsquo;t get through.</p>
+allowlisted before it runs (litewire#17, in v0.6.2). It has to be exactly one <code>CREATE TABLE</code>, <code>CREATE [UNIQUE] INDEX</code>,
+<code>CREATE VIEW</code> or <code>CREATE TRIGGER</code>. That&rsquo;s everything <code>sqlite_schema.sql</code> can legitimately hold. <code>ATTACH</code> and <code>PRAGMA</code>
+don&rsquo;t get through.</p>
 <p>The primary side of the stream is a loop per subscriber. Each replica gets its own <code>CdcTailer</code> starting at the watermark
 the replica announced:</p>
 <div class="highlight"><pre tabindex="0" class="chroma"><code class="language-rust" data-lang="rust"><span class="line"><span class="cl"><span class="kd">let</span><span class="w"> </span><span class="k">mut</span><span class="w"> </span><span class="n">tailer</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">CdcTailer</span>::<span class="n">new</span><span class="p">(</span><span class="n">mgmt</span><span class="p">,</span><span class="w"> </span><span class="n">from</span><span class="p">);</span><span class="w">
@@ -325,13 +327,13 @@ the replica announced:</p>
 </span></span></span><span class="line"><span class="cl"><span class="w">        </span><span class="p">}</span><span class="w">
 </span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="p">}</span><span class="w">
 </span></span></span><span class="line"><span class="cl"><span class="p">}</span><span class="w">
-</span></span></span></code></pre></div><p>Turso has no wakeup signal for CDC inserts, so it polls, and <code>POLL_INTERVAL</code> is 25 ms. Keep that number in mind for the
+</span></span></span></code></pre></div><p>Turso has no wakeup signal for CDC inserts, so it polls. <code>POLL_INTERVAL</code> is 25 ms. Keep that number in mind for the
 benchmark below.</p>
 <h3 id="v1-was-a-third-protocol">v1 was a third protocol</h3>
-<p>The first version of #186 had its own port (<code>cdc_listen</code>, 5015), length-prefixed JSON frames, and no encryption. It worked.
-It was also the third separate inter-node protocol after gossip and the KV data plane, and if I was going to need
-snapshot bootstrap next, and probably more after that, each one wasn&rsquo;t going to get its own port. So before #186 merged,
-the transport became the <strong>cluster channel</strong>, and <code>cdc_listen</code> was deleted before it ever shipped in a release
+<p>The first version of #186 had its own port (<code>cdc_listen</code>, 5015), length-prefixed JSON frames, and no encryption. It
+worked. It was also the third separate inter-node protocol after gossip and the KV data plane. I was going to need
+snapshot bootstrap next, and probably more after that. Each one wasn&rsquo;t going to get its own port. So before #186
+merged, the transport became the <strong>cluster channel</strong>. <code>cdc_listen</code> was deleted before it ever shipped in a release
 (<a href="https://github.com/ephpm/ephpm/pull/219">#219</a>).</p>
 <p>The rule the channel makes explicit is: <strong>gossip carries names, the channel carries payloads.</strong></p>
 <ul>
@@ -367,24 +369,25 @@ turn it on is a field in one struct:</p>
 </span></span></span><span class="line"><span class="cl"><span class="p">}</span><span class="w">
 </span></span></span></code></pre></div><p>The destructuring in <code>any_enabled</code> is on purpose. Add a field and that line stops compiling until you decide whether the
 new feature needs the channel. A feature that forgets its flag gets no channel, rather than a half-wired one. There&rsquo;s a
-unit test that runs with every flag off and then binds the derived port itself to prove nothing else did.</p>
+unit test that runs with every flag off. It then binds the derived port itself to prove nothing else did.</p>
 <h3 id="one-connection-many-streams">One connection, many streams</h3>
 <p>After the handshake (next section) both sides speak <a href="https://github.com/libp2p/rust-yamux">yamux</a> over the encrypted
-socket. Every stream starts with a length-prefixed type string, and that string is the dispatch key: <code>cdc/&lt;site&gt;</code>,
-<code>snapshot/&lt;site&gt;</code>, and later <code>sql/&lt;site&gt;</code>. An unknown type gets a WARN and the stream is closed, while the connection
-stays up. New features can ship without a protocol version bump, because old nodes just refuse the stream they don&rsquo;t know.</p>
-<p>Backpressure was the part I worried about. yamux has per-stream flow control (256 KiB window), and every subscriber owns a
-private <code>CdcTailer</code>, so a stalled replica pauses its own stream and nothing else. The tailer just stops advancing while its
-write is blocked. An earlier design broadcast one shared cursor to everyone, where a slow subscriber got
+socket. Every stream starts with a length-prefixed type string, and that string is the dispatch key. The types are
+<code>cdc/&lt;site&gt;</code>, <code>snapshot/&lt;site&gt;</code>, and later <code>sql/&lt;site&gt;</code>. An unknown type gets a WARN and the stream is closed. The
+connection stays up. New features can ship without a protocol version bump, because old nodes just refuse the stream
+they don&rsquo;t know.</p>
+<p>Backpressure was the part I worried about. yamux has per-stream flow control (256 KiB window). Every subscriber owns a
+private <code>CdcTailer</code>, so a stalled replica pauses its own stream and nothing else. The tailer just stops advancing while
+its write is blocked. An earlier design broadcast one shared cursor to everyone. There a slow subscriber got
 <code>RecvError::Lagged</code> and permanently lost batches. Now the failure mode for a slow replica is lag, not loss.</p>
-<p>Snapshot bootstrap rides the same connection: an empty replica pulls a logical dump on <code>snapshot/&lt;site&gt;</code> captured under
-one read view along with its watermark, validated against a <code>CREATE</code>/<code>INSERT</code> allowlist, and then subscribes to the tail
-from exactly that watermark.</p>
+<p>Snapshot bootstrap rides the same connection. An empty replica pulls a logical dump on <code>snapshot/&lt;site&gt;</code>, captured
+under one read view along with its watermark. The dump is validated against a <code>CREATE</code>/<code>INSERT</code> allowlist. Then the
+replica subscribes to the tail from exactly that watermark.</p>
 <h3 id="the-handshake">The handshake</h3>
-<p>The first channel handshake was one round trip. The initiator sent a sealed challenge, the responder opened it and echoed
-it back. That proves the responder has the secret. It does not prove anything about the initiator, and the responder only
-ever echoes what it&rsquo;s handed, so anyone who recorded one legitimate setup could replay those bytes verbatim and get through
-the accept path without the secret.</p>
+<p>The first channel handshake was one round trip. The initiator sent a sealed challenge, and the responder opened it and
+echoed it back. That proves the responder has the secret. It does not prove anything about the initiator. The responder
+only ever echoes what it&rsquo;s handed. So anyone who recorded one legitimate setup could replay those bytes verbatim and get
+through the accept path without the secret.</p>
 <p>v2 is a mutual challenge/response, three messages before any yamux frame:</p>
 <p><img src="/img/2026/09/clustered-sqlite-cluster-channel-handshake.svg" alt="cluster channel handshake"></p>
 <p>The important line is in the responder. It mixes in a challenge of its own, which a replayer has never seen and can&rsquo;t
@@ -412,44 +415,46 @@ open:</p>
 <ul>
 <li>Both echo comparisons are constant time.</li>
 <li>The handshake key comes from its own HKDF domain, so a stray gossip datagram or KV frame can never authenticate here.</li>
-<li>After the handshake, both sides derive a per-connection session key from the secret salted with <code>C_i || C_r</code>, and every
-byte yamux writes goes out as a length-prefixed ChaCha20-Poly1305 frame. Frames can&rsquo;t be spliced between connections,
-and a frame that fails authentication drops the connection.</li>
-<li>The source IP has to be a live gossip member before the handshake even starts. That&rsquo;s coarse (per host, and it trusts
-the TCP source address), but it means a leaked secret alone doesn&rsquo;t let an arbitrary host pull a database snapshot.</li>
+<li>After the handshake, both sides derive a per-connection session key from the secret salted with <code>C_i || C_r</code>. Every
+byte yamux writes goes out as a length-prefixed ChaCha20-Poly1305 frame. Frames can&rsquo;t be spliced between
+connections, and a frame that fails authentication drops the connection.</li>
+<li>The source IP has to be a live gossip member before the handshake even starts. That&rsquo;s coarse. It&rsquo;s per host, and it
+trusts the TCP source address. But it means a leaked secret alone doesn&rsquo;t let an arbitrary host pull a database
+snapshot.</li>
 <li>At most 64 concurrent handshakes in flight, a 10 second deadline on each.</li>
 <li>It refuses to bind at all if a channel feature is on and there&rsquo;s no secret. Authenticated or absent.</li>
 </ul>
-<p>There&rsquo;s a test that does exactly what the v1 attack did: record a real initiator&rsquo;s first message, replay it on a new
-connection, echo back whatever the responder says, and assert nothing ever reaches the dispatch table.</p>
+<p>There&rsquo;s a test that does exactly what the v1 attack did. It records a real initiator&rsquo;s first message and replays it on
+a new connection. It echoes back whatever the responder says. Then it asserts nothing ever reaches the dispatch table.</p>
 <h3 id="then-the-e2e-suite-killed-the-primary">Then the e2e suite killed the primary</h3>
-<p>Everything above passed its tests. The two-node path had been validated by hand during benchmarking. What hadn&rsquo;t happened
-was a test that started three real <code>ephpm</code> processes, wrote data, and killed the elected primary. <a href="https://github.com/ephpm/ephpm/pull/310">#310</a>
-added that suite, and it found two defects on its first run. Both were filed as <code>#[ignore]</code>d tests carrying the log
-evidence, so the intended behavior was written down and executable before anyone touched the fix.</p>
+<p>Everything above passed its tests. The two-node path had been validated by hand during benchmarking. What hadn&rsquo;t
+happened was a test that started three real <code>ephpm</code> processes, wrote data, and killed the elected primary.
+<a href="https://github.com/ephpm/ephpm/pull/310">#310</a> added that suite, and it found two defects on its first run. Both were
+filed as <code>#[ignore]</code>d tests carrying the log evidence. That way the intended behavior was written down and executable
+before anyone touched the fix.</p>
 <p><strong>1. A joining node stole the primary role.</strong></p>
 <pre tabindex="0"><code>21:41:58  cdc-node-2  elected as SQLite primary          (holds the data)
 21:42:04  cdc-node-3  elected as SQLite primary          (empty, just booted)
 21:42:08  cdc-node-2  role changed Primary -&gt; Replica{ primary: node-3 }
-</code></pre><p>The initial role was decided before gossip converged. A freshly booted node saw a member list containing only itself,
-concluded it was the lowest-ordinal alive node, and published a claim. Gossip KV is last-write-wins, so the incumbent
-demoted. The cluster re-rooted onto an empty database, and the joiner, believing it was primary, never bootstrapped.</p>
+</code></pre><p>The initial role was decided before gossip converged. A freshly booted node saw a member list containing only itself.
+It concluded it was the lowest-ordinal alive node and published a claim. Gossip KV is last-write-wins, so the incumbent
+demoted. The cluster re-rooted onto an empty database. The joiner believed it was primary, so it never bootstrapped.</p>
 <p><strong>2. Writes after a failover were silently never replicated.</strong></p>
 <pre tabindex="0"><code>cdc-node-1  CDC replica: subscribed  from_change_id=5   (watermark from the dead node-2)
 cdc-node-0  CDC: subscriber attached from_change_id=5   (tailer over node-0&#39;s own log)
-</code></pre><p><code>change_id</code> is a per-database sequence. The subscribe watermark was being treated as cluster-wide. A promoted replica&rsquo;s own
-CDC log starts empty (applied batches bypass capture), so its first new writes landed at <code>change_id</code> 1 and 2, below the
-inherited cursor of 5, and the tailer never yielded them. No error, no metric moved, and the replica reported itself
-connected and caught up. That&rsquo;s unbounded silent write loss after any failover.</p>
+</code></pre><p><code>change_id</code> is a per-database sequence. The subscribe watermark was being treated as cluster-wide. A promoted replica&rsquo;s
+own CDC log starts empty, because applied batches bypass capture. Its first new writes landed at <code>change_id</code> 1 and 2.
+That&rsquo;s below the inherited cursor of 5, so the tailer never yielded them. No error, no metric moved, and the replica
+reported itself connected and caught up. That&rsquo;s unbounded silent write loss after any failover.</p>
 <p>The fixes are in <a href="https://github.com/ephpm/ephpm/pull/346">#346</a>:</p>
 <ul>
-<li><strong>Election:</strong> a fresh node can&rsquo;t publish its first claim until a 15 second startup grace (claim TTL plus one heartbeat)
-has passed. A live incumbent republishes every 5 seconds, so its claim always arrives first. A restarting incumbent
-whose own claim is still unexpired can reclaim right away. And a primary that sees a live foreign claim breaks the tie by
-lowest node id, the documented rule, instead of yielding to whoever wrote last. The cost is that a brand new cluster
-elects its first primary 15-20 seconds after boot.</li>
+<li><strong>Election:</strong> a fresh node can&rsquo;t publish its first claim until a 15 second startup grace has passed. That&rsquo;s the claim
+TTL plus one heartbeat. A live incumbent republishes every 5 seconds, so its claim always arrives first. A restarting
+incumbent whose own claim is still unexpired can reclaim right away. A primary that sees a live foreign claim breaks
+the tie by lowest node id, the documented rule, instead of yielding to whoever wrote last. The cost is that a brand
+new cluster elects its first primary 15-20 seconds after boot.</li>
 <li><strong>Watermarks:</strong> every database file gets a random 128-bit log identity. The first frame on every CDC stream is now a
-<code>Hello</code> naming the log the primary is about to serve, and the replica keeps a cursor per log:</li>
+<code>Hello</code> naming the log the primary is about to serve. The replica keeps a cursor per log:</li>
 </ul>
 <div class="highlight"><pre tabindex="0" class="chroma"><code class="language-rust" data-lang="rust"><span class="line"><span class="cl"><span class="k">enum</span> <span class="nc">Frame</span><span class="w"> </span><span class="p">{</span><span class="w">
 </span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="sd">/// Primary -&gt; replica, first frame on every stream. Identifies
@@ -461,28 +466,32 @@ elects its first primary 15-20 seconds after boot.</li>
 </span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="n">Batch</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">rows</span>: <span class="nb">Vec</span><span class="o">&lt;</span><span class="n">WireCdcRow</span><span class="o">&gt;</span><span class="w"> </span><span class="p">},</span><span class="w">
 </span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="n">Ping</span><span class="p">,</span><span class="w">
 </span></span></span><span class="line"><span class="cl"><span class="p">}</span><span class="w">
-</span></span></span></code></pre></div><p>On a source switch the replica saves the old log&rsquo;s cursor, restores the new log&rsquo;s (0 if it has never followed it) and
-re-seeds litewire&rsquo;s watermark table so the applier&rsquo;s idempotency guard follows along. Primary to replica to primary again
-resolves correctly.</p>
-<p>Removing the <code>#[ignore]</code> was the verification step. Then each fix was verified the other direction: revert just that fix,
-keep the other, and watch its test fail again with the original symptom. The joining-node test failed with the joiner
-taking the role, and the failover test failed with the survivor stuck at its pre-failover rows until a 90 second timeout.
-Then both went back in, and the full e2e run was 55 suites, 236 tests, zero failures. Proving a test fails without the fix
-is the only way I know to be sure it&rsquo;s testing the fix.</p>
+</span></span></span></code></pre></div><p>On a source switch the replica does three things:</p>
+<ul>
+<li>Saves the old log&rsquo;s cursor.</li>
+<li>Restores the new log&rsquo;s cursor (0 if it has never followed it).</li>
+<li>Re-seeds litewire&rsquo;s watermark table so the applier&rsquo;s idempotency guard follows along.</li>
+</ul>
+<p>Primary to replica to primary again resolves correctly.</p>
+<p>Removing the <code>#[ignore]</code> was the verification step. Then each fix was verified the other direction. I reverted just that
+fix, kept the other, and watched its test fail again with the original symptom. The joining-node test failed with the
+joiner taking the role. The failover test failed with the survivor stuck at its pre-failover rows until a 90 second
+timeout. Then both went back in. The full e2e run was 55 suites, 236 tests, zero failures. Proving a test fails without
+the fix is the only way I know to be sure it&rsquo;s testing the fix.</p>
 <p>The audit of #346 turned up one more, narrower door (<a href="https://github.com/ephpm/ephpm/pull/353">#353</a>). The fast-restart
 reclaim matched on node id. But &ldquo;same node id&rdquo; isn&rsquo;t &ldquo;same data&rdquo;. A node redeployed onto an empty volume comes back with
-its old id and a fresh log identity, and it could win the reclaim inside the 10 second TTL and re-root the cluster onto
+its old id and a fresh log identity. It could win the reclaim inside the 10 second TTL and re-root the cluster onto
 nothing again. The claim is now <code>node_id|addr|log_id</code>, and the fast path only fires when both match.</p>
-<p>Worth saying plainly: <strong>none of these bugs were Turso&rsquo;s.</strong> All three lived in ePHPm&rsquo;s election and watermark logic layered
-on top. Turso&rsquo;s CDC stream did exactly what it said the whole time, with one ordered stream, monotonic ids, and DDL
+<p>Worth saying plainly: <strong>none of these bugs were Turso&rsquo;s.</strong> All three lived in ePHPm&rsquo;s election and watermark logic
+layered on top. Turso&rsquo;s CDC stream did exactly what it said the whole time. One ordered stream, monotonic ids, and DDL
 included. If you&rsquo;re wondering whether to trust the beta engine, under failover testing the beta wasn&rsquo;t what broke.</p>
 <h3 id="how-far-behind-is-a-replica">How far behind is a replica?</h3>
-<p>ePHPm doesn&rsquo;t export a replication lag gauge yet, so I measured it from the outside. Two v0.8.7 nodes on one machine, a
-primary on <code>127.0.0.1</code> and a replica on <code>127.0.0.2</code>, real cluster channel between them. A small Go probe inserts a row
-through PHP on the primary, takes the time when the HTTP response comes back (the write is committed at that point), then
-polls a PHP page on the replica every ~2.4 ms until the row shows up. 150 samples per step, with a random pause between
-samples so they don&rsquo;t line up with the tailer&rsquo;s 25 ms poll. In the background, a separate open-loop writer puts a steady
-rate of single-row INSERTs on the primary.</p>
+<p>ePHPm doesn&rsquo;t export a replication lag gauge yet, so I measured it from the outside. I ran two v0.8.7 nodes on one
+machine with the real cluster channel between them. The primary was on <code>127.0.0.1</code> and the replica on <code>127.0.0.2</code>. A
+small Go probe inserts a row through PHP on the primary. It takes the time when the HTTP response comes back, since the
+write is committed at that point. Then it polls a PHP page on the replica every ~2.4 ms until the row shows up. I took
+150 samples per step, with a random pause between samples so they don&rsquo;t line up with the tailer&rsquo;s 25 ms poll. In the
+background, a separate open-loop writer puts a steady rate of single-row INSERTs on the primary.</p>
 <p><img src="/img/2026/09/clustered-sqlite-cdc-replication-lag.svg" alt="CDC replication lag by write rate"></p>
 <table>
   <thead>
@@ -520,11 +529,11 @@ rate of single-row INSERTs on the primary.</p>
       </tr>
   </tbody>
 </table>
-<p>That&rsquo;s what a 25 ms poll looks like. On an idle primary the median is a bit over half the interval plus the apply, and it
+<p>That&rsquo;s what a 25 ms poll looks like. On an idle primary the median is a bit over half the interval plus the apply. It
 creeps up as the stream gets busier. For a PHP app, a replica that&rsquo;s 20-30 ms behind is fine.</p>
-<p>At 1,000 writes/s it stopped being fine. The replica fell behind and kept falling: five probes in a row timed out at 5
-seconds, and the ten that did land had a median of 1.7 seconds. So I went looking for the ceiling. I hit the primary with
-closed-loop writers for 17 seconds, didn&rsquo;t touch the replica, and timed how long it took to catch up:</p>
+<p>At 1,000 writes/s it stopped being fine. The replica fell behind and kept falling. Five probes in a row timed out at 5
+seconds, and the ten that did land had a median of 1.7 seconds. So I went looking for the ceiling. I hit the primary
+with closed-loop writers for 17 seconds and didn&rsquo;t touch the replica. Then I timed how long it took to catch up:</p>
 <table>
   <thead>
       <tr>
@@ -550,17 +559,17 @@ closed-loop writers for 17 seconds, didn&rsquo;t touch the replica, and timed ho
   </tbody>
 </table>
 <p><img src="/img/2026/09/clustered-sqlite-cdc-replica-catchup.svg" alt="replica catch-up after a burst"></p>
-<p>Two things come out of that. First, capturing CDC on the primary costs 16-19% of write throughput against the same binary
-with no <code>[cluster]</code> at all, in the same range as the 12-13% the lab measured on its podman rig. Second, the replica applies about 750-830
-transactions per second, a straight line, no matter how hard the primary is pushed. The reason is in the tailer:
-<code>poll_batch</code> cuts at the first <code>COMMIT</code> record, so every primary transaction becomes its own poll, its own frame and its own
-transaction on the replica. The 25 ms sleep only happens when there&rsquo;s nothing to send, so it isn&rsquo;t the bottleneck here.
-The per-transaction round trip is. Batching several source transactions per frame and per apply transaction is the obvious
-next step, and now there&rsquo;s a number to beat.</p>
-<p>During those bursts the replica also logged <code>SQLITE_BUSY</code> from <code>apply_batch</code> twice, when an apply collided with my read
-probe on the replica. Both times it dropped the stream, resubscribed two seconds later from its watermark, and carried on.
-The final count on both nodes was 179,369 rows. That&rsquo;s the &ldquo;lag, not loss&rdquo; property from the backpressure section doing
-its job, though a busy timeout on the apply connection would make it a lot less noisy.</p>
+<p>Two things come out of that. First, capturing CDC on the primary costs 16-19% of write throughput. That&rsquo;s against the
+same binary with no <code>[cluster]</code> at all. It&rsquo;s in the same range as the 12-13% the lab measured on its podman rig.
+Second, the replica applies about 750-830 transactions per second. It&rsquo;s a straight line no matter how hard the primary
+is pushed. The reason is in the tailer. <code>poll_batch</code> cuts at the first <code>COMMIT</code> record. So every primary transaction
+becomes its own poll, its own frame and its own transaction on the replica. The 25 ms sleep only happens when there&rsquo;s
+nothing to send, so it isn&rsquo;t the bottleneck here. The per-transaction round trip is. The obvious next step is batching
+several source transactions per frame and per apply transaction. Now there&rsquo;s a number to beat.</p>
+<p>During those bursts the replica also logged <code>SQLITE_BUSY</code> from <code>apply_batch</code> twice. Both were an apply colliding with
+my read probe on the replica. Both times it dropped the stream and resubscribed two seconds later from its watermark,
+then carried on. The final count on both nodes was 179,369 rows. That&rsquo;s the &ldquo;lag, not loss&rdquo; property from the
+backpressure section doing its job. A busy timeout on the apply connection would make it a lot less noisy, though.</p>
 <h4 id="how-i-measured">How I measured</h4>
 <ul>
 <li>AMD Ryzen 9 5950X (16 cores / 32 threads), 128 GB (62 GiB visible to WSL2), Windows 11 with WSL2 (kernel 6.18.33.2), everything on the WSL ext4
@@ -568,10 +577,10 @@ filesystem. No CPU limits on either node, so both ePHPm processes and the load g
 <li>ePHPm <a href="https://github.com/ephpm/ephpm/releases/tag/v0.8.7">v0.8.7</a>, the <code>php8.4.23-linux-x86_64</code> release build,
 <code>[db.sqlite.replication] role = &quot;primary&quot;</code> / <code>&quot;replica&quot;</code> pinned, <code>[php] mode = &quot;fpm&quot;</code>, rate limiting off, query stats off.</li>
 <li>PHP fixtures use <code>ephpm_db_execute</code> / <code>ephpm_db_query</code>, one statement each. The lag probe and open-loop writer are a
-~150 line Go program; the burst writers are closed loop over keep-alive connections.</li>
-<li>One-machine loopback numbers. They say how the replication path behaves, not what a real network between two hosts adds.
-Absolute inserts/s won&rsquo;t transfer to your hardware; the shape (lag tracks the poll interval, apply has a ceiling around
-one transaction per round trip) should.</li>
+~150 line Go program. The burst writers are closed loop over keep-alive connections.</li>
+<li>One-machine loopback numbers. They say how the replication path behaves, not what a real network between two hosts
+adds. Absolute inserts/s won&rsquo;t transfer to your hardware. The shape should: lag tracks the poll interval, and apply
+has a ceiling around one transaction per round trip.</li>
 </ul>
 <h3 id="one-database-per-site">One database per site</h3>
 <p>Multi-tenant ePHPm (a <code>sites_dir</code> with a database per vhost) and clustering didn&rsquo;t coexist until
@@ -579,25 +588,33 @@ one transaction per round trip) should.</li>
 clustered database. With <code>[db.sqlite.replication] per_site = true</code>:</p>
 <ul>
 <li>Each vhost gets its own <code>cdc/&lt;site&gt;</code> and <code>snapshot/&lt;site&gt;</code> streams over the same channel connection.</li>
-<li>Ownership is rendezvous-hashed over the alive nodes, so a node death moves only that node&rsquo;s sites, each to a node that
+<li>Ownership is rendezvous-hashed over the alive nodes. A node death moves only that node&rsquo;s sites, each to a node that
 already has a warm replica.</li>
 <li>A new <code>sql/&lt;site&gt;</code> stream forwards writes from a non-owner to the owner, so they get captured into that site&rsquo;s CDC log.</li>
 </ul>
-<p>A review of the PR listed its own blockers, the worst being data loss when a site got re-homed onto a node that never had
-it (a node <em>joining</em> was enough), and they were closed before merge. Two more silent ones came after: a node that only
-forwarded a site never replicated it (<a href="https://github.com/ephpm/ephpm/pull/429">#429</a>), and stock <code>pdo_mysql</code> writes on a
-non-owner committed locally and were never shipped (<a href="https://github.com/ephpm/ephpm/pull/432">#432</a>). Every health check
-was green in both cases. The <a href="https://github.com/ephpm/lab/blob/main/docs/cluster-persite-v087.md">lab&rsquo;s cluster suite</a>
-puts the forward hop at about 255-275 µs per statement, paid per statement, so a ten-query page on a non-owner pays it ten
-times.</p>
+<p>A review of the PR listed its own blockers, and they were closed before merge. The worst was data loss when a site got
+re-homed onto a node that never had it. A node <em>joining</em> was enough to trigger it. Two more silent ones came after:</p>
+<ul>
+<li>A node that only forwarded a site never replicated it (<a href="https://github.com/ephpm/ephpm/pull/429">#429</a>).</li>
+<li>Stock <code>pdo_mysql</code> writes on a non-owner committed locally and were never shipped
+(<a href="https://github.com/ephpm/ephpm/pull/432">#432</a>).</li>
+</ul>
+<p>Every health check was green in both cases. The
+<a href="https://github.com/ephpm/lab/blob/main/docs/cluster-persite-v087.md">lab&rsquo;s cluster suite</a> puts the forward hop at about
+255-275 µs per statement. It&rsquo;s paid per statement, so a ten-query page on a non-owner pays it ten times.</p>
 <h3 id="counting-protocols">Counting protocols</h3>
-<p>Here&rsquo;s the closing argument for the series. In the sqld era, two nodes talked over gossip, the KV data plane, sqld gRPC,
-and Hrana HTTP to a child process on each side. Now it&rsquo;s gossip, the KV data plane, and one multiplexed, authenticated
-cluster channel, all in one process.</p>
+<p>Here&rsquo;s the closing argument for the series. In the sqld era, two nodes talked over four things:</p>
+<ul>
+<li>Gossip.</li>
+<li>The KV data plane.</li>
+<li>sqld gRPC.</li>
+<li>Hrana HTTP to a child process on each side.</li>
+</ul>
+<p>Now it&rsquo;s gossip, the KV data plane, and one multiplexed, authenticated cluster channel, all in one process.</p>
 <p>ePHPm&rsquo;s docs still label clustered mode experimental, and I think that&rsquo;s right. That label is about ePHPm&rsquo;s replication
-layer, which is a couple of months old and has had real bugs in its election and watermark logic, not about Turso. The
-fixes for those bugs came with tests that fail without them, which is the best I can offer until it has more time behind
-it.</p>
+layer, not about Turso. The layer is a couple of months old and has had real bugs in its election and watermark logic.
+The fixes for those bugs came with tests that fail without them. That&rsquo;s the best I can offer until it has more time
+behind it.</p>
 <h3 id="links">Links</h3>
 <ul>
 <li><a href="https://github.com/ephpm/ephpm/pull/186">#186 Phase 2 CDC-native replication</a>, <a href="https://github.com/ephpm/litewire/pull/10">litewire#10</a></li>

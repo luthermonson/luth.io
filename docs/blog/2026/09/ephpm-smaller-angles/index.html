@@ -272,64 +272,73 @@
       </div>
       <div class="content">
         
-        <p>Not every fix in <a href="https://github.com/ephpm/ephpm">ePHPm</a> earns a full write-up, but a few of the smaller ones have
-stuck with me because the lesson in each was bigger than the diff. Here are four from this summer.</p>
+        <p>Not every fix in <a href="https://github.com/ephpm/ephpm">ePHPm</a> earns a full write-up. A few of the smaller ones have stuck
+with me because the lesson in each was bigger than the diff. Here are four from this summer.</p>
 <h3 id="a-release-build-the-oom-killer-kept-eating">A release build the OOM killer kept eating</h3>
-<p>ePHPm statically links libphp, ICU and a pile of other C libraries into one Rust binary, and it ships for four targets.
+<p>ePHPm statically links libphp, ICU and a pile of other C libraries into one Rust binary. It ships for four targets.
 For the v0.4.2 performance release I set the release profile to <code>lto = &quot;fat&quot;</code> with <code>codegen-units = 1</code>
 (<a href="https://github.com/ephpm/ephpm/pull/171">#171</a>). Fat LTO pulls every crate&rsquo;s LLVM IR into one module in one process
-and optimizes it as a unit, and one codegen unit removes the parallelism that would otherwise spread that memory out.
+and optimizes it as a unit. One codegen unit removes the parallelism that would otherwise spread that memory out.
 That&rsquo;s one very large process at the final link.</p>
-<p>The linux-aarch64 legs died first, rustc killed with <code>(signal: 9, SIGKILL)</code> during the link on three consecutive
-matrix runs, including one where the leg had the host to itself. The fix ladder:</p>
+<p>The linux-aarch64 legs died first. rustc was killed with <code>(signal: 9, SIGKILL)</code> during the link on three consecutive
+matrix runs. That included one where the leg had the host to itself. The fix ladder:</p>
 <ul>
 <li><strong>Thin LTO for arm64</strong> (<a href="https://github.com/ephpm/ephpm/pull/181">#181</a>). Enough for about ten days.</li>
 <li><strong>LTO off for arm64 and Windows</strong> (<a href="https://github.com/ephpm/ephpm/pull/198">#198</a>) once the Turso engine landed and
-grew the IR past what thin LTO fit into. The git history made the tipping point obvious: Windows built fine on fat LTO
-through v0.5.0 and started OOMing in v0.5.1, the first release with Turso linked in.</li>
+grew the IR past what thin LTO fit into. The git history made the tipping point obvious. Windows built fine on fat
+LTO through v0.5.0 and started OOMing in v0.5.1, the first release with Turso linked in.</li>
 <li><strong><code>RUST_MIN_STACK=32MiB</code> on Windows</strong> (<a href="https://github.com/ephpm/ephpm/pull/199">#199</a>). With LTO off, the
-Windows build got far enough to hit a <em>different</em> wall: <code>sqlparser</code>&rsquo;s deeply recursive AST types overflowed rustc&rsquo;s
-default thread stack (<code>STATUS_STACK_OVERFLOW</code>). Only on MSVC; arm64 compiled it fine.</li>
+Windows build got far enough to hit a <em>different</em> wall. <code>sqlparser</code>&rsquo;s deeply recursive AST types overflowed rustc&rsquo;s
+default thread stack (<code>STATUS_STACK_OVERFLOW</code>). Only on MSVC. arm64 compiled it fine.</li>
 <li><strong>The same fix for nightly</strong> (<a href="https://github.com/ephpm/ephpm/pull/203">#203</a>), which had failed arm64 for eight
-straight runs. In most of those the OOM killer took the <em>runner agent</em> too, so GitHub reported &ldquo;the self-hosted runner
-lost communication with the server&rdquo; instead of a build error. Same failure, different hat, and that&rsquo;s exactly why it
-had been read as flaky infrastructure.</li>
+straight runs. In most of those the OOM killer took the <em>runner agent</em> too. So GitHub reported &ldquo;the self-hosted
+runner lost communication with the server&rdquo; instead of a build error. Same failure, different hat. That&rsquo;s exactly why
+it had been read as flaky infrastructure.</li>
 </ul>
-<p>One detail from #203 I&rsquo;ll repeat to anybody who touches a workflow file: the value is quoted, <code>&quot;off&quot;</code>. Bare <code>off</code> in
+<p>One detail from #203 I&rsquo;ll repeat to anybody who touches a workflow file. The value is quoted, <code>&quot;off&quot;</code>. Bare <code>off</code> in
 YAML is boolean <code>false</code>, and Cargo&rsquo;s <code>lto = false</code> means <em>thin-local</em>, not off.</p>
 <p>Every one of those PRs said <code>codegen-units = 1</code> was a contributing factor, and nobody had measured it. So instead of
 changing release CI on reasoning, <a href="https://github.com/ephpm/ephpm/pull/249">#249</a> added an opt-in <code>workflow_dispatch</code>
-probe that builds the same commit with <code>lto</code> and <code>codegen_units</code> as inputs and records two numbers: total peak memory
-(what the OOM killer acts on) and the largest single process (what <code>rustc-LLVM ERROR: out of memory</code> is about). The
-first successful Windows run, LTO off with one codegen unit, peaked at 5.58 GiB total and 2.66 GiB for rustc alone,
-with a 1001-second build on a 10 GiB host. That&rsquo;s the baseline any change to <code>codegen-units</code> now has to beat.</p>
+probe. It builds the same commit with <code>lto</code> and <code>codegen_units</code> as inputs and records two numbers:</p>
+<ul>
+<li>Total peak memory, which is what the OOM killer acts on.</li>
+<li>The largest single process, which is what <code>rustc-LLVM ERROR: out of memory</code> is about.</li>
+</ul>
+<p>The first successful Windows run was LTO off with one codegen unit. It peaked at 5.58 GiB total and 2.66 GiB for rustc
+alone, with a 1001-second build on a 10 GiB host. That&rsquo;s the baseline any change to <code>codegen-units</code> now has to beat.</p>
 <h3 id="using-the-embedded-zend-compiler-as-a-static-analyzer">Using the embedded Zend compiler as a static analyzer</h3>
-<p><code>ephpm analyze</code> (<a href="https://github.com/ephpm/ephpm/pull/502">#502</a>) is a fail-closed gate you run before deploying PHP:
-an analyzer framework, a policy engine, SARIF output, and some analyzers that shell out to existing tools (composer
-audit, semgrep, YARA). Any analyzer error, timeout or panic floors the verdict at quarantine, because a run where
-something that should have spoken didn&rsquo;t can never be an &ldquo;allow&rdquo;.</p>
+<p><code>ephpm analyze</code> (<a href="https://github.com/ephpm/ephpm/pull/502">#502</a>) is a fail-closed gate you run before deploying PHP.
+It has an analyzer framework, a policy engine and SARIF output. Some analyzers shell out to existing tools (composer
+audit, semgrep, YARA). Any analyzer error, timeout or panic floors the verdict at quarantine. A run where something
+that should have spoken didn&rsquo;t can never be an &ldquo;allow&rdquo;.</p>
 <p>The interesting one is <code>opcode-scan</code> (<a href="https://github.com/ephpm/ephpm/pull/509">#509</a>). PHPStan, Psalm and semgrep all
-re-implement PHP parsing. ePHPm already has PHP&rsquo;s actual compiler linked in, so <code>opcode-scan</code> compiles each file with
-<code>zend_compile_file</code> under <code>ZEND_COMPILE_WITHOUT_EXECUTION</code> (the <code>opcache_compile_file()</code> model) and walks the opcode
-stream for dangerous calls. Nothing executes. It looks for <code>ZEND_INCLUDE_OR_EVAL</code> with <code>ZEND_EVAL</code>, and for statically
-named calls through the <code>INIT_FCALL</code> family to <code>system</code>, <code>exec</code>, <code>shell_exec</code>, <code>passthru</code>, <code>proc_open</code>, <code>popen</code>,
-<code>create_function</code>, <code>assert</code> and <code>unserialize</code>, in every op_array: functions, methods, closures, arrow functions and
-conditional declarations.</p>
+re-implement PHP parsing. ePHPm already has PHP&rsquo;s actual compiler linked in. So <code>opcode-scan</code> compiles each file with
+<code>zend_compile_file</code> under <code>ZEND_COMPILE_WITHOUT_EXECUTION</code>, the <code>opcache_compile_file()</code> model. Then it walks the opcode
+stream for dangerous calls. Nothing executes. It looks for two things:</p>
+<ul>
+<li><code>ZEND_INCLUDE_OR_EVAL</code> with <code>ZEND_EVAL</code>.</li>
+<li>Statically named calls through the <code>INIT_FCALL</code> family to <code>system</code>, <code>exec</code>, <code>shell_exec</code>, <code>passthru</code>, <code>proc_open</code>,
+<code>popen</code>, <code>create_function</code>, <code>assert</code> and <code>unserialize</code>.</li>
+</ul>
+<p>It checks every op_array. That means functions, methods, closures, arrow functions and conditional declarations.</p>
 <p>Asking the compiler beats a text scan in both directions. Opcodes have no comments and no strings-as-code, so <code>system</code>
-in a docblock produces nothing. And the compiler lowers things a text scan can&rsquo;t see: backticks arrive as a genuine
+in a docblock produces nothing. And the compiler lowers things a text scan can&rsquo;t see. Backticks arrive as a genuine
 <code>shell_exec</code> call. So findings are reported as confirmed rather than suspected. Some boring details matter for a
-scanner that runs inside a server process: the whole compile-and-walk runs inside <code>zend_try</code>/<code>zend_catch</code> so a fatal
-never longjmps into Rust, a file that doesn&rsquo;t compile is a gating error (code that can&rsquo;t compile can&rsquo;t be vouched for),
-and class and function table registrations get pruned after each file so two files declaring the same symbol both scan.</p>
-<p>My favorite footnote is in #502&rsquo;s review notes: the test fixtures assemble webshell-shaped strings at runtime, because
-Windows Defender had quarantined earlier fixture <em>source files</em> as <code>Backdoor:PHP/*</code>. If your security scanner&rsquo;s tests
-don&rsquo;t trip the antivirus at least once, are they even testing anything?</p>
+scanner that runs inside a server process:</p>
+<ul>
+<li>The whole compile-and-walk runs inside <code>zend_try</code>/<code>zend_catch</code> so a fatal never longjmps into Rust.</li>
+<li>A file that doesn&rsquo;t compile is a gating error. Code that can&rsquo;t compile can&rsquo;t be vouched for.</li>
+<li>Class and function table registrations get pruned after each file, so two files declaring the same symbol both scan.</li>
+</ul>
+<p>My favorite footnote is in #502&rsquo;s review notes. The test fixtures assemble webshell-shaped strings at runtime. Windows
+Defender had quarantined earlier fixture <em>source files</em> as <code>Backdoor:PHP/*</code>. If your security scanner&rsquo;s tests don&rsquo;t trip
+the antivirus at least once, are they even testing anything?</p>
 <h3 id="websockets-where-php-never-holds-the-socket">WebSockets where PHP never holds the socket</h3>
 <p><a href="https://github.com/ephpm/ephpm/pull/304">#304</a> added native WebSockets, but not the Swoole or ReactPHP way. Rust owns
-the socket and PHP runs once per event, which is the API Gateway (<code>$connect</code>/<code>$disconnect</code>/message) shape. An idle
-connection costs a registry entry and some reactor memory, not a PHP process, so ten thousand idle connections cost no
-PHP at all (once you raise <code>max_connections_per_site</code>, which defaults to 1,000 and counts a single-site server as one
-site). Every event goes through the same <code>handle_php</code> path as an HTTP request, so the per-site database, KV
+the socket and PHP runs once per event. That&rsquo;s the API Gateway (<code>$connect</code>/<code>$disconnect</code>/message) shape. An idle
+connection costs a registry entry and some reactor memory, not a PHP process. So ten thousand idle connections cost no
+PHP at all. You do have to raise <code>max_connections_per_site</code> first. It defaults to 1,000 and counts a single-site server
+as one site. Every event goes through the same <code>handle_php</code> path as an HTTP request. The per-site database, KV
 keyspace, <code>open_basedir</code> sandbox and crash guard all apply without a parallel implementation to keep in sync.</p>
 <p>One script, <code>websocket.php</code> at the vhost&rsquo;s document root, routes on <code>$_SERVER['WS_EVENT']</code>:</p>
 <div class="highlight"><pre tabindex="0" class="chroma"><code class="language-php" data-lang="php"><span class="line"><span class="cl"><span class="o">&lt;?</span><span class="nx">php</span>
@@ -352,28 +361,29 @@ keyspace, <code>open_basedir</code> sandbox and crash guard all apply without a 
 </span></span><span class="line"><span class="cl">        <span class="nx">ephpm_ws_broadcast</span><span class="p">(</span><span class="s1">&#39;lobby&#39;</span><span class="p">,</span> <span class="nx">json_encode</span><span class="p">([</span><span class="s1">&#39;text&#39;</span> <span class="o">=&gt;</span> <span class="nv">$payload</span><span class="p">[</span><span class="s1">&#39;text&#39;</span><span class="p">]</span> <span class="o">??</span> <span class="s1">&#39;&#39;</span><span class="p">]));</span>
 </span></span><span class="line"><span class="cl">        <span class="k">return</span><span class="p">;</span>
 </span></span><span class="line"><span class="cl"><span class="p">}</span>
-</span></span></code></pre></div><p>The <code>connect</code> event runs on the real upgrade request, before the handshake completes, so it sees the cookies and query
-string that auth needs and can refuse with a real 401. Two decisions I&rsquo;d copy elsewhere. The implicit <code>ephpm_ws_send()</code>
-called from an ordinary HTTP request <em>throws</em> rather than returning false, because a push API that silently succeeds is
-the worst possible failure mode. And every bound is a bound: each connection has a fixed outbound queue, and on overflow
-the socket closes with 1013 instead of buffering. One slow reader costs one connection, never the server&rsquo;s memory.</p>
+</span></span></code></pre></div><p>The <code>connect</code> event runs on the real upgrade request, before the handshake completes. So it sees the cookies and query
+string that auth needs, and it can refuse with a real 401. There are two decisions I&rsquo;d copy elsewhere. First, the
+implicit <code>ephpm_ws_send()</code> called from an ordinary HTTP request <em>throws</em> rather than returning false. A push API that
+silently succeeds is the worst possible failure mode. Second, every bound is a bound. Each connection has a fixed
+outbound queue, and on overflow the socket closes with 1013 instead of buffering. One slow reader costs one connection,
+never the server&rsquo;s memory.</p>
 <h3 id="the-44-ms-stall-and-the-fix-that-got-reverted">The 44 ms stall, and the fix that got reverted</h3>
-<p>The single most productive class of performance bug in ePHPm has been <code>TCP_NODELAY</code> on small-response paths. The
-worst case was the MySQL wire frontend in <a href="https://github.com/ephpm/litewire">litewire</a>. With PHP talking to the
-in-process SQLite over <code>pdo_mysql</code>, single-row INSERTs took about a millisecond and SELECTs were pinned at a fixed ~44
-ms. That asymmetry is the fingerprint of Nagle plus delayed ACK: a one-packet response (INSERT OK) can&rsquo;t trigger it, a
-multi-packet result set can. A fixed timer value is a timer, not a slow query.</p>
-<p>The non-obvious part: setting <code>TCP_NODELAY</code> on the server side alone did <em>not</em> fix it, because the mysqlnd client&rsquo;s
-side of the exchange mattered too. The real fix was coalescing the whole result set into a single write. From the lab&rsquo;s
-v0.4.1 retest, ten sequential PDO queries per request:</p>
+<p>The single most productive class of performance bug in ePHPm has been <code>TCP_NODELAY</code> on small-response paths. The worst
+case was the MySQL wire frontend in <a href="https://github.com/ephpm/litewire">litewire</a>. PHP talks to the in-process SQLite
+over <code>pdo_mysql</code>. Single-row INSERTs took about a millisecond and SELECTs were pinned at a fixed ~44 ms. That asymmetry
+is the fingerprint of Nagle plus delayed ACK. A one-packet response (INSERT OK) can&rsquo;t trigger it, but a multi-packet
+result set can. A fixed timer value is a timer, not a slow query.</p>
+<p>The non-obvious part is that setting <code>TCP_NODELAY</code> on the server side alone did <em>not</em> fix it. The mysqlnd client&rsquo;s side
+of the exchange mattered too. The real fix was coalescing the whole result set into a single write. Here&rsquo;s the lab&rsquo;s
+v0.4.1 retest, with ten sequential PDO queries per request:</p>
 <p><img src="/img/2026/09/ephpm-smaller-angles-nodelay.svg" alt="db.php latency before and after"></p>
 <p>That&rsquo;s 444.0 ms p50 down to 4.4 ms at c=1, and 35 to 106 requests per second at c=16. The same audit found the main
 HTTP listener didn&rsquo;t set nodelay either, on the assumption that hyper does it. It doesn&rsquo;t.</p>
-<p>The part that actually changed how I release things: a rebase conflict during a stacked-PR merge silently dropped
-the litewire <code>set_nodelay</code> lines. The commit was in history, but its changes had been overwritten by a <code>--theirs</code>
-resolution. CI was green. The DB benchmark on the release candidate still showed the full 44 ms stall, and that&rsquo;s the
-only reason it didn&rsquo;t ship as a headline that was false on the flagship path. &ldquo;The code merged and CI is green&rdquo; isn&rsquo;t
-the same claim as &ldquo;the fix is in the binary&rdquo;. Measure the release candidate.</p>
+<p>This next part changed how I release things. A rebase conflict during a stacked-PR merge silently dropped the litewire
+<code>set_nodelay</code> lines. The commit was in history, but its changes had been overwritten by a <code>--theirs</code> resolution. CI was
+green. The DB benchmark on the release candidate still showed the full 44 ms stall. That&rsquo;s the only reason it didn&rsquo;t
+ship as a headline that was false on the flagship path. &ldquo;The code merged and CI is green&rdquo; isn&rsquo;t the same claim as &ldquo;the
+fix is in the binary&rdquo;. Measure the release candidate.</p>
 <h3 id="links">Links</h3>
 <ul>
 <li>LTO and the arm64/Windows OOMs: <a href="https://github.com/ephpm/ephpm/pull/171">#171</a>, <a href="https://github.com/ephpm/ephpm/pull/181">#181</a>, <a href="https://github.com/ephpm/ephpm/pull/198">#198</a>, <a href="https://github.com/ephpm/ephpm/pull/199">#199</a>, <a href="https://github.com/ephpm/ephpm/pull/203">#203</a>, <a href="https://github.com/ephpm/ephpm/pull/249">#249</a></li>

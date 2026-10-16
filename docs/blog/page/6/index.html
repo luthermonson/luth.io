@@ -233,10 +233,10 @@
     <img class="" src="/img/2026/08/windows-dynamic-disk-usb-wsl2-usbip-layout.svg" alt="GPT layout of the 1 TB drive with LDM metadata and a 930 GiB LDM data partition, and the two paths: the Windows storage stack refusing it and usbipd passing it to WSL2">
   </a>
     
-    <p>I pulled a 1 TB NVMe out of an old Windows box, dropped it in a USB enclosure, plugged it in, and Windows showed nothing.
-No drive letter, no &ldquo;initialize this disk&rdquo; prompt, nothing in Explorer. Disk Management listed it as <code>Invalid</code>, and the
-enclosure&rsquo;s booklet said to &ldquo;bring the disk online&rdquo;, which silently did nothing. The data was completely intact. Windows was
-refusing on <strong>policy</strong> grounds, not because anything was broken, and getting it back meant going around the&hellip;</p>
+    <p>I pulled a 1 TB NVMe out of an old Windows box, dropped it in a USB enclosure and plugged it in. Windows showed nothing.
+No drive letter, no &ldquo;initialize this disk&rdquo; prompt, nothing in Explorer. Disk Management listed it as <code>Invalid</code>. The
+enclosure&rsquo;s booklet said to &ldquo;bring the disk online&rdquo;, which silently did nothing. The data was completely intact. Windows
+was refusing on <strong>policy</strong> grounds, not because anything was broken. Getting it back meant going around the Windows&hellip;</p>
   </div>
   <footer>
     <a href="/blog/2026/08/windows-dynamic-disk-usb-wsl2-usbip/" class="button big">Read More</a>
@@ -303,10 +303,10 @@ refusing on <strong>policy</strong> grounds, not because anything was broken, an
     <img class="" src="/img/2026/08/building-a-custom-php-sapi-cover.svg" alt="Table mapping PHP operations like echo, header(), $_POST, $_COOKIE and $_SERVER to SAPI callbacks and to the Rust side of ePHPm">
   </a>
     
-    <p>If you&rsquo;ve only ever run PHP behind nginx you&rsquo;ve probably never had to think about how <code>echo</code> reaches a socket. When you
-embed PHP, as <a href="https://github.com/ephpm/ephpm">ePHPm</a> does, it&rsquo;s the first thing you have to answer, and the answer is a
-SAPI. There is very little written about implementing one. Most of what I know came from reading <code>sapi/cli</code>,
-<code>sapi/cgi</code> and <code>sapi/embed</code> in php-src and then finding out which parts I&rsquo;d misread. This is the write-up I wanted back
+    <p>If you&rsquo;ve only ever run PHP behind nginx, you&rsquo;ve probably never had to think about how <code>echo</code> reaches a socket. When
+you embed PHP like <a href="https://github.com/ephpm/ephpm">ePHPm</a> does, it&rsquo;s the first thing you have to answer. The answer
+is a SAPI. There is very little written about implementing one. Most of what I know came from reading <code>sapi/cli</code>,
+<code>sapi/cgi</code> and <code>sapi/embed</code> in php-src. Then I found out which parts I&rsquo;d misread. This is the write-up I wanted back
 in March.</p>
   </div>
   <footer>
@@ -357,7 +357,7 @@ in March.</p>
       <h2><a href="/blog/2026/07/five-ways-to-url-encode-an-ssh-key/">Five Ways to URL-Encode an SSH Key (and Why Proxmox Rejects Them)</a></h2>
     
     
-      <p>Proxmox&#39;s sshkeys parameter wants Python-style percent encoding that no single Go function produces. A two-year-old issue, a one-line fix, and a related double-encoding bug in guest file writes.</p>
+      <p>Proxmox&#39;s sshkeys parameter wants Python-style percent encoding that no single Go function produces. This covers a two-year-old issue, its one-line fix, and a related double-encoding bug in guest file writes.</p>
     
   </div>
   <div class="meta">
@@ -372,10 +372,10 @@ in March.</p>
     <img class="" src="/img/2026/07/five-ways-to-url-encode-an-ssh-key-results.svg" alt="Table of seven ways to encode an SSH public key and whether each passes Proxmox&#39;s urlencoded validator">
   </a>
     
-    <p><a href="https://github.com/luthermonson/go-proxmox/issues/144">Issue #144</a> on go-proxmox was opened in April 2024 with the title
-&ldquo;Weird sshkeys SSH public key validation error&rdquo; and it is one of my less proud threads. Thirteen comments of people,
-including me, trying to get a public key into a cloud-init VM through the API, and the working answer took more than a
-year to show up. The fix that finally landed in May is one line. Here&rsquo;s why it took so long.</p>
+    <p><a href="https://github.com/luthermonson/go-proxmox/issues/144">Issue #144</a> on go-proxmox was opened in April 2024 with the
+title &ldquo;Weird sshkeys SSH public key validation error&rdquo;. It is one of my less proud threads. It&rsquo;s thirteen comments of
+people, including me, trying to get a public key into a cloud-init VM through the API. The working answer took more
+than a year to show up. The fix that finally landed in May is one line. Here&rsquo;s why it took so long.</p>
   </div>
   <footer>
     <a href="/blog/2026/07/five-ways-to-url-encode-an-ssh-key/" class="button big">Read More</a>
@@ -421,7 +421,7 @@ year to show up. The fix that finally landed in May is one line. Here&rsquo;s wh
       <h2><a href="/blog/2026/07/sqlite-production-database-protocol-translation/">SQLite as a Production Database via Protocol Translation</a></h2>
     
     
-      <p>litewire speaks the MySQL wire protocol on one side and SQLite on the other, so WordPress and Laravel run against a .db file without a code change. Here&#39;s how it works and what it took.</p>
+      <p>litewire speaks the MySQL wire protocol on one side and SQLite on the other. That lets WordPress and Laravel run against a .db file without a code change.</p>
     
   </div>
   <div class="meta">
@@ -436,11 +436,11 @@ year to show up. The fix that finally landed in May is one line. Here&rsquo;s wh
     <img class="" src="/img/2026/07/sqlite-production-database-protocol-translation-cover.svg" alt="A PHP app connecting over the MySQL wire protocol on port 3306 to litewire, which translates the SQL and runs it against a SQLite file">
   </a>
     
-    <p>Most of the PHP sites I&rsquo;d put on <a href="https://github.com/ephpm/ephpm">ePHPm</a> don&rsquo;t need a MySQL server. A brochure WordPress,
-an internal Laravel tool, a preview environment that lives for an afternoon. What they do need is something that
-<em>looks</em> like MySQL, because <code>mysqli</code> and <code>pdo_mysql</code> are the only database drivers their code has ever been pointed at.
-I mentioned this in the <a href="/blog/2026/06/ephpm-pragmatism/">ePHPm pragmatism post</a> as a one-paragraph &ldquo;because&rdquo;. This is the
-longer version, now that WordPress 7.0 and Laravel 13 both install and&hellip;</p>
+    <p>Most of the PHP sites I&rsquo;d put on <a href="https://github.com/ephpm/ephpm">ePHPm</a> don&rsquo;t need a MySQL server. A brochure
+WordPress, an internal Laravel tool, a preview environment that lives for an afternoon. What they do need is something
+that <em>looks</em> like MySQL, because <code>mysqli</code> and <code>pdo_mysql</code> are the only database drivers their code has ever been
+pointed at. I mentioned this in the <a href="/blog/2026/06/ephpm-pragmatism/">ePHPm pragmatism post</a> as a one-paragraph
+&ldquo;because&rdquo;. This is the longer version, now that WordPress 7.0 and Laravel 13 both install and&hellip;</p>
   </div>
   <footer>
     <a href="/blog/2026/07/sqlite-production-database-protocol-translation/" class="button big">Read More</a>
@@ -509,7 +509,7 @@ longer version, now that WordPress 7.0 and Laravel 13 both install and&hellip;</
     
     <p>One of the first things that broke when I started building PHP on Windows with
 <a href="https://github.com/crazywhalecc/static-php-cli">static-php-cli</a> (SPC) wasn&rsquo;t PHP at all. It was unpacking the source
-tarballs. libxml2, xz, a couple of others would die partway through extraction with:</p>
+tarballs. libxml2, xz and a couple of others would die partway through extraction with:</p>
   </div>
   <footer>
     <a href="/blog/2026/07/spc-windows-archive-extraction/" class="button big">Read More</a>
@@ -557,7 +557,7 @@ tarballs. libxml2, xz, a couple of others would die partway through extraction w
       <h2><a href="/blog/2026/07/go-proxmox-watch-close-withretry/">Two Small go-proxmox Fixes: A Watch Channel That Never Closed, and WithRetry</a></h2>
     
     
-      <p>A task log channel that only closed on the happy path, and a composable RoundTripper that retries the 502s and 503s Proxmox throws during cluster transitions.</p>
+      <p>go-proxmox had a task log channel that only closed on the happy path. It also gained a composable RoundTripper that retries the 502s and 503s Proxmox throws during cluster transitions.</p>
     
   </div>
   <div class="meta">
@@ -572,9 +572,9 @@ tarballs. libxml2, xz, a couple of others would die partway through extraction w
     <img class="" src="/img/2022/02/proxmox-logo.png" alt="Proxmox VE Logo">
   </a>
     
-    <p>Two changes from the v0.5 to v0.7 stretch of <a href="https://github.com/luthermonson/go-proxmox">go-proxmox</a> that are too small
-for a post each but are worth knowing about if you write long-running tooling against Proxmox. One is a bug in code I
-wrote about in 2022, the other is a feature that replaces a retry loop everybody was writing for themselves.</p>
+    <p>Here are two changes from the v0.5 to v0.7 stretch of <a href="https://github.com/luthermonson/go-proxmox">go-proxmox</a>. They&rsquo;re
+too small for a post each. They&rsquo;re worth knowing about if you write long-running tooling against Proxmox. One is a bug
+in code I wrote about in 2022. The other is a feature that replaces a retry loop everybody was writing for themselves.</p>
   </div>
   <footer>
     <a href="/blog/2026/07/go-proxmox-watch-close-withretry/" class="button big">Read More</a>
@@ -620,7 +620,7 @@ wrote about in 2022, the other is a feature that replaces a retry loop everybody
       <h2><a href="/blog/2026/06/go-proxmox-agents-md/">Maintaining an Open-Source Library With AI Agents: AGENTS.md and the Rule They Kept Breaking</a></h2>
     
     
-      <p>Six weeks of go-proxmox with coding agents doing most of the typing: what went into AGENTS.md, the API shape five parallel agents got wrong the same way, and how a coverage metric bent the code around it.</p>
+      <p>Six weeks of go-proxmox with coding agents doing most of the typing taught me what belongs in AGENTS.md. Five parallel agents got the same API shape wrong, and a coverage metric bent the code around it.</p>
     
   </div>
   <div class="meta">
@@ -635,12 +635,12 @@ wrote about in 2022, the other is a feature that replaces a retry loop everybody
     <img class="" src="/img/2026/06/go-proxmox-agents-md-rule.svg" alt="Decision diagram: endpoints without an id in the path become methods on the parent, endpoints with an id get a handle type">
   </a>
     
-    <p>On May 9th I merged <a href="https://github.com/luthermonson/go-proxmox/pull/264">#264</a>, which added an <code>AGENTS.md</code> to
-<a href="https://github.com/luthermonson/go-proxmox">go-proxmox</a> and a stub <code>CLAUDE.md</code> that just points at it. Over the
-next six weeks, through the v0.8.0 migration guide on June 15th, <code>main</code> took 77 commits, +31,794 / -1,144 lines, went from
-84 to 186 <code>.go</code> files, and endpoint coverage went from 30% to <a href="/blog/2026/06/go-proxmox-endpoint-coverage/">100% of the Proxmox API</a>.
-Most of that code was typed by coding agents, a lot of it by several at once. This is what that looked like from the
-maintainer&rsquo;s chair, mostly the parts that went&hellip;</p>
+    <p>On May 9th I merged <a href="https://github.com/luthermonson/go-proxmox/pull/264">#264</a>. It added an <code>AGENTS.md</code> to
+<a href="https://github.com/luthermonson/go-proxmox">go-proxmox</a> and a stub <code>CLAUDE.md</code> that just points at it. The next six
+weeks ran through the v0.8.0 migration guide on June 15th. In that time <code>main</code> took 77 commits and +31,794 / -1,144
+lines. The repo went from 84 to 186 <code>.go</code> files. Endpoint coverage went from 30% to
+<a href="/blog/2026/06/go-proxmox-endpoint-coverage/">100% of the Proxmox API</a>. Most of that code was typed by coding agents,
+a lot of it by several at once. This is what that looked like from the maintainer&rsquo;s chair. It&rsquo;s&hellip;</p>
   </div>
   <footer>
     <a href="/blog/2026/06/go-proxmox-agents-md/" class="button big">Read More</a>
@@ -688,7 +688,7 @@ maintainer&rsquo;s chair, mostly the parts that went&hellip;</p>
       <h2><a href="/blog/2026/06/proxmox-numbers-null-scientific-notation-net10/">Proxmox JSON, Part 2: null PIDs, 1.12589990684262e&#43;15 and net10</a></h2>
     
     
-      <p>Three more ways the Proxmox VE API&#39;s JSON doesn&#39;t fit Go&#39;s encoding/json: a null I fixed and then broke, petabyte storage in scientific notation, and devices past index 9 that were silently dropped.</p>
+      <p>The Proxmox VE API found three more ways for its JSON not to fit Go&#39;s encoding/json. There&#39;s a null I fixed and then broke, petabyte storage in scientific notation, and devices past index 9 that were silently dropped.</p>
     
   </div>
   <div class="meta">
@@ -703,10 +703,10 @@ maintainer&rsquo;s chair, mostly the parts that went&hellip;</p>
     <img class="" src="/img/2022/02/proxmox-logo.png" alt="Proxmox VE Logo">
   </a>
     
-    <p>In 2023 I wrote about <a href="/blog/2023/11/proxmox-doesnt-know-what-type-a-number-is/">why go-proxmox has <code>StringOrInt</code> and friends</a>:
+    <p>In 2023 I wrote about <a href="/blog/2023/11/proxmox-doesnt-know-what-type-a-number-is/">why go-proxmox has <code>StringOrInt</code> and friends</a>.
 Proxmox sends the same number quoted in one place and bare in another, so the client has types that accept both. That
 post ended on a pretty confident note. Since then three more shapes of &ldquo;the JSON is valid and Go still won&rsquo;t take it&rdquo;
-have come in, and one of them is a bug I&rsquo;d already fixed once and then reintroduced myself.</p>
+have come in. One of them is a bug I&rsquo;d already fixed once and then reintroduced myself.</p>
   </div>
   <footer>
     <a href="/blog/2026/06/proxmox-numbers-null-scientific-notation-net10/" class="button big">Read More</a>
@@ -767,8 +767,8 @@ have come in, and one of them is a bug I&rsquo;d already fixed once and then rei
     
     <p><a href="https://github.com/ephpm/ephpm">ePHPm</a> tagged <a href="https://github.com/ephpm/ephpm/releases/tag/v0.1.0">v0.1.0</a> this
 week, three months after the first commit. Before the feature list grows any further I want to write down how
-decisions get made on it, mostly for myself, because the easiest way to ruin a project like this is to let it turn into
-a checklist of things other projects have.</p>
+decisions get made on it. This is mostly for myself. The easiest way to ruin a project like this is to let it turn
+into a checklist of things other projects have.</p>
   </div>
   <footer>
     <a href="/blog/2026/06/ephpm-pragmatism/" class="button big">Read More</a>
@@ -831,10 +831,7 @@ a checklist of things other projects have.</p>
     <img class="" src="/img/2026/06/tail-gunner-filtered.svg" alt="tail-gunner in gunner mode showing only ERROR lines with a highlight on request durations">
   </a>
     
-    <p>Here&rsquo;s a loop I end up in all the time: <code>tail -f app.log</code>, something scrolls by that looks wrong, Ctrl-C, <code>tail -f app.log | grep ERROR</code>,
-wait for it to happen again, decide I also want to drop the health checks, Ctrl-C, <code>| grep -v healthz</code>, wait again. Every filter tweak
-throws away the stream and every line that already went past. I got tired of it and wrote <a href="https://github.com/luthermonson/tail-gunner">tail-gunner</a>,
-a <code>tail</code> replacement that you can promote into a filtering TUI with one keystroke and drop back out of without the stream ever&hellip;</p>
+    <p>Here&rsquo;s a loop I end up in all the time:</p>
   </div>
   <footer>
     <a href="/blog/2026/06/tail-gunner/" class="button big">Read More</a>

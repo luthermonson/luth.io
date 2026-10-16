@@ -235,9 +235,9 @@
     
     <p>Ask most people what their PHP server does when it&rsquo;s overloaded and you&rsquo;ll hear &ldquo;it returns 503s.&rdquo; Ask them how they
 know and it usually comes down to a config setting they read about. I was in that camp for <a href="https://github.com/ephpm/ephpm">ePHPm</a>.
-We had a <code>[server.limits] max_connections</code> knob, the docs said it returned 503 at the cap, and every benchmark we had
-ever run reported zero errors under heavy load. Then I wrote a load generator that could actually produce overload,
-and the honest answer was&hellip;</p>
+We had a <code>[server.limits] max_connections</code> knob, and the docs said it returned 503 at the cap. Every benchmark we had
+ever run reported zero errors under heavy load. Then I wrote a load generator that could produce overload. The honest
+answer was that an&hellip;</p>
   </div>
   <footer>
     <a href="/blog/2026/08/what-an-overloaded-php-server-actually-returns/" class="button big">Read More</a>
@@ -285,13 +285,13 @@ and the honest answer was&hellip;</p>
       <h2><a href="/blog/2026/08/shipmates-persona-based-ai-coding-crews/">shipmates: Persona-Based AI Coding Crews That Remember</a></h2>
     
     
-      <p>A Go CLI and daemon that runs crews of AI coding agents across machines, with per-project memory, a shared task graph, voice control and a real permission model.</p>
+      <p>shipmates is a Go CLI and daemon that runs crews of AI coding agents across machines. It adds per-project memory, a shared task graph, voice control and a real permission model.</p>
     
   </div>
   <div class="meta">
     <time datetime="2026-08-21 21:18:00 -0700 PDT">August 21, 2026</time>
     
-    <p>6-Minute Read</p>
+    <p>7-Minute Read</p>
   </div>
 </header>
 
@@ -302,8 +302,8 @@ and the honest answer was&hellip;</p>
     
     <p>Since June most of my evenings have gone into <a href="https://github.com/luthermonson/shipmates">shipmates</a>, a Go CLI and daemon
 for running crews of AI coding agents. I tagged <a href="https://github.com/luthermonson/shipmates/releases/tag/v0.5.0">v0.5.0</a>
-on August 17th, two months and about 240 commits after the first architecture doc, so it&rsquo;s a good time to write down what
-it is and why it exists.</p>
+on August 17th. That was two months and about 240 commits after the first architecture doc. So it&rsquo;s a good time to write
+down what it is and why it exists.</p>
   </div>
   <footer>
     <a href="/blog/2026/08/shipmates-persona-based-ai-coding-crews/" class="button big">Read More</a>
@@ -364,10 +364,10 @@ it is and why it exists.</p>
     <img class="" src="/img/2026/08/ephemerd-one-daemon-every-os-arch.svg" alt="ephemerd architecture across Linux, Windows and macOS hosts">
   </a>
     
-    <p>I have CI that needs Linux amd64, Linux arm64, Windows and macOS, and GitHub-hosted runners for all four get expensive fast,
+    <p>I have CI that needs Linux amd64, Linux arm64, Windows and macOS. GitHub-hosted runners for all four get expensive fast,
 especially the arm64 and Mac minutes. Self-hosted runners fix the bill and create a different problem. A stock
-<code>actions/runner</code> on a box you own runs whatever the workflow says, keeps whatever the last job left behind, and is one fork
-PR away from somebody running code on your LAN.</p>
+<code>actions/runner</code> on a box you own runs whatever the workflow says. It keeps whatever the last job left behind. And it&rsquo;s
+one fork PR away from somebody running code on your LAN.</p>
   </div>
   <footer>
     <a href="/blog/2026/08/ephemerd-one-daemon-every-os/" class="button big">Read More</a>
@@ -419,7 +419,7 @@ PR away from somebody running code on your LAN.</p>
       <h2><a href="/blog/2026/08/ntfs-atomic-file-replacement-not-rename-fsync/">Atomic File Replacement on NTFS Is Not rename &#43; fsync</a></h2>
     
     
-      <p>The Unix recipe for durable atomic file replacement doesn&#39;t translate to Windows. What shipmates uses instead, and the delete-pending window that made an 8-way test fail only when the whole suite ran.</p>
+      <p>The Unix recipe for durable atomic file replacement doesn&#39;t translate to Windows. This is what shipmates uses instead, plus the delete-pending window that made an 8-way test fail only when the whole suite ran.</p>
     
   </div>
   <div class="meta">
@@ -434,11 +434,11 @@ PR away from somebody running code on your LAN.</p>
     <img class="" src="/img/2026/09/ntfs-atomic-file-replacement-not-rename-fsync-cover.svg" alt="How long a losing concurrent replacer waits on NTFS, idle disk vs a disk under fsync load">
   </a>
     
-    <p><a href="https://github.com/luthermonson/shipmates">shipmates</a> writes a lot of small state files that other
-processes read: voyage plans and state, tracker files. Each of them has to be replaced atomically (a reader sees
-the old file or the new one, never half of each) and durably (when the function returns success, a power cut doesn&rsquo;t
-take it back). Every Unix programmer knows the recipe for that. It doesn&rsquo;t work on Windows, and the reasons are more
-interesting than &ldquo;Windows is different&rdquo;.</p>
+    <p><a href="https://github.com/luthermonson/shipmates">shipmates</a> writes a lot of small state files that other processes read.
+Voyage plans and state, tracker files. Each of them has to be replaced atomically, so a reader sees the old file or the
+new one and never half of each. Each also has to be replaced durably. When the function returns success, a power cut
+doesn&rsquo;t take it back. Every Unix programmer knows the recipe for that. It doesn&rsquo;t work on Windows, and the reasons are
+more interesting than &ldquo;Windows is different&rdquo;.</p>
   </div>
   <footer>
     <a href="/blog/2026/08/ntfs-atomic-file-replacement-not-rename-fsync/" class="button big">Read More</a>
@@ -486,7 +486,7 @@ interesting than &ldquo;Windows is different&rdquo;.</p>
       <h2><a href="/blog/2026/07/five-ways-to-url-encode-an-ssh-key/">Five Ways to URL-Encode an SSH Key (and Why Proxmox Rejects Them)</a></h2>
     
     
-      <p>Proxmox&#39;s sshkeys parameter wants Python-style percent encoding that no single Go function produces. A two-year-old issue, a one-line fix, and a related double-encoding bug in guest file writes.</p>
+      <p>Proxmox&#39;s sshkeys parameter wants Python-style percent encoding that no single Go function produces. This covers a two-year-old issue, its one-line fix, and a related double-encoding bug in guest file writes.</p>
     
   </div>
   <div class="meta">
@@ -501,10 +501,10 @@ interesting than &ldquo;Windows is different&rdquo;.</p>
     <img class="" src="/img/2026/07/five-ways-to-url-encode-an-ssh-key-results.svg" alt="Table of seven ways to encode an SSH public key and whether each passes Proxmox&#39;s urlencoded validator">
   </a>
     
-    <p><a href="https://github.com/luthermonson/go-proxmox/issues/144">Issue #144</a> on go-proxmox was opened in April 2024 with the title
-&ldquo;Weird sshkeys SSH public key validation error&rdquo; and it is one of my less proud threads. Thirteen comments of people,
-including me, trying to get a public key into a cloud-init VM through the API, and the working answer took more than a
-year to show up. The fix that finally landed in May is one line. Here&rsquo;s why it took so long.</p>
+    <p><a href="https://github.com/luthermonson/go-proxmox/issues/144">Issue #144</a> on go-proxmox was opened in April 2024 with the
+title &ldquo;Weird sshkeys SSH public key validation error&rdquo;. It is one of my less proud threads. It&rsquo;s thirteen comments of
+people, including me, trying to get a public key into a cloud-init VM through the API. The working answer took more
+than a year to show up. The fix that finally landed in May is one line. Here&rsquo;s why it took so long.</p>
   </div>
   <footer>
     <a href="/blog/2026/07/five-ways-to-url-encode-an-ssh-key/" class="button big">Read More</a>
@@ -550,7 +550,7 @@ year to show up. The fix that finally landed in May is one line. Here&rsquo;s wh
       <h2><a href="/blog/2026/07/go-proxmox-watch-close-withretry/">Two Small go-proxmox Fixes: A Watch Channel That Never Closed, and WithRetry</a></h2>
     
     
-      <p>A task log channel that only closed on the happy path, and a composable RoundTripper that retries the 502s and 503s Proxmox throws during cluster transitions.</p>
+      <p>go-proxmox had a task log channel that only closed on the happy path. It also gained a composable RoundTripper that retries the 502s and 503s Proxmox throws during cluster transitions.</p>
     
   </div>
   <div class="meta">
@@ -565,9 +565,9 @@ year to show up. The fix that finally landed in May is one line. Here&rsquo;s wh
     <img class="" src="/img/2022/02/proxmox-logo.png" alt="Proxmox VE Logo">
   </a>
     
-    <p>Two changes from the v0.5 to v0.7 stretch of <a href="https://github.com/luthermonson/go-proxmox">go-proxmox</a> that are too small
-for a post each but are worth knowing about if you write long-running tooling against Proxmox. One is a bug in code I
-wrote about in 2022, the other is a feature that replaces a retry loop everybody was writing for themselves.</p>
+    <p>Here are two changes from the v0.5 to v0.7 stretch of <a href="https://github.com/luthermonson/go-proxmox">go-proxmox</a>. They&rsquo;re
+too small for a post each. They&rsquo;re worth knowing about if you write long-running tooling against Proxmox. One is a bug
+in code I wrote about in 2022. The other is a feature that replaces a retry loop everybody was writing for themselves.</p>
   </div>
   <footer>
     <a href="/blog/2026/07/go-proxmox-watch-close-withretry/" class="button big">Read More</a>
@@ -613,7 +613,7 @@ wrote about in 2022, the other is a feature that replaces a retry loop everybody
       <h2><a href="/blog/2026/06/go-proxmox-agents-md/">Maintaining an Open-Source Library With AI Agents: AGENTS.md and the Rule They Kept Breaking</a></h2>
     
     
-      <p>Six weeks of go-proxmox with coding agents doing most of the typing: what went into AGENTS.md, the API shape five parallel agents got wrong the same way, and how a coverage metric bent the code around it.</p>
+      <p>Six weeks of go-proxmox with coding agents doing most of the typing taught me what belongs in AGENTS.md. Five parallel agents got the same API shape wrong, and a coverage metric bent the code around it.</p>
     
   </div>
   <div class="meta">
@@ -628,12 +628,12 @@ wrote about in 2022, the other is a feature that replaces a retry loop everybody
     <img class="" src="/img/2026/06/go-proxmox-agents-md-rule.svg" alt="Decision diagram: endpoints without an id in the path become methods on the parent, endpoints with an id get a handle type">
   </a>
     
-    <p>On May 9th I merged <a href="https://github.com/luthermonson/go-proxmox/pull/264">#264</a>, which added an <code>AGENTS.md</code> to
-<a href="https://github.com/luthermonson/go-proxmox">go-proxmox</a> and a stub <code>CLAUDE.md</code> that just points at it. Over the
-next six weeks, through the v0.8.0 migration guide on June 15th, <code>main</code> took 77 commits, +31,794 / -1,144 lines, went from
-84 to 186 <code>.go</code> files, and endpoint coverage went from 30% to <a href="/blog/2026/06/go-proxmox-endpoint-coverage/">100% of the Proxmox API</a>.
-Most of that code was typed by coding agents, a lot of it by several at once. This is what that looked like from the
-maintainer&rsquo;s chair, mostly the parts that went&hellip;</p>
+    <p>On May 9th I merged <a href="https://github.com/luthermonson/go-proxmox/pull/264">#264</a>. It added an <code>AGENTS.md</code> to
+<a href="https://github.com/luthermonson/go-proxmox">go-proxmox</a> and a stub <code>CLAUDE.md</code> that just points at it. The next six
+weeks ran through the v0.8.0 migration guide on June 15th. In that time <code>main</code> took 77 commits and +31,794 / -1,144
+lines. The repo went from 84 to 186 <code>.go</code> files. Endpoint coverage went from 30% to
+<a href="/blog/2026/06/go-proxmox-endpoint-coverage/">100% of the Proxmox API</a>. Most of that code was typed by coding agents,
+a lot of it by several at once. This is what that looked like from the maintainer&rsquo;s chair. It&rsquo;s&hellip;</p>
   </div>
   <footer>
     <a href="/blog/2026/06/go-proxmox-agents-md/" class="button big">Read More</a>
@@ -681,7 +681,7 @@ maintainer&rsquo;s chair, mostly the parts that went&hellip;</p>
       <h2><a href="/blog/2026/06/proxmox-numbers-null-scientific-notation-net10/">Proxmox JSON, Part 2: null PIDs, 1.12589990684262e&#43;15 and net10</a></h2>
     
     
-      <p>Three more ways the Proxmox VE API&#39;s JSON doesn&#39;t fit Go&#39;s encoding/json: a null I fixed and then broke, petabyte storage in scientific notation, and devices past index 9 that were silently dropped.</p>
+      <p>The Proxmox VE API found three more ways for its JSON not to fit Go&#39;s encoding/json. There&#39;s a null I fixed and then broke, petabyte storage in scientific notation, and devices past index 9 that were silently dropped.</p>
     
   </div>
   <div class="meta">
@@ -696,10 +696,10 @@ maintainer&rsquo;s chair, mostly the parts that went&hellip;</p>
     <img class="" src="/img/2022/02/proxmox-logo.png" alt="Proxmox VE Logo">
   </a>
     
-    <p>In 2023 I wrote about <a href="/blog/2023/11/proxmox-doesnt-know-what-type-a-number-is/">why go-proxmox has <code>StringOrInt</code> and friends</a>:
+    <p>In 2023 I wrote about <a href="/blog/2023/11/proxmox-doesnt-know-what-type-a-number-is/">why go-proxmox has <code>StringOrInt</code> and friends</a>.
 Proxmox sends the same number quoted in one place and bare in another, so the client has types that accept both. That
 post ended on a pretty confident note. Since then three more shapes of &ldquo;the JSON is valid and Go still won&rsquo;t take it&rdquo;
-have come in, and one of them is a bug I&rsquo;d already fixed once and then reintroduced myself.</p>
+have come in. One of them is a bug I&rsquo;d already fixed once and then reintroduced myself.</p>
   </div>
   <footer>
     <a href="/blog/2026/06/proxmox-numbers-null-scientific-notation-net10/" class="button big">Read More</a>
@@ -758,10 +758,7 @@ have come in, and one of them is a bug I&rsquo;d already fixed once and then rei
     <img class="" src="/img/2026/06/tail-gunner-filtered.svg" alt="tail-gunner in gunner mode showing only ERROR lines with a highlight on request durations">
   </a>
     
-    <p>Here&rsquo;s a loop I end up in all the time: <code>tail -f app.log</code>, something scrolls by that looks wrong, Ctrl-C, <code>tail -f app.log | grep ERROR</code>,
-wait for it to happen again, decide I also want to drop the health checks, Ctrl-C, <code>| grep -v healthz</code>, wait again. Every filter tweak
-throws away the stream and every line that already went past. I got tired of it and wrote <a href="https://github.com/luthermonson/tail-gunner">tail-gunner</a>,
-a <code>tail</code> replacement that you can promote into a filtering TUI with one keystroke and drop back out of without the stream ever&hellip;</p>
+    <p>Here&rsquo;s a loop I end up in all the time:</p>
   </div>
   <footer>
     <a href="/blog/2026/06/tail-gunner/" class="button big">Read More</a>
@@ -825,7 +822,7 @@ a <code>tail</code> replacement that you can promote into a filtering TUI with o
   </a>
     
     <p>I&rsquo;ve been building <a href="https://github.com/ephpm/ephemerd">ephemerd</a>, a daemon that runs self-hosted GitHub Actions runners
-with a fresh environment per job. On a Windows host, Windows jobs run in Hyper-V isolated containers, but Linux jobs still
+with a fresh environment per job. On a Windows host, Windows jobs run in Hyper-V isolated containers. Linux jobs still
 need a Linux kernel from somewhere. The obvious answer on Windows in 2026 is WSL2, and that&rsquo;s what I used first. It worked
 great from my terminal and fell over the moment ephemerd became a real Windows service.</p>
   </div>

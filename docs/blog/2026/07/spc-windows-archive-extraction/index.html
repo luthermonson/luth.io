@@ -274,14 +274,15 @@
         
         <p>One of the first things that broke when I started building PHP on Windows with
 <a href="https://github.com/crazywhalecc/static-php-cli">static-php-cli</a> (SPC) wasn&rsquo;t PHP at all. It was unpacking the source
-tarballs. libxml2, xz, a couple of others would die partway through extraction with:</p>
+tarballs. libxml2, xz and a couple of others would die partway through extraction with:</p>
 <pre tabindex="0"><code>ERROR: The pipe has been ended.
 </code></pre><p>Over the last few months I&rsquo;ve &ldquo;fixed&rdquo; this two different ways, and the maintainers fixed it a third. It&rsquo;s a small piece
-of code but it&rsquo;s a good example of how much Linux assumption hides in a single shell pipeline, so here&rsquo;s the whole thing.</p>
+of code. But it&rsquo;s a good example of how much Linux assumption hides in a single shell pipeline, so here&rsquo;s the whole
+thing.</p>
 <h3 id="the-pipeline">The pipeline</h3>
 <p><img src="/img/2026/07/spc-windows-archive-extraction-pipe.svg" alt="7za piping into MinGW tar, which exits on a Windows path"></p>
-<p>SPC v2 extracted archives on Windows with one line. Here&rsquo;s the block from <code>FileSystem::extractArchive()</code>, including
-the maintainer&rsquo;s comments, which tell you how much fun this code has been for everyone:</p>
+<p>SPC v2 extracted archives on Windows with one line. Here&rsquo;s the block from <code>FileSystem::extractArchive()</code>. I kept the
+maintainer&rsquo;s comments, which tell you how much fun this code has been for everyone:</p>
 <div class="highlight"><pre tabindex="0" class="chroma"><code class="language-php" data-lang="php"><span class="line"><span class="cl"><span class="p">}</span> <span class="k">elseif</span> <span class="p">(</span><span class="nx">PHP_OS_FAMILY</span> <span class="o">===</span> <span class="s1">&#39;Windows&#39;</span><span class="p">)</span> <span class="p">{</span>
 </span></span><span class="line"><span class="cl">    <span class="c1">// use php-sdk-binary-tools/bin/7za.exe
 </span></span></span><span class="line"><span class="cl">    <span class="nv">$_7z</span> <span class="o">=</span> <span class="nx">self</span><span class="o">::</span><span class="na">convertPath</span><span class="p">(</span><span class="nx">getenv</span><span class="p">(</span><span class="s1">&#39;PHP_SDK_PATH&#39;</span><span class="p">)</span> <span class="o">.</span> <span class="s1">&#39;/bin/7za.exe&#39;</span><span class="p">);</span>
@@ -299,13 +300,13 @@ the maintainer&rsquo;s comments, which tell you how much fun this code has been 
 </span></span><span class="line"><span class="cl">        <span class="k">default</span> <span class="o">=&gt;</span> <span class="k">throw</span> <span class="k">new</span> <span class="nx">FileSystemException</span><span class="p">(</span><span class="s2">&#34;unknown archive format: </span><span class="si">{</span><span class="nv">$filename</span><span class="si">}</span><span class="s2">&#34;</span><span class="p">),</span>
 </span></span><span class="line"><span class="cl">    <span class="p">};</span>
 </span></span><span class="line"><span class="cl"><span class="p">}</span>
-</span></span></code></pre></div><p>7za decompresses the <code>.xz</code>/<code>.gz</code>/<code>.bz2</code> layer to stdout (<code>-so</code>), and <code>tar</code> reads the inner tarball from stdin and handles
-<code>--strip-components 1</code>, which flattens the <code>libxml2-2.x.y/</code> top-level directory into the target directory. On Linux this is the most boring
-command in the world.</p>
+</span></span></code></pre></div><p>7za decompresses the <code>.xz</code>/<code>.gz</code>/<code>.bz2</code> layer to stdout (<code>-so</code>). <code>tar</code> reads the inner tarball from stdin and handles
+<code>--strip-components 1</code>. That flattens the <code>libxml2-2.x.y/</code> top-level directory into the target directory. On Linux this
+is the most boring command in the world.</p>
 <h3 id="first-fix-stop-piping">First fix: stop piping</h3>
-<p>I was building on a Windows runner that also has Git for Windows installed, and my first read of the error was the obvious
-one: Windows pipes between processes are flaky with big streams, so don&rsquo;t stream. Decompress to disk, then extract from disk.
-That went into my SPC PR <a href="https://github.com/crazywhalecc/static-php-cli/pull/1079">#1079</a> in April:</p>
+<p>I was building on a Windows runner that also has Git for Windows installed. My first read of the error was the obvious
+one. Windows pipes between processes are flaky with big streams, so don&rsquo;t stream. Decompress to disk, then extract from
+disk. That went into my SPC PR <a href="https://github.com/crazywhalecc/static-php-cli/pull/1079">#1079</a> in April:</p>
 <div class="highlight"><pre tabindex="0" class="chroma"><code class="language-php" data-lang="php"><span class="line"><span class="cl"><span class="s1">&#39;xz&#39;</span><span class="p">,</span> <span class="s1">&#39;txz&#39;</span><span class="p">,</span> <span class="s1">&#39;gz&#39;</span><span class="p">,</span> <span class="s1">&#39;tgz&#39;</span><span class="p">,</span> <span class="s1">&#39;bz2&#39;</span> <span class="o">=&gt;</span> <span class="p">(</span><span class="k">function</span> <span class="p">()</span> <span class="k">use</span> <span class="p">(</span><span class="nv">$_7z</span><span class="p">,</span> <span class="nv">$filename</span><span class="p">,</span> <span class="nv">$target</span><span class="p">)</span> <span class="p">{</span>
 </span></span><span class="line"><span class="cl">    <span class="nv">$dir</span> <span class="o">=</span> <span class="nx">dirname</span><span class="p">(</span><span class="nv">$filename</span><span class="p">);</span>
 </span></span><span class="line"><span class="cl">    <span class="nx">cmd</span><span class="p">()</span><span class="o">-&gt;</span><span class="na">execWithResult</span><span class="p">(</span><span class="s2">&#34;</span><span class="se">\&#34;</span><span class="si">{</span><span class="nv">$_7z</span><span class="si">}</span><span class="se">\&#34;</span><span class="s2"> x </span><span class="se">\&#34;</span><span class="si">{</span><span class="nv">$filename</span><span class="si">}</span><span class="se">\&#34;</span><span class="s2"> -o</span><span class="se">\&#34;</span><span class="si">{</span><span class="nv">$dir</span><span class="si">}</span><span class="se">\&#34;</span><span class="s2"> -y&#34;</span><span class="p">);</span>
@@ -317,14 +318,14 @@ That went into my SPC PR <a href="https://github.com/crazywhalecc/static-php-cli
 </span></span><span class="line"><span class="cl">    <span class="nx">f_passthru</span><span class="p">(</span><span class="s2">&#34;</span><span class="se">\&#34;</span><span class="si">{</span><span class="nv">$winTar</span><span class="si">}</span><span class="se">\&#34;</span><span class="s2"> -xf </span><span class="se">\&#34;</span><span class="si">{</span><span class="nv">$tarFile</span><span class="si">}</span><span class="se">\&#34;</span><span class="s2"> -C </span><span class="se">\&#34;</span><span class="si">{</span><span class="nv">$target</span><span class="si">}</span><span class="se">\&#34;</span><span class="s2"> --strip-components 1&#34;</span><span class="p">);</span>
 </span></span><span class="line"><span class="cl">    <span class="o">@</span><span class="nx">unlink</span><span class="p">(</span><span class="nv">$tarFile</span><span class="p">);</span>
 </span></span><span class="line"><span class="cl"><span class="p">})(),</span>
-</span></span></code></pre></div><p>Two steps: 7za writes <code>foo.tar</code> next to the archive, then <code>C:\Windows\System32\tar.exe</code> extracts it and the
-intermediate file gets deleted. It worked. But look at the second-to-last line, because that&rsquo;s the actual fix, and the pipe
-story I told myself was wrong.</p>
+</span></span></code></pre></div><p>It&rsquo;s two steps. 7za writes <code>foo.tar</code> next to the archive. Then <code>C:\Windows\System32\tar.exe</code> extracts it and the
+intermediate file gets deleted. It worked. But look at the second-to-last line. That&rsquo;s the real fix, and the pipe story
+I told myself was wrong.</p>
 <h3 id="what-was-really-happening">What was really happening</h3>
 <p>Notice that the original command says <code>tar</code>, not a path. On a stock Windows box that resolves to
-<code>C:\Windows\System32\tar.exe</code>, which is bsdtar from libarchive and handles Windows paths fine. On a box with Git for Windows
-(or MSYS2) on the <code>PATH</code> ahead of System32, <code>tar</code> resolves to <code>C:\Program Files\Git\usr\bin\tar.exe</code> instead. That&rsquo;s GNU tar
-built for MSYS, and GNU tar has opinions about colons.</p>
+<code>C:\Windows\System32\tar.exe</code>. That&rsquo;s bsdtar from libarchive and it handles Windows paths fine. Some boxes have Git for
+Windows (or MSYS2) on the <code>PATH</code> ahead of System32. There <code>tar</code> resolves to <code>C:\Program Files\Git\usr\bin\tar.exe</code>
+instead. That&rsquo;s GNU tar built for MSYS, and GNU tar has opinions about colons.</p>
 <p>I reproduced it again for this post with a <code>.tar.xz</code> that unpacks to about 67 MB, piping 7za into each tar:</p>
 <pre tabindex="0"><code>&gt; 7za x -so big.tar.xz | &#34;C:\Program Files\Git\usr\bin\tar.exe&#34; -f - -x -C &#34;C:\...\out2&#34; --strip-components 1
 /usr/bin/tar: C\:\\Users\\...\\out2: Cannot open: No such file or directory
@@ -333,27 +334,27 @@ ERROR: The pipe has been ended.
 
 &gt; 7za x -so big.tar.xz | C:\Windows\System32\tar.exe -f - -x -C &#34;C:\...\out2&#34; --strip-components 1
 (exit 0, files extracted)
-</code></pre><p>GNU tar can&rsquo;t use the <code>C:\...</code> target directory and exits immediately. 7za is still writing decompressed bytes into the pipe,
-the reader is gone, and 7za reports the write failure as <code>The pipe has been ended</code>. The error everyone sees is printed by
-the <em>writer</em>, about the <em>reader</em> dying. Nothing is wrong with the pipe.</p>
-<p>Same tar, non-piped, gets a different and even stranger error, because <code>-f C:\foo.tar</code> is GNU tar&rsquo;s syntax for &ldquo;a tape on
+</code></pre><p>GNU tar can&rsquo;t use the <code>C:\...</code> target directory and exits immediately. 7za is still writing decompressed bytes into the
+pipe, but the reader is gone. So 7za reports the write failure as <code>The pipe has been ended</code>. The error everyone sees is
+printed by the <em>writer</em>, about the <em>reader</em> dying. Nothing is wrong with the pipe.</p>
+<p>The same tar without the pipe gets a different and even stranger error. To GNU tar, <code>-f C:\foo.tar</code> means &ldquo;a tape on
 the remote host named <code>C</code>&rdquo;:</p>
 <pre tabindex="0"><code>&gt; &#34;C:\Program Files\Git\usr\bin\tar.exe&#34; -xf C:\...\pkg.tar -C C:\...\out --strip-components 1
 /usr/bin/tar: Cannot connect to C: resolve failed
-</code></pre><p>So my two-step fix worked for the boring reason that it hardcoded <code>System32\tar.exe</code>. The decompress-to-disk part only added
-an extra copy of every tarball on disk. Lesson learned: when a pipeline fails, check that each side of it is the binary
-you think it is before blaming the pipe.</p>
+</code></pre><p>So my two-step fix worked for the boring reason that it hardcoded <code>System32\tar.exe</code>. The decompress-to-disk part only
+added an extra copy of every tarball on disk. Lesson learned. When a pipeline fails, check that each side of it is the
+binary you think it is before blaming the pipe.</p>
 <h3 id="second-fix-v3-and-the-symlink-problem">Second fix: v3 and the symlink problem</h3>
 <p>That PR didn&rsquo;t merge. SPC was in the middle of a ground-up v3 rewrite, and v3&rsquo;s shell layer already pinned the binary:</p>
 <div class="highlight"><pre tabindex="0" class="chroma"><code class="language-php" data-lang="php"><span class="line"><span class="cl"><span class="nv">$tar</span> <span class="o">=</span> <span class="nx">SystemTarget</span><span class="o">::</span><span class="na">isUnix</span><span class="p">()</span> <span class="o">?</span> <span class="s1">&#39;tar&#39;</span> <span class="o">:</span> <span class="s1">&#39;&#34;C:\Windows\system32\tar.exe&#34;&#39;</span><span class="p">;</span>
-</span></span></code></pre></div><p>So in v3 the PATH problem was gone, and the pipe was fine. What was left was the other thing in the maintainer&rsquo;s comment:
-<strong>symlinks</strong>. Some upstream tarballs ship symbolic links (zstd ships <code>tests/cli-tests/bin/unzstd -&gt; zstd</code>, for example).
-Windows only lets a process create symlinks with admin rights or Developer Mode turned on, and bsdtar fails each one
-with <code>Can't create '...': Invalid argument</code> and exits non-zero. On a CI runner without those rights, the extraction fails
-and leaves a half-written source tree behind.</p>
-<p>My answer in May was <a href="https://github.com/crazywhalecc/static-php-cli/pull/1175">#1175</a>: drop <code>tar.exe</code> entirely and let 7za
-do both layers, since 7za doesn&rsquo;t fail the extraction on symlinks the way bsdtar does. 7za has no <code>--strip-components</code>, so
-that moved into PHP (lightly trimmed, with the logging taken out and comments added):</p>
+</span></span></code></pre></div><p>So in v3 the PATH problem was gone, and the pipe was fine. What was left was the other thing in the maintainer&rsquo;s
+comment: <strong>symlinks</strong>. Some upstream tarballs ship symbolic links. zstd ships <code>tests/cli-tests/bin/unzstd -&gt; zstd</code>, for
+example. Windows only lets a process create symlinks with admin rights or Developer Mode turned on. bsdtar fails each
+one with <code>Can't create '...': Invalid argument</code> and exits non-zero. On a CI runner without those rights, the extraction
+fails and leaves a half-written source tree behind.</p>
+<p>My answer in May was <a href="https://github.com/crazywhalecc/static-php-cli/pull/1175">#1175</a>. Drop <code>tar.exe</code> entirely and let
+7za do both layers. 7za doesn&rsquo;t fail the extraction on symlinks the way bsdtar does. 7za has no <code>--strip-components</code>, so
+that moved into PHP. The version below is lightly trimmed, with the logging taken out and comments added:</p>
 <div class="highlight"><pre tabindex="0" class="chroma"><code class="language-php" data-lang="php"><span class="line"><span class="cl"><span class="k">private</span> <span class="k">function</span> <span class="nf">extract7zWithStripComponents</span><span class="p">(</span><span class="nx">string</span> <span class="nv">$archive_path</span><span class="p">,</span> <span class="nx">string</span> <span class="nv">$target_path</span><span class="p">,</span> <span class="nx">string</span> <span class="nv">$_7z</span><span class="p">,</span> <span class="nx">int</span> <span class="nv">$strip</span> <span class="o">=</span> <span class="mi">1</span><span class="p">)</span><span class="o">:</span> <span class="nx">void</span>
 </span></span><span class="line"><span class="cl"><span class="p">{</span>
 </span></span><span class="line"><span class="cl">    <span class="nv">$temp_dir</span> <span class="o">=</span> <span class="nx">sys_get_temp_dir</span><span class="p">()</span> <span class="o">.</span> <span class="nx">DIRECTORY_SEPARATOR</span> <span class="o">.</span> <span class="s1">&#39;spc_&#39;</span> <span class="o">.</span> <span class="nx">bin2hex</span><span class="p">(</span><span class="nx">random_bytes</span><span class="p">(</span><span class="mi">8</span><span class="p">));</span>
@@ -390,13 +391,18 @@ that moved into PHP (lightly trimmed, with the logging taken out and comments ad
 </span></span><span class="line"><span class="cl"><span class="p">}</span>
 </span></span></code></pre></div><p>It worked in my fork and that&rsquo;s what my Windows builds ran on for the next couple of months.</p>
 <h3 id="what-upstream-did-instead">What upstream did instead</h3>
-<p>The review feedback was fair. crazywhalecc pointed out that a full 7za path was a reasonable direction but that
-<code>FileSystem::copyDir</code> is slow, and my version copies every extracted source tree a second time to fake
-<code>--strip-components</code>. It also only approximates it: if an archive has more than one top-level entry, nothing gets stripped.</p>
+<p>The review feedback was fair. crazywhalecc said a full 7za path was a reasonable direction. But <code>FileSystem::copyDir</code> is
+slow, and my version copies every extracted source tree a second time to fake <code>--strip-components</code>. It also only
+approximates it. If an archive has more than one top-level entry, nothing gets stripped.</p>
 <p>Then two things landed in v3. In June, PHP&rsquo;s old <code>php-sdk-binary-tools</code> were replaced with MSYS2 plus a standalone
 <code>7za-win</code> tool package (<a href="https://github.com/crazywhalecc/static-php-cli/pull/1193">#1193</a>). And the shell layer grew
-<code>passthruTolerateSymlinks()</code>: keep the 7za-into-<code>System32\tar.exe</code> pipe, capture tar&rsquo;s output, and if the <em>only</em> errors are
-symlinks Windows refused to create, log a warning and keep going. Anything else still throws.</p>
+<code>passthruTolerateSymlinks()</code>. It does three things:</p>
+<ul>
+<li>keeps the 7za-into-<code>System32\tar.exe</code> pipe</li>
+<li>captures tar&rsquo;s output</li>
+<li>if the <em>only</em> errors are symlinks Windows refused to create, logs a warning and keeps going</li>
+</ul>
+<p>Anything else still throws.</p>
 <div class="highlight"><pre tabindex="0" class="chroma"><code class="language-php" data-lang="php"><span class="line"><span class="cl"><span class="k">private</span> <span class="k">function</span> <span class="nf">passthruTolerateSymlinks</span><span class="p">(</span><span class="nx">string</span> <span class="nv">$cmd</span><span class="p">)</span><span class="o">:</span> <span class="nx">void</span>
 </span></span><span class="line"><span class="cl"><span class="p">{</span>
 </span></span><span class="line"><span class="cl">    <span class="c1">// Symlink creation only fails on a Windows host; elsewhere extraction handles symlinks fine.
@@ -415,11 +421,11 @@ symlinks Windows refused to create, log a warning and keep going. Anything else 
 </span></span><span class="line"><span class="cl">    <span class="p">}</span>
 </span></span><span class="line"><span class="cl">    <span class="k">throw</span> <span class="k">new</span> <span class="nx">ExecutionException</span><span class="p">(</span><span class="cm">/* ... */</span><span class="p">);</span>
 </span></span><span class="line"><span class="cl"><span class="p">}</span>
-</span></span></code></pre></div><p>That keeps the single streaming pass and real <code>--strip-components</code>, and it only forgives the one failure mode we know is
+</span></span></code></pre></div><p>That keeps the single streaming pass and real <code>--strip-components</code>. It only forgives the one failure mode we know is
 harmless. #1175 was closed as superseded on July 13th, which is the right call. Their version is better than mine.</p>
 <h3 id="takeaways">Takeaways</h3>
 <ul>
-<li><strong>Pin the binary.</strong> <code>tar</code> in a command string means &ldquo;whatever is first on the <code>PATH</code>&rdquo;, and on Windows developer machines
+<li><strong>Pin the binary.</strong> <code>tar</code> in a command string means &ldquo;whatever is first on the <code>PATH</code>&rdquo;. On Windows developer machines
 and CI runners that&rsquo;s frequently GNU tar from Git or MSYS2, which reads <code>C:</code> as a hostname.</li>
 <li><strong>&ldquo;The pipe has been ended&rdquo; means the other side died.</strong> Go look at what the reader printed before it exited.</li>
 <li><strong>Tolerate narrowly.</strong> Skipping symlinks wholesale (7za) and failing on them wholesale (tar) are both wrong. Matching the

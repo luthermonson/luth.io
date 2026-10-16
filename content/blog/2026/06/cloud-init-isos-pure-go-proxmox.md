@@ -12,14 +12,15 @@ draft: false
 ---
 
 Proxmox's built-in cloud-init support is fine for the basics: a user, an SSH key, an IP config. It falls apart the second you
-want your own `user-data`, `vendor-data` or a real `network-config`, because the GUI and the `ci*` options only expose a
-handful of fields, and the escape hatch (`cicustom` pointing at snippet files) means getting files onto the Proxmox host's
-filesystem first. The usual alternative is building a nocloud ISO yourself with `genisoimage` or `mkisofs`, which means a
-system dependency on whatever machine runs your automation, a different package name on every OS, and a subprocess to babysit.
+want your own `user-data`, `vendor-data` or a real `network-config`. The GUI and the `ci*` options only expose a handful of
+fields. The escape hatch is `cicustom` pointing at snippet files, and that means getting files onto the Proxmox host's
+filesystem first. The usual alternative is building a nocloud ISO yourself with `genisoimage` or `mkisofs`. That means a
+system dependency on whatever machine runs your automation. You get a different package name on every OS and a subprocess to
+babysit.
 
 [go-proxmox](https://github.com/luthermonson/go-proxmox) has done this in Go since early 2023 with `vm.CloudInit()`. After
-the [Joliet work in go-diskfs](/blog/2026/05/go-diskfs-rock-ridge-joliet-windows/) last month it works for Windows guests too,
-and v0.6.0 added the ability to choose where the ISO goes, so this seemed like a good time to walk through it.
+the [Joliet work in go-diskfs](/blog/2026/05/go-diskfs-rock-ridge-joliet-windows/) last month it works for Windows guests
+too. v0.6.0 added the ability to choose where the ISO goes. So this seemed like a good time to walk through it.
 
 ![Cloud-init ISO lifecycle: build, upload, mount, boot, clean up](/img/2026/06/cloud-init-isos-pure-go-proxmox-lifecycle.svg)
 
@@ -120,7 +121,7 @@ the VM.
 ### Building the ISO
 
 All the interesting work is in `makeCloudInitISO()`. go-diskfs needs a backing file, so it creates an empty one in the OS
-temp dir, wraps it, and creates an ISO 9660 filesystem on it with a 2048-byte block size:
+temp dir. It wraps it and creates an ISO 9660 filesystem on it with a 2048-byte block size:
 
 ```go
 func makeCloudInitISO(filename, userdata, metadata, vendordata, networkconfig string) (isopath string, err error) {
@@ -156,8 +157,8 @@ func makeCloudInitISO(filename, userdata, metadata, vendordata, networkconfig st
 	}
 ```
 
-Then it writes whichever files were provided. The `Close()` inside the loop matters: with Joliet enabled, go-diskfs v1.9
-records each file's size when its handle closes, so writing without closing before `Finalize` gives you a Joliet tree with the
+Then it writes whichever files were provided. The `Close()` inside the loop matters. With Joliet enabled, go-diskfs v1.9
+records each file's size when its handle closes. Writing without closing before `Finalize` gives you a Joliet tree with the
 wrong sizes. (I found that one while switching go-proxmox over to Joliet for v0.5.0.)
 
 ```go
@@ -206,17 +207,17 @@ And finalize, which is where the actual ISO layout gets written:
 ```
 
 Both extensions are on for a reason. Plain ISO 9660 names are 8.3 uppercase, so `user-data` is stored as `USER_DAT.;1`.
-**Rock Ridge** adds the real name (and POSIX modes and timestamps) in a way Linux reads, which is what cloud-init on a Linux
-guest sees. **Joliet** adds a second directory tree with UCS-2 names, which is the only thing Windows reads, and what
-cloudbase-init needs. The [go-diskfs post](/blog/2026/05/go-diskfs-rock-ridge-joliet-windows/) has the full story of getting
-both right, including the bug where the Joliet label came out as 捩摡瑡.
+**Rock Ridge** adds the real name in a way Linux reads, along with POSIX modes and timestamps. That's what cloud-init on a
+Linux guest sees. **Joliet** adds a second directory tree with UCS-2 names. That's the only thing Windows reads, and it's
+what cloudbase-init needs. The [go-diskfs post](/blog/2026/05/go-diskfs-rock-ridge-joliet-windows/) has the full story of
+getting both right. That includes the bug where the Joliet label came out as 捩摡瑡.
 
 The result is tiny. A three-file ISO like this comes in well under 100 KB.
 
 ### Uploading and mounting
 
-`CloudInit()` strings the rest together. It builds the ISO, always removes the temp file on the way out, resolves which storage
-to use, uploads, tags the VM and points a CD-ROM drive at the ISO:
+`CloudInit()` strings the rest together. It builds the ISO and always removes the temp file on the way out. Then it resolves
+which storage to use, uploads, tags the VM and points a CD-ROM drive at the ISO:
 
 ```go
 func (v *VirtualMachine) CloudInit(ctx context.Context, device, userdata, metadata, vendordata, networkconfig string, opts ...CloudInitOption) error {
@@ -277,9 +278,9 @@ func (v *VirtualMachine) CloudInit(ctx context.Context, device, userdata, metada
 }
 ```
 
-The storage selection is the new bit in v0.6.0 ([#272](https://github.com/luthermonson/go-proxmox/pull/272), closing a
-long-standing [#119](https://github.com/luthermonson/go-proxmox/issues/119)). Before, the ISO went to the first enabled storage
-on the node that accepted `iso` content, which is non-deterministic when a node has more than one. Now
+The storage selection is the new bit in v0.6.0 ([#272](https://github.com/luthermonson/go-proxmox/pull/272)). It closes a
+long-standing [#119](https://github.com/luthermonson/go-proxmox/issues/119). Before, the ISO went to the first enabled
+storage on the node that accepted `iso` content. That's non-deterministic when a node has more than one. Now
 `WithCloudInitStorage("name")` picks one explicitly and validates that it takes ISOs:
 
 ```go
@@ -302,16 +303,16 @@ func resolveCloudInitStorage(ctx context.Context, node *Node, cfg *cloudInitConf
 
 The `cloud-init` tag is how go-proxmox remembers that a VM has an ISO lying around. Once the guest has booted and cloud-init
 has done its thing, `vm.UnmountCloudInitISO(ctx, "ide2")` empties the drive (`none,media=cdrom`) and deletes the ISO. And
-`vm.Delete()` checks for the tag first and removes the ISO before deleting the VM, so you don't slowly fill your ISO storage
-with `user-data-1xx.iso` files from VMs that no longer exist. Since the storage is now selectable, the delete path scans every
-enabled ISO-capable storage on the node for the file instead of assuming the default one.
+`vm.Delete()` checks for the tag first and removes the ISO before deleting the VM. That way you don't slowly fill your ISO
+storage with `user-data-1xx.iso` files from VMs that no longer exist. Since the storage is now selectable, the delete path
+scans every enabled ISO-capable storage on the node for the file. It doesn't assume the default one.
 
 ### Why not just shell out
 
-I like the benefits of keeping this in-process. There's nothing to install on the machine that runs the automation, so the
-same code works from a Linux CI runner, my Mac, and the Windows box I'm writing this on. The ISO is built from strings in
-memory and a temp file, so there's no templating a directory tree on disk and no parsing a subprocess's exit code. And it's
-easy to test: the ISO is just bytes you can read back with the same library.
+I like the benefits of keeping this in-process. There's nothing to install on the machine that runs the automation. The same
+code works from a Linux CI runner, my Mac and the Windows box I'm writing this on. The ISO is built from strings in memory
+and a temp file. There's no templating a directory tree on disk and no parsing a subprocess's exit code. And it's easy to
+test, because the ISO is just bytes you can read back with the same library.
 
 If you want the ISO without the Proxmox part, I have an old standalone CLI called [quiso](https://github.com/luthermonson/quiso)
 that does the same job from the command line.

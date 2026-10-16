@@ -10,14 +10,14 @@
     gtag('config', 'G-MSTSKGFWTX');
 </script><meta charset="utf-8">
 <title>Cross-Platform Process Containment: Job Objects vs Process Groups vs cgroups - Luther Monson</title>
-<meta name="description" content="How shipmates bounds and tears down agent process trees on Windows, Linux and macOS, why I deleted 1,206 lines of cgroup code, and the grandchild that escaped the memory cap everywhere except my dev box.">
+<meta name="description" content="How shipmates bounds and tears down agent process trees on Windows, Linux and macOS. It also covers why I deleted 1,206 lines of cgroup code and the grandchild that escaped the memory cap everywhere except my dev box.">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
 <meta name="twitter:card" content="summary_large_image"><meta name="twitter:site" content="@luthermonson">
 
 <meta property="og:site_name" content="Luther Monson">
 <meta property="og:title" content="Cross-Platform Process Containment: Job Objects vs Process Groups vs cgroups">
-<meta property="og:description" content="How shipmates bounds and tears down agent process trees on Windows, Linux and macOS, why I deleted 1,206 lines of cgroup code, and the grandchild that escaped the memory cap everywhere except my dev box.">
+<meta property="og:description" content="How shipmates bounds and tears down agent process trees on Windows, Linux and macOS. It also covers why I deleted 1,206 lines of cgroup code and the grandchild that escaped the memory cap everywhere except my dev box.">
 <meta property="og:type" content="article">
 <meta property="og:url" content="https://luth.io/blog/2026/09/process-containment-job-objects-process-groups-cgroups/">
     <meta property="og:image" content="https://luth.io/img/2026/09/process-containment-job-objects-process-groups-cgroups-cover.svg">
@@ -215,7 +215,7 @@
       <h2><a href="/blog/2026/09/process-containment-job-objects-process-groups-cgroups/">Cross-Platform Process Containment: Job Objects vs Process Groups vs cgroups</a></h2>
     
     
-      <p>How shipmates bounds and tears down agent process trees on Windows, Linux and macOS, why I deleted 1,206 lines of cgroup code, and the grandchild that escaped the memory cap everywhere except my dev box.</p>
+      <p>How shipmates bounds and tears down agent process trees on Windows, Linux and macOS. It also covers why I deleted 1,206 lines of cgroup code and the grandchild that escaped the memory cap everywhere except my dev box.</p>
     
   </div>
   <div class="meta">
@@ -271,15 +271,18 @@
 
       </div>
       <div class="content">
+              <figure class="post-cover">
+                <img src="/img/2026/09/process-containment-job-objects-process-groups-cgroups-cover.svg" alt="Agent process tree with the scope of kill and measurement on Windows, Linux and macOS">
+              </figure>
         
-        <p>Every turn a <a href="/blog/2026/08/shipmates-persona-based-ai-coding-crews/">shipmates</a> crew member takes is a subprocess:
-<code>claude</code> or the <code>codex</code> app-server, which in turn spawns shells, <code>go test</code>, <code>npm</code>, whatever the task calls for. Two
+        <p>Every turn a <a href="/blog/2026/08/shipmates-persona-based-ai-coding-crews/">shipmates</a> crew member takes is a subprocess. It&rsquo;s
+<code>claude</code> or the <code>codex</code> app-server. That in turn spawns shells, <code>go test</code>, <code>npm</code> or whatever the task calls for. Two
 things have to be true about that tree. When a turn ends or gets killed, the <em>whole</em> tree goes, including the
 grandchildren. And if somebody sets a memory or CPU budget, the budget applies to the whole tree, not just the
 process I happened to start.</p>
-<p>Each OS gives you a different primitive for that, and they&rsquo;re not equivalent. This is how shipmates ended up using
-Job Objects on Windows and process groups plus sampling on Linux and macOS, why the cgroup path got deleted, and the bug
-that only existed on the platforms I wasn&rsquo;t sitting in front of.</p>
+<p>Each OS gives you a different primitive for that, and they&rsquo;re not equivalent. shipmates ended up using Job Objects on
+Windows and process groups plus sampling on Linux and macOS. This post covers how that happened and why the cgroup path
+got deleted. It also covers the bug that only existed on the platforms I wasn&rsquo;t sitting in front of.</p>
 <h3 id="the-three-primitives">The three primitives</h3>
 <table>
   <thead>
@@ -324,17 +327,28 @@ that only existed on the platforms I wasn&rsquo;t sitting in front of.</p>
   </tbody>
 </table>
 <p>On paper cgroups win. In practice, &ldquo;a delegated subtree&rdquo; is where it falls apart for a tool you install with a single
-binary: on a desktop you need a systemd user scope with the right controllers delegated, in a container you usually
-don&rsquo;t get one at all, and macOS doesn&rsquo;t have cgroups. Job Objects need nothing. Process groups need nothing.</p>
+binary:</p>
+<ul>
+<li>on a desktop you need a systemd user scope with the right controllers delegated</li>
+<li>in a container you usually don&rsquo;t get one at all</li>
+<li>macOS doesn&rsquo;t have cgroups</li>
+</ul>
+<p>Job Objects need nothing. Process groups need nothing.</p>
 <h3 id="deleting-the-cgroup-launcher">Deleting the cgroup launcher</h3>
-<p>The codex runtime originally carried its own Linux-only, cgroup-delegating launcher inside <code>internal/codexapp</code>. It
-was reachable only through the codex transport, only when an operator set <code>containment.mode: cgroup</code>, and its single
-real test was gated behind <code>SHIPMATES_REAL_CONTAINMENT_TEST=1</code>. Which meant it had <strong>never run in CI</strong>. When I
+<p>The codex runtime originally carried its own Linux-only, cgroup-delegating launcher inside <code>internal/codexapp</code>. It was
+reachable only through the codex transport, and only when an operator set <code>containment.mode: cgroup</code>. Its single real
+test was gated behind <code>SHIPMATES_REAL_CONTAINMENT_TEST=1</code>. Which meant it had <strong>never run in CI</strong>. When I
 <a href="https://github.com/luthermonson/shipmates/pull/26">moved CI to ephemerd</a> I even wrote down that the delegated-scope job
 was the gap. Everywhere else, and by default, codex ran with no containment at all.</p>
-<p><a href="https://github.com/luthermonson/shipmates/commit/24bd788"><code>24bd788</code></a> deleted it: <code>containment_linux.go</code>,
-<code>cgroup_discovery_linux.go</code>, their tests, <code>containment_pidfd_linux.go</code> and <code>containment_other.go</code>, 1,206 lines. Codex
-now spawns its app-server through the same <code>containment.Watcher</code> that Claude uses, so every runtime gets the same
+<p><a href="https://github.com/luthermonson/shipmates/commit/24bd788"><code>24bd788</code></a> deleted it. That&rsquo;s 1,206 lines across these files:</p>
+<ul>
+<li><code>containment_linux.go</code></li>
+<li><code>cgroup_discovery_linux.go</code></li>
+<li>their tests</li>
+<li><code>containment_pidfd_linux.go</code></li>
+<li><code>containment_other.go</code></li>
+</ul>
+<p>Codex now spawns its app-server through the same <code>containment.Watcher</code> that Claude uses. Every runtime gets the same
 bounds on every OS.</p>
 <p>The part I care most about is what happens to configs that still say <code>cgroup</code>. The old docs said it &ldquo;degrades to
 <code>watchdog</code> with a warning&rdquo;. Now the config fails to resolve, with <code>config.ErrCgroupModeRemoved</code>:</p>
@@ -342,11 +356,11 @@ bounds on every OS.</p>
 watchdog (RSS/CPU sampling plus process-tree teardown on Linux, macOS and Windows). Use mode: watchdog
 — your memory_limit_mb, cpu_limit_seconds and other limits carry over unchanged
 </code></pre><p>An operator who asked for kernel enforcement and quietly got polling has been told something untrue about their own
-deployment. A warning in a log nobody reads is still a lie. Same reasoning for <code>Caps.Containment</code>, which is now derived
-from whether the supervisor actually bounds anything, so the <code>none</code> watcher can&rsquo;t report that it contains.</p>
+deployment. A warning in a log nobody reads is still a lie. The same reasoning applies to <code>Caps.Containment</code>. It&rsquo;s now
+derived from whether the supervisor bounds anything, so the <code>none</code> watcher can&rsquo;t report that it contains.</p>
 <h3 id="windows-suspended-assigned-resumed">Windows: suspended, assigned, resumed</h3>
-<p>On Windows the watchdog creates the child suspended, puts it in a Job Object before it runs a single instruction, then
-resumes it. Assigning a running process leaves a window where it can spawn a child outside the job.</p>
+<p>On Windows the watchdog creates the child suspended. It puts the child in a Job Object before it runs a single
+instruction, then resumes it. Assigning a running process leaves a window where it can spawn a child outside the job.</p>
 <div class="highlight"><pre tabindex="0" class="chroma"><code class="language-go" data-lang="go"><span class="line"><span class="cl"><span class="kd">func</span><span class="w"> </span><span class="nf">prepare</span><span class="p">(</span><span class="nx">cmd</span><span class="w"> </span><span class="o">*</span><span class="nx">exec</span><span class="p">.</span><span class="nx">Cmd</span><span class="p">,</span><span class="w"> </span><span class="nx">_</span><span class="w"> </span><span class="nx">containment</span><span class="p">.</span><span class="nx">Limits</span><span class="p">)</span><span class="w"> </span><span class="kt">error</span><span class="w"> </span><span class="p">{</span><span class="w">
 </span></span></span><span class="line"><span class="cl"><span class="w">	</span><span class="k">if</span><span class="w"> </span><span class="nx">cmd</span><span class="p">.</span><span class="nx">SysProcAttr</span><span class="w"> </span><span class="o">==</span><span class="w"> </span><span class="kc">nil</span><span class="w"> </span><span class="p">{</span><span class="w">
 </span></span></span><span class="line"><span class="cl"><span class="w">		</span><span class="nx">cmd</span><span class="p">.</span><span class="nx">SysProcAttr</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="o">&amp;</span><span class="nx">syscall</span><span class="p">.</span><span class="nx">SysProcAttr</span><span class="p">{}</span><span class="w">
@@ -368,13 +382,13 @@ resumes it. Assigning a running process leaves a window where it can spawn a chi
 </span></span></span><span class="line"><span class="cl"><span class="w">	</span><span class="nx">info</span><span class="p">.</span><span class="nx">BasicLimitInformation</span><span class="p">.</span><span class="nx">LimitFlags</span><span class="w"> </span><span class="o">|=</span><span class="w"> </span><span class="nx">windows</span><span class="p">.</span><span class="nx">JOB_OBJECT_LIMIT_ACTIVE_PROCESS</span><span class="w">
 </span></span></span><span class="line"><span class="cl"><span class="w">	</span><span class="nx">info</span><span class="p">.</span><span class="nx">BasicLimitInformation</span><span class="p">.</span><span class="nx">ActiveProcessLimit</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="nx">limits</span><span class="p">.</span><span class="nx">MaxProcesses</span><span class="w">
 </span></span></span><span class="line"><span class="cl"><span class="p">}</span><span class="w">
-</span></span></span></code></pre></div><p>Each flag is guarded on a non-zero limit, because setting a <code>LimitFlags</code> bit without its paired value is a no-op at best,
-and a caller who asked for nothing shouldn&rsquo;t silently get kernel enforcement. <code>KILL_ON_JOB_CLOSE</code> is always on, so even
-if shipmates itself dies, closing the last job handle takes the tree with it. That&rsquo;s the closest thing Windows has to
+</span></span></span></code></pre></div><p>Each flag is guarded on a non-zero limit. Setting a <code>LimitFlags</code> bit without its paired value is a no-op at best. And a
+caller who asked for nothing shouldn&rsquo;t silently get kernel enforcement. <code>KILL_ON_JOB_CLOSE</code> is always on. Even if
+shipmates itself dies, closing the last job handle takes the tree with it. That&rsquo;s the closest thing Windows has to
 Linux&rsquo;s <code>Pdeathsig</code>.</p>
-<p><code>JobMemoryLimit</code> is committed memory across <em>every</em> process in the job, enforced by the kernel when the allocation
-happens. To see it, I put a Go &ldquo;agent&rdquo; in a job with a 256 MiB limit and had it spawn a &ldquo;tool&rdquo; grandchild that commits
-16 MiB at a time:</p>
+<p><code>JobMemoryLimit</code> is committed memory across <em>every</em> process in the job. The kernel enforces it when the allocation
+happens. To see it, I put a Go &ldquo;agent&rdquo; in a job with a 256 MiB limit. It spawned a &ldquo;tool&rdquo; grandchild that commits 16 MiB
+at a time:</p>
 <pre tabindex="0"><code>parent: agent in a job with a 256 MiB limit
 tool: 16 MiB committed
 tool: 32 MiB committed
@@ -383,11 +397,10 @@ tool: 208 MiB committed
 tool: 224 MiB committed
 runtime: VirtualAlloc of 16777216 bytes failed with errno=1455
 fatal error: out of memory
-</code></pre><p>Errno 1455 is <code>ERROR_COMMITMENT_LIMIT</code>. The grandchild was never touched by my code, it just inherited the job, and the
-kernel stopped it short of the budget the parent was given (the agent and the Go runtime overhead eat the rest).
-No polling gap.</p>
+</code></pre><p>Errno 1455 is <code>ERROR_COMMITMENT_LIMIT</code>. My code never touched the grandchild. It just inherited the job, and the kernel
+stopped it short of the budget the parent was given. The agent and the Go runtime overhead eat the rest. No polling gap.</p>
 <h3 id="linux-and-macos-process-groups-and-a-sampler">Linux and macOS: process groups and a sampler</h3>
-<p>On Unix the child is started as a process group leader with <code>Setpgid</code>, so its pid is the pgid and every descendant
+<p>On Unix the child is started as a process group leader with <code>Setpgid</code>. Its pid is the pgid and every descendant
 inherits the group. Teardown signals the group:</p>
 <div class="highlight"><pre tabindex="0" class="chroma"><code class="language-go" data-lang="go"><span class="line"><span class="cl"><span class="kd">func</span><span class="w"> </span><span class="nf">killTree</span><span class="p">(</span><span class="nx">cmd</span><span class="w"> </span><span class="o">*</span><span class="nx">exec</span><span class="p">.</span><span class="nx">Cmd</span><span class="p">,</span><span class="w"> </span><span class="nx">kill</span><span class="w"> </span><span class="kt">bool</span><span class="p">)</span><span class="w"> </span><span class="kt">error</span><span class="w"> </span><span class="p">{</span><span class="w">
 </span></span></span><span class="line"><span class="cl"><span class="w">	</span><span class="k">if</span><span class="w"> </span><span class="nx">cmd</span><span class="p">.</span><span class="nx">Process</span><span class="w"> </span><span class="o">==</span><span class="w"> </span><span class="kc">nil</span><span class="w"> </span><span class="p">{</span><span class="w">
@@ -403,12 +416,12 @@ inherits the group. Teardown signals the group:</p>
 </span></span></span><span class="line"><span class="cl"><span class="w">	</span><span class="p">}</span><span class="w">
 </span></span></span><span class="line"><span class="cl"><span class="w">	</span><span class="k">return</span><span class="w"> </span><span class="nx">syscall</span><span class="p">.</span><span class="nf">Kill</span><span class="p">(</span><span class="o">-</span><span class="nx">pgid</span><span class="p">,</span><span class="w"> </span><span class="nx">sig</span><span class="p">)</span><span class="w">
 </span></span></span><span class="line"><span class="cl"><span class="p">}</span><span class="w">
-</span></span></span></code></pre></div><p>There&rsquo;s no kernel memory cap here, so a sampler polls RSS and CPU time on an interval and calls <code>killTree</code> when the
-budget is exceeded. Which brings us to the bug.</p>
+</span></span></span></code></pre></div><p>There&rsquo;s no kernel memory cap here. A sampler polls RSS and CPU time on an interval and calls <code>killTree</code> when the budget
+is exceeded. Which brings us to the bug.</p>
 <h3 id="the-bug-my-dev-box-hid">The bug my dev box hid</h3>
 <p>A cross-platform sweep after v0.6.0 found it (<a href="https://github.com/luthermonson/shipmates/pull/58">PR #58</a>). The Unix
 sampler measured RSS and CPU for <code>cmd.Process.Pid</code>, the root, and nothing else. The kill covered the whole process
-group. So the <em>scope of measurement</em> and the <em>scope of enforcement</em> didn&rsquo;t match: a tool subprocess that hogged memory
+group. So the <em>scope of measurement</em> and the <em>scope of enforcement</em> didn&rsquo;t match. A tool subprocess that hogged memory
 or spun CPU was invisible to the sampler, and the cap never fired.</p>
 <p>On Windows the Job Object enforces memory across the whole tree in the kernel, so the bug simply doesn&rsquo;t exist there.
 I develop shipmates on Windows. Every manual check I&rsquo;d ever done of the memory cap passed.</p>
@@ -419,10 +432,10 @@ t=1.0s  root pid RSS:    2.7 MiB   process group RSS:  519.2 MiB (2 procs)
 t=1.5s  root pid RSS:    2.7 MiB   process group RSS:  519.2 MiB (2 procs)
 t=2.0s  root pid RSS:    2.7 MiB   process group RSS:  519.2 MiB (2 procs)
 </code></pre><p>With a 256 MB cap, the old sampler would read 2.7 MiB forever.</p>
-<p>The fix (<a href="https://github.com/luthermonson/shipmates/commit/1642864"><code>1642864</code></a>) makes the Unix samplers measure the group.
-On Linux that&rsquo;s a walk of <code>/proc</code>, reading field 5 of each <code>/proc/&lt;pid&gt;/stat</code> (the pgrp) and summing <code>statm</code> RSS and
-<code>utime+stime</code> for the members. Field parsing has to count from the <em>last</em> <code>)</code>, because the comm field is parenthesized
-and can itself contain spaces and parentheses:</p>
+<p>The fix (<a href="https://github.com/luthermonson/shipmates/commit/1642864"><code>1642864</code></a>) makes the Unix samplers measure the
+group. On Linux that&rsquo;s a walk of <code>/proc</code>. It reads field 5 of each <code>/proc/&lt;pid&gt;/stat</code> (the pgrp) and sums <code>statm</code> RSS
+and <code>utime+stime</code> for the members. Field parsing has to count from the <em>last</em> <code>)</code>. The comm field is parenthesized and
+can itself contain spaces and parentheses:</p>
 <div class="highlight"><pre tabindex="0" class="chroma"><code class="language-go" data-lang="go"><span class="line"><span class="cl"><span class="kd">func</span><span class="w"> </span><span class="nf">parseProcStatPgrp</span><span class="p">(</span><span class="nx">s</span><span class="w"> </span><span class="kt">string</span><span class="p">)</span><span class="w"> </span><span class="p">(</span><span class="kt">int</span><span class="p">,</span><span class="w"> </span><span class="kt">error</span><span class="p">)</span><span class="w"> </span><span class="p">{</span><span class="w">
 </span></span></span><span class="line"><span class="cl"><span class="w">	</span><span class="nx">closeIdx</span><span class="w"> </span><span class="o">:=</span><span class="w"> </span><span class="nx">strings</span><span class="p">.</span><span class="nf">LastIndex</span><span class="p">(</span><span class="nx">s</span><span class="p">,</span><span class="w"> </span><span class="s">&#34;)&#34;</span><span class="p">)</span><span class="w">
 </span></span></span><span class="line"><span class="cl"><span class="w">	</span><span class="k">if</span><span class="w"> </span><span class="nx">closeIdx</span><span class="w"> </span><span class="p">&lt;</span><span class="w"> </span><span class="mi">0</span><span class="w"> </span><span class="p">{</span><span class="w">
@@ -438,29 +451,30 @@ and can itself contain spaces and parentheses:</p>
 </span></span></span><span class="line"><span class="cl"><span class="w">	</span><span class="p">}</span><span class="w">
 </span></span></span><span class="line"><span class="cl"><span class="w">	</span><span class="k">return</span><span class="w"> </span><span class="nx">pgrp</span><span class="p">,</span><span class="w"> </span><span class="kc">nil</span><span class="w">
 </span></span></span><span class="line"><span class="cl"><span class="p">}</span><span class="w">
-</span></span></span></code></pre></div><p>macOS has no <code>/proc</code>, and <code>ps</code> has no dependable &ldquo;select by process group&rdquo; flag, so it snapshots every process with
+</span></span></span></code></pre></div><p>macOS has no <code>/proc</code>, and <code>ps</code> has no dependable &ldquo;select by process group&rdquo; flag. So it snapshots every process with
 <code>ps -Ao pgid=,rss=</code> (and <code>pgid=,time=</code> for CPU) and sums the rows whose pgid matches. Both versions treat &ldquo;no processes
 found in the group&rdquo; as a failed sample, not a zero. A gone group leader skips the tick rather than reporting a reading
 comfortably below the cap.</p>
-<p>The summation logic is factored into pure functions so it&rsquo;s unit tested on every platform, and there&rsquo;s a <code>linux || darwin</code>
-test that spawns a memory-hogging grandchild and fails against the old root-only sampler.</p>
+<p>The summation logic is factored into pure functions so it&rsquo;s unit tested on every platform. There&rsquo;s also a
+<code>linux || darwin</code> test that spawns a memory-hogging grandchild and fails against the old root-only sampler.</p>
 <h3 id="whats-still-uneven">What&rsquo;s still uneven</h3>
 <p>The Windows sampler is still root-only, on purpose. Memory is enforced tree-wide by the job, so the sampler there is
 defense in depth. CPU seconds are the exception. The Job Object doesn&rsquo;t express a CPU-seconds budget the way the
-watchdog does, so <code>cpu_limit_seconds</code> on Windows is approximated from the root process&rsquo;s times. A grandchild spinning
+watchdog does. So <code>cpu_limit_seconds</code> on Windows is approximated from the root process&rsquo;s times. A grandchild spinning
 CPU on Windows escapes that cap today. The cheap fix is probably <code>QueryInformationJobObject</code> with
-<code>JobObjectBasicAccountingInformation</code>, which reports total user and kernel time for everything that has ever run in the
-job, no tree walk required. That&rsquo;s next.</p>
-<p>And sampling is sampling. A process group can grow between two polls, and anything that calls <code>setsid</code> leaves the group
+<code>JobObjectBasicAccountingInformation</code>. It reports total user and kernel time for everything that has ever run in the
+job, with no tree walk required. That&rsquo;s next.</p>
+<p>And sampling is sampling. A process group can grow between two polls. Anything that calls <code>setsid</code> leaves the group
 entirely. For an agent&rsquo;s tool calls that&rsquo;s an acceptable trade for a single binary that needs no privileges. If you need
-a hard wall on Linux, run the ship inside a systemd scope or a container with <code>memory.max</code> set and let shipmates&rsquo; own
+a hard wall on Linux, run the ship inside a systemd scope or a container with <code>memory.max</code> set. Let shipmates&rsquo; own
 limits be the inner layer.</p>
 <h3 id="how-i-measured">How I measured</h3>
-<p>Both demos are small standalone Go programs (Go 1.26.5 on Windows 11 Pro, cross-compiled and run under WSL2 kernel
-6.18.33.2 for the Linux one) on an AMD Ryzen 9 5950X with 128 GB RAM. The Linux one starts an &ldquo;agent&rdquo; with
-<code>Setpgid: true</code>, which runs a &ldquo;tool&rdquo; that allocates 32 x 16 MiB with every page touched, and prints <code>/proc/&lt;pid&gt;/statm</code>
-RSS for the root next to the sum over the process group every 500 ms. The Windows one creates a Job Object with
-<code>JOB_OBJECT_LIMIT_JOB_MEMORY</code> set to 256 MiB, assigns the agent, and lets the agent&rsquo;s child allocate 16 MiB at a time.</p>
+<p>Both demos are small standalone Go programs on an AMD Ryzen 9 5950X with 128 GB RAM. I used Go 1.26.5 on Windows 11
+Pro. The Linux one was cross-compiled and run under WSL2 kernel 6.18.33.2. It starts an &ldquo;agent&rdquo; with <code>Setpgid: true</code>.
+The agent runs a &ldquo;tool&rdquo; that allocates 32 x 16 MiB with every page touched. Every 500 ms it prints <code>/proc/&lt;pid&gt;/statm</code>
+RSS for the root next to the sum over the process group. The Windows one creates a Job Object with
+<code>JOB_OBJECT_LIMIT_JOB_MEMORY</code> set to 256 MiB and assigns the agent. Then it lets the agent&rsquo;s child allocate 16 MiB at a
+time.</p>
 <h3 id="links">Links</h3>
 <ul>
 <li><a href="https://github.com/luthermonson/shipmates/commit/24bd788"><code>24bd788</code></a>: contain codex with the portable watchdog, delete cgroups</li>

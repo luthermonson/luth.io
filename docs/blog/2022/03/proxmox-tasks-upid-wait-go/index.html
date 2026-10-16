@@ -272,24 +272,28 @@
       </div>
       <div class="content">
         
-        <p>If you start automating <a href="https://www.proxmox.com/en/">Proxmox VE</a> through the API, the first thing that trips you up is
-that almost nothing you ask it to do is finished when the HTTP call returns. Start a VM, clone a template, download an
-ISO to storage, delete a disk&hellip; the response is a single string that looks like a typo and the actual work is happening
-in a worker process on the node. If your next call depends on that work being done you have to go find out when it&rsquo;s done.</p>
-<p>I&rsquo;ve been building that part of <a href="https://github.com/luthermonson/go-proxmox">go-proxmox</a> over the last couple of months
-(the <a href="/blog/2022/02/recreating-proxmox-ve-xtermjs-in-go/">xterm.js post</a> covered the shell side) and with the simpler
-<code>WaitFor</code> that just landed I think the shape is settled enough to write up.</p>
+        <p>If you start automating <a href="https://www.proxmox.com/en/">Proxmox VE</a> through the API, one thing trips you up first.
+Almost nothing you ask it to do is finished when the HTTP call returns. Start a VM, clone a template, download an ISO
+to storage, delete a disk&hellip; the response is a single string that looks like a typo. The actual work is happening in a
+worker process on the node. If your next call depends on that work being done, you have to go find out when it&rsquo;s done.</p>
+<p>I&rsquo;ve been building that part of <a href="https://github.com/luthermonson/go-proxmox">go-proxmox</a> over the last couple of
+months. The <a href="/blog/2022/02/recreating-proxmox-ve-xtermjs-in-go/">xterm.js post</a> covered the shell side. With the
+simpler <code>WaitFor</code> that just landed, I think the shape is settled enough to write up.</p>
 <h3 id="the-upid">The UPID</h3>
 <p>Here is what a download-url call on my home lab node <code>i7</code> gave back:</p>
 <pre tabindex="0"><code>UPID:i7:00303F51:09D93CFE:61CCA568:download:8fd77349e9f6.iso:root@pam:
 </code></pre><p>That is a Unique Process ID, and it&rsquo;s more useful than it looks. It&rsquo;s colon separated and every field means something:</p>
 <p><img src="/img/2022/03/proxmox-tasks-upid-wait-go-anatomy.svg" alt="Anatomy of a Proxmox UPID"></p>
-<p>The middle three are hex. <code>00303F51</code> is the PID of the worker on the node (3161937), <code>09D93CFE</code> is the process start time
-in clock ticks that Proxmox uses to tell PIDs apart after they get reused, and <code>61CCA568</code> is a unix timestamp (1640801640,
-December 29th 2021 at 18:14 UTC, which is when I was testing this). The rest is plain text: the task type, an id (the VMID
-for VM tasks, the file name for a download) and the user that started it.</p>
-<p>The important bit is the node. Task status lives at <code>/nodes/{node}/tasks/{upid}/status</code>, so if you parse the node out of
-the UPID you can poll it without the caller having to remember where the work was scheduled. That&rsquo;s the entire reason
+<p>The middle three are hex:</p>
+<ul>
+<li><code>00303F51</code> is the PID of the worker on the node (3161937).</li>
+<li><code>09D93CFE</code> is the process start time in clock ticks. Proxmox uses it to tell PIDs apart after they get reused.</li>
+<li><code>61CCA568</code> is a unix timestamp (1640801640). That&rsquo;s December 29th 2021 at 18:14 UTC, which is when I was testing this.</li>
+</ul>
+<p>The rest is plain text. There&rsquo;s the task type, then an id, then the user that started it. The id is the VMID for VM
+tasks and the file name for a download.</p>
+<p>The important bit is the node. Task status lives at <code>/nodes/{node}/tasks/{upid}/status</code>. If you parse the node out of
+the UPID, you can poll it without the caller having to remember where the work was scheduled. That&rsquo;s the entire reason
 <code>NewTask</code> exists:</p>
 <div class="highlight"><pre tabindex="0" class="chroma"><code class="language-go" data-lang="go"><span class="line"><span class="cl"><span class="kd">func</span><span class="w"> </span><span class="nf">NewTask</span><span class="p">(</span><span class="nx">upid</span><span class="w"> </span><span class="nx">UPID</span><span class="p">,</span><span class="w"> </span><span class="nx">client</span><span class="w"> </span><span class="o">*</span><span class="nx">Client</span><span class="p">)</span><span class="w"> </span><span class="o">*</span><span class="nx">Task</span><span class="w"> </span><span class="p">{</span><span class="w">
 </span></span></span><span class="line"><span class="cl"><span class="w">	</span><span class="k">if</span><span class="w"> </span><span class="nx">upid</span><span class="w"> </span><span class="o">==</span><span class="w"> </span><span class="s">&#34;&#34;</span><span class="w"> </span><span class="p">{</span><span class="w">
@@ -323,18 +327,18 @@ is the simplest example:</p>
 </span></span></span><span class="line"><span class="cl"><span class="w">
 </span></span></span><span class="line"><span class="cl"><span class="w">	</span><span class="k">return</span><span class="w"> </span><span class="nf">NewTask</span><span class="p">(</span><span class="nx">upid</span><span class="p">,</span><span class="w"> </span><span class="nx">v</span><span class="p">.</span><span class="nx">client</span><span class="p">),</span><span class="w"> </span><span class="kc">nil</span><span class="w">
 </span></span></span><span class="line"><span class="cl"><span class="p">}</span><span class="w">
-</span></span></span></code></pre></div><p>The response body for these calls is <code>{&quot;data&quot;: &quot;UPID:...&quot;}</code>, so unmarshalling straight into a <code>UPID</code> (which is just a
-<code>string</code> type) works with no special handling.</p>
+</span></span></span></code></pre></div><p>The response body for these calls is <code>{&quot;data&quot;: &quot;UPID:...&quot;}</code>. A <code>UPID</code> is just a <code>string</code> type, so unmarshalling
+straight into one works with no special handling.</p>
 <h3 id="ping-wait-and-waitfor">Ping, Wait and WaitFor</h3>
-<p>Once you have a <code>*Task</code>, <code>Ping</code> refreshes it from the status endpoint. The status payload has <code>status</code> (<code>running</code> or
-<code>stopped</code>) and, once it&rsquo;s stopped, <code>exitstatus</code>, which is <code>OK</code> or the error text.</p>
+<p>Once you have a <code>*Task</code>, <code>Ping</code> refreshes it from the status endpoint. The status payload has <code>status</code>, which is
+<code>running</code> or <code>stopped</code>. Once it&rsquo;s stopped it also has <code>exitstatus</code>, which is <code>OK</code> or the error text.</p>
 <div class="highlight"><pre tabindex="0" class="chroma"><code class="language-go" data-lang="go"><span class="line"><span class="cl"><span class="kd">func</span><span class="w"> </span><span class="p">(</span><span class="nx">t</span><span class="w"> </span><span class="o">*</span><span class="nx">Task</span><span class="p">)</span><span class="w"> </span><span class="nf">Ping</span><span class="p">()</span><span class="w"> </span><span class="kt">error</span><span class="w"> </span><span class="p">{</span><span class="w">
 </span></span></span><span class="line"><span class="cl"><span class="w">	</span><span class="k">return</span><span class="w"> </span><span class="nx">t</span><span class="p">.</span><span class="nx">client</span><span class="p">.</span><span class="nf">Get</span><span class="p">(</span><span class="nx">fmt</span><span class="p">.</span><span class="nf">Sprintf</span><span class="p">(</span><span class="s">&#34;/nodes/%s/tasks/%s/status&#34;</span><span class="p">,</span><span class="w"> </span><span class="nx">t</span><span class="p">.</span><span class="nx">Node</span><span class="p">,</span><span class="w"> </span><span class="nx">t</span><span class="p">.</span><span class="nx">UPID</span><span class="p">),</span><span class="w"> </span><span class="nx">t</span><span class="p">)</span><span class="w">
 </span></span></span><span class="line"><span class="cl"><span class="p">}</span><span class="w">
 </span></span></span></code></pre></div><p>Note it unmarshals right back into the task itself. The status response has the same fields the UPID encodes plus the
-ones that change, so the struct just keeps filling in as you poll it.</p>
-<p><code>Wait</code> is a polling loop with an interval and a max. I went with a plain <code>select</code> on a <code>time.After</code> because I wanted
-the timeout to be a real error you can check for, not a silent return:</p>
+ones that change. So the struct just keeps filling in as you poll it.</p>
+<p><code>Wait</code> is a polling loop with an interval and a max. I went with a plain <code>select</code> on a <code>time.After</code>. I wanted the
+timeout to be a real error you can check for, not a silent return:</p>
 <div class="highlight"><pre tabindex="0" class="chroma"><code class="language-go" data-lang="go"><span class="line"><span class="cl"><span class="kd">func</span><span class="w"> </span><span class="p">(</span><span class="nx">t</span><span class="w"> </span><span class="o">*</span><span class="nx">Task</span><span class="p">)</span><span class="w"> </span><span class="nf">Wait</span><span class="p">(</span><span class="nx">interval</span><span class="p">,</span><span class="w"> </span><span class="nx">max</span><span class="w"> </span><span class="nx">time</span><span class="p">.</span><span class="nx">Duration</span><span class="p">)</span><span class="w"> </span><span class="kt">error</span><span class="w"> </span><span class="p">{</span><span class="w">
 </span></span></span><span class="line"><span class="cl"><span class="w">	</span><span class="c1">// ping it quick to fill in all the details we need in case they&#39;re not there</span><span class="w">
 </span></span></span><span class="line"><span class="cl"><span class="w">	</span><span class="nx">t</span><span class="p">.</span><span class="nf">Ping</span><span class="p">()</span><span class="w">
@@ -360,20 +364,20 @@ the timeout to be a real error you can check for, not a silent return:</p>
 </span></span></span><span class="line"><span class="cl"><span class="w">		</span><span class="nx">time</span><span class="p">.</span><span class="nf">Sleep</span><span class="p">(</span><span class="nx">interval</span><span class="p">)</span><span class="w">
 </span></span></span><span class="line"><span class="cl"><span class="w">	</span><span class="p">}</span><span class="w">
 </span></span></span><span class="line"><span class="cl"><span class="p">}</span><span class="w">
-</span></span></span></code></pre></div><p>After writing <code>task.Wait(1*time.Second, 10*time.Second)</code> twenty times across the integration tests I added the lazy
+</span></span></span></code></pre></div><p>After writing <code>task.Wait(1*time.Second, 10*time.Second)</code> twenty times across the integration tests, I added the lazy
 version. Most of the time you just want &ldquo;poll every second, give up after N seconds&rdquo;:</p>
 <div class="highlight"><pre tabindex="0" class="chroma"><code class="language-go" data-lang="go"><span class="line"><span class="cl"><span class="kd">var</span><span class="w"> </span><span class="nx">DefaultWaitInterval</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="mi">1</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="nx">time</span><span class="p">.</span><span class="nx">Second</span><span class="w">
 </span></span></span><span class="line"><span class="cl"><span class="w">
 </span></span></span><span class="line"><span class="cl"><span class="kd">func</span><span class="w"> </span><span class="p">(</span><span class="nx">t</span><span class="w"> </span><span class="o">*</span><span class="nx">Task</span><span class="p">)</span><span class="w"> </span><span class="nf">WaitFor</span><span class="p">(</span><span class="nx">seconds</span><span class="w"> </span><span class="kt">int</span><span class="p">)</span><span class="w"> </span><span class="kt">error</span><span class="w"> </span><span class="p">{</span><span class="w">
 </span></span></span><span class="line"><span class="cl"><span class="w">	</span><span class="k">return</span><span class="w"> </span><span class="nx">t</span><span class="p">.</span><span class="nf">Wait</span><span class="p">(</span><span class="nx">DefaultWaitInterval</span><span class="p">,</span><span class="w"> </span><span class="nx">time</span><span class="p">.</span><span class="nf">Duration</span><span class="p">(</span><span class="nx">seconds</span><span class="p">)</span><span class="o">*</span><span class="nx">time</span><span class="p">.</span><span class="nx">Second</span><span class="p">)</span><span class="w">
 </span></span></span><span class="line"><span class="cl"><span class="p">}</span><span class="w">
-</span></span></span></code></pre></div><p>One thing to be aware of: <code>Wait</code> returning <code>nil</code> means the task is no longer <em>running</em>, not that it worked. A clone onto
-storage that&rsquo;s full stops just as fast as one that succeeds. Check <code>task.ExitStatus</code> after the wait if you care, which
-you probably do.</p>
+</span></span></span></code></pre></div><p>One thing to be aware of: <code>Wait</code> returning <code>nil</code> means the task is no longer <em>running</em>, not that it worked. A clone
+onto storage that&rsquo;s full stops just as fast as one that succeeds. Check <code>task.ExitStatus</code> after the wait if you care.
+You probably do.</p>
 <h3 id="watching-the-log">Watching the log</h3>
-<p>Some tasks take long enough that you want to see what they&rsquo;re doing. A big ISO download is the obvious one, Proxmox
-writes progress lines to the task log as it goes. The log endpoint is paged with <code>start</code> and <code>limit</code>, so <code>Watch</code> reads
-what&rsquo;s there, hands it back on a channel and then tails it until the task stops:</p>
+<p>Some tasks take long enough that you want to see what they&rsquo;re doing. A big ISO download is the obvious one. Proxmox
+writes progress lines to the task log as it goes. The log endpoint is paged with <code>start</code> and <code>limit</code>. <code>Watch</code> reads
+what&rsquo;s there and hands it back on a channel. Then it tails the log until the task stops:</p>
 <div class="highlight"><pre tabindex="0" class="chroma"><code class="language-go" data-lang="go"><span class="line"><span class="cl"><span class="kd">func</span><span class="w"> </span><span class="nf">tasktail</span><span class="p">(</span><span class="nx">start</span><span class="w"> </span><span class="kt">int</span><span class="p">,</span><span class="w"> </span><span class="nx">watch</span><span class="w"> </span><span class="kd">chan</span><span class="w"> </span><span class="kt">string</span><span class="p">,</span><span class="w"> </span><span class="nx">task</span><span class="w"> </span><span class="o">*</span><span class="nx">Task</span><span class="p">)</span><span class="w"> </span><span class="kt">error</span><span class="w"> </span><span class="p">{</span><span class="w">
 </span></span></span><span class="line"><span class="cl"><span class="w">	</span><span class="k">for</span><span class="w"> </span><span class="p">{</span><span class="w">
 </span></span></span><span class="line"><span class="cl"><span class="w">		</span><span class="nx">task</span><span class="p">.</span><span class="nx">client</span><span class="p">.</span><span class="nx">log</span><span class="p">.</span><span class="nf">Debugf</span><span class="p">(</span><span class="s">&#34;tailing log for task %s&#34;</span><span class="p">,</span><span class="w"> </span><span class="nx">task</span><span class="p">.</span><span class="nx">UPID</span><span class="p">)</span><span class="w">
@@ -398,12 +402,12 @@ what&rsquo;s there, hands it back on a channel and then tails it until the task 
 </span></span></span><span class="line"><span class="cl"><span class="w">		</span><span class="nx">time</span><span class="p">.</span><span class="nf">Sleep</span><span class="p">(</span><span class="mi">2</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="nx">time</span><span class="p">.</span><span class="nx">Second</span><span class="p">)</span><span class="w">
 </span></span></span><span class="line"><span class="cl"><span class="w">	</span><span class="p">}</span><span class="w">
 </span></span></span><span class="line"><span class="cl"><span class="p">}</span><span class="w">
-</span></span></span></code></pre></div><p>There is a small race at the front of this. If you call <code>Watch</code> immediately after starting a task the log can be empty
-for a moment, so <code>Watch</code> retries the first read three times with a one second sleep before it gives up with
-<code>no logs available</code>. The channel is closed when the task finishes so you can just <code>range</code> over it.</p>
+</span></span></span></code></pre></div><p>There is a small race at the front of this. If you call <code>Watch</code> immediately after starting a task, the log can be
+empty for a moment. So <code>Watch</code> retries the first read three times with a one second sleep. After that it gives up with
+<code>no logs available</code>. The channel is closed when the task finishes, so you can just <code>range</code> over it.</p>
 <h3 id="putting-it-together">Putting it together</h3>
-<p>The integration test fixture for VMs is the best example of all of this in one place. Download a tinycore ISO, wait for
-it, create a VM with it attached, wait, configure it, wait:</p>
+<p>The integration test fixture for VMs is the best example of all of this in one place. Download a tinycore ISO and wait
+for it. Create a VM with it attached and wait. Configure it and wait:</p>
 <div class="highlight"><pre tabindex="0" class="chroma"><code class="language-go" data-lang="go"><span class="line"><span class="cl"><span class="nx">isoName</span><span class="w"> </span><span class="o">:=</span><span class="w"> </span><span class="nx">name</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="s">&#34;.iso&#34;</span><span class="w">
 </span></span></span><span class="line"><span class="cl"><span class="nx">task</span><span class="p">,</span><span class="w"> </span><span class="nx">err</span><span class="w"> </span><span class="o">:=</span><span class="w"> </span><span class="nx">td</span><span class="p">.</span><span class="nx">storage</span><span class="p">.</span><span class="nf">DownloadURL</span><span class="p">(</span><span class="s">&#34;iso&#34;</span><span class="p">,</span><span class="w"> </span><span class="nx">isoName</span><span class="p">,</span><span class="w"> </span><span class="nx">tinycoreURL</span><span class="p">)</span><span class="w">
 </span></span></span><span class="line"><span class="cl"><span class="nx">assert</span><span class="p">.</span><span class="nf">Nil</span><span class="p">(</span><span class="nx">t</span><span class="p">,</span><span class="w"> </span><span class="nx">err</span><span class="p">)</span><span class="w">
@@ -421,13 +425,17 @@ it, create a VM with it attached, wait, configure it, wait:</p>
 </span></span></span><span class="line"><span class="cl"><span class="nx">task</span><span class="p">,</span><span class="w"> </span><span class="nx">err</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="nx">node</span><span class="p">.</span><span class="nf">NewVirtualMachine</span><span class="p">(</span><span class="nx">nextid</span><span class="p">,</span><span class="w"> </span><span class="nx">VirtualMachineOption</span><span class="p">{</span><span class="nx">Name</span><span class="p">:</span><span class="w"> </span><span class="s">&#34;cdrom&#34;</span><span class="p">,</span><span class="w"> </span><span class="nx">Value</span><span class="p">:</span><span class="w"> </span><span class="nx">iso</span><span class="p">.</span><span class="nx">VolID</span><span class="p">})</span><span class="w">
 </span></span></span><span class="line"><span class="cl"><span class="nx">require</span><span class="p">.</span><span class="nf">NoError</span><span class="p">(</span><span class="nx">t</span><span class="p">,</span><span class="w"> </span><span class="nx">err</span><span class="p">)</span><span class="w">
 </span></span></span><span class="line"><span class="cl"><span class="nx">require</span><span class="p">.</span><span class="nf">NoError</span><span class="p">(</span><span class="nx">t</span><span class="p">,</span><span class="w"> </span><span class="nx">task</span><span class="p">.</span><span class="nf">Wait</span><span class="p">(</span><span class="mi">1</span><span class="o">*</span><span class="nx">time</span><span class="p">.</span><span class="nx">Second</span><span class="p">,</span><span class="w"> </span><span class="mi">10</span><span class="o">*</span><span class="nx">time</span><span class="p">.</span><span class="nx">Second</span><span class="p">))</span><span class="w">
-</span></span></span></code></pre></div><p>And the task test itself downloads an Ubuntu ISO big enough to still be running after 30 seconds, waits on it in a
-goroutine with a 30 second max so it has to hit the timeout, stops the task with a <code>DELETE</code> on the task path, and reads
-the <code>Watch</code> channel on the main goroutine until it closes. One test, the whole lifecycle: start, poll, time out, tail,
-cancel.</p>
-<p>That&rsquo;s the plumbing. With tasks working, clone (which landed in February) and the rest of the VM lifecycle calls are
-just &ldquo;post, wrap the UPID, return the task&rdquo;, and the next thing I want on top of it is booting a VM straight from a qcow
-URL without touching the node&rsquo;s shell.</p>
+</span></span></span></code></pre></div><p>And the task test itself covers the rest:</p>
+<ul>
+<li>It downloads an Ubuntu ISO big enough to still be running after 30 seconds.</li>
+<li>It waits on it in a goroutine with a 30 second max, so it has to hit the timeout.</li>
+<li>It stops the task with a <code>DELETE</code> on the task path.</li>
+<li>It reads the <code>Watch</code> channel on the main goroutine until it closes.</li>
+</ul>
+<p>One test, the whole lifecycle: start, poll, time out, tail, cancel.</p>
+<p>That&rsquo;s the plumbing. Clone landed in February. With tasks working, it and the rest of the VM lifecycle calls are just
+&ldquo;post, wrap the UPID, return the task&rdquo;. The next thing I want on top of it is booting a VM straight from a qcow URL
+without touching the node&rsquo;s shell.</p>
 <h3 id="links">Links</h3>
 <ul>
 <li><a href="https://github.com/luthermonson/go-proxmox">go-proxmox</a></li>

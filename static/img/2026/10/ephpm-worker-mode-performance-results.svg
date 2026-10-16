@@ -1,0 +1,80 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 820 610" role="img" aria-labelledby="t d" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif">
+  <title id="t">ePHPm worker mode: requests/sec and peak memory</title>
+  <desc id="d">Two horizontal bar charts. Requests per second: Before 50,855; #575 56,629; #575+#578 59,064; #575+#578+#577 58,122; Swoole 61,580; Workerman 64,521. Peak memory: Before 307 MiB; #575 305 MiB; #575+#578 308 MiB; #575+#578+#577 170 MiB; Swoole 838 MiB; Workerman not measured the same way.</desc>
+  <defs>
+    <pattern id="hatch" width="8" height="8" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
+      <rect width="8" height="8" fill="#e3e3e3"/>
+      <line x1="0" y1="0" x2="0" y2="8" stroke="#6b6b6b" stroke-width="3"/>
+    </pattern>
+  </defs>
+  <rect width="820" height="610" fill="#ffffff"/>
+  <text x="410" y="36" text-anchor="middle" font-size="20" font-weight="600" fill="#222">ePHPm worker mode vs Swoole and Workerman</text>
+  <text x="410" y="62" text-anchor="middle" font-size="15" fill="#555">Same app, machine and load; average of three runs</text>
+
+  <!-- Panel 1: requests/sec -->
+  <text x="20" y="102" font-size="17" font-weight="600" fill="#222">Requests/sec (higher is better)</text>
+  <g font-size="16" fill="#222" text-anchor="end">
+    <text x="218" y="134">Before</text>
+    <text x="218" y="170">#575</text>
+    <text x="218" y="206">#575+#578</text>
+    <text x="218" y="242">#575+#578+#577</text>
+    <text x="218" y="278">Swoole</text>
+    <text x="218" y="314">Workerman</text>
+  </g>
+  <g fill="#0550ae">
+    <rect x="230" y="116" width="370.5" height="24"/>
+    <rect x="230" y="152" width="412.5" height="24"/>
+    <rect x="230" y="188" width="430.2" height="24"/>
+    <rect x="230" y="224" width="423.4" height="24"/>
+  </g>
+  <g fill="url(#hatch)" stroke="#555" stroke-width="1">
+    <rect x="230" y="260" width="448.6" height="24"/>
+    <rect x="230" y="296" width="470" height="24"/>
+  </g>
+  <g font-size="16" fill="#222">
+    <text x="608.5" y="134">50,855</text>
+    <text x="650.5" y="170">56,629</text>
+    <text x="668.2" y="206">59,064</text>
+    <text x="661.4" y="242">58,122</text>
+    <text x="686.6" y="278">61,580</text>
+    <text x="708" y="314">64,521</text>
+  </g>
+  <line x1="230" y1="110" x2="230" y2="326" stroke="#333" stroke-width="1.5"/>
+  <line x1="40" y1="116" x2="40" y2="248" stroke="#0550ae" stroke-width="2"/>
+  <line x1="40" y1="116" x2="48" y2="116" stroke="#0550ae" stroke-width="2"/>
+  <line x1="40" y1="248" x2="48" y2="248" stroke="#0550ae" stroke-width="2"/>
+  <text transform="translate(30 182) rotate(-90)" text-anchor="middle" font-size="15" font-weight="600" fill="#0550ae">ePHPm</text>
+
+  <!-- Panel 2: peak memory -->
+  <text x="20" y="364" font-size="17" font-weight="600" fill="#222">Peak memory, MiB (lower is better)</text>
+  <g font-size="16" fill="#222" text-anchor="end">
+    <text x="218" y="396">Before</text>
+    <text x="218" y="432">#575</text>
+    <text x="218" y="468">#575+#578</text>
+    <text x="218" y="504">#575+#578+#577</text>
+    <text x="218" y="540">Swoole</text>
+    <text x="218" y="576">Workerman</text>
+  </g>
+  <g fill="#0550ae">
+    <rect x="230" y="378" width="172.2" height="24"/>
+    <rect x="230" y="414" width="171.1" height="24"/>
+    <rect x="230" y="450" width="172.7" height="24"/>
+    <rect x="230" y="486" width="95.3" height="24"/>
+  </g>
+  <g fill="url(#hatch)" stroke="#555" stroke-width="1">
+    <rect x="230" y="522" width="470" height="24"/>
+  </g>
+  <g font-size="16" fill="#222">
+    <text x="410.2" y="396">307 MiB</text>
+    <text x="409.1" y="432">305 MiB</text>
+    <text x="410.7" y="468">308 MiB</text>
+    <text x="333.3" y="504" font-weight="600">170 MiB</text>
+    <text x="708" y="540">838 MiB</text>
+    <text x="240" y="576" font-style="italic" fill="#555">not measured the same way</text>
+  </g>
+  <line x1="230" y1="372" x2="230" y2="588" stroke="#333" stroke-width="1.5"/>
+  <line x1="40" y1="378" x2="40" y2="510" stroke="#0550ae" stroke-width="2"/>
+  <line x1="40" y1="378" x2="48" y2="378" stroke="#0550ae" stroke-width="2"/>
+  <line x1="40" y1="510" x2="48" y2="510" stroke="#0550ae" stroke-width="2"/>
+  <text transform="translate(30 444) rotate(-90)" text-anchor="middle" font-size="15" font-weight="600" fill="#0550ae">ePHPm</text>
+</svg>

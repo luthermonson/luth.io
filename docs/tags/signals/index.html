@@ -218,7 +218,7 @@
       <h2><a href="/blog/2026/09/php-timeout-linker-wraps/">The Bugs Were Our Own Linker Wraps: Making a PHP Timeout Actually Time Out</a></h2>
     
     
-      <p>max_execution_time did nothing in ePHPm because we had wrapped zend_set_timeout to a no-op. The SDK already had per-thread timers; we just had to stop switching them off.</p>
+      <p>max_execution_time did nothing in ePHPm because we had wrapped zend_set_timeout to a no-op. The SDK already had per-thread timers. We just had to stop switching them off.</p>
     
   </div>
   <div class="meta">
@@ -235,9 +235,9 @@
     
     <p>In <a href="/blog/2026/09/php-stack-guard-segfault-containment/">the stack guard post</a> the villain was a <code>-Wl,--wrap</code> linker
 flag that turned off PHP&rsquo;s C-stack overflow guard. It wasn&rsquo;t the only one. Until August, <code>max_execution_time</code> did
-nothing in <a href="https://github.com/ephpm/ephpm">ePHPm</a> on Linux, for the same reason: we had wrapped the function that
-arms it to a no-op. A runaway script ran until the HTTP layer&rsquo;s request timeout gave up on it and sent a 504, and the
-PHP thread kept burning CPU after that.</p>
+nothing in <a href="https://github.com/ephpm/ephpm">ePHPm</a> on Linux, for the same reason. We had wrapped the function that arms
+it to a no-op. A runaway script ran until the HTTP layer&rsquo;s request timeout gave up on it and sent a 504. The PHP thread
+kept burning CPU after that.</p>
   </div>
   <footer>
     <a href="/blog/2026/09/php-timeout-linker-wraps/" class="button big">Read More</a>
@@ -285,7 +285,7 @@ PHP thread kept burning CPU after that.</p>
       <h2><a href="/blog/2026/09/php-stack-guard-segfault-containment/">We Disabled PHP&#39;s Stack Guard Ourselves: Containing Segfaults in a Single-Process PHP Server</a></h2>
     
     
-      <p>How ePHPm went from dying silently on a segfault to containing stack overflows per thread, and the linker flag that had turned off PHP&#39;s own guard.</p>
+      <p>How ePHPm went from dying silently on a segfault to containing stack overflows per thread. It also covers the linker flag that had turned off PHP&#39;s own guard.</p>
     
   </div>
   <div class="meta">
@@ -300,10 +300,10 @@ PHP thread kept burning CPU after that.</p>
     <img class="" src="/img/2026/09/php-stack-guard-cover.svg" alt="Diagram of a PHP thread stack, the guard window below it, and which faults get contained versus which kill the process">
   </a>
     
-    <p>php-fpm has a property nobody thinks about until they leave it: when a worker segfaults, you lose one request. The
+    <p>php-fpm has a property nobody thinks about until they leave it. When a worker segfaults, you lose one request. The
 master forks a new child and life goes on. <a href="https://github.com/ephpm/ephpm">ePHPm</a> runs every tenant&rsquo;s PHP as threads
-inside one process. That&rsquo;s where the memory and latency wins come from, and it also means one tenant&rsquo;s segfault
-takes down every other tenant on the box.</p>
+inside one process. That&rsquo;s where the memory and latency wins come from. It also means one tenant&rsquo;s segfault takes down
+every other tenant on the box.</p>
   </div>
   <footer>
     <a href="/blog/2026/09/php-stack-guard-segfault-containment/" class="button big">Read More</a>
@@ -370,8 +370,8 @@ takes down every other tenant on the box.</p>
     
     <p>Last week I wrote about <a href="/blog/2026/04/why-rust-for-php-embedding/">why ePHPm embeds PHP from Rust</a> and promised the
 signal bug its own post. Here it is. It&rsquo;s the kind of bug where the fix is about ten lines and the explanation is the
-whole post, because nothing in PHP&rsquo;s embed documentation (there&rsquo;s barely any) tells you that initializing PHP has
-process-wide side effects that assume PHP is the only thing in the process.</p>
+whole post. Nothing in PHP&rsquo;s embed documentation (there&rsquo;s barely any) tells you that initializing PHP has
+process-wide side effects. Those side effects assume PHP is the only thing in the process.</p>
   </div>
   <footer>
     <a href="/blog/2026/04/php-signal-safety-init-ordering/" class="button big">Read More</a>

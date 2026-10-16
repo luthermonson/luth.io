@@ -218,13 +218,13 @@
       <h2><a href="/blog/2026/08/clustered-sqlite-sqld-sidecar/">Clustered SQLite in ePHPm, Part 1: Replication by Sidecar</a></h2>
     
     
-      <p>How ePHPm first made SQLite highly available by embedding sqld as a child process, and the list of things that went wrong with it.</p>
+      <p>ePHPm first made SQLite highly available by embedding sqld as a child process. This is how that worked and the list of things that went wrong with it.</p>
     
   </div>
   <div class="meta">
     <time datetime="2026-08-08 20:14:00 -0700 PDT">August 8, 2026</time>
     
-    <p>8-Minute Read</p>
+    <p>9-Minute Read</p>
   </div>
 </header>
 
@@ -235,9 +235,9 @@
     
     <p>Most PHP sites I have run in the last twenty years did not need a MySQL server. They needed <em>a</em> database, and MySQL was the
 one every framework spoke. With <a href="https://github.com/ephpm/ephpm">ePHPm</a> I have been trying to get rid of that server for
-the common case, and the piece that makes it possible is <a href="https://github.com/ephpm/litewire">litewire</a>: PHP connects with
-plain <code>pdo_mysql</code>, litewire speaks the MySQL wire protocol, and the queries land in a SQLite file. WordPress and Laravel
-don&rsquo;t know the difference. No <code>mysqld</code>, no child processes, just <code>ephpm</code> and a <code>.db&hellip;</code></p>
+the common case. The piece that makes it possible is <a href="https://github.com/ephpm/litewire">litewire</a>. PHP connects with
+plain <code>pdo_mysql</code>. litewire speaks the MySQL wire protocol, and the queries land in a SQLite file. WordPress and Laravel
+don&rsquo;t know the difference. No <code>mysqld</code>, no child processes, just <code>ephpm</code> and a <code>.db</code> file.</p>
   </div>
   <footer>
     <a href="/blog/2026/08/clustered-sqlite-sqld-sidecar/" class="button big">Read More</a>

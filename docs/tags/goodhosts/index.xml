@@ -13,7 +13,7 @@
       <link>https://luth.io/blog/2024/02/goodhosts/</link>
       <pubDate>Sat, 03 Feb 2024 19:22:00 -0700</pubDate>
       <guid>https://luth.io/blog/2024/02/goodhosts/</guid>
-      <description>&lt;p&gt;Editing the hosts file sounds like the most boring problem in software. Read a text file, add a line, write it back. Then you find out&#xA;your binary is being shelled out to from a Ruby Vagrant plugin on a Windows laptop with UAC prompts, your library is being called in a&#xA;loop by &lt;a href=&#34;https://github.com/ddev/ddev&#34;&gt;ddev&lt;/a&gt;, and every hosts file you parse was hand-edited by somebody at some point.&#xA;I&amp;rsquo;ve been maintaining &lt;a href=&#34;https://github.com/goodhosts&#34;&gt;goodhosts&lt;/a&gt; for a few years now, and since I just spent a chunk of the fall and the&#xA;holidays on it, here&amp;rsquo;s what that looks like.&lt;/p&gt;</description>
+      <description>&lt;p&gt;Editing the hosts file sounds like the most boring problem in software. Read a text file, add a line, write it back. Then you find out&#xA;your binary is being shelled out to from a Ruby Vagrant plugin on a Windows laptop with UAC prompts. Your library is being called in a&#xA;loop by &lt;a href=&#34;https://github.com/ddev/ddev&#34;&gt;ddev&lt;/a&gt;. And every hosts file you parse was hand-edited by somebody at some point. I&amp;rsquo;ve been&#xA;maintaining &lt;a href=&#34;https://github.com/goodhosts&#34;&gt;goodhosts&lt;/a&gt; for a few years now. I just spent a chunk of the fall and the holidays on it, so&#xA;here&amp;rsquo;s what that looks like.&lt;/p&gt;</description>
     </item>
   </channel>
 </rss>

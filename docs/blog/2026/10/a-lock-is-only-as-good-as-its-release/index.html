@@ -10,14 +10,14 @@
     gtag('config', 'G-MSTSKGFWTX');
 </script><meta charset="utf-8">
 <title>A Lock Is Only as Good as Its Release - Luther Monson</title>
-<meta name="description" content="SETNX gets all the attention, but most of the bugs in ePHPm&#39;s KV locks were on the release side. This is how blind deletes, a missing compare-and-delete, and a cluster where two nodes could both win got fixed.">
+<meta name="description" content="SETNX gets all the attention, but most of the bugs in ePHPm&#39;s KV locks were on the release side. This is how blind deletes, a missing compare-and-delete and a cluster where two nodes could both win got fixed.">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
 <meta name="twitter:card" content="summary_large_image"><meta name="twitter:site" content="@luthermonson">
 
 <meta property="og:site_name" content="Luther Monson">
 <meta property="og:title" content="A Lock Is Only as Good as Its Release">
-<meta property="og:description" content="SETNX gets all the attention, but most of the bugs in ePHPm&#39;s KV locks were on the release side. This is how blind deletes, a missing compare-and-delete, and a cluster where two nodes could both win got fixed.">
+<meta property="og:description" content="SETNX gets all the attention, but most of the bugs in ePHPm&#39;s KV locks were on the release side. This is how blind deletes, a missing compare-and-delete and a cluster where two nodes could both win got fixed.">
 <meta property="og:type" content="article">
 <meta property="og:url" content="https://luth.io/blog/2026/10/a-lock-is-only-as-good-as-its-release/">
     <meta property="og:image" content="https://luth.io/img/2026/10/a-lock-is-only-as-good-as-its-release-cover.svg">
@@ -215,7 +215,7 @@
       <h2><a href="/blog/2026/10/a-lock-is-only-as-good-as-its-release/">A Lock Is Only as Good as Its Release</a></h2>
     
     
-      <p>SETNX gets all the attention, but most of the bugs in ePHPm&#39;s KV locks were on the release side. This is how blind deletes, a missing compare-and-delete, and a cluster where two nodes could both win got fixed.</p>
+      <p>SETNX gets all the attention, but most of the bugs in ePHPm&#39;s KV locks were on the release side. This is how blind deletes, a missing compare-and-delete and a cluster where two nodes could both win got fixed.</p>
     
   </div>
   <div class="meta">
@@ -271,19 +271,22 @@
 
       </div>
       <div class="content">
+              <figure class="post-cover">
+                <img src="/img/2026/10/a-lock-is-only-as-good-as-its-release-cover.svg" alt="Timeline: request A&#39;s lock expires, B acquires it, A&#39;s blind DEL frees B&#39;s lock and C gets in">
+              </figure>
         
         <p>Every &ldquo;build a lock on Redis&rdquo; tutorial spends its time on acquisition: <code>SET key value NX PX 30000</code>, one winner, done. The
-release gets one line, <code>DEL key</code>, and that line is where most of the lock bugs I&rsquo;ve had in ePHPm lived. Over about three months
-the same mistake showed up in the native session handler, in two of the Composer wrapper packages, and finally in the
-cluster, each time in a slightly different costume.</p>
+release gets one line, <code>DEL key</code>. That line is where most of the lock bugs I&rsquo;ve had in ePHPm lived. Over about three
+months the same mistake showed up in three places. First the native session handler, then two of the Composer wrapper
+packages, and finally the cluster. Each time it wore a slightly different costume.</p>
 <h3 id="version-one-setnx-and-a-blind-del">Version one: SETNX and a blind DEL</h3>
 <p>The native session handler got locking in <a href="https://github.com/ephpm/ephpm/pull/111">#111</a> back in July. Without it, two
-concurrent requests with the same session cookie both read the blob, both change their copy, and the second write
+concurrent requests with the same session cookie both read the blob and both change their copy. The second write
 silently wins. The design is the one php-fpm&rsquo;s files handler uses, built on the KV store:</p>
 <ul>
 <li><code>PS_READ</code> takes <code>session_lock:&lt;sid&gt;</code> with <code>set_nx</code> and a 30 second TTL.</li>
 <li>On contention it spins with backoff, 10 ms doubling to a 100 ms cap, for up to 30 seconds.</li>
-<li>If it still can&rsquo;t get the lock it logs a warning and proceeds without it. A lost update is bad, a deadlocked PHP thread
+<li>If it still can&rsquo;t get the lock it logs a warning and proceeds without it. A lost update is bad. A deadlocked PHP thread
 is worse.</li>
 <li><code>PS_CLOSE</code>, which PHP calls after the write even when the request bailed out, releases it.</li>
 </ul>
@@ -302,10 +305,10 @@ is worse.</li>
 </span></span><span class="line"><span class="cl"> <span class="o">*</span> <span class="n">is</span> <span class="n">an</span> <span class="n">unconditional</span> <span class="n">DEL</span> <span class="err">—</span> <span class="n">the</span> <span class="n">KV</span> <span class="n">ops</span> <span class="n">table</span> <span class="n">has</span> <span class="n">no</span> <span class="n">compare</span><span class="o">-</span><span class="n">and</span><span class="o">-</span><span class="n">delete</span> <span class="err">—</span>
 </span></span><span class="line"><span class="cl"> <span class="o">*</span> <span class="n">so</span> <span class="n">the</span> <span class="n">original</span> <span class="n">holder</span> <span class="n">would</span> <span class="n">then</span> <span class="n">release</span> <span class="n">the</span> <span class="o">*</span><span class="n">new</span><span class="o">*</span> <span class="n">holder</span><span class="err">&#39;</span><span class="n">s</span> <span class="n">lock</span><span class="p">,</span>
 </span></span><span class="line"><span class="cl"> <span class="o">*</span> <span class="n">letting</span> <span class="n">a</span> <span class="n">third</span> <span class="n">request</span> <span class="n">in</span> <span class="n">early</span><span class="p">.</span>
-</span></span></code></pre></div><p>That&rsquo;s the diagram at the top. A holds the lock and runs past its TTL. The lock expires, B acquires it and believes it
+</span></span></code></pre></div><p>That&rsquo;s the diagram at the top. A holds the lock and runs past its TTL. The lock expires. B acquires it and believes it
 has the session to itself. A finishes and deletes the key, which is now B&rsquo;s lock. C walks straight in while B is still
 working. A TTL lock already has the problem that A is running unlocked once it overruns. The blind release adds a second
-problem: it breaks the lock for B and C, who did everything right.</p>
+problem. It breaks the lock for B and C, who did everything right.</p>
 <h3 id="the-wrappers-made-the-same-choice">The wrappers made the same choice</h3>
 <p>The <a href="/blog/2026/09/calling-rust-from-php-without-a-socket-part-2/">wrapper packages</a> that put Laravel, Symfony and
 WordPress on the KV store needed locks too. <code>cache-laravel</code> got an atomic lock on September 10th, modelled on Laravel&rsquo;s
@@ -318,17 +321,19 @@ own <code>MemcachedLock</code>. Acquisition goes through <code>ephpm_kv_setnx</c
 </span></span><span class="line"><span class="cl">
 </span></span><span class="line"><span class="cl">    <span class="k">return</span> <span class="k">false</span><span class="p">;</span>
 </span></span><span class="line"><span class="cl"><span class="p">}</span>
-</span></span></code></pre></div><p>That&rsquo;s better than a blind delete because it checks the owner, but the check and the delete are two calls. Between them
-the lock can expire and be re-acquired, and the delete removes the new holder&rsquo;s lock anyway. The docblock says so plainly:
-&ldquo;The ePHPm SAPI has no compare-and-delete / CAS primitive&rdquo;. The userland <code>session-handler</code> package&rsquo;s opt-in lock makes the
-same trade and documents it the same way.</p>
+</span></span></code></pre></div><p>That&rsquo;s better than a blind delete because it checks the owner. But the check and the delete are two calls. Between them
+the lock can expire and be re-acquired. Then the delete removes the new holder&rsquo;s lock anyway. The docblock says so
+plainly: &ldquo;The ePHPm SAPI has no compare-and-delete / CAS primitive&rdquo;. The userland <code>session-handler</code> package&rsquo;s opt-in lock
+makes the same trade and documents it the same way.</p>
 <p>The fix for both sides of this already existed in Redis land. You can&rsquo;t fix release in PHP, so the store needs a
 primitive.</p>
 <h3 id="compare-and-delete">Compare-and-delete</h3>
 <p><a href="https://github.com/ephpm/ephpm/pull/501">#501</a> merged the day after the Laravel lock was written. It adds <code>del_if_eq</code>:
-delete the key only while its value is still exactly this token. It&rsquo;s on the <code>Store</code>, as a RESP command (<code>DELIFEQ key token</code>), and as <code>ephpm_kv_del_if_eq()</code> in PHP, appended to the end of the ops table like every other addition.</p>
+delete the key only while its value is still exactly this token. It&rsquo;s on the <code>Store</code>. It&rsquo;s a RESP command
+(<code>DELIFEQ key token</code>). In PHP it&rsquo;s <code>ephpm_kv_del_if_eq()</code>, appended to the end of the ops table like every other
+addition.</p>
 <p>The implementation is short because DashMap already has the right primitive. <code>remove_if</code> evaluates its predicate while
-holding the shard&rsquo;s write lock, so the compare and the delete are one step:</p>
+holding the shard&rsquo;s write lock. So the compare and the delete are one step:</p>
 <div class="highlight"><pre tabindex="0" class="chroma"><code class="language-rust" data-lang="rust"><span class="line"><span class="cl"><span class="k">pub</span><span class="w"> </span><span class="k">fn</span> <span class="nf">del_if_eq</span><span class="p">(</span><span class="o">&amp;</span><span class="bp">self</span><span class="p">,</span><span class="w"> </span><span class="n">key</span>: <span class="kp">&amp;</span><span class="kt">str</span><span class="p">,</span><span class="w"> </span><span class="n">token</span>: <span class="kp">&amp;</span><span class="p">[</span><span class="kt">u8</span><span class="p">])</span><span class="w"> </span>-&gt; <span class="kt">bool</span> <span class="p">{</span><span class="w">
 </span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="kd">let</span><span class="w"> </span><span class="n">removed</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="bp">self</span><span class="p">.</span><span class="n">data</span><span class="p">.</span><span class="n">remove_if</span><span class="p">(</span><span class="n">key</span><span class="p">,</span><span class="w"> </span><span class="o">|</span><span class="n">_</span><span class="p">,</span><span class="w"> </span><span class="n">entry</span><span class="o">|</span><span class="w"> </span><span class="p">{</span><span class="w">
 </span></span></span><span class="line"><span class="cl"><span class="w">        </span><span class="k">if</span><span class="w"> </span><span class="n">entry</span><span class="p">.</span><span class="n">is_expired</span><span class="p">()</span><span class="w"> </span><span class="p">{</span><span class="w">
@@ -352,10 +357,11 @@ holding the shard&rsquo;s write lock, so the compare and the delete are one step
 </span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="p">}</span><span class="w">
 </span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="kc">true</span><span class="w">
 </span></span></span><span class="line"><span class="cl"><span class="p">}</span><span class="w">
-</span></span></span></code></pre></div><p>Two details matter. An expired entry counts as absent and never matches, so a late release can&rsquo;t remove a lock that&rsquo;s
-logically gone and about to be reaped. And the compare is against the decompressed value, so turning on KV compression
+</span></span></span></code></pre></div><p>Two details matter. An expired entry counts as absent and never matches. A late release can&rsquo;t remove a lock that&rsquo;s
+logically gone and about to be reaped. And the compare is against the decompressed value. Turning on KV compression
 doesn&rsquo;t quietly make every release fail.</p>
-<p>The PHP pattern becomes: generate a random token per acquisition, store it as the value, release with the token.</p>
+<p>The PHP pattern becomes simple. Generate a random token per acquisition, store it as the value and release with the
+token.</p>
 <div class="highlight"><pre tabindex="0" class="chroma"><code class="language-php" data-lang="php"><span class="line"><span class="cl"><span class="nv">$token</span> <span class="o">=</span> <span class="nx">bin2hex</span><span class="p">(</span><span class="nx">random_bytes</span><span class="p">(</span><span class="mi">16</span><span class="p">));</span>
 </span></span><span class="line"><span class="cl"><span class="k">if</span> <span class="p">(</span><span class="nx">ephpm_kv_setnx</span><span class="p">(</span><span class="s1">&#39;lock:nightly-report&#39;</span><span class="p">,</span> <span class="nv">$token</span><span class="p">,</span> <span class="mi">30</span><span class="p">))</span> <span class="p">{</span>
 </span></span><span class="line"><span class="cl">    <span class="k">try</span> <span class="p">{</span>
@@ -364,8 +370,8 @@ doesn&rsquo;t quietly make every release fail.</p>
 </span></span><span class="line"><span class="cl">        <span class="nx">ephpm_kv_del_if_eq</span><span class="p">(</span><span class="s1">&#39;lock:nightly-report&#39;</span><span class="p">,</span> <span class="nv">$token</span><span class="p">);</span>
 </span></span><span class="line"><span class="cl">    <span class="p">}</span>
 </span></span><span class="line"><span class="cl"><span class="p">}</span>
-</span></span></code></pre></div><p>Here&rsquo;s the scenario from the diagram as a real script against the v0.10.6 release: A takes the lock with a 1 second TTL,
-sleeps 1.2 seconds, B acquires, A releases, and C tries.</p>
+</span></span></code></pre></div><p>Here&rsquo;s the scenario from the diagram as a real script against the v0.10.6 release. A takes the lock with a 1 second TTL
+and sleeps 1.2 seconds. Then B acquires, A releases and C tries.</p>
 <div class="highlight"><pre tabindex="0" class="chroma"><code class="language-text" data-lang="text"><span class="line"><span class="cl">$ curl -s localhost:8131/lock.php?release=del
 </span></span><span class="line"><span class="cl">A acquires (1s TTL):     true
 </span></span><span class="line"><span class="cl">B acquires (30s TTL):    true
@@ -379,22 +385,22 @@ sleeps 1.2 seconds, B acquires, A releases, and C tries.</p>
 </span></span><span class="line"><span class="cl">A releases with del_if_eq: false
 </span></span><span class="line"><span class="cl">C tries to acquire:      false
 </span></span><span class="line"><span class="cl">lock holder now:         &#39;B&#39;
-</span></span></code></pre></div><p>With <code>del</code>, A&rsquo;s release returns 1 (it deleted something, just not its own lock) and C gets in on top of B. With
-<code>del_if_eq</code>, A&rsquo;s release is a no-op, B keeps the lock and C is turned away.</p>
+</span></span></code></pre></div><p>With <code>del</code>, A&rsquo;s release returns 1. It deleted something, just not its own lock. C gets in on top of B. With
+<code>del_if_eq</code>, A&rsquo;s release is a no-op. B keeps the lock and C is turned away.</p>
 <h3 id="then-the-cluster">Then the cluster</h3>
 <p>That fixed one node. ePHPm can also run as a cluster, with the KV store replicated between nodes over gossip and a data
-plane, and the clustering comment on <code>del_if_eq</code> was careful to say what it did and didn&rsquo;t promise: &ldquo;per-node atomic;
+plane. The clustering comment on <code>del_if_eq</code> was careful to say what it did and didn&rsquo;t promise: &ldquo;per-node atomic;
 cluster-wide it is last-arrival-wins&rdquo;. The same was true of <code>set_nx</code>. Each node ran the check-and-insert on its own map
 and then published the result.</p>
 <p>Spell that out for a lock and it&rsquo;s not a lock. Two nodes get a request for the same key at about the same time. Each
-checks its own map, each sees absent, each inserts, each publishes, and both callers were told they acquired it. The
-release side had the matching bug. A holder whose lock had expired and been granted to someone on another node still had
-its old token in its local copy, so <code>del_if_eq</code> matched against the stale copy, succeeded, and broadcast a tombstone that
-deleted the new holder&rsquo;s lock everywhere.</p>
+checks its own map and sees absent. Each inserts and publishes. Both callers were told they acquired it. The release
+side had the matching bug. Say a holder&rsquo;s lock had expired and been granted to someone on another node. The old holder
+still had its old token in its local copy. So <code>del_if_eq</code> matched against the stale copy and succeeded. Then it
+broadcast a tombstone that deleted the new holder&rsquo;s lock everywhere.</p>
 <p><a href="https://github.com/ephpm/ephpm/pull/562">#562</a> changes where the decision is made. Both <code>SETNX</code> and <code>DELIFEQ</code> go to the
-key&rsquo;s primary owner, <code>hash(key) % sorted alive nodes</code> (the same owner the large-value tier already used), and the owner
-decides under its own shard lock. It merged after v0.11.3 was cut, so it ships in the upcoming v0.12.0 release. The <code>Replicator</code> trait gets two hooks that default to &ldquo;decide locally&rdquo;, which is still
-right for a single node:</p>
+key&rsquo;s primary owner, <code>hash(key) % sorted alive nodes</code>. That&rsquo;s the same owner the large-value tier already used. The
+owner decides under its own shard lock. It merged after v0.11.3 was cut, so it ships in the upcoming v0.12.0 release.
+The <code>Replicator</code> trait gets two hooks that default to &ldquo;decide locally&rdquo;. That&rsquo;s still right for a single node:</p>
 <div class="highlight"><pre tabindex="0" class="chroma"><code class="language-rust" data-lang="rust"><span class="line"><span class="cl"><span class="k">fn</span> <span class="nf">route_set_nx</span><span class="p">(</span><span class="o">&amp;</span><span class="bp">self</span><span class="p">,</span><span class="w"> </span><span class="n">key</span>: <span class="kp">&amp;</span><span class="kt">str</span><span class="p">,</span><span class="w"> </span><span class="n">value</span>: <span class="kp">&amp;</span><span class="p">[</span><span class="kt">u8</span><span class="p">],</span><span class="w"> </span><span class="n">ttl</span>: <span class="nb">Option</span><span class="o">&lt;</span><span class="n">Duration</span><span class="o">&gt;</span><span class="p">)</span><span class="w"> </span>-&gt; <span class="nc">Routed</span><span class="o">&lt;</span><span class="n">SetNxOutcome</span><span class="o">&gt;</span><span class="w"> </span><span class="p">{</span><span class="w">
 </span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="kd">let</span><span class="w"> </span><span class="n">_</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">(</span><span class="n">key</span><span class="p">,</span><span class="w"> </span><span class="n">value</span><span class="p">,</span><span class="w"> </span><span class="n">ttl</span><span class="p">);</span><span class="w">
 </span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="n">Routed</span>::<span class="n">Local</span><span class="w">
@@ -413,34 +419,42 @@ right for a single node:</p>
 </span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="p">}</span><span class="w">
 </span></span></span><span class="line"><span class="cl"><span class="p">}</span><span class="w">
 </span></span></span><span class="line"><span class="cl"><span class="bp">self</span><span class="p">.</span><span class="n">set_nx_outcome_local</span><span class="p">(</span><span class="n">key</span><span class="p">,</span><span class="w"> </span><span class="n">value</span><span class="p">,</span><span class="w"> </span><span class="n">ttl</span><span class="p">)</span><span class="w">
-</span></span></span></code></pre></div><p>The owner runs the <code>_local</code> variant and never re-routes, so two nodes that briefly disagree about who owns a key can&rsquo;t
-bounce a request back and forth. When the owner can&rsquo;t be reached the caller gets a failure, not a guess: <code>set_nx</code>
-returns false and RESP answers <code>-CLUSTERDOWN ... the outcome is unknown</code> instead of <code>:0</code>, because a request that timed
-out may still have landed on the owner. Falling back to a local decision would bring back the exact bug the routing
-exists to fix.</p>
-<p>The PR&rsquo;s tests are the convincing part. A real three-node in-process cluster test, with routing stubbed back to <code>Local</code>,
-produces three winners for one lock, a stale release that returns <code>Ok(true)</code>, and an unreachable owner that still reports
-<code>Inserted</code>. With the routing in place all three pass, along with a 32-thread, four-&ldquo;node&rdquo; test that expects exactly one
-winner.</p>
-<p>I want to be precise about what this is: single-arbiter routing, not consensus. Every node computes the owner from its
-own view of live membership. During a join, a leave, or the few seconds it takes gossip to declare a node dead, two nodes
-can name different owners. A new owner only knows about locks that had already replicated to it. For session locks and
-cron de-duplication that&rsquo;s a fine trade. For anything where two holders would corrupt data, you want a fencing token or
-a real consensus store, and the docs now say that instead of implying it.</p>
+</span></span></span></code></pre></div><p>The owner runs the <code>_local</code> variant and never re-routes. Two nodes that briefly disagree about who owns a key can&rsquo;t
+bounce a request back and forth. When the owner can&rsquo;t be reached the caller gets a failure, not a guess. <code>set_nx</code>
+returns false and RESP answers <code>-CLUSTERDOWN ... the outcome is unknown</code> instead of <code>:0</code>. A request that timed out may
+still have landed on the owner. Falling back to a local decision would bring back the exact bug the routing exists to
+fix.</p>
+<p>The PR&rsquo;s tests are the convincing part. One is a real three-node in-process cluster test. With routing stubbed back to
+<code>Local</code> it shows all three bugs:</p>
+<ul>
+<li>three winners for one lock</li>
+<li>a stale release that returns <code>Ok(true)</code></li>
+<li>an unreachable owner that still reports <code>Inserted</code></li>
+</ul>
+<p>With the routing in place all three pass. So does a 32-thread, four-&ldquo;node&rdquo; test that expects exactly one winner.</p>
+<p>I want to be precise about what this is. It&rsquo;s single-arbiter routing, not consensus. Every node computes the owner from
+its own view of live membership. Two nodes can name different owners during a join or a leave. The same goes for the few
+seconds it takes gossip to declare a node dead. A new owner only knows about locks that had already replicated to it.
+For session locks and cron de-duplication that&rsquo;s a fine trade. For anything where two holders would corrupt data, you
+want a fencing token or a real consensus store. The docs now say that instead of implying it.</p>
 <p>The same PR finally closes the session handler&rsquo;s known limitation. The lock value is a random 128-bit token from PHP&rsquo;s
-CSPRNG, hex encoded, instead of <code>&quot;1&quot;</code>, and release (including the out-of-memory undo path) is <code>del_if_eq</code> against it.
-The new test <code>session_lock_release_cannot_delete_a_lock_it_no_longer_holds</code> fails against the old wrapper with
-<code>lock value ... got &quot;1&quot;</code>. Acquisition changed too: an unreachable owner is no longer treated as contention, so instead
-of retrying for up to 30 seconds the request proceeds after one timed-out attempt, with a warning. It still holds its
-token, so if the grant landed on the owner anyway, <code>PS_CLOSE</code> releases it.</p>
+CSPRNG, hex encoded, instead of <code>&quot;1&quot;</code>. Release is <code>del_if_eq</code> against it, including the out-of-memory undo path. The new
+test <code>session_lock_release_cannot_delete_a_lock_it_no_longer_holds</code> fails against the old wrapper with
+<code>lock value ... got &quot;1&quot;</code>. Acquisition changed too. An unreachable owner is no longer treated as contention. Instead of
+retrying for up to 30 seconds, the request proceeds after one timed-out attempt, with a warning. It still holds its
+token. If the grant landed on the owner anyway, <code>PS_CLOSE</code> releases it.</p>
 <h3 id="the-wrappers-lag-the-server">The wrappers lag the server</h3>
 <p>This is the part that&rsquo;s easy to forget. A primitive in the server doesn&rsquo;t fix anything until callers use it. As of this
-writing <code>cache-laravel</code>&rsquo;s lock and the userland <code>session-handler</code> still release with a plain delete and still say there&rsquo;s
-no compare-and-delete, because they were written against the API as it was the day before. The acquisition side has
-mostly caught up (<code>cache-wordpress</code> moved <code>wp_cache_add()</code> to <code>setnx</code> in the same week), and the release side is next.</p>
+writing <code>cache-laravel</code>&rsquo;s lock and the userland <code>session-handler</code> still release with a plain delete. They still say
+there&rsquo;s no compare-and-delete, because they were written against the API as it was the day before. The acquisition side
+has mostly caught up. <code>cache-wordpress</code> moved <code>wp_cache_add()</code> to <code>setnx</code> in the same week. The release side is next.</p>
 <p>The general lesson I took from it: when you review a lock, read the release first. Acquisition with <code>SETNX</code> is hard to
-get wrong. Release needs a token you generated, a compare-and-delete that&rsquo;s atomic where the decision is made, and in a
-cluster, agreement about where that is.</p>
+get wrong. Release needs three things:</p>
+<ul>
+<li>a token you generated</li>
+<li>a compare-and-delete that&rsquo;s atomic where the decision is made</li>
+<li>in a cluster, agreement about where that is</li>
+</ul>
 <h3 id="links">Links</h3>
 <ul>
 <li><a href="https://github.com/ephpm/ephpm/pull/111">ephpm #111: multi-tenant defaults and KV session locking</a></li>

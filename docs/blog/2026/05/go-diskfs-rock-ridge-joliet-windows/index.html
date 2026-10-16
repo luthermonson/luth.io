@@ -10,14 +10,14 @@
     gtag('config', 'G-MSTSKGFWTX');
 </script><meta charset="utf-8">
 <title>go-diskfs: Getting Rock Ridge Working for Joliet on Windows - Luther Monson</title>
-<meta name="description" content="Fixing Rock Ridge, adding Joliet, and then finding out what Windows actually wanted, all so a Go-built cloud-init ISO works for cloudbase-init.">
+<meta name="description" content="I fixed Rock Ridge and added Joliet to go-diskfs so a Go-built cloud-init ISO works for cloudbase-init. Then I found out what Windows actually wanted.">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
 <meta name="twitter:card" content="summary_large_image"><meta name="twitter:site" content="@luthermonson">
 
 <meta property="og:site_name" content="Luther Monson">
 <meta property="og:title" content="go-diskfs: Getting Rock Ridge Working for Joliet on Windows">
-<meta property="og:description" content="Fixing Rock Ridge, adding Joliet, and then finding out what Windows actually wanted, all so a Go-built cloud-init ISO works for cloudbase-init.">
+<meta property="og:description" content="I fixed Rock Ridge and added Joliet to go-diskfs so a Go-built cloud-init ISO works for cloudbase-init. Then I found out what Windows actually wanted.">
 <meta property="og:type" content="article">
 <meta property="og:url" content="https://luth.io/blog/2026/05/go-diskfs-rock-ridge-joliet-windows/">
     <meta property="og:image" content="https://luth.io/img/2026/05/go-diskfs-rock-ridge-joliet-windows-layout.svg">
@@ -215,7 +215,7 @@
       <h2><a href="/blog/2026/05/go-diskfs-rock-ridge-joliet-windows/">go-diskfs: Getting Rock Ridge Working for Joliet on Windows</a></h2>
     
     
-      <p>Fixing Rock Ridge, adding Joliet, and then finding out what Windows actually wanted, all so a Go-built cloud-init ISO works for cloudbase-init.</p>
+      <p>I fixed Rock Ridge and added Joliet to go-diskfs so a Go-built cloud-init ISO works for cloudbase-init. Then I found out what Windows actually wanted.</p>
     
   </div>
   <div class="meta">
@@ -274,52 +274,68 @@
         
         <p><a href="https://github.com/luthermonson/go-proxmox">go-proxmox</a> has had a <code>CloudInit()</code> helper since 2023. It builds a small
 nocloud ISO in Go, uploads it to Proxmox and mounts it on the VM as a CD-ROM. It&rsquo;s always worked fine for Linux guests. It
-has never worked for Windows guests running <a href="https://cloudbase.it/cloudbase-init/">cloudbase-init</a>, and the reason is a
+has never worked for Windows guests running <a href="https://cloudbase.it/cloudbase-init/">cloudbase-init</a>. The reason is a
 filesystem extension from 1995 called Joliet.</p>
-<p>Getting it fixed took three PRs to <a href="https://github.com/diskfs/go-diskfs">go-diskfs</a> over about seven weeks, plus a bug report
-from a user who actually ran it on Windows, which turned out to be the most important part.</p>
+<p>Getting it fixed took three PRs to <a href="https://github.com/diskfs/go-diskfs">go-diskfs</a> over about seven weeks. It also took a
+bug report from a user who ran it on Windows. That turned out to be the most important part.</p>
 <h3 id="why-windows-cant-read-the-iso">Why Windows can&rsquo;t read the ISO</h3>
-<p>Plain ISO 9660 is very strict about names. At interchange level 1 a file name is up to 8 characters of uppercase
-letters, digits and underscore, a dot, a 3 character extension and a <code>;1</code> version suffix. Here are the three nocloud files
-as go-diskfs writes them into the primary directory tree:</p>
+<p>Plain ISO 9660 is very strict about names. At interchange level 1 a file name has four parts:</p>
+<ul>
+<li>up to 8 characters of uppercase letters, digits and underscore</li>
+<li>a dot</li>
+<li>a 3 character extension</li>
+<li>a <code>;1</code> version suffix</li>
+</ul>
+<p>Here are the three nocloud files as go-diskfs writes them into the primary directory tree:</p>
 <pre tabindex="0"><code>META_DAT.;1
 NETWORK_.;1
 USER_DAT.;1
-</code></pre><p>Nobody actually reads those names. There are two extensions that layer real filenames on top, and which one an OS uses
-decides what it sees:</p>
+</code></pre><p>Nobody reads those names. Two extensions layer real filenames on top. Which one an OS uses decides what it sees:</p>
 <ul>
-<li><strong>Rock Ridge</strong> is for Unix. It hides POSIX metadata inside each directory record&rsquo;s System Use area using the SUSP
-framework: <code>PX</code> for mode/uid/gid/links, <code>NM</code> for the real name, <code>SL</code> for symlink targets, <code>TF</code> for timestamps, <code>CL</code>/<code>PL</code>/<code>RE</code>
-for relocating directories nested deeper than ISO 9660&rsquo;s 8-level limit, and an <code>ER</code> entry announcing the extension.
-Linux reads it, so Linux sees <code>meta-data</code>.</li>
-<li><strong>Joliet</strong> is Microsoft&rsquo;s. It doesn&rsquo;t touch the primary tree at all. It adds a Supplementary Volume Descriptor, or SVD
-(sector 17 here, right behind the PVD), flagged with an escape sequence (<code>%/@</code>, <code>%/C</code> or <code>%/E</code> for UCS-2 levels 1 to 3), pointing at a
-<em>second</em> directory tree whose names are UCS-2 big-endian, up to 64 characters.</li>
+<li>
+<p><strong>Rock Ridge</strong> is for Unix. It hides POSIX metadata inside each directory record&rsquo;s System Use area using the SUSP
+framework. The entries are:</p>
+<ul>
+<li><code>PX</code> for mode/uid/gid/links</li>
+<li><code>NM</code> for the real name</li>
+<li><code>SL</code> for symlink targets</li>
+<li><code>TF</code> for timestamps</li>
+<li><code>CL</code>/<code>PL</code>/<code>RE</code> for relocating directories nested deeper than ISO 9660&rsquo;s 8-level limit</li>
+<li>an <code>ER</code> entry announcing the extension</li>
 </ul>
-<p>Windows&rsquo; CD-ROM filesystem doesn&rsquo;t do Rock Ridge. Without a Joliet tree it sees <code>META_DAT.;1</code>, and cloudbase-init, which is
-looking for <code>meta-data</code>, finds nothing. Here&rsquo;s the layout of the ISO that works, with both trees, read out of a real one:</p>
+<p>Linux reads it, so Linux sees <code>meta-data</code>.</p>
+</li>
+<li>
+<p><strong>Joliet</strong> is Microsoft&rsquo;s. It doesn&rsquo;t touch the primary tree at all. It adds a Supplementary Volume Descriptor, or SVD
+(sector 17 here, right behind the PVD). The SVD is flagged with an escape sequence (<code>%/@</code>, <code>%/C</code> or <code>%/E</code> for UCS-2
+levels 1 to 3). It points at a <em>second</em> directory tree whose names are UCS-2 big-endian, up to 64 characters.</p>
+</li>
+</ul>
+<p>Windows&rsquo; CD-ROM filesystem doesn&rsquo;t do Rock Ridge. Without a Joliet tree it sees <code>META_DAT.;1</code>. cloudbase-init is looking
+for <code>meta-data</code>, so it finds nothing. Here&rsquo;s the layout of the ISO that works, with both trees, read out of a real one:</p>
 <p><img src="/img/2026/05/go-diskfs-rock-ridge-joliet-windows-layout.svg" alt="Sector map of a go-diskfs cidata ISO with Rock Ridge and Joliet"></p>
 <h3 id="there-is-no-go-library-for-this">There is no Go library for this</h3>
 <p>I went looking before writing anything. As of March:</p>
 <ul>
 <li><a href="https://github.com/kdomanski/iso9660">kdomanski/iso9660</a>: its README says it plainly, &ldquo;Joliet extension is <strong>NOT</strong>
-supported&rdquo;, with Rock Ridge reading still experimental.</li>
+supported&rdquo;. Rock Ridge reading is still experimental.</li>
 <li><a href="https://github.com/hooklift/iso9660">hooklift/iso9660</a>: a reader only, last touched in 2019.</li>
-<li><a href="https://github.com/bgrewell/iso-kit">bgrewell/iso-kit</a>: new (January 2025), a couple of stars, says it does Joliet but calls itself early
-development.</li>
+<li><a href="https://github.com/bgrewell/iso-kit">bgrewell/iso-kit</a>: new (January 2025) with a couple of stars. It says it does
+Joliet but calls itself early development.</li>
 <li><a href="https://github.com/diskfs/go-diskfs">go-diskfs</a>: the serious one, and what go-proxmox already used. It could write
-Rock Ridge, and &ldquo;Joliet extensions to iso9660&rdquo; was sitting in the plans section of the README, with
-<a href="https://github.com/diskfs/go-diskfs/issues/73">issue #73</a> asking for it open since 2020.</li>
+Rock Ridge. &ldquo;Joliet extensions to iso9660&rdquo; was sitting in the plans section of the README.
+<a href="https://github.com/diskfs/go-diskfs/issues/73">Issue #73</a> asking for it had been open since 2020.</li>
 </ul>
-<p>So, go-diskfs. The two extensions are independent on disk (the maintainer pointed that out in review, and he&rsquo;s right), but Rock Ridge was already in the tree and half-working. Before bolting a second directory tree onto the
-finalize code, I wanted the first one to be correct.</p>
+<p>So, go-diskfs. The two extensions are independent on disk. The maintainer pointed that out in review, and he&rsquo;s right. But
+Rock Ridge was already in the tree and half-working. Before bolting a second directory tree onto the finalize code, I
+wanted the first one to be correct.</p>
 <h3 id="step-1-rock-ridge-up-to-spec-353">Step 1: Rock Ridge up to spec (#353)</h3>
-<p><a href="https://github.com/diskfs/go-diskfs/pull/353">PR #353</a>, merged April 10th. Most of the fixes were small and each one is a
+<p><a href="https://github.com/diskfs/go-diskfs/pull/353">PR #353</a> merged April 10th. Most of the fixes were small. Each one is a
 good example of the spec being specific about something the code had been loose about:</p>
 <ul>
 <li>
 <p><strong>Modes were hardcoded.</strong> <code>Mode()</code> returned <code>0o755</code> for everything regardless of the <code>PX</code> entry. Now it reads the <code>PX</code>
-mode and only falls back to fixed values for non-Rock Ridge images:</p>
+mode. It only falls back to fixed values for non-Rock Ridge images:</p>
 <div class="highlight"><pre tabindex="0" class="chroma"><code class="language-go" data-lang="go"><span class="line"><span class="cl"><span class="kd">func</span><span class="w"> </span><span class="p">(</span><span class="nx">de</span><span class="w"> </span><span class="o">*</span><span class="nx">directoryEntry</span><span class="p">)</span><span class="w"> </span><span class="nf">Mode</span><span class="p">()</span><span class="w"> </span><span class="nx">os</span><span class="p">.</span><span class="nx">FileMode</span><span class="w"> </span><span class="p">{</span><span class="w">
 </span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="k">for</span><span class="w"> </span><span class="nx">_</span><span class="p">,</span><span class="w"> </span><span class="nx">ext</span><span class="w"> </span><span class="o">:=</span><span class="w"> </span><span class="k">range</span><span class="w"> </span><span class="nx">de</span><span class="p">.</span><span class="nx">extensions</span><span class="w"> </span><span class="p">{</span><span class="w">
 </span></span></span><span class="line"><span class="cl"><span class="w">        </span><span class="k">if</span><span class="w"> </span><span class="nx">px</span><span class="p">,</span><span class="w"> </span><span class="nx">ok</span><span class="w"> </span><span class="o">:=</span><span class="w"> </span><span class="nx">ext</span><span class="p">.(</span><span class="nx">rockRidgePosixAttributes</span><span class="p">);</span><span class="w"> </span><span class="nx">ok</span><span class="w"> </span><span class="p">{</span><span class="w">
@@ -336,7 +352,7 @@ mode and only falls back to fixed values for non-Rock Ridge images:</p>
 </span></span></span></code></pre></div></li>
 <li>
 <p><strong>No way to get at the metadata.</strong> <code>Sys()</code> now returns a <code>*RockRidgeInfo</code> with UID, GID, link count, mode and symlink
-target, which is the standard Go way to expose filesystem-specific detail through <code>fs.FileInfo</code>:</p>
+target. That&rsquo;s the standard Go way to expose filesystem-specific detail through <code>fs.FileInfo</code>:</p>
 <div class="highlight"><pre tabindex="0" class="chroma"><code class="language-go" data-lang="go"><span class="line"><span class="cl"><span class="kd">type</span><span class="w"> </span><span class="nx">RockRidgeInfo</span><span class="w"> </span><span class="kd">struct</span><span class="w"> </span><span class="p">{</span><span class="w">
 </span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="nx">UID</span><span class="w">     </span><span class="kt">uint32</span><span class="w">
 </span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="nx">GID</span><span class="w">     </span><span class="kt">uint32</span><span class="w">
@@ -346,23 +362,23 @@ target, which is the standard Go way to expose filesystem-specific detail throug
 </span></span></span><span class="line"><span class="cl"><span class="p">}</span><span class="w">
 </span></span></span></code></pre></div></li>
 <li>
-<p><strong><code>RE</code> was 8 bytes.</strong> The Relocated Directory entry is just a marker: 2 bytes of signature, a length byte and a version
-byte, so its length is 4. The code allocated 8 and zero-filled the rest. Harmless to most readers, still wrong.</p>
+<p><strong><code>RE</code> was 8 bytes.</strong> The Relocated Directory entry is just a marker. It holds 2 bytes of signature, a length byte and
+a version byte, so its length is 4. The code allocated 8 and zero-filled the rest. Harmless to most readers, still wrong.</p>
 </li>
 <li>
-<p><strong>Relocated directories were looked up too late.</strong> When a tree is deeper than 8 levels, the deep directory is moved
-and a <code>CL</code> (child link) entry points at its new home. The reader checked path depth before resolving the <code>CL</code>, so relocated
+<p><strong>Relocated directories were looked up too late.</strong> When a tree is deeper than 8 levels, the deep directory is moved. A
+<code>CL</code> (child link) entry points at its new home. The reader checked path depth before resolving the <code>CL</code>, so relocated
 directories didn&rsquo;t resolve at every level. The lookup moved ahead of the depth check.</p>
 </li>
 <li>
-<p><strong>Symlinks were treated as files during finalize.</strong> A symlink&rsquo;s target lives inline in the <code>SL</code> entry; it has no data
-extent. But finalize put symlinks in the list of files to copy, so <code>os.Open()</code> would follow the link and either fail on a
+<p><strong>Symlinks were treated as files during finalize.</strong> A symlink&rsquo;s target lives inline in the <code>SL</code> entry. It has no data
+extent. But finalize put symlinks in the list of files to copy. <code>os.Open()</code> would follow the link and either fail on a
 dangling one or copy the target&rsquo;s bytes. They&rsquo;re now excluded from data allocation while still getting directory entries.</p>
 </li>
 <li>
-<p><strong>Relative symlinks came out absolute.</strong> The <code>SL</code> parser glued components together with a leading separator, so
-a relative <code>target.txt</code> came back as <code>/target.txt</code>. The fix only adds a separator once something is already in the path, and review asked for that
-repeated check to be pulled into a helper:</p>
+<p><strong>Relative symlinks came out absolute.</strong> The <code>SL</code> parser glued components together with a leading separator. A
+relative <code>target.txt</code> came back as <code>/target.txt</code>. The fix only adds a separator once something is already in the path.
+Review asked for that repeated check to be pulled into a helper:</p>
 <div class="highlight"><pre tabindex="0" class="chroma"><code class="language-go" data-lang="go"><span class="line"><span class="cl"><span class="nx">appendComponent</span><span class="w"> </span><span class="o">:=</span><span class="w"> </span><span class="kd">func</span><span class="p">(</span><span class="nx">component</span><span class="w"> </span><span class="kt">string</span><span class="p">)</span><span class="w"> </span><span class="p">{</span><span class="w">
 </span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="nx">name</span><span class="w"> </span><span class="o">!=</span><span class="w"> </span><span class="s">&#34;&#34;</span><span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span><span class="nx">name</span><span class="w"> </span><span class="o">!=</span><span class="w"> </span><span class="s">&#34;/&#34;</span><span class="w"> </span><span class="p">{</span><span class="w">
 </span></span></span><span class="line"><span class="cl"><span class="w">        </span><span class="nx">name</span><span class="w"> </span><span class="o">+=</span><span class="w"> </span><span class="s">&#34;/&#34;</span><span class="w">
@@ -372,14 +388,13 @@ repeated check to be pulled into a helper:</p>
 </span></span></span></code></pre></div></li>
 </ul>
 <p>The more interesting part was testing. I wanted to check go-diskfs against a reference implementation instead of against
-itself, and the reference for Rock Ridge is <a href="https://www.gnu.org/software/xorriso/">xorriso</a>. The PR as first written added
-Docker-based tests in both directions (build with go-diskfs and check with <code>isoinfo</code>, build with xorriso and read with
-go-diskfs) plus
-a byte-level comparison of the <code>PX</code> and <code>NM</code> entries each one writes. Getting xorriso into the test image hit a fun Alpine
-problem: <code>cdrkit</code> (which provides <code>isoinfo</code>) and <code>xorriso</code> both provide <code>mkisofs</code> and refuse to install together. My
-workaround involved shuffling binaries around and editing <code>/etc/apk/world</code>, which got a well-deserved &ldquo;why the whole
-rigamarole&rdquo; in review. The maintainer dropped cdrkit from the image entirely and I rewrote the test to read back with
-go-diskfs instead of <code>isoinfo</code>. Much simpler.</p>
+itself. The reference for Rock Ridge is <a href="https://www.gnu.org/software/xorriso/">xorriso</a>. The PR as first written added
+Docker-based tests in both directions. One built with go-diskfs and checked with <code>isoinfo</code>. The other built with xorriso
+and read with go-diskfs. On top of that was a byte-level comparison of the <code>PX</code> and <code>NM</code> entries each one writes.</p>
+<p>Getting xorriso into the test image hit a fun Alpine problem. <code>cdrkit</code> (which provides <code>isoinfo</code>) and <code>xorriso</code> both
+provide <code>mkisofs</code> and refuse to install together. My workaround involved shuffling binaries around and editing
+<code>/etc/apk/world</code>. That got a well-deserved &ldquo;why the whole rigamarole&rdquo; in review. The maintainer dropped cdrkit from the
+image entirely. I rewrote the test to read back with go-diskfs instead of <code>isoinfo</code>. Much simpler.</p>
 <p>Reading the metadata back looks like this:</p>
 <div class="highlight"><pre tabindex="0" class="chroma"><code class="language-go" data-lang="go"><span class="line"><span class="cl"><span class="nx">entries</span><span class="p">,</span><span class="w"> </span><span class="nx">err</span><span class="w"> </span><span class="o">:=</span><span class="w"> </span><span class="nx">fs</span><span class="p">.</span><span class="nf">ReadDir</span><span class="p">(</span><span class="s">&#34;.&#34;</span><span class="p">)</span><span class="w">
 </span></span></span><span class="line"><span class="cl"><span class="k">if</span><span class="w"> </span><span class="nx">err</span><span class="w"> </span><span class="o">!=</span><span class="w"> </span><span class="kc">nil</span><span class="w"> </span><span class="p">{</span><span class="w">
@@ -393,47 +408,51 @@ go-diskfs instead of <code>isoinfo</code>. Much simpler.</p>
 </span></span></span></code></pre></div><pre tabindex="0"><code>meta-data        -rw-rw-rw- size=49 rr=&amp;{UID:0 GID:0 Nlink:0 Mode:-rw-rw-rw- Symlink:}
 network-config   -rw-rw-rw- size=46 rr=&amp;{UID:0 GID:0 Nlink:0 Mode:-rw-rw-rw- Symlink:}
 user-data        -rw-rw-rw- size=37 rr=&amp;{UID:0 GID:0 Nlink:0 Mode:-rw-rw-rw- Symlink:}
-</code></pre><p>(That ISO was written on Windows, hence <code>0666</code>, and go-diskfs&rsquo;s Windows stat shim returns zero for link count, UID and GID,
-which is on my list.)</p>
+</code></pre><p>(That ISO was written on Windows, hence <code>0666</code>. go-diskfs&rsquo;s Windows stat shim returns zero for link count, UID and GID.
+That&rsquo;s on my list.)</p>
 <h3 id="step-2-joliet-372">Step 2: Joliet (#372)</h3>
-<p><a href="https://github.com/diskfs/go-diskfs/pull/372">PR #372</a> went up the day #353 merged and landed April 16th, closing #73 after
-more than five years. On the write side it&rsquo;s a single flag:</p>
+<p><a href="https://github.com/diskfs/go-diskfs/pull/372">PR #372</a> went up the day #353 merged and landed April 16th. It closed #73
+after more than five years. On the write side it&rsquo;s a single flag:</p>
 <div class="highlight"><pre tabindex="0" class="chroma"><code class="language-go" data-lang="go"><span class="line"><span class="cl"><span class="nx">err</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="nx">fs</span><span class="p">.</span><span class="nf">Finalize</span><span class="p">(</span><span class="nx">iso9660</span><span class="p">.</span><span class="nx">FinalizeOptions</span><span class="p">{</span><span class="w">
 </span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="nx">RockRidge</span><span class="p">:</span><span class="w">        </span><span class="kc">true</span><span class="p">,</span><span class="w">
 </span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="nx">Joliet</span><span class="p">:</span><span class="w">           </span><span class="kc">true</span><span class="p">,</span><span class="w">
 </span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="nx">VolumeIdentifier</span><span class="p">:</span><span class="w"> </span><span class="s">&#34;cidata&#34;</span><span class="p">,</span><span class="w">
 </span></span></span><span class="line"><span class="cl"><span class="p">})</span><span class="w">
-</span></span></span></code></pre></div><p>Under that flag, finalize builds a parallel directory tree with UCS-2 names, generates Joliet L and M path tables, and writes
-an SVD with the UCS-2 level 3 escape sequence. Both trees point at the same file extents, so the data is only on disk once. On
-the read side go-diskfs detects a Joliet SVD by its escape sequence and transparently reads the Joliet tree when Rock Ridge
-isn&rsquo;t active.</p>
-<p>Two review questions are worth repeating because they&rsquo;re the kind of thing the spec makes easy to get wrong. First, Rock
-Ridge and Joliet aren&rsquo;t mutually exclusive, and a comment in my code claiming &ldquo;Joliet entries never have SUSP&rdquo; read like they
-were. The flag is per directory entry: entries in the Joliet tree carry no SUSP, entries in the primary tree carry the full
-Rock Ridge set. Second, with both El Torito and Joliet enabled, does the root directory location get bumped twice? Yes,
-because the boot record and the SVD are each their own volume descriptor sector, and that deserved a comment.</p>
+</span></span></span></code></pre></div><p>Under that flag, finalize does three things:</p>
+<ul>
+<li>builds a parallel directory tree with UCS-2 names</li>
+<li>generates Joliet L and M path tables</li>
+<li>writes an SVD with the UCS-2 level 3 escape sequence</li>
+</ul>
+<p>Both trees point at the same file extents, so the data is only on disk once. On the read side go-diskfs detects a Joliet
+SVD by its escape sequence. It transparently reads the Joliet tree when Rock Ridge isn&rsquo;t active.</p>
+<p>Two review questions are worth repeating. They&rsquo;re the kind of thing the spec makes easy to get wrong. First, Rock Ridge
+and Joliet aren&rsquo;t mutually exclusive. A comment in my code claiming &ldquo;Joliet entries never have SUSP&rdquo; read like they were.
+The flag is per directory entry. Entries in the Joliet tree carry no SUSP. Entries in the primary tree carry the full
+Rock Ridge set. Second, with both El Torito and Joliet enabled, does the root directory location get bumped twice? Yes.
+The boot record and the SVD are each their own volume descriptor sector, and that deserved a comment.</p>
 <p>go-proxmox switched <code>makeCloudInitISO()</code> over to <code>Joliet: true</code> and shipped it in
 <a href="https://github.com/luthermonson/go-proxmox/releases/tag/v0.5.0">v0.5.0</a> on May 7th, pinned to go-diskfs v1.9.2.</p>
 <h3 id="step-3-what-windows-actually-wanted-391">Step 3: what Windows actually wanted (#391)</h3>
 <p>A day later <a href="https://github.com/luthermonson/go-proxmox/issues/258">go-proxmox#258</a> came in from
 <a href="https://github.com/rgl">rgl</a>, titled &ldquo;0.5.0 creates an invalid iso file&rdquo;. On Ubuntu, <code>blkid</code> showed this as the label:</p>
 <pre tabindex="0"><code>/dev/sr0: BLOCK_SIZE=&#34;2048&#34; UUID=&#34;2026-05-08-21-11-46-82&#34; LABEL=&#34;M-fM-^MM-)M-fM-^QM-!M-gM-^QM-!&#34; TYPE=&#34;iso9660&#34;
-</code></pre><p>That&rsquo;s <code>cat -v</code> escaping for 9 bytes of UTF-8, and if you decode them you get three CJK characters: 捩摡瑡. Which is what you
-get when you take the six ASCII bytes of <code>cidata</code>, <code>63 69 64 61 74 61</code>, and read them as UCS-2 big-endian: <code>0x6369</code>,
+</code></pre><p>That&rsquo;s <code>cat -v</code> escaping for 9 bytes of UTF-8. Decode them and you get three CJK characters: 捩摡瑡. That&rsquo;s what you get
+when you take the six ASCII bytes of <code>cidata</code> (<code>63 69 64 61 74 61</code>) and read them as UCS-2 big-endian: <code>0x6369</code>,
 <code>0x6461</code>, <code>0x7461</code>.</p>
 <pre tabindex="0"><code>$ printf &#39;cidata&#39; | iconv -f UCS-2BE -t UTF-8 | cat -v
 M-fM-^MM-)M-fM-^QM-!M-gM-^QM-!
-</code></pre><p>The Joliet SVD&rsquo;s volume identifier is a UCS-2 field like everything else in that descriptor, and go-diskfs was copying the
-ASCII string straight in. Linux preferred the Joliet label, got garbage, and cloud-init&rsquo;s nocloud datasource never found a
-volume called <code>cidata</code>. So the Joliet work had broken <em>Linux</em> guests too, which is the opposite of the plan.</p>
-<p>Fixing the label got Linux back, and on Windows the label now showed correctly and <code>dir D:\</code> listed the files. But reading
-one failed with <code>Cannot find path 'D:\meta-data' because it does not exist</code>, while an xorriso-built ISO
-worked. The second bug was in the Joliet path table. Every directory gets a path table record, and the root&rsquo;s identifier
-is a single byte. I&rsquo;d written <code>0x01</code>. ECMA-119 says the
-root&rsquo;s path table identifier is a single <code>0x00</code> byte, in the Joliet tables as much as the primary ones. My best read is that Windows resolves paths through the path table, so it could enumerate the root through its directory
-record but couldn&rsquo;t resolve a file path through the bad table entry.</p>
-<p><a href="https://github.com/diskfs/go-diskfs/pull/391">PR #391</a> fixes both. The identifier encoding is gated on the escape sequence,
-since review pointed out that not every SVD is a Joliet SVD:</p>
+</code></pre><p>The Joliet SVD&rsquo;s volume identifier is a UCS-2 field like everything else in that descriptor. go-diskfs was copying the
+ASCII string straight in. Linux preferred the Joliet label and got garbage. cloud-init&rsquo;s nocloud datasource never found a
+volume called <code>cidata</code>. So the Joliet work had broken <em>Linux</em> guests too. That&rsquo;s the opposite of the plan.</p>
+<p>Fixing the label got Linux back. On Windows the label now showed correctly and <code>dir D:\</code> listed the files. But reading
+one failed with <code>Cannot find path 'D:\meta-data' because it does not exist</code>. An xorriso-built ISO worked. The second bug
+was in the Joliet path table. Every directory gets a path table record, and the root&rsquo;s identifier is a single byte. I&rsquo;d
+written <code>0x01</code>. ECMA-119 says the root&rsquo;s path table identifier is a single <code>0x00</code> byte. That applies in the Joliet tables
+as much as the primary ones. My best read is that Windows resolves paths through the path table. It could enumerate the
+root through its directory record but couldn&rsquo;t resolve a file path through the bad table entry.</p>
+<p><a href="https://github.com/diskfs/go-diskfs/pull/391">PR #391</a> fixes both. The identifier encoding is gated on the escape
+sequence. Review pointed out that not every SVD is a Joliet SVD:</p>
 <div class="highlight"><pre tabindex="0" class="chroma"><code class="language-go" data-lang="go"><span class="line"><span class="cl"><span class="kd">func</span><span class="w"> </span><span class="p">(</span><span class="nx">v</span><span class="w"> </span><span class="o">*</span><span class="nx">supplementaryVolumeDescriptor</span><span class="p">)</span><span class="w"> </span><span class="nf">toBytes</span><span class="p">()</span><span class="w"> </span><span class="p">[]</span><span class="kt">byte</span><span class="w"> </span><span class="p">{</span><span class="w">
 </span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="nx">b</span><span class="w"> </span><span class="o">:=</span><span class="w"> </span><span class="nf">volumeDescriptorFirstBytes</span><span class="p">(</span><span class="nx">volumeDescriptorSupplementary</span><span class="p">)</span><span class="w">
 </span></span></span><span class="line"><span class="cl"><span class="w">
@@ -447,18 +466,19 @@ since review pointed out that not every SVD is a Joliet SVD:</p>
 </span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="p">}</span><span class="w">
 </span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="c1">// ...</span><span class="w">
 </span></span></span><span class="line"><span class="cl"><span class="p">}</span><span class="w">
-</span></span></span></code></pre></div><p>and the path table root becomes <code>&quot;\x00&quot;</code>. rgl confirmed it worked against a Windows guest running cloudbase-init, the maintainer
-tagged go-diskfs v1.9.3 on May 14th, and go-proxmox v0.5.1 pinned it the same day.</p>
+</span></span></span></code></pre></div><p>and the path table root becomes <code>&quot;\x00&quot;</code>. rgl confirmed it worked against a Windows guest running cloudbase-init. The
+maintainer tagged go-diskfs v1.9.3 on May 14th, and go-proxmox v0.5.1 pinned it the same day.</p>
 <h3 id="why-the-tests-didnt-catch-it">Why the tests didn&rsquo;t catch it</h3>
-<p>I had round-trip tests and xorriso tests, and neither caught a wrong label. The round-trip tests couldn&rsquo;t: the reader and writer
-had the same bug in opposite directions. <code>parseSupplementaryVolumeDescriptor()</code> read the identifier as raw bytes and
-<code>toBytes()</code> wrote raw bytes, so a go-diskfs ISO read back by go-diskfs said <code>cidata</code> every time. A round trip through your own
-code proves your reader and writer agree with each other. It says nothing about whether either one agrees with the spec.</p>
-<p>The thing that caught it was someone booting a real VM. I&rsquo;d add tests that assert specific bytes against the spec (the
-SVD identifier is UCS-2, the root path table entry is <code>00</code>) instead of only asserting that what goes in comes back out.</p>
+<p>I had round-trip tests and xorriso tests, and neither caught a wrong label. The round-trip tests couldn&rsquo;t. The reader and
+writer had the same bug in opposite directions. <code>parseSupplementaryVolumeDescriptor()</code> read the identifier as raw bytes.
+<code>toBytes()</code> wrote raw bytes. So a go-diskfs ISO read back by go-diskfs said <code>cidata</code> every time. A round trip through your
+own code proves your reader and writer agree with each other. It says nothing about whether either one agrees with the
+spec.</p>
+<p>The thing that caught it was someone booting a real VM. I&rsquo;d add tests that assert specific bytes against the spec instead
+of only asserting that what goes in comes back out. The SVD identifier is UCS-2. The root path table entry is <code>00</code>.</p>
 <h3 id="how-i-tested">How I tested</h3>
-<p>To check this for the post I built the same three-file ISO (<code>RockRidge: true, Joliet: true, VolumeIdentifier: &quot;cidata&quot;</code>) with
-go-diskfs v1.9.2 and v1.9.3 and compared them on Windows 11 (build 26200) with <code>Mount-DiskImage</code>:</p>
+<p>To check this for the post I built the same three-file ISO (<code>RockRidge: true, Joliet: true, VolumeIdentifier: &quot;cidata&quot;</code>)
+with go-diskfs v1.9.2 and v1.9.3. I compared them on Windows 11 (build 26200) with <code>Mount-DiskImage</code>:</p>
 <pre tabindex="0"><code>v1.9.2  SVD volume id bytes: 63 69 64 61 74 61 00 00 ...
         Joliet L path table root: 01 00 1a 00 00 00 01 00 01 00
         Get-Volume label: 捩摡瑡   dir D:\ lists 3 files   Get-Content D:\meta-data -&gt; Cannot find path
@@ -466,8 +486,8 @@ go-diskfs v1.9.2 and v1.9.3 and compared them on Windows 11 (build 26200) with <
 v1.9.3  SVD volume id bytes: 00 63 00 69 00 64 00 61 00 74 00 61 ...
         Joliet L path table root: 01 00 1a 00 00 00 01 00 00 00
         Get-Volume label: cidata   Get-Content D:\meta-data -&gt; instance-id: vm-100 ...
-</code></pre><p>Same symptoms rgl saw in the VM. One extra thing turned up: the raw files are 57,354 bytes while the primary volume
-descriptor claims 29 sectors (59,392 bytes), and <code>Mount-DiskImage</code> refused both as &ldquo;corrupted and unreadable&rdquo; until I padded
+</code></pre><p>Same symptoms rgl saw in the VM. One extra thing turned up. The raw files are 57,354 bytes, but the primary volume
+descriptor claims 29 sectors (59,392 bytes). <code>Mount-DiskImage</code> refused both as &ldquo;corrupted and unreadable&rdquo; until I padded
 them to 29 full sectors. Proxmox and QEMU don&rsquo;t care, but it&rsquo;s another thing for the list.</p>
 <h3 id="links">Links</h3>
 <ul>

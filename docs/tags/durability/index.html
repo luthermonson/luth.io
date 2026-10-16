@@ -218,7 +218,7 @@
       <h2><a href="/blog/2026/08/ntfs-atomic-file-replacement-not-rename-fsync/">Atomic File Replacement on NTFS Is Not rename &#43; fsync</a></h2>
     
     
-      <p>The Unix recipe for durable atomic file replacement doesn&#39;t translate to Windows. What shipmates uses instead, and the delete-pending window that made an 8-way test fail only when the whole suite ran.</p>
+      <p>The Unix recipe for durable atomic file replacement doesn&#39;t translate to Windows. This is what shipmates uses instead, plus the delete-pending window that made an 8-way test fail only when the whole suite ran.</p>
     
   </div>
   <div class="meta">
@@ -233,11 +233,11 @@
     <img class="" src="/img/2026/09/ntfs-atomic-file-replacement-not-rename-fsync-cover.svg" alt="How long a losing concurrent replacer waits on NTFS, idle disk vs a disk under fsync load">
   </a>
     
-    <p><a href="https://github.com/luthermonson/shipmates">shipmates</a> writes a lot of small state files that other
-processes read: voyage plans and state, tracker files. Each of them has to be replaced atomically (a reader sees
-the old file or the new one, never half of each) and durably (when the function returns success, a power cut doesn&rsquo;t
-take it back). Every Unix programmer knows the recipe for that. It doesn&rsquo;t work on Windows, and the reasons are more
-interesting than &ldquo;Windows is different&rdquo;.</p>
+    <p><a href="https://github.com/luthermonson/shipmates">shipmates</a> writes a lot of small state files that other processes read.
+Voyage plans and state, tracker files. Each of them has to be replaced atomically, so a reader sees the old file or the
+new one and never half of each. Each also has to be replaced durably. When the function returns success, a power cut
+doesn&rsquo;t take it back. Every Unix programmer knows the recipe for that. It doesn&rsquo;t work on Windows, and the reasons are
+more interesting than &ldquo;Windows is different&rdquo;.</p>
   </div>
   <footer>
     <a href="/blog/2026/08/ntfs-atomic-file-replacement-not-rename-fsync/" class="button big">Read More</a>

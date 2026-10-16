@@ -218,7 +218,7 @@
       <h2><a href="/blog/2026/08/ntfs-atomic-file-replacement-not-rename-fsync/">Atomic File Replacement on NTFS Is Not rename &#43; fsync</a></h2>
     
     
-      <p>The Unix recipe for durable atomic file replacement doesn&#39;t translate to Windows. What shipmates uses instead, and the delete-pending window that made an 8-way test fail only when the whole suite ran.</p>
+      <p>The Unix recipe for durable atomic file replacement doesn&#39;t translate to Windows. This is what shipmates uses instead, plus the delete-pending window that made an 8-way test fail only when the whole suite ran.</p>
     
   </div>
   <div class="meta">
@@ -233,11 +233,11 @@
     <img class="" src="/img/2026/09/ntfs-atomic-file-replacement-not-rename-fsync-cover.svg" alt="How long a losing concurrent replacer waits on NTFS, idle disk vs a disk under fsync load">
   </a>
     
-    <p><a href="https://github.com/luthermonson/shipmates">shipmates</a> writes a lot of small state files that other
-processes read: voyage plans and state, tracker files. Each of them has to be replaced atomically (a reader sees
-the old file or the new one, never half of each) and durably (when the function returns success, a power cut doesn&rsquo;t
-take it back). Every Unix programmer knows the recipe for that. It doesn&rsquo;t work on Windows, and the reasons are more
-interesting than &ldquo;Windows is different&rdquo;.</p>
+    <p><a href="https://github.com/luthermonson/shipmates">shipmates</a> writes a lot of small state files that other processes read.
+Voyage plans and state, tracker files. Each of them has to be replaced atomically, so a reader sees the old file or the
+new one and never half of each. Each also has to be replaced durably. When the function returns success, a power cut
+doesn&rsquo;t take it back. Every Unix programmer knows the recipe for that. It doesn&rsquo;t work on Windows, and the reasons are
+more interesting than &ldquo;Windows is different&rdquo;.</p>
   </div>
   <footer>
     <a href="/blog/2026/08/ntfs-atomic-file-replacement-not-rename-fsync/" class="button big">Read More</a>
@@ -300,10 +300,10 @@ interesting than &ldquo;Windows is different&rdquo;.</p>
     <img class="" src="/img/2026/08/windows-dynamic-disk-usb-wsl2-usbip-layout.svg" alt="GPT layout of the 1 TB drive with LDM metadata and a 930 GiB LDM data partition, and the two paths: the Windows storage stack refusing it and usbipd passing it to WSL2">
   </a>
     
-    <p>I pulled a 1 TB NVMe out of an old Windows box, dropped it in a USB enclosure, plugged it in, and Windows showed nothing.
-No drive letter, no &ldquo;initialize this disk&rdquo; prompt, nothing in Explorer. Disk Management listed it as <code>Invalid</code>, and the
-enclosure&rsquo;s booklet said to &ldquo;bring the disk online&rdquo;, which silently did nothing. The data was completely intact. Windows was
-refusing on <strong>policy</strong> grounds, not because anything was broken, and getting it back meant going around the&hellip;</p>
+    <p>I pulled a 1 TB NVMe out of an old Windows box, dropped it in a USB enclosure and plugged it in. Windows showed nothing.
+No drive letter, no &ldquo;initialize this disk&rdquo; prompt, nothing in Explorer. Disk Management listed it as <code>Invalid</code>. The
+enclosure&rsquo;s booklet said to &ldquo;bring the disk online&rdquo;, which silently did nothing. The data was completely intact. Windows
+was refusing on <strong>policy</strong> grounds, not because anything was broken. Getting it back meant going around the Windows&hellip;</p>
   </div>
   <footer>
     <a href="/blog/2026/08/windows-dynamic-disk-usb-wsl2-usbip/" class="button big">Read More</a>
@@ -372,7 +372,7 @@ refusing on <strong>policy</strong> grounds, not because anything was broken, an
     
     <p>One of the first things that broke when I started building PHP on Windows with
 <a href="https://github.com/crazywhalecc/static-php-cli">static-php-cli</a> (SPC) wasn&rsquo;t PHP at all. It was unpacking the source
-tarballs. libxml2, xz, a couple of others would die partway through extraction with:</p>
+tarballs. libxml2, xz and a couple of others would die partway through extraction with:</p>
   </div>
   <footer>
     <a href="/blog/2026/07/spc-windows-archive-extraction/" class="button big">Read More</a>
@@ -436,7 +436,7 @@ tarballs. libxml2, xz, a couple of others would die partway through extraction w
   </a>
     
     <p>I&rsquo;ve been building <a href="https://github.com/ephpm/ephemerd">ephemerd</a>, a daemon that runs self-hosted GitHub Actions runners
-with a fresh environment per job. On a Windows host, Windows jobs run in Hyper-V isolated containers, but Linux jobs still
+with a fresh environment per job. On a Windows host, Windows jobs run in Hyper-V isolated containers. Linux jobs still
 need a Linux kernel from somewhere. The obvious answer on Windows in 2026 is WSL2, and that&rsquo;s what I used first. It worked
 great from my terminal and fell over the moment ephemerd became a real Windows service.</p>
   </div>
@@ -490,7 +490,7 @@ great from my terminal and fell over the moment ephemerd became a real Windows s
       <h2><a href="/blog/2026/05/go-diskfs-rock-ridge-joliet-windows/">go-diskfs: Getting Rock Ridge Working for Joliet on Windows</a></h2>
     
     
-      <p>Fixing Rock Ridge, adding Joliet, and then finding out what Windows actually wanted, all so a Go-built cloud-init ISO works for cloudbase-init.</p>
+      <p>I fixed Rock Ridge and added Joliet to go-diskfs so a Go-built cloud-init ISO works for cloudbase-init. Then I found out what Windows actually wanted.</p>
     
   </div>
   <div class="meta">
@@ -507,7 +507,7 @@ great from my terminal and fell over the moment ephemerd became a real Windows s
     
     <p><a href="https://github.com/luthermonson/go-proxmox">go-proxmox</a> has had a <code>CloudInit()</code> helper since 2023. It builds a small
 nocloud ISO in Go, uploads it to Proxmox and mounts it on the VM as a CD-ROM. It&rsquo;s always worked fine for Linux guests. It
-has never worked for Windows guests running <a href="https://cloudbase.it/cloudbase-init/">cloudbase-init</a>, and the reason is a
+has never worked for Windows guests running <a href="https://cloudbase.it/cloudbase-init/">cloudbase-init</a>. The reason is a
 filesystem extension from 1995 called Joliet.</p>
   </div>
   <footer>
@@ -560,7 +560,7 @@ filesystem extension from 1995 called Joliet.</p>
       <h2><a href="/blog/2024/02/goodhosts/">Maintaining a Go Tool That Edits /etc/hosts on Every OS</a></h2>
     
     
-      <p>Notes from maintaining goodhosts, the hosts file CLI and Go library behind vagrant-goodhosts and ddev: Windows quirks, a HostsPerLine bug, and making the CLI testable.</p>
+      <p>Notes from maintaining goodhosts, the hosts file CLI and Go library behind vagrant-goodhosts and ddev. It covers Windows quirks, a HostsPerLine bug, and making the CLI testable.</p>
     
   </div>
   <div class="meta">
@@ -576,10 +576,10 @@ filesystem extension from 1995 called Joliet.</p>
   </a>
     
     <p>Editing the hosts file sounds like the most boring problem in software. Read a text file, add a line, write it back. Then you find out
-your binary is being shelled out to from a Ruby Vagrant plugin on a Windows laptop with UAC prompts, your library is being called in a
-loop by <a href="https://github.com/ddev/ddev">ddev</a>, and every hosts file you parse was hand-edited by somebody at some point.
-I&rsquo;ve been maintaining <a href="https://github.com/goodhosts">goodhosts</a> for a few years now, and since I just spent a chunk of the fall and the
-holidays on it, here&rsquo;s&hellip;</p>
+your binary is being shelled out to from a Ruby Vagrant plugin on a Windows laptop with UAC prompts. Your library is being called in a
+loop by <a href="https://github.com/ddev/ddev">ddev</a>. And every hosts file you parse was hand-edited by somebody at some point. I&rsquo;ve been
+maintaining <a href="https://github.com/goodhosts">goodhosts</a> for a few years now. I just spent a chunk of the fall and the holidays on it, so
+here&rsquo;s what that&hellip;</p>
   </div>
   <footer>
     <a href="/blog/2024/02/goodhosts/" class="button big">Read More</a>

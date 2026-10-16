@@ -8,26 +8,28 @@ tags:
 categories: [ go, tools ]
 ---
 
-I recently had to spend some time to learn [Cue](https://cuelang.org/) and felt the examples/tutorials were a bit lacking 
-and the paradigm shift to the entire language sort of messed with my head and some things Cue does were a bit foreign to me. 
-To get started, note that the two places I spent all of my time to get this information came from their main [docs](https://cuelang.org/docs/) 
-and a community [Cuetorials](https://cuetorials.com/) site. This will be a tutorial on how you can use Cue to generate
-two different YAML documents using Cue all starting with Go types to generate Cue files.
+I recently had to spend some time to learn [Cue](https://cuelang.org/) and felt the examples/tutorials were a bit lacking.
+The paradigm shift to the entire language sort of messed with my head, and some things Cue does were a bit foreign to me.
+To get started, note that I spent all of my time getting this information from two places: their main
+[docs](https://cuelang.org/docs/) and a community [Cuetorials](https://cuetorials.com/) site. This will be a tutorial on
+how you can use Cue to generate two different YAML documents, all starting with Go types to generate Cue files.
 
-As Cue changes this could become out of date, this was all done using Cue **v0.4.1**. All code for this tutorial can be
+![Flow from types.go through cue get go to types_go_gen.cue, then main.cue with prod.cue and qa.cue, exported with cue export ./cue -t prod or -t qa into two YAML documents](/img/2022/01/practical-cue-example-flow.svg)
+
+As Cue changes this could become out of date. This was all done using Cue **v0.4.1**. All code for this tutorial can be
 found in this [github repository](https://github.com/luthermonson/tutorials/tree/main/2022/01/cue).
 
 ### Prerequisites
-You'll need to [install](https://cuelang.org/docs/install/) Cue and I recommend you get some basic understanding of the 
-cli commands as there is some power there for your project. I also recommend you get used to 
-[modules](https://cuelang.org/docs/concepts/packages/#modules) and the `mod` command and the directory structure it will 
-create for you. Note the Cue takes a lot of it's packaging and generating inspiration from [Go](https://go.dev/) itself so
-if you've already done some of this in Go you may already recognize some of these features.
+You'll need to [install](https://cuelang.org/docs/install/) Cue. I recommend you get some basic understanding of the
+cli commands as there is some power there for your project. I also recommend you get used to
+[modules](https://cuelang.org/docs/concepts/packages/#modules), the `mod` command and the directory structure it will
+create for you. Note that Cue takes a lot of its packaging and generating inspiration from [Go](https://go.dev/) itself.
+If you've already done some of this in Go you may already recognize some of these features.
 
 ### Go Types to Config YAML
-Here is a simple scenario we will use to setup this example, we are building a server daemon in Go with a 
-`--config` flag which is a file path to a YAML configuration document for database drive application with host/port configurations
-along with a worker pool setting for processing a work queue.
+Here is a simple scenario we will use to setup this example. We are building a server daemon in Go with a `--config`
+flag. The flag is a file path to a YAML configuration document for a database driven application. It has host/port
+configurations along with a worker pool setting for processing a work queue.
 
 Sample Config:
 ```
@@ -38,13 +40,13 @@ app:
     db-dsn: root:test@tcp(mysql.domain.com:3306)/test?charset=utf8&parseTime=True&loc=Local
 ```
 
-This idea is actually pretty simple from Cue's perspective if you write this up by hand but what makes your life
-easier is if the Go types generate your Cue files so you can import the types into your app and consume your generated config 
+This idea is actually pretty simple from Cue's perspective if you write this up by hand. What makes your life easier is
+if the Go types generate your Cue files. Then you can import the types into your app and consume your generated config
 file via unmarshalling.
 
 ### Setting Up the Cue Module
-To get this project setup you'll probably want to use a sub-directory in your project and intialize it as a cue module and 
-place a go file with some types at the root.
+To get this project setup you'll probably want to use a sub-directory in your project and initialize it as a cue module.
+Then place a go file with some types at the root.
 
 ```bash
 $ cd config
@@ -137,7 +139,7 @@ app:
 ```
 
 ### Using Tags in Cue for Better Config Files
-Tags are a construct in Cue to let you pass in variables at call time so let's change our Cue file to use tags and consume 
+Tags are a construct in Cue to let you pass in variables at call time. Let's change our Cue file to use tags and consume
 some environment files based on tag to generate two YAML files. Change the main.cue file to set host/workers/dsn as a variable...
 ```cue
 package config
@@ -177,10 +179,10 @@ package config
 ```
 
 Now when you run `cue export` pass a `-t qa` or `-t prod`. The `@if()` at the top of the file will check if the tags are set
-and only include those files if the tag was passed. This is a different pattern than say only evaluating certain cue files 
-like `cue eval main.cue prod.cue` and `cue eval main.cue qa.cue` which is a pattern outlined by this [tutorial](https://cuetorials.com/patterns/inject/).
-I like the benefits of evaluating cue on a directory of files and passing tags at call time instead of having to figure out
-which files within the directory need evaluating.
+and only include those files if the tag was passed. This is a different pattern than say only evaluating certain cue files
+like `cue eval main.cue prod.cue` and `cue eval main.cue qa.cue`. That pattern is outlined by this
+[tutorial](https://cuetorials.com/patterns/inject/). I like the benefits of evaluating cue on a directory of files and
+passing tags at call time. That beats having to figure out which files within the directory need evaluating.
 
 ```bash
 $ cue export ./cue -t prod --out yaml
@@ -199,6 +201,7 @@ app:
 
 ### Conclusion
 Please checkout the code for this tutorial on the [github repository](https://github.com/luthermonson/tutorials/tree/main/2022/01/cue).
-This was ultimately a very basic interpretation of the Cue language itself but gives you some ideas for structuring your Cue modules.
-The language is far more feature rich than this tutorial gives it credit and I will likely do followup blog post on the 
-language itself after and using it to validate your configuration files before they ever hit your application runtime.
+This was ultimately a very basic interpretation of the Cue language itself, but it gives you some ideas for structuring
+your Cue modules. The language is far more feature rich than this tutorial gives it credit for. I will likely do a
+followup blog post on the language itself and on using it to validate your configuration files before they ever hit your
+application runtime.

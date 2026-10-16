@@ -272,59 +272,70 @@
       </div>
       <div class="content">
         
-        <p><a href="https://github.com/ephpm/ephpm">ePHPm</a> embeds PHP into a single Rust binary, and the obvious follow-up question from
+        <p><a href="https://github.com/ephpm/ephpm">ePHPm</a> embeds PHP into a single Rust binary. The obvious follow-up question from
 anybody deploying it is &ldquo;do I still need a <code>php</code> on the box?&rdquo; Composer, WP-CLI, artisan, PHPUnit and every build
-script in the world call <code>php</code>. If <code>ephpm php</code> can stand in for it then the answer is no, and the single binary actually
-means a single binary. &ldquo;Mostly works&rdquo; isn&rsquo;t good enough for that though. These tools parse PHP&rsquo;s output, check its exit
-codes and re-invoke it. So the goal was simple to state: <code>ephpm php</code> should be indistinguishable from php-cli.</p>
+script in the world call <code>php</code>. If <code>ephpm php</code> can stand in for it then the answer is no. The single binary really means
+a single binary. &ldquo;Mostly works&rdquo; isn&rsquo;t good enough for that though. These tools parse PHP&rsquo;s output, check its exit codes
+and re-invoke it. So the goal was simple to state: <code>ephpm php</code> should be indistinguishable from php-cli.</p>
 <h3 id="getting-to-drop-in-the-first-time">Getting to &ldquo;drop-in&rdquo; the first time</h3>
-<p>The first pass (<a href="https://github.com/ephpm/ephpm/pull/306">#306</a>) made <code>ephpm php</code> report <code>PHP_SAPI === &quot;cli&quot;</code>
-(set before <code>php_embed_init()</code> so OPcache&rsquo;s startup verdict sees it), read programs from stdin, honor <code>-d</code>, <code>-c</code> and
-<code>-n</code>, support line mode (<code>-B</code>, <code>-R</code>, <code>-F</code>, <code>-E</code>), define the <code>STDIN</code>/<code>STDOUT</code>/<code>STDERR</code> constants WP-CLI needs, and
-actually implement the <code>--rf</code>/<code>--rc</code>/<code>--re</code>/<code>--rz</code>/<code>--ri</code> reflection flags that had been declared and silently did
-nothing. <code>composer.phar create-project laravel/laravel</code> completed clean and <code>wp-cli.phar --version</code> was byte-identical
-to the system php.</p>
-<p>A couple of things are honest errors rather than fakes. <code>-S</code> isn&rsquo;t aliased to <code>ephpm serve</code>, because the
-embedded <code>libphp.a</code> contains zero <code>php_cli_server_*</code> symbols and pretending otherwise would just move the surprise. <code>-a</code>
-says &ldquo;not supported&rdquo; because the interactive shell isn&rsquo;t linked into the embed build.</p>
-<p>The second pass (<a href="https://github.com/ephpm/ephpm/pull/317">#317</a>) was the tedious one: checking every rule against
-<code>sapi/cli/php_cli.c</code> and every output against a real php 8.5.4. Stdin programs with <code>--</code> args, <code>$argv[0]</code> being
-<code>&quot;Standard input code&quot;</code> (not <code>&quot;-&quot;</code>, which our docs had claimed matched php-cli and never did), exit codes taken from
-<code>EG(exit_status)</code> unconditionally so <code>exit(3)</code>, fatals and uncaught exceptions stopped all reporting 0, <code>-w</code> and <code>-s</code>
-reading stdin instead of silently <em>executing</em> a piped program, and <code>$argi</code> being 1-based.</p>
+<p>The first pass (<a href="https://github.com/ephpm/ephpm/pull/306">#306</a>) made <code>ephpm php</code> do six things:</p>
+<ul>
+<li>report <code>PHP_SAPI === &quot;cli&quot;</code>, set before <code>php_embed_init()</code> so OPcache&rsquo;s startup verdict sees it</li>
+<li>read programs from stdin</li>
+<li>honor <code>-d</code>, <code>-c</code> and <code>-n</code></li>
+<li>support line mode (<code>-B</code>, <code>-R</code>, <code>-F</code>, <code>-E</code>)</li>
+<li>define the <code>STDIN</code>/<code>STDOUT</code>/<code>STDERR</code> constants WP-CLI needs</li>
+<li>implement the <code>--rf</code>/<code>--rc</code>/<code>--re</code>/<code>--rz</code>/<code>--ri</code> reflection flags, which had been declared and silently did nothing</li>
+</ul>
+<p><code>composer.phar create-project laravel/laravel</code> completed clean. <code>wp-cli.phar --version</code> was byte-identical to the
+system php.</p>
+<p>A couple of things are honest errors rather than fakes. <code>-S</code> isn&rsquo;t aliased to <code>ephpm serve</code>. The embedded <code>libphp.a</code>
+contains zero <code>php_cli_server_*</code> symbols, and pretending otherwise would just move the surprise. <code>-a</code> says &ldquo;not
+supported&rdquo; because the interactive shell isn&rsquo;t linked into the embed build.</p>
+<p>The second pass (<a href="https://github.com/ephpm/ephpm/pull/317">#317</a>) was the tedious one. It checked every rule against
+<code>sapi/cli/php_cli.c</code> and every output against a real php 8.5.4. It fixed these:</p>
+<ul>
+<li>stdin programs with <code>--</code> args</li>
+<li><code>$argv[0]</code> being <code>&quot;Standard input code&quot;</code>, not <code>&quot;-&quot;</code>. Our docs had claimed the dash matched php-cli, and it never did.</li>
+<li>exit codes taken from <code>EG(exit_status)</code> unconditionally. Before that, <code>exit(3)</code>, fatals and uncaught exceptions all
+reported 0.</li>
+<li><code>-w</code> and <code>-s</code> reading stdin instead of silently <em>executing</em> a piped program</li>
+<li><code>$argi</code> being 1-based</li>
+</ul>
 <p>That PR was verified with a throwaway diff script over 55 cases. Throwaway is the problem. The next regression
 wouldn&rsquo;t get caught by anything.</p>
 <h3 id="the-differential-harness">The differential harness</h3>
 <p><a href="https://github.com/ephpm/ephpm/pull/342">#342</a> turned that into a real harness. <code>tests/cli-conformance/</code> holds the
-corpus. The <code>0xx</code> cases cover the language and runtime surface (var_dump of every type, float formatting, INF/NAN,
-sprintf, mbstring, sort stability, JSON edge cases, serialize, preg backtrack limits, uncaught exception format,
-shutdown and destructor ordering, enums, readonly and so on). The <code>1xx</code> cases cover CLI behavior: exit codes,
-<code>-r</code> with and without <code>--</code>, <code>-l</code>, <code>-d</code>, <code>$argv</code>/<code>$argc</code>/<code>$_SERVER</code> in every mode, <code>PHP_BINARY</code>, shebang stripping, line
-mode, <code>-w</code>, <code>-s</code>, <code>-v</code>, <code>--rf</code>. A case is a <code>.php</code> file or an <code>.args</code> file, optionally with <code>.stdin</code> and <code>.meta</code>:</p>
+corpus. The <code>0xx</code> cases cover the language and runtime surface. That&rsquo;s var_dump of every type, float formatting,
+INF/NAN, sprintf, mbstring, sort stability, JSON edge cases, serialize, preg backtrack limits, uncaught exception
+format, shutdown and destructor ordering, enums, readonly and so on. The <code>1xx</code> cases cover CLI behavior. That&rsquo;s exit
+codes, <code>-r</code> with and without <code>--</code>, <code>-l</code>, <code>-d</code>, <code>$argv</code>/<code>$argc</code>/<code>$_SERVER</code> in every mode, <code>PHP_BINARY</code>, shebang
+stripping, line mode, <code>-w</code>, <code>-s</code>, <code>-v</code> and <code>--rf</code>. A case is a <code>.php</code> file or an <code>.args</code> file, optionally with <code>.stdin</code>
+and <code>.meta</code>:</p>
 <pre tabindex="0"><code># 115-php-binary.args
 -r
 echo PHP_BINARY === &#39;&#39; ? &#34;(empty)&#34; : PHP_BINARY, &#34;\n&#34;; var_dump(is_string(PHP_BINARY));
 </code></pre><p>The runner is <code>cargo xtask cli-conformance --php &lt;upstream&gt; --ephpm &lt;bin&gt;</code>. It runs each case against both binaries
-with an identical minimal environment (<code>TZ=UTC</code>, <code>LC_ALL=C</code>, a per-side scratch directory) and compares stdout, stderr
-and exit code byte for byte. Any unexplained mismatch prints a unified diff and fails the run. A nightly workflow runs
-it over PHP 8.3, 8.4 and 8.5 against the matching upstream php from the ondrej PPA.</p>
+with an identical minimal environment: <code>TZ=UTC</code>, <code>LC_ALL=C</code> and a per-side scratch directory. Then it compares stdout,
+stderr and exit code byte for byte. Any unexplained mismatch prints a unified diff and fails the run. A nightly workflow
+runs it over PHP 8.3, 8.4 and 8.5 against the matching upstream php from the ondrej PPA.</p>
 <p>Three design choices in the runner are the reason I trust it.</p>
-<p><strong>It checks the binary&rsquo;s identity before running anything.</strong> <code>&lt;ephpm&gt; php -n -v</code> has to print a PHP banner first, so
-handing a plain <code>php</code> to <code>--ephpm</code> fails immediately. This isn&rsquo;t paranoia. A <code>$VAR</code> expansion bug in the WSL bridge
-had repeatedly made earlier harnesses test the system php against itself, which passes beautifully.</p>
+<p><strong>It checks the binary&rsquo;s identity before running anything.</strong> <code>&lt;ephpm&gt; php -n -v</code> has to print a PHP banner first.
+Handing a plain <code>php</code> to <code>--ephpm</code> fails immediately. This isn&rsquo;t paranoia. A <code>$VAR</code> expansion bug in the WSL bridge
+had repeatedly made earlier harnesses test the system php against itself. That passes beautifully.</p>
 <p><strong>Expected failures are marked, and a stale marker fails the run.</strong> A known divergence gets an <code>xfail</code> with a reason
-and an issue number. If an xfail case starts matching, the runner reports XPASS and goes red until somebody deletes the
+and an issue number. If an xfail case starts matching, the runner reports XPASS. It goes red until somebody deletes the
 marker. Markers can&rsquo;t quietly rot into lies.</p>
-<p><strong>Normalization is a tiny, justified registry.</strong> There are exactly four normalizers (<code>strip-versions</code>,
-<code>strip-zts-marker</code>, <code>strip-distro-banner</code>, <code>strip-binary-path</code>), and every use has to explain itself in the <code>.meta</code>
+<p><strong>Normalization is a tiny, justified registry.</strong> There are exactly four normalizers: <code>strip-versions</code>,
+<code>strip-zts-marker</code>, <code>strip-distro-banner</code> and <code>strip-binary-path</code>. Every use has to explain itself in the <code>.meta</code>
 file:</p>
 <pre tabindex="0"><code># 115-php-binary.meta
 # strip-binary-path: the two sides are different executables by definition,
 # so each side&#39;s own binary path is folded to &lt;BINARY&gt;; the case then proves
 # PHP_BINARY is a non-empty string naming the invoked binary on BOTH sides.
 normalize = [&#34;strip-binary-path&#34;]
-</code></pre><p>Things that are packaging facts rather than behavior, like the <code>-m</code> extension list of a static SDK versus a distro
-php, or <code>--ini</code> search paths, get <code>skip</code> with a reason.</p>
+</code></pre><p>Some things are packaging facts rather than behavior. The <code>-m</code> extension list of a static SDK versus a distro php is
+one. <code>--ini</code> search paths are another. Those get <code>skip</code> with a reason.</p>
 <h3 id="what-it-found-on-day-one">What it found on day one</h3>
 <p>Against a build of main, the first real run was <code>total 77: 65 pass, 0 fail, 2 skip, 10 xfail</code>. Seven of those xfails
 were new, real divergences, all filed as issues:</p>
@@ -368,22 +379,22 @@ were new, real divergences, all filed as issues:</p>
 </table>
 <p>The first one is the scary one. A CLI that never runs shutdown functions or destructors breaks every tool that flushes
 a buffer or writes a lock file on the way out. The root cause (<a href="https://github.com/ephpm/ephpm/pull/347">#347</a>) was
-that <code>ephpm_cli_main</code> never called <code>php_request_shutdown()</code>. Teardown ran invisibly at process exit, into the
-discarded HTTP capture buffer, after the exit code had already been taken. The fix runs shutdown in php-cli&rsquo;s exact
-order, with nested-bailout protection, and takes the exit status afterwards so <code>exit()</code> inside a shutdown function
-works.</p>
+that <code>ephpm_cli_main</code> never called <code>php_request_shutdown()</code>. Teardown ran invisibly at process exit. Its output went
+into the discarded HTTP capture buffer, after the exit code had already been taken. The fix runs shutdown in php-cli&rsquo;s
+exact order, with nested-bailout protection. It takes the exit status afterwards, so <code>exit()</code> inside a shutdown
+function works.</p>
 <h3 id="the-fixes-checked-against-php_clic">The fixes, checked against php_cli.c</h3>
 <p><a href="https://github.com/ephpm/ephpm/pull/356">#356</a> took the next five. A few of them are worth the detail.</p>
-<p><strong><code>-Z</code> was accepted silently.</strong> The flag fell through both getopt passes, no mode got selected, and the CLI read empty
+<p><strong><code>-Z</code> was accepted silently.</strong> The flag fell through both getopt passes and no mode got selected. The CLI read empty
 stdin as a program. A typo&rsquo;d flag ran nothing and reported success. Now <code>php_getopt</code> is called with <code>show_err = 1</code>
-like php-cli&rsquo;s <code>main()</code>, so stderr gets the exact <code>Error in argument 2, char 2: option not found Z</code> and the exit is 1.
-That had a consequence: the option table is now load-bearing, since any option php-cli accepts that the table lacks
-turns a working command line into a failure. So the table was diffed against php-src&rsquo;s <code>OPTIONS[]</code>, and the one missing
-entry (<code>--syntax-highlighting</code>, the long spelling of <code>-s</code>) was added. The one deliberate gap is php-cli&rsquo;s internal
-<code>--repeat</code>, which php-src itself labels a testing option; accepting and ignoring it would silently run a script once
+like php-cli&rsquo;s <code>main()</code>. Stderr gets the exact <code>Error in argument 2, char 2: option not found Z</code> and the exit is 1.
+That had a consequence. The option table is now load-bearing. Any option php-cli accepts that the table lacks turns a
+working command line into a failure. So the table was diffed against php-src&rsquo;s <code>OPTIONS[]</code>. The one missing entry was
+added. That&rsquo;s <code>--syntax-highlighting</code>, the long spelling of <code>-s</code>. The one deliberate gap is php-cli&rsquo;s internal
+<code>--repeat</code>, which php-src itself labels a testing option. Accepting and ignoring it would silently run a script once
 when the caller asked for N times.</p>
 <p><strong><code>PHP_BINARY</code> was empty on Unix.</strong> On Windows <code>php_binary_init()</code> asks the OS, which is why it looked fine there. On
-everything else it reads <code>sapi_module.executable_location</code>, and <code>php_embed_init()</code> assigns that <code>argv[0]</code>, which ePHPm
+every other platform it reads <code>sapi_module.executable_location</code>. <code>php_embed_init()</code> assigns that <code>argv[0]</code>, which ePHPm
 passes as the bare string <code>&quot;ephpm&quot;</code>. PHP then searches <code>PATH</code> for something named <code>ephpm</code>, finds nothing and leaves it
 NULL. The trap is <em>where</em> to set it. Set it before <code>php_embed_init()</code> and it gets overwritten. Set it after
 <code>php_module_startup()</code> and it&rsquo;s too late. The only window is inside ePHPm&rsquo;s startup shim, right before it hands off:</p>
@@ -400,47 +411,50 @@ NULL. The trap is <em>where</em> to set it. Set it before <code>php_embed_init()
 </span></span><span class="line"><span class="cl">    <span class="p">}</span>
 </span></span><span class="line"><span class="cl">    <span class="cm">/* ... -d splice, worker module ... */</span>
 </span></span><span class="line"><span class="cl"><span class="p">}</span>
-</span></span></code></pre></div><p>The first cut set the field pre-init, built clean, and passed on Windows while staying broken everywhere else. The
-Linux binary is what caught it, which is a good argument for running the harness on the platform where the code path
-actually differs. The value recorded is <code>std::env::current_exe()</code>, so it names <em>this</em> binary rather than whatever
-<code>ephpm</code> is first on <code>PATH</code>.</p>
+</span></span></code></pre></div><p>The first cut set the field pre-init and built clean. It passed on Windows while staying broken on every other platform.
+The Linux binary is what caught it. That&rsquo;s a good argument for running the harness on the platform where the code path
+differs. The value recorded is <code>std::env::current_exe()</code>. It names <em>this</em> binary rather than whatever <code>ephpm</code> is first
+on <code>PATH</code>.</p>
 <p>That same <code>ephpm_module_startup()</code> window is where <code>-d</code> now goes too (<a href="https://github.com/ephpm/ephpm/pull/341">#341</a>).
 OPcache decides once, at module startup, whether it will ever be active in the CLI. We were applying <code>-d</code> after
-<code>php_embed_init()</code>, so <code>ini_get('opcache.enable_cli')</code> said <code>1</code> while <code>opcache_get_status()</code> said <code>false</code>. Splicing the
-<code>-d</code> entries into <code>ini_entries</code> right there, after the embed SAPI&rsquo;s hardcoded block, gives php-cli&rsquo;s exact precedence.
-It also means <code>-d extension=</code> and <code>-d zend_extension=</code> genuinely load now.</p>
-<p><strong><code>$_SERVER</code> in the CLI lacked the environment.</strong> php-cli imports the process environment into <code>$_SERVER</code> (the &ldquo;S&rdquo;
-of <code>EGPCS</code> in a CLI process is its environment) and registers an empty <code>DOCUMENT_ROOT</code>. That&rsquo;s now done, but only on the
-CLI path. <code>ephpm serve</code> is multi-tenant and the process environment holds cross-tenant material, so it must never reach
-a web request&rsquo;s <code>$_SERVER</code>. That was verified by starting the server with a probe variable in its environment and
-confirming no request could see it. Being byte-compatible doesn&rsquo;t mean copying every php-cli behavior into the
-server.</p>
-<p>After #356 the run was <code>total 78: 75 pass, 0 fail, 2 skip, 1 xfail</code>. The remaining xfail is permanent and intentional:
-the usage screen says <code>Usage: ephpm php</code> and omits flags this build doesn&rsquo;t implement. The part that matters, the
-stderr diagnostic and exit status, is pinned byte-for-byte from the ePHPm side by an e2e test.</p>
+<code>php_embed_init()</code>. So <code>ini_get('opcache.enable_cli')</code> said <code>1</code> while <code>opcache_get_status()</code> said <code>false</code>. The fix
+splices the <code>-d</code> entries into <code>ini_entries</code> right there, after the embed SAPI&rsquo;s hardcoded block. That gives php-cli&rsquo;s
+exact precedence. It also means <code>-d extension=</code> and <code>-d zend_extension=</code> genuinely load now.</p>
+<p><strong><code>$_SERVER</code> in the CLI lacked the environment.</strong> php-cli imports the process environment into <code>$_SERVER</code>. The &ldquo;S&rdquo; of
+<code>EGPCS</code> in a CLI process is its environment. It also registers an empty <code>DOCUMENT_ROOT</code>. That&rsquo;s now done, but only on
+the CLI path. <code>ephpm serve</code> is multi-tenant and the process environment holds cross-tenant material. It must never reach
+a web request&rsquo;s <code>$_SERVER</code>. That was verified by starting the server with a probe variable in its environment. No
+request could see it. Being byte-compatible doesn&rsquo;t mean copying every php-cli behavior into the server.</p>
+<p>After #356 the run was <code>total 78: 75 pass, 0 fail, 2 skip, 1 xfail</code>. The remaining xfail is permanent and intentional.
+The usage screen says <code>Usage: ephpm php</code> and omits flags this build doesn&rsquo;t implement. The part that matters is the
+stderr diagnostic and exit status. An e2e test pins those byte-for-byte from the ePHPm side.</p>
 <p><img src="/img/2026/09/ephpm-php-cli-conformance-results.svg" alt="CLI conformance results"></p>
 <h3 id="the-last-mile-reflection-flags">The last mile: reflection flags</h3>
 <p>The most recent fix (<a href="https://github.com/ephpm/ephpm/pull/481">#481</a>) is a good example of how literal &ldquo;byte for
 byte&rdquo; gets. <code>--rf ArrayObject::count</code> was printing <code>Exception: Function ArrayObject::count() does not exist</code> and exiting</p>
 <ol>
-<li>php-cli prints the method, exits 0, and on 8.5 also prints this first, on stdout:</li>
+<li>php-cli prints the method and exits 0. On 8.5 it also prints this first, on stdout:</li>
 </ol>
 <pre tabindex="0"><code>Deprecated: Calling ReflectionMethod::__construct() with 1 argument is deprecated,
 use ReflectionMethod::createFromMethodName() instead in Unknown on line 0
 </code></pre><p>That&rsquo;s php-cli&rsquo;s own deprecation, from php-cli&rsquo;s own code. Matching it meant giving up on evaluating an
-<code>echo new ReflectionX($name)</code> snippet. php-cli constructs the reflection object under a zeroed execute-data frame,
-and that frame is exactly what produces <code>in Unknown on line 0</code>. Evaluated code stamps the eval&rsquo;s filename and line, so no
-<code>zend_eval_string</code> shape can produce those bytes. The five reflection flags now run php_cli.c&rsquo;s algorithm in C,
-including <code>--ri main</code> printing the core ini table and <code>--ri nosuchext</code> exiting 1. The corpus is at 83 cases:
+<code>echo new ReflectionX($name)</code> snippet. php-cli constructs the reflection object under a zeroed execute-data frame.
+That frame is exactly what produces <code>in Unknown on line 0</code>. Evaluated code stamps the eval&rsquo;s filename and line. So no
+<code>zend_eval_string</code> shape can produce those bytes. The five reflection flags now run php_cli.c&rsquo;s algorithm in C. That
+includes <code>--ri main</code> printing the core ini table and <code>--ri nosuchext</code> exiting 1. The corpus is at 83 cases:
 79 pass, 3 skip, 1 xfail.</p>
 <h3 id="whats-still-open">What&rsquo;s still open</h3>
-<p><code>PHP_BINARY</code> now names the <code>ephpm</code> executable, which is correct and creates the next problem. Tools that re-invoke PHP
-through it, like PHPUnit process isolation, Symfony&rsquo;s <code>PhpExecutableFinder</code> and Composer <code>@php</code> scripts, run
+<p><code>PHP_BINARY</code> now names the <code>ephpm</code> executable. That&rsquo;s correct, and it creates the next problem. Some tools re-invoke
+PHP through it, like PHPUnit process isolation, Symfony&rsquo;s <code>PhpExecutableFinder</code> and Composer <code>@php</code> scripts. They run
 <code>PHP_BINARY script.php</code>, and <code>ephpm script.php</code> isn&rsquo;t a PHP CLI. For now that&rsquo;s documented with a wrapper-script
 workaround. Making <code>ephpm</code> answer as php when it&rsquo;s re-invoked that way is next on the list.</p>
-<p>The harness is the part I&rsquo;d reuse on any project that claims compatibility with something else. Diff against the real
-thing, compare bytes not vibes, make the binary prove its identity, and make every exception to the rule explain itself
-in a file that fails the build when it stops being true.</p>
+<p>The harness is the part I&rsquo;d reuse on any project that claims compatibility with something else:</p>
+<ul>
+<li>diff against the real thing</li>
+<li>compare bytes, not vibes</li>
+<li>make the binary prove its identity</li>
+<li>make every exception to the rule explain itself in a file that fails the build when it stops being true</li>
+</ul>
 <h3 id="links">Links</h3>
 <ul>
 <li><code>ephpm php</code> drop-in: <a href="https://github.com/ephpm/ephpm/pull/306">#306</a>, <a href="https://github.com/ephpm/ephpm/pull/317">#317</a></li>

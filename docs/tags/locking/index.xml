@@ -13,7 +13,7 @@
       <link>https://luth.io/blog/2026/10/a-lock-is-only-as-good-as-its-release/</link>
       <pubDate>Tue, 13 Oct 2026 20:40:00 -0700</pubDate>
       <guid>https://luth.io/blog/2026/10/a-lock-is-only-as-good-as-its-release/</guid>
-      <description>&lt;p&gt;Every &amp;ldquo;build a lock on Redis&amp;rdquo; tutorial spends its time on acquisition: &lt;code&gt;SET key value NX PX 30000&lt;/code&gt;, one winner, done. The&#xA;release gets one line, &lt;code&gt;DEL key&lt;/code&gt;, and that line is where most of the lock bugs I&amp;rsquo;ve had in ePHPm lived. Over about three months&#xA;the same mistake showed up in the native session handler, in two of the Composer wrapper packages, and finally in the&#xA;cluster, each time in a slightly different costume.&lt;/p&gt;</description>
+      <description>&lt;p&gt;Every &amp;ldquo;build a lock on Redis&amp;rdquo; tutorial spends its time on acquisition: &lt;code&gt;SET key value NX PX 30000&lt;/code&gt;, one winner, done. The&#xA;release gets one line, &lt;code&gt;DEL key&lt;/code&gt;. That line is where most of the lock bugs I&amp;rsquo;ve had in ePHPm lived. Over about three&#xA;months the same mistake showed up in three places. First the native session handler, then two of the Composer wrapper&#xA;packages, and finally the cluster. Each time it wore a slightly different costume.&lt;/p&gt;</description>
     </item>
   </channel>
 </rss>

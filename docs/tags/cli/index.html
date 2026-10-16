@@ -233,11 +233,11 @@
     <img class="" src="/img/2026/09/ephpm-php-cli-conformance-results.svg" alt="Bar chart of conformance corpus results: 65 pass and 10 xfail when the harness landed, 79 pass and 1 xfail after the fixes">
   </a>
     
-    <p><a href="https://github.com/ephpm/ephpm">ePHPm</a> embeds PHP into a single Rust binary, and the obvious follow-up question from
+    <p><a href="https://github.com/ephpm/ephpm">ePHPm</a> embeds PHP into a single Rust binary. The obvious follow-up question from
 anybody deploying it is &ldquo;do I still need a <code>php</code> on the box?&rdquo; Composer, WP-CLI, artisan, PHPUnit and every build
-script in the world call <code>php</code>. If <code>ephpm php</code> can stand in for it then the answer is no, and the single binary actually
-means a single binary. &ldquo;Mostly works&rdquo; isn&rsquo;t good enough for that though. These tools parse PHP&rsquo;s output, check its exit
-codes and re-invoke it. So the&hellip;</p>
+script in the world call <code>php</code>. If <code>ephpm php</code> can stand in for it then the answer is no. The single binary really means
+a single binary. &ldquo;Mostly works&rdquo; isn&rsquo;t good enough for that though. These tools parse PHP&rsquo;s output, check its exit codes
+and re-invoke it. So the goal was&hellip;</p>
   </div>
   <footer>
     <a href="/blog/2026/09/ephpm-php-cli-conformance/" class="button big">Read More</a>
@@ -298,10 +298,7 @@ codes and re-invoke it. So the&hellip;</p>
     <img class="" src="/img/2026/06/tail-gunner-filtered.svg" alt="tail-gunner in gunner mode showing only ERROR lines with a highlight on request durations">
   </a>
     
-    <p>Here&rsquo;s a loop I end up in all the time: <code>tail -f app.log</code>, something scrolls by that looks wrong, Ctrl-C, <code>tail -f app.log | grep ERROR</code>,
-wait for it to happen again, decide I also want to drop the health checks, Ctrl-C, <code>| grep -v healthz</code>, wait again. Every filter tweak
-throws away the stream and every line that already went past. I got tired of it and wrote <a href="https://github.com/luthermonson/tail-gunner">tail-gunner</a>,
-a <code>tail</code> replacement that you can promote into a filtering TUI with one keystroke and drop back out of without the stream ever&hellip;</p>
+    <p>Here&rsquo;s a loop I end up in all the time:</p>
   </div>
   <footer>
     <a href="/blog/2026/06/tail-gunner/" class="button big">Read More</a>

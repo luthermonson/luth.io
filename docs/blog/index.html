@@ -299,10 +299,11 @@ runtimes and compares them. Our fork with the ePHPm runner is <a href="https://g
   </a>
     
     <p>The pitch for <a href="https://github.com/ephpm/ephpm">ePHPm</a> is one binary in place of php-fpm, nginx and Redis. There was
-always a hole in it though. To deploy a PHP app you still need to run <code>composer install</code>, and that drags PHP and
-<code>composer.phar</code> back onto the box, or into the container build, just for that one step. <code>ephpm composer install</code> now
+always a hole in it though. To deploy a PHP app you still need to run <code>composer install</code>. That drags PHP and
+<code>composer.phar</code> back onto the box or into the container build, just for that one step. <code>ephpm composer install</code> now
 runs a pure-Rust, Composer-compatible installer called <a href="https://github.com/Adelagric/vivacity">vivacity</a> inside the
-ePHPm binary. One binary serves the app and installs its dependencies, and on Windows that works with no PHP installed&hellip;</p>
+ePHPm binary. One binary serves the app and installs its dependencies. On Windows that works with no PHP installed at
+all.&hellip;</p>
   </div>
   <footer>
     <a href="/blog/2026/10/composer-without-php-vivacity/" class="button big">Read More</a>
@@ -352,7 +353,7 @@ ePHPm binary. One binary serves the app and installs its dependencies, and on Wi
       <h2><a href="/blog/2026/10/a-lock-is-only-as-good-as-its-release/">A Lock Is Only as Good as Its Release</a></h2>
     
     
-      <p>SETNX gets all the attention, but most of the bugs in ePHPm&#39;s KV locks were on the release side. This is how blind deletes, a missing compare-and-delete, and a cluster where two nodes could both win got fixed.</p>
+      <p>SETNX gets all the attention, but most of the bugs in ePHPm&#39;s KV locks were on the release side. This is how blind deletes, a missing compare-and-delete and a cluster where two nodes could both win got fixed.</p>
     
   </div>
   <div class="meta">
@@ -368,9 +369,9 @@ ePHPm binary. One binary serves the app and installs its dependencies, and on Wi
   </a>
     
     <p>Every &ldquo;build a lock on Redis&rdquo; tutorial spends its time on acquisition: <code>SET key value NX PX 30000</code>, one winner, done. The
-release gets one line, <code>DEL key</code>, and that line is where most of the lock bugs I&rsquo;ve had in ePHPm lived. Over about three months
-the same mistake showed up in the native session handler, in two of the Composer wrapper packages, and finally in the
-cluster, each time in a slightly different costume.</p>
+release gets one line, <code>DEL key</code>. That line is where most of the lock bugs I&rsquo;ve had in ePHPm lived. Over about three
+months the same mistake showed up in three places. First the native session handler, then two of the Composer wrapper
+packages, and finally the cluster. Each time it wore a slightly different costume.</p>
   </div>
   <footer>
     <a href="/blog/2026/10/a-lock-is-only-as-good-as-its-release/" class="button big">Read More</a>
@@ -424,7 +425,7 @@ cluster, each time in a slightly different costume.</p>
   <div class="meta">
     <time datetime="2026-10-12 21:10:00 -0700 PDT">October 12, 2026</time>
     
-    <p>11-Minute Read</p>
+    <p>12-Minute Read</p>
   </div>
 </header>
 
@@ -435,9 +436,9 @@ cluster, each time in a slightly different costume.</p>
     
     <p>Persistent workers are the big performance win in modern PHP. You boot Laravel or Symfony once, keep the container
 in memory, and serve thousands of requests out of the same process. <a href="https://github.com/ephpm/ephpm">ePHPm</a> has had
-a worker mode for a while, and like most worker runtimes it had a quiet hole in it: you couldn&rsquo;t step debug a request
-with Xdebug. I wanted that fixed without patching Xdebug and without giving up the warm pool, and the answer ended up
-being to stop fighting the constraint and route around it.&hellip;</p>
+a worker mode for a while. Like most worker runtimes it had a quiet hole in it. You couldn&rsquo;t step debug a request with
+Xdebug. I wanted that fixed without patching Xdebug and without giving up the warm pool. The answer ended up being to
+stop fighting the constraint and route around it. The debug&hellip;</p>
   </div>
   <footer>
     <a href="/blog/2026/10/xdebug-worker-mode/" class="button big">Read More</a>
@@ -483,7 +484,7 @@ being to stop fighting the constraint and route around it.&hellip;</p>
       <h2><a href="/blog/2026/10/ephpm-websockets-how-to/">WebSockets in ePHPm, From Zero to a Working Chat</a></h2>
     
     
-      <p>How to run WebSockets in ePHPm with a single PHP file: turning them on, sharing the login session, pushing messages from normal HTTP requests, serving it over TLS, and the limits to know about.</p>
+      <p>How to run WebSockets in ePHPm with a single PHP file. It covers turning them on, sharing the login session, pushing messages from normal HTTP requests, serving over TLS and the limits to know about.</p>
     
   </div>
   <div class="meta">
@@ -498,11 +499,11 @@ being to stop fighting the constraint and route around it.&hellip;</p>
     <img class="" src="/img/2026/10/ephpm-websockets-how-to-cover.svg" alt="Diagram: browsers hold sockets to ePHPm&#39;s Rust session tasks and registry; each connect, message and disconnect runs websocket.php once on the PHP thread pool, and ordinary HTTP requests push through ephpm_ws_broadcast">
   </a>
     
-    <p>I covered the design of <a href="https://github.com/ephpm/ephpm">ePHPm</a>&rsquo;s native WebSockets in a few paragraphs of the
-<a href="/blog/2026/09/ephpm-smaller-angles/">odds and ends post</a>: Rust owns the socket, PHP runs once per event, and an idle
+    <p>I covered the design of <a href="https://github.com/ephpm/ephpm">ePHPm</a>&rsquo;s native WebSockets in a few paragraphs of the <a href="/blog/2026/09/ephpm-smaller-angles/">odds
+and ends post</a>. Rust owns the socket and PHP runs once per event. An idle
 connection never costs you a PHP thread. That was the why. This post is the how. We&rsquo;ll build a small chat app with
-login, per-user push notifications from ordinary HTTP requests, and a browser client. Then we&rsquo;ll serve it over TLS
-and look at the limits, the sharp edges, and how to debug it when the browser only tells you&hellip;</p>
+login, per-user push notifications from ordinary HTTP requests and a browser client. Then we&rsquo;ll serve it over TLS.
+Last come the limits, the sharp edges and how to debug it when the browser only tells you <code>1006</code>.</p>
   </div>
   <footer>
     <a href="/blog/2026/10/ephpm-websockets-how-to/" class="button big">Read More</a>
@@ -546,7 +547,7 @@ and look at the limits, the sharp edges, and how to debug it when the browser on
       <h2><a href="/blog/2026/10/webhooks-out-of-order-scheduler/">Webhooks Arrive Out of Order: How My Scheduler Killed Live Builds</a></h2>
     
     
-      <p>ephemerd&#39;s orphan sweep trusted webhook history over reality and destroyed a runner mid-build. The fix: rules only nominate, and a live busy check gets a veto.</p>
+      <p>ephemerd&#39;s orphan sweep trusted webhook history over reality and destroyed a runner mid-build. Now the rules only nominate, and a live busy check gets a veto.</p>
     
   </div>
   <div class="meta">
@@ -561,10 +562,10 @@ and look at the limits, the sharp edges, and how to debug it when the browser on
     <img class="" src="/img/2026/10/webhooks-out-of-order-scheduler-timeline.svg" alt="Timeline of three same-label jobs where a runner executing a build is destroyed 2.3 seconds before its in_progress webhook arrives">
   </a>
     
-    <p>The scheduler in <a href="/blog/2026/08/ephemerd-one-daemon-every-os/">ephemerd</a> is event-driven. GitHub sends a <code>workflow_job</code>
-webhook when a job is queued, when it starts and when it completes, and ephemerd creates and destroys runners to match.
-For a while that worked well enough that I stopped thinking about it. Then a <code>docker-build</code> job failed with &ldquo;The
-self-hosted runner lost communication with the server&rdquo;, and when I pulled the node&rsquo;s journal, ephemerd had destroyed that
+    <p>The scheduler in <a href="/blog/2026/08/ephemerd-one-daemon-every-os/">ephemerd</a> is event-driven. GitHub sends a
+<code>workflow_job</code> webhook when a job is queued, when it starts and when it completes. ephemerd creates and destroys runners
+to match. For a while that worked well enough that I stopped thinking about it. Then a <code>docker-build</code> job failed with
+&ldquo;The self-hosted runner lost communication with the server&rdquo;. I pulled the node&rsquo;s journal. ephemerd had destroyed that
 runner itself, on purpose, while it was running the build.</p>
   </div>
   <footer>
@@ -613,13 +614,13 @@ runner itself, on purpose, while it was running the build.</p>
       <h2><a href="/blog/2026/10/go-proxmox-five-years-to-v0-8/">Breaking Changes Without Breaking Trust: Five Years to go-proxmox v0.8</a></h2>
     
     
-      <p>What five years of go-proxmox releases looked like when I measured them: a broken tag that can never be deleted, a release that didn&#39;t compile, 285 breaking changes in v0.7.0, and the rule I follow now.</p>
+      <p>I measured five years of go-proxmox releases and found a broken tag that can never be deleted, a release that didn&#39;t compile and 285 breaking changes in v0.7.0. This is that history and the rule I follow now.</p>
     
   </div>
   <div class="meta">
     <time datetime="2026-10-04 19:40:00 -0700 PDT">October 4, 2026</time>
     
-    <p>8-Minute Read</p>
+    <p>9-Minute Read</p>
   </div>
 </header>
 
@@ -629,12 +630,11 @@ runner itself, on purpose, while it was running the build.</p>
   </a>
     
     <p><a href="https://github.com/luthermonson/go-proxmox">go-proxmox</a> had its first commit in June 2021 and v0.8.2 went out on
-September 30th. In between: 366 commits, 43 people besides me with a merged PR, and, more to the point of this post,
-downstream projects that I don&rsquo;t control pinning it in their <code>go.mod</code>. IONOS&rsquo;s
+September 30th. In between there were 366 commits and 43 people besides me with a merged PR. More to the point of this
+post, there are downstream projects that I don&rsquo;t control pinning it in their <code>go.mod</code>. IONOS&rsquo;s
 <a href="https://github.com/ionos-cloud/cluster-api-provider-proxmox">Cluster API provider</a> and Sidero&rsquo;s
-<a href="https://github.com/siderolabs/omni-infra-provider-proxmox">Omni Proxmox provider</a> are both on v0.8.1 today. A
-library with users like that gets judged less on its API and more on what happens to their build when they bump the
-version. I&hellip;</p>
+<a href="https://github.com/siderolabs/omni-infra-provider-proxmox">Omni Proxmox provider</a> are both on v0.8.1 today. A library
+with users like that gets judged less on its API. It gets judged more on what happens to their build when they&hellip;</p>
   </div>
   <footer>
     <a href="/blog/2026/10/go-proxmox-five-years-to-v0-8/" class="button big">Read More</a>
@@ -680,7 +680,7 @@ version. I&hellip;</p>
       <h2><a href="/blog/2026/10/windows-sigterm-sparse-files/">Windows Grab-Bag: SIGTERM That Doesn&#39;t Exist and Sparse Files That Break Docker</a></h2>
     
     
-      <p>Two Windows-only bugs from ephemerd: Go can&#39;t SIGTERM a child on Windows, so cloudflared processes piled up, and Delivery Optimization&#39;s sparse temp files broke image layer commits.</p>
+      <p>Go can&#39;t SIGTERM a child on Windows, so ephemerd&#39;s cloudflared processes piled up. Separately, Delivery Optimization&#39;s sparse temp files broke its Windows image layer commits.</p>
     
   </div>
   <div class="meta">
@@ -747,13 +747,13 @@ long way from the cause.</p>
       <h2><a href="/blog/2026/10/php-jit-use-after-free/">An Upstream PHP JIT Use-After-Free, and Why Our Default Flipped Twice</a></h2>
     
     
-      <p>ePHPm turned PHP&#39;s tracing JIT on by default, then off three days later when stock Laravel died after three requests. The bug was upstream; here is the bisect, the root cause and where the fix landed.</p>
+      <p>ePHPm turned PHP&#39;s tracing JIT on by default, then off three days later when stock Laravel died after three requests. The bug was upstream, and this is the bisect, the root cause and where the fix landed.</p>
     
   </div>
   <div class="meta">
     <time datetime="2026-10-01 20:10:00 -0700 PDT">October 1, 2026</time>
     
-    <p>9-Minute Read</p>
+    <p>10-Minute Read</p>
   </div>
 </header>
 
@@ -763,10 +763,10 @@ long way from the cause.</p>
   </a>
     
     <p>In August, <a href="https://github.com/ephpm/ephpm">ePHPm</a> turned PHP&rsquo;s tracing JIT on by default in single-site serve mode.
-Three days later it went back off, on every platform, and it&rsquo;s still off. The reason turned out to be a
-use-after-free in PHP&rsquo;s tracing JIT that has nothing to do with ePHPm: stock <code>php -S</code> with a stock Laravel skeleton
-dies on it in a couple of requests. The fix is now released upstream, so this seemed like the right time to write up
-how we got there, and what still has to happen before the&hellip;</p>
+Three days later it went back off on every platform, and it&rsquo;s still off. The reason turned out to be a use-after-free
+in PHP&rsquo;s tracing JIT that has nothing to do with ePHPm. Stock <code>php -S</code> with a stock Laravel skeleton dies on it in a
+couple of requests. The fix is now released upstream. So this seemed like the right time to write up how we got there,
+and what still has to happen before the default&hellip;</p>
   </div>
   <footer>
     <a href="/blog/2026/10/php-jit-use-after-free/" class="button big">Read More</a>
@@ -816,7 +816,7 @@ how we got there, and what still has to happen before the&hellip;</p>
       <h2><a href="/blog/2026/09/agent-shell-allowlist-bypassable/">Your Agent&#39;s Shell Allowlist Is Bypassable</a></h2>
     
     
-      <p>A permission gate for AI agents&#39; shell commands judged spellings instead of commands. The classes of bypass I found in shipmates&#39; own gate, and the one idea that fixes most of them.</p>
+      <p>A permission gate for AI agents&#39; shell commands judged spellings instead of commands. I found several classes of bypass in shipmates&#39; own gate, and one idea fixes most of them.</p>
     
   </div>
   <div class="meta">
@@ -831,11 +831,9 @@ how we got there, and what still has to happen before the&hellip;</p>
     <img class="" src="/img/2026/09/agent-shell-allowlist-bypassable-cover.svg" alt="A shell command decomposed into the nested command lines the permission gate has to judge">
   </a>
     
-    <p>Every <a href="/blog/2026/08/shipmates-persona-based-ai-coding-crews/">shipmates</a> crew member runs shell commands, and before any
-of them runs it goes through a permission gate. The gate uses the same rule syntax as Claude Code settings,
-<code>Bash(git status)</code>, <code>Bash(rm *)</code>, <code>Write(**/.claude/settings.json)</code>, merged from several layers: a fleet-wide deny list
-pushed from Fleet Command, per-persona policy files, project settings, and the Brig, which compiles shipmates&rsquo; fifteen
-&ldquo;Ship&rsquo;s Articles&rdquo; into deny and ask rules. Deny beats ask, ask beats&hellip;</p>
+    <p>Every <a href="/blog/2026/08/shipmates-persona-based-ai-coding-crews/">shipmates</a> crew member runs shell commands. Before any of
+them runs, it goes through a permission gate. The gate uses the same rule syntax as Claude Code settings:
+<code>Bash(git status)</code>, <code>Bash(rm *)</code>, <code>Write(**/.claude/settings.json)</code>. The rules are merged from several layers:</p>
   </div>
   <footer>
     <a href="/blog/2026/09/agent-shell-allowlist-bypassable/" class="button big">Read More</a>

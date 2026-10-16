@@ -13,21 +13,22 @@ draft: false
 
 One of the first things that broke when I started building PHP on Windows with
 [static-php-cli](https://github.com/crazywhalecc/static-php-cli) (SPC) wasn't PHP at all. It was unpacking the source
-tarballs. libxml2, xz, a couple of others would die partway through extraction with:
+tarballs. libxml2, xz and a couple of others would die partway through extraction with:
 
 ```
 ERROR: The pipe has been ended.
 ```
 
 Over the last few months I've "fixed" this two different ways, and the maintainers fixed it a third. It's a small piece
-of code but it's a good example of how much Linux assumption hides in a single shell pipeline, so here's the whole thing.
+of code. But it's a good example of how much Linux assumption hides in a single shell pipeline, so here's the whole
+thing.
 
 ### The pipeline
 
 ![7za piping into MinGW tar, which exits on a Windows path](/img/2026/07/spc-windows-archive-extraction-pipe.svg)
 
-SPC v2 extracted archives on Windows with one line. Here's the block from `FileSystem::extractArchive()`, including
-the maintainer's comments, which tell you how much fun this code has been for everyone:
+SPC v2 extracted archives on Windows with one line. Here's the block from `FileSystem::extractArchive()`. I kept the
+maintainer's comments, which tell you how much fun this code has been for everyone:
 
 ```php
 } elseif (PHP_OS_FAMILY === 'Windows') {
@@ -49,15 +50,15 @@ the maintainer's comments, which tell you how much fun this code has been for ev
 }
 ```
 
-7za decompresses the `.xz`/`.gz`/`.bz2` layer to stdout (`-so`), and `tar` reads the inner tarball from stdin and handles
-`--strip-components 1`, which flattens the `libxml2-2.x.y/` top-level directory into the target directory. On Linux this is the most boring
-command in the world.
+7za decompresses the `.xz`/`.gz`/`.bz2` layer to stdout (`-so`). `tar` reads the inner tarball from stdin and handles
+`--strip-components 1`. That flattens the `libxml2-2.x.y/` top-level directory into the target directory. On Linux this
+is the most boring command in the world.
 
 ### First fix: stop piping
 
-I was building on a Windows runner that also has Git for Windows installed, and my first read of the error was the obvious
-one: Windows pipes between processes are flaky with big streams, so don't stream. Decompress to disk, then extract from disk.
-That went into my SPC PR [#1079](https://github.com/crazywhalecc/static-php-cli/pull/1079) in April:
+I was building on a Windows runner that also has Git for Windows installed. My first read of the error was the obvious
+one. Windows pipes between processes are flaky with big streams, so don't stream. Decompress to disk, then extract from
+disk. That went into my SPC PR [#1079](https://github.com/crazywhalecc/static-php-cli/pull/1079) in April:
 
 ```php
 'xz', 'txz', 'gz', 'tgz', 'bz2' => (function () use ($_7z, $filename, $target) {
@@ -73,16 +74,16 @@ That went into my SPC PR [#1079](https://github.com/crazywhalecc/static-php-cli/
 })(),
 ```
 
-Two steps: 7za writes `foo.tar` next to the archive, then `C:\Windows\System32\tar.exe` extracts it and the
-intermediate file gets deleted. It worked. But look at the second-to-last line, because that's the actual fix, and the pipe
-story I told myself was wrong.
+It's two steps. 7za writes `foo.tar` next to the archive. Then `C:\Windows\System32\tar.exe` extracts it and the
+intermediate file gets deleted. It worked. But look at the second-to-last line. That's the real fix, and the pipe story
+I told myself was wrong.
 
 ### What was really happening
 
 Notice that the original command says `tar`, not a path. On a stock Windows box that resolves to
-`C:\Windows\System32\tar.exe`, which is bsdtar from libarchive and handles Windows paths fine. On a box with Git for Windows
-(or MSYS2) on the `PATH` ahead of System32, `tar` resolves to `C:\Program Files\Git\usr\bin\tar.exe` instead. That's GNU tar
-built for MSYS, and GNU tar has opinions about colons.
+`C:\Windows\System32\tar.exe`. That's bsdtar from libarchive and it handles Windows paths fine. Some boxes have Git for
+Windows (or MSYS2) on the `PATH` ahead of System32. There `tar` resolves to `C:\Program Files\Git\usr\bin\tar.exe`
+instead. That's GNU tar built for MSYS, and GNU tar has opinions about colons.
 
 I reproduced it again for this post with a `.tar.xz` that unpacks to about 67 MB, piping 7za into each tar:
 
@@ -96,11 +97,11 @@ ERROR: The pipe has been ended.
 (exit 0, files extracted)
 ```
 
-GNU tar can't use the `C:\...` target directory and exits immediately. 7za is still writing decompressed bytes into the pipe,
-the reader is gone, and 7za reports the write failure as `The pipe has been ended`. The error everyone sees is printed by
-the *writer*, about the *reader* dying. Nothing is wrong with the pipe.
+GNU tar can't use the `C:\...` target directory and exits immediately. 7za is still writing decompressed bytes into the
+pipe, but the reader is gone. So 7za reports the write failure as `The pipe has been ended`. The error everyone sees is
+printed by the *writer*, about the *reader* dying. Nothing is wrong with the pipe.
 
-Same tar, non-piped, gets a different and even stranger error, because `-f C:\foo.tar` is GNU tar's syntax for "a tape on
+The same tar without the pipe gets a different and even stranger error. To GNU tar, `-f C:\foo.tar` means "a tape on
 the remote host named `C`":
 
 ```
@@ -108,9 +109,9 @@ the remote host named `C`":
 /usr/bin/tar: Cannot connect to C: resolve failed
 ```
 
-So my two-step fix worked for the boring reason that it hardcoded `System32\tar.exe`. The decompress-to-disk part only added
-an extra copy of every tarball on disk. Lesson learned: when a pipeline fails, check that each side of it is the binary
-you think it is before blaming the pipe.
+So my two-step fix worked for the boring reason that it hardcoded `System32\tar.exe`. The decompress-to-disk part only
+added an extra copy of every tarball on disk. Lesson learned. When a pipeline fails, check that each side of it is the
+binary you think it is before blaming the pipe.
 
 ### Second fix: v3 and the symlink problem
 
@@ -120,15 +121,15 @@ That PR didn't merge. SPC was in the middle of a ground-up v3 rewrite, and v3's 
 $tar = SystemTarget::isUnix() ? 'tar' : '"C:\Windows\system32\tar.exe"';
 ```
 
-So in v3 the PATH problem was gone, and the pipe was fine. What was left was the other thing in the maintainer's comment:
-**symlinks**. Some upstream tarballs ship symbolic links (zstd ships `tests/cli-tests/bin/unzstd -> zstd`, for example).
-Windows only lets a process create symlinks with admin rights or Developer Mode turned on, and bsdtar fails each one
-with `Can't create '...': Invalid argument` and exits non-zero. On a CI runner without those rights, the extraction fails
-and leaves a half-written source tree behind.
+So in v3 the PATH problem was gone, and the pipe was fine. What was left was the other thing in the maintainer's
+comment: **symlinks**. Some upstream tarballs ship symbolic links. zstd ships `tests/cli-tests/bin/unzstd -> zstd`, for
+example. Windows only lets a process create symlinks with admin rights or Developer Mode turned on. bsdtar fails each
+one with `Can't create '...': Invalid argument` and exits non-zero. On a CI runner without those rights, the extraction
+fails and leaves a half-written source tree behind.
 
-My answer in May was [#1175](https://github.com/crazywhalecc/static-php-cli/pull/1175): drop `tar.exe` entirely and let 7za
-do both layers, since 7za doesn't fail the extraction on symlinks the way bsdtar does. 7za has no `--strip-components`, so
-that moved into PHP (lightly trimmed, with the logging taken out and comments added):
+My answer in May was [#1175](https://github.com/crazywhalecc/static-php-cli/pull/1175). Drop `tar.exe` entirely and let
+7za do both layers. 7za doesn't fail the extraction on symlinks the way bsdtar does. 7za has no `--strip-components`, so
+that moved into PHP. The version below is lightly trimmed, with the logging taken out and comments added:
 
 ```php
 private function extract7zWithStripComponents(string $archive_path, string $target_path, string $_7z, int $strip = 1): void
@@ -171,14 +172,19 @@ It worked in my fork and that's what my Windows builds ran on for the next coupl
 
 ### What upstream did instead
 
-The review feedback was fair. crazywhalecc pointed out that a full 7za path was a reasonable direction but that
-`FileSystem::copyDir` is slow, and my version copies every extracted source tree a second time to fake
-`--strip-components`. It also only approximates it: if an archive has more than one top-level entry, nothing gets stripped.
+The review feedback was fair. crazywhalecc said a full 7za path was a reasonable direction. But `FileSystem::copyDir` is
+slow, and my version copies every extracted source tree a second time to fake `--strip-components`. It also only
+approximates it. If an archive has more than one top-level entry, nothing gets stripped.
 
 Then two things landed in v3. In June, PHP's old `php-sdk-binary-tools` were replaced with MSYS2 plus a standalone
 `7za-win` tool package ([#1193](https://github.com/crazywhalecc/static-php-cli/pull/1193)). And the shell layer grew
-`passthruTolerateSymlinks()`: keep the 7za-into-`System32\tar.exe` pipe, capture tar's output, and if the *only* errors are
-symlinks Windows refused to create, log a warning and keep going. Anything else still throws.
+`passthruTolerateSymlinks()`. It does three things:
+
+- keeps the 7za-into-`System32\tar.exe` pipe
+- captures tar's output
+- if the *only* errors are symlinks Windows refused to create, logs a warning and keeps going
+
+Anything else still throws.
 
 ```php
 private function passthruTolerateSymlinks(string $cmd): void
@@ -201,12 +207,12 @@ private function passthruTolerateSymlinks(string $cmd): void
 }
 ```
 
-That keeps the single streaming pass and real `--strip-components`, and it only forgives the one failure mode we know is
+That keeps the single streaming pass and real `--strip-components`. It only forgives the one failure mode we know is
 harmless. #1175 was closed as superseded on July 13th, which is the right call. Their version is better than mine.
 
 ### Takeaways
 
-- **Pin the binary.** `tar` in a command string means "whatever is first on the `PATH`", and on Windows developer machines
+- **Pin the binary.** `tar` in a command string means "whatever is first on the `PATH`". On Windows developer machines
   and CI runners that's frequently GNU tar from Git or MSYS2, which reads `C:` as a hostname.
 - **"The pipe has been ended" means the other side died.** Go look at what the reader printed before it exited.
 - **Tolerate narrowly.** Skipping symlinks wholesale (7za) and failing on them wholesale (tar) are both wrong. Matching the

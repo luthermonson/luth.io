@@ -10,14 +10,14 @@
     gtag('config', 'G-MSTSKGFWTX');
 </script><meta charset="utf-8">
 <title>What Does One More WordPress Site Cost? - Luther Monson</title>
-<meta name="description" content="Marginal RAM, file descriptors, CPU and disk for each extra WordPress tenant on one ePHPm instance, measured from 10 to 1000 sites.">
+<meta name="description" content="I measured what each extra WordPress tenant on one ePHPm instance costs in RAM, file descriptors, CPU and disk. The sweep ran from 10 to 1000 sites.">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
 <meta name="twitter:card" content="summary_large_image"><meta name="twitter:site" content="@luthermonson">
 
 <meta property="og:site_name" content="Luther Monson">
 <meta property="og:title" content="What Does One More WordPress Site Cost?">
-<meta property="og:description" content="Marginal RAM, file descriptors, CPU and disk for each extra WordPress tenant on one ePHPm instance, measured from 10 to 1000 sites.">
+<meta property="og:description" content="I measured what each extra WordPress tenant on one ePHPm instance costs in RAM, file descriptors, CPU and disk. The sweep ran from 10 to 1000 sites.">
 <meta property="og:type" content="article">
 <meta property="og:url" content="https://luth.io/blog/2026/08/what-does-one-more-wordpress-site-cost/">
     <meta property="og:image" content="https://luth.io/img/2026/08/what-does-one-more-wordpress-site-cost-rss.svg">
@@ -215,7 +215,7 @@
       <h2><a href="/blog/2026/08/what-does-one-more-wordpress-site-cost/">What Does One More WordPress Site Cost?</a></h2>
     
     
-      <p>Marginal RAM, file descriptors, CPU and disk for each extra WordPress tenant on one ePHPm instance, measured from 10 to 1000 sites.</p>
+      <p>I measured what each extra WordPress tenant on one ePHPm instance costs in RAM, file descriptors, CPU and disk. The sweep ran from 10 to 1000 sites.</p>
     
   </div>
   <div class="meta">
@@ -272,27 +272,26 @@
       </div>
       <div class="content">
         
-        <p>ePHPm v0.7.0 shipped per-site multi-tenancy: point <code>[server] sites_dir</code> at a directory, every <code>Host</code> maps to its own
-docroot and its own Turso database file, and one process serves all of them. The first question anybody asks about
-that is &ldquo;how many sites fit on a box?&rdquo;, and the honest way to answer it is to turn the question around. What does
-<strong>one more</strong> site cost? If you know the marginal RAM, file descriptors, CPU and disk for a tenant, the box size falls
-out of arithmetic.</p>
+        <p>ePHPm v0.7.0 shipped per-site multi-tenancy. Point <code>[server] sites_dir</code> at a directory and every <code>Host</code> maps to its own
+docroot and its own Turso database file. One process serves all of them. The first question anybody asks about that is
+&ldquo;how many sites fit on a box?&rdquo; The honest way to answer it is to turn the question around. What does <strong>one more</strong> site
+cost? If you know the marginal RAM, file descriptors, CPU and disk for a tenant, the box size falls out of arithmetic.</p>
 <p>So I built <a href="https://github.com/ephpm/multitenant-scalebench">multitenant-scalebench</a> to measure exactly that, from
-10 to 1000 sites on one instance. The repo is frozen now (the harness moved to <code>scale/</code> in
-<a href="https://github.com/ephpm/lab">ephpm/lab</a>), but the reports and raw JSON stay there as the record. This is the short
-version, with the numbers I actually size with.</p>
+10 to 1000 sites on one instance. The repo is frozen now. The harness moved to <code>scale/</code> in
+<a href="https://github.com/ephpm/lab">ephpm/lab</a>, but the reports and raw JSON stay there as the record. This is the short
+version, with the numbers I size with.</p>
 <h3 id="the-setup">The setup</h3>
 <p>Every data point is a fresh ePHPm instance serving exactly N vhosts (<code>site-0001</code> through <code>site-N</code>). All N share one
-read-only docroot, which is realistic (production runs one copy of WordPress core across tenants) and means opcache
-gets shared the way it would in production. What diverges per site is the database: each vhost gets
-<code>&lt;db.dir&gt;/&lt;site&gt;.db</code>, opened lazily and cached under an LRU with a cap, <code>max_open_dbs</code> (default 256).</p>
+read-only docroot. That&rsquo;s realistic, since production runs one copy of WordPress core across tenants. It also means
+opcache gets shared the way it would in production. What diverges per site is the database. Each vhost gets
+<code>&lt;db.dir&gt;/&lt;site&gt;.db</code>, opened lazily and cached under an LRU with a cap. The cap is <code>max_open_dbs</code> (default 256).</p>
 <p>There are two workloads. <strong>wp-real</strong> is real WordPress core with the
 <a href="https://github.com/ephpm/db-wordpress">ephpm/db-wordpress</a> drop-in, which routes <code>$wpdb</code> to the per-site Turso
 database in-process. <strong>wp-lite</strong> is a WordPress-<em>shaped</em> front controller doing the same ~20 reads per front page
-against the per-site DB. wp-lite is not WordPress, and the reports label it every time, but it&rsquo;s what lets the sweep
+against the per-site DB. wp-lite is not WordPress, and the reports label it every time. But it&rsquo;s what lets the sweep
 reach 1000 sites without provisioning 1000 real installs. Load is a Go closed-loop generator at 128 concurrent
-workers, round-robining the <code>Host</code> header over all N sites with a 3:1:1 mix of front page, permalink and REST.</p>
-<p>Every point was run twice: once at the default cap of 256 and once at 4096, so every site stays open. That second
+workers. It round-robins the <code>Host</code> header over all N sites with a 3:1:1 mix of front page, permalink and REST.</p>
+<p>Every point was run twice. Once at the default cap of 256 and once at 4096, so every site stays open. That second
 knob turns out to be the whole story.</p>
 <h3 id="ram-about-22-mb-per-open-site">RAM: about 2.2 MB per open site</h3>
 <p><img src="/img/2026/08/what-does-one-more-wordpress-site-cost-rss.svg" alt="Steady RSS vs tenant sites"></p>
@@ -301,56 +300,57 @@ RSS columns are read straight from <code>/proc</code> and weren&rsquo;t affected
 cap=4096 bump is a measured outlier from a sibling build running on the box, left in rather than smoothed.</em></p>
 <p>With every site open (cap=4096), RSS climbs linearly from 1.2 GB at 250 sites to 2.8 GB at 1000:
 (2844 - 1216) / (1000 - 250) = <strong>2.17 MB per open site</strong>. That&rsquo;s the open Turso database, its WAL and the per-site
-KV store. On top of that is a baseline of about 0.67 GB, which is the PHP ZTS runtime, opcache and the server.</p>
+KV store. On top of that is a baseline of about 0.67 GB. That&rsquo;s the PHP ZTS runtime, opcache and the server.</p>
 <p>That baseline is not a floor, though. It&rsquo;s what ePHPm&rsquo;s autotune picked on a 62 GiB box. <code>opcache.memory_consumption</code>
 is 18% of RAM clamped to 64-512 MB, so this box hit the 512 MB ceiling. Workers are <code>clamp(vCPUs, 2, 32)</code>. On a 1 GB
-VM the same math works out to roughly 250-350 MB of baseline (that one is derived from the autotune formula, not measured).</p>
-<p>With the default cap, the LRU does its job: past 256 sites the curve goes flat and RSS sits around 1.5 GB whether you
-have 500 sites or 1000. The fd count follows the same pattern, about <strong>2 per open site</strong> (the <code>.db</code> and its <code>-wal</code>)
-plus ~140 base: 641 fds at N=250, 2,141 at N=1000 with cap=4096, 790 at N=1000 under the default cap.</p>
+VM the same math works out to roughly 250-350 MB of baseline. That one is derived from the autotune formula, not
+measured.</p>
+<p>With the default cap, the LRU does its job. Past 256 sites the curve goes flat. RSS sits around 1.5 GB whether you
+have 500 sites or 1000. The fd count follows the same pattern. It&rsquo;s about <strong>2 per open site</strong> (the <code>.db</code> and its
+<code>-wal</code>) plus ~140 base. That&rsquo;s 641 fds at N=250 and 2,141 at N=1000 with cap=4096. Under the default cap N=1000 used
+790.</p>
 <p>So the RAM formula is:</p>
 <pre tabindex="0"><code>RSS ≈ baseline + 2.2 MB × min(N, max_open_dbs)
 fds ≈ 140 + 2 × min(N, max_open_dbs)
 </code></pre><h3 id="the-cliff-more-active-sites-than-max_open_dbs">The cliff: more active sites than max_open_dbs</h3>
 <p>The LRU bounds memory, but it isn&rsquo;t free. If more sites are actively receiving traffic than the cap allows, nearly
-every request becomes a miss: open a file, evict an idle site, serve. In the original sweep that path ran through a
-single registry mutex held across the file open (deliberately, to guarantee one Turso handle per file), and
-throughput collapsed while CPU <em>dropped</em>, because threads were blocked, not working.</p>
+every request becomes a miss. Open a file, evict an idle site, serve. In the original sweep that path ran through a
+single registry mutex held across the file open. That was deliberate, to guarantee one Turso handle per file.
+Throughput collapsed while CPU <em>dropped</em>, because threads were blocked, not working.</p>
 <p><img src="/img/2026/08/what-does-one-more-wordpress-site-cost-lru.svg" alt="RPS with every site open vs LRU churn"></p>
 <p><em>Data: points 1 and 2 of <a href="https://github.com/ephpm/multitenant-scalebench/blob/main/report/BEFORE-AFTER.md">BEFORE-AFTER.md</a>,
 medians of 3 interleaved runs per binary, wp-lite, 32 cores.</em></p>
-<p>Before the fix, 250 warm sites served 14.9k RPS on 16.5 cores, and 500 sites under the default cap fell to 1.4k RPS
-on 2.1 cores. <a href="https://github.com/ephpm/ephpm/pull/303">ePHPm #303</a> replaced the global map-plus-mutex with permanent
-per-site slots, each with its own lock, so opening site A no longer blocks resolving site B. That lifted the churn
-case 2.3x to 3.3k RPS on 10.5 cores and the warm case to 18.9k. The churn case is still 5.7x slower than warm,
-though, so the rule doesn&rsquo;t change: <strong>set <code>max_open_dbs</code> at or above the number of sites that are active at the same
-time.</strong> The LRU is a memory safety valve for lots of idle tenants, not a performance feature.</p>
+<p>Before the fix, 250 warm sites served 14.9k RPS on 16.5 cores. 500 sites under the default cap fell to 1.4k RPS on
+2.1 cores. <a href="https://github.com/ephpm/ephpm/pull/303">ePHPm #303</a> replaced the global map-plus-mutex with permanent
+per-site slots, each with its own lock. Opening site A no longer blocks resolving site B. That lifted the churn case
+2.3x to 3.3k RPS on 10.5 cores and the warm case to 18.9k. The churn case is still 5.7x slower than warm, though. So
+the rule doesn&rsquo;t change: <strong>set <code>max_open_dbs</code> at or above the number of sites that are active at the same time.</strong> The
+LRU is a memory safety valve for lots of idle tenants, not a performance feature.</p>
 <h3 id="cpu-real-wordpress-is-the-cost-not-the-tenancy">CPU: real WordPress is the cost, not the tenancy</h3>
 <p>wp-lite tells you about the multi-tenant plumbing. For sizing you want real WordPress, and real WordPress is
-CPU-bound. On the fixed harness (more on that below) wp-real at 50 sites ran 266-272 RPS with 28 of 32 cores busy:
-<strong>9.5-9.7 front-page requests per second per core, or about 105 ms of CPU per request.</strong></p>
+CPU-bound. I ran wp-real at 50 sites on the fixed harness (more on that below). It did 266-272 RPS with 28 of 32 cores
+busy. That&rsquo;s <strong>9.5-9.7 front-page requests per second per core, or about 105 ms of CPU per request.</strong></p>
 <p>The more useful finding is that the number didn&rsquo;t move with site count. The original wp-real sweep ran 10, 50, 100
-and 250 sites and throughput was flat at 243-253 RPS across all four (those runs carried a small harness penalty,
-about 7% low, but the same penalty at every N). Adding a tenant doesn&rsquo;t make any request more expensive; it spreads
-the same saturated cores across more sites. CPU scales with traffic, not with site count.</p>
+and 250 sites. Throughput was flat at 243-253 RPS across all four. Those runs carried a small harness penalty, about
+7% low, but the same penalty at every N. Adding a tenant doesn&rsquo;t make any request more expensive. It spreads the same
+saturated cores across more sites. CPU scales with traffic, not with site count.</p>
 <h3 id="disk-a-fraction-of-a-megabyte-per-fresh-site">Disk: a fraction of a megabyte per fresh site</h3>
 <p>This is the number that changed my sizing sheet the most. My first draft of it had a guess of 2 MB per WordPress
-database. Measured on 250 real <code>wp-admin/install.php</code> installs, a fresh WordPress database (default 1 post, 1 page,
-1 comment) is <strong>~124 KB</strong> once the WAL is checkpointed, and ~660 KB if it still carries the install-time <code>-wal</code>
+database. I measured 250 real <code>wp-admin/install.php</code> installs. A fresh WordPress database (default 1 post, 1 page,
+1 comment) is <strong>~124 KB</strong> once the WAL is checkpointed. It&rsquo;s ~660 KB if it still carries the install-time <code>-wal</code>
 (<a href="https://github.com/ephpm/multitenant-scalebench/blob/main/report/LKE-SIZING.md">LKE-SIZING.md</a>,
 commit <a href="https://github.com/ephpm/multitenant-scalebench/commit/2f705de"><code>2f705de</code></a>).</p>
-<p>I re-measured that on the v0.7.0 release binary with WordPress 7.0.3: 20 fresh sites, each installed through the web
-installer onto its own Turso database. Two things showed up:</p>
+<p>I re-measured that on the v0.7.0 release binary with WordPress 7.0.3. I made 20 fresh sites, each installed through
+the web installer onto its own Turso database. Two things showed up:</p>
 <ul>
 <li>Right after install, each site was a 4 KiB <code>.db</code> plus a 716,912-byte <code>-wal</code>. <strong>The whole install lives in the
-WAL</strong>, and it stayed that way through a clean shutdown of the server. So &ldquo;uncheckpointed&rdquo; isn&rsquo;t a corner case,
-it&rsquo;s the state a freshly installed site sits in: about <strong>704 KiB</strong> per site.</li>
-<li>After <code>PRAGMA wal_checkpoint(TRUNCATE)</code>, every database was exactly 155,648 bytes (<strong>152 KiB</strong>) and
-<code>integrity_check</code> returned <code>ok</code>. That&rsquo;s a bit above the original 124 KB, and I&rsquo;d guess the WordPress version
-is the difference, but I don&rsquo;t have the original run&rsquo;s version recorded to prove it. Of the 152 KiB, 80 KiB is
-<code>wp_options</code>.</li>
+WAL</strong>, and it stayed that way through a clean shutdown of the server. So &ldquo;uncheckpointed&rdquo; isn&rsquo;t a corner case. It&rsquo;s
+the state a freshly installed site sits in, about <strong>704 KiB</strong> per site.</li>
+<li>After <code>PRAGMA wal_checkpoint(TRUNCATE)</code>, every database was exactly 155,648 bytes (<strong>152 KiB</strong>). <code>integrity_check</code>
+returned <code>ok</code>. That&rsquo;s a bit above the original 124 KB. I&rsquo;d guess the WordPress version is the difference, but I
+don&rsquo;t have the original run&rsquo;s version recorded to prove it. Of the 152 KiB, 80 KiB is <code>wp_options</code>.</li>
 </ul>
-<p>Either way the order of magnitude is the point: a fresh WordPress site is a fraction of a megabyte, not several.</p>
+<p>Either way the order of magnitude is the point. A fresh WordPress site is a fraction of a megabyte, not several.</p>
 <p>A real preview with a theme, plugins and content will be a few MB. Still small, but size disk with headroom if your
 previews aren&rsquo;t close to fresh.</p>
 <h3 id="putting-it-together">Putting it together</h3>
@@ -389,37 +389,37 @@ previews aren&rsquo;t close to fresh.</p>
 <p>That gives two very different sizing answers depending on traffic.</p>
 <p><strong>Lots of mostly idle sites (PR previews).</strong> At 5 req/s across the whole service you need about half a core.
 5,000 fresh sites is 0.6-3.3 GB of disk. With <code>max_open_dbs = 64</code> the open-DB term is ~140 MB on top of the
-autotuned baseline. That&rsquo;s one 1 vCPU / 1 GB node. The real risk there isn&rsquo;t aggregate compute, it&rsquo;s one preview
-getting crawled and eating the only core, which is a per-site rate limit problem, not a bigger-node problem.</p>
+autotuned baseline. That&rsquo;s one 1 vCPU / 1 GB node. The real risk there isn&rsquo;t aggregate compute. It&rsquo;s one preview
+getting crawled and eating the only core. That&rsquo;s a per-site rate limit problem, not a bigger-node problem.</p>
 <p><strong>Tenants under real sustained traffic.</strong> Now it&rsquo;s CPU, and only CPU:</p>
 <pre tabindex="0"><code>cores_needed  = ceil(peak_realWP_RPS / 9.5)
 RAM_per_pod   = autotuned_baseline + 2.2 MB × min(sites_per_pod, max_open_dbs) + headroom
 disk_per_pod  = ~0.7 MB × sites_per_pod
 fd_per_pod    = 2 × max_open_dbs + 200      # set RLIMIT_NOFILE above this
 max_open_dbs &gt;= sites active at the same time
-</code></pre><p>On a 3-node LKE cluster with N+1 headroom that works out to Dedicated 8 vCPU nodes for ~150 peak RPS and Dedicated 32
-vCPU nodes for ~450-600. RAM is never what you&rsquo;re buying; at 5,000 sites the per-site footprint is a few GB. You buy
-cores, and to go past what one pod&rsquo;s cores give you, you go wider, not bigger. One constraint applies once you have
-more than one pod: Turso opens each <code>&lt;site&gt;.db</code> from exactly one process, so a site lives on exactly one pod and
-traffic has to be routed to it by <code>Host</code>.</p>
+</code></pre><p>Take a 3-node LKE cluster with N+1 headroom. That works out to Dedicated 8 vCPU nodes for ~150 peak RPS and Dedicated
+32 vCPU nodes for ~450-600. RAM is never what you&rsquo;re buying. At 5,000 sites the per-site footprint is a few GB. You buy
+cores. To go past what one pod&rsquo;s cores give you, you go wider, not bigger. One constraint applies once you have more
+than one pod. Turso opens each <code>&lt;site&gt;.db</code> from exactly one process. So a site lives on exactly one pod and traffic has
+to be routed to it by <code>Host</code>.</p>
 <h3 id="the-asterisk-on-the-throughput-numbers">The asterisk on the throughput numbers</h3>
 <p>Halfway through this work I found that my harness had been launching the server with its working directory on
-<code>/mnt/c</code>, which cost the light workload about 4x and produced a confident, wrong story about the registry mutex being
-the ceiling. That one gets <a href="/blog/2026/08/benchmark-4x-wrong-wsl-drvfs-cwd/">its own post</a>. Every throughput number
-above is from the fixed harness. The RSS, fd and disk numbers never depended on it, and the wp-real per-core figure
+<code>/mnt/c</code>. That cost the light workload about 4x. It also produced a confident, wrong story about the registry mutex
+being the ceiling. That one gets <a href="/blog/2026/08/benchmark-4x-wrong-wsl-drvfs-cwd/">its own post</a>. Every throughput
+number above is from the fixed harness. The RSS, fd and disk numbers never depended on it. The wp-real per-core figure
 barely moved because WordPress&rsquo;s own CPU cost swamped the penalty.</p>
-<p>And the usual caveat: this is a 32-vCPU WSL2 dev box. Take the shape and the per-site coefficients, then measure one
+<p>And the usual caveat: this is a 32-vCPU WSL2 dev box. Take the shape and the per-site coefficients. Then measure one
 pod on your target hardware to calibrate the absolute RPS.</p>
 <h3 id="how-i-measured">How I measured</h3>
 <ul>
 <li>Host: WSL2 on Windows 11, AMD Ryzen 9 5950X (16 cores / 32 threads), 62 GiB RAM, run directory on native ext4.</li>
 <li>Sweep binary: ePHPm <code>3352445</code> (v0.7.0 per-site multi-tenancy, 2026-08-14), <code>cargo xtask release 8.5</code>, PHP 8.5.7 ZTS.
 Before/after binaries: <code>b9f56db</code> and <code>a634dff</code>.</li>
-<li><code>scripts/run_sweep.sh</code> with <code>NS=&quot;10 25 50 100 250 500 1000&quot; CAPS=&quot;256 4096&quot; C=128</code>, 8 s warmup, 20-25 s measured;
+<li><code>scripts/run_sweep.sh</code> with <code>NS=&quot;10 25 50 100 250 500 1000&quot; CAPS=&quot;256 4096&quot; C=128</code>, 8 s warmup, 20-25 s measured.
 <code>scripts/sample.sh</code> samples RSS, CPU and fds from <code>/proc</code> once a second.</li>
 <li>Disk re-measure: ePHPm v0.7.0 release (<code>ephpm-v0.7.0+php8.5.7-linux-x86_64</code>), WordPress 7.0.3 plus the
-db-wordpress drop-in, 20 sites installed with the harness&rsquo;s <code>scripts/seed_wp_real.sh</code>, sizes with <code>ls -l</code> / <code>du -cb</code>
-while running and after SIGTERM, then <code>sqlite3 &lt;db&gt; &quot;PRAGMA wal_checkpoint(TRUNCATE);&quot;</code> and
+db-wordpress drop-in. 20 sites installed with the harness&rsquo;s <code>scripts/seed_wp_real.sh</code>. Sizes came from <code>ls -l</code> /
+<code>du -cb</code> while running and after SIGTERM. Then <code>sqlite3 &lt;db&gt; &quot;PRAGMA wal_checkpoint(TRUNCATE);&quot;</code> and
 <code>PRAGMA integrity_check</code>, with per-table sizes from the <code>dbstat</code> virtual table.</li>
 </ul>
 <h3 id="links">Links</h3>

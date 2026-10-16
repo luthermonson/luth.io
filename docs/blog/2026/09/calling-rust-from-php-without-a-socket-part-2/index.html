@@ -10,14 +10,14 @@
     gtag('config', 'G-MSTSKGFWTX');
 </script><meta charset="utf-8">
 <title>Calling Rust From PHP Without a Socket, Part 2: Making Existing Code Use It - Luther Monson</title>
-<meta name="description" content="Thirteen Composer packages that let existing Redis and database code in WordPress, Laravel and Symfony use ePHPm&#39;s built-in versions, and the bugs they turned up.">
+<meta name="description" content="Thirteen Composer packages let existing Redis and database code in WordPress, Laravel and Symfony use ePHPm&#39;s built-in versions. This post covers what&#39;s in them and the bugs they turned up.">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
 <meta name="twitter:card" content="summary_large_image"><meta name="twitter:site" content="@luthermonson">
 
 <meta property="og:site_name" content="Luther Monson">
 <meta property="og:title" content="Calling Rust From PHP Without a Socket, Part 2: Making Existing Code Use It">
-<meta property="og:description" content="Thirteen Composer packages that let existing Redis and database code in WordPress, Laravel and Symfony use ePHPm&#39;s built-in versions, and the bugs they turned up.">
+<meta property="og:description" content="Thirteen Composer packages let existing Redis and database code in WordPress, Laravel and Symfony use ePHPm&#39;s built-in versions. This post covers what&#39;s in them and the bugs they turned up.">
 <meta property="og:type" content="article">
 <meta property="og:url" content="https://luth.io/blog/2026/09/calling-rust-from-php-without-a-socket-part-2/">
     <meta property="og:image" content="https://luth.io/img/2026/09/calling-rust-from-php-without-a-socket-part-2-cover.svg">
@@ -215,7 +215,7 @@
       <h2><a href="/blog/2026/09/calling-rust-from-php-without-a-socket-part-2/">Calling Rust From PHP Without a Socket, Part 2: Making Existing Code Use It</a></h2>
     
     
-      <p>Thirteen Composer packages that let existing Redis and database code in WordPress, Laravel and Symfony use ePHPm&#39;s built-in versions, and the bugs they turned up.</p>
+      <p>Thirteen Composer packages let existing Redis and database code in WordPress, Laravel and Symfony use ePHPm&#39;s built-in versions. This post covers what&#39;s in them and the bugs they turned up.</p>
     
   </div>
   <div class="meta">
@@ -271,16 +271,23 @@
 
       </div>
       <div class="content">
+              <figure class="post-cover">
+                <img src="/img/2026/09/calling-rust-from-php-without-a-socket-part-2-cover.svg" alt="The APIs PHP apps already call, mapped through ePHPm wrapper packages onto ephpm_kv_* and ephpm_db_*">
+              </figure>
         
-        <p><a href="/blog/2026/09/calling-rust-from-php-without-a-socket-part-1/">Part 1</a> covered the plumbing: ePHPm registers
-<code>ephpm_kv_*</code> and <code>ephpm_db_*</code> functions that call straight into Rust, and a cache read through one costs about a tenth of
-a microsecond instead of a loopback round trip. That&rsquo;s nice and also useless on its own, because nobody is going to rewrite
-their WordPress object cache or their Laravel cache store around a function called <code>ephpm_kv_set()</code>. Applications talk to
-Redis through phpredis or Predis, to the cache through PSR-6/16 or <code>wp_cache_*</code>, and to the database through <code>wpdb</code>,
-mysqli, Eloquent or DBAL.</p>
+        <p><a href="/blog/2026/09/calling-rust-from-php-without-a-socket-part-1/">Part 1</a> covered the plumbing. ePHPm registers
+<code>ephpm_kv_*</code> and <code>ephpm_db_*</code> functions that call straight into Rust. A cache read through one costs about a tenth of a
+microsecond instead of a loopback round trip. That&rsquo;s nice and also useless on its own. Nobody is going to rewrite their
+WordPress object cache or their Laravel cache store around a function called <code>ephpm_kv_set()</code>. Applications talk to
+existing APIs instead:</p>
+<ul>
+<li>Redis through phpredis or Predis</li>
+<li>the cache through PSR-6/16 or <code>wp_cache_*</code></li>
+<li>the database through <code>wpdb</code>, mysqli, Eloquent or DBAL</li>
+</ul>
 <p>So there&rsquo;s a set of Composer packages in the <a href="https://github.com/ephpm">ephpm org</a> whose whole job is to sit under those
-APIs and route them to the native functions. This post is what&rsquo;s in them, the rule that decides when they switch on, and
-the bugs that only showed up once real applications ran on top.</p>
+APIs and route them to the native functions. This post covers what&rsquo;s in them and the rule that decides when they switch
+on. It also covers the bugs that only showed up once real applications ran on top.</p>
 <h3 id="the-packages">The packages</h3>
 <p>There are 13 of them, seven on the KV side and six on the database side:</p>
 <table>
@@ -356,10 +363,10 @@ easiest to show because it&rsquo;s the smallest change to an existing app:</p>
 </span></span><span class="line"><span class="cl">
 </span></span><span class="line"><span class="cl"><span class="nv">$redis</span><span class="o">-&gt;</span><span class="na">incrby</span><span class="p">(</span><span class="s1">&#39;hits:home&#39;</span><span class="p">,</span> <span class="mi">1</span><span class="p">);</span>
 </span></span><span class="line"><span class="cl"><span class="nv">$visits</span> <span class="o">=</span> <span class="nv">$redis</span><span class="o">-&gt;</span><span class="na">get</span><span class="p">(</span><span class="s1">&#39;hits:home&#39;</span><span class="p">);</span>
-</span></span></code></pre></div><p>Everything else in the app keeps calling Predis. <code>KvConnection</code> takes the command objects Predis builds, and instead of
+</span></span></code></pre></div><p>Everything else in the app keeps calling Predis. <code>KvConnection</code> takes the command objects Predis builds. Instead of
 serializing them to RESP, it dispatches on the command ID and calls <code>ephpm_kv_*</code>.</p>
 <h3 id="when-a-shim-switches-on">When a shim switches on</h3>
-<p>The rule for every package that impersonates a global API is the same: <strong>alias the global name only when the real
+<p>Every package that impersonates a global API follows the same rule: <strong>alias the global name only when the real
 extension isn&rsquo;t loaded</strong>. The namespaced class always works. Here&rsquo;s the entire activation file for the phpredis shim,
 loaded through Composer&rsquo;s <code>autoload.files</code>:</p>
 <div class="highlight"><pre tabindex="0" class="chroma"><code class="language-php" data-lang="php"><span class="line"><span class="cl"><span class="k">use</span> <span class="nx">Ephpm\Phpredis\Redis</span><span class="p">;</span>
@@ -376,20 +383,20 @@ loaded through Composer&rsquo;s <code>autoload.files</code>:</p>
 </span></span><span class="line"><span class="cl"><span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="nx">\class_exists</span><span class="p">(</span><span class="s1">&#39;RedisException&#39;</span><span class="p">,</span> <span class="k">false</span><span class="p">))</span> <span class="p">{</span>
 </span></span><span class="line"><span class="cl">    <span class="nx">\class_alias</span><span class="p">(</span><span class="nx">RedisException</span><span class="o">::</span><span class="na">class</span><span class="p">,</span> <span class="s1">&#39;RedisException&#39;</span><span class="p">);</span>
 </span></span><span class="line"><span class="cl"><span class="p">}</span>
-</span></span></code></pre></div><p>A userland class can&rsquo;t replace a loaded extension&rsquo;s class anyway, so anything cleverer would just fatal on a box that has
-phpredis. The same rule has a funny consequence for the mysqli shim: the ePHPm SDK compiles mysqli in, so under ePHPm the
-global <code>mysqli</code> is always the real extension and only the namespaced shim API is active. The global surface is for plain
-PHP builds without ext-mysqli. For WordPress that doesn&rsquo;t matter, because the <code>db.php</code> drop-in replaces <code>$wpdb</code> instead of
-replacing mysqli.</p>
+</span></span></code></pre></div><p>A userland class can&rsquo;t replace a loaded extension&rsquo;s class anyway. Anything cleverer would just fatal on a box that has
+phpredis. The same rule has a funny consequence for the mysqli shim. The ePHPm SDK compiles mysqli in, so under ePHPm
+the global <code>mysqli</code> is always the real extension. Only the namespaced shim API is active. The global surface is for
+plain PHP builds without ext-mysqli. For WordPress that doesn&rsquo;t matter, because the <code>db.php</code> drop-in replaces <code>$wpdb</code>
+instead of replacing mysqli.</p>
 <p>The WordPress drop-ins also have to survive being copied to a host that isn&rsquo;t ePHPm. <code>db.php</code> checks for
-<code>ephpm_db_query()</code> first, and if it&rsquo;s missing it logs a notice and returns without setting <code>$wpdb</code>, so WordPress builds the
-stock mysqli <code>wpdb</code> exactly as if the drop-in weren&rsquo;t there. <code>object-cache.php</code> does the same when it can&rsquo;t load its
+<code>ephpm_db_query()</code> first. If it&rsquo;s missing, it logs a notice and returns without setting <code>$wpdb</code>. WordPress then builds
+the stock mysqli <code>wpdb</code> exactly as if the drop-in weren&rsquo;t there. <code>object-cache.php</code> does the same when it can&rsquo;t load its
 classes. A drop-in that fatals your site when you move hosts is worse than no drop-in.</p>
 <h3 id="throwing-beats-a-wrong-answer">Throwing beats a wrong answer</h3>
-<p>The KV store behind <code>ephpm_kv_*</code> models strings, counters and TTLs. It doesn&rsquo;t have pipelines, <code>MULTI</code>, Lua, pub/sub, key
-iteration, or (through the native functions) hashes, lists and sets. The obvious way to write a compatibility shim is to
-fake those: run a &ldquo;pipeline&rdquo; as a sequence of calls, implement <code>SCAN</code> by returning nothing, and so on. Every one of those
-fakes gives callers an answer that&rsquo;s wrong in a way they can&rsquo;t detect.</p>
+<p>The KV store behind <code>ephpm_kv_*</code> models strings, counters and TTLs. It doesn&rsquo;t have pipelines, <code>MULTI</code>, Lua, pub/sub
+or key iteration. Through the native functions it doesn&rsquo;t have hashes, lists and sets either. The obvious way to write
+a compatibility shim is to fake those. Run a &ldquo;pipeline&rdquo; as a sequence of calls, implement <code>SCAN</code> by returning nothing,
+and so on. Every one of those fakes gives callers an answer that&rsquo;s wrong in a way they can&rsquo;t detect.</p>
 <p>So the phpredis shim throws instead:</p>
 <div class="highlight"><pre tabindex="0" class="chroma"><code class="language-php" data-lang="php"><span class="line"><span class="cl"><span class="k">public</span> <span class="k">function</span> <span class="nf">multi</span><span class="p">(</span><span class="nx">int</span> <span class="nv">$mode</span> <span class="o">=</span> <span class="nx">self</span><span class="o">::</span><span class="na">MULTI</span><span class="p">)</span><span class="o">:</span> <span class="nx">never</span>
 </span></span><span class="line"><span class="cl"><span class="p">{</span>
@@ -400,19 +407,19 @@ fakes gives callers an answer that&rsquo;s wrong in a way they can&rsquo;t detec
 </span></span><span class="line"><span class="cl"><span class="p">{</span>
 </span></span><span class="line"><span class="cl">    <span class="k">throw</span> <span class="nx">NotImplementedException</span><span class="o">::</span><span class="na">for</span><span class="p">(</span><span class="s1">&#39;SCAN&#39;</span><span class="p">,</span> <span class="s1">&#39;the KV store exposes no key iteration&#39;</span><span class="p">);</span>
 </span></span><span class="line"><span class="cl"><span class="p">}</span>
-</span></span></code></pre></div><p><code>NotImplementedException</code> extends <code>BadMethodCallException</code>, deliberately not <code>RedisException</code>. Plenty of application code
-wraps Redis calls in <code>catch (\RedisException $e)</code> and treats it as &ldquo;Redis is down, carry on without cache&rdquo;. Calling a
-command the shim doesn&rsquo;t implement is a bug in your setup, not a transient outage, and it shouldn&rsquo;t get swallowed by that
+</span></span></code></pre></div><p><code>NotImplementedException</code> extends <code>BadMethodCallException</code>, deliberately not <code>RedisException</code>. Plenty of application
+code wraps Redis calls in <code>catch (\RedisException $e)</code> and treats it as &ldquo;Redis is down, carry on without cache&rdquo;. Calling
+a command the shim doesn&rsquo;t implement is a bug in your setup, not a transient outage. It shouldn&rsquo;t get swallowed by that
 catch block. The Predis connection does the same with <code>SET ... XX</code>, <code>GET</code>, <code>KEEPTTL</code> and friends.</p>
-<p>The WordPress object cache had the same question with <code>wp_cache_flush_group()</code>. With no key scan there is no way to delete
-every key in a persistent group, so <code>flush_group()</code> clears the in-request copy and returns <code>false</code> for persistent groups,
-and <code>wp_cache_supports('flush_group')</code> says <code>false</code>. Plugins that check support fall back to their own invalidation.</p>
+<p>The WordPress object cache had the same question with <code>wp_cache_flush_group()</code>. With no key scan there is no way to
+delete every key in a persistent group. So <code>flush_group()</code> clears the in-request copy and returns <code>false</code> for persistent
+groups. <code>wp_cache_supports('flush_group')</code> says <code>false</code>. Plugins that check support fall back to their own invalidation.</p>
 <h3 id="the-semantics-fixes">The semantics fixes</h3>
 <p>These are the ones I&rsquo;d point at if someone asked &ldquo;why can&rsquo;t I just write a quick adapter&rdquo;.</p>
 <p><strong><code>wp_cache_add()</code> is a mutex.</strong> The first version of <code>add()</code> in <code>cache-wordpress</code> checked whether the key existed and
-then set it. WordPress code uses <code>wp_cache_add()</code> as a cheap mutex (only the first caller&rsquo;s add succeeds, so whoever gets <code>true</code>
-does the work), and with check-then-set two concurrent requests could both see &ldquo;absent&rdquo; and both win. <code>19226c2</code> routes the persistent path through
-<code>ephpm_kv_setnx</code>, which is one insert-if-absent under the store&rsquo;s per-shard lock:</p>
+then set it. WordPress code uses <code>wp_cache_add()</code> as a cheap mutex. Only the first caller&rsquo;s add succeeds, so whoever
+gets <code>true</code> does the work. With check-then-set, two concurrent requests could both see &ldquo;absent&rdquo; and both win. <code>19226c2</code>
+routes the persistent path through <code>ephpm_kv_setnx</code>. That&rsquo;s one insert-if-absent under the store&rsquo;s per-shard lock:</p>
 <div class="highlight"><pre tabindex="0" class="chroma"><code class="language-php" data-lang="php"><span class="line"><span class="cl"><span class="nv">$inserted</span> <span class="o">=</span> <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">ops</span><span class="o">-&gt;</span><span class="na">setnx</span><span class="p">(</span>
 </span></span><span class="line"><span class="cl">    <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">build_key</span><span class="p">(</span><span class="nv">$key</span><span class="p">,</span> <span class="nv">$group</span><span class="p">),</span>
 </span></span><span class="line"><span class="cl">    <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">serialize</span><span class="p">(</span><span class="nv">$data</span><span class="p">),</span>
@@ -422,9 +429,9 @@ does the work), and with check-then-set two concurrent requests could both see &
 </span></span><span class="line"><span class="cl">    <span class="k">return</span> <span class="k">false</span><span class="p">;</span>
 </span></span><span class="line"><span class="cl"><span class="p">}</span>
 </span></span></code></pre></div><p><strong><code>(int) false</code> is zero.</strong> <code>ephpm_kv_incr_by()</code> returns <code>false</code> when the stored value isn&rsquo;t an integer. Five of the
-packages had <code>return (int) \ephpm_kv_incr_by($key, $delta);</code>, which turns that error into <code>0</code>, and a counter that
-silently resets to zero is worse than one that throws. The same one-line bug got the same fix in each of them in the
-September audit:</p>
+packages had <code>return (int) \ephpm_kv_incr_by($key, $delta);</code>, which turns that error into <code>0</code>. A counter that silently
+resets to zero is worse than one that throws. The same one-line bug got the same fix in each of them in the September
+audit:</p>
 <div class="highlight"><pre tabindex="0" class="chroma"><code class="language-php" data-lang="php"><span class="line"><span class="cl"><span class="nv">$result</span> <span class="o">=</span> <span class="nx">\ephpm_kv_incr_by</span><span class="p">(</span><span class="nv">$key</span><span class="p">,</span> <span class="nv">$delta</span><span class="p">);</span>
 </span></span><span class="line"><span class="cl"><span class="k">if</span> <span class="p">(</span><span class="nv">$result</span> <span class="o">===</span> <span class="k">false</span><span class="p">)</span> <span class="p">{</span>
 </span></span><span class="line"><span class="cl">    <span class="k">throw</span> <span class="k">new</span> <span class="nx">\RuntimeException</span><span class="p">(</span>
@@ -432,31 +439,31 @@ September audit:</p>
 </span></span><span class="line"><span class="cl">    <span class="p">);</span>
 </span></span><span class="line"><span class="cl"><span class="p">}</span>
 </span></span><span class="line"><span class="cl"><span class="k">return</span> <span class="p">(</span><span class="nx">int</span><span class="p">)</span> <span class="nv">$result</span><span class="p">;</span>
-</span></span></code></pre></div><p><strong><code>'O\'Reilly'</code> broke the installer.</strong> <code>wpdb</code> without mysqli has to escape strings itself, and the first version did what
-<code>mysql_real_escape_string()</code> does, backslash-escaping the single quote. litewire&rsquo;s tenant path rejected <code>\'</code> as malformed
-SQL while accepting every other backslash escape, so any content with an apostrophe failed. The first place that showed
-up was the twentytwentyfive theme&rsquo;s block-pattern transient, which 500&rsquo;d the installer during its last step. <code>35db6a8</code>
-doubles the quote (<code>''</code>), which both MySQL and SQLite accept, and keeps doubling backslashes so a string still can&rsquo;t be
-broken out of. Doctrine&rsquo;s <code>quote()</code> and the mysqli shim&rsquo;s <code>real_escape_string()</code> got the same change later.</p>
-<p><strong>Native ints printed &ldquo;0 responses&rdquo;.</strong> The bridge hands back real PHP ints and floats. mysqli doesn&rsquo;t: unless
-<code>MYSQLI_OPT_INT_AND_FLOAT_NATIVE</code> is set (and <code>wpdb</code> never sets it) every scalar column comes back as a string. WordPress
-core depends on that. The comments-title block does <code>'0' === get_comments_number()</code>, so with native ints every post with
-no comments rendered a &ldquo;0 responses&rdquo; heading. I found it by rendering the same pages under stock <code>wpdb</code> and under the
-drop-in and diffing the HTML byte for byte. <code>ad746e9</code> stringifies non-NULL scalars during row hydration, and NULL stays
-null, like mysqli.</p>
-<p><strong>Stop guessing from the first keyword.</strong> Every adapter that implements a single <code>query()</code> entry point had to decide
-between <code>ephpm_db_query()</code> (rows) and <code>ephpm_db_execute()</code> (affected rows), and they all did it by looking at the first
-word of the SQL. That breaks on <code>WITH ... INSERT</code>, <code>INSERT ... RETURNING</code> and anything else that doesn&rsquo;t fit.
-<a href="https://github.com/ephpm/ephpm/pull/357">#357</a> added <code>ephpm_db_run()</code>, which reports <code>has_rowset</code> from the statement that
-actually executed. Doctrine deleted its <code>QueryClassifier</code> class outright (<code>e991c20</code>), and <code>db-wordpress</code> and the mysqli
-shim moved over too.</p>
+</span></span></code></pre></div><p><strong><code>'O\'Reilly'</code> broke the installer.</strong> <code>wpdb</code> without mysqli has to escape strings itself. The first version did what
+<code>mysql_real_escape_string()</code> does and backslash-escaped the single quote. litewire&rsquo;s tenant path rejected <code>\'</code> as
+malformed SQL while accepting every other backslash escape. So any content with an apostrophe failed. The first place
+that showed up was the twentytwentyfive theme&rsquo;s block-pattern transient, which 500&rsquo;d the installer during its last step.
+<code>35db6a8</code> doubles the quote (<code>''</code>), which both MySQL and SQLite accept. It keeps doubling backslashes so a string still
+can&rsquo;t be broken out of. Doctrine&rsquo;s <code>quote()</code> and the mysqli shim&rsquo;s <code>real_escape_string()</code> got the same change later.</p>
+<p><strong>Native ints printed &ldquo;0 responses&rdquo;.</strong> The bridge hands back real PHP ints and floats. mysqli doesn&rsquo;t. Unless
+<code>MYSQLI_OPT_INT_AND_FLOAT_NATIVE</code> is set, every scalar column comes back as a string, and <code>wpdb</code> never sets it.
+WordPress core depends on that. The comments-title block does <code>'0' === get_comments_number()</code>. With native ints every
+post with no comments rendered a &ldquo;0 responses&rdquo; heading. I found it by rendering the same pages under stock <code>wpdb</code> and
+under the drop-in, then diffing the HTML byte for byte. <code>ad746e9</code> stringifies non-NULL scalars during row hydration.
+NULL stays null, like mysqli.</p>
+<p><strong>Stop guessing from the first keyword.</strong> Every adapter that implements a single <code>query()</code> entry point had to pick
+between <code>ephpm_db_query()</code> (rows) and <code>ephpm_db_execute()</code> (affected rows). They all did it by looking at the first word
+of the SQL. That breaks on <code>WITH ... INSERT</code>, <code>INSERT ... RETURNING</code> and anything else that doesn&rsquo;t fit.
+<a href="https://github.com/ephpm/ephpm/pull/357">#357</a> added <code>ephpm_db_run()</code>. It reports <code>has_rowset</code> from the statement that
+executed. Doctrine deleted its <code>QueryClassifier</code> class outright (<code>e991c20</code>). <code>db-wordpress</code> and the mysqli shim moved
+over too.</p>
 <h3 id="known-limitations">Known limitations</h3>
-<p>Two things I found while writing this up, both of which come from the boundary rather than the wrappers&rsquo; own logic.</p>
-<p>Keys go through the native functions as C strings and must be valid UTF-8, as covered in part 1. In the Predis connection
-a plain <code>SET</code> that returns <code>false</code> is reported as Redis&rsquo; OOM error, on the reasoning that an overwrite can only fail for
-memory. A key that isn&rsquo;t valid UTF-8 also gets <code>false</code> from the bridge, so it surfaces as
+<p>I found two things while writing this up. Both come from the boundary rather than the wrappers&rsquo; own logic.</p>
+<p>Keys go through the native functions as C strings and must be valid UTF-8, as covered in part 1. In the Predis
+connection, a plain <code>SET</code> that returns <code>false</code> is reported as Redis&rsquo; OOM error. The reasoning is that an overwrite can
+only fail for memory. But a key that isn&rsquo;t valid UTF-8 also gets <code>false</code> from the bridge. It surfaces as
 <code>OOM command not allowed when used memory &gt; maxmemory.</code>, which will send you looking in the wrong place.</p>
-<p>The WordPress object cache stores integers raw so the native <code>incr</code> keeps working on them, and it applies that to
+<p>The WordPress object cache stores integers raw so the native <code>incr</code> keeps working on them. It applies that to
 integer-looking strings too:</p>
 <div class="highlight"><pre tabindex="0" class="chroma"><code class="language-php" data-lang="php"><span class="line"><span class="cl"><span class="k">private</span> <span class="k">function</span> <span class="nf">serialize</span><span class="p">(</span><span class="nx">mixed</span> <span class="nv">$value</span><span class="p">)</span><span class="o">:</span> <span class="nx">string</span>
 </span></span><span class="line"><span class="cl"><span class="p">{</span>
@@ -476,20 +483,23 @@ integer-looking strings too:</p>
 </span></span><span class="line"><span class="cl">    <span class="p">}</span>
 </span></span><span class="line"><span class="cl">    <span class="k">return</span> <span class="nx">\unserialize</span><span class="p">(</span><span class="nv">$value</span><span class="p">);</span>
 </span></span><span class="line"><span class="cl"><span class="p">}</span>
-</span></span></code></pre></div><p>On the next request (once it&rsquo;s past the in-request cache), a string <code>&quot;02134&quot;</code> comes back as the int <code>2134</code>, and <code>&quot;5&quot;</code>
-comes back as <code>5</code>. For most WordPress caching nobody notices. A ZIP code or a zero-padded ID cached as a string does
-notice. Distinguishing the two needs a type tag in the stored value, which is a format change, so for now it&rsquo;s a
-documented quirk rather than a quick patch.</p>
-<p>And the Laravel lock acquires atomically with <code>setnx</code>, but releases by reading the owner and then deleting, the same
-non-atomic release Laravel&rsquo;s own Memcached lock has. It was written the day before the store grew a compare-and-delete,
-so it says &ldquo;no CAS in the SAPI&rdquo; in its docblock. That one&rsquo;s a story of its own.</p>
+</span></span></code></pre></div><p>On the next request (once it&rsquo;s past the in-request cache), a string <code>&quot;02134&quot;</code> comes back as the int <code>2134</code>. <code>&quot;5&quot;</code> comes
+back as <code>5</code>. For most WordPress caching nobody notices. A ZIP code or a zero-padded ID cached as a string does notice.
+Distinguishing the two needs a type tag in the stored value, which is a format change. For now it&rsquo;s a documented quirk
+rather than a quick patch.</p>
+<p>The Laravel lock acquires atomically with <code>setnx</code>. But it releases by reading the owner and then deleting. That&rsquo;s the
+same non-atomic release Laravel&rsquo;s own Memcached lock has. It was written the day before the store grew a
+compare-and-delete, so it says &ldquo;no CAS in the SAPI&rdquo; in its docblock. That one&rsquo;s a story of its own.</p>
 <h3 id="trying-it">Trying it</h3>
-<p>The <a href="https://github.com/ephpm/wordpress-sample">wordpress-sample</a> repo puts most of this together: WordPress on the
-embedded database through <code>db-wordpress</code>, the object cache on the KV store through <code>cache-wordpress</code>, and a WebSocket
-broadcast from PHP through <code>ephpm_ws_broadcast</code>. It runs WooCommerce and Elementor, which between them exercise more
-MySQL-isms than WordPress core does.</p>
-<p>The theme across all thirteen packages is the same as part 1: the boundary is the easy part, and matching what callers
-already depend on (string typing, atomic <code>add()</code>, errors that are errors) is where the work goes.</p>
+<p>The <a href="https://github.com/ephpm/wordpress-sample">wordpress-sample</a> repo puts most of this together:</p>
+<ul>
+<li>WordPress on the embedded database through <code>db-wordpress</code></li>
+<li>the object cache on the KV store through <code>cache-wordpress</code></li>
+<li>a WebSocket broadcast from PHP through <code>ephpm_ws_broadcast</code></li>
+</ul>
+<p>It runs WooCommerce and Elementor, which between them exercise more MySQL-isms than WordPress core does.</p>
+<p>The theme across all thirteen packages is the same as part 1. The boundary is the easy part. The work goes into
+matching what callers already depend on: string typing, atomic <code>add()</code>, errors that are errors.</p>
 <h3 id="links">Links</h3>
 <ul>
 <li><a href="/blog/2026/09/calling-rust-from-php-without-a-socket-part-1/">Part 1: The Native Functions</a></li>

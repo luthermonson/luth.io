@@ -218,7 +218,7 @@
       <h2><a href="/blog/2026/09/process-containment-job-objects-process-groups-cgroups/">Cross-Platform Process Containment: Job Objects vs Process Groups vs cgroups</a></h2>
     
     
-      <p>How shipmates bounds and tears down agent process trees on Windows, Linux and macOS, why I deleted 1,206 lines of cgroup code, and the grandchild that escaped the memory cap everywhere except my dev box.</p>
+      <p>How shipmates bounds and tears down agent process trees on Windows, Linux and macOS. It also covers why I deleted 1,206 lines of cgroup code and the grandchild that escaped the memory cap everywhere except my dev box.</p>
     
   </div>
   <div class="meta">
@@ -233,8 +233,8 @@
     <img class="" src="/img/2026/09/process-containment-job-objects-process-groups-cgroups-cover.svg" alt="Agent process tree with the scope of kill and measurement on Windows, Linux and macOS">
   </a>
     
-    <p>Every turn a <a href="/blog/2026/08/shipmates-persona-based-ai-coding-crews/">shipmates</a> crew member takes is a subprocess:
-<code>claude</code> or the <code>codex</code> app-server, which in turn spawns shells, <code>go test</code>, <code>npm</code>, whatever the task calls for. Two
+    <p>Every turn a <a href="/blog/2026/08/shipmates-persona-based-ai-coding-crews/">shipmates</a> crew member takes is a subprocess. It&rsquo;s
+<code>claude</code> or the <code>codex</code> app-server. That in turn spawns shells, <code>go test</code>, <code>npm</code> or whatever the task calls for. Two
 things have to be true about that tree. When a turn ends or gets killed, the <em>whole</em> tree goes, including the
 grandchildren. And if somebody sets a memory or CPU budget, the budget applies to the whole tree, not just the
 process I happened to start.</p>
@@ -306,11 +306,11 @@ process I happened to start.</p>
     <img class="" src="/img/2026/09/bind-mounts-across-mount-namespaces-toctou.svg" alt="Sequence diagram of the bind mount TOCTOU race and the openat2 plus staging fix">
   </a>
     
-    <p>GitHub Actions has a <code>container:</code> key that runs a job&rsquo;s steps inside an image of your choosing. It&rsquo;s popular because it
-gives you a reproducible toolchain without building a custom runner image. On a self-hosted runner it works by having the
-runner drive Docker, and on <a href="/blog/2026/08/ephemerd-one-daemon-every-os/">ephemerd</a> &ldquo;Docker&rdquo; is a shim that speaks the
-Docker API and creates containers in containerd. Getting bind mounts right through that shim took four PRs in a week. A
-couple of months later the version that&hellip;</p>
+    <p>GitHub Actions has a <code>container:</code> key that runs a job&rsquo;s steps inside an image of your choosing. It&rsquo;s popular because
+it gives you a reproducible toolchain without building a custom runner image. On a self-hosted runner it works by
+having the runner drive Docker. On <a href="/blog/2026/08/ephemerd-one-daemon-every-os/">ephemerd</a>, &ldquo;Docker&rdquo; is a shim that
+speaks the Docker API and creates containers in containerd. Getting bind mounts right through that shim took four PRs
+in a week. A couple of months later the version that worked&hellip;</p>
   </div>
   <footer>
     <a href="/blog/2026/09/bind-mounts-across-mount-namespaces/" class="button big">Read More</a>
@@ -380,9 +380,9 @@ couple of months later the version that&hellip;</p>
   </a>
     
     <p>On August 16th a <code>server.test.exe</code> from <a href="/blog/2026/08/shipmates-persona-based-ai-coding-crews/">shipmates</a> climbed to
-roughly <strong>1 TB of commit charge</strong> on my Windows workstation. Windows Terminal, which was hosting several agent sessions
-in tabs, hard-faulted with <code>E_OUTOFMEMORY</code> and every one of those sessions died at the same moment. It wasn&rsquo;t the first
-time either. An earlier one hit about 236 GB through an infinite <code>filepath.Dir</code> loop.</p>
+roughly <strong>1 TB of commit charge</strong> on my Windows workstation. Windows Terminal was hosting several agent sessions in
+tabs. It hard-faulted with <code>E_OUTOFMEMORY</code>, and every one of those sessions died at the same moment. It wasn&rsquo;t the
+first time either. An earlier one hit about 236 GB through an infinite <code>filepath.Dir</code> loop.</p>
   </div>
   <footer>
     <a href="/blog/2026/09/memory-watchdog-for-go-test/" class="button big">Read More</a>
@@ -430,7 +430,7 @@ time either. An earlier one hit about 236 GB through an infinite <code>filepath.
       <h2><a href="/blog/2026/09/kata-containers-for-ci/">Kata Containers for CI: Boot Cost Isn&#39;t the Problem, File I/O Is</a></h2>
     
     
-      <p>Kata containers are safer for CI, but slower. Starting one takes 12x longer, which is fine, and reading small files is about 40x slower for the entire job, which isn&#39;t.</p>
+      <p>Kata containers are safer for CI, but slower. Starting one takes 12x longer, which is fine. Reading small files is about 40x slower for the entire job, which isn&#39;t.</p>
     
   </div>
   <div class="meta">
@@ -446,11 +446,11 @@ time either. An earlier one hit about 236 GB through an infinite <code>filepath.
   </a>
     
     <p>Of the three platforms <a href="/blog/2026/08/ephemerd-one-daemon-every-os/">ephemerd</a> runs jobs on, Linux has the weakest
-isolation. Windows jobs get a Hyper-V isolated container with its own kernel, macOS jobs get a whole VM, and a Linux job is
+isolation. Windows jobs get a Hyper-V isolated container with its own kernel. macOS jobs get a whole VM. A Linux job is
 an ordinary runc container sharing the host kernel. A kernel escape from a Linux job is a host compromise.
-<a href="https://katacontainers.io/">Kata Containers</a> fixes that by putting each container in a lightweight VM with its own kernel,
-and it plugs into containerd as just another runtime handler. So I added it in
-<a href="https://github.com/ephpm/ephemerd/pull/155">#155</a>, measured it, and left&hellip;</p>
+<a href="https://katacontainers.io/">Kata Containers</a> fixes that by putting each container in a lightweight VM with its own
+kernel. It plugs into containerd as just another runtime handler. So I added it in
+<a href="https://github.com/ephpm/ephemerd/pull/155">#155</a>, measured it, and left it off&hellip;</p>
   </div>
   <footer>
     <a href="/blog/2026/09/kata-containers-for-ci/" class="button big">Read More</a>
@@ -502,7 +502,7 @@ and it plugs into containerd as just another runtime handler. So I added it in
       <h2><a href="/blog/2026/08/ephpm-ebpf-per-vhost-network-policy/">Per-Tenant Network Policy in One Process: ePHPm&#39;s eBPF Thread Tags</a></h2>
     
     
-      <p>Every site on an ePHPm server runs inside the same process, so a normal firewall can&#39;t tell them apart. A small eBPF program tags each thread with its site and keeps sites from reaching each other&#39;s local ports, at under a microsecond per connection.</p>
+      <p>Every site on an ePHPm server runs inside the same process, so a normal firewall can&#39;t tell them apart. A small eBPF program tags each thread with its site. It keeps sites from reaching each other&#39;s local ports for under a microsecond per connection.</p>
     
   </div>
   <div class="meta">
@@ -518,9 +518,9 @@ and it plugs into containerd as just another runtime handler. So I added it in
   </a>
     
     <p>In multi-tenant mode <a href="https://github.com/ephpm/ephpm">ePHPm</a> serves every site in <code>sites_dir</code> from one process. Every
-tenant&rsquo;s PHP runs as the same OS user, on the same pool of ZTS threads, and a thread that just served <code>blog.example</code>
-will serve <code>shop.example</code> a few milliseconds later. That&rsquo;s the density win. It also means the kernel has no idea
-which tenant is behind a given <code>connect()</code>. As far as Linux is concerned it&rsquo;s all <code>ephpm-web</code>.</p>
+tenant&rsquo;s PHP runs as the same OS user on the same pool of ZTS threads. A thread that just served <code>blog.example</code> will
+serve <code>shop.example</code> a few milliseconds later. That&rsquo;s the density win. It also means the kernel has no idea which
+tenant is behind a given <code>connect()</code>. As far as Linux is concerned it&rsquo;s all <code>ephpm-web</code>.</p>
   </div>
   <footer>
     <a href="/blog/2026/08/ephpm-ebpf-per-vhost-network-policy/" class="button big">Read More</a>
@@ -587,8 +587,8 @@ which tenant is behind a given <code>connect()</code>. As far as Linux is concer
     
     <p>After a week of Windows firewall rules that <a href="/blog/2026/08/windows-container-egress-firewall/">listed fine and enforced nothing</a>,
 I went back to the Linux side of <a href="https://github.com/ephpm/ephemerd">ephemerd</a> feeling pretty good about it. iptables is
-the boring, well-understood one. Then I looked at the packet counters on a live node and found a rule that had never
-matched a packet in its life, on a node that had pushed 9.8 GB through the same chain.</p>
+the boring, well-understood one. Then I looked at the packet counters on a live node. I found a rule that had never
+matched a packet in its life. That node had pushed 9.8 GB through the same chain.</p>
   </div>
   <footer>
     <a href="/blog/2026/08/iptables-rule-zero-packets/" class="button big">Read More</a>
@@ -638,7 +638,7 @@ matched a packet in its life, on a node that had pushed 9.8 GB through the same 
       <h2><a href="/blog/2026/08/benchmark-4x-wrong-wsl-drvfs-cwd/">My Benchmark Was 4x Wrong Because of WSL</a></h2>
     
     
-      <p>Launching the server with its working directory on /mnt/c cost ePHPm about 4x on a light workload, and the report built a wrong explanation on top of it. Here&#39;s the strace that shows why.</p>
+      <p>Launching the server with its working directory on /mnt/c cost ePHPm about 4x on a light workload. The report built a wrong explanation on top of it, and the strace shows why.</p>
     
   </div>
   <div class="meta">
@@ -653,11 +653,11 @@ matched a packet in its life, on a node that had pushed 9.8 GB through the same 
     <img class="" src="/img/2026/08/benchmark-4x-wrong-wsl-drvfs-cwd-depth.svg" alt="Bar chart of ePHPm requests per second by working directory: native ext4 far ahead of DrvFs, with DrvFs throughput falling as the cwd path gets deeper">
   </a>
     
-    <p>I do most of my benchmarking on a Windows box in WSL2, because it&rsquo;s the machine with 32 threads and 62 GB of RAM on
-my desk. Everybody who does that learns the first rule early: don&rsquo;t put your data on <code>/mnt/c</code>. DrvFs, the 9p-backed
-mount that exposes the Windows drives inside WSL, is slow for file-heavy work, so the databases, the docroot and the
-build output all live on the WSL ext4 disk. My scaling harness for <a href="https://github.com/ephpm/ephpm">ePHPm</a> even
-says so in capital letters in its README.</p>
+    <p>I do most of my benchmarking on a Windows box in WSL2. It&rsquo;s the machine on my desk with 32 threads and 62 GB of RAM.
+Everybody who does that learns the first rule early: don&rsquo;t put your data on <code>/mnt/c</code>. DrvFs is the 9p-backed mount that
+exposes the Windows drives inside WSL, and it&rsquo;s slow for file-heavy work. So the databases, the docroot and the build
+output all live on the WSL ext4 disk. My scaling harness for <a href="https://github.com/ephpm/ephpm">ePHPm</a> even says so in
+capital letters in its README.</p>
   </div>
   <footer>
     <a href="/blog/2026/08/benchmark-4x-wrong-wsl-drvfs-cwd/" class="button big">Read More</a>
@@ -723,7 +723,7 @@ says so in capital letters in its README.</p>
   </a>
     
     <p>I&rsquo;ve been building <a href="https://github.com/ephpm/ephemerd">ephemerd</a>, a daemon that runs self-hosted GitHub Actions runners
-with a fresh environment per job. On a Windows host, Windows jobs run in Hyper-V isolated containers, but Linux jobs still
+with a fresh environment per job. On a Windows host, Windows jobs run in Hyper-V isolated containers. Linux jobs still
 need a Linux kernel from somewhere. The obvious answer on Windows in 2026 is WSL2, and that&rsquo;s what I used first. It worked
 great from my terminal and fell over the moment ephemerd became a real Windows service.</p>
   </div>
@@ -794,8 +794,8 @@ great from my terminal and fell over the moment ephemerd became a real Windows s
     
     <p>Last week I wrote about <a href="/blog/2026/04/why-rust-for-php-embedding/">why ePHPm embeds PHP from Rust</a> and promised the
 signal bug its own post. Here it is. It&rsquo;s the kind of bug where the fix is about ten lines and the explanation is the
-whole post, because nothing in PHP&rsquo;s embed documentation (there&rsquo;s barely any) tells you that initializing PHP has
-process-wide side effects that assume PHP is the only thing in the process.</p>
+whole post. Nothing in PHP&rsquo;s embed documentation (there&rsquo;s barely any) tells you that initializing PHP has
+process-wide side effects. Those side effects assume PHP is the only thing in the process.</p>
   </div>
   <footer>
     <a href="/blog/2026/04/php-signal-safety-init-ordering/" class="button big">Read More</a>

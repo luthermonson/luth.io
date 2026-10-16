@@ -218,7 +218,7 @@
       <h2><a href="/blog/2026/09/kata-containers-for-ci/">Kata Containers for CI: Boot Cost Isn&#39;t the Problem, File I/O Is</a></h2>
     
     
-      <p>Kata containers are safer for CI, but slower. Starting one takes 12x longer, which is fine, and reading small files is about 40x slower for the entire job, which isn&#39;t.</p>
+      <p>Kata containers are safer for CI, but slower. Starting one takes 12x longer, which is fine. Reading small files is about 40x slower for the entire job, which isn&#39;t.</p>
     
   </div>
   <div class="meta">
@@ -234,11 +234,11 @@
   </a>
     
     <p>Of the three platforms <a href="/blog/2026/08/ephemerd-one-daemon-every-os/">ephemerd</a> runs jobs on, Linux has the weakest
-isolation. Windows jobs get a Hyper-V isolated container with its own kernel, macOS jobs get a whole VM, and a Linux job is
+isolation. Windows jobs get a Hyper-V isolated container with its own kernel. macOS jobs get a whole VM. A Linux job is
 an ordinary runc container sharing the host kernel. A kernel escape from a Linux job is a host compromise.
-<a href="https://katacontainers.io/">Kata Containers</a> fixes that by putting each container in a lightweight VM with its own kernel,
-and it plugs into containerd as just another runtime handler. So I added it in
-<a href="https://github.com/ephpm/ephemerd/pull/155">#155</a>, measured it, and left&hellip;</p>
+<a href="https://katacontainers.io/">Kata Containers</a> fixes that by putting each container in a lightweight VM with its own
+kernel. It plugs into containerd as just another runtime handler. So I added it in
+<a href="https://github.com/ephpm/ephemerd/pull/155">#155</a>, measured it, and left it off&hellip;</p>
   </div>
   <footer>
     <a href="/blog/2026/09/kata-containers-for-ci/" class="button big">Read More</a>

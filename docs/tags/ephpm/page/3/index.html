@@ -218,7 +218,7 @@
       <h2><a href="/blog/2026/08/ephpm-ebpf-per-vhost-network-policy/">Per-Tenant Network Policy in One Process: ePHPm&#39;s eBPF Thread Tags</a></h2>
     
     
-      <p>Every site on an ePHPm server runs inside the same process, so a normal firewall can&#39;t tell them apart. A small eBPF program tags each thread with its site and keeps sites from reaching each other&#39;s local ports, at under a microsecond per connection.</p>
+      <p>Every site on an ePHPm server runs inside the same process, so a normal firewall can&#39;t tell them apart. A small eBPF program tags each thread with its site. It keeps sites from reaching each other&#39;s local ports for under a microsecond per connection.</p>
     
   </div>
   <div class="meta">
@@ -234,9 +234,9 @@
   </a>
     
     <p>In multi-tenant mode <a href="https://github.com/ephpm/ephpm">ePHPm</a> serves every site in <code>sites_dir</code> from one process. Every
-tenant&rsquo;s PHP runs as the same OS user, on the same pool of ZTS threads, and a thread that just served <code>blog.example</code>
-will serve <code>shop.example</code> a few milliseconds later. That&rsquo;s the density win. It also means the kernel has no idea
-which tenant is behind a given <code>connect()</code>. As far as Linux is concerned it&rsquo;s all <code>ephpm-web</code>.</p>
+tenant&rsquo;s PHP runs as the same OS user on the same pool of ZTS threads. A thread that just served <code>blog.example</code> will
+serve <code>shop.example</code> a few milliseconds later. That&rsquo;s the density win. It also means the kernel has no idea which
+tenant is behind a given <code>connect()</code>. As far as Linux is concerned it&rsquo;s all <code>ephpm-web</code>.</p>
   </div>
   <footer>
     <a href="/blog/2026/08/ephpm-ebpf-per-vhost-network-policy/" class="button big">Read More</a>
@@ -286,7 +286,7 @@ which tenant is behind a given <code>connect()</code>. As far as Linux is concer
       <h2><a href="/blog/2026/08/hardening-rust-database-proxy/">Security and Performance Hardening of a Rust Database Proxy</a></h2>
     
     
-      <p>One week of hardening litewire: a memory bug in a dependency, a site that could open its neighbor&#39;s database, a security rule that lived only in a comment, and a needless 1 MB clear on every query.</p>
+      <p>What a week of hardening litewire turned up. A dependency had a memory bug, one site could open its neighbor&#39;s database, a security rule lived only in a comment and every query paid for a needless 1 MB clear.</p>
     
   </div>
   <div class="meta">
@@ -302,10 +302,8 @@ which tenant is behind a given <code>connect()</code>. As far as Linux is concer
   </a>
     
     <p><a href="https://github.com/ephpm/litewire">litewire</a> is the piece of ePHPm that lets PHP apps talk MySQL to a SQLite file. I
-wrote about <a href="/blog/2026/07/sqlite-production-database-protocol-translation/">how it works</a> and about
-<a href="/blog/2026/08/faking-mysql-quirks-wordpress/">the MySQL quirks WordPress depends on</a>. This one is the less visible
-half of August: an audit pass on litewire, a multi-tenant mode that turned a database proxy into a security boundary,
-and a performance regression I shipped and then had to go find.</p>
+wrote about <a href="/blog/2026/07/sqlite-production-database-protocol-translation/">how it works</a> and about <a href="/blog/2026/08/faking-mysql-quirks-wordpress/">the MySQL quirks
+WordPress depends on</a>. This one is the less visible half of August:</p>
   </div>
   <footer>
     <a href="/blog/2026/08/hardening-rust-database-proxy/" class="button big">Read More</a>
@@ -357,7 +355,7 @@ and a performance regression I shipped and then had to go find.</p>
       <h2><a href="/blog/2026/08/what-does-one-more-wordpress-site-cost/">What Does One More WordPress Site Cost?</a></h2>
     
     
-      <p>Marginal RAM, file descriptors, CPU and disk for each extra WordPress tenant on one ePHPm instance, measured from 10 to 1000 sites.</p>
+      <p>I measured what each extra WordPress tenant on one ePHPm instance costs in RAM, file descriptors, CPU and disk. The sweep ran from 10 to 1000 sites.</p>
     
   </div>
   <div class="meta">
@@ -372,11 +370,10 @@ and a performance regression I shipped and then had to go find.</p>
     <img class="" src="/img/2026/08/what-does-one-more-wordpress-site-cost-rss.svg" alt="Line chart of ePHPm steady RSS against tenant site count: linear at about 2.2 MB per site with every site open, flat past the default LRU cap of 256">
   </a>
     
-    <p>ePHPm v0.7.0 shipped per-site multi-tenancy: point <code>[server] sites_dir</code> at a directory, every <code>Host</code> maps to its own
-docroot and its own Turso database file, and one process serves all of them. The first question anybody asks about
-that is &ldquo;how many sites fit on a box?&rdquo;, and the honest way to answer it is to turn the question around. What does
-<strong>one more</strong> site cost? If you know the marginal RAM, file descriptors, CPU and disk for a tenant, the box size falls
-out of arithmetic.</p>
+    <p>ePHPm v0.7.0 shipped per-site multi-tenancy. Point <code>[server] sites_dir</code> at a directory and every <code>Host</code> maps to its own
+docroot and its own Turso database file. One process serves all of them. The first question anybody asks about that is
+&ldquo;how many sites fit on a box?&rdquo; The honest way to answer it is to turn the question around. What does <strong>one more</strong> site
+cost? If you know the marginal RAM, file descriptors, CPU and disk for a tenant, the box size falls out of arithmetic.</p>
   </div>
   <footer>
     <a href="/blog/2026/08/what-does-one-more-wordpress-site-cost/" class="button big">Read More</a>
@@ -445,9 +442,9 @@ out of arithmetic.</p>
     
     <p>Ask most people what their PHP server does when it&rsquo;s overloaded and you&rsquo;ll hear &ldquo;it returns 503s.&rdquo; Ask them how they
 know and it usually comes down to a config setting they read about. I was in that camp for <a href="https://github.com/ephpm/ephpm">ePHPm</a>.
-We had a <code>[server.limits] max_connections</code> knob, the docs said it returned 503 at the cap, and every benchmark we had
-ever run reported zero errors under heavy load. Then I wrote a load generator that could actually produce overload,
-and the honest answer was&hellip;</p>
+We had a <code>[server.limits] max_connections</code> knob, and the docs said it returned 503 at the cap. Every benchmark we had
+ever run reported zero errors under heavy load. Then I wrote a load generator that could produce overload. The honest
+answer was that an&hellip;</p>
   </div>
   <footer>
     <a href="/blog/2026/08/what-an-overloaded-php-server-actually-returns/" class="button big">Read More</a>
@@ -495,7 +492,7 @@ and the honest answer was&hellip;</p>
       <h2><a href="/blog/2026/08/benchmark-4x-wrong-wsl-drvfs-cwd/">My Benchmark Was 4x Wrong Because of WSL</a></h2>
     
     
-      <p>Launching the server with its working directory on /mnt/c cost ePHPm about 4x on a light workload, and the report built a wrong explanation on top of it. Here&#39;s the strace that shows why.</p>
+      <p>Launching the server with its working directory on /mnt/c cost ePHPm about 4x on a light workload. The report built a wrong explanation on top of it, and the strace shows why.</p>
     
   </div>
   <div class="meta">
@@ -510,11 +507,11 @@ and the honest answer was&hellip;</p>
     <img class="" src="/img/2026/08/benchmark-4x-wrong-wsl-drvfs-cwd-depth.svg" alt="Bar chart of ePHPm requests per second by working directory: native ext4 far ahead of DrvFs, with DrvFs throughput falling as the cwd path gets deeper">
   </a>
     
-    <p>I do most of my benchmarking on a Windows box in WSL2, because it&rsquo;s the machine with 32 threads and 62 GB of RAM on
-my desk. Everybody who does that learns the first rule early: don&rsquo;t put your data on <code>/mnt/c</code>. DrvFs, the 9p-backed
-mount that exposes the Windows drives inside WSL, is slow for file-heavy work, so the databases, the docroot and the
-build output all live on the WSL ext4 disk. My scaling harness for <a href="https://github.com/ephpm/ephpm">ePHPm</a> even
-says so in capital letters in its README.</p>
+    <p>I do most of my benchmarking on a Windows box in WSL2. It&rsquo;s the machine on my desk with 32 threads and 62 GB of RAM.
+Everybody who does that learns the first rule early: don&rsquo;t put your data on <code>/mnt/c</code>. DrvFs is the 9p-backed mount that
+exposes the Windows drives inside WSL, and it&rsquo;s slow for file-heavy work. So the databases, the docroot and the build
+output all live on the WSL ext4 disk. My scaling harness for <a href="https://github.com/ephpm/ephpm">ePHPm</a> even says so in
+capital letters in its README.</p>
   </div>
   <footer>
     <a href="/blog/2026/08/benchmark-4x-wrong-wsl-drvfs-cwd/" class="button big">Read More</a>
@@ -564,7 +561,7 @@ says so in capital letters in its README.</p>
       <h2><a href="/blog/2026/08/clustered-sqlite-adding-turso/">Clustered SQLite in ePHPm, Part 2: Adding Turso</a></h2>
     
     
-      <p>Deciding a beta database engine is ready by testing it instead of reading its version number, and replacing both rusqlite and sqld with Turso in ePHPm v0.7.0.</p>
+      <p>How I decided a beta database engine was ready by testing it instead of reading its version number. ePHPm v0.7.0 replaces both rusqlite and sqld with Turso.</p>
     
   </div>
   <div class="meta">
@@ -579,10 +576,10 @@ says so in capital letters in its README.</p>
     <img class="" src="/img/2026/08/clustered-sqlite-adding-turso-four-lanes.svg" alt="Bar chart of four SQLite lanes at 16 concurrent connections: rusqlite and Turso single node, sqld and Turso CDC clustered">
   </a>
     
-    <p><a href="/blog/2026/08/clustered-sqlite-sqld-sidecar/">Part 1</a> ended with ePHPm running two SQLite engines: rusqlite in-process
-for a single node, and an embedded sqld child process for a cluster. The sidecar fell off a cliff past four concurrent
-writers and the best fix I could ship was a semaphore set to 1. This post is about replacing both engines with one, and
-about how I decided that engine was ready.</p>
+    <p><a href="/blog/2026/08/clustered-sqlite-sqld-sidecar/">Part 1</a> ended with ePHPm running two SQLite engines. rusqlite ran
+in-process for a single node, and an embedded sqld child process ran for a cluster. The sidecar fell off a cliff past
+four concurrent writers. The best fix I could ship was a semaphore set to 1. This post is about replacing both engines
+with one, and about how I decided that engine was ready.</p>
   </div>
   <footer>
     <a href="/blog/2026/08/clustered-sqlite-adding-turso/" class="button big">Read More</a>
@@ -630,13 +627,13 @@ about how I decided that engine was ready.</p>
       <h2><a href="/blog/2026/08/rolling-your-own-kv-store/">Rolling Your Own KV Store Instead of Embedding Redis</a></h2>
     
     
-      <p>Why ePHPm has its own Redis-compatible cache built in instead of running Redis, a bug that hid in it for four months, and how it compares to real Redis on the same machine.</p>
+      <p>Why ePHPm has its own Redis-compatible cache built in instead of running Redis. It also covers a bug that hid in it for four months and how it compares to real Redis on the same machine.</p>
     
   </div>
   <div class="meta">
     <time datetime="2026-08-17 20:44:00 -0700 PDT">August 17, 2026</time>
     
-    <p>10-Minute Read</p>
+    <p>11-Minute Read</p>
   </div>
 </header>
 
@@ -647,9 +644,9 @@ about how I decided that engine was ready.</p>
     
     <p>Every PHP deployment I&rsquo;ve run eventually grew a Redis. Sessions, the WordPress object cache, Laravel&rsquo;s cache and locks,
 rate limiting. <a href="https://github.com/ephpm/ephpm">ePHPm</a> is supposed to be one binary that replaces nginx + php-fpm +
-Redis, so it needed a cache in the box. I didn&rsquo;t want to write one. This post is why I did anyway, how it&rsquo;s built, the
-bug that sat in its eviction code from March until last month, and how it holds up against a stock Redis on the same
-machine with <code>redis-benchmark</code> doing the&hellip;</p>
+Redis, so it needed a cache in the box. I didn&rsquo;t want to write one. This post covers why I did anyway and how it&rsquo;s
+built. It also covers the bug that sat in its eviction code from March until last month. Then I compare it against a
+stock Redis on the same machine with&hellip;</p>
   </div>
   <footer>
     <a href="/blog/2026/08/rolling-your-own-kv-store/" class="button big">Read More</a>
@@ -701,7 +698,7 @@ machine with <code>redis-benchmark</code> doing the&hellip;</p>
       <h2><a href="/blog/2026/08/faking-mysql-quirks-wordpress/">Faking MySQL&#39;s Quirks Well Enough to Fool WordPress</a></h2>
     
     
-      <p>Passing WordPress&#39;s install tests didn&#39;t mean litewire behaved like MySQL. This is the second round of fixes: the small MySQL behaviors that WordPress and Laravel quietly depend on.</p>
+      <p>Passing WordPress&#39;s install tests didn&#39;t mean litewire behaved like MySQL. This is the second round of fixes, for the small MySQL behaviors that WordPress and Laravel quietly depend on.</p>
     
   </div>
   <div class="meta">
@@ -717,11 +714,8 @@ machine with <code>redis-benchmark</code> doing the&hellip;</p>
   </a>
     
     <p>Last month I wrote about <a href="/blog/2026/07/sqlite-production-database-protocol-translation/">running SQLite behind a MySQL socket</a>
-with <a href="https://github.com/ephpm/litewire">litewire</a>, and ended on &ldquo;passing an install suite is not the same thing as
-behaving like MySQL&rdquo;. That turned out to be accurate. On August 10th a few things happened at once: I put a real
-WordPress 7.0.3 site through a benchmark on ePHPm, A/B tested the new in-process database bridge against the wire path, and started building
-<a href="https://github.com/ephpm/db-wordpress">ephpm/db-wordpress</a>, a <code>wpdb</code> drop-in that talks to the database in-process
-instead of over a&hellip;</p>
+with <a href="https://github.com/ephpm/litewire">litewire</a>. I ended on &ldquo;passing an install suite is not the same thing as
+behaving like MySQL&rdquo;. That turned out to be accurate. On August 10th a few things happened at once:</p>
   </div>
   <footer>
     <a href="/blog/2026/08/faking-mysql-quirks-wordpress/" class="button big">Read More</a>
@@ -771,7 +765,7 @@ instead of over a&hellip;</p>
       <h2><a href="/blog/2026/08/requests-that-end-wrong/">Requests That End Wrong: A 200 That Was Really a Crash</a></h2>
     
     
-      <p>Three ePHPm bugs in how an embedded PHP request starts and ends: a bailout that returned 200, an empty $_POST, and a SIGTERM that corrupted the heap.</p>
+      <p>Three ePHPm bugs lived in how an embedded PHP request starts and ends. A bailout returned 200, $_POST came up empty and a SIGTERM corrupted the heap.</p>
     
   </div>
   <div class="meta">
@@ -786,9 +780,9 @@ instead of over a&hellip;</p>
     <img class="" src="/img/2026/08/requests-that-end-wrong-cover.svg" alt="Diagram of a bare zend_bailout being absorbed by php_execute_script&#39;s own zend_try instead of reaching ePHPm&#39;s guard">
   </a>
     
-    <p>The scariest response a server can send isn&rsquo;t a 500. It&rsquo;s a 200 that should have been a 500. A crash is loud: the
-pod restarts, an alert fires, somebody looks. A truncated page with a success status code gets cached by your CDN,
-the health check calls the box healthy, and a client parses half a document as if it were the whole thing.</p>
+    <p>The scariest response a server can send isn&rsquo;t a 500. It&rsquo;s a 200 that should have been a 500. A crash is loud. The pod
+restarts, an alert fires, somebody looks. A truncated page with a success status code is quiet. Your CDN caches it and
+the health check calls the box healthy. A client parses half a document as if it were the whole thing.</p>
   </div>
   <footer>
     <a href="/blog/2026/08/requests-that-end-wrong/" class="button big">Read More</a>
@@ -836,7 +830,7 @@ the health check calls the box healthy, and a client parses half a document as i
       <h2><a href="/blog/2026/08/db-connection-pooling-smart-reset/">Database Connection Pooling with Smart Reset</a></h2>
     
     
-      <p>PHP opens a new MySQL connection on every request. ePHPm reuses them and cleans up only the ones that need it. How it works, two bugs it had, and how much load it takes off MySQL.</p>
+      <p>PHP opens a new MySQL connection on every request, but ePHPm reuses them and cleans up only the ones that need it. Here&#39;s how that works, two bugs it had and how much load it takes off MySQL.</p>
     
   </div>
   <div class="meta">
@@ -851,11 +845,11 @@ the health check calls the box healthy, and a client parses half a document as i
     <img class="" src="/img/2026/08/db-connection-pooling-smart-reset-cover.svg" alt="PHP request connecting to the ePHPm MySQL proxy, which lends it a pooled backend connection and resets it only if the session was dirtied">
   </a>
     
-    <p>PHP&rsquo;s share-nothing model is one of its best properties and it has one expensive side effect: a request can&rsquo;t keep a
-database connection for the next request. php-fpm gives you <code>PDO::ATTR_PERSISTENT</code> and <code>mysqli</code>&rsquo;s <code>p:</code> hosts, but
-those are per-worker-process, PDO&rsquo;s keep whatever session state the last request left behind (mysqli at least resets
-the session with <code>COM_CHANGE_USER</code> on reuse), and almost nobody turns them on. So in practice every PHP request does a
-TCP connect, a&hellip;</p>
+    <p>PHP&rsquo;s share-nothing model is one of its best properties. It has one expensive side effect: a request can&rsquo;t keep a
+database connection for the next request. php-fpm gives you <code>PDO::ATTR_PERSISTENT</code> and <code>mysqli</code>&rsquo;s <code>p:</code> hosts. But
+those are per-worker-process. PDO&rsquo;s keep whatever session state the last request left behind. mysqli at least resets
+the session with <code>COM_CHANGE_USER</code> on reuse. And almost nobody turns them on. So in practice every PHP request does a
+TCP connect, a MySQL&hellip;</p>
   </div>
   <footer>
     <a href="/blog/2026/08/db-connection-pooling-smart-reset/" class="button big">Read More</a>

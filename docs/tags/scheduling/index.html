@@ -218,7 +218,7 @@
       <h2><a href="/blog/2026/10/webhooks-out-of-order-scheduler/">Webhooks Arrive Out of Order: How My Scheduler Killed Live Builds</a></h2>
     
     
-      <p>ephemerd&#39;s orphan sweep trusted webhook history over reality and destroyed a runner mid-build. The fix: rules only nominate, and a live busy check gets a veto.</p>
+      <p>ephemerd&#39;s orphan sweep trusted webhook history over reality and destroyed a runner mid-build. Now the rules only nominate, and a live busy check gets a veto.</p>
     
   </div>
   <div class="meta">
@@ -233,10 +233,10 @@
     <img class="" src="/img/2026/10/webhooks-out-of-order-scheduler-timeline.svg" alt="Timeline of three same-label jobs where a runner executing a build is destroyed 2.3 seconds before its in_progress webhook arrives">
   </a>
     
-    <p>The scheduler in <a href="/blog/2026/08/ephemerd-one-daemon-every-os/">ephemerd</a> is event-driven. GitHub sends a <code>workflow_job</code>
-webhook when a job is queued, when it starts and when it completes, and ephemerd creates and destroys runners to match.
-For a while that worked well enough that I stopped thinking about it. Then a <code>docker-build</code> job failed with &ldquo;The
-self-hosted runner lost communication with the server&rdquo;, and when I pulled the node&rsquo;s journal, ephemerd had destroyed that
+    <p>The scheduler in <a href="/blog/2026/08/ephemerd-one-daemon-every-os/">ephemerd</a> is event-driven. GitHub sends a
+<code>workflow_job</code> webhook when a job is queued, when it starts and when it completes. ephemerd creates and destroys runners
+to match. For a while that worked well enough that I stopped thinking about it. Then a <code>docker-build</code> job failed with
+&ldquo;The self-hosted runner lost communication with the server&rdquo;. I pulled the node&rsquo;s journal. ephemerd had destroyed that
 runner itself, on purpose, while it was running the build.</p>
   </div>
   <footer>

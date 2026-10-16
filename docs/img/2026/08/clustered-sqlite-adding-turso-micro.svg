@@ -1,0 +1,73 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 860 476" role="img" aria-labelledby="t d" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif">
+  <title id="t">litewire backends: rusqlite vs Turso p50 and concurrent writes</title>
+  <desc id="d">Grouped bar charts. p50 latency on a log scale, lower is better: point SELECT rusqlite 81.2 µs, Turso 2.9 µs; INSERT (autocommit) rusqlite 138.5 µs, Turso 17.3 µs; 10-query page rusqlite 840.1 µs, Turso 30.2 µs. 8 concurrent writers, higher is better: rusqlite 3,609 inserts/s, Turso 14,451 inserts/s.</desc>
+  <defs>
+    <pattern id="hatch" width="8" height="8" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
+      <rect width="8" height="8" fill="#f6e3d3"/>
+      <line x1="0" y1="0" x2="0" y2="8" stroke="#a34700" stroke-width="3"/>
+    </pattern>
+  </defs>
+  <rect width="860" height="476" fill="#ffffff"/>
+  <text x="430" y="36" text-anchor="middle" font-size="20" font-weight="600" fill="#222">litewire backends: rusqlite vs Turso</text>
+  <text x="430" y="62" text-anchor="middle" font-size="15" fill="#555">Same SQL, same harness, back to back on WSL2</text>
+
+  <!-- Panel 1: p50 latency, log scale -->
+  <text x="20" y="102" font-size="17" font-weight="600" fill="#222">p50 latency, µs (lower is better, log scale)</text>
+  <g stroke="#d0d0d0" stroke-width="1">
+    <line x1="430" y1="118" x2="430" y2="318"/>
+    <line x1="570" y1="118" x2="570" y2="318"/>
+    <line x1="710" y1="118" x2="710" y2="318"/>
+  </g>
+  <g font-size="14" fill="#555" text-anchor="middle">
+    <text x="290" y="338">1</text>
+    <text x="430" y="338">10</text>
+    <text x="570" y="338">100</text>
+    <text x="710" y="338">1000</text>
+  </g>
+  <g font-size="16" font-weight="600" fill="#222">
+    <text x="20" y="157">point SELECT</text>
+    <text x="20" y="225">INSERT (autocommit)</text>
+    <text x="20" y="293">10-query page</text>
+  </g>
+  <g font-size="15" fill="#222" text-anchor="end">
+    <text x="280" y="143">rusqlite</text>
+    <text x="280" y="169">Turso</text>
+    <text x="280" y="211">rusqlite</text>
+    <text x="280" y="237">Turso</text>
+    <text x="280" y="279">rusqlite</text>
+    <text x="280" y="305">Turso</text>
+  </g>
+  <g fill="url(#hatch)" stroke="#a34700" stroke-width="1">
+    <rect x="290" y="127" width="267.3" height="22"/>
+    <rect x="290" y="195" width="299.8" height="22"/>
+    <rect x="290" y="263" width="409.4" height="22"/>
+  </g>
+  <g fill="#0550ae">
+    <rect x="290" y="153" width="64.7" height="22"/>
+    <rect x="290" y="221" width="173.3" height="22"/>
+    <rect x="290" y="289" width="207.2" height="22"/>
+  </g>
+  <g font-size="15" fill="#222">
+    <text x="565.3" y="143">81.2 µs</text>
+    <text x="362.7" y="169">2.9 µs</text>
+    <text x="597.8" y="211">138.5 µs</text>
+    <text x="471.3" y="237">17.3 µs</text>
+    <text x="707.4" y="279">840.1 µs</text>
+    <text x="505.2" y="305">30.2 µs</text>
+  </g>
+  <line x1="290" y1="118" x2="290" y2="318" stroke="#333" stroke-width="1.5"/>
+
+  <!-- Panel 2: concurrent writers -->
+  <text x="20" y="384" font-size="17" font-weight="600" fill="#222">8 concurrent writers, inserts/s (higher is better)</text>
+  <g font-size="15" fill="#222" text-anchor="end">
+    <text x="280" y="421">rusqlite</text>
+    <text x="280" y="447">Turso</text>
+  </g>
+  <rect x="290" y="405" width="99.9" height="22" fill="url(#hatch)" stroke="#a34700" stroke-width="1"/>
+  <rect x="290" y="431" width="400" height="22" fill="#0550ae"/>
+  <g font-size="15" fill="#222">
+    <text x="397.9" y="421">3,609 inserts/s</text>
+    <text x="698" y="447">14,451 inserts/s</text>
+  </g>
+  <line x1="290" y1="398" x2="290" y2="460" stroke="#333" stroke-width="1.5"/>
+</svg>

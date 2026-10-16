@@ -74,6 +74,8 @@ Every runtime ran the same app on the same machine under the same load. Each num
 
 \* Before the fixes, ePHPm was already past its limit at this load. Requests kept piling up.
 
+![Bar charts of requests/sec and peak memory: ePHPm rises from 50,855 to 58,122 requests/sec with all three fixes, below Swoole's 61,580 and Workerman's 64,521, while peak memory drops from 307 MiB to 170 MiB against Swoole's 838 MiB](/img/2026/10/ephpm-worker-mode-performance-results.svg)
+
 In short:
 
 - **About 15% faster** than before. The slowest requests are answered far sooner.

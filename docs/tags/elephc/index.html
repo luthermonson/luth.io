@@ -235,9 +235,9 @@
     
     <p><a href="https://github.com/ephpm/ephpm">ePHPm</a> middleware runs <em>before</em> PHP. It&rsquo;s a small versioned C ABI, loaded with
 <code>dlopen</code>, that gets to look at a request and reject it before PHP boots or the request body is read. That&rsquo;s the
-right shape for a gateway, and it&rsquo;s the wrong shape for most PHP shops, who want to write their middleware in PHP.
-This is the story of compiling PHP into a native <code>.so</code> to fit that ABI, finding exactly where it broke, and then
-building the lane that should have existed in the first place.</p>
+right shape for a gateway. It&rsquo;s the wrong shape for most PHP shops, who want to write their middleware in PHP. This is
+the story of compiling PHP into a native <code>.so</code> to fit that ABI and finding exactly where it broke. Then I built the lane
+that should have existed in the first place.</p>
   </div>
   <footer>
     <a href="/blog/2026/08/php-middleware-elephc/" class="button big">Read More</a>

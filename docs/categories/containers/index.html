@@ -218,7 +218,7 @@
       <h2><a href="/blog/2026/09/process-containment-job-objects-process-groups-cgroups/">Cross-Platform Process Containment: Job Objects vs Process Groups vs cgroups</a></h2>
     
     
-      <p>How shipmates bounds and tears down agent process trees on Windows, Linux and macOS, why I deleted 1,206 lines of cgroup code, and the grandchild that escaped the memory cap everywhere except my dev box.</p>
+      <p>How shipmates bounds and tears down agent process trees on Windows, Linux and macOS. It also covers why I deleted 1,206 lines of cgroup code and the grandchild that escaped the memory cap everywhere except my dev box.</p>
     
   </div>
   <div class="meta">
@@ -233,8 +233,8 @@
     <img class="" src="/img/2026/09/process-containment-job-objects-process-groups-cgroups-cover.svg" alt="Agent process tree with the scope of kill and measurement on Windows, Linux and macOS">
   </a>
     
-    <p>Every turn a <a href="/blog/2026/08/shipmates-persona-based-ai-coding-crews/">shipmates</a> crew member takes is a subprocess:
-<code>claude</code> or the <code>codex</code> app-server, which in turn spawns shells, <code>go test</code>, <code>npm</code>, whatever the task calls for. Two
+    <p>Every turn a <a href="/blog/2026/08/shipmates-persona-based-ai-coding-crews/">shipmates</a> crew member takes is a subprocess. It&rsquo;s
+<code>claude</code> or the <code>codex</code> app-server. That in turn spawns shells, <code>go test</code>, <code>npm</code> or whatever the task calls for. Two
 things have to be true about that tree. When a turn ends or gets killed, the <em>whole</em> tree goes, including the
 grandchildren. And if somebody sets a memory or CPU budget, the budget applies to the whole tree, not just the
 process I happened to start.</p>
@@ -306,11 +306,11 @@ process I happened to start.</p>
     <img class="" src="/img/2026/09/bind-mounts-across-mount-namespaces-toctou.svg" alt="Sequence diagram of the bind mount TOCTOU race and the openat2 plus staging fix">
   </a>
     
-    <p>GitHub Actions has a <code>container:</code> key that runs a job&rsquo;s steps inside an image of your choosing. It&rsquo;s popular because it
-gives you a reproducible toolchain without building a custom runner image. On a self-hosted runner it works by having the
-runner drive Docker, and on <a href="/blog/2026/08/ephemerd-one-daemon-every-os/">ephemerd</a> &ldquo;Docker&rdquo; is a shim that speaks the
-Docker API and creates containers in containerd. Getting bind mounts right through that shim took four PRs in a week. A
-couple of months later the version that&hellip;</p>
+    <p>GitHub Actions has a <code>container:</code> key that runs a job&rsquo;s steps inside an image of your choosing. It&rsquo;s popular because
+it gives you a reproducible toolchain without building a custom runner image. On a self-hosted runner it works by
+having the runner drive Docker. On <a href="/blog/2026/08/ephemerd-one-daemon-every-os/">ephemerd</a>, &ldquo;Docker&rdquo; is a shim that
+speaks the Docker API and creates containers in containerd. Getting bind mounts right through that shim took four PRs
+in a week. A couple of months later the version that worked&hellip;</p>
   </div>
   <footer>
     <a href="/blog/2026/09/bind-mounts-across-mount-namespaces/" class="button big">Read More</a>
@@ -364,7 +364,7 @@ couple of months later the version that&hellip;</p>
       <h2><a href="/blog/2026/09/single-binary-wordpress/">Zero-Dependency Deployments - Single Binary for WordPress</a></h2>
     
     
-      <p>WordPress with no nginx, no php-fpm, no Redis and no MySQL: one ePHPm binary, a SQLite file, and a distroless container image. What&#39;s in the binary, how it gets built, and what it actually takes to run.</p>
+      <p>WordPress with no nginx, no php-fpm, no Redis and no MySQL. It runs from one ePHPm binary, a SQLite file and a distroless container image.</p>
     
   </div>
   <div class="meta">
@@ -379,11 +379,7 @@ couple of months later the version that&hellip;</p>
     <img class="" src="/img/2026/09/single-binary-wordpress-cover.svg" alt="Side by side: nginx, php-fpm, Redis and MySQL as four services, versus one ephpm process containing the HTTP server, embedded PHP, KV store and SQLite">
   </a>
     
-    <p>The standard way to run a WordPress site is four services: nginx for HTTP and TLS, php-fpm to run PHP, MySQL for data,
-and Redis once the site gets slow enough that someone installs an object cache plugin. That&rsquo;s four processes, four
-config files, three sockets between them, and four things to upgrade. For a big site that&rsquo;s fine. For a brochure site, a
-staging copy, a PR preview, a CI job that needs a real WordPress to test a plugin against, or a box at the edge, it&rsquo;s
-absurd.</p>
+    <p>The standard way to run a WordPress site is four services:</p>
   </div>
   <footer>
     <a href="/blog/2026/09/single-binary-wordpress/" class="button big">Read More</a>
@@ -433,7 +429,7 @@ absurd.</p>
       <h2><a href="/blog/2026/09/kata-containers-for-ci/">Kata Containers for CI: Boot Cost Isn&#39;t the Problem, File I/O Is</a></h2>
     
     
-      <p>Kata containers are safer for CI, but slower. Starting one takes 12x longer, which is fine, and reading small files is about 40x slower for the entire job, which isn&#39;t.</p>
+      <p>Kata containers are safer for CI, but slower. Starting one takes 12x longer, which is fine. Reading small files is about 40x slower for the entire job, which isn&#39;t.</p>
     
   </div>
   <div class="meta">
@@ -449,11 +445,11 @@ absurd.</p>
   </a>
     
     <p>Of the three platforms <a href="/blog/2026/08/ephemerd-one-daemon-every-os/">ephemerd</a> runs jobs on, Linux has the weakest
-isolation. Windows jobs get a Hyper-V isolated container with its own kernel, macOS jobs get a whole VM, and a Linux job is
+isolation. Windows jobs get a Hyper-V isolated container with its own kernel. macOS jobs get a whole VM. A Linux job is
 an ordinary runc container sharing the host kernel. A kernel escape from a Linux job is a host compromise.
-<a href="https://katacontainers.io/">Kata Containers</a> fixes that by putting each container in a lightweight VM with its own kernel,
-and it plugs into containerd as just another runtime handler. So I added it in
-<a href="https://github.com/ephpm/ephemerd/pull/155">#155</a>, measured it, and left&hellip;</p>
+<a href="https://katacontainers.io/">Kata Containers</a> fixes that by putting each container in a lightweight VM with its own
+kernel. It plugs into containerd as just another runtime handler. So I added it in
+<a href="https://github.com/ephpm/ephemerd/pull/155">#155</a>, measured it, and left it off&hellip;</p>
   </div>
   <footer>
     <a href="/blog/2026/09/kata-containers-for-ci/" class="button big">Read More</a>
@@ -505,7 +501,7 @@ and it plugs into containerd as just another runtime handler. So I added it in
       <h2><a href="/blog/2026/08/ephpm-ebpf-per-vhost-network-policy/">Per-Tenant Network Policy in One Process: ePHPm&#39;s eBPF Thread Tags</a></h2>
     
     
-      <p>Every site on an ePHPm server runs inside the same process, so a normal firewall can&#39;t tell them apart. A small eBPF program tags each thread with its site and keeps sites from reaching each other&#39;s local ports, at under a microsecond per connection.</p>
+      <p>Every site on an ePHPm server runs inside the same process, so a normal firewall can&#39;t tell them apart. A small eBPF program tags each thread with its site. It keeps sites from reaching each other&#39;s local ports for under a microsecond per connection.</p>
     
   </div>
   <div class="meta">
@@ -521,9 +517,9 @@ and it plugs into containerd as just another runtime handler. So I added it in
   </a>
     
     <p>In multi-tenant mode <a href="https://github.com/ephpm/ephpm">ePHPm</a> serves every site in <code>sites_dir</code> from one process. Every
-tenant&rsquo;s PHP runs as the same OS user, on the same pool of ZTS threads, and a thread that just served <code>blog.example</code>
-will serve <code>shop.example</code> a few milliseconds later. That&rsquo;s the density win. It also means the kernel has no idea
-which tenant is behind a given <code>connect()</code>. As far as Linux is concerned it&rsquo;s all <code>ephpm-web</code>.</p>
+tenant&rsquo;s PHP runs as the same OS user on the same pool of ZTS threads. A thread that just served <code>blog.example</code> will
+serve <code>shop.example</code> a few milliseconds later. That&rsquo;s the density win. It also means the kernel has no idea which
+tenant is behind a given <code>connect()</code>. As far as Linux is concerned it&rsquo;s all <code>ephpm-web</code>.</p>
   </div>
   <footer>
     <a href="/blog/2026/08/ephpm-ebpf-per-vhost-network-policy/" class="button big">Read More</a>
@@ -590,8 +586,8 @@ which tenant is behind a given <code>connect()</code>. As far as Linux is concer
     
     <p>After a week of Windows firewall rules that <a href="/blog/2026/08/windows-container-egress-firewall/">listed fine and enforced nothing</a>,
 I went back to the Linux side of <a href="https://github.com/ephpm/ephemerd">ephemerd</a> feeling pretty good about it. iptables is
-the boring, well-understood one. Then I looked at the packet counters on a live node and found a rule that had never
-matched a packet in its life, on a node that had pushed 9.8 GB through the same chain.</p>
+the boring, well-understood one. Then I looked at the packet counters on a live node. I found a rule that had never
+matched a packet in its life. That node had pushed 9.8 GB through the same chain.</p>
   </div>
   <footer>
     <a href="/blog/2026/08/iptables-rule-zero-packets/" class="button big">Read More</a>
@@ -656,10 +652,10 @@ matched a packet in its life, on a node that had pushed 9.8 GB through the same 
     <img class="" src="/img/2026/08/ephemerd-one-daemon-every-os-arch.svg" alt="ephemerd architecture across Linux, Windows and macOS hosts">
   </a>
     
-    <p>I have CI that needs Linux amd64, Linux arm64, Windows and macOS, and GitHub-hosted runners for all four get expensive fast,
+    <p>I have CI that needs Linux amd64, Linux arm64, Windows and macOS. GitHub-hosted runners for all four get expensive fast,
 especially the arm64 and Mac minutes. Self-hosted runners fix the bill and create a different problem. A stock
-<code>actions/runner</code> on a box you own runs whatever the workflow says, keeps whatever the last job left behind, and is one fork
-PR away from somebody running code on your LAN.</p>
+<code>actions/runner</code> on a box you own runs whatever the workflow says. It keeps whatever the last job left behind. And it&rsquo;s
+one fork PR away from somebody running code on your LAN.</p>
   </div>
   <footer>
     <a href="/blog/2026/08/ephemerd-one-daemon-every-os/" class="button big">Read More</a>

@@ -1,6 +1,6 @@
 ---
 title: "Atomic File Replacement on NTFS Is Not rename + fsync"
-description: "The Unix recipe for durable atomic file replacement doesn't translate to Windows. What shipmates uses instead, and the delete-pending window that made an 8-way test fail only when the whole suite ran."
+description: "The Unix recipe for durable atomic file replacement doesn't translate to Windows. This is what shipmates uses instead, plus the delete-pending window that made an 8-way test fail only when the whole suite ran."
 date: 2026-08-06T21:27:00-07:00
 tags: [ go, windows, ntfs, filesystems, durability, shipmates ]
 categories: [ go, windows ]
@@ -12,11 +12,11 @@ images:
 draft: false
 ---
 
-[shipmates](https://github.com/luthermonson/shipmates) writes a lot of small state files that other
-processes read: voyage plans and state, tracker files. Each of them has to be replaced atomically (a reader sees
-the old file or the new one, never half of each) and durably (when the function returns success, a power cut doesn't
-take it back). Every Unix programmer knows the recipe for that. It doesn't work on Windows, and the reasons are more
-interesting than "Windows is different".
+[shipmates](https://github.com/luthermonson/shipmates) writes a lot of small state files that other processes read.
+Voyage plans and state, tracker files. Each of them has to be replaced atomically, so a reader sees the old file or the
+new one and never half of each. Each also has to be replaced durably. When the function returns success, a power cut
+doesn't take it back. Every Unix programmer knows the recipe for that. It doesn't work on Windows, and the reasons are
+more interesting than "Windows is different".
 
 ### The Unix recipe
 
@@ -42,13 +42,13 @@ func DurableRename(oldpath, newpath string) error {
 }
 ```
 
-The directory fsync is the step people forget. `rename(2)` is atomic for other observers, but the new directory entry is
-just metadata in the page cache until the directory itself is flushed, and ext4's default `data=ordered` doesn't promise
+The directory fsync is the step people forget. `rename(2)` is atomic for other observers. But the new directory entry
+is just metadata in the page cache until the directory itself is flushed. ext4's default `data=ordered` doesn't promise
 otherwise. Crash between the rename and the flush and you can lose a file you reported as written.
 
 ### Neither half translates
 
-On Windows, `os.Rename` is `MoveFileEx` with `MOVEFILE_REPLACE_EXISTING` and without `MOVEFILE_WRITE_THROUGH`, so it can
+On Windows, `os.Rename` is `MoveFileEx` with `MOVEFILE_REPLACE_EXISTING` and without `MOVEFILE_WRITE_THROUGH`. It can
 return before the change reaches the disk. Fine, flush the directory afterwards like on Unix. Except a straight port
 doesn't:
 
@@ -57,17 +57,21 @@ doesn't:
 ```
 
 That's `os.Open` on a directory followed by `Sync()`, on NTFS, Windows 11, Go 1.26.5. `Sync()` is `FlushFileBuffers`,
-which requires a handle with `GENERIC_WRITE`, and `os.Open` hands you a read-only one. NTFS itself is fine with flushing
-a directory: open it yourself with `CreateFile`, `GENERIC_READ|GENERIC_WRITE` and `FILE_FLAG_BACKUP_SEMANTICS`, and
-`FlushFileBuffers` on that handle succeeds. I checked both on this box: the read-only handle gets error 5, the
-read-write one flushes. So the portable code, as written, has two bad options: ignore the error and silently drop the
-durability guarantee, or return it and report failure for a write that actually landed. The working version is
-Windows-only code with its own `CreateFile` call, and once you're writing Windows-only code there's a better primitive.
+which requires a handle with `GENERIC_WRITE`. `os.Open` hands you a read-only one. NTFS itself is fine with flushing a
+directory. Open it yourself with `CreateFile`, `GENERIC_READ|GENERIC_WRITE` and `FILE_FLAG_BACKUP_SEMANTICS`, and
+`FlushFileBuffers` on that handle succeeds. I checked both on this box. The read-only handle gets error 5 and the
+read-write one flushes. So the portable code, as written, has two bad options:
+
+- ignore the error and silently drop the durability guarantee
+- return it and report failure for a write that landed
+
+The working version is Windows-only code with its own `CreateFile` call. Once you're writing Windows-only code there's a
+better primitive.
 
 ### One call instead of two
 
 Windows has a primitive that covers both halves. `MOVEFILE_WRITE_THROUGH` is documented to not return until the move
-has been flushed to disk, and on NTFS a rename is a single logged metadata transaction, so flushing it commits the new
+has been flushed to disk. On NTFS a rename is a single logged metadata transaction, so flushing it commits the new
 directory entry along with it. From [`416665e`](https://github.com/luthermonson/shipmates/commit/416665e):
 
 ```go
@@ -97,27 +101,27 @@ func DurableRename(oldpath, newpath string) error {
 }
 ```
 
-Where Unix needs two ordered operations to make one rename durable, Windows needs one, and no extra handle to the
-directory. Both paths have to be on the same
-volume: across volumes, `MoveFileEx` degrades to copy-then-delete, which is neither atomic nor what any caller wants.
-Every caller in shipmates stages its temp file in the destination directory, so that holds.
+Unix needs two ordered operations to make one rename durable. Windows needs one, and no extra handle to the directory.
+Both paths have to be on the same volume. Across volumes, `MoveFileEx` degrades to copy-then-delete, which is neither
+atomic nor what any caller wants. Every caller in shipmates stages its temp file in the destination directory, so that
+holds.
 
 That retry loop is the second half of the story.
 
 ### Losing a race on NTFS
 
-Voyage state publication in shipmates is deliberately retry-idempotent, so it's legal for several processes to publish
-the same successor state at once. `TestMigrateSuccessorConcurrentPublicationAndAtomicRetry` does exactly that, eight
+Voyage state publication in shipmates is deliberately retry-idempotent. It's legal for several processes to publish the
+same successor state at once. `TestMigrateSuccessorConcurrentPublicationAndAtomicRetry` does exactly that, with eight
 goroutines racing `MigrateSuccessor` onto the same output path.
 
-On Unix the losers just replace the winner's file, which is fine, it has the same content. On NTFS the replace-existing
-path has to get rid of the old target, and while the winner's replace is in flight the old file sits in a
-*delete-pending* state. A loser that shows up during that window doesn't wait, it fails with `ERROR_ACCESS_DENIED` (or
+On Unix the losers just replace the winner's file. That's fine because it has the same content. On NTFS the
+replace-existing path has to get rid of the old target. While the winner's replace is in flight the old file sits in a
+*delete-pending* state. A loser that shows up during that window doesn't wait. It fails with `ERROR_ACCESS_DENIED` (or
 `ERROR_SHARING_VIOLATION`).
 
-To see how common that is, I wrote a small experiment: 200 rounds of eight goroutines, each with its own staged and
-fsynced 4 KiB temp file, released at once to `MoveFileEx(REPLACE_EXISTING|WRITE_THROUGH)` onto the same target, no
-retries:
+To see how common that is, I wrote a small experiment. It runs 200 rounds of eight goroutines. Each one has its own
+staged and fsynced 4 KiB temp file. They're released at once to `MoveFileEx(REPLACE_EXISTING|WRITE_THROUGH)` onto the
+same target, with no retries:
 
 ```
 3) 200 rounds x 8 concurrent replacers, no retry:
@@ -126,14 +130,16 @@ retries:
 ```
 
 A second run gave 386 ok and 1214 `ERROR_ACCESS_DENIED` (75.9%). So with eight concurrent replacers, roughly three out
-of four lose. That's why `DurableRename` treats exactly those two errors as transient and retries. Anything else, or the
-same errors past the deadline, is a real error and comes back to the caller. A genuine permission problem still surfaces.
+of four lose. That's why `DurableRename` treats exactly those two errors as transient and retries. Anything else is a
+real error and comes back to the caller. So do the same errors past the deadline. A genuine permission problem still
+surfaces.
 
 ### Two seconds wasn't enough
 
-The original deadline in both `DurableRename` and voyage's `PublishSuccessor` was 2 seconds, and the 8-way test passed on its own. It failed with `Access is denied` only when the whole repository's tests ran at
-once. [`144af92`](https://github.com/luthermonson/shipmates/commit/144af92) explains why: the delete-pending window lasts
-as long as the winner's fsync-heavy write takes, and under a fully loaded test suite that was observed above **9
+The original deadline in both `DurableRename` and voyage's `PublishSuccessor` was 2 seconds. The 8-way test passed on
+its own. It failed with `Access is denied` only when the whole repository's tests ran at once.
+[`144af92`](https://github.com/luthermonson/shipmates/commit/144af92) explains why. The delete-pending window lasts as
+long as the winner's fsync-heavy write takes. Under a fully loaded test suite that was observed above **9
 seconds**. The fix bumped `DurableRename` to 15 s and `PublishSuccessor` to 60 s, still only for classified contention
 errors:
 
@@ -148,9 +154,9 @@ func PublishSuccessor(path string, state *State, plan *Plan, hash string) (*Stat
 
 On Unix `transientFSContention` is simply `return false`.
 
-I wanted to see the window move with disk load on my own box, so the experiment's last part runs the same 8-way race
-with the retry loop (15 s deadline, 5 ms sleep) and records how long each process waited before its replace succeeded.
-Fifty rounds on an idle disk, then fifty more while 16 goroutines write, fsync and delete 1 MiB files in the same
+I wanted to see the window move with disk load on my own box. The experiment's last part runs the same 8-way race with
+the retry loop (15 s deadline, 5 ms sleep). It records how long each process waited before its replace succeeded. I ran
+fifty rounds on an idle disk. Then I ran fifty more while 16 goroutines write, fsync and delete 1 MiB files in the same
 directory:
 
 ![Wait for a losing replacer, idle vs loaded disk](/img/2026/09/ntfs-atomic-file-replacement-not-rename-fsync-cover.svg)
@@ -168,23 +174,24 @@ and the second run:
 ```
 
 On an idle disk the worst wait was 39 ms in one run and 204 ms in the other. With the disk busy, the tail went past 4
-seconds in both runs, more than double the old 2 second deadline. My 16-writer load is a toy next to a full `go test ./...`
-on a big repo, so the 9 second observation from the commit doesn't surprise me. The median barely moves, which is exactly
-why this hid: most of the time the window is short, and a deadline sized from "most of the time" fails under load.
+seconds in both runs. That's more than double the old 2 second deadline. My 16-writer load is a toy next to a full
+`go test ./...` on a big repo. So the 9 second observation from the commit doesn't surprise me. The median barely
+moves, which is exactly why this hid. Most of the time the window is short. A deadline sized from "most of the time"
+fails under load.
 
 ### What about the cost of write-through?
 
-I also timed 500 renames each way with the same staging work. At the median I couldn't separate them (about 0.52 ms
-each in the first run; the second run's plain-rename median landed below the timer's resolution). Write-through had
-the fatter tail in both runs (p99 1.05 ms vs 0.67 ms, then 19 ms vs 1 ms), but at this scale and with this timer that's
-not a number I'd hang much on. For small state files that are written once per task, write-through isn't the
-thing to optimize.
+I also timed 500 renames each way with the same staging work. At the median I couldn't separate them. Both were about
+0.52 ms in the first run. The second run's plain-rename median landed below the timer's resolution. Write-through had
+the fatter tail in both runs (p99 1.05 ms vs 0.67 ms, then 19 ms vs 1 ms). At this scale and with this timer that's not
+a number I'd hang much on. For small state files that are written once per task, write-through isn't the thing to
+optimize.
 
 ### Takeaways
 
 - On Windows, durable atomic replace is one call: `MoveFileEx(MOVEFILE_REPLACE_EXISTING | MOVEFILE_WRITE_THROUGH)`.
-  Don't port the directory fsync: `os.Open(dir).Sync()` fails with `Access is denied`, and making it work means opening
-  the directory for write with `FILE_FLAG_BACKUP_SEMANTICS`, which you don't need.
+  Don't port the directory fsync. `os.Open(dir).Sync()` fails with `Access is denied`. Making it work means opening the
+  directory for write with `FILE_FLAG_BACKUP_SEMANTICS`, which you don't need.
 - Concurrent replacers of one file on NTFS see `ERROR_ACCESS_DENIED` / `ERROR_SHARING_VIOLATION` from the winner's
   delete-pending file. Retry those two specifically, and nothing else.
 - Size retry windows for a saturated disk, not an idle one. If a test fails only when the whole suite runs, the suite is
@@ -192,15 +199,20 @@ thing to optimize.
 
 ### How I measured
 
-A standalone Go program (Go 1.26.5, `golang.org/x/sys/windows`) on Windows 11 Pro, AMD Ryzen 9 5950X, 128 GB RAM, with
-the files on the system NTFS volume (an ADATA LEGEND 860 SSD) under my user temp directory. The program creates a fresh directory, then:
-(1) `os.Open(dir).Sync()`; (2) 500 staged 4 KiB replacements each with `MOVEFILE_REPLACE_EXISTING` and with
-`|MOVEFILE_WRITE_THROUGH`, timing only the `MoveFileEx` call; (3) 200 rounds of 8 goroutines replacing the same target
-with no retry; (4) 50 rounds of the same race with `DurableRename`'s retry loop, first with no background load and then
-with 16 goroutines continuously writing, fsyncing and deleting 1 MiB files in the same directory. I ran it twice
-back to back; both runs are shown above. Separately, I opened a directory with `CreateFileW` and
-`FILE_FLAG_BACKUP_SEMANTICS` twice, once `GENERIC_READ` and once `GENERIC_READ|GENERIC_WRITE`, and called
-`FlushFileBuffers` on each: the first fails with error 5, the second succeeds.
+A standalone Go program (Go 1.26.5, `golang.org/x/sys/windows`) on Windows 11 Pro, AMD Ryzen 9 5950X, 128 GB RAM. The
+files were on the system NTFS volume (an ADATA LEGEND 860 SSD) under my user temp directory. The program creates a
+fresh directory, then runs four steps:
+
+1. `os.Open(dir).Sync()`.
+2. 500 staged 4 KiB replacements each with `MOVEFILE_REPLACE_EXISTING` and with `|MOVEFILE_WRITE_THROUGH`, timing only
+   the `MoveFileEx` call.
+3. 200 rounds of 8 goroutines replacing the same target with no retry.
+4. 50 rounds of the same race with `DurableRename`'s retry loop. First with no background load, then with 16 goroutines
+   continuously writing, fsyncing and deleting 1 MiB files in the same directory.
+
+I ran it twice back to back. Both runs are shown above. Separately, I opened a directory with `CreateFileW` and
+`FILE_FLAG_BACKUP_SEMANTICS` twice, once `GENERIC_READ` and once `GENERIC_READ|GENERIC_WRITE`. Then I called
+`FlushFileBuffers` on each. The first fails with error 5 and the second succeeds.
 
 ### Links
 

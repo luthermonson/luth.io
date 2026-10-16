@@ -233,10 +233,10 @@
     <img class="" src="/img/2026/08/windows-dynamic-disk-usb-wsl2-usbip-layout.svg" alt="GPT layout of the 1 TB drive with LDM metadata and a 930 GiB LDM data partition, and the two paths: the Windows storage stack refusing it and usbipd passing it to WSL2">
   </a>
     
-    <p>I pulled a 1 TB NVMe out of an old Windows box, dropped it in a USB enclosure, plugged it in, and Windows showed nothing.
-No drive letter, no &ldquo;initialize this disk&rdquo; prompt, nothing in Explorer. Disk Management listed it as <code>Invalid</code>, and the
-enclosure&rsquo;s booklet said to &ldquo;bring the disk online&rdquo;, which silently did nothing. The data was completely intact. Windows was
-refusing on <strong>policy</strong> grounds, not because anything was broken, and getting it back meant going around the&hellip;</p>
+    <p>I pulled a 1 TB NVMe out of an old Windows box, dropped it in a USB enclosure and plugged it in. Windows showed nothing.
+No drive letter, no &ldquo;initialize this disk&rdquo; prompt, nothing in Explorer. Disk Management listed it as <code>Invalid</code>. The
+enclosure&rsquo;s booklet said to &ldquo;bring the disk online&rdquo;, which silently did nothing. The data was completely intact. Windows
+was refusing on <strong>policy</strong> grounds, not because anything was broken. Getting it back meant going around the Windows&hellip;</p>
   </div>
   <footer>
     <a href="/blog/2026/08/windows-dynamic-disk-usb-wsl2-usbip/" class="button big">Read More</a>
@@ -304,9 +304,9 @@ refusing on <strong>policy</strong> grounds, not because anything was broken, an
   </a>
     
     <p>Proxmox&rsquo;s built-in cloud-init support is fine for the basics: a user, an SSH key, an IP config. It falls apart the second you
-want your own <code>user-data</code>, <code>vendor-data</code> or a real <code>network-config</code>, because the GUI and the <code>ci*</code> options only expose a
-handful of fields, and the escape hatch (<code>cicustom</code> pointing at snippet files) means getting files onto the Proxmox host&rsquo;s
-filesystem first. The usual alternative is building a nocloud ISO yourself with <code>genisoimage</code> or <code>mkisofs</code>, which means a
+want your own <code>user-data</code>, <code>vendor-data</code> or a real <code>network-config</code>. The GUI and the <code>ci*</code> options only expose a handful of
+fields. The escape hatch is <code>cicustom</code> pointing at snippet files, and that means getting files onto the Proxmox host&rsquo;s
+filesystem first. The usual alternative is building a nocloud ISO yourself with <code>genisoimage</code> or <code>mkisofs</code>. That means a
 system&hellip;</p>
   </div>
   <footer>
@@ -370,10 +370,10 @@ system&hellip;</p>
     <img class="" src="/img/2022/03/proxmox-tasks-upid-wait-go-anatomy.svg" alt="Diagram breaking a Proxmox UPID string into node, pid, pstart, starttime, type, id and user">
   </a>
     
-    <p>If you start automating <a href="https://www.proxmox.com/en/">Proxmox VE</a> through the API, the first thing that trips you up is
-that almost nothing you ask it to do is finished when the HTTP call returns. Start a VM, clone a template, download an
-ISO to storage, delete a disk&hellip; the response is a single string that looks like a typo and the actual work is happening
-in a worker process on the node. If your next call depends on that work being done you have to go find out when it&rsquo;s done.</p>
+    <p>If you start automating <a href="https://www.proxmox.com/en/">Proxmox VE</a> through the API, one thing trips you up first.
+Almost nothing you ask it to do is finished when the HTTP call returns. Start a VM, clone a template, download an ISO
+to storage, delete a disk&hellip; the response is a single string that looks like a typo. The actual work is happening in a
+worker process on the node. If your next call depends on that work being done, you have to go find out when it&rsquo;s done.</p>
   </div>
   <footer>
     <a href="/blog/2022/03/proxmox-tasks-upid-wait-go/" class="button big">Read More</a>

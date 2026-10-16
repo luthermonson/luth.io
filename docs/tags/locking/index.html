@@ -218,7 +218,7 @@
       <h2><a href="/blog/2026/10/a-lock-is-only-as-good-as-its-release/">A Lock Is Only as Good as Its Release</a></h2>
     
     
-      <p>SETNX gets all the attention, but most of the bugs in ePHPm&#39;s KV locks were on the release side. This is how blind deletes, a missing compare-and-delete, and a cluster where two nodes could both win got fixed.</p>
+      <p>SETNX gets all the attention, but most of the bugs in ePHPm&#39;s KV locks were on the release side. This is how blind deletes, a missing compare-and-delete and a cluster where two nodes could both win got fixed.</p>
     
   </div>
   <div class="meta">
@@ -234,9 +234,9 @@
   </a>
     
     <p>Every &ldquo;build a lock on Redis&rdquo; tutorial spends its time on acquisition: <code>SET key value NX PX 30000</code>, one winner, done. The
-release gets one line, <code>DEL key</code>, and that line is where most of the lock bugs I&rsquo;ve had in ePHPm lived. Over about three months
-the same mistake showed up in the native session handler, in two of the Composer wrapper packages, and finally in the
-cluster, each time in a slightly different costume.</p>
+release gets one line, <code>DEL key</code>. That line is where most of the lock bugs I&rsquo;ve had in ePHPm lived. Over about three
+months the same mistake showed up in three places. First the native session handler, then two of the Composer wrapper
+packages, and finally the cluster. Each time it wore a slightly different costume.</p>
   </div>
   <footer>
     <a href="/blog/2026/10/a-lock-is-only-as-good-as-its-release/" class="button big">Read More</a>

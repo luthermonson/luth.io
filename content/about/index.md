@@ -5,26 +5,26 @@ author: "Luther Monson"
 comments: false
 ---
 
-Originally born and raised in the Midwest, Luther moved to the expansive deserts of the American Southwest after 
-receiving a Bachelor of the Arts in Computer Science from [Gustavus Adolphus College](https://gustavus.edu/) in Southern Minnesota. 
-After moving to Arizona, Luther spent his career building web APIs and utilities for various industries in PHP and NodeJS
-before migrating to Open Source DevOps tooling using Containers and Virtualization.
+Originally born and raised in the Midwest, Luther received a Bachelor of the Arts in Computer Science from
+[Gustavus Adolphus College](https://gustavus.edu/) in Southern Minnesota. After that he moved to the expansive deserts
+of the American Southwest. In Arizona, Luther spent his career building web APIs and utilities for various industries
+in PHP and NodeJS. From there he migrated to Open Source DevOps tooling using Containers and Virtualization.
 
 Luther works at [Akamai](https://www.akamai.com/) on [LKE Enterprise](https://www.linode.com/products/kubernetes/),
 the enterprise tier of the Linode Kubernetes Engine. Before Akamai he spent years in the Kubernetes space at
 Rancher Labs and [SUSE](https://suse.com/) working on the Multi-Cluster Management tool
 [Rancher](https://rancher.com/). As the Team Lead for [Windows on Rancher](https://github.com/rancher/windows) he
 specialized in Kubernetes on alternative operating systems and architectures including Windows, arm64 and s390x.
-After Rancher he worked at [Spectro Cloud](https://www.spectrocloud.com/) on Cluster API providers for AWS and Azure,
-including OIDC/IRSA support for self-managed clusters on AWS.
+After Rancher he worked at [Spectro Cloud](https://www.spectrocloud.com/) on Cluster API providers for AWS and Azure.
+That included OIDC/IRSA support for self-managed clusters on AWS.
 Working in this unique space and working from home full time has made him a home lab aficionado and consumer of
 [Proxmox VE](https://www.proxmox.com/en/).
 
 ### ePHPm
 
 [ePHPm](https://github.com/ephpm/ephpm) runs the same PHP app the same way from dev to prod as one Rust binary. It
-embeds real PHP through a custom SAPI and bundles a web server with automatic TLS, an embedded SQLite-compatible
-database, a KV cache, a pooling SQL proxy and gossip clustering, so a PHP app runs as a single process with no other
+embeds real PHP through a custom SAPI. It bundles a web server with automatic TLS, an embedded SQLite-compatible
+database, a KV cache, a pooling SQL proxy and gossip clustering. A PHP app runs as a single process with no other
 services to operate.
 
 ### ephemerd
@@ -36,19 +36,19 @@ that is thrown away when the job finishes.
 ### litewire
 
 [litewire](https://github.com/ephpm/litewire) speaks the MySQL, PostgreSQL and SQL Server wire protocols in front of
-SQLite. Point `pdo_mysql` at `:3306` and an unmodified app runs on embedded SQLite, with no database server and no
+SQLite. Point `pdo_mysql` at `:3306` and an unmodified app runs on embedded SQLite. There's no database server and no
 code changes. It is the database layer inside ePHPm.
 
 ### shipmates
 
-[shipmates](https://github.com/luthermonson/shipmates) gives Claude Code subagents that remember: role-specialized
-personas with persistent per-project memory, plus a live lead-and-crew channel for dispatching work, steering an
-agent mid-task and approving actions with a human in the loop.
+[shipmates](https://github.com/luthermonson/shipmates) gives Claude Code subagents that remember. It provides
+role-specialized personas with persistent per-project memory. It also has a live lead-and-crew channel for dispatching
+work, steering an agent mid-task and approving actions with a human in the loop.
 
 ### go-proxmox
 
 [go-proxmox](https://github.com/luthermonson/go-proxmox) is a Go client, with types and tests, for the Proxmox VE
-REST API. It started in 2021 as a side project for the home lab and is now used by projects like the
+REST API. It started in 2021 as a side project for the home lab. It's now used by projects like the
 [Cluster API provider for Proxmox](https://github.com/ionos-cloud/cluster-api-provider-proxmox).
 
 ### Other Projects

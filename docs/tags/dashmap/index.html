@@ -218,13 +218,13 @@
       <h2><a href="/blog/2026/08/rolling-your-own-kv-store/">Rolling Your Own KV Store Instead of Embedding Redis</a></h2>
     
     
-      <p>Why ePHPm has its own Redis-compatible cache built in instead of running Redis, a bug that hid in it for four months, and how it compares to real Redis on the same machine.</p>
+      <p>Why ePHPm has its own Redis-compatible cache built in instead of running Redis. It also covers a bug that hid in it for four months and how it compares to real Redis on the same machine.</p>
     
   </div>
   <div class="meta">
     <time datetime="2026-08-17 20:44:00 -0700 PDT">August 17, 2026</time>
     
-    <p>10-Minute Read</p>
+    <p>11-Minute Read</p>
   </div>
 </header>
 
@@ -235,9 +235,9 @@
     
     <p>Every PHP deployment I&rsquo;ve run eventually grew a Redis. Sessions, the WordPress object cache, Laravel&rsquo;s cache and locks,
 rate limiting. <a href="https://github.com/ephpm/ephpm">ePHPm</a> is supposed to be one binary that replaces nginx + php-fpm +
-Redis, so it needed a cache in the box. I didn&rsquo;t want to write one. This post is why I did anyway, how it&rsquo;s built, the
-bug that sat in its eviction code from March until last month, and how it holds up against a stock Redis on the same
-machine with <code>redis-benchmark</code> doing the&hellip;</p>
+Redis, so it needed a cache in the box. I didn&rsquo;t want to write one. This post covers why I did anyway and how it&rsquo;s
+built. It also covers the bug that sat in its eviction code from March until last month. Then I compare it against a
+stock Redis on the same machine with&hellip;</p>
   </div>
   <footer>
     <a href="/blog/2026/08/rolling-your-own-kv-store/" class="button big">Read More</a>

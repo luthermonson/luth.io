@@ -218,7 +218,7 @@
       <h2><a href="/blog/2026/09/clustered-sqlite-cdc-cluster-channel/">Clustered SQLite in ePHPm, Part 3: CDC Over the Cluster Channel</a></h2>
     
     
-      <p>Shipping Turso&#39;s change data capture stream between ePHPm nodes over one authenticated, multiplexed TCP connection, and the two failover bugs that showed up when the e2e suite killed the primary.</p>
+      <p>ePHPm ships Turso&#39;s change data capture stream between nodes over one authenticated, multiplexed TCP connection. This covers how that works and the two failover bugs that showed up when the e2e suite killed the primary.</p>
     
   </div>
   <div class="meta">
@@ -233,9 +233,9 @@
     <img class="" src="/img/2026/09/clustered-sqlite-cluster-channel-topology.svg" alt="Two ePHPm nodes connected by gossip on UDP 7946, the KV data plane on TCP 7947 and the cluster channel on TCP 7948 carrying cdc, snapshot and sql streams">
   </a>
     
-    <p>By the end of <a href="/blog/2026/08/clustered-sqlite-adding-turso/">Part 2</a> ePHPm v0.7.0 ran exactly one SQLite engine, Turso, in
-process, for single-node and clustered mode alike. The sidecar was gone. What I skipped over is how a replica actually gets
-the primary&rsquo;s writes, and what happens when the primary dies with data on it. That&rsquo;s this post.</p>
+    <p>By the end of <a href="/blog/2026/08/clustered-sqlite-adding-turso/">Part 2</a> ePHPm v0.7.0 ran exactly one SQLite engine in
+process. That was Turso, for single-node and clustered mode alike. The sidecar was gone. What I skipped over is how a
+replica actually gets the primary&rsquo;s writes, and what happens when the primary dies with data on it. That&rsquo;s this post.</p>
   </div>
   <footer>
     <a href="/blog/2026/09/clustered-sqlite-cdc-cluster-channel/" class="button big">Read More</a>

@@ -299,10 +299,11 @@ runtimes and compares them. Our fork with the ePHPm runner is <a href="https://g
   </a>
     
     <p>The pitch for <a href="https://github.com/ephpm/ephpm">ePHPm</a> is one binary in place of php-fpm, nginx and Redis. There was
-always a hole in it though. To deploy a PHP app you still need to run <code>composer install</code>, and that drags PHP and
-<code>composer.phar</code> back onto the box, or into the container build, just for that one step. <code>ephpm composer install</code> now
+always a hole in it though. To deploy a PHP app you still need to run <code>composer install</code>. That drags PHP and
+<code>composer.phar</code> back onto the box or into the container build, just for that one step. <code>ephpm composer install</code> now
 runs a pure-Rust, Composer-compatible installer called <a href="https://github.com/Adelagric/vivacity">vivacity</a> inside the
-ePHPm binary. One binary serves the app and installs its dependencies, and on Windows that works with no PHP installed&hellip;</p>
+ePHPm binary. One binary serves the app and installs its dependencies. On Windows that works with no PHP installed at
+all.&hellip;</p>
   </div>
   <footer>
     <a href="/blog/2026/10/composer-without-php-vivacity/" class="button big">Read More</a>
@@ -352,7 +353,7 @@ ePHPm binary. One binary serves the app and installs its dependencies, and on Wi
       <h2><a href="/blog/2026/10/a-lock-is-only-as-good-as-its-release/">A Lock Is Only as Good as Its Release</a></h2>
     
     
-      <p>SETNX gets all the attention, but most of the bugs in ePHPm&#39;s KV locks were on the release side. This is how blind deletes, a missing compare-and-delete, and a cluster where two nodes could both win got fixed.</p>
+      <p>SETNX gets all the attention, but most of the bugs in ePHPm&#39;s KV locks were on the release side. This is how blind deletes, a missing compare-and-delete and a cluster where two nodes could both win got fixed.</p>
     
   </div>
   <div class="meta">
@@ -368,9 +369,9 @@ ePHPm binary. One binary serves the app and installs its dependencies, and on Wi
   </a>
     
     <p>Every &ldquo;build a lock on Redis&rdquo; tutorial spends its time on acquisition: <code>SET key value NX PX 30000</code>, one winner, done. The
-release gets one line, <code>DEL key</code>, and that line is where most of the lock bugs I&rsquo;ve had in ePHPm lived. Over about three months
-the same mistake showed up in the native session handler, in two of the Composer wrapper packages, and finally in the
-cluster, each time in a slightly different costume.</p>
+release gets one line, <code>DEL key</code>. That line is where most of the lock bugs I&rsquo;ve had in ePHPm lived. Over about three
+months the same mistake showed up in three places. First the native session handler, then two of the Composer wrapper
+packages, and finally the cluster. Each time it wore a slightly different costume.</p>
   </div>
   <footer>
     <a href="/blog/2026/10/a-lock-is-only-as-good-as-its-release/" class="button big">Read More</a>
@@ -424,7 +425,7 @@ cluster, each time in a slightly different costume.</p>
   <div class="meta">
     <time datetime="2026-10-12 21:10:00 -0700 PDT">October 12, 2026</time>
     
-    <p>11-Minute Read</p>
+    <p>12-Minute Read</p>
   </div>
 </header>
 
@@ -435,9 +436,9 @@ cluster, each time in a slightly different costume.</p>
     
     <p>Persistent workers are the big performance win in modern PHP. You boot Laravel or Symfony once, keep the container
 in memory, and serve thousands of requests out of the same process. <a href="https://github.com/ephpm/ephpm">ePHPm</a> has had
-a worker mode for a while, and like most worker runtimes it had a quiet hole in it: you couldn&rsquo;t step debug a request
-with Xdebug. I wanted that fixed without patching Xdebug and without giving up the warm pool, and the answer ended up
-being to stop fighting the constraint and route around it.&hellip;</p>
+a worker mode for a while. Like most worker runtimes it had a quiet hole in it. You couldn&rsquo;t step debug a request with
+Xdebug. I wanted that fixed without patching Xdebug and without giving up the warm pool. The answer ended up being to
+stop fighting the constraint and route around it. The debug&hellip;</p>
   </div>
   <footer>
     <a href="/blog/2026/10/xdebug-worker-mode/" class="button big">Read More</a>
@@ -483,7 +484,7 @@ being to stop fighting the constraint and route around it.&hellip;</p>
       <h2><a href="/blog/2026/10/ephpm-websockets-how-to/">WebSockets in ePHPm, From Zero to a Working Chat</a></h2>
     
     
-      <p>How to run WebSockets in ePHPm with a single PHP file: turning them on, sharing the login session, pushing messages from normal HTTP requests, serving it over TLS, and the limits to know about.</p>
+      <p>How to run WebSockets in ePHPm with a single PHP file. It covers turning them on, sharing the login session, pushing messages from normal HTTP requests, serving over TLS and the limits to know about.</p>
     
   </div>
   <div class="meta">
@@ -498,11 +499,11 @@ being to stop fighting the constraint and route around it.&hellip;</p>
     <img class="" src="/img/2026/10/ephpm-websockets-how-to-cover.svg" alt="Diagram: browsers hold sockets to ePHPm&#39;s Rust session tasks and registry; each connect, message and disconnect runs websocket.php once on the PHP thread pool, and ordinary HTTP requests push through ephpm_ws_broadcast">
   </a>
     
-    <p>I covered the design of <a href="https://github.com/ephpm/ephpm">ePHPm</a>&rsquo;s native WebSockets in a few paragraphs of the
-<a href="/blog/2026/09/ephpm-smaller-angles/">odds and ends post</a>: Rust owns the socket, PHP runs once per event, and an idle
+    <p>I covered the design of <a href="https://github.com/ephpm/ephpm">ePHPm</a>&rsquo;s native WebSockets in a few paragraphs of the <a href="/blog/2026/09/ephpm-smaller-angles/">odds
+and ends post</a>. Rust owns the socket and PHP runs once per event. An idle
 connection never costs you a PHP thread. That was the why. This post is the how. We&rsquo;ll build a small chat app with
-login, per-user push notifications from ordinary HTTP requests, and a browser client. Then we&rsquo;ll serve it over TLS
-and look at the limits, the sharp edges, and how to debug it when the browser only tells you&hellip;</p>
+login, per-user push notifications from ordinary HTTP requests and a browser client. Then we&rsquo;ll serve it over TLS.
+Last come the limits, the sharp edges and how to debug it when the browser only tells you <code>1006</code>.</p>
   </div>
   <footer>
     <a href="/blog/2026/10/ephpm-websockets-how-to/" class="button big">Read More</a>
@@ -546,13 +547,13 @@ and look at the limits, the sharp edges, and how to debug it when the browser on
       <h2><a href="/blog/2026/10/php-jit-use-after-free/">An Upstream PHP JIT Use-After-Free, and Why Our Default Flipped Twice</a></h2>
     
     
-      <p>ePHPm turned PHP&#39;s tracing JIT on by default, then off three days later when stock Laravel died after three requests. The bug was upstream; here is the bisect, the root cause and where the fix landed.</p>
+      <p>ePHPm turned PHP&#39;s tracing JIT on by default, then off three days later when stock Laravel died after three requests. The bug was upstream, and this is the bisect, the root cause and where the fix landed.</p>
     
   </div>
   <div class="meta">
     <time datetime="2026-10-01 20:10:00 -0700 PDT">October 1, 2026</time>
     
-    <p>9-Minute Read</p>
+    <p>10-Minute Read</p>
   </div>
 </header>
 
@@ -562,10 +563,10 @@ and look at the limits, the sharp edges, and how to debug it when the browser on
   </a>
     
     <p>In August, <a href="https://github.com/ephpm/ephpm">ePHPm</a> turned PHP&rsquo;s tracing JIT on by default in single-site serve mode.
-Three days later it went back off, on every platform, and it&rsquo;s still off. The reason turned out to be a
-use-after-free in PHP&rsquo;s tracing JIT that has nothing to do with ePHPm: stock <code>php -S</code> with a stock Laravel skeleton
-dies on it in a couple of requests. The fix is now released upstream, so this seemed like the right time to write up
-how we got there, and what still has to happen before the&hellip;</p>
+Three days later it went back off on every platform, and it&rsquo;s still off. The reason turned out to be a use-after-free
+in PHP&rsquo;s tracing JIT that has nothing to do with ePHPm. Stock <code>php -S</code> with a stock Laravel skeleton dies on it in a
+couple of requests. The fix is now released upstream. So this seemed like the right time to write up how we got there,
+and what still has to happen before the default&hellip;</p>
   </div>
   <footer>
     <a href="/blog/2026/10/php-jit-use-after-free/" class="button big">Read More</a>
@@ -615,7 +616,7 @@ how we got there, and what still has to happen before the&hellip;</p>
       <h2><a href="/blog/2026/09/calling-rust-from-php-without-a-socket-part-2/">Calling Rust From PHP Without a Socket, Part 2: Making Existing Code Use It</a></h2>
     
     
-      <p>Thirteen Composer packages that let existing Redis and database code in WordPress, Laravel and Symfony use ePHPm&#39;s built-in versions, and the bugs they turned up.</p>
+      <p>Thirteen Composer packages let existing Redis and database code in WordPress, Laravel and Symfony use ePHPm&#39;s built-in versions. This post covers what&#39;s in them and the bugs they turned up.</p>
     
   </div>
   <div class="meta">
@@ -630,11 +631,11 @@ how we got there, and what still has to happen before the&hellip;</p>
     <img class="" src="/img/2026/09/calling-rust-from-php-without-a-socket-part-2-cover.svg" alt="The APIs PHP apps already call, mapped through ePHPm wrapper packages onto ephpm_kv_* and ephpm_db_*">
   </a>
     
-    <p><a href="/blog/2026/09/calling-rust-from-php-without-a-socket-part-1/">Part 1</a> covered the plumbing: ePHPm registers
-<code>ephpm_kv_*</code> and <code>ephpm_db_*</code> functions that call straight into Rust, and a cache read through one costs about a tenth of
-a microsecond instead of a loopback round trip. That&rsquo;s nice and also useless on its own, because nobody is going to rewrite
-their WordPress object cache or their Laravel cache store around a function called <code>ephpm_kv_set()</code>. Applications talk to
-Redis through phpredis or Predis, to the cache through PSR-6/16 or <code>wp_cache_*</code>, and to&hellip;</p>
+    <p><a href="/blog/2026/09/calling-rust-from-php-without-a-socket-part-1/">Part 1</a> covered the plumbing. ePHPm registers
+<code>ephpm_kv_*</code> and <code>ephpm_db_*</code> functions that call straight into Rust. A cache read through one costs about a tenth of a
+microsecond instead of a loopback round trip. That&rsquo;s nice and also useless on its own. Nobody is going to rewrite their
+WordPress object cache or their Laravel cache store around a function called <code>ephpm_kv_set()</code>. Applications talk to
+existing APIs instead:</p>
   </div>
   <footer>
     <a href="/blog/2026/09/calling-rust-from-php-without-a-socket-part-2/" class="button big">Read More</a>
@@ -697,8 +698,8 @@ Redis through phpredis or Predis, to the cache through PSR-6/16 or <code>wp_cach
     <img class="" src="/img/2026/09/ephpm-smaller-angles-nodelay.svg" alt="Bar chart: db.php p50 at c=1 dropped from 444 ms on v0.4.0 to 4.4 ms on v0.4.1">
   </a>
     
-    <p>Not every fix in <a href="https://github.com/ephpm/ephpm">ePHPm</a> earns a full write-up, but a few of the smaller ones have
-stuck with me because the lesson in each was bigger than the diff. Here are four from this summer.</p>
+    <p>Not every fix in <a href="https://github.com/ephpm/ephpm">ePHPm</a> earns a full write-up. A few of the smaller ones have stuck
+with me because the lesson in each was bigger than the diff. Here are four from this summer.</p>
   </div>
   <footer>
     <a href="/blog/2026/09/ephpm-smaller-angles/" class="button big">Read More</a>
@@ -746,7 +747,7 @@ stuck with me because the lesson in each was bigger than the diff. Here are four
       <h2><a href="/blog/2026/09/php-timeout-linker-wraps/">The Bugs Were Our Own Linker Wraps: Making a PHP Timeout Actually Time Out</a></h2>
     
     
-      <p>max_execution_time did nothing in ePHPm because we had wrapped zend_set_timeout to a no-op. The SDK already had per-thread timers; we just had to stop switching them off.</p>
+      <p>max_execution_time did nothing in ePHPm because we had wrapped zend_set_timeout to a no-op. The SDK already had per-thread timers. We just had to stop switching them off.</p>
     
   </div>
   <div class="meta">
@@ -763,9 +764,9 @@ stuck with me because the lesson in each was bigger than the diff. Here are four
     
     <p>In <a href="/blog/2026/09/php-stack-guard-segfault-containment/">the stack guard post</a> the villain was a <code>-Wl,--wrap</code> linker
 flag that turned off PHP&rsquo;s C-stack overflow guard. It wasn&rsquo;t the only one. Until August, <code>max_execution_time</code> did
-nothing in <a href="https://github.com/ephpm/ephpm">ePHPm</a> on Linux, for the same reason: we had wrapped the function that
-arms it to a no-op. A runaway script ran until the HTTP layer&rsquo;s request timeout gave up on it and sent a 504, and the
-PHP thread kept burning CPU after that.</p>
+nothing in <a href="https://github.com/ephpm/ephpm">ePHPm</a> on Linux, for the same reason. We had wrapped the function that arms
+it to a no-op. A runaway script ran until the HTTP layer&rsquo;s request timeout gave up on it and sent a 504. The PHP thread
+kept burning CPU after that.</p>
   </div>
   <footer>
     <a href="/blog/2026/09/php-timeout-linker-wraps/" class="button big">Read More</a>
@@ -813,7 +814,7 @@ PHP thread kept burning CPU after that.</p>
       <h2><a href="/blog/2026/09/clustered-sqlite-cdc-cluster-channel/">Clustered SQLite in ePHPm, Part 3: CDC Over the Cluster Channel</a></h2>
     
     
-      <p>Shipping Turso&#39;s change data capture stream between ePHPm nodes over one authenticated, multiplexed TCP connection, and the two failover bugs that showed up when the e2e suite killed the primary.</p>
+      <p>ePHPm ships Turso&#39;s change data capture stream between nodes over one authenticated, multiplexed TCP connection. This covers how that works and the two failover bugs that showed up when the e2e suite killed the primary.</p>
     
   </div>
   <div class="meta">
@@ -828,9 +829,9 @@ PHP thread kept burning CPU after that.</p>
     <img class="" src="/img/2026/09/clustered-sqlite-cluster-channel-topology.svg" alt="Two ePHPm nodes connected by gossip on UDP 7946, the KV data plane on TCP 7947 and the cluster channel on TCP 7948 carrying cdc, snapshot and sql streams">
   </a>
     
-    <p>By the end of <a href="/blog/2026/08/clustered-sqlite-adding-turso/">Part 2</a> ePHPm v0.7.0 ran exactly one SQLite engine, Turso, in
-process, for single-node and clustered mode alike. The sidecar was gone. What I skipped over is how a replica actually gets
-the primary&rsquo;s writes, and what happens when the primary dies with data on it. That&rsquo;s this post.</p>
+    <p>By the end of <a href="/blog/2026/08/clustered-sqlite-adding-turso/">Part 2</a> ePHPm v0.7.0 ran exactly one SQLite engine in
+process. That was Turso, for single-node and clustered mode alike. The sidecar was gone. What I skipped over is how a
+replica actually gets the primary&rsquo;s writes, and what happens when the primary dies with data on it. That&rsquo;s this post.</p>
   </div>
   <footer>
     <a href="/blog/2026/09/clustered-sqlite-cdc-cluster-channel/" class="button big">Read More</a>

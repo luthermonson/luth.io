@@ -1,6 +1,6 @@
 ---
 title: "Clustered SQLite in ePHPm, Part 1: Replication by Sidecar"
-description: "How ePHPm first made SQLite highly available by embedding sqld as a child process, and the list of things that went wrong with it."
+description: "ePHPm first made SQLite highly available by embedding sqld as a child process. This is how that worked and the list of things that went wrong with it."
 date: 2026-08-08T20:14:00-07:00
 tags: [ ephpm, sqlite, sqld, libsql, rust, clustering, php ]
 categories: [ ephpm, databases ]
@@ -14,13 +14,13 @@ draft: false
 
 Most PHP sites I have run in the last twenty years did not need a MySQL server. They needed *a* database, and MySQL was the
 one every framework spoke. With [ePHPm](https://github.com/ephpm/ephpm) I have been trying to get rid of that server for
-the common case, and the piece that makes it possible is [litewire](https://github.com/ephpm/litewire): PHP connects with
-plain `pdo_mysql`, litewire speaks the MySQL wire protocol, and the queries land in a SQLite file. WordPress and Laravel
+the common case. The piece that makes it possible is [litewire](https://github.com/ephpm/litewire). PHP connects with
+plain `pdo_mysql`. litewire speaks the MySQL wire protocol, and the queries land in a SQLite file. WordPress and Laravel
 don't know the difference. No `mysqld`, no child processes, just `ephpm` and a `.db` file.
 
-That works great until somebody asks the obvious question: what happens when the box dies? SQLite has no replication.
-This is a three-part series about how ePHPm went from "SQLite file plus a sidecar" to replication done entirely inside the
-process. The PHP side never changes across all three posts. Everything interesting happens behind litewire.
+That works great until somebody asks the obvious question. What happens when the box dies? SQLite has no replication.
+This is a three-part series about how ePHPm went from "SQLite file plus a sidecar" to replication done entirely inside
+the process. The PHP side never changes across all three posts. Everything interesting happens behind litewire.
 
 - Part 1: Replication by sidecar with sqld (this post)
 - [Part 2: Adding Turso, one engine in-process](/blog/2026/08/clustered-sqlite-adding-turso/)
@@ -28,14 +28,14 @@ process. The PHP side never changes across all three posts. Everything interesti
 
 ### The first answer: sqld
 
-When I wanted HA in March, the shortest path was [sqld](https://github.com/tursodatabase/libsql), which is libsql-server,
-Turso's MIT-licensed SQLite server. It already does primary/replica replication: replicas pull WAL frames from the primary
-over gRPC and forward writes back to it. I pinned v0.24.32 and the first wiring landed on 2026-03-30. The initial commit
-("single node sqld") got reverted 17 minutes later, and "clustering sqld" landed that night. That should have been a hint
-about how this was going to go.
+When I wanted HA in March, the shortest path was [sqld](https://github.com/tursodatabase/libsql). That's libsql-server,
+Turso's MIT-licensed SQLite server. It already does primary/replica replication. Replicas pull WAL frames from the
+primary over gRPC and forward writes back to it. I pinned v0.24.32 and the first wiring landed on 2026-03-30. The
+initial commit ("single node sqld") got reverted 17 minutes later. "clustering sqld" landed that night. That should have
+been a hint about how this was going to go.
 
 The thing I care about most in ePHPm is the single binary, so sqld had to be inside it. The release build downloads the
-sqld binary and a `build.rs` copies it into `OUT_DIR` so `include_bytes!()` can embed it:
+sqld binary. A `build.rs` copies it into `OUT_DIR` so `include_bytes!()` can embed it:
 
 ```rust
 fn main() {
@@ -61,16 +61,22 @@ fn main() {
 static SQLD_BINARY: &[u8] = include_bytes!(env!("SQLD_BINARY_PATH"));
 ```
 
-At startup the clustered path writes those bytes to a temp file, marks it executable, spawns it as a child process, polls
-its `/health` endpoint, and then hands litewire a different backend. Single-node mode used rusqlite in-process. Clustered
-mode swapped litewire's backend to a Hrana HTTP client pointed at the local sqld:
+At startup the clustered path does a few steps:
+
+- writes those bytes to a temp file and marks it executable
+- spawns it as a child process
+- polls its `/health` endpoint
+- hands litewire a different backend
+
+Single-node mode used rusqlite in-process. Clustered mode swapped litewire's backend to a Hrana HTTP client pointed at
+the local sqld:
 
 ```rust
 let mut backend = litewire::backend::HranaClient::new(&sqld_http_url);
 ```
 
-So "single binary" was technically true. It was a single binary with another binary inside it. And there were now two
-modes running two different engines: rusqlite for one node, sqld for a cluster. That split is the seed of everything in
+So "single binary" was technically true. It was a single binary with another binary inside it. There were now two modes
+running two different engines. rusqlite ran one node and sqld ran a cluster. That split is the seed of everything in
 Parts 2 and 3.
 
 ![sqld sidecar topology](/img/2026/08/clustered-sqlite-sqld-sidecar-topology.svg)
@@ -78,9 +84,10 @@ Parts 2 and 3.
 ### sqld doesn't elect anybody
 
 sqld knows how to be a primary or a replica. It does not decide which one it is. That is your problem. ePHPm already had a
-gossip layer ([chitchat](https://github.com/quickwit-oss/chitchat), scuttlebutt-style anti-entropy with a phi-accrual failure detector) for the KV
-store, so the election went on top of it. The rule: lowest-ordinal alive node wins, the winner writes a claim into the
-gossip KV at `sqlite:primary`, refreshes it every 5 seconds, and the claim has a 10 second TTL.
+gossip layer for the KV store. That's [chitchat](https://github.com/quickwit-oss/chitchat), scuttlebutt-style
+anti-entropy with a phi-accrual failure detector. The election went on top of it. The lowest-ordinal alive node wins. The
+winner writes a claim into the gossip KV at `sqlite:primary` and refreshes it every 5 seconds. The claim has a 10 second
+TTL.
 
 ```rust
 /// Gossip KV key for the primary node identity.
@@ -95,7 +102,7 @@ const PRIMARY_TTL: Duration = Duration::from_secs(10);
 ```
 
 The claim value is just `node_id|grpc_addr`. When the role changes, a watcher task restarts sqld with new arguments. On
-Unix that means SIGTERM, wait up to 5 seconds, SIGKILL if it's still there, and spawn again:
+Unix that means SIGTERM and a wait of up to 5 seconds. If it's still there it gets SIGKILL, and then it spawns again:
 
 ```rust
 pub async fn restart(&mut self, new_role: SqldRole) -> anyhow::Result<()> {
@@ -106,19 +113,19 @@ pub async fn restart(&mut self, new_role: SqldRole) -> anyhow::Result<()> {
 }
 ```
 
-That's a failover: kill a process and start it again with different flags. It works, in the sense that each piece does what
-it says. The rest of this post is the list of ways it didn't work, because that list is the actual reason the next two
-posts exist.
+That's a failover. Kill a process and start it again with different flags. It works, in the sense that each piece does
+what it says. The rest of this post is the list of ways it didn't work. That list is the reason the next two posts
+exist.
 
 ### Failure 1: async replication loses data on failover
 
-sqld replicas pull frames from the primary. Anything the primary committed and acknowledged to PHP but hadn't shipped yet
-is gone when the primary dies and a replica gets promoted. That's the nature of async replication, it's not a sqld bug, but
-it is a real window and it was mine to document.
+sqld replicas pull frames from the primary. Say the primary committed a write and acknowledged it to PHP but hadn't
+shipped it yet. That write is gone when the primary dies and a replica gets promoted. That's the nature of async
+replication. It's not a sqld bug, but it is a real window and it was mine to document.
 
 ### Failure 2: no Windows
 
-There is no sqld build for Windows. ePHPm runs on Windows (I spend a lot of time making sure it does), so clustered SQLite
+There is no sqld build for Windows. ePHPm runs on Windows (I spend a lot of time making sure it does). Clustered SQLite
 was simply a startup error there:
 
 ```rust
@@ -154,19 +161,19 @@ match role {
 ```
 
 The fix is boring. What it says isn't. The feature had unit tests, an election, docs, and config. It had never once run
-with two nodes. "Implemented" and "exercised" are different words and I had been using them as if they were the same.
+with two nodes. "Implemented" and "exercised" are different words. I had been using them as if they were the same.
 
 ### Failure 4: the control plane was open
 
-A security audit pass in late July ([#201](https://github.com/ephpm/ephpm/pull/201)) found three things, all rooted in the
-same threat model, a plaintext and unauthenticated cluster control plane:
+A security audit pass in late July ([#201](https://github.com/ephpm/ephpm/pull/201)) found three things. All of them were
+rooted in the same threat model, a plaintext and unauthenticated cluster control plane:
 
-- **Empty secret meant plaintext.** With `[cluster] secret` unset, gossip and the KV data plane ran unauthenticated, with
-  only a startup warning. Any host on the network could forge KV writes: sessions, rate-limit counters, ACME keys. Now
-  clustering refuses to start without a secret unless you set `allow_insecure_no_auth = true` on purpose.
+- **Empty secret meant plaintext.** With `[cluster] secret` unset, gossip and the KV data plane ran unauthenticated. The
+  only sign was a startup warning. Any host on the network could forge KV writes: sessions, rate-limit counters, ACME
+  keys. Now clustering refuses to start without a secret unless you set `allow_insecure_no_auth = true` on purpose.
 - **Forged primary claims.** Replicas dialed whatever `grpc_addr` was in the gossip claim. Inject a claim and you could
-  point every replica at an attacker's sqld. Claims are now validated against live gossip membership (by host, since
-  gossip and gRPC use different ports on the same machine) before anyone dials them.
+  point every replica at an attacker's sqld. Claims are now validated against live gossip membership before anyone
+  dials them. The check is by host, since gossip and gRPC use different ports on the same machine.
 - **Predictable extraction path.** The embedded binary was written to `temp_dir()/ephpm-sqld-<pid>`, then chmodded and
   executed. Classic symlink race on a shared `/tmp`. It now goes into a fresh `0700` directory from `mkdtemp`, created
   with `O_EXCL`.
@@ -176,9 +183,9 @@ gossip layer that was designed for cache keys.
 
 ### Failure 5: the write cliff
 
-This is the one that ended it. For v0.6.0 I benchmarked four lanes: rusqlite and Turso, each single-node and clustered,
-one machine, `--cpus 1` per node, one autocommit INSERT per request. The clustered sqld lane did this as concurrent writers
-went up ([issue #217](https://github.com/ephpm/ephpm/issues/217)):
+This is the one that ended it. For v0.6.0 I benchmarked four lanes. They were rusqlite and Turso, each single-node and
+clustered. Everything ran on one machine with `--cpus 1` per node and one autocommit INSERT per request. Here's what the
+clustered sqld lane did as concurrent writers went up ([issue #217](https://github.com/ephpm/ephpm/issues/217)):
 
 ![clustered sqld write throughput by concurrency](/img/2026/08/clustered-sqlite-sqld-sidecar-write-cliff.svg)
 
@@ -190,26 +197,26 @@ went up ([issue #217](https://github.com/ephpm/ephpm/issues/217)):
 | 8 | 453 | 9.6 ms | 29.8 ms | 8 |
 | 16 | **37** | 20.4 ms | **5.04 s** | 0 |
 
-Peak at four writers, half that at eight, and at sixteen it fell over. In the release-build run, the c=16 cell completed
-*zero* requests in both 20 second reps. When there was an error, it looked like this:
+It peaked at four writers and dropped to half that at eight. At sixteen it fell over. In the release-build run, the c=16
+cell completed *zero* requests in both 20 second reps. When there was an error, it looked like this:
 
 ```
 SQLSTATE[HY000]: General error: 1205 SQLite error: [SQLITE_BUSY] database is locked
 ```
 
-That is SQLite's single write lock, with an HTTP round trip from litewire to sqld for every statement, and a busy
-timeout that runs out. Mostly, though, there were no errors. Look at the 500 column at c=16: zero. The requests hung. The
+That is SQLite's single write lock. Add an HTTP round trip from litewire to sqld for every statement and a busy timeout
+that runs out. Mostly, though, there were no errors. Look at the 500 column at c=16: zero. The requests hung. The
 primary logged nothing, with no busy line and no timeout. A health check watching for 5xx would have called that node
 healthy while it served nobody.
 
-Every other lane got faster with more writers. Single-node rusqlite went 648 to 1130 RPS from c=1 to c=16, and the
+Every other lane got faster with more writers. Single-node rusqlite went 648 to 1130 RPS from c=1 to c=16. The
 clustered Turso lane went 558 to 876. sqld was the only one that went off a cliff.
 
 ### The band-aid that proved the point
 
-For the 0.6.x line I added write admission control ([#222](https://github.com/ephpm/ephpm/pull/222)): a semaphore in
-front of the Hrana backend, `[db.sqlite.sqld] write_permits`. Reads never take a permit. With the knob unset, c=8 and c=16
-completed nothing. With `write_permits = 1`:
+For the 0.6.x line I added write admission control ([#222](https://github.com/ephpm/ephpm/pull/222)). It's a semaphore
+in front of the Hrana backend, `[db.sqlite.sqld] write_permits`. Reads never take a permit. With the knob unset, c=8 and
+c=16 completed nothing. With `write_permits = 1`:
 
 | `write_permits` | c=1 | c=4 | c=8 | c=16 |
 |---|---|---|---|---|
@@ -217,9 +224,9 @@ completed nothing. With `write_permits = 1`:
 | 1 | 415-445 | 561-595 | 527-593 | 551-598 |
 | 8 | 444-451 | 232-266 | 0 completed | 0 completed |
 
-(Ranges are across two reps and two separate cluster bring-ups, from the PR.) One permit, which means one write at a
-time, fixed it. Eight permits sits above the cliff and reproduces it exactly. The best fix I could ship for clustered
-writes was to stop doing them concurrently. That is a useful knob and a terrible architecture.
+(Ranges are across two reps and two separate cluster bring-ups, from the PR.) One permit fixed it. That means one write
+at a time. Eight permits sits above the cliff and reproduces it exactly. The best fix I could ship for clustered writes
+was to stop doing them concurrently. That is a useful knob and a terrible architecture.
 
 ### Where that left things
 
@@ -228,9 +235,9 @@ Hrana HTTP between litewire and sqld on every node. A child process per node wit
 inside the main binary. Two engines depending on whether the config said `[cluster]`. No Windows. And concurrent writes
 needed a semaphore set to 1.
 
-A sidecar means another process, another protocol hop, and another failure domain, and WAL plus a busy timeout doesn't
-hold up under concurrent writers. The same benchmark that drew the cliff above had a fourth lane in it, Turso with
-in-process change data capture, sustaining 876 RPS at c=16 on the same fixture. That's
+A sidecar means another process, another protocol hop, and another failure domain. WAL plus a busy timeout doesn't hold
+up under concurrent writers. The same benchmark that drew the cliff above had a fourth lane in it. That was Turso with
+in-process change data capture. It sustained 876 RPS at c=16 on the same fixture. That's
 [Part 2](/blog/2026/08/clustered-sqlite-adding-turso/).
 
 ### Links

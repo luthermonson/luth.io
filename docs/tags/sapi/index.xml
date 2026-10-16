@@ -13,7 +13,7 @@
       <link>https://luth.io/blog/2026/07/building-a-custom-php-sapi/</link>
       <pubDate>Thu, 30 Jul 2026 20:18:00 -0700</pubDate>
       <guid>https://luth.io/blog/2026/07/building-a-custom-php-sapi/</guid>
-      <description>&lt;p&gt;If you&amp;rsquo;ve only ever run PHP behind nginx you&amp;rsquo;ve probably never had to think about how &lt;code&gt;echo&lt;/code&gt; reaches a socket. When you&#xA;embed PHP, as &lt;a href=&#34;https://github.com/ephpm/ephpm&#34;&gt;ePHPm&lt;/a&gt; does, it&amp;rsquo;s the first thing you have to answer, and the answer is a&#xA;SAPI. There is very little written about implementing one. Most of what I know came from reading &lt;code&gt;sapi/cli&lt;/code&gt;,&#xA;&lt;code&gt;sapi/cgi&lt;/code&gt; and &lt;code&gt;sapi/embed&lt;/code&gt; in php-src and then finding out which parts I&amp;rsquo;d misread. This is the write-up I wanted back&#xA;in March.&lt;/p&gt;</description>
+      <description>&lt;p&gt;If you&amp;rsquo;ve only ever run PHP behind nginx, you&amp;rsquo;ve probably never had to think about how &lt;code&gt;echo&lt;/code&gt; reaches a socket. When&#xA;you embed PHP like &lt;a href=&#34;https://github.com/ephpm/ephpm&#34;&gt;ePHPm&lt;/a&gt; does, it&amp;rsquo;s the first thing you have to answer. The answer&#xA;is a SAPI. There is very little written about implementing one. Most of what I know came from reading &lt;code&gt;sapi/cli&lt;/code&gt;,&#xA;&lt;code&gt;sapi/cgi&lt;/code&gt; and &lt;code&gt;sapi/embed&lt;/code&gt; in php-src. Then I found out which parts I&amp;rsquo;d misread. This is the write-up I wanted back&#xA;in March.&lt;/p&gt;</description>
     </item>
   </channel>
 </rss>

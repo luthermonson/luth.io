@@ -218,7 +218,7 @@
       <h2><a href="/blog/2026/09/agent-shell-allowlist-bypassable/">Your Agent&#39;s Shell Allowlist Is Bypassable</a></h2>
     
     
-      <p>A permission gate for AI agents&#39; shell commands judged spellings instead of commands. The classes of bypass I found in shipmates&#39; own gate, and the one idea that fixes most of them.</p>
+      <p>A permission gate for AI agents&#39; shell commands judged spellings instead of commands. I found several classes of bypass in shipmates&#39; own gate, and one idea fixes most of them.</p>
     
   </div>
   <div class="meta">
@@ -233,11 +233,9 @@
     <img class="" src="/img/2026/09/agent-shell-allowlist-bypassable-cover.svg" alt="A shell command decomposed into the nested command lines the permission gate has to judge">
   </a>
     
-    <p>Every <a href="/blog/2026/08/shipmates-persona-based-ai-coding-crews/">shipmates</a> crew member runs shell commands, and before any
-of them runs it goes through a permission gate. The gate uses the same rule syntax as Claude Code settings,
-<code>Bash(git status)</code>, <code>Bash(rm *)</code>, <code>Write(**/.claude/settings.json)</code>, merged from several layers: a fleet-wide deny list
-pushed from Fleet Command, per-persona policy files, project settings, and the Brig, which compiles shipmates&rsquo; fifteen
-&ldquo;Ship&rsquo;s Articles&rdquo; into deny and ask rules. Deny beats ask, ask beats&hellip;</p>
+    <p>Every <a href="/blog/2026/08/shipmates-persona-based-ai-coding-crews/">shipmates</a> crew member runs shell commands. Before any of
+them runs, it goes through a permission gate. The gate uses the same rule syntax as Claude Code settings:
+<code>Bash(git status)</code>, <code>Bash(rm *)</code>, <code>Write(**/.claude/settings.json)</code>. The rules are merged from several layers:</p>
   </div>
   <footer>
     <a href="/blog/2026/09/agent-shell-allowlist-bypassable/" class="button big">Read More</a>
@@ -287,7 +285,7 @@ pushed from Fleet Command, per-persona policy files, project settings, and the B
       <h2><a href="/blog/2026/09/process-containment-job-objects-process-groups-cgroups/">Cross-Platform Process Containment: Job Objects vs Process Groups vs cgroups</a></h2>
     
     
-      <p>How shipmates bounds and tears down agent process trees on Windows, Linux and macOS, why I deleted 1,206 lines of cgroup code, and the grandchild that escaped the memory cap everywhere except my dev box.</p>
+      <p>How shipmates bounds and tears down agent process trees on Windows, Linux and macOS. It also covers why I deleted 1,206 lines of cgroup code and the grandchild that escaped the memory cap everywhere except my dev box.</p>
     
   </div>
   <div class="meta">
@@ -302,8 +300,8 @@ pushed from Fleet Command, per-persona policy files, project settings, and the B
     <img class="" src="/img/2026/09/process-containment-job-objects-process-groups-cgroups-cover.svg" alt="Agent process tree with the scope of kill and measurement on Windows, Linux and macOS">
   </a>
     
-    <p>Every turn a <a href="/blog/2026/08/shipmates-persona-based-ai-coding-crews/">shipmates</a> crew member takes is a subprocess:
-<code>claude</code> or the <code>codex</code> app-server, which in turn spawns shells, <code>go test</code>, <code>npm</code>, whatever the task calls for. Two
+    <p>Every turn a <a href="/blog/2026/08/shipmates-persona-based-ai-coding-crews/">shipmates</a> crew member takes is a subprocess. It&rsquo;s
+<code>claude</code> or the <code>codex</code> app-server. That in turn spawns shells, <code>go test</code>, <code>npm</code> or whatever the task calls for. Two
 things have to be true about that tree. When a turn ends or gets killed, the <em>whole</em> tree goes, including the
 grandchildren. And if somebody sets a memory or CPU budget, the budget applies to the whole tree, not just the
 process I happened to start.</p>
@@ -376,9 +374,9 @@ process I happened to start.</p>
   </a>
     
     <p>On August 16th a <code>server.test.exe</code> from <a href="/blog/2026/08/shipmates-persona-based-ai-coding-crews/">shipmates</a> climbed to
-roughly <strong>1 TB of commit charge</strong> on my Windows workstation. Windows Terminal, which was hosting several agent sessions
-in tabs, hard-faulted with <code>E_OUTOFMEMORY</code> and every one of those sessions died at the same moment. It wasn&rsquo;t the first
-time either. An earlier one hit about 236 GB through an infinite <code>filepath.Dir</code> loop.</p>
+roughly <strong>1 TB of commit charge</strong> on my Windows workstation. Windows Terminal was hosting several agent sessions in
+tabs. It hard-faulted with <code>E_OUTOFMEMORY</code>, and every one of those sessions died at the same moment. It wasn&rsquo;t the
+first time either. An earlier one hit about 236 GB through an infinite <code>filepath.Dir</code> loop.</p>
   </div>
   <footer>
     <a href="/blog/2026/09/memory-watchdog-for-go-test/" class="button big">Read More</a>
@@ -441,11 +439,11 @@ time either. An earlier one hit about 236 GB through an infinite <code>filepath.
     <img class="" src="/img/2026/09/os-exec-stdoutpipe-wait-footgun-cover.svg" alt="Timeline of a child process exiting, Wait closing the pipe, and the reader losing buffered frames">
   </a>
     
-    <p><a href="/blog/2026/08/shipmates-persona-based-ai-coding-crews/">shipmates</a> spends most of its life spawning <code>claude</code> (and <code>codex</code>)
-processes and reading newline-delimited JSON off their stdout. The last frame of a turn is the important one, a
-<code>result</code> frame with the cost, the model and the final text. Stderr matters too, because that&rsquo;s where Claude Code
-tells you <code>Invalid API key · Please run /login</code>. For a while I was throwing both away under load, and the cause is
-documented right there in the <code>os/exec</code> godoc. I fixed it in one package and then found the exact&hellip;</p>
+    <p><a href="/blog/2026/08/shipmates-persona-based-ai-coding-crews/">shipmates</a> spends most of its life spawning <code>claude</code> (and
+<code>codex</code>) processes and reading newline-delimited JSON off their stdout. The last frame of a turn is the important one.
+It&rsquo;s a <code>result</code> frame with the cost, the model and the final text. Stderr matters too, because that&rsquo;s where Claude Code
+tells you <code>Invalid API key · Please run /login</code>. For a while I was throwing both away under load. The cause is
+documented right there in the <code>os/exec</code> godoc. I fixed it in one package and then found the&hellip;</p>
   </div>
   <footer>
     <a href="/blog/2026/09/os-exec-stdoutpipe-wait-footgun/" class="button big">Read More</a>
@@ -489,7 +487,7 @@ documented right there in the <code>os/exec</code> godoc. I fixed it in one pack
       <h2><a href="/blog/2026/09/shipmates-short-ones-setup-go-and-voice/">shipmates Short Ones: 8 Minutes Extracting Go, and Three Voice-Loop Bugs</a></h2>
     
     
-      <p>Four small stories from shipmates: setup-go stuck extracting on Windows CI, Cloudflare&#39;s 100 second timeout, a voice loop that transcribed itself, and events lost to a timestamp watermark.</p>
+      <p>Four small stories from shipmates, starting with setup-go stuck extracting on Windows CI and Cloudflare&#39;s 100 second timeout. The other two are a voice loop that transcribed itself and events lost to a timestamp watermark.</p>
     
   </div>
   <div class="meta">
@@ -504,8 +502,8 @@ documented right there in the <code>os/exec</code> godoc. I fixed it in one pack
     <img class="" src="/img/2026/09/shipmates-short-ones-setup-go-and-voice-cover.svg" alt="setup-go on Windows CI: 7 seconds to download, 473 seconds extracting before the timeout">
   </a>
     
-    <p>A few <a href="/blog/2026/08/shipmates-persona-based-ai-coding-crews/">shipmates</a> bugs that don&rsquo;t need a whole post each but
-were too good to leave in commit messages.</p>
+    <p>A few <a href="/blog/2026/08/shipmates-persona-based-ai-coding-crews/">shipmates</a> bugs don&rsquo;t need a whole post each. They were
+too good to leave in commit messages, though.</p>
   </div>
   <footer>
     <a href="/blog/2026/09/shipmates-short-ones-setup-go-and-voice/" class="button big">Read More</a>
@@ -573,8 +571,8 @@ were too good to leave in commit messages.</p>
   </a>
     
     <p><a href="/blog/2026/08/shipmates-persona-based-ai-coding-crews/">shipmates</a> ships connect to Fleet Command over outbound
-websocket tunnels so nothing on the ship side has to be exposed to the internet. I didn&rsquo;t write that tunnel layer,
-I used <a href="https://github.com/rancher/remotedialer">rancher/remotedialer</a>, the same library Rancher uses to reach
+websocket tunnels. That way nothing on the ship side has to be exposed to the internet. I didn&rsquo;t write that tunnel
+layer. I used <a href="https://github.com/rancher/remotedialer">rancher/remotedialer</a>, the same library Rancher uses to reach
 downstream cluster agents. I spent years around that code at Rancher, so it was the obvious pick. What I didn&rsquo;t
 expect was for my CI&rsquo;s race job to find two data races in it in the first week.</p>
   </div>
@@ -622,13 +620,13 @@ expect was for my CI&rsquo;s race job to find two data races in it in the first 
       <h2><a href="/blog/2026/08/shipmates-persona-based-ai-coding-crews/">shipmates: Persona-Based AI Coding Crews That Remember</a></h2>
     
     
-      <p>A Go CLI and daemon that runs crews of AI coding agents across machines, with per-project memory, a shared task graph, voice control and a real permission model.</p>
+      <p>shipmates is a Go CLI and daemon that runs crews of AI coding agents across machines. It adds per-project memory, a shared task graph, voice control and a real permission model.</p>
     
   </div>
   <div class="meta">
     <time datetime="2026-08-21 21:18:00 -0700 PDT">August 21, 2026</time>
     
-    <p>6-Minute Read</p>
+    <p>7-Minute Read</p>
   </div>
 </header>
 
@@ -639,8 +637,8 @@ expect was for my CI&rsquo;s race job to find two data races in it in the first 
     
     <p>Since June most of my evenings have gone into <a href="https://github.com/luthermonson/shipmates">shipmates</a>, a Go CLI and daemon
 for running crews of AI coding agents. I tagged <a href="https://github.com/luthermonson/shipmates/releases/tag/v0.5.0">v0.5.0</a>
-on August 17th, two months and about 240 commits after the first architecture doc, so it&rsquo;s a good time to write down what
-it is and why it exists.</p>
+on August 17th. That was two months and about 240 commits after the first architecture doc. So it&rsquo;s a good time to write
+down what it is and why it exists.</p>
   </div>
   <footer>
     <a href="/blog/2026/08/shipmates-persona-based-ai-coding-crews/" class="button big">Read More</a>
@@ -686,7 +684,7 @@ it is and why it exists.</p>
       <h2><a href="/blog/2026/08/ntfs-atomic-file-replacement-not-rename-fsync/">Atomic File Replacement on NTFS Is Not rename &#43; fsync</a></h2>
     
     
-      <p>The Unix recipe for durable atomic file replacement doesn&#39;t translate to Windows. What shipmates uses instead, and the delete-pending window that made an 8-way test fail only when the whole suite ran.</p>
+      <p>The Unix recipe for durable atomic file replacement doesn&#39;t translate to Windows. This is what shipmates uses instead, plus the delete-pending window that made an 8-way test fail only when the whole suite ran.</p>
     
   </div>
   <div class="meta">
@@ -701,11 +699,11 @@ it is and why it exists.</p>
     <img class="" src="/img/2026/09/ntfs-atomic-file-replacement-not-rename-fsync-cover.svg" alt="How long a losing concurrent replacer waits on NTFS, idle disk vs a disk under fsync load">
   </a>
     
-    <p><a href="https://github.com/luthermonson/shipmates">shipmates</a> writes a lot of small state files that other
-processes read: voyage plans and state, tracker files. Each of them has to be replaced atomically (a reader sees
-the old file or the new one, never half of each) and durably (when the function returns success, a power cut doesn&rsquo;t
-take it back). Every Unix programmer knows the recipe for that. It doesn&rsquo;t work on Windows, and the reasons are more
-interesting than &ldquo;Windows is different&rdquo;.</p>
+    <p><a href="https://github.com/luthermonson/shipmates">shipmates</a> writes a lot of small state files that other processes read.
+Voyage plans and state, tracker files. Each of them has to be replaced atomically, so a reader sees the old file or the
+new one and never half of each. Each also has to be replaced durably. When the function returns success, a power cut
+doesn&rsquo;t take it back. Every Unix programmer knows the recipe for that. It doesn&rsquo;t work on Windows, and the reasons are
+more interesting than &ldquo;Windows is different&rdquo;.</p>
   </div>
   <footer>
     <a href="/blog/2026/08/ntfs-atomic-file-replacement-not-rename-fsync/" class="button big">Read More</a>

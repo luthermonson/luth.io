@@ -218,7 +218,7 @@
       <h2><a href="/blog/2026/08/requests-that-end-wrong/">Requests That End Wrong: A 200 That Was Really a Crash</a></h2>
     
     
-      <p>Three ePHPm bugs in how an embedded PHP request starts and ends: a bailout that returned 200, an empty $_POST, and a SIGTERM that corrupted the heap.</p>
+      <p>Three ePHPm bugs lived in how an embedded PHP request starts and ends. A bailout returned 200, $_POST came up empty and a SIGTERM corrupted the heap.</p>
     
   </div>
   <div class="meta">
@@ -233,9 +233,9 @@
     <img class="" src="/img/2026/08/requests-that-end-wrong-cover.svg" alt="Diagram of a bare zend_bailout being absorbed by php_execute_script&#39;s own zend_try instead of reaching ePHPm&#39;s guard">
   </a>
     
-    <p>The scariest response a server can send isn&rsquo;t a 500. It&rsquo;s a 200 that should have been a 500. A crash is loud: the
-pod restarts, an alert fires, somebody looks. A truncated page with a success status code gets cached by your CDN,
-the health check calls the box healthy, and a client parses half a document as if it were the whole thing.</p>
+    <p>The scariest response a server can send isn&rsquo;t a 500. It&rsquo;s a 200 that should have been a 500. A crash is loud. The pod
+restarts, an alert fires, somebody looks. A truncated page with a success status code is quiet. Your CDN caches it and
+the health check calls the box healthy. A client parses half a document as if it were the whole thing.</p>
   </div>
   <footer>
     <a href="/blog/2026/08/requests-that-end-wrong/" class="button big">Read More</a>

@@ -221,7 +221,7 @@
   <div class="meta">
     <time datetime="2026-10-12 21:10:00 -0700 PDT">October 12, 2026</time>
     
-    <p>11-Minute Read</p>
+    <p>12-Minute Read</p>
   </div>
 </header>
 
@@ -274,14 +274,14 @@
         
         <p>Persistent workers are the big performance win in modern PHP. You boot Laravel or Symfony once, keep the container
 in memory, and serve thousands of requests out of the same process. <a href="https://github.com/ephpm/ephpm">ePHPm</a> has had
-a worker mode for a while, and like most worker runtimes it had a quiet hole in it: you couldn&rsquo;t step debug a request
-with Xdebug. I wanted that fixed without patching Xdebug and without giving up the warm pool, and the answer ended up
-being to stop fighting the constraint and route around it. The debug lane is merged on main and coming in the upcoming
-v0.12.0 release.</p>
+a worker mode for a while. Like most worker runtimes it had a quiet hole in it. You couldn&rsquo;t step debug a request with
+Xdebug. I wanted that fixed without patching Xdebug and without giving up the warm pool. The answer ended up being to
+stop fighting the constraint and route around it. The debug lane is merged on main and coming in the upcoming v0.12.0
+release.</p>
 <h3 id="why-worker-mode-breaks-xdebug">Why worker mode breaks Xdebug</h3>
-<p>To PHP, a worker&rsquo;s entire life is one request. Request startup (RINIT) runs when the worker boots, then the script
-sits in a loop pulling HTTP requests off ePHPm, and request shutdown (RSHUTDOWN) only runs when the worker retires.
-A minimal worker looks like this:</p>
+<p>To PHP, a worker&rsquo;s entire life is one request. Request startup (RINIT) runs when the worker boots. Then the script sits
+in a loop pulling HTTP requests off ePHPm. Request shutdown (RSHUTDOWN) only runs when the worker retires. A minimal
+worker looks like this:</p>
 <div class="highlight"><pre tabindex="0" class="chroma"><code class="language-php" data-lang="php"><span class="line"><span class="cl"><span class="o">&lt;?</span><span class="nx">php</span>
 </span></span><span class="line"><span class="cl"><span class="c1">// boot once: build the kernel, container, config
 </span></span></span><span class="line"><span class="cl"><span class="nv">$served</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
@@ -297,12 +297,12 @@ A minimal worker looks like this:</p>
 </span></span><span class="line"><span class="cl">    <span class="p">);</span>
 </span></span><span class="line"><span class="cl"><span class="p">}</span>
 </span></span></code></pre></div><p>Xdebug decides whether to open a DBGp session at RINIT. It looks for <code>XDEBUG_TRIGGER</code> or <code>XDEBUG_SESSION</code> in
-<code>$_GET</code>, <code>$_POST</code> and <code>$_COOKIE</code>, connects to your IDE if it finds one, and closes the session at RSHUTDOWN.
-On a warm worker none of that lines up. The &ldquo;request&rdquo; Xdebug saw at RINIT was the boot, which had no HTTP data at all,
-so it never sees your trigger. And if it did open a session, that session would last for the entire life of the worker.</p>
-<p>The first idea everybody has is &ldquo;reset Xdebug between loop iterations&rdquo;. That&rsquo;s a dead end. While the worker is parked
-in <code>take_request()</code> its own PHP frames are still live on the stack, so there&rsquo;s no clean point where you can tear down
-and restart Xdebug&rsquo;s per-request state without pulling the floor out from under the script.</p>
+<code>$_GET</code>, <code>$_POST</code> and <code>$_COOKIE</code>. If it finds one it connects to your IDE, and it closes the session at RSHUTDOWN. On a
+warm worker none of that lines up. The &ldquo;request&rdquo; Xdebug saw at RINIT was the boot, which had no HTTP data at all. So it
+never sees your trigger. And if it did open a session, that session would last for the entire life of the worker.</p>
+<p>The first idea everybody has is &ldquo;reset Xdebug between loop iterations&rdquo;. That&rsquo;s a dead end. While the worker is parked in
+<code>take_request()</code> its own PHP frames are still live on the stack. There&rsquo;s no clean point where you can tear down and
+restart Xdebug&rsquo;s per-request state without pulling the floor out from under the script.</p>
 <h3 id="route-dont-reset">Route, don&rsquo;t reset</h3>
 <p>The design that worked flips the problem. Instead of making a warm worker behave like a fresh request, give the
 debugged request an actual fresh request.</p>
@@ -316,10 +316,10 @@ RINIT sees the trigger natively and connects to the IDE before the first line of
 actually hit. That&rsquo;s something you don&rsquo;t usually get without some fiddling even under php-fpm.</li>
 <li>The thread serves exactly that one request through the normal <code>take_request()</code> / <code>send_response()</code> loop with
 <code>max_requests = 1</code>. You step through the same code path production uses, not a debug-only copy.</li>
-<li>The loop ends, <code>php_request_shutdown()</code> runs, and Xdebug sends a clean DBGp <code>stopping</code>, same as php-fpm.</li>
+<li>The loop ends and <code>php_request_shutdown()</code> runs. Xdebug sends a clean DBGp <code>stopping</code>, same as php-fpm.</li>
 </ol>
-<p>The C side of step 2 is short. It registers the thread with TSRM, points PHP&rsquo;s request globals at the triggering
-request, and only then starts the PHP request:</p>
+<p>The C side of step 2 is short. It registers the thread with TSRM and points PHP&rsquo;s request globals at the triggering
+request. Only then does it start the PHP request:</p>
 <div class="highlight"><pre tabindex="0" class="chroma"><code class="language-c" data-lang="c"><span class="line"><span class="cl"><span class="kt">int</span> <span class="nf">ephpm_thread_init_preseeded</span><span class="p">(</span><span class="k">const</span> <span class="kt">char</span> <span class="o">*</span><span class="n">method</span><span class="p">,</span> <span class="k">const</span> <span class="kt">char</span> <span class="o">*</span><span class="n">uri</span><span class="p">,</span>
 </span></span><span class="line"><span class="cl">    <span class="k">const</span> <span class="kt">char</span> <span class="o">*</span><span class="n">query_string</span><span class="p">,</span> <span class="k">const</span> <span class="kt">char</span> <span class="o">*</span><span class="n">content_type</span><span class="p">,</span> <span class="k">const</span> <span class="kt">char</span> <span class="o">*</span><span class="n">cookie</span><span class="p">,</span>
 </span></span><span class="line"><span class="cl">    <span class="kt">size_t</span> <span class="n">content_length</span><span class="p">,</span> <span class="k">const</span> <span class="kt">char</span> <span class="o">*</span><span class="n">path_translated</span><span class="p">,</span>
@@ -348,27 +348,31 @@ request, and only then starts the PHP request:</p>
 </span></span><span class="line"><span class="cl">    <span class="k">return</span> <span class="n">ret</span> <span class="o">==</span> <span class="n">SUCCESS</span> <span class="o">?</span> <span class="mi">0</span> <span class="o">:</span> <span class="o">-</span><span class="mi">1</span><span class="p">;</span>
 </span></span><span class="line"><span class="cl"><span class="p">}</span>
 </span></span></code></pre></div><p>For a form POST trigger, PHP gets a private copy of the body during startup only. The app still receives the whole
-body when it calls <code>take_request()</code>, and the end-to-end test checks the md5 to prove it.</p>
+body when it calls <code>take_request()</code>. The end-to-end test checks the md5 to prove it.</p>
 <p>Every other request stays on the warm pool. In the PR&rsquo;s end-to-end run I held a debug session paused on a breakpoint
-for 6 seconds and kept hitting the server; the warm pool answered in 0.58 to 0.67 ms per request the whole time, from
-the same two boot ids it had before the session started.</p>
-<p>The honest cost is one framework boot per debugged request, which is what php-fpm pays on every request anyway.
-Paying it also means a bug that only shows up on a warm worker&rsquo;s Nth request (a leaked static, a stale cache) won&rsquo;t
-reproduce on a debugged one. The lane can&rsquo;t help with that class of bug and the docs say so.</p>
+for 6 seconds and kept hitting the server. The warm pool answered in 0.58 to 0.67 ms per request the whole time. It
+served them from the same two boot ids it had before the session started.</p>
+<p>The honest cost is one framework boot per debugged request. That&rsquo;s what php-fpm pays on every request anyway. Paying it
+also means some bugs won&rsquo;t reproduce on a debugged request. A bug that only shows up on a warm worker&rsquo;s Nth request (a
+leaked static, a stale cache) is one of them. The lane can&rsquo;t help with that class of bug and the docs say so.</p>
 <h3 id="reimplementing-xdebugs-trigger-logic-in-rust-exactly">Reimplementing Xdebug&rsquo;s trigger logic in Rust, exactly</h3>
 <p>The routing decision has to match Xdebug&rsquo;s own decision. If the router says yes and Xdebug says no, you wasted a
-framework boot. If the router says no and Xdebug would have said yes, the request silently doesn&rsquo;t debug, which is the
-worst kind of developer experience. So <code>xdebug_trigger.rs</code> is a port of Xdebug 3.5.3&rsquo;s <code>trigger_enabled()</code>,
-<code>xdebug_lib_find_in_globals()</code> and <code>xdebug_debug_init_if_requested_at_startup()</code>, checked against php-src 8.5.7&rsquo;s
-<code>php_variables.c</code> for the decoding rules.</p>
+framework boot. If the router says no and Xdebug would have said yes, the request silently doesn&rsquo;t debug. That&rsquo;s the
+worst kind of developer experience. So <code>xdebug_trigger.rs</code> is a port of three Xdebug 3.5.3 functions:</p>
+<ul>
+<li><code>trigger_enabled()</code></li>
+<li><code>xdebug_lib_find_in_globals()</code></li>
+<li><code>xdebug_debug_init_if_requested_at_startup()</code></li>
+</ul>
+<p>It&rsquo;s checked against php-src 8.5.7&rsquo;s <code>php_variables.c</code> for the decoding rules.</p>
 <p>The corner cases are the fun part:</p>
 <ul>
-<li><code>XDEBUG_TRIGGER</code> is looked up first, then the legacy <code>XDEBUG_SESSION</code>, in <code>$_GET</code>, then <code>$_POST</code>, then <code>$_COOKIE</code>
-(Xdebug also falls back to the environment, which can&rsquo;t vary per request, so the router ignores it). The <em>first</em>
-place a name shows up decides.</li>
+<li><code>XDEBUG_TRIGGER</code> is looked up first, then the legacy <code>XDEBUG_SESSION</code>. Each is checked in <code>$_GET</code>, then <code>$_POST</code>,
+then <code>$_COOKIE</code>. Xdebug also falls back to the environment. That can&rsquo;t vary per request, so the router ignores it.
+The <em>first</em> place a name shows up decides.</li>
 <li><code>XDEBUG_IGNORE</code> vetoes everything (unless its value is <code>no</code> or <code>0</code>).</li>
-<li>With <code>xdebug.trigger_value</code> set (a shared secret, optionally a comma-separated list), the trimmed trigger value has
-to match, and the legacy <code>XDEBUG_SESSION_START</code> is refused outright.</li>
+<li><code>xdebug.trigger_value</code> can be set to a shared secret, optionally a comma-separated list. Then the trimmed trigger
+value has to match, and the legacy <code>XDEBUG_SESSION_START</code> is refused outright.</li>
 <li>Under <code>start_with_request=yes</code>, any trigger <em>name</em> counts and its value is ignored.</li>
 </ul>
 <p>Here&rsquo;s the core of it:</p>
@@ -402,32 +406,31 @@ to match, and the legacy <code>XDEBUG_SESSION_START</code> is refused outright.<
 </span></span></span><span class="line"><span class="cl"><span class="w">        </span><span class="p">}</span><span class="w">
 </span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="p">}</span><span class="w">
 </span></span></span><span class="line"><span class="cl"><span class="p">}</span><span class="w">
-</span></span></span></code></pre></div><p>The part that took the longest wasn&rsquo;t the decision, it was building <code>Lookup</code> so it decodes names and values the
-way PHP does. <code>+</code> is a space in query strings and form bodies but not in cookies. Duplicate GET and POST keys are
-last-wins, duplicate cookies are first-wins. PHP mangles variable names (<code>.</code> and space become <code>_</code>, <code>[...]</code> makes an
-array). If any of that is off, an encoding trick could route a request Xdebug would refuse, or the reverse. Even
-Xdebug&rsquo;s mode parser got ported, because it matches each item as a prefix (<code>xdebug.mode=d</code> means <code>develop</code>, not
-<code>debug</code>).</p>
-<p>Ini values are per-thread under ZTS, so <code>xdebug.mode</code>, <code>start_with_request</code> and <code>trigger_value</code> are read once on the
+</span></span></span></code></pre></div><p>The part that took the longest wasn&rsquo;t the decision. It was building <code>Lookup</code> so it decodes names and values the way PHP
+does. <code>+</code> is a space in query strings and form bodies but not in cookies. Duplicate GET and POST keys are last-wins.
+Duplicate cookies are first-wins. PHP mangles variable names (<code>.</code> and space become <code>_</code>, <code>[...]</code> makes an array). If any
+of that is off, an encoding trick could route a request Xdebug would refuse, or the reverse. Even Xdebug&rsquo;s mode parser
+got ported. It matches each item as a prefix (<code>xdebug.mode=d</code> means <code>develop</code>, not <code>debug</code>).</p>
+<p>Ini values are per-thread under ZTS. So <code>xdebug.mode</code>, <code>start_with_request</code> and <code>trigger_value</code> are read once on the
 <code>php_embed_init()</code> thread and frozen into a <code>TriggerPolicy</code>. The router never touches PHP state.</p>
 <h3 id="a-debugger-is-an-attack-surface">A debugger is an attack surface</h3>
 <p>The lane is reachable by any client that can reach the server. Anyone who can send a trigger can force a fresh
-framework boot, and with <code>xdebug.discover_client_host</code> on they can point the debugger at a host they control, where a
-debugger can run arbitrary code. Xdebug is a dev tool and should never be loaded in production, but &ldquo;should never&rdquo; isn&rsquo;t
+framework boot. With <code>xdebug.discover_client_host</code> on, they can point the debugger at a host they control. A debugger
+there can run arbitrary code. Xdebug is a dev tool and should never be loaded in production. But &ldquo;should never&rdquo; isn&rsquo;t
 a control, so the lane is bounded:</p>
 <ul>
-<li><code>[php.worker] debug_workers</code> (default 1) is separate from <code>[php] concurrency</code>, so a developer paused on a
-breakpoint never takes a serving slot.</li>
+<li><code>[php.worker] debug_workers</code> (default 1) is separate from <code>[php] concurrency</code>. A developer paused on a breakpoint
+never takes a serving slot.</li>
 <li>Over the cap, triggered requests <em>wait</em> instead of getting a 503. With a browser helper extension every AJAX call
-from your tab carries the trigger cookie, and failing them would break the page you&rsquo;re debugging.</li>
+from your tab carries the trigger cookie. Failing them would break the page you&rsquo;re debugging.</li>
 <li>The wait is bounded though: 16 waiters per slot, then an immediate 503.</li>
 <li>A thread paused inside Xdebug can&rsquo;t be killed. If the request times out or the client goes away, the slot is freed
-right away (it&rsquo;s held by the HTTP request, not the thread), but the thread lives on until you resume it in the IDE.
+right away. It&rsquo;s held by the HTTP request, not the thread. But the thread lives on until you resume it in the IDE.
 So at most <code>2 x debug_workers</code> debug threads can be alive at once. Past that, a triggered request waits two seconds
-for one to finish, then gets a 503 and a log line telling you to go resume your abandoned sessions.</li>
-<li>Startup logs a WARN whenever the lane is armed, another when <code>trigger_value</code> is empty, and another when
+for one to finish. Then it gets a 503 and a log line telling you to go resume your abandoned sessions.</li>
+<li>Startup logs a WARN whenever the lane is armed. It logs another when <code>trigger_value</code> is empty, and another when
 <code>discover_client_host</code> is on.</li>
-<li>Only the request <em>path</em> is logged for lane requests, never the query string, because it can carry the
+<li>Only the request <em>path</em> is logged for lane requests, never the query string. The query string can carry the
 <code>trigger_value</code> secret.</li>
 </ul>
 <p>The abandoned-session case from the end-to-end run shows the slot handoff working with a 2 second request timeout:</p>
@@ -436,45 +439,49 @@ for one to finish, then gets a 503 and a log line telling you to go resume your 
 [+2.015s] session B connected 0.003s after request B was sent (A still paused)
 [+2.016s] HTTP B: status=200 after 0.003s
 [+2.016s] session A resumed: status=stopping ; stop -&gt; stopped ; engine closed connection
-</code></pre><p>Mirroring Xdebug instead of &ldquo;route any trigger and let Xdebug sort it out&rdquo; matters here too. With <code>trigger_value</code> set,
+</code></pre><p>Mirroring Xdebug matters here too, instead of &ldquo;route any trigger and let Xdebug sort it out&rdquo;. With <code>trigger_value</code> set,
 a client without the secret can&rsquo;t make the server boot a debug worker at all.</p>
 <h3 id="the-bug-xdebug-flushed-out">The bug Xdebug flushed out</h3>
 <p>Building this exposed something that had nothing to do with worker mode. In per-request mode (the default), ePHPm ran
 <code>php_request_shutdown()</code> <em>lazily, at the start of the thread&rsquo;s next request</em>. That was left over from an older
 thread-reuse model and nothing depended on it.</p>
-<p>Under Xdebug that meant the <code>stopping</code> packet, the socket close and any profiler output waited for some unrelated
-later request to land on the same thread. The same root cause made sessions hang under the multi-thread pool, because
-the session module writes the session and releases its lock in RSHUTDOWN. The idle thread held the lock while the
+<p>Under Xdebug that meant the <code>stopping</code> packet, the socket close and any profiler output all waited. They waited for
+some unrelated later request to land on the same thread. The same root cause made sessions hang under the multi-thread
+pool. The session module writes the session and releases its lock in RSHUTDOWN. The idle thread held the lock while the
 next request for that session blocked on it on another thread. Reproduced on the released v0.11.2:</p>
 <pre tabindex="0"><code>req 1: HTTP 200 in 0.0018s  n=1 handler=files
 req 2: HTTP 000 in 8.0027s
 req 3: HTTP 000 in 8.0028s
 req 4: HTTP 000 in 8.0028s
 </code></pre><p>The fix (<a href="https://github.com/ephpm/ephpm/pull/541">#541</a>) split the request lifecycle into
-<code>ephpm_begin_request()</code>, <code>ephpm_run_request()</code> and <code>ephpm_finish_request()</code>. The pool sends the response first and
-then finishes the request, so teardown adds no latency, and it happens when the request actually ends. That one
-already shipped in v0.11.3. Same script after the fix:</p>
+<code>ephpm_begin_request()</code>, <code>ephpm_run_request()</code> and <code>ephpm_finish_request()</code>. The pool sends the response first and then
+finishes the request. Teardown adds no latency, and it happens when the request ends. That one already shipped in
+v0.11.3. Same script after the fix:</p>
 <pre tabindex="0"><code>req 1: HTTP 200 in 0.000865s  n=1 handler=files
 req 2: HTTP 200 in 0.001767s  n=2 handler=files
 req 3: HTTP 200 in 0.000727s  n=3 handler=files
 req 4: HTTP 200 in 0.000707s  n=4 handler=files
-</code></pre><p>It also had a cross-tenant side, since tenant A&rsquo;s destructors were running under whatever tenant reached the thread
-next. That deserves its own write-up, but I like this as a story about a debugger exposing a bug that had nothing to do
-with debugging.</p>
+</code></pre><p>It also had a cross-tenant side. Tenant A&rsquo;s destructors were running under whatever tenant reached the thread next.
+That deserves its own write-up. But I like this as a story about a debugger exposing a bug that had nothing to do with
+debugging.</p>
 <h3 id="making-it-one-flag-ephpm-dev---xdebug">Making it one flag: <code>ephpm dev --xdebug</code></h3>
 <p>All of the above still left a real wall for users. Xdebug has to be a ZTS build that matches the embedded PHP&rsquo;s
-<code>ZEND_MODULE_API_NO</code>, and the distro and Sury packages are NTS, so they won&rsquo;t load. Telling people to build Xdebug from
+<code>ZEND_MODULE_API_NO</code>. The distro and Sury packages are NTS, so they won&rsquo;t load. Telling people to build Xdebug from
 source against matching headers is accurate and useless.</p>
 <p>So <code>ephpm dev</code> is growing a flag (<a href="https://github.com/ephpm/ephpm/pull/554">#554</a>, in review):</p>
 <pre tabindex="0"><code>ephpm dev --xdebug                          # catalog build, cached, offline after first run
 ephpm dev --xdebug-path ./xdebug.so         # local build, no network (implies --xdebug)
           --xdebug-client-host &lt;HOST&gt;       # default 127.0.0.1 (WSL -&gt; Windows IDE: host IP)
           --xdebug-client-port &lt;PORT&gt;       # default 9003
-</code></pre><p><code>--xdebug</code> reads the binary&rsquo;s own PHP version, API number, ZTS flag and arch, pulls the matching build from the
-php-sdk extension catalog, checks the manifest&rsquo;s ABI fields and the sha256 of every file, and caches the result so later
-runs need no network. A mismatch is a hard refusal, never a quiet skip to another release. It also lifts the request
-deadline so a paused breakpoint doesn&rsquo;t come back as a 504, and prints a banner with the IDE address and a VS Code
-<code>launch.json</code> hint:</p>
+</code></pre><p><code>--xdebug</code> does a few things:</p>
+<ul>
+<li>reads the binary&rsquo;s own PHP version, API number, ZTS flag and arch</li>
+<li>pulls the matching build from the php-sdk extension catalog</li>
+<li>checks the manifest&rsquo;s ABI fields and the sha256 of every file</li>
+<li>caches the result so later runs need no network</li>
+</ul>
+<p>A mismatch is a hard refusal, never a quiet skip to another release. It also lifts the request deadline so a paused
+breakpoint doesn&rsquo;t come back as a 504. Then it prints a banner with the IDE address and a VS Code <code>launch.json</code> hint:</p>
 <pre tabindex="0"><code>  Xdebug 3.5.3 loaded (dev only: never load Xdebug in production)
     ide:      DBGp to 127.0.0.1:9003 (start the IDE listening first)
     trigger:  http://127.0.0.1:18080/?XDEBUG_TRIGGER=1
@@ -484,18 +491,22 @@ deadline so a paused breakpoint doesn&rsquo;t come back as a 504, and prints a b
               (no pathMappings needed when the IDE and ephpm share the filesystem)
 </code></pre><p>One more papercut fell out of this. Xdebug is a Zend extension, so it has to be loaded with <code>zend_extension=</code> and an
 absolute path. A relative path resolves against ePHPm&rsquo;s baked-in placeholder <code>extension_dir</code> and fails. Now
-<code>[php] extensions</code> reads each shared object&rsquo;s symbols, and anything that exports both <code>zend_extension_entry</code> and
+<code>[php] extensions</code> reads each shared object&rsquo;s symbols. Anything that exports both <code>zend_extension_entry</code> and
 <code>extension_version_info</code> gets the right ini line written for it automatically.</p>
-<p>Platform reality: Linux glibc works straight from the catalog, which ships Xdebug 3.5.3 in <code>ext-8.5.7</code>. macOS arm64
-has catalog builds too, but it needs a binary newer than v0.11.3: shared extensions only load there now that
-<a href="https://github.com/ephpm/ephpm/pull/566">#566</a> exports the binary&rsquo;s symbols. The default Windows binary can&rsquo;t
-do it, because the static <code>php8embed.lib</code> can&rsquo;t load extension DLLs. <a href="https://github.com/ephpm/ephpm/pull/564">#564</a>
-(in review) adds an opt-in shared-engine build that links the official <code>php8ts.dll</code>, and with that one
-<code>ephpm dev --xdebug</code> pulls <code>php_xdebug.dll</code> from the catalog and works on Windows too.</p>
-<p>The debug lane and the macOS fix are merged on main and coming in the upcoming v0.12.0 release. The <code>dev</code> flag
-and the Windows build are in review. Even once it lands, the Windows shared-engine build will be build-from-source at
-first (release artifacts ship the static build), so after that comes getting it published, since Windows is the
-platform where I&rsquo;d most like to use this.</p>
+<p>Platform reality:</p>
+<ul>
+<li>Linux glibc works straight from the catalog, which ships Xdebug 3.5.3 in <code>ext-8.5.7</code>.</li>
+<li>macOS arm64 has catalog builds too, but it needs a binary newer than v0.11.3. Shared extensions only load there now
+that <a href="https://github.com/ephpm/ephpm/pull/566">#566</a> exports the binary&rsquo;s symbols.</li>
+<li>The default Windows binary can&rsquo;t do it, because the static <code>php8embed.lib</code> can&rsquo;t load extension DLLs.
+<a href="https://github.com/ephpm/ephpm/pull/564">#564</a> (in review) adds an opt-in shared-engine build that links the
+official <code>php8ts.dll</code>. With that one, <code>ephpm dev --xdebug</code> pulls <code>php_xdebug.dll</code> from the catalog and works on
+Windows too.</li>
+</ul>
+<p>The debug lane and the macOS fix are merged on main and coming in the upcoming v0.12.0 release. The <code>dev</code> flag and the
+Windows build are in review. Even once it lands, the Windows shared-engine build will be build-from-source at first.
+Release artifacts ship the static build. So after that comes getting it published, since Windows is the platform where
+I&rsquo;d most like to use this.</p>
 <h3 id="links">Links</h3>
 <ul>
 <li>Worker-mode debug lane: <a href="https://github.com/ephpm/ephpm/pull/552">ephpm #552</a> (<code>crates/ephpm-server/src/debug_lane.rs</code>, <code>xdebug_trigger.rs</code>)</li>

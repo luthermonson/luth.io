@@ -10,14 +10,14 @@
     gtag('config', 'G-MSTSKGFWTX');
 </script><meta charset="utf-8">
 <title>Five Ways to URL-Encode an SSH Key (and Why Proxmox Rejects Them) - Luther Monson</title>
-<meta name="description" content="Proxmox&#39;s sshkeys parameter wants Python-style percent encoding that no single Go function produces. A two-year-old issue, a one-line fix, and a related double-encoding bug in guest file writes.">
+<meta name="description" content="Proxmox&#39;s sshkeys parameter wants Python-style percent encoding that no single Go function produces. This covers a two-year-old issue, its one-line fix, and a related double-encoding bug in guest file writes.">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
 <meta name="twitter:card" content="summary_large_image"><meta name="twitter:site" content="@luthermonson">
 
 <meta property="og:site_name" content="Luther Monson">
 <meta property="og:title" content="Five Ways to URL-Encode an SSH Key (and Why Proxmox Rejects Them)">
-<meta property="og:description" content="Proxmox&#39;s sshkeys parameter wants Python-style percent encoding that no single Go function produces. A two-year-old issue, a one-line fix, and a related double-encoding bug in guest file writes.">
+<meta property="og:description" content="Proxmox&#39;s sshkeys parameter wants Python-style percent encoding that no single Go function produces. This covers a two-year-old issue, its one-line fix, and a related double-encoding bug in guest file writes.">
 <meta property="og:type" content="article">
 <meta property="og:url" content="https://luth.io/blog/2026/07/five-ways-to-url-encode-an-ssh-key/">
     <meta property="og:image" content="https://luth.io/img/2026/07/five-ways-to-url-encode-an-ssh-key-results.svg">
@@ -215,7 +215,7 @@
       <h2><a href="/blog/2026/07/five-ways-to-url-encode-an-ssh-key/">Five Ways to URL-Encode an SSH Key (and Why Proxmox Rejects Them)</a></h2>
     
     
-      <p>Proxmox&#39;s sshkeys parameter wants Python-style percent encoding that no single Go function produces. A two-year-old issue, a one-line fix, and a related double-encoding bug in guest file writes.</p>
+      <p>Proxmox&#39;s sshkeys parameter wants Python-style percent encoding that no single Go function produces. This covers a two-year-old issue, its one-line fix, and a related double-encoding bug in guest file writes.</p>
     
   </div>
   <div class="meta">
@@ -272,17 +272,17 @@
       </div>
       <div class="content">
         
-        <p><a href="https://github.com/luthermonson/go-proxmox/issues/144">Issue #144</a> on go-proxmox was opened in April 2024 with the title
-&ldquo;Weird sshkeys SSH public key validation error&rdquo; and it is one of my less proud threads. Thirteen comments of people,
-including me, trying to get a public key into a cloud-init VM through the API, and the working answer took more than a
-year to show up. The fix that finally landed in May is one line. Here&rsquo;s why it took so long.</p>
+        <p><a href="https://github.com/luthermonson/go-proxmox/issues/144">Issue #144</a> on go-proxmox was opened in April 2024 with the
+title &ldquo;Weird sshkeys SSH public key validation error&rdquo;. It is one of my less proud threads. It&rsquo;s thirteen comments of
+people, including me, trying to get a public key into a cloud-init VM through the API. The working answer took more
+than a year to show up. The fix that finally landed in May is one line. Here&rsquo;s why it took so long.</p>
 <h3 id="what-the-api-wants">What the API wants</h3>
-<p>Setting <code>sshkeys</code> on a VM is how you get a key into cloud-init&rsquo;s <code>authorized_keys</code>. With <code>qm</code> on the node you can point it
-at a file (<code>--sshkeys ~/.ssh/id_rsa.pub</code>), which is where the thread started: the reporter passed a path through the API
-and got <code>500 SSH public key validation error</code>, because over the API you have to send the key text itself. That part is
+<p>Setting <code>sshkeys</code> on a VM is how you get a key into cloud-init&rsquo;s <code>authorized_keys</code>. With <code>qm</code> on the node you can point
+it at a file (<code>--sshkeys ~/.ssh/id_rsa.pub</code>). That&rsquo;s where the thread started. The reporter passed a path through the
+API and got <code>500 SSH public key validation error</code>. Over the API you have to send the key text itself. That part is
 fair. The confusing part is the next error, once you send the key:</p>
 <pre tabindex="0"><code>400 Parameter verification failed. - {&#34;sshkeys&#34;:&#34;invalid format - invalid urlencoded string: ssh-rsa%20AAAAB ...
-</code></pre><p>The schema declares the parameter with <code>format =&gt; 'urlencoded'</code>, and the format check lives in
+</code></pre><p>The schema declares the parameter with <code>format =&gt; 'urlencoded'</code>. The format check lives in
 <a href="https://git.proxmox.com/?p=pve-common.git;a=blob;f=src/PVE/JSONSchema.pm">pve-common&rsquo;s JSONSchema.pm</a>:</p>
 <div class="highlight"><pre tabindex="0" class="chroma"><code class="language-perl" data-lang="perl"><span class="line"><span class="cl"><span class="k">sub</span> <span class="nf">pve_verify_urlencoded</span> <span class="p">{</span>
 </span></span><span class="line"><span class="cl">    <span class="k">my</span> <span class="p">(</span><span class="nv">$text</span><span class="p">,</span> <span class="nv">$noerr</span><span class="p">)</span> <span class="o">=</span> <span class="nv">@_</span><span class="p">;</span>
@@ -293,16 +293,16 @@ fair. The confusing part is the next error, once you send the key:</p>
 </span></span><span class="line"><span class="cl">    <span class="k">return</span> <span class="nv">$text</span><span class="p">;</span>
 </span></span><span class="line"><span class="cl"><span class="p">}</span>
 </span></span></code></pre></div><p>That&rsquo;s the entire allowed character set: letters, digits, <code>- _ . ! ~ * ' ( )</code> and <code>%</code>. Everything else has to be
-percent-encoded, including <code>+</code>, <code>/</code>, <code>=</code>, <code>@</code> and space, which are exactly the characters that show up in an OpenSSH
-public key (base64 body, <code>user@host</code> comment, spaces between the fields). Multiple keys are separated by newlines, so
-<code>%0A</code> too.</p>
+percent-encoded, including <code>+</code>, <code>/</code>, <code>=</code>, <code>@</code> and space. Those are exactly the characters that show up in an OpenSSH
+public key. There&rsquo;s the base64 body, the <code>user@host</code> comment, and spaces between the fields. Multiple keys are
+separated by newlines, so <code>%0A</code> too.</p>
 <h3 id="trying-them-all">Trying them all</h3>
 <p>The thread worked through <code>url.PathEscape</code>, <code>url.QueryEscape</code> and three flavors of base64. My own contribution was
-&ldquo;try <code>url.QueryEscape</code>&rdquo;, which the reporter had already said didn&rsquo;t work. A couple of hours later I linked the regex above,
-which was the right thing to look at, and then nobody, me included, followed it through. So here it is followed
-through. This program generates a throwaway ed25519 key whose base64 contains both <code>+</code> and <code>/</code>, runs each candidate
-through the same regex, and checks whether URI-unescaping the result gives the original key back (which is what Proxmox
-does with it before handing it to cloud-init):</p>
+&ldquo;try <code>url.QueryEscape</code>&rdquo;, which the reporter had already said didn&rsquo;t work. A couple of hours later I linked the regex
+above. That was the right thing to look at, and then nobody, me included, followed it through. So here it is followed
+through. This program generates a throwaway ed25519 key whose base64 contains both <code>+</code> and <code>/</code>. It runs each candidate
+through the same regex. Then it checks whether URI-unescaping the result gives the original key back. That&rsquo;s what
+Proxmox does with it before handing it to cloud-init:</p>
 <div class="highlight"><pre tabindex="0" class="chroma"><code class="language-go" data-lang="go"><span class="line"><span class="cl"><span class="kd">var</span><span class="w"> </span><span class="nx">pveURLEncoded</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="nx">regexp</span><span class="p">.</span><span class="nf">MustCompile</span><span class="p">(</span><span class="s">`^[-%a-zA-Z0-9_.!~*&#39;()]*$`</span><span class="p">)</span><span class="w">
 </span></span></span><span class="line"><span class="cl"><span class="w">
 </span></span></span><span class="line"><span class="cl"><span class="nx">cands</span><span class="w"> </span><span class="o">:=</span><span class="w"> </span><span class="p">[]</span><span class="kd">struct</span><span class="p">{</span><span class="w"> </span><span class="nx">name</span><span class="p">,</span><span class="w"> </span><span class="nx">val</span><span class="w"> </span><span class="kt">string</span><span class="w"> </span><span class="p">}{</span><span class="w">
@@ -325,22 +325,22 @@ EncodeSSHKeys          validator=true  roundtrip=true  rejected=&#34;&#34;     s
 </code></pre><p><img src="/img/2026/07/five-ways-to-url-encode-an-ssh-key-results.svg" alt="Results"></p>
 <p>Going through the failures:</p>
 <ul>
-<li><strong><code>PathEscape</code></strong> is for a single path segment, so it encodes the space and the <code>/</code> but leaves <code>+</code> and <code>@</code> alone
-because they&rsquo;re legal in a path. Proxmox doesn&rsquo;t want them.</li>
-<li><strong><code>QueryEscape</code></strong> does HTML form encoding, where a space is <code>+</code>. The validator rejects <code>+</code> outright, and even if it
-didn&rsquo;t, a URI unescape that isn&rsquo;t form-aware turns it back into a literal <code>+</code> and you&rsquo;d get a corrupted key.</li>
+<li><strong><code>PathEscape</code></strong> is for a single path segment. It encodes the space and the <code>/</code> but leaves <code>+</code> and <code>@</code> alone because
+they&rsquo;re legal in a path. Proxmox doesn&rsquo;t want them.</li>
+<li><strong><code>QueryEscape</code></strong> does HTML form encoding, where a space is <code>+</code>. The validator rejects <code>+</code> outright. Even if it
+didn&rsquo;t, a URI unescape that isn&rsquo;t form-aware turns it back into a literal <code>+</code>. You&rsquo;d get a corrupted key.</li>
 <li><strong>Standard and URL-safe base64</strong> end in <code>=</code> padding here, which fails the regex. It doesn&rsquo;t matter much, because&hellip;</li>
 <li><strong><code>RawURLEncoding</code></strong> sails through the validator, and it&rsquo;s the worst one of the bunch. The alphabet is entirely legal
 characters, so the format check passes and Proxmox stores the base64 <em>text</em> as the key. Then the key check, or
 cloud-init, gets a string that isn&rsquo;t an OpenSSH key.</li>
 </ul>
-<p>What actually works is RFC 3986 percent encoding with nothing marked safe, which is what Python&rsquo;s
-<code>urllib.parse.quote(key, safe='')</code> does and what a Proxmox staff member recommended on the forum years ago. Go doesn&rsquo;t
-have that as a single function, but <code>QueryEscape</code> is one substitution away from it: it percent-encodes everything
-except unreserved characters, and the only thing it does differently is spaces as <code>+</code>.</p>
+<p>What works is RFC 3986 percent encoding with nothing marked safe. That&rsquo;s what Python&rsquo;s
+<code>urllib.parse.quote(key, safe='')</code> does. It&rsquo;s also what a Proxmox staff member recommended on the forum years ago. Go
+doesn&rsquo;t have that as a single function, but <code>QueryEscape</code> is one substitution away from it. It percent-encodes
+everything except unreserved characters. The only thing it does differently is spaces as <code>+</code>.</p>
 <h3 id="the-fix">The fix</h3>
-<p><a href="https://github.com/luthermonson/go-proxmox/issues/144">@abbaszai posted a working Go version</a> in August 2025, with some
-extra trimming and decoding logic around the core idea. <a href="https://github.com/luthermonson/go-proxmox/pull/273">#273</a>
+<p><a href="https://github.com/luthermonson/go-proxmox/issues/144">@abbaszai posted a working Go version</a> in August 2025. It had
+some extra trimming and decoding logic around the core idea. <a href="https://github.com/luthermonson/go-proxmox/pull/273">#273</a>
 reduced it to the core and put it in the library next to <code>MakeTag</code>:</p>
 <div class="highlight"><pre tabindex="0" class="chroma"><code class="language-go" data-lang="go"><span class="line"><span class="cl"><span class="c1">// EncodeSSHKeys returns the given SSH public keys encoded the way Proxmox&#39;s</span><span class="w">
 </span></span></span><span class="line"><span class="cl"><span class="c1">// sshkeys parameter requires. Multiple keys are joined with newlines (PVE&#39;s</span><span class="w">
@@ -351,24 +351,24 @@ reduced it to the core and put it in the library next to <code>MakeTag</code>:</
 </span></span></span></code></pre></div><div class="highlight"><pre tabindex="0" class="chroma"><code class="language-go" data-lang="go"><span class="line"><span class="cl"><span class="nx">opts</span><span class="w"> </span><span class="o">:=</span><span class="w"> </span><span class="p">[]</span><span class="nx">proxmox</span><span class="p">.</span><span class="nx">VirtualMachineOption</span><span class="p">{</span><span class="w">
 </span></span></span><span class="line"><span class="cl"><span class="w">	</span><span class="p">{</span><span class="nx">Name</span><span class="p">:</span><span class="w"> </span><span class="s">&#34;sshkeys&#34;</span><span class="p">,</span><span class="w"> </span><span class="nx">Value</span><span class="p">:</span><span class="w"> </span><span class="nx">proxmox</span><span class="p">.</span><span class="nf">EncodeSSHKeys</span><span class="p">(</span><span class="nx">pubKey1</span><span class="p">,</span><span class="w"> </span><span class="nx">pubKey2</span><span class="p">)},</span><span class="w">
 </span></span></span><span class="line"><span class="cl"><span class="p">}</span><span class="w">
-</span></span></span></code></pre></div><p>The <code>+</code> to <code>%20</code> swap is safe because <code>QueryEscape</code> already turned every literal <code>+</code> in the input into <code>%2B</code>, so the only
+</span></span></span></code></pre></div><p>The <code>+</code> to <code>%20</code> swap is safe because <code>QueryEscape</code> already turned every literal <code>+</code> in the input into <code>%2B</code>. The only
 <code>+</code> characters left in its output are spaces. The test table includes a key with a literal <code>+</code> to prove that.</p>
 <p>It would be easy to do this automatically inside the VM config call, and I deliberately didn&rsquo;t. Everyone who hit #144
-has a workaround in their code that already encodes the key one way or another, and auto-encoding would encode their
-already-encoded value a second time. <code>%20</code> becomes <code>%2520</code>, the validator is perfectly happy with that, and the key that
+has a workaround in their code that already encodes the key one way or another. Auto-encoding would encode their
+already-encoded value a second time. <code>%20</code> becomes <code>%2520</code> and the validator is perfectly happy with that. The key that
 lands in the guest is garbage with no error anywhere. An opt-in helper and a doc comment on the <code>SSHKeys</code> field is the
 version that can&rsquo;t silently break anyone.</p>
 <h3 id="the-same-mistake-in-the-other-direction">The same mistake, in the other direction</h3>
-<p>Encoding flags bit again this month. The QEMU guest agent wrapper has <code>AgentFileWrite</code>, for writing a file into a running
-VM. The guest agent wants base64 content, and the Proxmox endpoint has an <code>encode</code> parameter that the API docs describe
-like this:</p>
+<p>Encoding flags bit again this month. The QEMU guest agent wrapper has <code>AgentFileWrite</code>, for writing a file into a
+running VM. The guest agent wants base64 content. The Proxmox endpoint has an <code>encode</code> parameter that the API docs
+describe like this:</p>
 <blockquote>
 <p>If set, the content will be encoded as base64 (required by QEMU). Otherwise the content needs to be encoded beforehand - defaults to true.</p>
 </blockquote>
-<p>The original wrapper base64-encoded the content itself and <em>also</em> sent <code>encode: 1</code>, with a confident comment saying
-that <code>encode=1</code> &ldquo;tells PVE the content is already base64&rdquo;. It means the opposite. Proxmox encoded it again, the guest
-agent decoded it once, and every file written through that method landed in the guest as base64 text. Someone writing a
-TOML config and a PEM file into a guest found it when the service inside crash-looped on
+<p>The original wrapper base64-encoded the content itself and <em>also</em> sent <code>encode: 1</code>. It had a confident comment saying
+that <code>encode=1</code> &ldquo;tells PVE the content is already base64&rdquo;. It means the opposite. Proxmox encoded it again and the
+guest agent decoded it once. Every file written through that method landed in the guest as base64 text. Someone was
+writing a TOML config and a PEM file into a guest. They found it when the service inside crash-looped on
 <code>expected value but found '='</code>. <a href="https://github.com/luthermonson/go-proxmox/pull/343">#343</a> keeps the client-side
 encoding (binary safe) and sends <code>encode: 0</code>:</p>
 <div class="highlight"><pre tabindex="0" class="chroma"><code class="language-go" data-lang="go"><span class="line"><span class="cl"><span class="nx">body</span><span class="w"> </span><span class="o">:=</span><span class="w"> </span><span class="kd">map</span><span class="p">[</span><span class="kt">string</span><span class="p">]</span><span class="kd">interface</span><span class="p">{}{</span><span class="w">
@@ -376,8 +376,8 @@ encoding (binary safe) and sends <code>encode: 0</code>:</p>
 </span></span></span><span class="line"><span class="cl"><span class="w">	</span><span class="s">&#34;content&#34;</span><span class="p">:</span><span class="w"> </span><span class="nx">base64</span><span class="p">.</span><span class="nx">StdEncoding</span><span class="p">.</span><span class="nf">EncodeToString</span><span class="p">(</span><span class="nx">content</span><span class="p">),</span><span class="w">
 </span></span></span><span class="line"><span class="cl"><span class="w">	</span><span class="s">&#34;encode&#34;</span><span class="p">:</span><span class="w">  </span><span class="mi">0</span><span class="p">,</span><span class="w">
 </span></span></span><span class="line"><span class="cl"><span class="p">}</span><span class="w">
-</span></span></span></code></pre></div><p>Both bugs are the same lesson. When two layers each might encode something, decide which one does it and write the
-decision down where the next person will see it, and when there&rsquo;s a flag for it, read the description of the flag on the
+</span></span></span></code></pre></div><p>Both bugs are the same lesson. When two layers each might encode something, decide which one does it. Write the
+decision down where the next person will see it. When there&rsquo;s a flag for it, read the description of the flag on the
 side that receives it rather than guessing from the name.</p>
 <h3 id="links">Links</h3>
 <ul>

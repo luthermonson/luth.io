@@ -272,94 +272,104 @@
       </div>
       <div class="content">
         
-        <p>GitHub Actions has a <code>container:</code> key that runs a job&rsquo;s steps inside an image of your choosing. It&rsquo;s popular because it
-gives you a reproducible toolchain without building a custom runner image. On a self-hosted runner it works by having the
-runner drive Docker, and on <a href="/blog/2026/08/ephemerd-one-daemon-every-os/">ephemerd</a> &ldquo;Docker&rdquo; is a shim that speaks the
-Docker API and creates containers in containerd. Getting bind mounts right through that shim took four PRs in a week. A
-couple of months later the version that worked turned out to be an escape.</p>
+        <p>GitHub Actions has a <code>container:</code> key that runs a job&rsquo;s steps inside an image of your choosing. It&rsquo;s popular because
+it gives you a reproducible toolchain without building a custom runner image. On a self-hosted runner it works by
+having the runner drive Docker. On <a href="/blog/2026/08/ephemerd-one-daemon-every-os/">ephemerd</a>, &ldquo;Docker&rdquo; is a shim that
+speaks the Docker API and creates containers in containerd. Getting bind mounts right through that shim took four PRs
+in a week. A couple of months later the version that worked turned out to be an escape.</p>
 <h3 id="what-the-runner-asks-for">What the runner asks for</h3>
-<p>For a <code>container:</code> job the runner does a <code>docker create</code> of a sibling container with a long list of binds, then runs every
-step as <code>docker exec sh -e /__w/_temp/&lt;uuid&gt;.sh</code>:</p>
+<p>For a <code>container:</code> job the runner does a <code>docker create</code> of a sibling container with a long list of binds. Then it
+runs every step as <code>docker exec sh -e /__w/_temp/&lt;uuid&gt;.sh</code>:</p>
 <pre tabindex="0"><code>-v /home/runner/_work:/__w
 -v /home/runner/_work/_temp:/__w/_temp
 -v /home/runner/_work/_actions:/__w/_actions
 -v /home/runner/externals:/__e:ro
 -v /var/run/docker.sock:/var/run/docker.sock
 ...
-</code></pre><p>Every one of those source paths is a path <em>inside the runner&rsquo;s container</em>. The runner writes the step script into its own
-<code>_temp</code>, and expects the sibling to see it at <code>/__w/_temp</code>. But the Docker API server (ephemerd) runs on the host, in a
-different mount namespace, where <code>/home/runner/_work</code> doesn&rsquo;t exist. Translating &ldquo;a path in container A&rsquo;s filesystem&rdquo; into
-&ldquo;something I can bind into container B&rdquo; is the whole problem.</p>
+</code></pre><p>Every one of those source paths is a path <em>inside the runner&rsquo;s container</em>. The runner writes the step script into its
+own <code>_temp</code> and expects the sibling to see it at <code>/__w/_temp</code>. But the Docker API server is ephemerd, and it runs on
+the host in a different mount namespace. There <code>/home/runner/_work</code> doesn&rsquo;t exist. Translating &ldquo;a path in container
+A&rsquo;s filesystem&rdquo; into &ldquo;something I can bind into container B&rdquo; is the whole problem.</p>
 <h3 id="82-binds-were-silently-dropped">#82: binds were silently dropped</h3>
-<p>The first version of the shim <code>os.Stat</code>&rsquo;d each bind source on its own filesystem and quietly skipped any that didn&rsquo;t exist.
-Since none of them existed from the host&rsquo;s point of view, every bind was dropped. The sibling started fine, and the first
-step died with:</p>
+<p>The first version of the shim <code>os.Stat</code>&rsquo;d each bind source on its own filesystem. It quietly skipped any that didn&rsquo;t
+exist. None of them existed from the host&rsquo;s point of view, so every bind was dropped. The sibling started fine, and
+the first step died with:</p>
 <pre tabindex="0"><code>sh: 0: cannot open /__w/_temp/&lt;uuid&gt;.sh: No such file
-</code></pre><p>which is confusing because the script very much exists. <a href="https://github.com/ephpm/ephemerd/pull/82">#82</a> added a
-translation layer. The runtime registers the runner&rsquo;s snapshot and its own bind table (docker.sock, <code>/etc/hosts</code>, the
-runner directory) with the shim, and each <code>-v</code> source resolves against, in order: the bind table by longest prefix, the
-overlayfs upperdir (read-write), then the lowerdirs (read-only, since image layers are shared between jobs). Anything else
-gets a 400 instead of a silent drop.</p>
+</code></pre><p>That&rsquo;s confusing, because the script very much exists. <a href="https://github.com/ephpm/ephemerd/pull/82">#82</a> added a
+translation layer. The runtime registers the runner&rsquo;s snapshot and its own bind table with the shim. The bind table
+holds docker.sock, <code>/etc/hosts</code> and the runner directory. Each <code>-v</code> source resolves against these, in order:</p>
+<ol>
+<li>the bind table, by longest prefix</li>
+<li>the overlayfs upperdir (read-write)</li>
+<li>the lowerdirs (read-only, since image layers are shared between jobs)</li>
+</ol>
+<p>A source that matches none of them gets a 400 instead of a silent drop.</p>
 <h3 id="83-the-wrong-layer">#83: the wrong layer</h3>
-<p>That got the first script running and then <code>actions/checkout</code> failed:</p>
+<p>That got the first script running. Then <code>actions/checkout</code> failed:</p>
 <pre tabindex="0"><code>exec: &#34;/__e/node20/bin/node&#34;: stat /__e/node20/bin/node: no such file or directory
-</code></pre><p>The resolver returned the first lowerdir that had the requested path. In the runner image, <code>/home/runner/externals/</code> exists
-as a directory entry in one layer, but <code>node20/bin/node</code> lives in a later one. Binding the first match gave the sibling an
-empty tree. Overlay merging is the kernel&rsquo;s job and I was doing it badly by hand.</p>
-<p><a href="https://github.com/ephpm/ephemerd/pull/83">#83</a> let the kernel do it: use <code>/proc/&lt;runner-pid&gt;/root/&lt;src&gt;</code>. That magic link
-walks into the runner&rsquo;s mount namespace and sees the merged overlay exactly as the runner does.</p>
+</code></pre><p>The resolver returned the first lowerdir that had the requested path. In the runner image, <code>/home/runner/externals/</code>
+exists as a directory entry in one layer, but <code>node20/bin/node</code> lives in a later one. Binding the first match gave the
+sibling an empty tree. Overlay merging is the kernel&rsquo;s job, and I was doing it badly by hand.</p>
+<p><a href="https://github.com/ephpm/ephemerd/pull/83">#83</a> let the kernel do it: use <code>/proc/&lt;runner-pid&gt;/root/&lt;src&gt;</code>. That magic
+link walks into the runner&rsquo;s mount namespace and sees the merged overlay exactly as the runner does.</p>
 <h3 id="84-mount2-wont-cross-namespaces">#84: mount(2) won&rsquo;t cross namespaces</h3>
-<p>Which works perfectly for reading, and not at all as a bind source:</p>
+<p>That works perfectly for reading. It doesn&rsquo;t work at all as a bind source:</p>
 <pre tabindex="0"><code>error mounting &#34;/proc/&lt;pid&gt;/root/home/runner/_work/_temp/_github_workflow&#34;
 to rootfs ... MS_BIND|MS_REC: invalid argument
-</code></pre><p>A bind source has to resolve within the <em>calling</em> process&rsquo;s mount namespace, and <code>/proc/&lt;pid&gt;/root</code> resolves into somebody
-else&rsquo;s. <a href="https://github.com/ephpm/ephemerd/pull/84">#84</a> switched to <code>os.Readlink(&quot;/proc/&lt;pid&gt;/root&quot;)</code> once at registration,
-which should return the host path of the bundle rootfs where runc mounted the merged overlay. That&rsquo;s a normal directory in
-the host namespace, and it has every layer&rsquo;s content.</p>
+</code></pre><p>A bind source has to resolve within the <em>calling</em> process&rsquo;s mount namespace. <code>/proc/&lt;pid&gt;/root</code> resolves into somebody
+else&rsquo;s. <a href="https://github.com/ephpm/ephemerd/pull/84">#84</a> switched to <code>os.Readlink(&quot;/proc/&lt;pid&gt;/root&quot;)</code> once at
+registration. That should return the host path of the bundle rootfs where runc mounted the merged overlay. That&rsquo;s a
+normal directory in the host namespace, and it has every layer&rsquo;s content.</p>
 <h3 id="85-readlink-says-">#85: readlink says &ldquo;/&rdquo;</h3>
-<p>Inside the Linux VM, that readlink returned <code>/</code>. Every time, before and after <code>task.Start</code>. I never fully traced why; the
-log line was enough:</p>
+<p>Inside the Linux VM, that readlink returned <code>/</code>. Every time, before and after <code>task.Start</code>. I never fully traced why.
+The log line was enough:</p>
 <pre tabindex="0"><code>runner rootfs registered ... rootfs_path=/ bind_table_entries=3
-</code></pre><p>So every source resolved to itself on the VM&rsquo;s root filesystem and got rejected. <a href="https://github.com/ephpm/ephemerd/pull/85">#85</a>
-stopped asking procfs and built the path from containerd&rsquo;s own state layout, which ephemerd fully controls since it embeds
-containerd:</p>
+</code></pre><p>So every source resolved to itself on the VM&rsquo;s root filesystem and got rejected.
+<a href="https://github.com/ephpm/ephemerd/pull/85">#85</a> stopped asking procfs. It built the path from containerd&rsquo;s own state
+layout instead. ephemerd embeds containerd, so it fully controls that layout:</p>
 <div class="highlight"><pre tabindex="0" class="chroma"><code class="language-go" data-lang="go"><span class="line"><span class="cl"><span class="nx">runnerRootfsPath</span><span class="w"> </span><span class="o">:=</span><span class="w"> </span><span class="nx">filepath</span><span class="p">.</span><span class="nf">Join</span><span class="p">(</span><span class="nx">r</span><span class="p">.</span><span class="nx">cfg</span><span class="p">.</span><span class="nx">DataDir</span><span class="p">,</span><span class="w"> </span><span class="s">&#34;containerd&#34;</span><span class="p">,</span><span class="w"> </span><span class="s">&#34;state&#34;</span><span class="p">,</span><span class="w">
 </span></span></span><span class="line"><span class="cl"><span class="w">	</span><span class="s">&#34;io.containerd.runtime.v2.task&#34;</span><span class="p">,</span><span class="w"> </span><span class="nx">namespace</span><span class="p">,</span><span class="w"> </span><span class="nx">id</span><span class="p">,</span><span class="w"> </span><span class="s">&#34;rootfs&#34;</span><span class="p">)</span><span class="w">
-</span></span></span></code></pre></div><p>That&rsquo;s where the runc shim mounts the merged overlay, every time. A probe workflow wrote a script into <code>_temp</code> from the
-runner, ran it from a sibling via <code>docker run -v</code>, and got <code>HELLO_FROM_SIBLING</code> back. <code>container:</code> jobs worked.</p>
+</span></span></span></code></pre></div><p>That&rsquo;s where the runc shim mounts the merged overlay, every time. A probe workflow wrote a script into <code>_temp</code> from
+the runner. It ran the script from a sibling via <code>docker run -v</code> and got <code>HELLO_FROM_SIBLING</code> back. <code>container:</code> jobs
+worked.</p>
 <h3 id="the-escape">The escape</h3>
-<p>The design at that point: take the job&rsquo;s source path, join it to the runner&rsquo;s rootfs path, <code>os.Stat</code> it, check that it&rsquo;s
-still inside the rootfs, and put the resulting <strong>path string</strong> into the sibling&rsquo;s OCI spec. Then runc, in its own process,
-some milliseconds later, walks that string again to do the mount.</p>
+<p>Here was the design at that point:</p>
+<ol>
+<li>take the job&rsquo;s source path and join it to the runner&rsquo;s rootfs path</li>
+<li><code>os.Stat</code> it and check that it&rsquo;s still inside the rootfs</li>
+<li>put the resulting <strong>path string</strong> into the sibling&rsquo;s OCI spec</li>
+</ol>
+<p>Then runc walks that string again to do the mount. It does that in its own process, some milliseconds later.</p>
 <p>The job owns every byte of the runner&rsquo;s rootfs. So between ephemerd&rsquo;s check and runc&rsquo;s walk, the job can rename the
 validated directory and drop a symlink in its place. runc follows the symlink and mounts whatever it points at. That&rsquo;s
-issue #125, and <a href="https://github.com/ephpm/ephemerd/pull/173">#173</a> reproduced it against real runc 1.3.4, the same version
+issue #125. <a href="https://github.com/ephpm/ephemerd/pull/173">#173</a> reproduced it against real runc 1.3.4, the same version
 ephemerd embeds:</p>
 <pre tabindex="0"><code>A  path-string source (the code at the time)   runc rc=0  CONTAINER-SAW: SWAPPED   &lt;- escape reproduced
 B  /proc/&lt;pid&gt;/fd/N                             mount ... : invalid argument
 C  staging bind                                 runc rc=0  CONTAINER-SAW: PINNED
 </code></pre><p><img src="/img/2026/09/bind-mounts-across-mount-namespaces-toctou.svg" alt="TOCTOU and the fix"></p>
-<p>Case B is worth a moment. The textbook TOCTOU fix is to resolve once, hold a file descriptor, and hand over the descriptor
-instead of the name. There was even a &ldquo;hardening&rdquo; branch that did exactly that, putting <code>/proc/&lt;pid&gt;/fd/N</code> in the spec. It
-fails for the same reason #84 did: runc runs in its own mount namespace, the fd path doesn&rsquo;t resolve there as a bind source,
-and <em>every</em> bind fails, legitimate ones included. That branch wasn&rsquo;t a fix, it was a regression that nobody had run against
-a real runc. The test that proves this is kept in the repo on purpose (<code>TestBindStaging_RealRunc_ProcFdSourceIsRejected</code>).</p>
+<p>Case B is worth a moment. The textbook TOCTOU fix is to resolve once and hold a file descriptor. Then you hand over
+the descriptor instead of the name. There was even a &ldquo;hardening&rdquo; branch that did exactly that, putting
+<code>/proc/&lt;pid&gt;/fd/N</code> in the spec. It fails for the same reason #84 did. runc runs in its own mount namespace, and the fd
+path doesn&rsquo;t resolve there as a bind source. So <em>every</em> bind fails, legitimate ones included. That branch wasn&rsquo;t a
+fix. It was a regression that nobody had run against a real runc. The test that proves this is kept in the repo on
+purpose (<code>TestBindStaging_RealRunc_ProcFdSourceIsRejected</code>).</p>
 <h3 id="the-fix-pin-it-then-stage-it">The fix: pin it, then stage it</h3>
 <p>Two steps, and both are needed.</p>
-<p><strong>Resolve once, to a descriptor, with the kernel enforcing containment.</strong> <code>openat2(2)</code> with <code>RESOLVE_IN_ROOT</code> treats the
-rootfs fd as <code>/</code> for the whole walk, so <code>..</code> and absolute symlinks clamp inside it rather than escaping, and the result is
-held as an <code>O_PATH</code> fd. Renaming things afterwards can&rsquo;t change what the fd points at:</p>
+<p><strong>Resolve once, to a descriptor, with the kernel enforcing containment.</strong> <code>openat2(2)</code> with <code>RESOLVE_IN_ROOT</code> treats
+the rootfs fd as <code>/</code> for the whole walk. So <code>..</code> and absolute symlinks clamp inside it rather than escaping. The
+result is held as an <code>O_PATH</code> fd. Renaming things afterwards can&rsquo;t change what the fd points at:</p>
 <div class="highlight"><pre tabindex="0" class="chroma"><code class="language-go" data-lang="go"><span class="line"><span class="cl"><span class="nx">how</span><span class="w"> </span><span class="o">:=</span><span class="w"> </span><span class="o">&amp;</span><span class="nx">unix</span><span class="p">.</span><span class="nx">OpenHow</span><span class="p">{</span><span class="w">
 </span></span></span><span class="line"><span class="cl"><span class="w">	</span><span class="nx">Flags</span><span class="p">:</span><span class="w">   </span><span class="nx">unix</span><span class="p">.</span><span class="nx">O_PATH</span><span class="w"> </span><span class="p">|</span><span class="w"> </span><span class="nx">unix</span><span class="p">.</span><span class="nx">O_CLOEXEC</span><span class="p">,</span><span class="w">
 </span></span></span><span class="line"><span class="cl"><span class="w">	</span><span class="nx">Resolve</span><span class="p">:</span><span class="w"> </span><span class="nx">unix</span><span class="p">.</span><span class="nx">RESOLVE_IN_ROOT</span><span class="w"> </span><span class="p">|</span><span class="w"> </span><span class="nx">unix</span><span class="p">.</span><span class="nx">RESOLVE_NO_MAGICLINKS</span><span class="p">,</span><span class="w">
 </span></span></span><span class="line"><span class="cl"><span class="p">}</span><span class="w">
 </span></span></span><span class="line"><span class="cl"><span class="nx">fd</span><span class="p">,</span><span class="w"> </span><span class="nx">err</span><span class="w"> </span><span class="o">:=</span><span class="w"> </span><span class="nx">unix</span><span class="p">.</span><span class="nf">Openat2</span><span class="p">(</span><span class="nx">rootFd</span><span class="p">,</span><span class="w"> </span><span class="nx">strings</span><span class="p">.</span><span class="nf">Join</span><span class="p">(</span><span class="nx">comps</span><span class="p">,</span><span class="w"> </span><span class="s">&#34;/&#34;</span><span class="p">),</span><span class="w"> </span><span class="nx">how</span><span class="p">)</span><span class="w">
-</span></span></span></code></pre></div><p>I used <code>openat2</code> rather than Go&rsquo;s <code>os.Root</code> on purpose. <code>os.Root</code> rejects absolute symlinks outright, and merged-usr images
-(<code>/bin -&gt; /usr/bin</code>) are full of them, so it would break every Ubuntu runner image. <code>RESOLVE_IN_ROOT</code> reinterprets them
-relative to the root, which is what a symlink inside a container rootfs means. Kernels older than 5.6 get an
-<code>O_PATH|O_NOFOLLOW</code> component-by-component walk instead, and a test asserts both resolvers land on the same inode.</p>
-<p><strong>Stage it, because a descriptor can&rsquo;t go in the spec.</strong> ephemerd does the bind itself, in its own mount namespace where
-<code>/proc/self/fd/N</code> does resolve, onto a directory it owns. The spec gets the staging path:</p>
+</span></span></span></code></pre></div><p>I used <code>openat2</code> rather than Go&rsquo;s <code>os.Root</code> on purpose. <code>os.Root</code> rejects absolute symlinks outright. Merged-usr
+images (<code>/bin -&gt; /usr/bin</code>) are full of them, so it would break every Ubuntu runner image. <code>RESOLVE_IN_ROOT</code>
+reinterprets them relative to the root. That&rsquo;s what a symlink inside a container rootfs means. Kernels older than 5.6
+get an <code>O_PATH|O_NOFOLLOW</code> component-by-component walk instead. A test asserts both resolvers land on the same inode.</p>
+<p><strong>Stage it, because a descriptor can&rsquo;t go in the spec.</strong> ephemerd does the bind itself onto a directory it owns. It
+does that in its own mount namespace, where <code>/proc/self/fd/N</code> does resolve. The spec gets the staging path:</p>
 <div class="highlight"><pre tabindex="0" class="chroma"><code class="language-go" data-lang="go"><span class="line"><span class="cl"><span class="nx">target</span><span class="w"> </span><span class="o">:=</span><span class="w"> </span><span class="nx">filepath</span><span class="p">.</span><span class="nf">Join</span><span class="p">(</span><span class="nx">m</span><span class="p">.</span><span class="nx">dir</span><span class="p">,</span><span class="w"> </span><span class="nx">strconv</span><span class="p">.</span><span class="nf">FormatUint</span><span class="p">(</span><span class="nx">m</span><span class="p">.</span><span class="nx">seq</span><span class="p">,</span><span class="w"> </span><span class="mi">10</span><span class="p">))</span><span class="w">
 </span></span></span><span class="line"><span class="cl"><span class="c1">// ... create a dir or empty file to match the source type ...</span><span class="w">
 </span></span></span><span class="line"><span class="cl"><span class="w">
@@ -371,34 +381,39 @@ relative to the root, which is what a symlink inside a container rootfs means. K
 </span></span></span><span class="line"><span class="cl"><span class="w">	</span><span class="nx">_</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="nx">os</span><span class="p">.</span><span class="nf">Remove</span><span class="p">(</span><span class="nx">target</span><span class="p">)</span><span class="w">
 </span></span></span><span class="line"><span class="cl"><span class="w">	</span><span class="k">return</span><span class="w"> </span><span class="s">&#34;&#34;</span><span class="p">,</span><span class="w"> </span><span class="nx">fmt</span><span class="p">.</span><span class="nf">Errorf</span><span class="p">(</span><span class="s">&#34;staging bind source %s at %s: %w ...&#34;</span><span class="p">,</span><span class="w"> </span><span class="nx">p</span><span class="p">.</span><span class="nx">logical</span><span class="p">,</span><span class="w"> </span><span class="nx">target</span><span class="p">,</span><span class="w"> </span><span class="nx">err</span><span class="p">)</span><span class="w">
 </span></span></span><span class="line"><span class="cl"><span class="p">}</span><span class="w">
-</span></span></span></code></pre></div><p>runc still walks a path, but now it&rsquo;s <code>&lt;data&gt;/dind-binds/&lt;job&gt;/&lt;n&gt;</code>. The leaf is a bare counter, nothing from the request
-ends up in the name, and every directory above it has to be root-owned and not group- or world-writable (checked, not
-assumed, by <code>ensureTrustedAncestry</code>). There&rsquo;s nothing left for the job to swap.</p>
+</span></span></span></code></pre></div><p>runc still walks a path, but now it&rsquo;s <code>&lt;data&gt;/dind-binds/&lt;job&gt;/&lt;n&gt;</code>. The leaf is a bare counter. Nothing from the
+request ends up in the name. Every directory above it has to be root-owned and not group- or world-writable.
+<code>ensureTrustedAncestry</code> checks that rather than assuming it. There&rsquo;s nothing left for the job to swap.</p>
 <p>The validation is the part I&rsquo;d point other people at. The privileged tests run real runc against real containerd in a
-root shell, and the swap test contains its own control: it runs the old path-string code in the same test and asserts it
-<em>does</em> see <code>SWAPPED</code>. Without the control, a green run proves nothing, and that&rsquo;s precisely how the fd branch got through
+root shell. The swap test contains its own control. It runs the old path-string code in the same test and asserts it
+<em>does</em> see <code>SWAPPED</code>. Without the control, a green run proves nothing. That&rsquo;s precisely how the fd branch got through
 review.</p>
 <h3 id="deleting-through-a-live-bind-mount">Deleting through a live bind mount</h3>
 <p>One detail in #173 deserves its own heading. The obvious place for the staging dir was under the job&rsquo;s directory,
-<code>&lt;data&gt;/jobs/&lt;job-id&gt;/</code>. But the runtime&rsquo;s orphan sweep <code>os.RemoveAll</code>s that tree, and <strong>recursively deleting a directory
+<code>&lt;data&gt;/jobs/&lt;job-id&gt;/</code>. But the runtime&rsquo;s orphan sweep <code>os.RemoveAll</code>s that tree. <strong>Recursively deleting a directory
 that contains a live bind mount deletes the files you see through the mount</strong>. Here that&rsquo;s the runner&rsquo;s own rootfs. So
-staging lives at <code>&lt;data&gt;/dind-binds/</code>, the teardown refuses to remove a directory that still has mounts under it, and the
-startup sweep unmounts staged binds <em>before</em> sweeping containers and snapshots (a leaked staging mount also pins the rootfs
-so the snapshot can&rsquo;t be removed).</p>
-<p>Pins are held for the container&rsquo;s whole life, not just until the task starts, because <code>docker restart</code> makes runc read the
+three things changed:</p>
+<ul>
+<li>Staging lives at <code>&lt;data&gt;/dind-binds/</code>.</li>
+<li>The teardown refuses to remove a directory that still has mounts under it.</li>
+<li>The startup sweep unmounts staged binds <em>before</em> sweeping containers and snapshots. A leaked staging mount also pins
+the rootfs, so the snapshot can&rsquo;t be removed.</li>
+</ul>
+<p>Pins are held for the container&rsquo;s whole life, not just until the task starts. <code>docker restart</code> makes runc read the
 spec again.</p>
 <h3 id="201-sweeping-someone-elses-staging-dir">#201: sweeping someone else&rsquo;s staging dir</h3>
-<p>That startup sweep came back to bite me. A later change added a periodic reaper for dead job containers, and it called the
-whole-tree <code>SweepStagedBinds</code> on every pass. That function&rsquo;s own doc comment said &ldquo;startup only&rdquo;, for exactly this reason:
-it doesn&rsquo;t know which jobs are live.</p>
+<p>That startup sweep came back to bite me. A later change added a periodic reaper for dead job containers. It called the
+whole-tree <code>SweepStagedBinds</code> on every pass. That function&rsquo;s own doc comment said &ldquo;startup only&rdquo;, for exactly this
+reason: it doesn&rsquo;t know which jobs are live.</p>
 <p>The symptom was jobs running several <code>docker run -v &quot;$PWD&quot;:/w</code> steps failing partway through:</p>
 <pre tabindex="0"><code>docker: Error response from daemon: bind mount /home/runner/_work/ephpm/ephpm -&gt; /w rejected:
   creating bind staging mountpoint /var/lib/ephemerd/dind-binds/ephemerd-github-ephpm-sure_hopper/2:
   mkdir /var/lib/ephemerd/dind-binds/... : no such file or directory
-</code></pre><p>The <code>/2</code> was the tell. Binds 0 and 1 staged fine, then a reaper tick for some unrelated dead container wiped every job&rsquo;s
-staging directory, including this one. Already-running containers didn&rsquo;t notice (their mounts live in their own
-namespaces), but the next <code>docker run -v</code> couldn&rsquo;t create its mountpoint. <a href="https://github.com/ephpm/ephemerd/pull/201">#201</a>
-scopes the periodic sweep to the container actually being reaped, and the test asserts the live job&rsquo;s directory survives.</p>
+</code></pre><p>The <code>/2</code> was the tell. Binds 0 and 1 staged fine. Then a reaper tick for some unrelated dead container wiped every
+job&rsquo;s staging directory, including this one. Already-running containers didn&rsquo;t notice, since their mounts live in
+their own namespaces. But the next <code>docker run -v</code> couldn&rsquo;t create its mountpoint.
+<a href="https://github.com/ephpm/ephemerd/pull/201">#201</a> scopes the periodic sweep to the container actually being reaped.
+The test asserts the live job&rsquo;s directory survives.</p>
 <h3 id="what-id-tell-myself-in-may">What I&rsquo;d tell myself in May</h3>
 <ul>
 <li>Paths are names, and names can change between when you check and when somebody else uses them. If a job controls any

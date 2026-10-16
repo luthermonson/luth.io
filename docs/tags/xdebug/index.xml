@@ -13,7 +13,7 @@
       <link>https://luth.io/blog/2026/10/xdebug-worker-mode/</link>
       <pubDate>Mon, 12 Oct 2026 21:10:00 -0700</pubDate>
       <guid>https://luth.io/blog/2026/10/xdebug-worker-mode/</guid>
-      <description>&lt;p&gt;Persistent workers are the big performance win in modern PHP. You boot Laravel or Symfony once, keep the container&#xA;in memory, and serve thousands of requests out of the same process. &lt;a href=&#34;https://github.com/ephpm/ephpm&#34;&gt;ePHPm&lt;/a&gt; has had&#xA;a worker mode for a while, and like most worker runtimes it had a quiet hole in it: you couldn&amp;rsquo;t step debug a request&#xA;with Xdebug. I wanted that fixed without patching Xdebug and without giving up the warm pool, and the answer ended up&#xA;being to stop fighting the constraint and route around it. The debug lane is merged on main and coming in the upcoming&#xA;v0.12.0 release.&lt;/p&gt;</description>
+      <description>&lt;p&gt;Persistent workers are the big performance win in modern PHP. You boot Laravel or Symfony once, keep the container&#xA;in memory, and serve thousands of requests out of the same process. &lt;a href=&#34;https://github.com/ephpm/ephpm&#34;&gt;ePHPm&lt;/a&gt; has had&#xA;a worker mode for a while. Like most worker runtimes it had a quiet hole in it. You couldn&amp;rsquo;t step debug a request with&#xA;Xdebug. I wanted that fixed without patching Xdebug and without giving up the warm pool. The answer ended up being to&#xA;stop fighting the constraint and route around it. The debug lane is merged on main and coming in the upcoming v0.12.0&#xA;release.&lt;/p&gt;</description>
     </item>
   </channel>
 </rss>

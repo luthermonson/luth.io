@@ -271,29 +271,32 @@
 
       </div>
       <div class="content">
+              <figure class="post-cover">
+                <img src="/img/2026/09/memory-watchdog-for-go-test-cover.svg" alt="go test process tree with per-package test binaries watched by the safe-test wrapper">
+              </figure>
         
         <p>On August 16th a <code>server.test.exe</code> from <a href="/blog/2026/08/shipmates-persona-based-ai-coding-crews/">shipmates</a> climbed to
-roughly <strong>1 TB of commit charge</strong> on my Windows workstation. Windows Terminal, which was hosting several agent sessions
-in tabs, hard-faulted with <code>E_OUTOFMEMORY</code> and every one of those sessions died at the same moment. It wasn&rsquo;t the first
-time either. An earlier one hit about 236 GB through an infinite <code>filepath.Dir</code> loop.</p>
-<p>The machine has 128 GB of RAM. Commit charge doesn&rsquo;t care, it&rsquo;s backed by the page file, and Windows will happily let a
-process reserve-and-commit until the commit limit is gone. Then everything else on the desktop starts failing
+roughly <strong>1 TB of commit charge</strong> on my Windows workstation. Windows Terminal was hosting several agent sessions in
+tabs. It hard-faulted with <code>E_OUTOFMEMORY</code>, and every one of those sessions died at the same moment. It wasn&rsquo;t the
+first time either. An earlier one hit about 236 GB through an infinite <code>filepath.Dir</code> loop.</p>
+<p>The machine has 128 GB of RAM. Commit charge doesn&rsquo;t care. It&rsquo;s backed by the page file, and Windows will happily let
+a process reserve-and-commit until the commit limit is gone. Then everything else on the desktop starts failing
 allocations too.</p>
 <p>I wanted the worst case to be a killed test process instead of a dead desktop.</p>
 <h3 id="watch-the-children-not-go">Watch the children, not go</h3>
 <p><code>go test ./...</code> builds one test binary per package and runs it as a child: <code>server.test.exe</code>,
 <code>permissions.test.exe</code> and so on. A test that allocates without bound blows up in that child. The parent <code>go</code> process
-stays small the entire time, so anything that watches <code>go</code> (a job limit on the shell, a <code>ulimit</code> on the parent&rsquo;s
-RSS, eyeballing Task Manager for <code>go.exe</code>) misses it.</p>
-<p>So <a href="https://github.com/luthermonson/shipmates/pull/54">PR #54</a> added two scripts with the same contract,
-<code>scripts/safe-test.ps1</code> for Windows and <code>scripts/safe-test.sh</code> for Linux, macOS and CI:</p>
+stays small the entire time. So anything that watches <code>go</code> misses it. That includes a job limit on the shell, a
+<code>ulimit</code> on the parent&rsquo;s RSS, or eyeballing Task Manager for <code>go.exe</code>.</p>
+<p>So <a href="https://github.com/luthermonson/shipmates/pull/54">PR #54</a> added two scripts with the same contract.
+<code>scripts/safe-test.ps1</code> is for Windows and <code>scripts/safe-test.sh</code> is for Linux, macOS and CI:</p>
 <ol>
 <li>Start <code>go test -count=1 &lt;target&gt;</code> with output captured to a temp file outside the repo.</li>
 <li>Every 0.5 s, walk the process tree from <em>that</em> <code>go</code> pid down and pick out the <code>*.test</code> binaries. A sibling
 <code>go test</code> running for another agent is left alone, which matters on a box running four or five crews.</li>
 <li>Record a per-package peak.</li>
-<li>If a child crosses the cap (default 2000 MB), kill it, kill the whole <code>go</code> tree, print which package tripped and
-the tail of its output, and exit 1.</li>
+<li>If a child crosses the cap (default 2000 MB), kill it and the whole <code>go</code> tree. Print which package tripped and the
+tail of its output, then exit 1.</li>
 </ol>
 <p>The Windows tree walk is a <code>Win32_Process</code> snapshot and a stack:</p>
 <div class="highlight"><pre tabindex="0" class="chroma"><code class="language-powershell" data-lang="powershell"><span class="line"><span class="cl"><span class="kd">function</span><span class="w"> </span><span class="nb">Get-Descendants($snapshot</span><span class="p">,</span> <span class="p">[</span><span class="no">int</span><span class="p">]</span><span class="nv">$root</span><span class="p">)</span> <span class="p">{</span>
@@ -312,31 +315,32 @@ the tail of its output, and exit 1.</li>
 </span></span><span class="line"><span class="cl"><span class="p">}</span>
 </span></span></code></pre></div><h3 id="commit-charge-on-windows-rss-everywhere-else">Commit charge on Windows, RSS everywhere else</h3>
 <p>The two scripts deliberately measure different things.</p>
-<p>On Windows the runaway <em>was</em> commit charge. Working set (physical RAM actually in use) could stay small while commit
-ran to a terabyte, because the pages were committed but mostly never touched. So the PowerShell side reads
+<p>On Windows the runaway <em>was</em> commit charge. Working set is the physical RAM actually in use. It could stay small while
+commit ran to a terabyte, because the pages were committed but mostly never touched. So the PowerShell side reads
 <code>PagedMemorySize64</code>, which is the process&rsquo;s page-file-backed committed memory:</p>
 <div class="highlight"><pre tabindex="0" class="chroma"><code class="language-powershell" data-lang="powershell"><span class="line"><span class="cl"><span class="c"># PagedMemorySize64 is the process&#39;s committed (page-file-backed)</span>
 </span></span><span class="line"><span class="cl"><span class="c"># memory -- the commit charge, which is what the OOM was about. Working</span>
 </span></span><span class="line"><span class="cl"><span class="c"># set (physical RAM) would have stayed small while commit ran to a TB.</span>
 </span></span><span class="line"><span class="cl"><span class="nv">$commit</span> <span class="p">=</span> <span class="p">[</span><span class="no">int64</span><span class="p">]</span><span class="nv">$gp</span><span class="p">.</span><span class="py">PagedMemorySize64</span>
 </span></span><span class="line"><span class="cl"><span class="nv">$pkg</span> <span class="p">=</span> <span class="nv">$proc</span><span class="p">.</span><span class="py">Name</span> <span class="o">-replace</span> <span class="s1">&#39;\.test\.exe$&#39;</span><span class="p">,</span> <span class="s1">&#39;&#39;</span>
-</span></span></code></pre></div><p>On Linux the equivalent number is useless. Every Go process reserves a big chunk of virtual address space up front and
-Linux overcommits by default, so VSZ is large and harmless. What takes a Linux box down is resident memory, so the sh
-script reads RSS from <code>ps</code>.</p>
+</span></span></code></pre></div><p>On Linux the equivalent number is useless. Every Go process reserves a big chunk of virtual address space up front,
+and Linux overcommits by default. So VSZ is large and harmless. What takes a Linux box down is resident memory, so the
+sh script reads RSS from <code>ps</code>.</p>
 <h3 id="validating-it-the-right-way">Validating it the right way</h3>
-<p>The 1 TB test itself is the more interesting part of the story. It was a test of a <em>bounded</em> behavior (the ring-buffer or
-event-log-cap kind), and to prove the cap mattered it exercised the &ldquo;fails without the guard&rdquo; case by disabling the
-bound and running unbounded. That turns a bounded test into an unbounded allocator. The rule that went into <code>CONTRIBUTING.md</code>:</p>
+<p>The 1 TB test itself is the more interesting part of the story. It was a test of a <em>bounded</em> behavior, the ring-buffer
+or event-log-cap kind. To prove the cap mattered, it exercised the &ldquo;fails without the guard&rdquo; case by disabling the
+bound and running unbounded. That turns a bounded test into an unbounded allocator. The rule that went into
+<code>CONTRIBUTING.md</code>:</p>
 <blockquote>
 <p>When you test that a limit holds, do not verify the &ldquo;fails without the guard&rdquo; case by disabling the bound and running
 unbounded. Assert against an injected small cap instead (fill a 4-slot buffer, prove the 5th is dropped), or run under
 the watchdog with a low cap.</p>
 </blockquote>
 <p>The watchdog got the same treatment. You don&rsquo;t prove a kill switch works by letting something run away and hoping. The
-PR validated it against a throwaway allocator with <code>-CapMB 300</code>: a healthy <code>./internal/server/...</code> run peaked at
-104.3 MB and passed, and the allocator tripped the kill at 300.2 MB and exited 1.</p>
-<p>I reran the same idea for this post with a test that grows by 16 MiB every 50 ms, touches every page so it shows up in
-RSS too, and stops itself at 1.5 GiB so a watchdog that misses it can&rsquo;t hurt anything:</p>
+PR validated it against a throwaway allocator with <code>-CapMB 300</code>. A healthy <code>./internal/server/...</code> run peaked at 104.3
+MB and passed. The allocator tripped the kill at 300.2 MB and exited 1.</p>
+<p>I reran the same idea for this post with a test that grows by 16 MiB every 50 ms. It touches every page so it shows up
+in RSS too. It stops itself at 1.5 GiB, so a watchdog that misses it can&rsquo;t hurt anything:</p>
 <div class="highlight"><pre tabindex="0" class="chroma"><code class="language-go" data-lang="go"><span class="line"><span class="cl"><span class="kd">func</span><span class="w"> </span><span class="nf">TestRunaway</span><span class="p">(</span><span class="nx">t</span><span class="w"> </span><span class="o">*</span><span class="nx">testing</span><span class="p">.</span><span class="nx">T</span><span class="p">)</span><span class="w"> </span><span class="p">{</span><span class="w">
 </span></span></span><span class="line"><span class="cl"><span class="w">	</span><span class="kd">var</span><span class="w"> </span><span class="nx">keep</span><span class="w"> </span><span class="p">[][]</span><span class="kt">byte</span><span class="w">
 </span></span></span><span class="line"><span class="cl"><span class="w">	</span><span class="k">for</span><span class="w"> </span><span class="nx">i</span><span class="w"> </span><span class="o">:=</span><span class="w"> </span><span class="mi">0</span><span class="p">;</span><span class="w"> </span><span class="nx">i</span><span class="w"> </span><span class="p">&lt;</span><span class="w"> </span><span class="mi">96</span><span class="p">;</span><span class="w"> </span><span class="nx">i</span><span class="o">++</span><span class="w"> </span><span class="p">{</span><span class="w">
@@ -365,21 +369,21 @@ safe-test: per-package peak commit charge
 WATCHDOG: package &#39;permissions&#39; (pid 55232) crossed the 300 MB cap at 354 MB commit charge.
 WATCHDOG: killed it and the parent &#39;go&#39; process. This is the runaway -- fix the test before re-running the full suite.
 </code></pre><p>It overshoots the cap by 54 MB because it samples. At 16 MiB per 50 ms, a half-second poll can miss about 160 MB of
-growth between looks. That&rsquo;s the honest limit of this design, and it&rsquo;s spelled out in the contributing guide now: the
+growth between looks. That&rsquo;s the honest limit of this design, and it&rsquo;s spelled out in the contributing guide now. The
 watchdog catches runaway <em>growth</em>, which is what has actually taken this machine down. It is not a hard per-allocation
-ceiling. If you want that on Windows, a Job Object memory limit is the tool, which is what shipmates uses for the agent
-processes themselves. That deserves its own post.</p>
+ceiling. If you want that on Windows, a Job Object memory limit is the tool. That&rsquo;s what shipmates uses for the agent
+processes themselves. It deserves its own post.</p>
 <h3 id="the-bug-the-windows-box-hid">The bug the Windows box hid</h3>
 <p>You may have noticed the package in my runaway test is named <code>permissions</code>. That&rsquo;s on purpose.</p>
-<p>A review of the watchdog before #54 merged (the PR sat open from mid-August to mid-September) found a hole in the sh
-version (<a href="https://github.com/luthermonson/shipmates/commit/166d208"><code>166d208</code></a>), so the fix went out with the rest of it in v0.6.0.
-It matched test children with <code>ps -o comm=</code>, and Linux truncates <code>comm</code> to 15 characters (<code>TASK_COMM_LEN</code> is 16
-including the NUL). Here&rsquo;s a binary named <code>permissions.test</code>:</p>
+<p>A review of the watchdog before #54 merged found a hole in the sh version. The PR sat open from mid-August to
+mid-September, so the fix (<a href="https://github.com/luthermonson/shipmates/commit/166d208"><code>166d208</code></a>) went out with the
+rest of it in v0.6.0. The sh script matched test children with <code>ps -o comm=</code>. Linux truncates <code>comm</code> to 15 characters
+(<code>TASK_COMM_LEN</code> is 16 including the NUL). Here&rsquo;s a binary named <code>permissions.test</code>:</p>
 <pre tabindex="0"><code>comm=[permissions.tes]
 args=[./permissions.test]
 </code></pre><p><code>permissions.tes</code> doesn&rsquo;t match <code>\.test$</code>, so the watchdog never saw it. Same for <code>personaname</code> and <code>containment</code>, which
-are, of course, the security-sensitive packages. PowerShell&rsquo;s <code>Process.Name</code> isn&rsquo;t truncated, so the Windows script was
-fine, and I only ever ran the Windows script at my desk.</p>
+are of course the security-sensitive packages. PowerShell&rsquo;s <code>Process.Name</code> isn&rsquo;t truncated, so the Windows script was
+fine. And I only ever ran the Windows script at my desk.</p>
 <p>Here&rsquo;s the original sh script (from <code>291f29e</code>) and the fixed one against the same runaway test under WSL2:</p>
 <pre tabindex="0"><code># before: matched on comm
 safe-test: go test -count=1 ./permissions/...
@@ -406,9 +410,9 @@ safe-test: per-package peak resident memory
 
 WATCHDOG: package &#39;permissions&#39; (pid 405042) crossed the 300 MB cap at 373 MB resident.
 WATCHDOG: killed it and the parent &#39;go&#39; process. This is the runaway -- fix the test before re-running the full suite.
-</code></pre><p>(The peak line is the last sample <em>under</em> the cap; the breaching sample is the one in the WATCHDOG line.)</p>
-<p>The fix reads <code>args</code> instead, which comes from <code>/proc/&lt;pid&gt;/cmdline</code> and isn&rsquo;t truncated, takes argv[0], and basenames
-it. The whole tree walk and filter is one awk pass:</p>
+</code></pre><p>(The peak line is the last sample <em>under</em> the cap. The breaching sample is the one in the WATCHDOG line.)</p>
+<p>The fix reads <code>args</code> instead, which comes from <code>/proc/&lt;pid&gt;/cmdline</code> and isn&rsquo;t truncated. It takes argv[0] and
+basenames it. The whole tree walk and filter is one awk pass:</p>
 <div class="highlight"><pre tabindex="0" class="chroma"><code class="language-sh" data-lang="sh"><span class="line"><span class="cl">snapshot<span class="o">()</span> <span class="o">{</span>
 </span></span><span class="line"><span class="cl">    ps -Ao <span class="nv">pid</span><span class="o">=</span>,ppid<span class="o">=</span>,rss<span class="o">=</span>,args<span class="o">=</span> <span class="p">|</span> awk -v <span class="nv">root</span><span class="o">=</span><span class="s2">&#34;</span><span class="nv">$1</span><span class="s2">&#34;</span> <span class="s1">&#39;
 </span></span></span><span class="line"><span class="cl"><span class="s1">    {
@@ -431,14 +435,14 @@ it. The whole tree walk and filter is one awk pass:</p>
 </span></span></code></pre></div><p>The same commit dropped the default poll from 1 s to 0.5 s to shrink the window between samples.</p>
 <p>The lesson is the same one twice. Test the guardrail against a deliberately small cap, and test it on the platform it&rsquo;s
 going to run on. The commit message for the fix even says the live Linux <code>ps</code> behavior &ldquo;can&rsquo;t be exercised on this
-Windows dev box&rdquo;. It could, it just needed WSL and five minutes.</p>
+Windows dev box&rdquo;. It could. It just needed WSL and five minutes.</p>
 <h3 id="using-it">Using it</h3>
 <div class="highlight"><pre tabindex="0" class="chroma"><code class="language-powershell" data-lang="powershell"><span class="line"><span class="cl"><span class="n">powershell</span> <span class="n">-ExecutionPolicy</span> <span class="n">Bypass</span> <span class="o">-File</span> <span class="n">scripts</span><span class="p">\</span><span class="nb">safe-test</span><span class="p">.</span><span class="py">ps1</span>
 </span></span><span class="line"><span class="cl"><span class="n">powershell</span> <span class="n">-ExecutionPolicy</span> <span class="n">Bypass</span> <span class="o">-File</span> <span class="n">scripts</span><span class="p">\</span><span class="nb">safe-test</span><span class="p">.</span><span class="py">ps1</span> <span class="n">-Target</span> <span class="p">./</span><span class="n">internal</span><span class="p">/</span><span class="n">server</span><span class="p">/...</span> <span class="n">-CapMB</span> <span class="mf">500</span>
 </span></span></code></pre></div><div class="highlight"><pre tabindex="0" class="chroma"><code class="language-sh" data-lang="sh"><span class="line"><span class="cl">scripts/safe-test.sh
 </span></span><span class="line"><span class="cl">scripts/safe-test.sh -t ./internal/server/... -c <span class="m">500</span>
 </span></span></code></pre></div><p>Both exit non-zero if they kill anything or if <code>go test</code> fails, so they work as a pre-push hook. CI still calls
-<code>go test</code> directly; the runners are ephemeral VMs and a runaway there only hurts itself.</p>
+<code>go test</code> directly. The runners are ephemeral VMs, and a runaway there only hurts itself.</p>
 <h3 id="how-i-measured">How I measured</h3>
 <p>Windows 11 Pro on an AMD Ryzen 9 5950X with 128 GB RAM, Windows PowerShell 5.1, Go 1.26. Linux runs were under WSL2
 (kernel 6.18.33.2, procps-ng 4.0.4, Go 1.26.0). The runaway module lives in a scratch directory with a single

@@ -234,10 +234,10 @@
   </a>
     
     <p><a href="https://github.com/ephpm/ephpm">ePHPm</a> can serve a directory full of sites out of one process. Point <code>sites_dir</code> at
-a folder, every subdirectory is a virtual host, and the Host header decides which one you get. That&rsquo;s how the PR preview
-environment runs: every pull request gets a subdomain, and the code behind it is whatever somebody pushed. One process
-holding many tenants means every per-tenant boundary is something ePHPm enforces itself, in-process. There&rsquo;s no
-container wall between site A and site B unless you add&hellip;</p>
+a folder and every subdirectory is a virtual host. The Host header decides which one you get. That&rsquo;s how the PR preview
+environment runs. Every pull request gets a subdomain, and the code behind it is whatever somebody pushed. One process
+holding many tenants means ePHPm enforces every per-tenant boundary itself, in-process. There&rsquo;s no container wall
+between site A and site B unless you add one.</p>
   </div>
   <footer>
     <a href="/blog/2026/09/cross-tenant-breakout-field-guide/" class="button big">Read More</a>
@@ -300,11 +300,11 @@ container wall between site A and site B unless you add&hellip;</p>
     <img class="" src="/img/2026/09/ephpm-php-cli-conformance-results.svg" alt="Bar chart of conformance corpus results: 65 pass and 10 xfail when the harness landed, 79 pass and 1 xfail after the fixes">
   </a>
     
-    <p><a href="https://github.com/ephpm/ephpm">ePHPm</a> embeds PHP into a single Rust binary, and the obvious follow-up question from
+    <p><a href="https://github.com/ephpm/ephpm">ePHPm</a> embeds PHP into a single Rust binary. The obvious follow-up question from
 anybody deploying it is &ldquo;do I still need a <code>php</code> on the box?&rdquo; Composer, WP-CLI, artisan, PHPUnit and every build
-script in the world call <code>php</code>. If <code>ephpm php</code> can stand in for it then the answer is no, and the single binary actually
-means a single binary. &ldquo;Mostly works&rdquo; isn&rsquo;t good enough for that though. These tools parse PHP&rsquo;s output, check its exit
-codes and re-invoke it. So the&hellip;</p>
+script in the world call <code>php</code>. If <code>ephpm php</code> can stand in for it then the answer is no. The single binary really means
+a single binary. &ldquo;Mostly works&rdquo; isn&rsquo;t good enough for that though. These tools parse PHP&rsquo;s output, check its exit codes
+and re-invoke it. So the goal was&hellip;</p>
   </div>
   <footer>
     <a href="/blog/2026/09/ephpm-php-cli-conformance/" class="button big">Read More</a>
@@ -350,7 +350,7 @@ codes and re-invoke it. So the&hellip;</p>
       <h2><a href="/blog/2026/09/single-binary-wordpress/">Zero-Dependency Deployments - Single Binary for WordPress</a></h2>
     
     
-      <p>WordPress with no nginx, no php-fpm, no Redis and no MySQL: one ePHPm binary, a SQLite file, and a distroless container image. What&#39;s in the binary, how it gets built, and what it actually takes to run.</p>
+      <p>WordPress with no nginx, no php-fpm, no Redis and no MySQL. It runs from one ePHPm binary, a SQLite file and a distroless container image.</p>
     
   </div>
   <div class="meta">
@@ -365,11 +365,7 @@ codes and re-invoke it. So the&hellip;</p>
     <img class="" src="/img/2026/09/single-binary-wordpress-cover.svg" alt="Side by side: nginx, php-fpm, Redis and MySQL as four services, versus one ephpm process containing the HTTP server, embedded PHP, KV store and SQLite">
   </a>
     
-    <p>The standard way to run a WordPress site is four services: nginx for HTTP and TLS, php-fpm to run PHP, MySQL for data,
-and Redis once the site gets slow enough that someone installs an object cache plugin. That&rsquo;s four processes, four
-config files, three sockets between them, and four things to upgrade. For a big site that&rsquo;s fine. For a brochure site, a
-staging copy, a PR preview, a CI job that needs a real WordPress to test a plugin against, or a box at the edge, it&rsquo;s
-absurd.</p>
+    <p>The standard way to run a WordPress site is four services:</p>
   </div>
   <footer>
     <a href="/blog/2026/09/single-binary-wordpress/" class="button big">Read More</a>
@@ -435,10 +431,10 @@ absurd.</p>
   </a>
     
     <p>A third-party Laravel runtime comparison put <a href="https://github.com/ephpm/ephpm">ePHPm</a>&rsquo;s worker mode at the top on
-throughput, about 19% ahead of FrankenPHP on <code>/api/static</code>, and at the bottom of the fast group on tail latency: P99 of
-157 ms against FrankenPHP&rsquo;s 57 ms. Best throughput plus the fattest tail is a shape worth chasing, because fast
-execution can&rsquo;t produce it. Making requests faster lowers the mean <em>and</em> the tail. Only waiting can pull them apart,
-and specifically, unfair waiting.</p>
+throughput. It was about 19% ahead of FrankenPHP on <code>/api/static</code>. It was also at the bottom of the fast group on tail
+latency, with a P99 of 157 ms against FrankenPHP&rsquo;s 57 ms. Best throughput plus the fattest tail is a shape worth
+chasing, because fast execution can&rsquo;t produce it. Making requests faster lowers the mean <em>and</em> the tail. Only waiting
+can pull them apart. Specifically, unfair waiting.</p>
   </div>
   <footer>
     <a href="/blog/2026/09/php-dispatch-fair-queue-p99/" class="button big">Read More</a>
@@ -488,7 +484,7 @@ and specifically, unfair waiting.</p>
       <h2><a href="/blog/2026/09/php-stack-guard-segfault-containment/">We Disabled PHP&#39;s Stack Guard Ourselves: Containing Segfaults in a Single-Process PHP Server</a></h2>
     
     
-      <p>How ePHPm went from dying silently on a segfault to containing stack overflows per thread, and the linker flag that had turned off PHP&#39;s own guard.</p>
+      <p>How ePHPm went from dying silently on a segfault to containing stack overflows per thread. It also covers the linker flag that had turned off PHP&#39;s own guard.</p>
     
   </div>
   <div class="meta">
@@ -503,10 +499,10 @@ and specifically, unfair waiting.</p>
     <img class="" src="/img/2026/09/php-stack-guard-cover.svg" alt="Diagram of a PHP thread stack, the guard window below it, and which faults get contained versus which kill the process">
   </a>
     
-    <p>php-fpm has a property nobody thinks about until they leave it: when a worker segfaults, you lose one request. The
+    <p>php-fpm has a property nobody thinks about until they leave it. When a worker segfaults, you lose one request. The
 master forks a new child and life goes on. <a href="https://github.com/ephpm/ephpm">ePHPm</a> runs every tenant&rsquo;s PHP as threads
-inside one process. That&rsquo;s where the memory and latency wins come from, and it also means one tenant&rsquo;s segfault
-takes down every other tenant on the box.</p>
+inside one process. That&rsquo;s where the memory and latency wins come from. It also means one tenant&rsquo;s segfault takes down
+every other tenant on the box.</p>
   </div>
   <footer>
     <a href="/blog/2026/09/php-stack-guard-segfault-containment/" class="button big">Read More</a>
@@ -556,7 +552,7 @@ takes down every other tenant on the box.</p>
       <h2><a href="/blog/2026/09/own-your-php-thread-pool/">Stop Running PHP on tokio&#39;s spawn_blocking - Own Your Thread Pool</a></h2>
     
     
-      <p>Why ePHPm moved PHP execution off tokio&#39;s generic blocking pool onto threads it owns, how the switch was rolled out behind a knob, and what it did to memory, throughput and overload.</p>
+      <p>Why ePHPm moved PHP execution off tokio&#39;s generic blocking pool onto threads it owns. How the switch rolled out behind a knob and what it did to memory, throughput and overload.</p>
     
   </div>
   <div class="meta">
@@ -572,10 +568,10 @@ takes down every other tenant on the box.</p>
   </a>
     
     <p>For most of its life, <a href="https://github.com/ephpm/ephpm">ePHPm</a> ran every PHP request on tokio&rsquo;s <code>spawn_blocking</code>
-pool. It works. It passes tests, it serves benchmarks fine, and it&rsquo;s the first thing anybody reaches for when they
-need to call blocking code from async Rust. It&rsquo;s also quietly wrong for a language runtime, in ways that only show up
-under overload or after a crash. Over the last three weeks it got replaced with a pool of OS threads that ePHPm owns,
-first behind a config flag, then as the default, and as&hellip;</p>
+pool. It works. It passes tests and it serves benchmarks fine. It&rsquo;s the first thing anybody reaches for when they need
+to call blocking code from async Rust. It&rsquo;s also quietly wrong for a language runtime. The problems only show up under
+overload or after a crash. Over the last three weeks it got replaced with a pool of OS threads that ePHPm owns. That
+pool shipped first behind a config flag, then as&hellip;</p>
   </div>
   <footer>
     <a href="/blog/2026/09/own-your-php-thread-pool/" class="button big">Read More</a>
@@ -640,9 +636,9 @@ first behind a config flag, then as the default, and as&hellip;</p>
     
     <p><a href="https://github.com/ephpm/ephpm">ePHPm</a> middleware runs <em>before</em> PHP. It&rsquo;s a small versioned C ABI, loaded with
 <code>dlopen</code>, that gets to look at a request and reject it before PHP boots or the request body is read. That&rsquo;s the
-right shape for a gateway, and it&rsquo;s the wrong shape for most PHP shops, who want to write their middleware in PHP.
-This is the story of compiling PHP into a native <code>.so</code> to fit that ABI, finding exactly where it broke, and then
-building the lane that should have existed in the first place.</p>
+right shape for a gateway. It&rsquo;s the wrong shape for most PHP shops, who want to write their middleware in PHP. This is
+the story of compiling PHP into a native <code>.so</code> to fit that ABI and finding exactly where it broke. Then I built the lane
+that should have existed in the first place.</p>
   </div>
   <footer>
     <a href="/blog/2026/08/php-middleware-elephc/" class="button big">Read More</a>
@@ -692,7 +688,7 @@ building the lane that should have existed in the first place.</p>
       <h2><a href="/blog/2026/08/opcache-on-windows-two-silent-failures/">OPcache on Windows: Two Silent Failures</a></h2>
     
     
-      <p>An ASLR fatal that looked like a memory-size lottery, and Windows PHP 8.3 builds that never had an opcode cache, with the fix sitting unpicked for three weeks.</p>
+      <p>An ASLR fatal on Windows looked like a memory-size lottery. Separately, Windows PHP 8.3 builds never had an opcode cache, and the fix sat unpicked for three weeks.</p>
     
   </div>
   <div class="meta">
@@ -708,9 +704,9 @@ building the lane that should have existed in the first place.</p>
   </a>
     
     <p>Windows is the platform where <a href="https://github.com/ephpm/ephpm">ePHPm</a> gets the least traffic and the most surprises.
-Last week closed out two OPcache bugs that only exist there, and both were quiet in their own way. One killed the
-server at startup with nothing in our own logs. The other didn&rsquo;t kill anything: it just ran PHP 8.3 with no opcode
-cache at all, and for three weeks after a fixed SDK was published every check stayed green.</p>
+Last week closed out two OPcache bugs that only exist there. Both were quiet in their own way. One killed the server
+at startup with nothing in our own logs. The other didn&rsquo;t kill anything. It just ran PHP 8.3 with no opcode cache at
+all. For three weeks after a fixed SDK was published, every check stayed green.</p>
   </div>
   <footer>
     <a href="/blog/2026/08/opcache-on-windows-two-silent-failures/" class="button big">Read More</a>
@@ -758,7 +754,7 @@ cache at all, and for three weeks after a fixed SDK was published every check st
       <h2><a href="/blog/2026/08/what-does-one-more-wordpress-site-cost/">What Does One More WordPress Site Cost?</a></h2>
     
     
-      <p>Marginal RAM, file descriptors, CPU and disk for each extra WordPress tenant on one ePHPm instance, measured from 10 to 1000 sites.</p>
+      <p>I measured what each extra WordPress tenant on one ePHPm instance costs in RAM, file descriptors, CPU and disk. The sweep ran from 10 to 1000 sites.</p>
     
   </div>
   <div class="meta">
@@ -773,11 +769,10 @@ cache at all, and for three weeks after a fixed SDK was published every check st
     <img class="" src="/img/2026/08/what-does-one-more-wordpress-site-cost-rss.svg" alt="Line chart of ePHPm steady RSS against tenant site count: linear at about 2.2 MB per site with every site open, flat past the default LRU cap of 256">
   </a>
     
-    <p>ePHPm v0.7.0 shipped per-site multi-tenancy: point <code>[server] sites_dir</code> at a directory, every <code>Host</code> maps to its own
-docroot and its own Turso database file, and one process serves all of them. The first question anybody asks about
-that is &ldquo;how many sites fit on a box?&rdquo;, and the honest way to answer it is to turn the question around. What does
-<strong>one more</strong> site cost? If you know the marginal RAM, file descriptors, CPU and disk for a tenant, the box size falls
-out of arithmetic.</p>
+    <p>ePHPm v0.7.0 shipped per-site multi-tenancy. Point <code>[server] sites_dir</code> at a directory and every <code>Host</code> maps to its own
+docroot and its own Turso database file. One process serves all of them. The first question anybody asks about that is
+&ldquo;how many sites fit on a box?&rdquo; The honest way to answer it is to turn the question around. What does <strong>one more</strong> site
+cost? If you know the marginal RAM, file descriptors, CPU and disk for a tenant, the box size falls out of arithmetic.</p>
   </div>
   <footer>
     <a href="/blog/2026/08/what-does-one-more-wordpress-site-cost/" class="button big">Read More</a>
@@ -846,9 +841,9 @@ out of arithmetic.</p>
     
     <p>Ask most people what their PHP server does when it&rsquo;s overloaded and you&rsquo;ll hear &ldquo;it returns 503s.&rdquo; Ask them how they
 know and it usually comes down to a config setting they read about. I was in that camp for <a href="https://github.com/ephpm/ephpm">ePHPm</a>.
-We had a <code>[server.limits] max_connections</code> knob, the docs said it returned 503 at the cap, and every benchmark we had
-ever run reported zero errors under heavy load. Then I wrote a load generator that could actually produce overload,
-and the honest answer was&hellip;</p>
+We had a <code>[server.limits] max_connections</code> knob, and the docs said it returned 503 at the cap. Every benchmark we had
+ever run reported zero errors under heavy load. Then I wrote a load generator that could produce overload. The honest
+answer was that an&hellip;</p>
   </div>
   <footer>
     <a href="/blog/2026/08/what-an-overloaded-php-server-actually-returns/" class="button big">Read More</a>

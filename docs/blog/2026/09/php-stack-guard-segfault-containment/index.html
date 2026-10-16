@@ -10,14 +10,14 @@
     gtag('config', 'G-MSTSKGFWTX');
 </script><meta charset="utf-8">
 <title>We Disabled PHP&#39;s Stack Guard Ourselves: Containing Segfaults in a Single-Process PHP Server - Luther Monson</title>
-<meta name="description" content="How ePHPm went from dying silently on a segfault to containing stack overflows per thread, and the linker flag that had turned off PHP&#39;s own guard.">
+<meta name="description" content="How ePHPm went from dying silently on a segfault to containing stack overflows per thread. It also covers the linker flag that had turned off PHP&#39;s own guard.">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
 <meta name="twitter:card" content="summary_large_image"><meta name="twitter:site" content="@luthermonson">
 
 <meta property="og:site_name" content="Luther Monson">
 <meta property="og:title" content="We Disabled PHP&#39;s Stack Guard Ourselves: Containing Segfaults in a Single-Process PHP Server">
-<meta property="og:description" content="How ePHPm went from dying silently on a segfault to containing stack overflows per thread, and the linker flag that had turned off PHP&#39;s own guard.">
+<meta property="og:description" content="How ePHPm went from dying silently on a segfault to containing stack overflows per thread. It also covers the linker flag that had turned off PHP&#39;s own guard.">
 <meta property="og:type" content="article">
 <meta property="og:url" content="https://luth.io/blog/2026/09/php-stack-guard-segfault-containment/">
     <meta property="og:image" content="https://luth.io/img/2026/09/php-stack-guard-cover.svg">
@@ -215,7 +215,7 @@
       <h2><a href="/blog/2026/09/php-stack-guard-segfault-containment/">We Disabled PHP&#39;s Stack Guard Ourselves: Containing Segfaults in a Single-Process PHP Server</a></h2>
     
     
-      <p>How ePHPm went from dying silently on a segfault to containing stack overflows per thread, and the linker flag that had turned off PHP&#39;s own guard.</p>
+      <p>How ePHPm went from dying silently on a segfault to containing stack overflows per thread. It also covers the linker flag that had turned off PHP&#39;s own guard.</p>
     
   </div>
   <div class="meta">
@@ -272,48 +272,49 @@
       </div>
       <div class="content">
         
-        <p>php-fpm has a property nobody thinks about until they leave it: when a worker segfaults, you lose one request. The
+        <p>php-fpm has a property nobody thinks about until they leave it. When a worker segfaults, you lose one request. The
 master forks a new child and life goes on. <a href="https://github.com/ephpm/ephpm">ePHPm</a> runs every tenant&rsquo;s PHP as threads
-inside one process. That&rsquo;s where the memory and latency wins come from, and it also means one tenant&rsquo;s segfault
-takes down every other tenant on the box.</p>
-<p>This is the story of closing that gap, in four steps over about two weeks. The last step turned out to be a bug we&rsquo;d
+inside one process. That&rsquo;s where the memory and latency wins come from. It also means one tenant&rsquo;s segfault takes down
+every other tenant on the box.</p>
+<p>This is the story of closing that gap in four steps over about two weeks. The last step turned out to be a bug we&rsquo;d
 put there ourselves. It&rsquo;s also the payoff for the thread pool work in
-<a href="/blog/2026/09/own-your-php-thread-pool/">the previous post</a>: everything below that actually shipped depends on
-ePHPm owning its own PHP threads.</p>
+<a href="/blog/2026/09/own-your-php-thread-pool/">the previous post</a>. Everything below that actually shipped depends on ePHPm
+owning its own PHP threads.</p>
 <h3 id="step-1-at-least-say-something-on-the-way-out">Step 1: at least say something on the way out</h3>
-<p>The first problem wasn&rsquo;t recovery at all. Kubernetes restarts a crashed pod in well under a second (we measured 61 to
-90 ms to respawn). The problem was that ePHPm died with <strong>no output</strong>. A null dereference in an extension produced
-total silence; the only things that ever said anything were Rust&rsquo;s own stack-overflow message and glibc&rsquo;s malloc
+<p>The first problem wasn&rsquo;t recovery at all. Kubernetes restarts a crashed pod in well under a second. We measured 61 to
+90 ms to respawn. The problem was that ePHPm died with <strong>no output</strong>. A null dereference in an extension produced
+total silence. The only things that ever said anything were Rust&rsquo;s own stack-overflow message and glibc&rsquo;s malloc
 checker. An operator got a restarted pod and no way to tell whether an extension, a native middleware or PHP itself
 did it.</p>
 <p><a href="https://github.com/ephpm/ephpm/pull/253">ephpm#253</a> added a fatal-signal reporter for SIGSEGV, SIGBUS, SIGILL, SIGFPE
-and SIGABRT. Everything about it is shaped by the fact that it runs inside a process that&rsquo;s already broken:</p>
+and SIGABRT. Everything about it is shaped by one fact. It runs inside a process that&rsquo;s already broken:</p>
 <ul>
-<li><strong>Async-signal-safe throughout.</strong> Raw <code>write(2)</code> to fd 2, integers and pointers formatted by hand into a fixed
-buffer, lock-free atomics only. <code>tracing</code>, <code>format!</code> and <code>println!</code> all allocate or lock, and the faulting thread
-might already hold the allocator lock.</li>
-<li><strong><code>backtrace()</code> is warmed at startup</strong> so its lazy init doesn&rsquo;t happen in a broken process, and raw addresses are
+<li><strong>Async-signal-safe throughout.</strong> Output is a raw <code>write(2)</code> to fd 2. Integers and pointers are formatted by hand
+into a fixed buffer. Only lock-free atomics are used. <code>tracing</code>, <code>format!</code> and <code>println!</code> all allocate or lock, and
+the faulting thread might already hold the allocator lock.</li>
+<li><strong><code>backtrace()</code> is warmed at startup</strong> so its lazy init doesn&rsquo;t happen in a broken process. Raw addresses are
 written <em>before</em> symbolization is attempted, because <code>_dl_addr</code> takes the loader lock.</li>
-<li><strong><code>sigaltstack</code> + <code>SA_ONSTACK</code></strong>, or a stack overflow can&rsquo;t be reported at all: the handler would need stack to run on.</li>
-<li><strong>It chains to the previous handler and dies with the original disposition.</strong> Every fault type was run twice on
-the same binary, handler on and off, and the exit codes matched (139 for segfaults, 134 for aborts), so Kubernetes
+<li><strong><code>sigaltstack</code> + <code>SA_ONSTACK</code></strong>, or a stack overflow can&rsquo;t be reported at all. The handler would need stack to run
+on.</li>
+<li><strong>It chains to the previous handler and dies with the original disposition.</strong> Every fault type was run twice on the
+same binary, with the handler on and off. The exit codes matched: 139 for segfaults and 134 for aborts. Kubernetes
 and exit-code alerting see exactly what they saw before.</li>
 </ul>
 <p>And deliberately <strong>no recovery</strong>. The reasoning from the PR is worth quoting: &ldquo;a ZMM smash was measured returning
 HTTP 200 to its own client and killing the process 17 ms later on a <em>different</em> thread serving an unrelated request.&rdquo;
 After heap corruption there&rsquo;s no request to blame and no thread to isolate.</p>
 <h3 id="step-2-the-spike-and-the-wall-it-hit">Step 2: the spike, and the wall it hit</h3>
-<p>Then a pentest found the process-killer that made this urgent, and it&rsquo;s ordinary PHP. Build a linked list of around
-50,000 plain objects and let it go out of scope. Freeing it recurses in C, <code>zend_object_std_dtor</code> into
-<code>zend_objects_store_del</code> and back, one pair of frames per node, until the thread runs out of stack. Nothing in userland
-reaches it: no <code>try</code>/<code>catch</code>, no <code>disable_functions</code>, no <code>memory_limit</code>.</p>
-<p>But a stack overflow is a different animal from heap corruption. The fault is in a <em>thread-local</em> resource, the
-thread&rsquo;s own stack. The objects being freed live in that thread&rsquo;s Zend MM heap and <code>EG(objects_store)</code>, and Zend MM
-<code>mmap</code>s its own 2 MiB chunks instead of going through glibc <code>malloc</code>, so no process-wide allocator lock is held when
-it faults. Abandon that one thread, and the rest of the process is fine.</p>
-<p>The spike (<a href="https://github.com/ephpm/ephpm/pull/294">ephpm#294</a>, never merged on purpose) built that in pure libc, so
-it compiles and is unit tested without PHP at all. A per-thread <code>sigsetjmp</code> region wraps each request, and the fatal
-signal handler asks a classifier first:</p>
+<p>Then a pentest found the process-killer that made this urgent. It&rsquo;s ordinary PHP. Build a linked list of around 50,000
+plain objects and let it go out of scope. Freeing it recurses in C. <code>zend_object_std_dtor</code> goes into
+<code>zend_objects_store_del</code> and back, one pair of frames per node, until the thread runs out of stack. Nothing in
+userland reaches it. Not <code>try</code>/<code>catch</code>, not <code>disable_functions</code> and not <code>memory_limit</code>.</p>
+<p>But a stack overflow is a different animal from heap corruption. The fault is in a <em>thread-local</em> resource: the
+thread&rsquo;s own stack. The objects being freed live in that thread&rsquo;s Zend MM heap and <code>EG(objects_store)</code>. Zend MM
+<code>mmap</code>s its own 2 MiB chunks instead of going through glibc <code>malloc</code>. So no process-wide allocator lock is held when
+it faults. Abandon that one thread and the rest of the process is fine.</p>
+<p>The spike was <a href="https://github.com/ephpm/ephpm/pull/294">ephpm#294</a>, and it was never merged on purpose. It built that
+in pure libc. That way it compiles and is unit tested without PHP at all. A per-thread <code>sigsetjmp</code> region wraps each
+request. The fatal signal handler asks a classifier first:</p>
 <div class="highlight"><pre tabindex="0" class="chroma"><code class="language-c" data-lang="c"><span class="line"><span class="cl"><span class="kt">int</span> <span class="nf">ephpm_guard_try_recover</span><span class="p">(</span><span class="kt">uintptr_t</span> <span class="n">fault_addr</span><span class="p">)</span>
 </span></span><span class="line"><span class="cl"><span class="p">{</span>
 </span></span><span class="line"><span class="cl">    <span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="n">g_armed</span><span class="p">)</span> <span class="p">{</span>
@@ -334,25 +335,25 @@ signal handler asks a classifier first:</p>
 </span></span><span class="line"><span class="cl">    <span class="nf">siglongjmp</span><span class="p">(</span><span class="n">g_recover_buf</span><span class="p">,</span> <span class="mi">1</span><span class="p">);</span>
 </span></span><span class="line"><span class="cl">    <span class="k">return</span> <span class="mi">0</span><span class="p">;</span> <span class="cm">/* unreachable */</span>
 </span></span><span class="line"><span class="cl"><span class="p">}</span>
-</span></span></code></pre></div><p>Only a fault at or just below <strong>this thread&rsquo;s own</strong> stack low bound gets contained (a 64 KiB window below, one page of
-slack above). The bounds come from <code>pthread_getattr_np</code> at arm time, never from inside the handler, because that call
-isn&rsquo;t async-signal-safe. The state lives in <code>__thread</code> variables because a signal handler can read those safely. A
-wild write lands nowhere near the stack, isn&rsquo;t contained, and dies with the usual diagnostic and exit code. The cover
-image above is that function as a picture.</p>
-<p>The mechanism worked. The process survived 100 concurrent plus 120 paced crashes with zero corruption across 3,591
-concurrent requests to a second tenant that round-tripped its own database. It also hit two walls, and both came
+</span></span></code></pre></div><p>Only a fault at or just below <strong>this thread&rsquo;s own</strong> stack low bound gets contained. The window is 64 KiB below it,
+with one page of slack above. The bounds come from <code>pthread_getattr_np</code> at arm time. They never come from inside the
+handler, because that call isn&rsquo;t async-signal-safe. The state lives in <code>__thread</code> variables because a signal handler
+can read those safely. A wild write lands nowhere near the stack. It isn&rsquo;t contained and dies with the usual
+diagnostic and exit code. The cover image above is that function as a picture.</p>
+<p>The mechanism worked. The process survived 100 concurrent plus 120 paced crashes. There was zero corruption across
+3,591 concurrent requests to a second tenant that round-tripped its own database. It also hit two walls. Both came
 from running PHP on tokio&rsquo;s <code>spawn_blocking</code> pool:</p>
 <ol>
-<li><strong>A poisoned thread can&rsquo;t be retired.</strong> After a contained crash, that thread&rsquo;s Zend context is garbage, so it has to
-refuse all further PHP. But tokio owns the thread, and there&rsquo;s no API to say &ldquo;kill this one and give me a fresh
-one&rdquo;. During a 100-crash storm, 17 threads got poisoned and the healthy pool shrank. The co-tenant&rsquo;s success rate
-was <strong>13.7%</strong>.</li>
+<li><strong>A poisoned thread can&rsquo;t be retired.</strong> After a contained crash, that thread&rsquo;s Zend context is garbage. It has to
+refuse all further PHP. But tokio owns the thread. There&rsquo;s no API to say &ldquo;kill this one and give me a fresh one&rdquo;.
+During a 100-crash storm, 17 threads got poisoned and the healthy pool shrank. The co-tenant&rsquo;s success rate was
+<strong>13.7%</strong>.</li>
 <li><strong>Graceful shutdown aborted after even one contained crash.</strong> <code>php_module_shutdown()</code> walks every TSRM entry,
-including the abandoned poisoned one, frees its corrupt heap from the main thread, and gets
+including the abandoned poisoned one. It frees that entry&rsquo;s corrupt heap from the main thread and gets
 <code>zend_mm_heap corrupted</code>. Exit 134 on every rolling deploy after any tenant crash.</li>
 </ol>
-<p>Containment turned &ldquo;one crash kills every tenant until restart&rdquo; into &ldquo;degraded but alive&rdquo;, which is better, but it
-isn&rsquo;t isolation.</p>
+<p>Containment turned &ldquo;one crash kills every tenant until restart&rdquo; into &ldquo;degraded but alive&rdquo;. That&rsquo;s better, but it isn&rsquo;t
+isolation.</p>
 <h3 id="step-3-ship-it-on-threads-we-own">Step 3: ship it on threads we own</h3>
 <p>The fix for both walls was the owned thread pool. Once ePHPm runs PHP on its own <code>std::thread</code>s, retiring a poisoned
 one is a <code>break</code> out of the job loop:</p>
@@ -376,14 +377,14 @@ one is a <code>break</code> out of the job loop:</p>
 </span></span></span><span class="line"><span class="cl"><span class="p">}</span><span class="w"> </span><span class="k">else</span><span class="w"> </span><span class="p">{</span><span class="w">
 </span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="n">PhpRuntime</span>::<span class="n">worker_thread_shutdown</span><span class="p">();</span><span class="w">
 </span></span></span><span class="line"><span class="cl"><span class="p">}</span><span class="w">
-</span></span></span></code></pre></div><p>A poisoned thread is abandoned, never cleaned up, the same trade a hung thread already got. That leads to the
-process-level invariant from <a href="https://github.com/ephpm/ephpm/pull/302">ephpm#302</a>: <strong>once any crash has been contained,
-this process must never call <code>php_embed_shutdown()</code>.</strong> That closed the second wall. Consecutive poisons inside a
-10-second window also back off 25 ms up to 500 ms before respawning, so a client in a crash loop can&rsquo;t make us spin
-thread creation and TSRM registration at request rate.</p>
+</span></span></span></code></pre></div><p>A poisoned thread is abandoned and never cleaned up. That&rsquo;s the same trade a hung thread already got. It leads to the
+process-level invariant from <a href="https://github.com/ephpm/ephpm/pull/302">ephpm#302</a>: <strong>once any crash has been
+contained, this process must never call <code>php_embed_shutdown()</code>.</strong> That closed the second wall. Consecutive poisons
+inside a 10-second window also back off 25 ms up to 500 ms before respawning. A client in a crash loop can&rsquo;t make us
+spin thread creation and TSRM registration at request rate.</p>
 <p><img src="/img/2026/09/php-stack-guard-containment-storm.svg" alt="Bar chart: co-tenant requests succeeded during a 100-crash storm, 13.7% on the spike versus 100% on the owned pool"></p>
-<p>The numbers from the PR (PHP 8.5.7 ZTS, 4-thread pool). They come from two different storm setups, so read the chart
-as before and after rather than a controlled A/B:</p>
+<p>These are the numbers from the PR, on PHP 8.5.7 ZTS with a 4-thread pool. They come from two different storm setups.
+Read the chart as before and after rather than as a controlled A/B:</p>
 <table>
   <thead>
       <tr>
@@ -418,17 +419,17 @@ as before and after rather than a controlled A/B:</p>
       </tr>
   </tbody>
 </table>
-<p>That last row is the one I care most about. The classifier has to say no just as reliably as it says yes. It&rsquo;s
-tested both ways: live, and with a forked-child unit test where a real null-deref write inside an armed guard has to
-re-raise and die. A later benchmark put the guard&rsquo;s happy-path cost at +0.4% RPS, inside the noise. It still ships
-as <code>[php] crash_containment = false</code> by default and labeled experimental, because each contained crash leaks a Zend
-context (bounded, but real) and because it only covers one fault class.</p>
+<p>That last row is the one I care most about. The classifier has to say no just as reliably as it says yes. It&rsquo;s tested
+both ways: live, and with a forked-child unit test. In that test a real null-deref write inside an armed guard has to
+re-raise and die. A later benchmark put the guard&rsquo;s happy-path cost at +0.4% RPS, inside the noise. It still ships as
+<code>[php] crash_containment = false</code> by default and labeled experimental. There are two reasons. Each contained crash
+leaks a Zend context, which is bounded but real. And it only covers one fault class.</p>
 <h3 id="step-4-the-twist-it-was-our-linker-flag">Step 4: the twist, it was our linker flag</h3>
 <p>Meanwhile there was a much older open issue,
 <a href="https://github.com/ephpm/ephpm/issues/116">ephpm#116</a>: WordPress block themes crash the worker. <code>do_blocks()</code> on
 nested block markup took down the resident PHP worker. It had been filed as a WordPress-in-worker-mode problem and
 sat on the &ldquo;adapter quirks&rdquo; pile.</p>
-<p>When I went back to it, it still reproduced on <code>main</code>, and not just in worker mode:</p>
+<p>When I went back to it, it still reproduced on <code>main</code>. And not just in worker mode:</p>
 <table>
   <thead>
       <tr>
@@ -460,11 +461,12 @@ sat on the &ldquo;adapter quirks&rdquo; pile.</p>
       </tr>
   </tbody>
 </table>
-<p>Stock PHP throws a <em>catchable error</em> for that. PHP 8.3 added a C-stack guard: <code>zend_call_stack_init()</code> reads the
-thread&rsquo;s real stack bounds at request startup into <code>EG(stack_limit)</code>, and the VM and <code>zend_call_function</code> check it
-before recursing. Recursion that re-enters the VM through an internal function (<code>array_map</code>,
-<code>preg_replace_callback</code>, <code>call_user_func_array</code>, which is exactly what <code>do_blocks()</code> to <code>render_block()</code> to
-<code>apply_filters()</code> does once per nesting level) raises an <code>Error</code> instead of running off the end of the stack.</p>
+<p>Stock PHP throws a <em>catchable error</em> for that. PHP 8.3 added a C-stack guard. At request startup
+<code>zend_call_stack_init()</code> reads the thread&rsquo;s real stack bounds into <code>EG(stack_limit)</code>. The VM and <code>zend_call_function</code>
+check it before recursing. Some recursion re-enters the VM through an internal function like <code>array_map</code>,
+<code>preg_replace_callback</code> or <code>call_user_func_array</code>. That&rsquo;s exactly what <code>do_blocks()</code> to <code>render_block()</code> to
+<code>apply_filters()</code> does once per nesting level. That kind of recursion raises an <code>Error</code> instead of running off the end
+of the stack.</p>
 <p>ePHPm had switched it off. <code>build.rs</code> had this, from early in the project:</p>
 <div class="highlight"><pre tabindex="0" class="chroma"><code class="language-rust" data-lang="rust"><span class="line"><span class="cl"><span class="kd">let</span><span class="w"> </span><span class="k">mut</span><span class="w"> </span><span class="n">wrap_funcs</span>: <span class="nb">Vec</span><span class="o">&lt;&amp;</span><span class="kt">str</span><span class="o">&gt;</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="fm">vec!</span><span class="p">[</span><span class="w">
 </span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="s">&#34;zend_signal_startup&#34;</span><span class="p">,</span><span class="w">
@@ -485,30 +487,30 @@ before recursing. Recursion that re-enters the VM through an internal function (
 </span></span><span class="line"><span class="cl"><span class="p">}</span>
 </span></span></code></pre></div><p><code>-Wl,--wrap=sym</code> tells GNU ld to send every call to <code>sym</code> to <code>__wrap_sym</code> instead. It&rsquo;s how you override a function
 inside a static archive you didn&rsquo;t compile. The theory in the comment was wrong on both counts. Probing doesn&rsquo;t fail
-on tokio threads: PHP reads the bounds with <code>pthread_getattr_np</code>, which is exact on any thread glibc creates. And even
-a probe that <em>did</em> fail would just leave <code>EG(stack_limit)</code> NULL, which means the guard is off, not a crash. What the
-wrap actually did was leave <code>EG(stack_limit)</code> NULL forever, so <code>zend_call_stack_overflowed()</code> was permanently false,
-on Linux only (macOS and Windows have no <code>--wrap</code> and kept the guard the whole time).</p>
+on tokio threads. PHP reads the bounds with <code>pthread_getattr_np</code>, which is exact on any thread glibc creates. And even
+a probe that <em>did</em> fail would just leave <code>EG(stack_limit)</code> NULL. That means the guard is off, not a crash. What the
+wrap actually did was leave <code>EG(stack_limit)</code> NULL forever. So <code>zend_call_stack_overflowed()</code> was permanently false.
+That was on Linux only. macOS and Windows have no <code>--wrap</code> and kept the guard the whole time.</p>
 <p>There was a second layer of the same misunderstanding. The wrapper also set <code>EG(max_allowed_stack_size) = 0</code> in several
 places, with comments saying &ldquo;disable stack size checking&rdquo;. Zero is PHP&rsquo;s <em>default</em> and means &ldquo;auto-detect from the
 real stack&rdquo;. The disable value is <code>-1</code>. Those writes never disabled anything. They just made the code look like it
 was doing something on purpose.</p>
 <h3 id="the-fix-is-two-parts-and-the-second-one-matters">The fix is two parts, and the second one matters</h3>
-<p><a href="https://github.com/ephpm/ephpm/pull/360">ephpm#360</a> dropped the wrap and the no-op, and deleted the
+<p><a href="https://github.com/ephpm/ephpm/pull/360">ephpm#360</a> dropped the wrap and the no-op. It also deleted the
 <code>max_allowed_stack_size</code> writes. But re-arming the guard alone would have swapped a crash for a spurious error at a
-quarter of php-fpm&rsquo;s depth. PHP derives the ceiling from the running thread&rsquo;s stack, Rust and tokio threads default
-to 2 MiB, and php-fpm runs PHP on the process main thread with <code>ulimit -s</code>, which is 8 MiB on every mainstream Linux.
-So every thread that runs PHP now gets an 8 MiB stack:</p>
+quarter of php-fpm&rsquo;s depth. PHP derives the ceiling from the running thread&rsquo;s stack. Rust and tokio threads default to
+2 MiB. php-fpm runs PHP on the process main thread with <code>ulimit -s</code>, which is 8 MiB on every mainstream Linux. So
+every thread that runs PHP now gets an 8 MiB stack:</p>
 <div class="highlight"><pre tabindex="0" class="chroma"><code class="language-rust" data-lang="rust"><span class="line"><span class="cl"><span class="k">pub</span><span class="w"> </span><span class="k">const</span><span class="w"> </span><span class="no">PHP_THREAD_STACK</span>: <span class="kt">usize</span> <span class="o">=</span><span class="w"> </span><span class="mi">8</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="mi">1024</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="mi">1024</span><span class="p">;</span><span class="w">
 </span></span></span><span class="line"><span class="cl"><span class="w">
 </span></span></span><span class="line"><span class="cl"><span class="kd">let</span><span class="w"> </span><span class="n">builder</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">std</span>::<span class="n">thread</span>::<span class="n">Builder</span>::<span class="n">new</span><span class="p">()</span><span class="w">
 </span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="p">.</span><span class="n">name</span><span class="p">(</span><span class="fm">format!</span><span class="p">(</span><span class="s">&#34;ephpm-fpm-</span><span class="si">{thread_id}</span><span class="s">&#34;</span><span class="p">))</span><span class="w">
 </span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="p">.</span><span class="n">stack_size</span><span class="p">(</span><span class="n">ephpm_php</span>::<span class="no">PHP_THREAD_STACK</span><span class="p">);</span><span class="w">
-</span></span></span></code></pre></div><p>That&rsquo;s applied to the tokio runtime threads, the per-request pool and the worker pool. It&rsquo;s reserved address space,
-committed a page at a time, so there&rsquo;s no RSS cost. Measured on an 8 MiB stack, the test fixture completes 11,000
-levels and fatals at 13,000, the same on PHP 8.3.31 and 8.5.7: about 750 bytes of C stack per level. The e2e test
-asserts 5,000 levels complete. That&rsquo;s more than 2x margin, and about twice what a 2 MiB thread would allow, so it&rsquo;s
-really a test of the thread stack size and not a tautology.</p>
+</span></span></span></code></pre></div><p>That&rsquo;s applied to the tokio runtime threads, the per-request pool and the worker pool. It&rsquo;s reserved address space
+that gets committed a page at a time. There&rsquo;s no RSS cost. Measured on an 8 MiB stack, the test fixture completes
+11,000 levels and fatals at 13,000. That&rsquo;s the same on PHP 8.3.31 and 8.5.7, about 750 bytes of C stack per level. The
+e2e test asserts 5,000 levels complete. That&rsquo;s more than 2x margin. It&rsquo;s also about twice what a 2 MiB thread would
+allow. So it&rsquo;s a real test of the thread stack size and not a tautology.</p>
 <table>
   <thead>
       <tr>
@@ -538,21 +540,21 @@ really a test of the thread stack size and not a tautology.</p>
 <p>And because the overflow is now a catchable <code>Error</code>, a worker adapter that catches it keeps serving with no recycle
 at all. That was #116&rsquo;s acceptance criterion.</p>
 <h3 id="both-guards-stay">Both guards stay</h3>
-<p>PHP&rsquo;s guard and the signal-level containment don&rsquo;t overlap, and it&rsquo;s worth being precise about why. PHP&rsquo;s guard is a
-<em>checkpoint</em>: it&rsquo;s tested in the VM and in <code>zend_call_function</code>. Recursion that goes through PHP code or internal
-callbacks hits a checkpoint and becomes an <code>Error</code>. The destructor cascade from the pentest recurses purely through C
-destructors and never passes one, so PHP can&rsquo;t see it. The signal handler is still the only thing that catches that
-one, and <code>crash_containment</code> still needs the owned pool. Worker mode can&rsquo;t contain that class yet. It owns its OS
-threads, which is the precondition, so it&rsquo;s tractable, but it&rsquo;s a feature-sized change of its own.</p>
+<p>PHP&rsquo;s guard and the signal-level containment don&rsquo;t overlap. Here&rsquo;s precisely why. PHP&rsquo;s guard is a <em>checkpoint</em>. It&rsquo;s
+tested in the VM and in <code>zend_call_function</code>. Recursion that goes through PHP code or internal callbacks hits a
+checkpoint and becomes an <code>Error</code>. The destructor cascade from the pentest recurses purely through C destructors and
+never passes one. PHP can&rsquo;t see it. The signal handler is still the only thing that catches that one, and
+<code>crash_containment</code> still needs the owned pool. Worker mode can&rsquo;t contain that class yet. It owns its OS threads,
+which is the precondition. So it&rsquo;s tractable, but it&rsquo;s a feature-sized change of its own.</p>
 <h3 id="takeaway">Takeaway</h3>
-<p>The uncomfortable part of this story is that the bug that took down every tenant on a block-theme page wasn&rsquo;t in PHP
-or WordPress. It was a linker flag with a confident comment, written early on when PHP threads lived on tokio&rsquo;s
-blocking pool and &ldquo;small, weird stacks&rdquo; seemed like a reasonable thing to defend against. Nobody re-tested the
-assumption, because nothing ever failed in a way that pointed at it.</p>
-<p><code>--wrap</code> is a powerful tool for embedding a C runtime, and ePHPm still uses it for PHP&rsquo;s process-wide signal handling.
-Every wrapped symbol is a feature of the runtime you&rsquo;ve switched off, and it deserves the same scrutiny as any other
+<p>The uncomfortable part of this story is where the bug lived. The bug that took down every tenant on a block-theme page
+wasn&rsquo;t in PHP or WordPress. It was a linker flag with a confident comment. It was written early on, when PHP threads
+lived on tokio&rsquo;s blocking pool and &ldquo;small, weird stacks&rdquo; seemed like a reasonable thing to defend against. Nobody
+re-tested the assumption, because nothing ever failed in a way that pointed at it.</p>
+<p><code>--wrap</code> is a powerful tool for embedding a C runtime. ePHPm still uses it for PHP&rsquo;s process-wide signal handling.
+Every wrapped symbol is a feature of the runtime you&rsquo;ve switched off. It deserves the same scrutiny as any other
 config default. Each one needs a test that would fail if the reason for it stopped being true. As it happens, this
-wasn&rsquo;t the only feature we&rsquo;d turned off this way. <code>zend_set_timeout</code> had been wrapped to a no-op too, which is why
+wasn&rsquo;t the only feature we&rsquo;d turned off this way. <code>zend_set_timeout</code> had been wrapped to a no-op too. That&rsquo;s why
 <code>max_execution_time</code> did nothing in ePHPm until August. That one gets its own post.</p>
 <h3 id="links">Links</h3>
 <ul>

@@ -10,14 +10,14 @@
     gtag('config', 'G-MSTSKGFWTX');
 </script><meta charset="utf-8">
 <title>Proxmox JSON, Part 2: null PIDs, 1.12589990684262e&#43;15 and net10 - Luther Monson</title>
-<meta name="description" content="Three more ways the Proxmox VE API&#39;s JSON doesn&#39;t fit Go&#39;s encoding/json: a null I fixed and then broke, petabyte storage in scientific notation, and devices past index 9 that were silently dropped.">
+<meta name="description" content="The Proxmox VE API found three more ways for its JSON not to fit Go&#39;s encoding/json. There&#39;s a null I fixed and then broke, petabyte storage in scientific notation, and devices past index 9 that were silently dropped.">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
 <meta name="twitter:card" content="summary_large_image"><meta name="twitter:site" content="@luthermonson">
 
 <meta property="og:site_name" content="Luther Monson">
 <meta property="og:title" content="Proxmox JSON, Part 2: null PIDs, 1.12589990684262e&#43;15 and net10">
-<meta property="og:description" content="Three more ways the Proxmox VE API&#39;s JSON doesn&#39;t fit Go&#39;s encoding/json: a null I fixed and then broke, petabyte storage in scientific notation, and devices past index 9 that were silently dropped.">
+<meta property="og:description" content="The Proxmox VE API found three more ways for its JSON not to fit Go&#39;s encoding/json. There&#39;s a null I fixed and then broke, petabyte storage in scientific notation, and devices past index 9 that were silently dropped.">
 <meta property="og:type" content="article">
 <meta property="og:url" content="https://luth.io/blog/2026/06/proxmox-numbers-null-scientific-notation-net10/">
     <meta property="og:image" content="https://luth.io/img/2022/02/proxmox-logo.png">
@@ -215,7 +215,7 @@
       <h2><a href="/blog/2026/06/proxmox-numbers-null-scientific-notation-net10/">Proxmox JSON, Part 2: null PIDs, 1.12589990684262e&#43;15 and net10</a></h2>
     
     
-      <p>Three more ways the Proxmox VE API&#39;s JSON doesn&#39;t fit Go&#39;s encoding/json: a null I fixed and then broke, petabyte storage in scientific notation, and devices past index 9 that were silently dropped.</p>
+      <p>The Proxmox VE API found three more ways for its JSON not to fit Go&#39;s encoding/json. There&#39;s a null I fixed and then broke, petabyte storage in scientific notation, and devices past index 9 that were silently dropped.</p>
     
   </div>
   <div class="meta">
@@ -272,28 +272,28 @@
       </div>
       <div class="content">
         
-        <p>In 2023 I wrote about <a href="/blog/2023/11/proxmox-doesnt-know-what-type-a-number-is/">why go-proxmox has <code>StringOrInt</code> and friends</a>:
+        <p>In 2023 I wrote about <a href="/blog/2023/11/proxmox-doesnt-know-what-type-a-number-is/">why go-proxmox has <code>StringOrInt</code> and friends</a>.
 Proxmox sends the same number quoted in one place and bare in another, so the client has types that accept both. That
 post ended on a pretty confident note. Since then three more shapes of &ldquo;the JSON is valid and Go still won&rsquo;t take it&rdquo;
-have come in, and one of them is a bug I&rsquo;d already fixed once and then reintroduced myself.</p>
+have come in. One of them is a bug I&rsquo;d already fixed once and then reintroduced myself.</p>
 <h3 id="null-twice">null, twice</h3>
 <p><a href="https://github.com/luthermonson/go-proxmox/issues/198">#198</a>, June 2025: listing VMs on a node fails with</p>
 <pre tabindex="0"><code>failed to match ^[0-9.]*$: null
-</code></pre><p>if any of the VMs is a template. Templates never run, so <code>/nodes/{node}/qemu</code> sends <code>&quot;pid&quot;: null</code> for them, while a
-running VM on the same list gets <code>&quot;pid&quot;: &quot;14558&quot;</code>, a quoted string. <code>PID</code> is a <code>StringOrUint64</code>, and its unmarshaller
-strips quotes and requires what&rsquo;s left to match <code>^[0-9.]*$</code>. <code>null</code> doesn&rsquo;t.</p>
-<p>The embarrassing part is that this worked in May 2023. A contributor&rsquo;s fix for stopped VMs returning <code>null</code> had the
+</code></pre><p>if any of the VMs is a template. Templates never run, so <code>/nodes/{node}/qemu</code> sends <code>&quot;pid&quot;: null</code> for them. A running
+VM on the same list gets <code>&quot;pid&quot;: &quot;14558&quot;</code>, a quoted string. <code>PID</code> is a <code>StringOrUint64</code>. Its unmarshaller strips quotes
+and requires what&rsquo;s left to match <code>^[0-9.]*$</code>. <code>null</code> doesn&rsquo;t.</p>
+<p>The embarrassing part is that this worked in May 2023. A contributor had sent a fix for stopped VMs returning <code>null</code>. It had the
 unmarshaller treat anything without a digit in it as zero:</p>
 <div class="highlight"><pre tabindex="0" class="chroma"><code class="language-go" data-lang="go"><span class="line"><span class="cl"><span class="nx">numeric</span><span class="w"> </span><span class="o">:=</span><span class="w"> </span><span class="nx">numericRegex</span><span class="p">.</span><span class="nf">MatchString</span><span class="p">(</span><span class="nx">str</span><span class="p">)</span><span class="w"> </span><span class="c1">// `\d`</span><span class="w">
 </span></span></span><span class="line"><span class="cl"><span class="k">if</span><span class="w"> </span><span class="p">!</span><span class="nx">numeric</span><span class="w"> </span><span class="p">{</span><span class="w">
 </span></span></span><span class="line"><span class="cl"><span class="w">	</span><span class="o">*</span><span class="nx">d</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="nf">StringOrUint64</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span><span class="w">
 </span></span></span><span class="line"><span class="cl"><span class="w">	</span><span class="k">return</span><span class="w"> </span><span class="kc">nil</span><span class="w">
 </span></span></span><span class="line"><span class="cl"><span class="p">}</span><span class="w">
-</span></span></span></code></pre></div><p>Three months later I rewrote all the <code>StringOr</code> types to parse floats and truncate, which is the version in the 2023
-post. &ldquo;Non-numeric means zero&rdquo; became &ldquo;non-numeric is an error, except the empty string&rdquo;, because I wanted garbage to fail
-loudly. <code>null</code> is not garbage, it&rsquo;s Proxmox saying the field doesn&rsquo;t apply, and no test fixture had a <code>null</code> in it, so
-nothing noticed for two years. The fix in <a href="https://github.com/luthermonson/go-proxmox/pull/265">#265</a> is one condition on
-each of the three types:</p>
+</span></span></span></code></pre></div><p>Three months later I rewrote all the <code>StringOr</code> types to parse floats and truncate. That&rsquo;s the version in the 2023 post.
+&ldquo;Non-numeric means zero&rdquo; became &ldquo;non-numeric is an error, except the empty string&rdquo;. I wanted garbage to fail loudly.
+<code>null</code> is not garbage. It&rsquo;s Proxmox saying the field doesn&rsquo;t apply. No test fixture had a <code>null</code> in it, so nothing
+noticed for two years. The fix in <a href="https://github.com/luthermonson/go-proxmox/pull/265">#265</a> is one condition on each
+of the three types:</p>
 <div class="highlight"><pre tabindex="0" class="chroma"><code class="language-go" data-lang="go"><span class="line"><span class="cl"><span class="nx">str</span><span class="w"> </span><span class="o">:=</span><span class="w"> </span><span class="nx">strings</span><span class="p">.</span><span class="nf">ReplaceAll</span><span class="p">(</span><span class="nb">string</span><span class="p">(</span><span class="nx">b</span><span class="p">),</span><span class="w"> </span><span class="s">&#34;\&#34;&#34;</span><span class="p">,</span><span class="w"> </span><span class="s">&#34;&#34;</span><span class="p">)</span><span class="w">
 </span></span></span><span class="line"><span class="cl"><span class="c1">// Empty string and JSON null both yield the zero value. Proxmox returns</span><span class="w">
 </span></span></span><span class="line"><span class="cl"><span class="c1">// null for fields that are simply absent on the resource (e.g. PID on a</span><span class="w">
@@ -302,25 +302,25 @@ each of the three types:</p>
 </span></span></span><span class="line"><span class="cl"><span class="w">	</span><span class="o">*</span><span class="nx">d</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="nf">StringOrInt</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span><span class="w">
 </span></span></span><span class="line"><span class="cl"><span class="w">	</span><span class="k">return</span><span class="w"> </span><span class="kc">nil</span><span class="w">
 </span></span></span><span class="line"><span class="cl"><span class="p">}</span><span class="w">
-</span></span></span></code></pre></div><p>Note that <code>encoding/json</code> calls <code>UnmarshalJSON</code> with the literal bytes <code>null</code> for a custom type rather than skipping it,
-which is why this has to be handled in the type at all.</p>
+</span></span></span></code></pre></div><p>Note that <code>encoding/json</code> calls <code>UnmarshalJSON</code> with the literal bytes <code>null</code> for a custom type rather than skipping it.
+That&rsquo;s why this has to be handled in the type at all.</p>
 <h3 id="a-petabyte-in-scientific-notation">A petabyte in scientific notation</h3>
 <p><a href="https://github.com/luthermonson/go-proxmox/issues/191">#191</a>: a directory storage backed by a MinIO bucket over a FUSE
-mount. The FUSE driver can&rsquo;t tell how big the bucket is, so it reports 1 PiB, and <code>pvesh</code> shows exactly that:</p>
+mount. The FUSE driver can&rsquo;t tell how big the bucket is, so it reports 1 PiB. <code>pvesh</code> shows exactly that:</p>
 <pre tabindex="0"><code>content   storage        type active avail           enabled shared total           used
 backup    minio_backup   dir  1      1125899906842624 1       0      1125899906842624 0
 </code></pre><p>The API sends something else:</p>
 <pre tabindex="0"><code>json: cannot unmarshal number 1.12589990684262e+15 into Go struct field Storage.Total of type uint64
-</code></pre><p>Somewhere in Proxmox&rsquo;s storage code that value became a Perl floating point number, and a float that big gets printed
-with 15 significant digits, in exponent form. It&rsquo;s valid JSON. It&rsquo;s not a valid <code>uint64</code>, and <code>json.Number.Int64()</code>
-won&rsquo;t parse it either:</p>
+</code></pre><p>Somewhere in Proxmox&rsquo;s storage code that value became a Perl floating point number. A float that big gets printed with
+15 significant digits in exponent form. It&rsquo;s valid JSON. It&rsquo;s not a valid <code>uint64</code>, and <code>json.Number.Int64()</code> won&rsquo;t
+parse it either:</p>
 <pre tabindex="0"><code>uint64: json: cannot unmarshal number 1.12589990684262e+15 into Go struct field .total of type uint64
 json.Number Int64 err: strconv.ParseInt: parsing &#34;1.12589990684262e+15&#34;: invalid syntax
 json.Number Float64 -&gt; uint64: 1125899906842620
 actual bytes (2^50):           1125899906842624
 </code></pre><p>The fix (<a href="https://github.com/luthermonson/go-proxmox/pull/237">#237</a>, from a contributor&rsquo;s earlier attempt in #195) is
-a custom <code>UnmarshalJSON</code> on <code>Storage</code> that decodes the numeric fields as <code>json.Number</code>, tries <code>Int64</code> first and falls back
-to <code>Float64</code>:</p>
+a custom <code>UnmarshalJSON</code> on <code>Storage</code>. It decodes the numeric fields as <code>json.Number</code>. It tries <code>Int64</code> first and falls
+back to <code>Float64</code>:</p>
 <div class="highlight"><pre tabindex="0" class="chroma"><code class="language-go" data-lang="go"><span class="line"><span class="cl"><span class="k">if</span><span class="w"> </span><span class="nx">aux</span><span class="p">.</span><span class="nx">Total</span><span class="w"> </span><span class="o">!=</span><span class="w"> </span><span class="s">&#34;&#34;</span><span class="w"> </span><span class="p">{</span><span class="w">
 </span></span></span><span class="line"><span class="cl"><span class="w">	</span><span class="c1">// Try int64 first, then fall back to float64 for scientific notation</span><span class="w">
 </span></span></span><span class="line"><span class="cl"><span class="w">	</span><span class="k">if</span><span class="w"> </span><span class="nx">val</span><span class="p">,</span><span class="w"> </span><span class="nx">err</span><span class="w"> </span><span class="o">:=</span><span class="w"> </span><span class="nx">aux</span><span class="p">.</span><span class="nx">Total</span><span class="p">.</span><span class="nf">Int64</span><span class="p">();</span><span class="w"> </span><span class="nx">err</span><span class="w"> </span><span class="o">==</span><span class="w"> </span><span class="kc">nil</span><span class="w"> </span><span class="p">{</span><span class="w">
@@ -330,29 +330,30 @@ to <code>Float64</code>:</p>
 </span></span></span><span class="line"><span class="cl"><span class="w">	</span><span class="p">}</span><span class="w">
 </span></span></span><span class="line"><span class="cl"><span class="p">}</span><span class="w">
 </span></span></span></code></pre></div><p>Look at the last two lines of that output though. The client now reads 1,125,899,906,842,620 for a storage that is
-1,125,899,906,842,624 bytes. Those four bytes were gone before the response left the server, when the number was printed
-with 15 digits, and no amount of client-side parsing brings them back. For a fake petabyte nobody cares. It&rsquo;s worth knowing
-that Proxmox capacity numbers above 10^15 are approximate.</p>
+1,125,899,906,842,624 bytes. Those four bytes were gone before the response left the server. They went when the number
+was printed with 15 digits. No amount of client-side parsing brings them back. For a fake petabyte nobody cares. It&rsquo;s
+worth knowing that Proxmox capacity numbers above 10^15 are approximate.</p>
+<p><img src="/img/2026/06/proxmox-numbers-float64.svg" alt="A 1 PiB storage size of 1125899906842624 bytes becomes 1.12589990684262e&#43;15 when Proxmox prints it as a 15-digit float. Decoding into uint64 fails; after the fix Storage.UnmarshalJSON falls back from Int64 to Float64 and reads 1125899906842620, four bytes short"></p>
 <p>That fix then broke something else in a way I would not have guessed.
 <a href="https://github.com/luthermonson/go-proxmox/issues/241">#241</a> came from running the
-<a href="https://github.com/ionos-cloud/cluster-api-provider-proxmox">cluster-api-provider-proxmox</a> test suite against <code>main</code>:
-marshal a <code>Storage</code>, unmarshal it again, and <code>Name</code> comes back empty. The struct had two fields that map to the same key
-once you remember <code>encoding/json</code> matches keys case-insensitively:</p>
+<a href="https://github.com/ionos-cloud/cluster-api-provider-proxmox">cluster-api-provider-proxmox</a> test suite against <code>main</code>.
+Marshal a <code>Storage</code>, unmarshal it again, and <code>Name</code> comes back empty. The struct had two fields that map to the same key.
+That&rsquo;s easy to miss until you remember <code>encoding/json</code> matches keys case-insensitively:</p>
 <div class="highlight"><pre tabindex="0" class="chroma"><code class="language-go" data-lang="go"><span class="line"><span class="cl"><span class="nx">Name</span><span class="w">    </span><span class="kt">string</span><span class="w"> </span><span class="s">`json:&#34;storage&#34;`</span><span class="w"> </span><span class="c1">// marshals as &#34;storage&#34;</span><span class="w">
 </span></span></span><span class="line"><span class="cl"><span class="nx">Storage</span><span class="w"> </span><span class="kt">string</span><span class="w">                  </span><span class="c1">// marshals as &#34;Storage&#34;</span><span class="w">
 </span></span></span></code></pre></div><p>Marshal writes both <code>&quot;storage&quot;:&quot;local&quot;</code> and <code>&quot;Storage&quot;:&quot;&quot;</code>. On the way back in, the new unmarshaller&rsquo;s <code>aux</code> struct has a
-single <code>json:&quot;storage&quot;</code> field, both keys match it, the later one wins, and it&rsquo;s the empty one. The old <code>Storage</code> field was
-a leftover from before <code>Name</code> existed. <a href="https://github.com/luthermonson/go-proxmox/pull/243">#243</a> tagged it <code>json:&quot;-&quot;</code>,
-marked it deprecated, and the round trip works again.</p>
+single <code>json:&quot;storage&quot;</code> field. Both keys match it and the later one wins. It&rsquo;s the empty one. The old <code>Storage</code> field was
+a leftover from before <code>Name</code> existed. <a href="https://github.com/luthermonson/go-proxmox/pull/243">#243</a> tagged it <code>json:&quot;-&quot;</code>
+and marked it deprecated. The round trip works again.</p>
 <h3 id="net10-and-the-fields-that-werent-there">net10 and the fields that weren&rsquo;t there</h3>
 <p><a href="https://github.com/luthermonson/go-proxmox/issues/211">#211</a>: a VM with eleven or more network interfaces only shows the
-first ten. <code>VirtualMachineConfig</code> had explicit fields for indexed devices, <code>Net0</code> through <code>Net9</code>, <code>SCSI0</code> through
-<code>SCSI30</code>, <code>Unused0</code> through <code>Unused9</code> and so on, plus helper maps (<code>Nets</code>, <code>SCSIs</code>, &hellip;) that a custom <code>UnmarshalJSON</code>
-filled in by reflecting over those fields. Proxmox allows <code>net0</code> to <code>net31</code>, <code>unused0</code> to <code>unused255</code>, and so on, and
-<code>encoding/json</code> throws away any key that doesn&rsquo;t match a struct field before your code ever gets a look at it. So
-<code>net10</code> was dropped on the floor, silently.</p>
+first ten. <code>VirtualMachineConfig</code> had explicit fields for indexed devices. Those were <code>Net0</code> through <code>Net9</code>, <code>SCSI0</code>
+through <code>SCSI30</code>, <code>Unused0</code> through <code>Unused9</code> and so on. It also had helper maps (<code>Nets</code>, <code>SCSIs</code>, &hellip;) that a custom
+<code>UnmarshalJSON</code> filled in by reflecting over those fields. Proxmox allows <code>net0</code> to <code>net31</code>, <code>unused0</code> to <code>unused255</code>,
+and so on. <code>encoding/json</code> throws away any key that doesn&rsquo;t match a struct field before your code ever gets a look at
+it. So <code>net10</code> was dropped on the floor, silently.</p>
 <p>The fix in <a href="https://github.com/luthermonson/go-proxmox/pull/260">#260</a> unmarshals the body a second time into
-<code>map[string]json.RawMessage</code> and routes every <code>&lt;prefix&gt;&lt;digits&gt;</code> key into the matching map:</p>
+<code>map[string]json.RawMessage</code>. Then it routes every <code>&lt;prefix&gt;&lt;digits&gt;</code> key into the matching map:</p>
 <div class="highlight"><pre tabindex="0" class="chroma"><code class="language-go" data-lang="go"><span class="line"><span class="cl"><span class="nx">routes</span><span class="w"> </span><span class="o">:=</span><span class="w"> </span><span class="nx">vmc</span><span class="p">.</span><span class="nf">indexedDeviceMaps</span><span class="p">()</span><span class="w"> </span><span class="c1">// &#34;net&#34; -&gt; &amp;vmc.Nets, &#34;scsi&#34; -&gt; &amp;vmc.SCSIs, ...</span><span class="w">
 </span></span></span><span class="line"><span class="cl"><span class="k">for</span><span class="w"> </span><span class="nx">k</span><span class="p">,</span><span class="w"> </span><span class="nx">v</span><span class="w"> </span><span class="o">:=</span><span class="w"> </span><span class="k">range</span><span class="w"> </span><span class="nx">raw</span><span class="w"> </span><span class="p">{</span><span class="w">
 </span></span></span><span class="line"><span class="cl"><span class="w">	</span><span class="nx">prefix</span><span class="p">,</span><span class="w"> </span><span class="nx">ok</span><span class="w"> </span><span class="o">:=</span><span class="w"> </span><span class="nf">indexedDeviceKey</span><span class="p">(</span><span class="nx">k</span><span class="p">)</span><span class="w">
@@ -373,9 +374,9 @@ filled in by reflecting over those fields. Proxmox allows <code>net0</code> to <
 </span></span></span><span class="line"><span class="cl"><span class="w">	</span><span class="p">}</span><span class="w">
 </span></span></span><span class="line"><span class="cl"><span class="w">	</span><span class="p">(</span><span class="o">*</span><span class="nx">target</span><span class="p">)[</span><span class="nx">k</span><span class="p">]</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="nx">s</span><span class="w">
 </span></span></span><span class="line"><span class="cl"><span class="p">}</span><span class="w">
-</span></span></span></code></pre></div><p>The obvious version of this is <code>strings.HasPrefix(k, &quot;scsi&quot;)</code>, and an earlier PR for the same issue did exactly that.
-It&rsquo;s wrong, because <code>scsihw</code> (the SCSI controller type) starts with <code>scsi</code>, and the VM config also has a plain <code>numa</code>
-flag next to <code>numa0</code>..<code>numa9</code>. So the key parser requires the prefix to be followed by digits and <em>only</em> digits:</p>
+</span></span></span></code></pre></div><p>The obvious version of this is <code>strings.HasPrefix(k, &quot;scsi&quot;)</code>. An earlier PR for the same issue did exactly that. It&rsquo;s
+wrong, because <code>scsihw</code> (the SCSI controller type) starts with <code>scsi</code>. The VM config also has a plain <code>numa</code> flag next
+to <code>numa0</code>..<code>numa9</code>. So the key parser requires the prefix to be followed by digits and <em>only</em> digits:</p>
 <div class="highlight"><pre tabindex="0" class="chroma"><code class="language-go" data-lang="go"><span class="line"><span class="cl"><span class="c1">// indexedDeviceKey returns (&#34;net&#34;, true) for &#34;net10&#34; and (&#34;&#34;, false) for keys</span><span class="w">
 </span></span></span><span class="line"><span class="cl"><span class="c1">// like &#34;scsihw&#34; or &#34;numa&#34; that share a prefix but lack a pure-digit suffix.</span><span class="w">
 </span></span></span><span class="line"><span class="cl"><span class="kd">func</span><span class="w"> </span><span class="nf">indexedDeviceKey</span><span class="p">(</span><span class="nx">k</span><span class="w"> </span><span class="kt">string</span><span class="p">)</span><span class="w"> </span><span class="p">(</span><span class="nx">prefix</span><span class="w"> </span><span class="kt">string</span><span class="p">,</span><span class="w"> </span><span class="nx">ok</span><span class="w"> </span><span class="kt">bool</span><span class="p">)</span><span class="w"> </span><span class="p">{</span><span class="w">
@@ -397,14 +398,14 @@ flag next to <code>numa0</code>..<code>numa9</code>. So the key parser requires 
 </span></span></span><span class="line"><span class="cl"><span class="w">	</span><span class="k">return</span><span class="w"> </span><span class="s">&#34;&#34;</span><span class="p">,</span><span class="w"> </span><span class="kc">false</span><span class="w">
 </span></span></span><span class="line"><span class="cl"><span class="p">}</span><span class="w">
 </span></span></span></code></pre></div><p>There are unit tests for exactly those two collisions. #260 kept the explicit <code>Net0..Net9</code> fields populated for
-compatibility, and v0.7.0 (<a href="https://github.com/luthermonson/go-proxmox/pull/261">#261</a>) removed them, so the maps are now
-the only shape: <code>cfg.Nets[&quot;net10&quot;]</code>. It&rsquo;s one of the bigger sections of the v0.7.0 migration guide because a lot of code
+compatibility. v0.7.0 (<a href="https://github.com/luthermonson/go-proxmox/pull/261">#261</a>) removed them. The maps are now the
+only shape: <code>cfg.Nets[&quot;net10&quot;]</code>. It&rsquo;s one of the bigger sections of the v0.7.0 migration guide because a lot of code
 reads <code>cfg.Net0</code>.</p>
 <h3 id="the-pattern">The pattern</h3>
-<p>All three of these are the same bug as the 2023 post wearing a different hat. The JSON is fine, the Go type was written
-from the docs or from one sample response, and the real API sends a shape nobody put in a test fixture: a <code>null</code>, a
-float, an eleventh NIC. Each fix is small. Finding them is the hard part, and it&rsquo;s why I&rsquo;m now more interested in testing
-against recorded responses from a real cluster than in typing more fixtures by hand.</p>
+<p>All three of these are the same bug as the 2023 post wearing a different hat. The JSON is fine. The Go type was written
+from the docs or from one sample response. The real API sends a shape nobody put in a test fixture: a <code>null</code>, a float,
+an eleventh NIC. Each fix is small. Finding them is the hard part. That&rsquo;s why I&rsquo;m now more interested in testing against
+recorded responses from a real cluster than in typing more fixtures by hand.</p>
 <h3 id="links">Links</h3>
 <ul>
 <li><a href="/blog/2023/11/proxmox-doesnt-know-what-type-a-number-is/">Part 1: Proxmox Doesn&rsquo;t Know What Type a Number Is</a></li>

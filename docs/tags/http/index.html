@@ -218,7 +218,7 @@
       <h2><a href="/blog/2026/07/go-proxmox-watch-close-withretry/">Two Small go-proxmox Fixes: A Watch Channel That Never Closed, and WithRetry</a></h2>
     
     
-      <p>A task log channel that only closed on the happy path, and a composable RoundTripper that retries the 502s and 503s Proxmox throws during cluster transitions.</p>
+      <p>go-proxmox had a task log channel that only closed on the happy path. It also gained a composable RoundTripper that retries the 502s and 503s Proxmox throws during cluster transitions.</p>
     
   </div>
   <div class="meta">
@@ -233,9 +233,9 @@
     <img class="" src="/img/2022/02/proxmox-logo.png" alt="Proxmox VE Logo">
   </a>
     
-    <p>Two changes from the v0.5 to v0.7 stretch of <a href="https://github.com/luthermonson/go-proxmox">go-proxmox</a> that are too small
-for a post each but are worth knowing about if you write long-running tooling against Proxmox. One is a bug in code I
-wrote about in 2022, the other is a feature that replaces a retry loop everybody was writing for themselves.</p>
+    <p>Here are two changes from the v0.5 to v0.7 stretch of <a href="https://github.com/luthermonson/go-proxmox">go-proxmox</a>. They&rsquo;re
+too small for a post each. They&rsquo;re worth knowing about if you write long-running tooling against Proxmox. One is a bug
+in code I wrote about in 2022. The other is a feature that replaces a retry loop everybody was writing for themselves.</p>
   </div>
   <footer>
     <a href="/blog/2026/07/go-proxmox-watch-close-withretry/" class="button big">Read More</a>

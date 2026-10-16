@@ -13,7 +13,7 @@
       <link>https://luth.io/blog/2026/08/benchmark-4x-wrong-wsl-drvfs-cwd/</link>
       <pubDate>Thu, 20 Aug 2026 20:45:00 -0700</pubDate>
       <guid>https://luth.io/blog/2026/08/benchmark-4x-wrong-wsl-drvfs-cwd/</guid>
-      <description>&lt;p&gt;I do most of my benchmarking on a Windows box in WSL2, because it&amp;rsquo;s the machine with 32 threads and 62 GB of RAM on&#xA;my desk. Everybody who does that learns the first rule early: don&amp;rsquo;t put your data on &lt;code&gt;/mnt/c&lt;/code&gt;. DrvFs, the 9p-backed&#xA;mount that exposes the Windows drives inside WSL, is slow for file-heavy work, so the databases, the docroot and the&#xA;build output all live on the WSL ext4 disk. My scaling harness for &lt;a href=&#34;https://github.com/ephpm/ephpm&#34;&gt;ePHPm&lt;/a&gt; even&#xA;says so in capital letters in its README.&lt;/p&gt;</description>
+      <description>&lt;p&gt;I do most of my benchmarking on a Windows box in WSL2. It&amp;rsquo;s the machine on my desk with 32 threads and 62 GB of RAM.&#xA;Everybody who does that learns the first rule early: don&amp;rsquo;t put your data on &lt;code&gt;/mnt/c&lt;/code&gt;. DrvFs is the 9p-backed mount that&#xA;exposes the Windows drives inside WSL, and it&amp;rsquo;s slow for file-heavy work. So the databases, the docroot and the build&#xA;output all live on the WSL ext4 disk. My scaling harness for &lt;a href=&#34;https://github.com/ephpm/ephpm&#34;&gt;ePHPm&lt;/a&gt; even says so in&#xA;capital letters in its README.&lt;/p&gt;</description>
     </item>
   </channel>
 </rss>

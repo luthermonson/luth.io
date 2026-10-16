@@ -274,30 +274,38 @@
         
         <p>Ask most people what their PHP server does when it&rsquo;s overloaded and you&rsquo;ll hear &ldquo;it returns 503s.&rdquo; Ask them how they
 know and it usually comes down to a config setting they read about. I was in that camp for <a href="https://github.com/ephpm/ephpm">ePHPm</a>.
-We had a <code>[server.limits] max_connections</code> knob, the docs said it returned 503 at the cap, and every benchmark we had
-ever run reported zero errors under heavy load. Then I wrote a load generator that could actually produce overload,
-and the honest answer was that an overloaded ePHPm returned nothing at all.</p>
-<p>This post is about the measuring more than the fixes: why the benchmark you probably have can&rsquo;t see overload, what a
-load generator has to do differently, and how to classify what comes back. The data comes from
-<a href="https://github.com/ephpm/multitenant-scalebench">multitenant-scalebench</a> (<code>report/SHEDDING.md</code>) and the
-re-run that verified the fixes in <a href="https://github.com/ephpm/lab">ephpm/lab</a> (<code>docs/shed-verify-v070.md</code>).</p>
+We had a <code>[server.limits] max_connections</code> knob, and the docs said it returned 503 at the cap. Every benchmark we had
+ever run reported zero errors under heavy load. Then I wrote a load generator that could produce overload. The honest
+answer was that an overloaded ePHPm returned nothing at all.</p>
+<p>This post is about the measuring more than the fixes. It covers three things:</p>
+<ul>
+<li>why the benchmark you probably have can&rsquo;t see overload</li>
+<li>what a load generator has to do differently</li>
+<li>how to classify what comes back</li>
+</ul>
+<p>The data comes from <a href="https://github.com/ephpm/multitenant-scalebench">multitenant-scalebench</a> (<code>report/SHEDDING.md</code>).
+The re-run that verified the fixes is in <a href="https://github.com/ephpm/lab">ephpm/lab</a> (<code>docs/shed-verify-v070.md</code>).</p>
 <h3 id="closed-loop-benchmarks-cant-overload-anything">Closed-loop benchmarks can&rsquo;t overload anything</h3>
-<p>Almost every HTTP benchmark tool you&rsquo;ve used (<code>wrk</code>, <code>hey</code>, <code>oha</code>, k6 with a fixed VU count, my own loadgen up to
-that week) is <strong>closed-loop</strong>. You pick a concurrency, say 128 workers, and each worker sends a request, waits for
-the response, then sends the next one. There are never more than 128 requests in flight.</p>
+<p>Almost every HTTP benchmark tool you&rsquo;ve used is <strong>closed-loop</strong>. That includes <code>wrk</code>, <code>hey</code>, <code>oha</code>, k6 with a fixed VU
+count and my own loadgen up to that week. You pick a concurrency, say 128 workers. Each worker sends a request, waits
+for the response, then sends the next one. There are never more than 128 requests in flight.</p>
 <p>That sounds reasonable until you think about what happens when the server slows down. The workers slow down with it.
 The server is never asked to do more than it&rsquo;s already doing, so backpressure shows up as latency and nothing else.
-I had run 128 and 512 workers against ePHPm and both engines came back with 0 errors. That result was true, and
-it also told me nothing about overload.</p>
+I had run 128 and 512 workers against ePHPm and both engines came back with 0 errors. That result was true. It also
+told me nothing about overload.</p>
 <p>Real traffic doesn&rsquo;t wait for you. Users, crawlers and the retry loop in someone else&rsquo;s service arrive at whatever
-rate they arrive at, whether or not you&rsquo;ve answered the last request. That&rsquo;s an <strong>open-loop</strong> arrival process, and
-it&rsquo;s the only way to find out what your server does when it&rsquo;s handed more work than it can finish.</p>
+rate they arrive at. They don&rsquo;t care whether you&rsquo;ve answered the last request. That&rsquo;s an <strong>open-loop</strong> arrival
+process. It&rsquo;s the only way to find out what your server does when it&rsquo;s handed more work than it can finish.</p>
 <h3 id="an-open-loop-mode-for-the-load-generator">An open-loop mode for the load generator</h3>
 <p>The loadgen in multitenant-scalebench is plain Go with no dependencies. I added an open-loop mode
-(<a href="https://github.com/ephpm/multitenant-scalebench/commit/b9ccdd1"><code>b9ccdd1</code></a>) behind three flags: <code>-rate</code> for
-arrivals per second, <code>-arrival const|poisson</code> for the inter-arrival process, and <code>-timeout</code> for the per-request client
-timeout. The core of it is a scheduler that fires every request at its scheduled instant on its own goroutine,
-regardless of how many are still outstanding:</p>
+(<a href="https://github.com/ephpm/multitenant-scalebench/commit/b9ccdd1"><code>b9ccdd1</code></a>) behind three flags:</p>
+<ul>
+<li><code>-rate</code> for arrivals per second</li>
+<li><code>-arrival const|poisson</code> for the inter-arrival process</li>
+<li><code>-timeout</code> for the per-request client timeout</li>
+</ul>
+<p>The core of it is a scheduler that fires every request at its scheduled instant on its own goroutine. It doesn&rsquo;t care
+how many are still outstanding:</p>
 <div class="highlight"><pre tabindex="0" class="chroma"><code class="language-go" data-lang="go"><span class="line"><span class="cl"><span class="nx">next</span><span class="w"> </span><span class="o">:=</span><span class="w"> </span><span class="nx">start</span><span class="w">
 </span></span></span><span class="line"><span class="cl"><span class="nx">i</span><span class="w"> </span><span class="o">:=</span><span class="w"> </span><span class="mi">0</span><span class="w">
 </span></span></span><span class="line"><span class="cl"><span class="k">for</span><span class="w"> </span><span class="p">{</span><span class="w">
@@ -326,19 +334,18 @@ regardless of how many are still outstanding:</p>
 </span></span></span><span class="line"><span class="cl"><span class="w">		</span><span class="c1">// track in-flight high-water mark, do the request, record a sample</span><span class="w">
 </span></span></span><span class="line"><span class="cl"><span class="w">	</span><span class="p">}(</span><span class="nx">measured</span><span class="p">,</span><span class="w"> </span><span class="nx">host</span><span class="p">,</span><span class="w"> </span><span class="nx">path</span><span class="p">)</span><span class="w">
 </span></span></span><span class="line"><span class="cl"><span class="p">}</span><span class="w">
-</span></span></span></code></pre></div><p>Two details matter more than they look. First, the schedule is computed from <code>start</code>, not from the previous send,
-so a slow <code>time.Sleep</code> doesn&rsquo;t quietly lower the rate. Second, the generator records its own worst scheduling lag. An
-open-loop test is only open-loop if the generator keeps its schedule; if it falls behind, you&rsquo;re back to measuring
-the generator. In every run in this post the max lag stayed under 90 ms, and on the runs where the server stopped
-answering, the in-flight ceiling climbed to <code>rate x timeout</code> (about 4,000 at 400/s, 8,000 at 800/s). That&rsquo;s how you
-know the arrival process really was independent of the server: the generator kept firing into a server that wasn&rsquo;t
-answering.</p>
-<p>The HTTP transport also has to be sized for it. A closed-loop run needs <code>2 x workers</code> idle connections; an open-loop
+</span></span></span></code></pre></div><p>Two details matter more than they look. First, the schedule is computed from <code>start</code>, not from the previous send. A
+slow <code>time.Sleep</code> doesn&rsquo;t quietly lower the rate. Second, the generator records its own worst scheduling lag. An
+open-loop test is only open-loop if the generator keeps its schedule. If it falls behind, you&rsquo;re back to measuring the
+generator. In every run in this post the max lag stayed under 90 ms. On the runs where the server stopped answering,
+the in-flight ceiling climbed to <code>rate x timeout</code>. That&rsquo;s about 4,000 at 400/s and 8,000 at 800/s. That&rsquo;s how you know
+the arrival process was independent of the server. The generator kept firing into a server that wasn&rsquo;t answering.</p>
+<p>The HTTP transport also has to be sized for it. A closed-loop run needs <code>2 x workers</code> idle connections. An open-loop
 flood can legitimately hold thousands in flight, so the open-loop mode raises <code>MaxIdleConnsPerHost</code> to 8192.</p>
 <h3 id="an-error-taxonomy-not-an-error-count">An error taxonomy, not an error count</h3>
-<p>The closed-loop report had one <code>errors</code> number. Under overload that number hides everything interesting, because
-the things that go wrong are different things. The open-loop report splits the status code distribution (200, 429,
-503, &hellip;) from a transport-error taxonomy for requests that never got a status at all:</p>
+<p>The closed-loop report had one <code>errors</code> number. Under overload that number hides everything interesting, because the
+things that go wrong are different things. The open-loop report splits out the status code distribution (200, 429,
+503, &hellip;). Requests that never got a status at all go into a separate transport-error taxonomy:</p>
 <div class="highlight"><pre tabindex="0" class="chroma"><code class="language-go" data-lang="go"><span class="line"><span class="cl"><span class="kd">func</span><span class="w"> </span><span class="nf">classify</span><span class="p">(</span><span class="nx">err</span><span class="w"> </span><span class="kt">error</span><span class="p">)</span><span class="w"> </span><span class="kt">string</span><span class="w"> </span><span class="p">{</span><span class="w">
 </span></span></span><span class="line"><span class="cl"><span class="w">	</span><span class="kd">var</span><span class="w"> </span><span class="nx">ne</span><span class="w"> </span><span class="nx">net</span><span class="p">.</span><span class="nx">Error</span><span class="w">
 </span></span></span><span class="line"><span class="cl"><span class="w">	</span><span class="k">if</span><span class="w"> </span><span class="nx">errors</span><span class="p">.</span><span class="nf">As</span><span class="p">(</span><span class="nx">err</span><span class="p">,</span><span class="w"> </span><span class="o">&amp;</span><span class="nx">ne</span><span class="p">)</span><span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span><span class="nx">ne</span><span class="p">.</span><span class="nf">Timeout</span><span class="p">()</span><span class="w"> </span><span class="p">{</span><span class="w">
@@ -364,39 +371,39 @@ the things that go wrong are different things. The open-loop report splits the s
 </span></span></span></code></pre></div><p>Each bucket means something different operationally. A <code>503</code> is the server choosing to say no. A <code>timeout</code> is the
 server saying nothing. <code>conn_refused</code> in the middle of a run usually means the process is gone. <code>conn_reset</code> and
 <code>eof</code> mean something died mid-response. &ldquo;We had 4% errors&rdquo; can mean any of those, and only one of them is healthy.</p>
-<p>The other rules: latency percentiles are computed over <strong>2xx successes only</strong> (a p50 that includes 10 s timeouts is
-a number about your client config, not your server), and the report includes a per-second series of 2xx completions.
-That series turned out to be the most useful thing in the report, because it shows the shape over time:
+<p>There are two other rules. Latency percentiles are computed over <strong>2xx successes only</strong>. A p50 that includes 10 s
+timeouts is a number about your client config, not your server. The report also includes a per-second series of 2xx
+completions. That series turned out to be the most useful thing in the report. It shows the shape over time:
 stabilizing, or a death spiral.</p>
 <h3 id="the-first-run-nothing-sheds">The first run: nothing sheds</h3>
 <p>The workload was real WordPress with the <a href="https://github.com/ephpm/db-wordpress">ephpm/db-wordpress</a> drop-in on
-per-site Turso databases, 10 sites, on a 32-core WSL2 box. Closed-loop capacity for that workload on that binary
-was about 262-276 RPS, so I flooded fresh instances at 400/s (about 1.5x capacity) and 800/s (about 3x) for 60
-seconds, with a 10 s client timeout. The matrix was both FPM engines (<code>spawn_blocking</code>, the default, and the new
-<code>pool</code> engine from <a href="https://github.com/ephpm/ephpm/pull/296">#296</a>) with and without <code>max_connections = 256</code>. After
-each flood: a 30 s idle cooldown and a light probe against the same instance to see whether it recovered.</p>
+per-site Turso databases. It ran 10 sites on a 32-core WSL2 box. Closed-loop capacity for that workload on that binary
+was about 262-276 RPS. So I flooded fresh instances at 400/s (about 1.5x capacity) and 800/s (about 3x) for 60 seconds,
+with a 10 s client timeout. The matrix covered both FPM engines with and without <code>max_connections = 256</code>. The engines
+were <code>spawn_blocking</code>, the default, and the new <code>pool</code> engine from <a href="https://github.com/ephpm/ephpm/pull/296">#296</a>.
+After each flood came a 30 s idle cooldown. Then a light probe against the same instance checked whether it recovered.</p>
 <p>The headline from <a href="https://github.com/ephpm/multitenant-scalebench/blob/main/report/SHEDDING.md">SHEDDING.md</a>:</p>
 <ul>
 <li><strong>With default settings, nothing sheds.</strong> Zero 503, zero 429, zero 5xx of any kind. Every arrival ended as either
 a 200 or a client timeout. At 800/s on <code>spawn_blocking</code>, that was 48,001 arrivals and 48,001 timeouts.</li>
-<li><strong><code>max_connections = 256</code> fired on 0.5-9.9% of arrivals and protected nothing.</strong> Most excess arrivals never got
-far enough to be rejected: the accept loop couldn&rsquo;t keep up, the listen backlog filled, and dials hung until the
-client gave up. And for the ones it did reject, reading the code showed the rejected connection was <strong>still
-dispatched to hyper and served</strong>. The limiter returned <code>None</code> on rejection, which was indistinguishable from &ldquo;no
-limiter configured.&rdquo; The 503 was a courtesy note.</li>
-<li><strong><code>spawn_blocking</code> wedged and never came back.</strong> RSS climbed to 5.4-6.2 GB and stayed there after the flood
-ended, and the recovery probe got zero responses in all four configs. The pool engine stayed flat at 0.56-0.75 GB
-and recovered within 30 s, fully with the connection limit set and partially without it (one pool instance never
-got probed, because of the next bullet).</li>
-<li><strong>3 of 10 flooded instances died</strong> of the same SIGABRT: a thread-local destructor in the DB bridge panicking
-during thread teardown. Once mid-flood, once during the idle cooldown after a flood it had survived, once at
+<li><strong><code>max_connections = 256</code> fired on 0.5-9.9% of arrivals and protected nothing.</strong> Most excess arrivals never got far
+enough to be rejected. The accept loop couldn&rsquo;t keep up and the listen backlog filled. Dials hung until the client
+gave up. And for the ones it did reject, reading the code showed the rejected connection was <strong>still dispatched to
+hyper and served</strong>. The limiter returned <code>None</code> on rejection, which was indistinguishable from &ldquo;no limiter
+configured.&rdquo; The 503 was a courtesy note.</li>
+<li><strong><code>spawn_blocking</code> wedged and never came back.</strong> RSS climbed to 5.4-6.2 GB and stayed there after the flood ended.
+The recovery probe got zero responses in all four configs. The pool engine stayed flat at 0.56-0.75 GB and recovered
+within 30 s. It recovered fully with the connection limit set and partially without it. One pool instance never got
+probed, because of the next bullet.</li>
+<li><strong>3 of 10 flooded instances died</strong> of the same SIGABRT. A thread-local destructor in the DB bridge panicked during
+thread teardown. It happened once mid-flood, once during the idle cooldown after a flood it had survived, and once at
 SIGTERM.</li>
 </ul>
 <p>The wedge has a simple mechanism once you see it. <code>spawn_blocking</code> closures go into tokio&rsquo;s blocking queue, which is
 unbounded and can&rsquo;t be cancelled. When a client times out and disconnects, its PHP request is still sitting in that
-FIFO. Tens of thousands of abandoned requests, each worth 100-500 ms of PHP, queue ahead of any new request, and
-at about 260 RPS of capacity that&rsquo;s minutes to hours of work for clients that already left. The pool engine&rsquo;s hyper
-task waits for a slot in a bounded channel instead, and when the client disconnects hyper drops the task and the
+FIFO. Tens of thousands of abandoned requests queue ahead of any new request. Each one is worth 100-500 ms of PHP. At
+about 260 RPS of capacity that&rsquo;s minutes to hours of work for clients that already left. The pool engine&rsquo;s hyper task
+waits for a slot in a bounded channel instead. When the client disconnects, hyper drops the task and the
 queued-but-unstarted request goes with it.</p>
 <p>None of this showed up in the closed-loop runs. Same binary, same box, same workload.</p>
 <h3 id="the-fixes-and-measuring-them-the-same-way">The fixes, and measuring them the same way</h3>
@@ -412,39 +419,38 @@ request-level shedding, both fixed in <a href="https://github.com/ephpm/ephpm/pu
 </span></span><span class="line"><span class="cl"><span class="nx">fpm_engine</span> <span class="p">=</span> <span class="s2">&#34;pool&#34;</span>
 </span></span><span class="line"><span class="cl"><span class="nx">overload_policy</span> <span class="p">=</span> <span class="s2">&#34;shed&#34;</span>   <span class="c"># &#34;wait&#34; is the default and the old behavior</span>
 </span></span><span class="line"><span class="cl"><span class="nx">shed_after_ms</span> <span class="p">=</span> <span class="mi">0</span>          <span class="c"># grace window before a queued request is shed</span>
-</span></span></code></pre></div><p>Shedding needs a queue to reject from, and that&rsquo;s engine specific. With the pool engine, a request that can&rsquo;t get
-into the bounded backlog gets a 503 with <code>Retry-After</code> and no PHP has run. With <code>spawn_blocking</code> the only safe shed
-point is the <code>[php] workers</code> semaphore, because once a closure reaches tokio&rsquo;s blocking queue it can&rsquo;t be withdrawn.
-So <code>spawn_blocking</code> with <code>workers = 0</code> (the default) can&rsquo;t shed at all, and startup logs a warning instead of
-pretending the setting did something. Shed 503s are counted in <code>ephpm_php_shed_total{engine}</code>.</p>
-<p>The SIGABRT write-up in #305 is worth reading on its own. The DB session lived in a <code>thread_local!</code>, the Turso engine
-registered its own buffer cache thread-local <em>after</em> ours during the first query, TLS destructors run in reverse
-registration order, so the engine&rsquo;s cache was gone by the time our destructor dropped a session that touched it.
-<code>try_with</code> on our side couldn&rsquo;t help because the panicking access was the engine&rsquo;s. The fix is to never run that
-drop on a dying thread: park the session in a process-wide list and drain it at the end of the next request.</p>
-<p>Then the important part: re-run the exact same flood against a binary with the fixes (<code>main</code> at <code>180d0ac</code>, the
-code that became v0.7.0), and gate each lane on its startup log so a misapplied env var can&rsquo;t produce a fake result.
+</span></span></code></pre></div><p>Shedding needs a queue to reject from, and that&rsquo;s engine specific. With the pool engine, a request that can&rsquo;t get into
+the bounded backlog gets a 503 with <code>Retry-After</code>. No PHP has run. With <code>spawn_blocking</code> the only safe shed point is
+the <code>[php] workers</code> semaphore. Once a closure reaches tokio&rsquo;s blocking queue it can&rsquo;t be withdrawn. So <code>spawn_blocking</code>
+with <code>workers = 0</code> (the default) can&rsquo;t shed at all. Startup logs a warning instead of pretending the setting did
+something. Shed 503s are counted in <code>ephpm_php_shed_total{engine}</code>.</p>
+<p>The SIGABRT write-up in #305 is worth reading on its own. The DB session lived in a <code>thread_local!</code>. During the first
+query, the Turso engine registered its own buffer cache thread-local <em>after</em> ours. TLS destructors run in reverse
+registration order. So the engine&rsquo;s cache was gone by the time our destructor dropped a session that touched it.
+<code>try_with</code> on our side couldn&rsquo;t help because the panicking access was the engine&rsquo;s. The fix is to never run that drop
+on a dying thread. The session gets parked in a process-wide list and drained at the end of the next request.</p>
+<p>Then the important part. I re-ran the exact same flood against a binary with the fixes (<code>main</code> at <code>180d0ac</code>, the code
+that became v0.7.0). Each lane was gated on its startup log so a misapplied env var can&rsquo;t produce a fake result.
 Closed-loop capacity on that binary was 339.7 RPS, so 400/s was about 1.2x and 800/s about 2.4x.</p>
 <p><img src="/img/2026/08/what-an-overloaded-php-server-actually-returns-outcomes.svg" alt="What 48,001 arrivals at 800 req/s got back"></p>
 <p><em>Data: <code>b9f56db</code> columns from <a href="https://github.com/ephpm/multitenant-scalebench/blob/main/report/SHEDDING.md">SHEDDING.md</a>,
 <code>180d0ac</code> columns from <a href="https://github.com/ephpm/lab/blob/main/docs/shed-verify-v070.md">shed-verify-v070.md</a>. Single
 run per point. &ldquo;sb&rdquo; is <code>spawn_blocking</code>; the sb shed lane runs with <code>workers = 32</code> and <code>shed_after_ms = 200</code>.</em></p>
-<p>On the shed lanes every one of the 48,001 arrivals got an answer: a 200 or a 503, and zero client timeouts. The 503s
-were fast, too. I measured them directly with timed side probes mid-flood at 600/s against a pool+shed instance: the
-shed ones came back in p50 1.7 ms, max 9.8 ms. The successes stayed sane at p50 190 ms, p99 237 ms, against p99s of
-9.2-10 s on the <code>wait</code> lanes (which is just the client timeout showing through). In-flight requests on the pool shed
-lane never went above 76, against 7,780 on the pool <code>wait</code> lane at the same rate.</p>
+<p>On the shed lanes every one of the 48,001 arrivals got an answer. Each got a 200 or a 503, with zero client timeouts.
+The 503s were fast, too. I measured them directly with timed side probes mid-flood at 600/s against a pool+shed
+instance. The shed ones came back in p50 1.7 ms, max 9.8 ms. The successes stayed sane at p50 190 ms, p99 237 ms. The
+<code>wait</code> lanes had p99s of 9.2-10 s, which is just the client timeout showing through. In-flight requests on the pool
+shed lane never went above 76. The pool <code>wait</code> lane hit 7,780 at the same rate.</p>
 <p>The per-second series shows why shedding is the right shape and not just a nicer error code:</p>
 <p><img src="/img/2026/08/what-an-overloaded-php-server-actually-returns-persec.svg" alt="2xx completions per second under an 800 req/s flood"></p>
 <p><em>Per-second 2xx completions from the shed-verify raw JSON (binary <code>180d0ac</code>, wp-real, 10 sites, 800 req/s).</em></p>
-<p>The pool shed lanes deliver about 344 2xx/s for the whole minute (the <code>spawn_blocking</code> shed lanes 320-336), which is the
-closed-loop capacity of the box. Overload
-no longer costs you the requests you could have served. The default <code>wait</code> lanes do what you&rsquo;d guess from the
-mechanism: a burst while the queue is still young, then the queue fills with requests whose clients will time out
-before they&rsquo;re served, and goodput falls to a trickle (pool) or to zero (<code>spawn_blocking</code>). That <code>spawn_blocking</code>
-instance was still wedged 30 s later at 6.2 GB. At 400/s it now recovers, which the original never did, but the
-default can still wedge under a deep flood. The remedy is configuration (<code>pool</code>, or <code>workers</code> plus <code>shed</code>), and the
-preview preset applies it.</p>
+<p>The pool shed lanes deliver about 344 2xx/s for the whole minute. The <code>spawn_blocking</code> shed lanes deliver 320-336.
+That&rsquo;s the closed-loop capacity of the box. Overload no longer costs you the requests you could have served. The
+default <code>wait</code> lanes do what you&rsquo;d guess from the mechanism. There&rsquo;s a burst while the queue is still young. Then the
+queue fills with requests whose clients will time out before they&rsquo;re served. Goodput falls to a trickle (pool) or to
+zero (<code>spawn_blocking</code>). That <code>spawn_blocking</code> instance was still wedged 30 s later at 6.2 GB. At 400/s it now
+recovers, which the original never did. But the default can still wedge under a deep flood. The remedy is
+configuration (<code>pool</code>, or <code>workers</code> plus <code>shed</code>), and the preview preset applies it.</p>
 <p>Across all 10 flood points, plus cooldowns and SIGTERM shutdowns, zero processes died.</p>
 <h3 id="what-id-tell-you-to-check-on-your-own-server">What I&rsquo;d tell you to check on your own server</h3>
 <ul>
@@ -455,23 +461,23 @@ arrivals, a client timeout, and a breakdown of what came back. If you only have 
 <li><strong>Check the generator kept its schedule.</strong> Record scheduling lag and max in-flight. If in-flight is far below
 <code>rate x timeout</code>, the generator throttled itself and you&rsquo;re looking at a closed-loop test with extra steps.</li>
 <li><strong>Fresh instance per point.</strong> Back-to-back points inherit tens of thousands of TIME_WAIT sockets from the previous
-one. Two reruns in the original session differed from their matrix twins by up to 8x on delivered goodput, which
-is why both reports call their numbers shape, not SLA.</li>
+one. Two reruns in the original session differed from their matrix twins by up to 8x on delivered goodput. That&rsquo;s
+why both reports call their numbers shape, not SLA.</li>
 </ul>
-<p>And the meta point: our docs said <code>max_connections</code> returned 503s, and that was technically true. It just didn&rsquo;t
-protect anything. A claim like &ldquo;we shed load&rdquo; is something to measure, and the test that measures it isn&rsquo;t the one
-you already have.</p>
+<p>And the meta point. Our docs said <code>max_connections</code> returned 503s, and that was technically true. It just didn&rsquo;t
+protect anything. A claim like &ldquo;we shed load&rdquo; is something to measure. The test that measures it isn&rsquo;t the one you
+already have.</p>
 <h3 id="how-i-measured">How I measured</h3>
 <ul>
 <li>Host: AMD Ryzen 9 5950X (32 threads), WSL2 on Windows 11, 62 GiB. The original run predates the harness cwd fix
-described in <a href="/blog/2026/08/benchmark-4x-wrong-wsl-drvfs-cwd/">the WSL post</a> (its server ran with a DrvFs working
-directory); the re-run was on native ext4. SHEDDING.md&rsquo;s erratum argues, and I agree, that the shed/no-shed, wedge
-and crash findings don&rsquo;t depend on it, but its absolute delivered-RPS numbers read a little low.</li>
+described in <a href="/blog/2026/08/benchmark-4x-wrong-wsl-drvfs-cwd/">the WSL post</a>. Its server ran with a DrvFs working
+directory. The re-run was on native ext4. SHEDDING.md&rsquo;s erratum argues that the shed/no-shed, wedge and crash
+findings don&rsquo;t depend on it, and I agree. Its absolute delivered-RPS numbers read a little low.</li>
 <li>Workload: real WordPress core plus the db-wordpress drop-in, 10 sites, per-site Turso DBs, <code>max_open_dbs = 4096</code>.</li>
 <li>Load: <code>loadgen -rate {400,800} -arrival const -timeout 10</code>, 5 s warmup, 60 s measured, then 30 s cooldown and a
 closed-loop probe (c=4, 10 s).</li>
 <li>Binaries: <code>b9f56db</code> (before) and <code>180d0ac</code> (after), both <code>cargo xtask release 8.5</code> from source.</li>
-<li>Harness: <code>scripts/run_overload.sh</code> in both repos; raw JSON for the original run is under
+<li>Harness: <code>scripts/run_overload.sh</code> in both repos. Raw JSON for the original run is under
 <code>results/wp-real-openloop/</code> in multitenant-scalebench.</li>
 </ul>
 <h3 id="links">Links</h3>

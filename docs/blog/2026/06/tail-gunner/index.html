@@ -272,18 +272,25 @@
       </div>
       <div class="content">
         
-        <p>Here&rsquo;s a loop I end up in all the time: <code>tail -f app.log</code>, something scrolls by that looks wrong, Ctrl-C, <code>tail -f app.log | grep ERROR</code>,
-wait for it to happen again, decide I also want to drop the health checks, Ctrl-C, <code>| grep -v healthz</code>, wait again. Every filter tweak
-throws away the stream and every line that already went past. I got tired of it and wrote <a href="https://github.com/luthermonson/tail-gunner">tail-gunner</a>,
-a <code>tail</code> replacement that you can promote into a filtering TUI with one keystroke and drop back out of without the stream ever stopping.</p>
-<p>The tagline in the README is &ldquo;it&rsquo;s <code>tail</code> until you need more&rdquo;, and that&rsquo;s the whole design. Everything below is as of
+        <p>Here&rsquo;s a loop I end up in all the time:</p>
+<ul>
+<li><code>tail -f app.log</code></li>
+<li>something scrolls by that looks wrong, Ctrl-C</li>
+<li><code>tail -f app.log | grep ERROR</code> and wait for it to happen again</li>
+<li>decide I also want to drop the health checks, Ctrl-C</li>
+<li><code>| grep -v healthz</code> and wait again</li>
+</ul>
+<p>Every filter tweak throws away the stream and every line that already went past. I got tired of it and wrote
+<a href="https://github.com/luthermonson/tail-gunner">tail-gunner</a>. It&rsquo;s a <code>tail</code> replacement that you can promote into a filtering TUI with
+one keystroke. You can drop back out of it without the stream ever stopping.</p>
+<p>The tagline in the README is &ldquo;it&rsquo;s <code>tail</code> until you need more&rdquo;. That&rsquo;s the whole design. Everything below is as of
 <a href="https://github.com/luthermonson/tail-gunner/releases/tag/v0.0.1">v0.0.1</a>.</p>
 <h3 id="three-modes-picked-at-startup">Three modes, picked at startup</h3>
 <p>The binary decides what it is based on where stdout goes:</p>
 <ol>
 <li><strong>Pipe mode</strong>: stdout isn&rsquo;t a terminal. It behaves byte-for-byte like GNU tail and none of the TUI code runs. Scripts and
 downstream pipes can&rsquo;t tell the difference.</li>
-<li><strong>Plain mode</strong>: stdout is a terminal and you&rsquo;re following (<code>-f</code>). It prints to your scrollback exactly like tail, but a
+<li><strong>Plain mode</strong>: stdout is a terminal and you&rsquo;re following (<code>-f</code>). It prints to your scrollback exactly like tail. A
 listener is waiting on the terminal for a <code>:</code>.</li>
 <li><strong>Gunner mode</strong>: the full-screen <a href="https://github.com/charmbracelet/bubbletea">Bubble Tea</a> TUI. Filters, stacked searches,
 scrolling, piping the view through shell commands. <code>q</code> drops you back to plain mode.</li>
@@ -302,9 +309,9 @@ scrolling, piping the view through shell commands. <code>q</code> drops you back
 </span></span></span><span class="line"><span class="cl"><span class="p">}</span><span class="w">
 </span></span></span><span class="line"><span class="cl"><span class="nx">os</span><span class="p">.</span><span class="nf">Exit</span><span class="p">(</span><span class="nx">app</span><span class="p">.</span><span class="nf">Run</span><span class="p">(</span><span class="nx">opts</span><span class="p">))</span><span class="w">
 </span></span></span></code></pre></div><h3 id="the-buffer-is-the-product">The buffer is the product</h3>
-<p>Promotion only works if nothing gets lost while you&rsquo;re switching, so ingestion is completely decoupled from rendering. A single
-goroutine drains the source channel into a ring buffer (100k lines by default, <code>--gun-buffer</code> to change it) and only <em>then</em> hands the
-line to whoever is displaying:</p>
+<p>Promotion only works if nothing gets lost while you&rsquo;re switching. So ingestion is completely decoupled from rendering. A single
+goroutine drains the source channel into a ring buffer. Only <em>then</em> does it hand the line to whoever is displaying. The ring holds
+100k lines by default, and <code>--gun-buffer</code> changes it:</p>
 <div class="highlight"><pre tabindex="0" class="chroma"><code class="language-go" data-lang="go"><span class="line"><span class="cl"><span class="k">go</span><span class="w"> </span><span class="kd">func</span><span class="p">()</span><span class="w"> </span><span class="p">{</span><span class="w">
 </span></span></span><span class="line"><span class="cl"><span class="w">	</span><span class="k">for</span><span class="w"> </span><span class="nx">ln</span><span class="w"> </span><span class="o">:=</span><span class="w"> </span><span class="k">range</span><span class="w"> </span><span class="nx">stream</span><span class="p">.</span><span class="nx">C</span><span class="w"> </span><span class="p">{</span><span class="w">
 </span></span></span><span class="line"><span class="cl"><span class="w">		</span><span class="nx">ring</span><span class="p">.</span><span class="nf">Append</span><span class="p">(</span><span class="nx">ln</span><span class="p">.</span><span class="nx">File</span><span class="p">,</span><span class="w"> </span><span class="nx">ln</span><span class="p">.</span><span class="nx">Text</span><span class="p">)</span><span class="w">
@@ -315,21 +322,21 @@ line to whoever is displaying:</p>
 </span></span></span><span class="line"><span class="cl"><span class="w">		</span><span class="p">}</span><span class="w">
 </span></span></span><span class="line"><span class="cl"><span class="w">	</span><span class="p">}</span><span class="w">
 </span></span></span><span class="line"><span class="cl"><span class="p">}()</span><span class="w">
-</span></span></span></code></pre></div><p><code>p.print</code> is a no-op while the TUI owns the screen, and the <code>notify</code> channel is a coalescing poke the TUI uses to know there&rsquo;s
-new data. Lines are addressed by a monotonic sequence number instead of a slice index, which keeps them stable while the ring
-evicts old entries underneath you:</p>
+</span></span></span></code></pre></div><p><code>p.print</code> is a no-op while the TUI owns the screen. The <code>notify</code> channel is a coalescing poke the TUI uses to know there&rsquo;s new data.
+Lines are addressed by a monotonic sequence number instead of a slice index. That keeps them stable while the ring evicts old
+entries underneath you:</p>
 <div class="highlight"><pre tabindex="0" class="chroma"><code class="language-go" data-lang="go"><span class="line"><span class="cl"><span class="c1">// Bounds returns the seq range currently retained: [first, next).</span><span class="w">
 </span></span></span><span class="line"><span class="cl"><span class="kd">func</span><span class="w"> </span><span class="p">(</span><span class="nx">r</span><span class="w"> </span><span class="o">*</span><span class="nx">Ring</span><span class="p">)</span><span class="w"> </span><span class="nf">Bounds</span><span class="p">()</span><span class="w"> </span><span class="p">(</span><span class="nx">first</span><span class="p">,</span><span class="w"> </span><span class="nx">next</span><span class="w"> </span><span class="kt">uint64</span><span class="p">)</span><span class="w"> </span><span class="p">{</span><span class="w">
 </span></span></span><span class="line"><span class="cl"><span class="w">	</span><span class="nx">r</span><span class="p">.</span><span class="nx">mu</span><span class="p">.</span><span class="nf">RLock</span><span class="p">()</span><span class="w">
 </span></span></span><span class="line"><span class="cl"><span class="w">	</span><span class="k">defer</span><span class="w"> </span><span class="nx">r</span><span class="p">.</span><span class="nx">mu</span><span class="p">.</span><span class="nf">RUnlock</span><span class="p">()</span><span class="w">
 </span></span></span><span class="line"><span class="cl"><span class="w">	</span><span class="k">return</span><span class="w"> </span><span class="nx">r</span><span class="p">.</span><span class="nx">first</span><span class="p">,</span><span class="w"> </span><span class="nx">r</span><span class="p">.</span><span class="nx">next</span><span class="w">
 </span></span></span><span class="line"><span class="cl"><span class="p">}</span><span class="w">
-</span></span></span></code></pre></div><p>Filters are a view over that buffer, not a stage in a pipeline. When you add <code>:in ERROR</code>, the view gets rebuilt by scanning the whole
-ring, so you see the errors that scrolled past <em>before</em> you typed the filter. New lines get tested once on the way in. A filter
-change costs one pass over at most 100k lines, and a new line costs one test against the rule stack.</p>
-<p>The rule stack itself is three kinds: <code>in</code> (keep), <code>out</code> (drop), and <code>hl</code> (highlight only). Multiple <code>in</code> rules OR together, any <code>out</code>
-match drops the line. Since most of what I actually type is a plain word, there&rsquo;s a small fast path: if the pattern parses as a
-regex literal it uses <code>bytes.Contains</code> instead of the regexp engine.</p>
+</span></span></span></code></pre></div><p>Filters are a view over that buffer, not a stage in a pipeline. When you add <code>:in ERROR</code>, the view gets rebuilt by scanning the
+whole ring. So you see the errors that scrolled past <em>before</em> you typed the filter. New lines get tested once on the way in. A
+filter change costs one pass over at most 100k lines. A new line costs one test against the rule stack.</p>
+<p>The rule stack itself has three kinds: <code>in</code> (keep), <code>out</code> (drop) and <code>hl</code> (highlight only). Multiple <code>in</code> rules OR together. Any
+<code>out</code> match drops the line. Most of what I type is a plain word, so there&rsquo;s a small fast path. If the pattern parses as a regex
+literal, it uses <code>bytes.Contains</code> instead of the regexp engine.</p>
 <div class="highlight"><pre tabindex="0" class="chroma"><code class="language-go" data-lang="go"><span class="line"><span class="cl"><span class="kd">func</span><span class="w"> </span><span class="nf">isLiteral</span><span class="p">(</span><span class="nx">pattern</span><span class="w"> </span><span class="kt">string</span><span class="p">)</span><span class="w"> </span><span class="kt">bool</span><span class="w"> </span><span class="p">{</span><span class="w">
 </span></span></span><span class="line"><span class="cl"><span class="w">	</span><span class="nx">parsed</span><span class="p">,</span><span class="w"> </span><span class="nx">err</span><span class="w"> </span><span class="o">:=</span><span class="w"> </span><span class="nx">syntax</span><span class="p">.</span><span class="nf">Parse</span><span class="p">(</span><span class="nx">pattern</span><span class="p">,</span><span class="w"> </span><span class="nx">syntax</span><span class="p">.</span><span class="nx">Perl</span><span class="p">)</span><span class="w">
 </span></span></span><span class="line"><span class="cl"><span class="w">	</span><span class="k">if</span><span class="w"> </span><span class="nx">err</span><span class="w"> </span><span class="o">!=</span><span class="w"> </span><span class="kc">nil</span><span class="w"> </span><span class="p">{</span><span class="w">
@@ -338,18 +345,19 @@ regex literal it uses <code>bytes.Contains</code> instead of the regexp engine.<
 </span></span></span><span class="line"><span class="cl"><span class="w">	</span><span class="k">return</span><span class="w"> </span><span class="nx">parsed</span><span class="p">.</span><span class="nx">Op</span><span class="w"> </span><span class="o">==</span><span class="w"> </span><span class="nx">syntax</span><span class="p">.</span><span class="nx">OpLiteral</span><span class="w">
 </span></span></span><span class="line"><span class="cl"><span class="p">}</span><span class="w">
 </span></span></span></code></pre></div><h3 id="promoting-without-stopping">Promoting without stopping</h3>
-<p>The fiddly part is the keyboard. If you&rsquo;re doing <code>kubectl logs -f ... | tail-gunner -f</code>, stdin is the log stream, so keystrokes have
-to come from somewhere else. Same trick fzf uses: open the controlling terminal directly. That&rsquo;s two five-line files with build tags, one constant each:</p>
+<p>The fiddly part is the keyboard. If you&rsquo;re doing <code>kubectl logs -f ... | tail-gunner -f</code>, stdin is the log stream. So keystrokes have
+to come from somewhere else. It&rsquo;s the same trick fzf uses: open the controlling terminal directly. That&rsquo;s two five-line files with
+build tags, one constant each:</p>
 <div class="highlight"><pre tabindex="0" class="chroma"><code class="language-go" data-lang="go"><span class="line"><span class="cl"><span class="cp">//go:build !windows</span><span class="w">
 </span></span></span><span class="line"><span class="cl"><span class="kd">const</span><span class="w"> </span><span class="nx">ttyPath</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s">&#34;/dev/tty&#34;</span><span class="w">
 </span></span></span></code></pre></div><div class="highlight"><pre tabindex="0" class="chroma"><code class="language-go" data-lang="go"><span class="line"><span class="cl"><span class="cp">//go:build windows</span><span class="w">
 </span></span></span><span class="line"><span class="cl"><span class="kd">const</span><span class="w"> </span><span class="nx">ttyPath</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s">&#34;CONIN$&#34;</span><span class="w">
 </span></span></span></code></pre></div><p>In plain mode a goroutine puts that tty into raw mode and reads a byte at a time. A <code>:</code> restores the terminal and signals the main
-loop, which stops plain printing and hands the same tty to Bubble Tea with <code>tea.WithInput(tty)</code> and the alt screen. Ctrl-C shows up
-as byte <code>3</code> in raw mode, so that gets handled by hand too.</p>
-<p>When you press <code>q</code> the TUI exits and the main loop has to catch you up. Anything that arrived while you were in gunner mode gets
-replayed into the scrollback, capped at the last 10 lines with a marker so you know what you skipped. The replay and the switch back
-to plain printing happen under the same lock, so a line can&rsquo;t sneak in between them:</p>
+loop. The main loop stops plain printing and hands the same tty to Bubble Tea with <code>tea.WithInput(tty)</code> and the alt screen. Ctrl-C
+shows up as byte <code>3</code> in raw mode, so that gets handled by hand too.</p>
+<p>When you press <code>q</code> the TUI exits, and the main loop has to catch you up. Lines that arrived while you were in gunner mode get
+replayed into the scrollback. The replay is capped at the last 10 lines, with a marker so you know what you skipped. The replay and
+the switch back to plain printing happen under the same lock. A line can&rsquo;t sneak in between them:</p>
 <div class="highlight"><pre tabindex="0" class="chroma"><code class="language-go" data-lang="go"><span class="line"><span class="cl"><span class="kd">func</span><span class="w"> </span><span class="nf">replayMissed</span><span class="p">(</span><span class="nx">ring</span><span class="w"> </span><span class="o">*</span><span class="nx">buffer</span><span class="p">.</span><span class="nx">Ring</span><span class="p">,</span><span class="w"> </span><span class="nx">p</span><span class="w"> </span><span class="o">*</span><span class="nx">printer</span><span class="p">,</span><span class="w"> </span><span class="nx">fromSeq</span><span class="w"> </span><span class="kt">uint64</span><span class="p">)</span><span class="w"> </span><span class="p">{</span><span class="w">
 </span></span></span><span class="line"><span class="cl"><span class="w">	</span><span class="nx">p</span><span class="p">.</span><span class="nx">mu</span><span class="p">.</span><span class="nf">Lock</span><span class="p">()</span><span class="w">
 </span></span></span><span class="line"><span class="cl"><span class="w">	</span><span class="k">defer</span><span class="w"> </span><span class="nx">p</span><span class="p">.</span><span class="nx">mu</span><span class="p">.</span><span class="nf">Unlock</span><span class="p">()</span><span class="w">
@@ -373,27 +381,30 @@ to plain printing happen under the same lock, so a line can&rsquo;t sneak in bet
 </span></span></span><span class="line"><span class="cl"><span class="p">}</span><span class="w">
 </span></span></span></code></pre></div><p>Filters survive the demotion too. If you leave gunner mode with <code>:in ERROR</code> set, plain mode keeps printing only errors until you <code>:clear</code>.</p>
 <h3 id="what-it-looks-like">What it looks like</h3>
-<p>These are captures from a real run: a 100x24 tmux pane, a bash loop appending a fake request log every ~50ms, and
-<code>tail-gunner -f -n 200 app.log</code> following it. Pressing <code>:</code> opens the palette at the bottom, and lines are already auto-colored by
-severity:</p>
+<p>These are captures from a real run. A bash loop appended a fake request log every ~50ms, and <code>tail-gunner -f -n 200 app.log</code>
+followed it in a 100x24 tmux pane. Pressing <code>:</code> opens the palette at the bottom. Lines are already auto-colored by severity:</p>
 <p><img src="/img/2026/06/tail-gunner-palette.svg" alt="tail-gunner with the command palette open"></p>
-<p>Then three commands: <code>:in ERROR</code>, <code>:out healthz</code> and <code>:hl dur=[0-9]{3}ms</code>. The status bar shows the filter chips and <code>21/328</code>, meaning 21
-of the 328 buffered lines pass. The top of that list is request <code>id=13</code>, which was written long before I typed the filter:</p>
+<p>Then three commands: <code>:in ERROR</code>, <code>:out healthz</code> and <code>:hl dur=[0-9]{3}ms</code>. The status bar shows the filter chips and <code>21/328</code>. That
+means 21 of the 328 buffered lines pass. The top of that list is request <code>id=13</code>, which was written long before I typed the filter:</p>
 <p><img src="/img/2026/06/tail-gunner-filtered.svg" alt="tail-gunner filtered to errors with highlighted durations"></p>
 <p>Pressing <code>q</code> from there printed this into the scrollback and kept following:</p>
 <pre tabindex="0"><code>--- tail-gunner: 98 lines while in TUI, showing last 10 ---
 22:22:41 ERROR req id=325 path=/api/users dur=664ms
 22:22:44 ERROR req id=365 path=/api/cart dur=834ms
-</code></pre><p>98 lines arrived while I was in the TUI, the last 10 of them got replayed, and only 2 of those 10 were errors that weren&rsquo;t on <code>/healthz</code>.
-The filters stuck, which is the behavior I wanted.</p>
-<p>Beyond <code>in</code>/<code>out</code>/<code>hl</code>, the palette has <code>/</code> searches that stack (each in its own color, <code>n</code>/<code>N</code> to jump), <code>:filters</code> and <code>:searches</code>
-panels to toggle or edit rules without retyping them, <code>:w file</code> to save the current filtered view, and <code>:| cmd</code> to pipe the view through
-a shell command (<code>:| jq .msg</code>, <code>:| grep -c ERROR</code>) and look at the output in an overlay.</p>
+</code></pre><p>98 lines arrived while I was in the TUI. The last 10 of them got replayed. Only 2 of those 10 were errors that weren&rsquo;t on
+<code>/healthz</code>. The filters stuck, which is the behavior I wanted.</p>
+<p>Beyond <code>in</code>/<code>out</code>/<code>hl</code>, the palette has a few more tools:</p>
+<ul>
+<li><code>/</code> searches that stack, each in its own color, with <code>n</code>/<code>N</code> to jump</li>
+<li><code>:filters</code> and <code>:searches</code> panels to toggle or edit rules without retyping them</li>
+<li><code>:w file</code> to save the current filtered view</li>
+<li><code>:| cmd</code> to pipe the view through a shell command (<code>:| jq .msg</code>, <code>:| grep -c ERROR</code>) and look at the output in an overlay</li>
+</ul>
 <h3 id="proving-its-still-tail">Proving it&rsquo;s still tail</h3>
-<p>None of that matters if the alias breaks a script. tail-gunner doesn&rsquo;t reuse coreutils source (GPLv3, and <code>tail.c</code> is not a library),
-so compatibility is pinned by tests instead. <code>test/golden.sh</code> runs 24 scenarios through the real <code>tail</code> and through tail-gunner and
-compares the output with <code>git hash-object</code> along with the exit codes: last-N, <code>+N</code> forms, byte mode, multi-file headers, <code>-q</code>/<code>-v</code>,
-missing files, stdin, a file with no trailing newline, and a follow smoke test.</p>
+<p>None of that matters if the alias breaks a script. tail-gunner doesn&rsquo;t reuse coreutils source. It&rsquo;s GPLv3, and <code>tail.c</code> is not a
+library. So compatibility is pinned by tests instead. <code>test/golden.sh</code> runs 24 scenarios through the real <code>tail</code> and through
+tail-gunner. It compares the output with <code>git hash-object</code> along with the exit codes. The scenarios cover last-N, <code>+N</code> forms, byte
+mode, multi-file headers, <code>-q</code>/<code>-v</code>, missing files, stdin, a file with no trailing newline and a follow smoke test.</p>
 <p>I built it and ran the suite on Windows from Git Bash, where <code>tail</code> is GNU coreutils:</p>
 <pre tabindex="0"><code>$ tail --version | head -1
 tail (GNU coreutils) 8.32
@@ -409,11 +420,11 @@ ok   -f picks up appended lines
 passed: 24  failed: 0
 </code></pre><p>CI runs the same script on Ubuntu, macOS and Windows runners. macOS ships BSD tail, so the workflow installs coreutils and points
 <code>GNU_TAIL</code> at <code>gtail</code>. An option tail-gunner doesn&rsquo;t know gets rejected by the flag parser with an error instead of being quietly
-ignored. The follow engine itself is <a href="https://github.com/nxadm/tail">nxadm/tail</a>, which already handles rotation,
-truncation, and inotify-with-polling-fallback. I didn&rsquo;t want to rewrite that part.</p>
+ignored. The follow engine itself is <a href="https://github.com/nxadm/tail">nxadm/tail</a>. It already handles rotation, truncation and
+inotify-with-polling-fallback. I didn&rsquo;t want to rewrite that part.</p>
 <h3 id="using-it-inside-k9s">Using it inside k9s</h3>
-<p>A k9s plugin with <code>background: false</code> suspends k9s and hands the terminal to the command, so the <code>:</code>
-promotion works the same way it does in a normal shell. In <code>plugins.yaml</code>:</p>
+<p>A k9s plugin with <code>background: false</code> suspends k9s and hands the terminal to the command. So the <code>:</code> promotion works the same way it
+does in a normal shell. In <code>plugins.yaml</code>:</p>
 <div class="highlight"><pre tabindex="0" class="chroma"><code class="language-yaml" data-lang="yaml"><span class="line"><span class="cl"><span class="nt">plugins</span><span class="p">:</span><span class="w">
 </span></span></span><span class="line"><span class="cl"><span class="w">  </span><span class="nt">tail-gunner</span><span class="p">:</span><span class="w">
 </span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="nt">shortCut</span><span class="p">:</span><span class="w"> </span><span class="l">Ctrl-L</span><span class="w">
@@ -425,21 +436,22 @@ promotion works the same way it does in a normal shell. In <code>plugins.yaml</c
 </span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="nt">args</span><span class="p">:</span><span class="w">
 </span></span></span><span class="line"><span class="cl"><span class="w">      </span>- -<span class="l">c</span><span class="w">
 </span></span></span><span class="line"><span class="cl"><span class="w">      </span>- <span class="l">kubectl logs -f --tail=500 $NAME -n $NAMESPACE --context $CONTEXT --kubeconfig $KUBECONFIG --all-containers=true 2&gt;&amp;1 | tail-gunner -f</span><span class="w">
-</span></span></span></code></pre></div><p>Select a pod, Ctrl-L, <code>:out healthz</code>, and Ctrl-C to go back to k9s. Two gotchas: shortcuts like <code>Ctrl-G</code> are
-silently shadowed by k9s built-ins (Ctrl-L is free), and the <code>sh -c</code> wrapper is required because k9s execs the command directly and
-the pipe needs a shell. The <code>--kubeconfig $KUBECONFIG</code> pins kubectl to the same config k9s is connected with, and <code>2&gt;&amp;1</code> puts kubectl&rsquo;s
+</span></span></span></code></pre></div><p>Select a pod, Ctrl-L, <code>:out healthz</code>, and Ctrl-C to go back to k9s. There are two gotchas. Shortcuts like <code>Ctrl-G</code> are silently
+shadowed by k9s built-ins, but Ctrl-L is free. And the <code>sh -c</code> wrapper is required, because k9s execs the command directly and the
+pipe needs a shell. The <code>--kubeconfig $KUBECONFIG</code> pins kubectl to the same config k9s is connected with. <code>2&gt;&amp;1</code> puts kubectl&rsquo;s
 errors in front of you instead of leaving you staring at a blank screen.</p>
 <h3 id="install">Install</h3>
-<p>Releases are built with goreleaser for Linux, macOS and Windows on amd64 and arm64, with zip archives instead of tarballs on Windows. Or from source:</p>
+<p>Releases are built with goreleaser for Linux, macOS and Windows on amd64 and arm64. Windows gets zip archives instead of
+tarballs. Or install from source:</p>
 <div class="highlight"><pre tabindex="0" class="chroma"><code class="language-sh" data-lang="sh"><span class="line"><span class="cl">go install github.com/luthermonson/tail-gunner/cmd/tail-gunner@latest
 </span></span><span class="line"><span class="cl"><span class="nb">alias</span> <span class="nv">tail</span><span class="o">=</span>tail-gunner
-</span></span></code></pre></div><p>The engine packages (<code>pkg/source</code>, <code>pkg/buffer</code>, <code>pkg/filter</code>, <code>pkg/tailio</code>) are public if you want the follow-into-a-ring-buffer part
-in your own tool, but it&rsquo;s pre-1.0 and the APIs will move. Timestamp parsing and merging multiple files by time are deliberately
-out of scope. That&rsquo;s <a href="https://lnav.org">lnav</a> territory, and lnav already does it well.</p>
+</span></span></code></pre></div><p>The engine packages are public if you want the follow-into-a-ring-buffer part in your own tool. Those are <code>pkg/source</code>,
+<code>pkg/buffer</code>, <code>pkg/filter</code> and <code>pkg/tailio</code>. It&rsquo;s pre-1.0, so the APIs will move. Timestamp parsing and merging multiple files by
+time are deliberately out of scope. That&rsquo;s <a href="https://lnav.org">lnav</a> territory, and lnav already does it well.</p>
 <h3 id="how-i-captured-the-screenshots">How I captured the screenshots</h3>
-<p>The two TUI images are tmux <code>capture-pane -e</code> dumps converted to SVG, with the colors and text kept exactly as tmux reported them.
-WSL2 Ubuntu, tmux at 100x24, <code>TERM=xterm-256color</code>, tail-gunner v0.0.1 built with Go 1.26. The golden suite output is from Git Bash on
-Windows 11 with GNU coreutils 8.32.</p>
+<p>The two TUI images are tmux <code>capture-pane -e</code> dumps converted to SVG. The colors and text are kept exactly as tmux reported them.
+The setup was WSL2 Ubuntu, tmux at 100x24, <code>TERM=xterm-256color</code> and tail-gunner v0.0.1 built with Go 1.26. The golden suite output
+is from Git Bash on Windows 11 with GNU coreutils 8.32.</p>
 <h3 id="links">Links</h3>
 <ul>
 <li><a href="https://github.com/luthermonson/tail-gunner">tail-gunner</a></li>

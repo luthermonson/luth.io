@@ -218,7 +218,7 @@
       <h2><a href="/blog/2026/09/php-timeout-linker-wraps/">The Bugs Were Our Own Linker Wraps: Making a PHP Timeout Actually Time Out</a></h2>
     
     
-      <p>max_execution_time did nothing in ePHPm because we had wrapped zend_set_timeout to a no-op. The SDK already had per-thread timers; we just had to stop switching them off.</p>
+      <p>max_execution_time did nothing in ePHPm because we had wrapped zend_set_timeout to a no-op. The SDK already had per-thread timers. We just had to stop switching them off.</p>
     
   </div>
   <div class="meta">
@@ -235,9 +235,9 @@
     
     <p>In <a href="/blog/2026/09/php-stack-guard-segfault-containment/">the stack guard post</a> the villain was a <code>-Wl,--wrap</code> linker
 flag that turned off PHP&rsquo;s C-stack overflow guard. It wasn&rsquo;t the only one. Until August, <code>max_execution_time</code> did
-nothing in <a href="https://github.com/ephpm/ephpm">ePHPm</a> on Linux, for the same reason: we had wrapped the function that
-arms it to a no-op. A runaway script ran until the HTTP layer&rsquo;s request timeout gave up on it and sent a 504, and the
-PHP thread kept burning CPU after that.</p>
+nothing in <a href="https://github.com/ephpm/ephpm">ePHPm</a> on Linux, for the same reason. We had wrapped the function that arms
+it to a no-op. A runaway script ran until the HTTP layer&rsquo;s request timeout gave up on it and sent a 504. The PHP thread
+kept burning CPU after that.</p>
   </div>
   <footer>
     <a href="/blog/2026/09/php-timeout-linker-wraps/" class="button big">Read More</a>
@@ -300,9 +300,9 @@ PHP thread kept burning CPU after that.</p>
     <img class="" src="/img/2026/08/libxml2-214-php-windows-def-missing-symbols.svg" alt="Bar chart: legacy php_libxml2.def entries missing from libxml2 headers - 0 for 2.11.9 and 2.13.0, 294 for 2.14.0 and 2.15.0">
   </a>
     
-    <p>Back in April I was getting the embed SAPI building on Windows through my fork of
-<a href="https://github.com/crazywhalecc/static-php-cli">static-php-cli</a> (SPC) for <a href="https://github.com/ephpm/ephpm">ePHPm</a>, and the
-link step for <code>php8ts.dll</code> fell over with a wall of errors that all looked like this:</p>
+    <p>Back in April I was getting the embed SAPI building on Windows for <a href="https://github.com/ephpm/ephpm">ePHPm</a>. I was
+using my fork of <a href="https://github.com/crazywhalecc/static-php-cli">static-php-cli</a> (SPC). The link step for
+<code>php8ts.dll</code> fell over with a wall of errors that all looked like this:</p>
   </div>
   <footer>
     <a href="/blog/2026/08/libxml2-2-14-broke-php-windows-builds/" class="button big">Read More</a>

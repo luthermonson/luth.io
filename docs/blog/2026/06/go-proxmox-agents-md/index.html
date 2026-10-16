@@ -10,14 +10,14 @@
     gtag('config', 'G-MSTSKGFWTX');
 </script><meta charset="utf-8">
 <title>Maintaining an Open-Source Library With AI Agents: AGENTS.md and the Rule They Kept Breaking - Luther Monson</title>
-<meta name="description" content="Six weeks of go-proxmox with coding agents doing most of the typing: what went into AGENTS.md, the API shape five parallel agents got wrong the same way, and how a coverage metric bent the code around it.">
+<meta name="description" content="Six weeks of go-proxmox with coding agents doing most of the typing taught me what belongs in AGENTS.md. Five parallel agents got the same API shape wrong, and a coverage metric bent the code around it.">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
 <meta name="twitter:card" content="summary_large_image"><meta name="twitter:site" content="@luthermonson">
 
 <meta property="og:site_name" content="Luther Monson">
 <meta property="og:title" content="Maintaining an Open-Source Library With AI Agents: AGENTS.md and the Rule They Kept Breaking">
-<meta property="og:description" content="Six weeks of go-proxmox with coding agents doing most of the typing: what went into AGENTS.md, the API shape five parallel agents got wrong the same way, and how a coverage metric bent the code around it.">
+<meta property="og:description" content="Six weeks of go-proxmox with coding agents doing most of the typing taught me what belongs in AGENTS.md. Five parallel agents got the same API shape wrong, and a coverage metric bent the code around it.">
 <meta property="og:type" content="article">
 <meta property="og:url" content="https://luth.io/blog/2026/06/go-proxmox-agents-md/">
     <meta property="og:image" content="https://luth.io/img/2026/06/go-proxmox-agents-md-rule.svg">
@@ -215,7 +215,7 @@
       <h2><a href="/blog/2026/06/go-proxmox-agents-md/">Maintaining an Open-Source Library With AI Agents: AGENTS.md and the Rule They Kept Breaking</a></h2>
     
     
-      <p>Six weeks of go-proxmox with coding agents doing most of the typing: what went into AGENTS.md, the API shape five parallel agents got wrong the same way, and how a coverage metric bent the code around it.</p>
+      <p>Six weeks of go-proxmox with coding agents doing most of the typing taught me what belongs in AGENTS.md. Five parallel agents got the same API shape wrong, and a coverage metric bent the code around it.</p>
     
   </div>
   <div class="meta">
@@ -272,44 +272,50 @@
       </div>
       <div class="content">
         
-        <p>On May 9th I merged <a href="https://github.com/luthermonson/go-proxmox/pull/264">#264</a>, which added an <code>AGENTS.md</code> to
-<a href="https://github.com/luthermonson/go-proxmox">go-proxmox</a> and a stub <code>CLAUDE.md</code> that just points at it. Over the
-next six weeks, through the v0.8.0 migration guide on June 15th, <code>main</code> took 77 commits, +31,794 / -1,144 lines, went from
-84 to 186 <code>.go</code> files, and endpoint coverage went from 30% to <a href="/blog/2026/06/go-proxmox-endpoint-coverage/">100% of the Proxmox API</a>.
-Most of that code was typed by coding agents, a lot of it by several at once. This is what that looked like from the
-maintainer&rsquo;s chair, mostly the parts that went wrong, because that&rsquo;s where <code>AGENTS.md</code> got its content.</p>
+        <p>On May 9th I merged <a href="https://github.com/luthermonson/go-proxmox/pull/264">#264</a>. It added an <code>AGENTS.md</code> to
+<a href="https://github.com/luthermonson/go-proxmox">go-proxmox</a> and a stub <code>CLAUDE.md</code> that just points at it. The next six
+weeks ran through the v0.8.0 migration guide on June 15th. In that time <code>main</code> took 77 commits and +31,794 / -1,144
+lines. The repo went from 84 to 186 <code>.go</code> files. Endpoint coverage went from 30% to
+<a href="/blog/2026/06/go-proxmox-endpoint-coverage/">100% of the Proxmox API</a>. Most of that code was typed by coding agents,
+a lot of it by several at once. This is what that looked like from the maintainer&rsquo;s chair. It&rsquo;s mostly the parts that
+went wrong, because that&rsquo;s where <code>AGENTS.md</code> got its content.</p>
 <h3 id="whats-in-the-file">What&rsquo;s in the file</h3>
-<p>The first version was boring on purpose: how to build and test (Mage targets, which env vars the integration suite reads,
-that CI only runs unit tests), how a request flows through <code>Client.Req</code>, the <code>client.Node(ctx, name)</code> to
-<code>node.VirtualMachine(ctx, id)</code> to <code>*Task</code> traversal, and a handful of gotchas like the ~16 KB upload cap. The one
-<em>required</em> section was about tests: any PR that adds or changes an endpoint ships a gock mock in
-<code>tests/mocks/pve9x/&lt;resource&gt;.go</code> and a unit test with a happy path and at least one error path. Integration tests need a
-live cluster and CI doesn&rsquo;t have one, so without that rule an agent can write a wrapper that has never executed and the
-green check means nothing.</p>
+<p>The first version was boring on purpose. It covered:</p>
+<ul>
+<li>How to build and test (Mage targets, which env vars the integration suite reads, that CI only runs unit tests).</li>
+<li>How a request flows through <code>Client.Req</code>.</li>
+<li>The <code>client.Node(ctx, name)</code> to <code>node.VirtualMachine(ctx, id)</code> to <code>*Task</code> traversal.</li>
+<li>A handful of gotchas like the ~16 KB upload cap.</li>
+</ul>
+<p>The one <em>required</em> section was about tests. Any PR that adds or changes an endpoint ships a gock mock in
+<code>tests/mocks/pve9x/&lt;resource&gt;.go</code>. It also ships a unit test with a happy path and at least one error path.
+Integration tests need a live cluster and CI doesn&rsquo;t have one. Without that rule an agent can write a wrapper that has
+never executed, and the green check means nothing.</p>
 <p>Everything else in the file today was added after something went wrong.</p>
 <h3 id="five-agents-one-rule-five-times">Five agents, one rule, five times</h3>
-<p>The coverage push went area by area, and the big areas were split into groups and handed to sub-agents in parallel. For
+<p>The coverage push went area by area. The big areas were split into groups and handed to sub-agents in parallel. For
 qemu that was five PRs, <a href="https://github.com/luthermonson/go-proxmox/pull/301">#301</a> through #305, each one fine on its
-own. They all appended to the same <code>virtual_machine.go</code>, <code>types.go</code> and mock file, so merging them one at a time meant a
+own. They all appended to the same <code>virtual_machine.go</code>, <code>types.go</code> and mock file. Merging them one at a time meant a
 four-way rebase. I closed all five and cherry-picked them into
-<a href="https://github.com/luthermonson/go-proxmox/pull/306">#306</a> with the per-feature commits kept. That became the pattern:
-parallel branches, one combined PR.</p>
-<p>Ceph (<a href="https://github.com/luthermonson/go-proxmox/pull/307">#307</a>) was five agents on 41 endpoints, and the combined PR
-needed a cleanup commit for placement alone. Two groups put their mocks in the existing <code>ceph.go</code>, two appended them to
-<code>nodes.go</code>, and one created a new <code>nodes_ceph.go</code> and registered a second, duplicate loader for it. Three of them wrote
-the identical <code>func cephNode() *Node</code> test helper in three files. None of that is wrong code, it&rsquo;s five people who
-didn&rsquo;t talk to each other, which is exactly what it was.</p>
+<a href="https://github.com/luthermonson/go-proxmox/pull/306">#306</a> with the per-feature commits kept. That became the
+pattern: parallel branches, one combined PR.</p>
+<p>Ceph (<a href="https://github.com/luthermonson/go-proxmox/pull/307">#307</a>) was five agents on 41 endpoints. The combined PR
+needed a cleanup commit for placement alone. Two groups put their mocks in the existing <code>ceph.go</code>, and two appended
+them to <code>nodes.go</code>. One created a new <code>nodes_ceph.go</code> and registered a second, duplicate loader for it. Three of them
+wrote the identical <code>func cephNode() *Node</code> test helper in three files. None of that is wrong code. It&rsquo;s five people
+who didn&rsquo;t talk to each other, which is exactly what it was.</p>
 <p>The bigger problem showed up in the method signatures. Several agents independently produced this:</p>
 <div class="highlight"><pre tabindex="0" class="chroma"><code class="language-go" data-lang="go"><span class="line"><span class="cl"><span class="nx">node</span><span class="p">.</span><span class="nf">CephOSDScrub</span><span class="p">(</span><span class="nx">ctx</span><span class="p">,</span><span class="w"> </span><span class="nx">id</span><span class="p">,</span><span class="w"> </span><span class="nx">deep</span><span class="p">)</span><span class="w">
 </span></span></span><span class="line"><span class="cl"><span class="nx">node</span><span class="p">.</span><span class="nf">DeleteCephOSD</span><span class="p">(</span><span class="nx">ctx</span><span class="p">,</span><span class="w"> </span><span class="nx">id</span><span class="p">,</span><span class="w"> </span><span class="nx">cleanup</span><span class="p">)</span><span class="w">
 </span></span></span><span class="line"><span class="cl"><span class="nx">node</span><span class="p">.</span><span class="nf">CephOSDLVInfo</span><span class="p">(</span><span class="nx">ctx</span><span class="p">,</span><span class="w"> </span><span class="nx">id</span><span class="p">,</span><span class="w"> </span><span class="o">...</span><span class="p">)</span><span class="w">
-</span></span></span></code></pre></div><p>Every OSD operation hung off <code>*Node</code> with the OSD id threaded through as an argument. It compiles, it works, and it&rsquo;s not
-the shape the rest of the library uses. Storage, VMs, containers and network interfaces all have a getter that returns a
-handle, and the operations live on the handle. The Proxmox schema even tells you which one to use: the path is
-<code>/nodes/{node}/ceph/osd/{osdid}/scrub</code>, and the <code>{osdid}</code> segment says &ldquo;this is one of many&rdquo;. Once I looked, the same
-thing had happened to node services, node replication jobs, firewall rules on nodes, VMs and containers, and snapshots.
-Fixing it took a refactor commit inside #307 plus four PRs, <a href="https://github.com/luthermonson/go-proxmox/pull/308">#308</a>
-to <a href="https://github.com/luthermonson/go-proxmox/pull/311">#311</a>, and the last two were breaking changes to methods that had
+</span></span></span></code></pre></div><p>Every OSD operation hung off <code>*Node</code> with the OSD id threaded through as an argument. It compiles and it works. But
+it&rsquo;s not the shape the rest of the library uses. Storage, VMs, containers and network interfaces all have a getter
+that returns a handle, and the operations live on the handle. The Proxmox schema even tells you which one to use. The
+path is <code>/nodes/{node}/ceph/osd/{osdid}/scrub</code>, and the <code>{osdid}</code> segment says &ldquo;this is one of many&rdquo;. Once I looked,
+the same thing had happened to node services, node replication jobs and snapshots. It had also happened to firewall
+rules on nodes, VMs and containers. Fixing it took a refactor commit inside #307 plus four PRs,
+<a href="https://github.com/luthermonson/go-proxmox/pull/308">#308</a> to
+<a href="https://github.com/luthermonson/go-proxmox/pull/311">#311</a>. The last two were breaking changes to methods that had
 already shipped.</p>
 <p>The fix that matters is <a href="https://github.com/luthermonson/go-proxmox/pull/312">#312</a>, which turned it into a rule with no
 judgement call in it:</p>
@@ -322,58 +328,65 @@ judgement call in it:</p>
 </span></span></span><span class="line"><span class="cl"><span class="c1">// Operations live on the instance, not the parent.</span><span class="w">
 </span></span></span><span class="line"><span class="cl"><span class="kd">func</span><span class="w"> </span><span class="p">(</span><span class="nx">o</span><span class="w"> </span><span class="o">*</span><span class="nx">CephOSD</span><span class="p">)</span><span class="w"> </span><span class="nf">Scrub</span><span class="p">(</span><span class="nx">ctx</span><span class="w"> </span><span class="nx">context</span><span class="p">.</span><span class="nx">Context</span><span class="p">,</span><span class="w"> </span><span class="nx">deep</span><span class="w"> </span><span class="kt">bool</span><span class="p">)</span><span class="w"> </span><span class="kt">error</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="err">…</span><span class="w"> </span><span class="p">}</span><span class="w">
 </span></span></span><span class="line"><span class="cl"><span class="kd">func</span><span class="w"> </span><span class="p">(</span><span class="nx">o</span><span class="w"> </span><span class="o">*</span><span class="nx">CephOSD</span><span class="p">)</span><span class="w"> </span><span class="nf">Delete</span><span class="p">(</span><span class="nx">ctx</span><span class="w"> </span><span class="nx">context</span><span class="p">.</span><span class="nx">Context</span><span class="p">,</span><span class="w"> </span><span class="nx">cleanup</span><span class="w"> </span><span class="kt">bool</span><span class="p">)</span><span class="w"> </span><span class="p">(</span><span class="o">*</span><span class="nx">Task</span><span class="p">,</span><span class="w"> </span><span class="kt">error</span><span class="p">)</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="err">…</span><span class="w"> </span><span class="p">}</span><span class="w">
-</span></span></span></code></pre></div><p>plus an explicit anti-pattern line naming <code>node.CephOSDScrub(ctx, id, ...)</code>, a note that creation stays on the parent
-because there&rsquo;s no instance yet, and a list of every existing handle type to copy. The cluster SDN sweep that came after it
-(<a href="https://github.com/luthermonson/go-proxmox/pull/320">#320</a>) has handle types throughout: <code>*SDNController</code>, <code>*VNet</code>, <code>*VNetSubnet</code> and friends. The lesson I took: &ldquo;follow the existing
-patterns&rdquo; is not an instruction. An agent sees one file at a time and the pattern isn&rsquo;t in that file. &ldquo;Look at the
+</span></span></span></code></pre></div><p>The rule comes with three more things:</p>
+<ul>
+<li>An explicit anti-pattern line naming <code>node.CephOSDScrub(ctx, id, ...)</code>.</li>
+<li>A note that creation stays on the parent, because there&rsquo;s no instance yet.</li>
+<li>A list of every existing handle type to copy.</li>
+</ul>
+<p>The cluster SDN sweep that came after it (<a href="https://github.com/luthermonson/go-proxmox/pull/320">#320</a>) has handle
+types throughout: <code>*SDNController</code>, <code>*VNet</code>, <code>*VNetSubnet</code> and friends. The lesson I took: &ldquo;follow the existing
+patterns&rdquo; is not an instruction. An agent sees one file at a time, and the pattern isn&rsquo;t in that file. &ldquo;Look at the
 upstream path, if it has <code>/{id}/</code> write a getter&rdquo; is an instruction.</p>
 <h3 id="they-optimize-for-the-gauge-you-give-them">They optimize for the gauge you give them</h3>
-<p>Coverage was the scoreboard for this work, and the scanner that computes it is a set of regexes looking for
-<code>client.Get(ctx, fmt.Sprintf(&quot;/nodes/%s/...&quot;, ...))</code>. Agents read the scanner&rsquo;s output after every change, and twice they
+<p>Coverage was the scoreboard for this work. The scanner that computes it is a set of regexes looking for
+<code>client.Get(ctx, fmt.Sprintf(&quot;/nodes/%s/...&quot;, ...))</code>. Agents read the scanner&rsquo;s output after every change. Twice they
 changed the <em>code</em> so the scanner would count it:</p>
 <ul>
-<li>The Ceph group writing start/stop/restart first built them through a shared <code>cephServiceAction(action, ...)</code> helper,
-then inlined three copies, because the path normalizer turned <code>fmt.Sprintf(&quot;/nodes/%s/ceph/%s&quot;, node, &quot;start&quot;)</code> into
+<li>The Ceph group writing start/stop/restart first built them through a shared <code>cephServiceAction(action, ...)</code> helper.
+Then it inlined three copies. The path normalizer turned <code>fmt.Sprintf(&quot;/nodes/%s/ceph/%s&quot;, node, &quot;start&quot;)</code> into
 <code>/nodes/{}/ceph/{}</code>, which doesn&rsquo;t match <code>/nodes/{node}/ceph/start</code>.</li>
 <li>Another group rewrote a <code>GetWithParams</code> call into the <code>url.URL{Path: ...}</code> form because the scanner understood one and
 not the other.</li>
 </ul>
-<p>Both were noted honestly in the PR bodies, which is the only reason I know. Neither is terrible code, but the duplication
-in the first one exists only to satisfy a tool. The right response was to fix the tool, and
+<p>Both were noted honestly in the PR bodies, which is the only reason I know. Neither is terrible code. But the
+duplication in the first one exists only to satisfy a tool. The right response was to fix the tool, and
 <a href="https://github.com/luthermonson/go-proxmox/pull/313">#313</a> taught the scanner about <code>*WithParams</code>. That went into
-<code>AGENTS.md</code> too: if a wrapper is invisible to the scanner, prefer teaching the scanner over contorting the code or adding
-to the exclusion list. If you hand an agent a number to move, decide in advance what it&rsquo;s allowed to change to move it.</p>
+<code>AGENTS.md</code> too. If a wrapper is invisible to the scanner, prefer teaching the scanner over contorting the code or
+adding to the exclusion list. If you hand an agent a number to move, decide in advance what it&rsquo;s allowed to change to
+move it.</p>
 <h3 id="rules-written-after-the-second-time">Rules written after the second time</h3>
 <p>The rest of the file reads like a list of reviews I didn&rsquo;t want to write again:</p>
 <ul>
-<li><strong>Pointer fields for non-zero Proxmox defaults</strong> (<a href="https://github.com/luthermonson/go-proxmox/pull/271">#271</a>), with
-the decision procedure spelled out: look up the default, pointer if it differs from Go&rsquo;s zero, regression test both ways.</li>
-<li><strong>Comment every pointer field</strong> with the default it protects. That one exists because a large wrapper PR
-(<a href="https://github.com/luthermonson/go-proxmox/pull/274">#274</a>) did the pointer conversion correctly and deleted the
-<code>FIXME</code> comments explaining why, leaving bare <code>*int</code> fields that look like noise. <a href="https://github.com/luthermonson/go-proxmox/pull/268">#268</a>
-put the explanations back.</li>
+<li><strong>Pointer fields for non-zero Proxmox defaults</strong> (<a href="https://github.com/luthermonson/go-proxmox/pull/271">#271</a>). The
+decision procedure is spelled out: look up the default, use a pointer if it differs from Go&rsquo;s zero, and regression
+test both ways.</li>
+<li><strong>Comment every pointer field</strong> with the default it protects. That one exists because of a large wrapper PR
+(<a href="https://github.com/luthermonson/go-proxmox/pull/274">#274</a>). It did the pointer conversion correctly and deleted
+the <code>FIXME</code> comments explaining why. That left bare <code>*int</code> fields that look like noise.
+<a href="https://github.com/luthermonson/go-proxmox/pull/268">#268</a> put the explanations back.</li>
 <li><strong>Directory-index endpoints are named <code>Subdirs</code></strong> and their helpers keep a <code>Diridx</code> suffix, because the scanner keys
 off that suffix. A rename for style would silently drop coverage.</li>
-<li><strong>Comma-joined fields use the <code>CSV</code> type</strong>, after <code>[]string</code> fields that Proxmox returns as <code>&quot;a,b,c&quot;</code> broke the SDN
-round trip.</li>
-<li><strong>Every release with an <code>apidiff</code> incompatible change ships <code>migration/vX.Y.Z.md</code></strong> (<a href="https://github.com/luthermonson/go-proxmox/pull/335">#335</a>),
-with the exact <code>apidiff</code> commands and &ldquo;themed sections with before/after code, not a flat dump&rdquo;.</li>
+<li><strong>Comma-joined fields use the <code>CSV</code> type.</strong> That came after <code>[]string</code> fields that Proxmox returns as <code>&quot;a,b,c&quot;</code>
+broke the SDN round trip.</li>
+<li><strong>Every release with an <code>apidiff</code> incompatible change ships <code>migration/vX.Y.Z.md</code></strong>
+(<a href="https://github.com/luthermonson/go-proxmox/pull/335">#335</a>). It includes the exact <code>apidiff</code> commands and &ldquo;themed
+sections with before/after code, not a flat dump&rdquo;.</li>
 </ul>
-<p>The pattern for all of them is the same: the first time I correct something it&rsquo;s a review comment, the second time it&rsquo;s
-a line in <code>AGENTS.md</code>.</p>
+<p>The pattern for all of them is the same. The first time I correct something it&rsquo;s a review comment. The second time
+it&rsquo;s a line in <code>AGENTS.md</code>.</p>
 <h3 id="the-file-rots-like-any-other-file">The file rots like any other file</h3>
 <p><code>AGENTS.md</code> is documentation that gets executed, and it goes stale. Right now its &ldquo;Repo-specific gotchas&rdquo; section warns
 about a <code>replace</code> directive in <code>go.mod</code> pointing at a local go-diskfs checkout. That <code>replace</code> only ever existed in my
-working copy, it has never been in a commit, and the file tells every agent to
-tiptoe around it anyway. It&rsquo;s harmless, but it&rsquo;s the same failure as a stale comment, with the difference that the reader
-takes it literally every single time.</p>
+working copy. It has never been in a commit, and the file tells every agent to tiptoe around it anyway. It&rsquo;s harmless,
+but it&rsquo;s the same failure as a stale comment. The difference is that the reader takes it literally every single time.</p>
 <h3 id="was-it-worth-it">Was it worth it</h3>
-<p>The numbers above happened, and 100% of the schema is wrapped with a mock and a unit test per endpoint, which I would
-never have typed by hand in six weeks of evenings. But the interesting work moved. I typed very little of the code and a lot of
-rules, did a lot of cherry-picking, and spent my review time on shape rather than syntax: is this the right type, the
-right receiver, the right place for this mock. Every change still went through a PR and CI. The agents are fast and
-literal, so the quality of what comes out is about the quality of what&rsquo;s written down, and the cheapest time to write it
-down is the second time you see the mistake.</p>
+<p>The numbers above happened, and 100% of the schema is wrapped with a mock and a unit test per endpoint. I would never
+have typed that by hand in six weeks of evenings. But the interesting work moved. I typed very little of the code and
+a lot of rules. I did a lot of cherry-picking. I spent my review time on shape rather than syntax: is this the right
+type, the right receiver, the right place for this mock. Every change still went through a PR and CI. The agents are
+fast and literal. So the quality of what comes out is about the quality of what&rsquo;s written down. The cheapest time to
+write it down is the second time you see the mistake.</p>
 <h3 id="links">Links</h3>
 <ul>
 <li><a href="https://github.com/luthermonson/go-proxmox/blob/main/AGENTS.md">AGENTS.md</a></li>

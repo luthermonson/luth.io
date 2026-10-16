@@ -9,14 +9,14 @@
 
     gtag('config', 'G-MSTSKGFWTX');
 </script><meta charset="utf-8">
-<title>Distributed Systems - Luther Monson</title>
+<title>Distributed-Systems - Luther Monson</title>
 <meta name="description" content="Luther Monson&#39;s Blog about Software Engineering mostly using the Go Programming language. Focusing on Containers and Virtualization with an emphasis on Kubernetes distributions and provisioning.">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
 <meta name="twitter:card" content="summary_large_image"><meta name="twitter:site" content="@luthermonson">
 
 <meta property="og:site_name" content="Luther Monson">
-<meta property="og:title" content="Distributed Systems">
+<meta property="og:title" content="Distributed-Systems">
 <meta property="og:description" content="Luther Monson&#39;s Blog about Software Engineering mostly using the Go Programming language. Focusing on Containers and Virtualization with an emphasis on Kubernetes distributions and provisioning.">
 <meta property="og:type" content="article">
 <meta property="og:url" content="https://luth.io/tags/distributed-systems/">
@@ -104,7 +104,7 @@
 
   
     
-    <a href="//twitter.com/share?text=Distributed%20Systems&amp;url=https%3a%2f%2fluth.io%2ftags%2fdistributed-systems%2f" target="_blank" rel="noopener" class="nav share-btn twitter">
+    <a href="//twitter.com/share?text=Distributed-Systems&amp;url=https%3a%2f%2fluth.io%2ftags%2fdistributed-systems%2f" target="_blank" rel="noopener" class="nav share-btn twitter">
         <p>Twitter</p>
       </a>
   
@@ -116,19 +116,19 @@
   
 
   
-    <a href="//www.reddit.com/submit?url=https%3a%2f%2fluth.io%2ftags%2fdistributed-systems%2f&amp;title=Distributed%20Systems" target="_blank" rel="noopener" class="nav share-btn reddit">
+    <a href="//www.reddit.com/submit?url=https%3a%2f%2fluth.io%2ftags%2fdistributed-systems%2f&amp;title=Distributed-Systems" target="_blank" rel="noopener" class="nav share-btn reddit">
           <p>Reddit</p>
         </a>
   
 
   
-        <a href="//www.linkedin.com/shareArticle?url=https%3a%2f%2fluth.io%2ftags%2fdistributed-systems%2f&amp;title=Distributed%20Systems" target="_blank" rel="noopener" class="nav share-btn linkedin">
+        <a href="//www.linkedin.com/shareArticle?url=https%3a%2f%2fluth.io%2ftags%2fdistributed-systems%2f&amp;title=Distributed-Systems" target="_blank" rel="noopener" class="nav share-btn linkedin">
             <p>LinkedIn</p>
           </a>
   
 
   
-        <a href="//www.pinterest.com/pin/create/button/?url=https%3a%2f%2fluth.io%2ftags%2fdistributed-systems%2f&amp;description=Distributed%20Systems" target="_blank" rel="noopener" class="nav share-btn pinterest">
+        <a href="//www.pinterest.com/pin/create/button/?url=https%3a%2f%2fluth.io%2ftags%2fdistributed-systems%2f&amp;description=Distributed-Systems" target="_blank" rel="noopener" class="nav share-btn pinterest">
           <p>Pinterest</p>
         </a>
   
@@ -218,7 +218,7 @@
       <h2><a href="/blog/2026/10/webhooks-out-of-order-scheduler/">Webhooks Arrive Out of Order: How My Scheduler Killed Live Builds</a></h2>
     
     
-      <p>ephemerd&#39;s orphan sweep trusted webhook history over reality and destroyed a runner mid-build. The fix: rules only nominate, and a live busy check gets a veto.</p>
+      <p>ephemerd&#39;s orphan sweep trusted webhook history over reality and destroyed a runner mid-build. Now the rules only nominate, and a live busy check gets a veto.</p>
     
   </div>
   <div class="meta">
@@ -233,10 +233,10 @@
     <img class="" src="/img/2026/10/webhooks-out-of-order-scheduler-timeline.svg" alt="Timeline of three same-label jobs where a runner executing a build is destroyed 2.3 seconds before its in_progress webhook arrives">
   </a>
     
-    <p>The scheduler in <a href="/blog/2026/08/ephemerd-one-daemon-every-os/">ephemerd</a> is event-driven. GitHub sends a <code>workflow_job</code>
-webhook when a job is queued, when it starts and when it completes, and ephemerd creates and destroys runners to match.
-For a while that worked well enough that I stopped thinking about it. Then a <code>docker-build</code> job failed with &ldquo;The
-self-hosted runner lost communication with the server&rdquo;, and when I pulled the node&rsquo;s journal, ephemerd had destroyed that
+    <p>The scheduler in <a href="/blog/2026/08/ephemerd-one-daemon-every-os/">ephemerd</a> is event-driven. GitHub sends a
+<code>workflow_job</code> webhook when a job is queued, when it starts and when it completes. ephemerd creates and destroys runners
+to match. For a while that worked well enough that I stopped thinking about it. Then a <code>docker-build</code> job failed with
+&ldquo;The self-hosted runner lost communication with the server&rdquo;. I pulled the node&rsquo;s journal. ephemerd had destroyed that
 runner itself, on purpose, while it was running the build.</p>
   </div>
   <footer>
@@ -285,7 +285,7 @@ runner itself, on purpose, while it was running the build.</p>
       <h2><a href="/blog/2026/08/gossip-clustering-for-php/">Gossip-Based Clustering for PHP Apps</a></h2>
     
     
-      <p>How ePHPm servers find each other and share data, what happens when a server joins or leaves, how fast a write reaches the other servers, and a bug I found while measuring it.</p>
+      <p>How ePHPm servers find each other, share data and handle a server joining or leaving. It also measures how fast a write reaches the other servers and covers a bug I found while measuring it.</p>
     
   </div>
   <div class="meta">
@@ -300,10 +300,10 @@ runner itself, on purpose, while it was running the build.</p>
     <img class="" src="/img/2026/08/gossip-clustering-php-cover.svg" alt="Three ePHPm nodes: small values replicated to every node over gossip, a large value stored on its owner and one replica over a TCP data plane">
   </a>
     
-    <p>Most PHP developers never touch clustering primitives, and that&rsquo;s by design. PHP is share-nothing: each request starts
-from zero, and anything shared lives somewhere else. Sessions go in Redis, cache goes in Redis or Memcached, locks go in
-Redis, and when you run two app servers the &ldquo;cluster&rdquo; is really two stateless boxes pointed at the same Redis. That works
-until Redis is the thing you&rsquo;re trying not to run.</p>
+    <p>Most PHP developers never touch clustering primitives. That&rsquo;s by design. PHP is share-nothing. Each request starts
+from zero, and anything shared lives somewhere else. Sessions go in Redis. Cache goes in Redis or Memcached. Locks go
+in Redis. When you run two app servers, the &ldquo;cluster&rdquo; is really two stateless boxes pointed at the same Redis. That
+works until Redis is the thing you&rsquo;re trying not to run.</p>
   </div>
   <footer>
     <a href="/blog/2026/08/gossip-clustering-for-php/" class="button big">Read More</a>

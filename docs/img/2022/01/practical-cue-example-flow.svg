@@ -1,0 +1,119 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 860 740" font-family="system-ui, -apple-system, Segoe UI, Roboto, sans-serif">
+  <title>Go types to Cue definitions to prod and qa YAML</title>
+  <desc>types.go holds the Go types Config and App with Host, Port, Workers and DSN. Running cue get go . generates gen/.../types_go_gen.cue with #Config and #App definitions. main.cue in ./cue imports those definitions and fills host, workers and dsn from #host, #workers and #dsn, with port 443. prod.cue, guarded by @if(prod), sets #host to mydomain.com and #workers to 16; qa.cue, guarded by @if(qa), sets #host to qa.mydomain.com and #workers to 1. cue export ./cue -t prod --out yaml and cue export ./cue -t qa --out yaml produce two YAML documents.</desc>
+  <defs>
+    <marker id="a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#57606a"/></marker>
+  </defs>
+  <rect width="860" height="740" fill="#ffffff"/>
+  <text x="430" y="32" text-anchor="middle" font-size="20" font-weight="600" fill="#1f2328">From Go types to two YAML configs with Cue</text>
+
+  <!-- step labels -->
+  <g font-size="13" font-weight="600" fill="#57606a">
+    <text x="20" y="64">1. GO TYPES</text>
+    <text x="540" y="64">2. GENERATED CUE</text>
+    <text x="20" y="286">3. CUE FILES IN ./cue</text>
+    <text x="20" y="510">4. TWO YAML DOCUMENTS</text>
+  </g>
+
+  <!-- types.go -->
+  <rect x="20" y="74" width="300" height="172" rx="8" fill="#f6f8fa" stroke="#0550ae" stroke-width="2"/>
+  <text x="36" y="100" font-size="15" font-weight="600" fill="#0550ae" font-family="ui-monospace, Consolas, Menlo, monospace">types.go</text>
+  <g font-family="ui-monospace, Consolas, Menlo, monospace" font-size="13" fill="#1f2328">
+    <text x="36" y="126">type Config struct { App App }</text>
+    <text x="36" y="148">type App struct {</text>
+    <text x="36" y="165" xml:space="preserve">  Host    string</text>
+    <text x="36" y="182" xml:space="preserve">  Port    int</text>
+    <text x="36" y="199" xml:space="preserve">  Workers int</text>
+    <text x="36" y="216" xml:space="preserve">  DSN     string</text>
+    <text x="36" y="233">}</text>
+  </g>
+
+  <!-- cue get go -->
+  <line x1="320" y1="160" x2="536" y2="160" stroke="#57606a" stroke-width="2" marker-end="url(#a)"/>
+  <rect x="356" y="132" width="144" height="26" rx="4" fill="#ffffff" stroke="#d0d7de"/>
+  <text x="428" y="150" text-anchor="middle" font-size="14" font-weight="600" fill="#1f2328" font-family="ui-monospace, Consolas, Menlo, monospace">cue get go .</text>
+  <text x="428" y="180" text-anchor="middle" font-size="12" fill="#57606a">generates</text>
+
+  <!-- types_go_gen.cue -->
+  <rect x="540" y="74" width="300" height="172" rx="8" fill="#f6f8fa" stroke="#00707a" stroke-width="2"/>
+  <text x="556" y="100" font-size="14" font-weight="600" fill="#00707a" font-family="ui-monospace, Consolas, Menlo, monospace">gen/…/types_go_gen.cue</text>
+  <g font-family="ui-monospace, Consolas, Menlo, monospace" font-size="13" fill="#1f2328">
+    <text x="556" y="126">#Config: { app: #App }</text>
+    <text x="556" y="148">#App: {</text>
+    <text x="556" y="165" xml:space="preserve">  host:    string</text>
+    <text x="556" y="182" xml:space="preserve">  port:    int</text>
+    <text x="556" y="199" xml:space="preserve">  workers: int</text>
+    <text x="556" y="216" xml:space="preserve">  dsn:     string</text>
+    <text x="556" y="233">}</text>
+  </g>
+
+  <!-- import arrow -->
+  <polyline points="690,246 690,270 430,270 430,294" fill="none" stroke="#57606a" stroke-width="2" marker-end="url(#a)"/>
+  <text x="560" y="264" text-anchor="middle" font-size="12" fill="#57606a">import …/config</text>
+
+  <!-- prod.cue -->
+  <rect x="20" y="298" width="250" height="150" rx="8" fill="#f6f8fa" stroke="#0550ae" stroke-width="2"/>
+  <text x="36" y="322" font-size="15" font-weight="600" fill="#0550ae" font-family="ui-monospace, Consolas, Menlo, monospace">prod.cue</text>
+  <g font-family="ui-monospace, Consolas, Menlo, monospace" font-size="13" fill="#1f2328">
+    <text x="36" y="348" font-weight="600">@if(prod)</text>
+    <text x="36" y="374">#host: "mydomain.com"</text>
+    <text x="36" y="396">#workers: 16</text>
+    <text x="36" y="418">#dsn: "root:prod@…"</text>
+  </g>
+
+  <!-- main.cue -->
+  <rect x="305" y="298" width="250" height="150" rx="8" fill="#ffffff" stroke="#1f2328" stroke-width="2"/>
+  <text x="321" y="322" font-size="15" font-weight="600" fill="#1f2328" font-family="ui-monospace, Consolas, Menlo, monospace">main.cue</text>
+  <g font-family="ui-monospace, Consolas, Menlo, monospace" font-size="13" fill="#1f2328">
+    <text x="321" y="346">#config: config.#Config &amp;</text>
+    <text x="321" y="364" xml:space="preserve"> app: config.#App &amp; {</text>
+    <text x="321" y="382" xml:space="preserve">  host: #host</text>
+    <text x="321" y="400" xml:space="preserve">  port: 443</text>
+    <text x="321" y="418" xml:space="preserve">  workers: #workers</text>
+    <text x="321" y="436" xml:space="preserve">  dsn: #dsn</text>
+  </g>
+
+  <!-- qa.cue -->
+  <rect x="590" y="298" width="250" height="150" rx="8" fill="#f6f8fa" stroke="#a0287f" stroke-width="2" stroke-dasharray="7 4"/>
+  <text x="606" y="322" font-size="15" font-weight="600" fill="#a0287f" font-family="ui-monospace, Consolas, Menlo, monospace">qa.cue</text>
+  <g font-family="ui-monospace, Consolas, Menlo, monospace" font-size="13" fill="#1f2328">
+    <text x="606" y="348" font-weight="600">@if(qa)</text>
+    <text x="606" y="374">#host: "qa.mydomain.com"</text>
+    <text x="606" y="396">#workers: 1</text>
+    <text x="606" y="418">#dsn: "root:qa@…"</text>
+  </g>
+
+  <!-- arrows to yaml -->
+  <line x1="235" y1="448" x2="235" y2="516" stroke="#0550ae" stroke-width="2" marker-end="url(#a)"/>
+  <line x1="625" y1="448" x2="625" y2="516" stroke="#a0287f" stroke-width="2" stroke-dasharray="7 4" marker-end="url(#a)"/>
+  <line x1="400" y1="448" x2="330" y2="516" stroke="#57606a" stroke-width="2" marker-end="url(#a)"/>
+  <line x1="460" y1="448" x2="530" y2="516" stroke="#57606a" stroke-width="2" marker-end="url(#a)"/>
+  <text x="430" y="476" text-anchor="middle" font-size="12" fill="#57606a">one directory,</text>
+  <text x="430" y="492" text-anchor="middle" font-size="12" fill="#57606a">tag picks the file</text>
+
+  <!-- prod yaml -->
+  <rect x="20" y="520" width="400" height="168" rx="8" fill="#ffffff" stroke="#0550ae" stroke-width="2"/>
+  <path d="M28,520 H412 A8,8 0 0 1 420,528 V554 H20 V528 A8,8 0 0 1 28,520 Z" fill="#0550ae"/>
+  <text x="34" y="542" font-size="13" fill="#ffffff" font-family="ui-monospace, Consolas, Menlo, monospace">$ cue export ./cue -t prod --out yaml</text>
+  <g font-family="ui-monospace, Consolas, Menlo, monospace" font-size="13" fill="#1f2328">
+    <text x="34" y="580">app:</text>
+    <text x="34" y="600" xml:space="preserve">  host: mydomain.com</text>
+    <text x="34" y="620" xml:space="preserve">  port: 443</text>
+    <text x="34" y="640" font-weight="600" xml:space="preserve">  workers: 16</text>
+    <text x="34" y="660" xml:space="preserve">  dsn: root:prod@tcp(mysql-prod…</text>
+  </g>
+
+  <!-- qa yaml -->
+  <rect x="440" y="520" width="400" height="168" rx="8" fill="#ffffff" stroke="#a0287f" stroke-width="2" stroke-dasharray="7 4"/>
+  <path d="M448,520 H832 A8,8 0 0 1 840,528 V554 H440 V528 A8,8 0 0 1 448,520 Z" fill="#a0287f"/>
+  <text x="454" y="542" font-size="13" fill="#ffffff" font-family="ui-monospace, Consolas, Menlo, monospace">$ cue export ./cue -t qa --out yaml</text>
+  <g font-family="ui-monospace, Consolas, Menlo, monospace" font-size="13" fill="#1f2328">
+    <text x="454" y="580">app:</text>
+    <text x="454" y="600" xml:space="preserve">  host: qa.mydomain.com</text>
+    <text x="454" y="620" xml:space="preserve">  port: 443</text>
+    <text x="454" y="640" font-weight="600" xml:space="preserve">  workers: 1</text>
+    <text x="454" y="660" xml:space="preserve">  dsn: root:qa@tcp(mysql-qa…</text>
+  </g>
+
+  <text x="430" y="720" text-anchor="middle" font-size="13" fill="#57606a">@if(tag) includes a file only when that tag is passed with -t</text>
+</svg>

@@ -218,7 +218,7 @@
       <h2><a href="/blog/2026/09/single-binary-wordpress/">Zero-Dependency Deployments - Single Binary for WordPress</a></h2>
     
     
-      <p>WordPress with no nginx, no php-fpm, no Redis and no MySQL: one ePHPm binary, a SQLite file, and a distroless container image. What&#39;s in the binary, how it gets built, and what it actually takes to run.</p>
+      <p>WordPress with no nginx, no php-fpm, no Redis and no MySQL. It runs from one ePHPm binary, a SQLite file and a distroless container image.</p>
     
   </div>
   <div class="meta">
@@ -233,11 +233,7 @@
     <img class="" src="/img/2026/09/single-binary-wordpress-cover.svg" alt="Side by side: nginx, php-fpm, Redis and MySQL as four services, versus one ephpm process containing the HTTP server, embedded PHP, KV store and SQLite">
   </a>
     
-    <p>The standard way to run a WordPress site is four services: nginx for HTTP and TLS, php-fpm to run PHP, MySQL for data,
-and Redis once the site gets slow enough that someone installs an object cache plugin. That&rsquo;s four processes, four
-config files, three sockets between them, and four things to upgrade. For a big site that&rsquo;s fine. For a brochure site, a
-staging copy, a PR preview, a CI job that needs a real WordPress to test a plugin against, or a box at the edge, it&rsquo;s
-absurd.</p>
+    <p>The standard way to run a WordPress site is four services:</p>
   </div>
   <footer>
     <a href="/blog/2026/09/single-binary-wordpress/" class="button big">Read More</a>

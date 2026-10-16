@@ -13,7 +13,7 @@
       <link>https://luth.io/blog/2026/09/remotedialer-data-race-two-thirds-fix/</link>
       <pubDate>Tue, 01 Sep 2026 21:05:00 -0700</pubDate>
       <guid>https://luth.io/blog/2026/09/remotedialer-data-race-two-thirds-fix/</guid>
-      <description>&lt;p&gt;&lt;a href=&#34;https://luth.io/blog/2026/08/shipmates-persona-based-ai-coding-crews/&#34;&gt;shipmates&lt;/a&gt; ships connect to Fleet Command over outbound&#xA;websocket tunnels so nothing on the ship side has to be exposed to the internet. I didn&amp;rsquo;t write that tunnel layer,&#xA;I used &lt;a href=&#34;https://github.com/rancher/remotedialer&#34;&gt;rancher/remotedialer&lt;/a&gt;, the same library Rancher uses to reach&#xA;downstream cluster agents. I spent years around that code at Rancher, so it was the obvious pick. What I didn&amp;rsquo;t&#xA;expect was for my CI&amp;rsquo;s race job to find two data races in it in the first week.&lt;/p&gt;</description>
+      <description>&lt;p&gt;&lt;a href=&#34;https://luth.io/blog/2026/08/shipmates-persona-based-ai-coding-crews/&#34;&gt;shipmates&lt;/a&gt; ships connect to Fleet Command over outbound&#xA;websocket tunnels. That way nothing on the ship side has to be exposed to the internet. I didn&amp;rsquo;t write that tunnel&#xA;layer. I used &lt;a href=&#34;https://github.com/rancher/remotedialer&#34;&gt;rancher/remotedialer&lt;/a&gt;, the same library Rancher uses to reach&#xA;downstream cluster agents. I spent years around that code at Rancher, so it was the obvious pick. What I didn&amp;rsquo;t&#xA;expect was for my CI&amp;rsquo;s race job to find two data races in it in the first week.&lt;/p&gt;</description>
     </item>
   </channel>
 </rss>

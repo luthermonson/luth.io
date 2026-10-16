@@ -218,7 +218,7 @@
       <h2><a href="/blog/2026/09/calling-rust-from-php-without-a-socket-part-2/">Calling Rust From PHP Without a Socket, Part 2: Making Existing Code Use It</a></h2>
     
     
-      <p>Thirteen Composer packages that let existing Redis and database code in WordPress, Laravel and Symfony use ePHPm&#39;s built-in versions, and the bugs they turned up.</p>
+      <p>Thirteen Composer packages let existing Redis and database code in WordPress, Laravel and Symfony use ePHPm&#39;s built-in versions. This post covers what&#39;s in them and the bugs they turned up.</p>
     
   </div>
   <div class="meta">
@@ -233,11 +233,11 @@
     <img class="" src="/img/2026/09/calling-rust-from-php-without-a-socket-part-2-cover.svg" alt="The APIs PHP apps already call, mapped through ePHPm wrapper packages onto ephpm_kv_* and ephpm_db_*">
   </a>
     
-    <p><a href="/blog/2026/09/calling-rust-from-php-without-a-socket-part-1/">Part 1</a> covered the plumbing: ePHPm registers
-<code>ephpm_kv_*</code> and <code>ephpm_db_*</code> functions that call straight into Rust, and a cache read through one costs about a tenth of
-a microsecond instead of a loopback round trip. That&rsquo;s nice and also useless on its own, because nobody is going to rewrite
-their WordPress object cache or their Laravel cache store around a function called <code>ephpm_kv_set()</code>. Applications talk to
-Redis through phpredis or Predis, to the cache through PSR-6/16 or <code>wp_cache_*</code>, and to&hellip;</p>
+    <p><a href="/blog/2026/09/calling-rust-from-php-without-a-socket-part-1/">Part 1</a> covered the plumbing. ePHPm registers
+<code>ephpm_kv_*</code> and <code>ephpm_db_*</code> functions that call straight into Rust. A cache read through one costs about a tenth of a
+microsecond instead of a loopback round trip. That&rsquo;s nice and also useless on its own. Nobody is going to rewrite their
+WordPress object cache or their Laravel cache store around a function called <code>ephpm_kv_set()</code>. Applications talk to
+existing APIs instead:</p>
   </div>
   <footer>
     <a href="/blog/2026/09/calling-rust-from-php-without-a-socket-part-2/" class="button big">Read More</a>
@@ -285,7 +285,7 @@ Redis through phpredis or Predis, to the cache through PSR-6/16 or <code>wp_cach
       <h2><a href="/blog/2026/07/sqlite-production-database-protocol-translation/">SQLite as a Production Database via Protocol Translation</a></h2>
     
     
-      <p>litewire speaks the MySQL wire protocol on one side and SQLite on the other, so WordPress and Laravel run against a .db file without a code change. Here&#39;s how it works and what it took.</p>
+      <p>litewire speaks the MySQL wire protocol on one side and SQLite on the other. That lets WordPress and Laravel run against a .db file without a code change.</p>
     
   </div>
   <div class="meta">
@@ -300,11 +300,11 @@ Redis through phpredis or Predis, to the cache through PSR-6/16 or <code>wp_cach
     <img class="" src="/img/2026/07/sqlite-production-database-protocol-translation-cover.svg" alt="A PHP app connecting over the MySQL wire protocol on port 3306 to litewire, which translates the SQL and runs it against a SQLite file">
   </a>
     
-    <p>Most of the PHP sites I&rsquo;d put on <a href="https://github.com/ephpm/ephpm">ePHPm</a> don&rsquo;t need a MySQL server. A brochure WordPress,
-an internal Laravel tool, a preview environment that lives for an afternoon. What they do need is something that
-<em>looks</em> like MySQL, because <code>mysqli</code> and <code>pdo_mysql</code> are the only database drivers their code has ever been pointed at.
-I mentioned this in the <a href="/blog/2026/06/ephpm-pragmatism/">ePHPm pragmatism post</a> as a one-paragraph &ldquo;because&rdquo;. This is the
-longer version, now that WordPress 7.0 and Laravel 13 both install and&hellip;</p>
+    <p>Most of the PHP sites I&rsquo;d put on <a href="https://github.com/ephpm/ephpm">ePHPm</a> don&rsquo;t need a MySQL server. A brochure
+WordPress, an internal Laravel tool, a preview environment that lives for an afternoon. What they do need is something
+that <em>looks</em> like MySQL, because <code>mysqli</code> and <code>pdo_mysql</code> are the only database drivers their code has ever been
+pointed at. I mentioned this in the <a href="/blog/2026/06/ephpm-pragmatism/">ePHPm pragmatism post</a> as a one-paragraph
+&ldquo;because&rdquo;. This is the longer version, now that WordPress 7.0 and Laravel 13 both install and&hellip;</p>
   </div>
   <footer>
     <a href="/blog/2026/07/sqlite-production-database-protocol-translation/" class="button big">Read More</a>

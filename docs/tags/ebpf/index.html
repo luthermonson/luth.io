@@ -218,7 +218,7 @@
       <h2><a href="/blog/2026/08/ephpm-ebpf-per-vhost-network-policy/">Per-Tenant Network Policy in One Process: ePHPm&#39;s eBPF Thread Tags</a></h2>
     
     
-      <p>Every site on an ePHPm server runs inside the same process, so a normal firewall can&#39;t tell them apart. A small eBPF program tags each thread with its site and keeps sites from reaching each other&#39;s local ports, at under a microsecond per connection.</p>
+      <p>Every site on an ePHPm server runs inside the same process, so a normal firewall can&#39;t tell them apart. A small eBPF program tags each thread with its site. It keeps sites from reaching each other&#39;s local ports for under a microsecond per connection.</p>
     
   </div>
   <div class="meta">
@@ -234,9 +234,9 @@
   </a>
     
     <p>In multi-tenant mode <a href="https://github.com/ephpm/ephpm">ePHPm</a> serves every site in <code>sites_dir</code> from one process. Every
-tenant&rsquo;s PHP runs as the same OS user, on the same pool of ZTS threads, and a thread that just served <code>blog.example</code>
-will serve <code>shop.example</code> a few milliseconds later. That&rsquo;s the density win. It also means the kernel has no idea
-which tenant is behind a given <code>connect()</code>. As far as Linux is concerned it&rsquo;s all <code>ephpm-web</code>.</p>
+tenant&rsquo;s PHP runs as the same OS user on the same pool of ZTS threads. A thread that just served <code>blog.example</code> will
+serve <code>shop.example</code> a few milliseconds later. That&rsquo;s the density win. It also means the kernel has no idea which
+tenant is behind a given <code>connect()</code>. As far as Linux is concerned it&rsquo;s all <code>ephpm-web</code>.</p>
   </div>
   <footer>
     <a href="/blog/2026/08/ephpm-ebpf-per-vhost-network-policy/" class="button big">Read More</a>

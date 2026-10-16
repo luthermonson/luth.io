@@ -13,14 +13,14 @@
       <link>https://luth.io/blog/2026/10/php-jit-use-after-free/</link>
       <pubDate>Thu, 01 Oct 2026 20:10:00 -0700</pubDate>
       <guid>https://luth.io/blog/2026/10/php-jit-use-after-free/</guid>
-      <description>&lt;p&gt;In August, &lt;a href=&#34;https://github.com/ephpm/ephpm&#34;&gt;ePHPm&lt;/a&gt; turned PHP&amp;rsquo;s tracing JIT on by default in single-site serve mode.&#xA;Three days later it went back off, on every platform, and it&amp;rsquo;s still off. The reason turned out to be a&#xA;use-after-free in PHP&amp;rsquo;s tracing JIT that has nothing to do with ePHPm: stock &lt;code&gt;php -S&lt;/code&gt; with a stock Laravel skeleton&#xA;dies on it in a couple of requests. The fix is now released upstream, so this seemed like the right time to write up&#xA;how we got there, and what still has to happen before the default can flip again.&lt;/p&gt;</description>
+      <description>&lt;p&gt;In August, &lt;a href=&#34;https://github.com/ephpm/ephpm&#34;&gt;ePHPm&lt;/a&gt; turned PHP&amp;rsquo;s tracing JIT on by default in single-site serve mode.&#xA;Three days later it went back off on every platform, and it&amp;rsquo;s still off. The reason turned out to be a use-after-free&#xA;in PHP&amp;rsquo;s tracing JIT that has nothing to do with ePHPm. Stock &lt;code&gt;php -S&lt;/code&gt; with a stock Laravel skeleton dies on it in a&#xA;couple of requests. The fix is now released upstream. So this seemed like the right time to write up how we got there,&#xA;and what still has to happen before the default can flip again.&lt;/p&gt;</description>
     </item>
     <item>
       <title>OPcache on Windows: Two Silent Failures</title>
       <link>https://luth.io/blog/2026/08/opcache-on-windows-two-silent-failures/</link>
       <pubDate>Sat, 29 Aug 2026 16:45:00 -0700</pubDate>
       <guid>https://luth.io/blog/2026/08/opcache-on-windows-two-silent-failures/</guid>
-      <description>&lt;p&gt;Windows is the platform where &lt;a href=&#34;https://github.com/ephpm/ephpm&#34;&gt;ePHPm&lt;/a&gt; gets the least traffic and the most surprises.&#xA;Last week closed out two OPcache bugs that only exist there, and both were quiet in their own way. One killed the&#xA;server at startup with nothing in our own logs. The other didn&amp;rsquo;t kill anything: it just ran PHP 8.3 with no opcode&#xA;cache at all, and for three weeks after a fixed SDK was published every check stayed green.&lt;/p&gt;</description>
+      <description>&lt;p&gt;Windows is the platform where &lt;a href=&#34;https://github.com/ephpm/ephpm&#34;&gt;ePHPm&lt;/a&gt; gets the least traffic and the most surprises.&#xA;Last week closed out two OPcache bugs that only exist there. Both were quiet in their own way. One killed the server&#xA;at startup with nothing in our own logs. The other didn&amp;rsquo;t kill anything. It just ran PHP 8.3 with no opcode cache at&#xA;all. For three weeks after a fixed SDK was published, every check stayed green.&lt;/p&gt;</description>
     </item>
   </channel>
 </rss>

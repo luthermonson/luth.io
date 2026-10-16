@@ -218,7 +218,7 @@
       <h2><a href="/blog/2026/09/php-stack-guard-segfault-containment/">We Disabled PHP&#39;s Stack Guard Ourselves: Containing Segfaults in a Single-Process PHP Server</a></h2>
     
     
-      <p>How ePHPm went from dying silently on a segfault to containing stack overflows per thread, and the linker flag that had turned off PHP&#39;s own guard.</p>
+      <p>How ePHPm went from dying silently on a segfault to containing stack overflows per thread. It also covers the linker flag that had turned off PHP&#39;s own guard.</p>
     
   </div>
   <div class="meta">
@@ -233,10 +233,10 @@
     <img class="" src="/img/2026/09/php-stack-guard-cover.svg" alt="Diagram of a PHP thread stack, the guard window below it, and which faults get contained versus which kill the process">
   </a>
     
-    <p>php-fpm has a property nobody thinks about until they leave it: when a worker segfaults, you lose one request. The
+    <p>php-fpm has a property nobody thinks about until they leave it. When a worker segfaults, you lose one request. The
 master forks a new child and life goes on. <a href="https://github.com/ephpm/ephpm">ePHPm</a> runs every tenant&rsquo;s PHP as threads
-inside one process. That&rsquo;s where the memory and latency wins come from, and it also means one tenant&rsquo;s segfault
-takes down every other tenant on the box.</p>
+inside one process. That&rsquo;s where the memory and latency wins come from. It also means one tenant&rsquo;s segfault takes down
+every other tenant on the box.</p>
   </div>
   <footer>
     <a href="/blog/2026/09/php-stack-guard-segfault-containment/" class="button big">Read More</a>

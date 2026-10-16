@@ -271,17 +271,21 @@
 
       </div>
       <div class="content">
+              <figure class="post-cover">
+                <img src="/img/2026/09/remotedialer-data-race-two-thirds-fix-cover.svg" alt="Three commits of remotedialer PR 265 and which one the replace directive pointed at">
+              </figure>
         
         <p><a href="/blog/2026/08/shipmates-persona-based-ai-coding-crews/">shipmates</a> ships connect to Fleet Command over outbound
-websocket tunnels so nothing on the ship side has to be exposed to the internet. I didn&rsquo;t write that tunnel layer,
-I used <a href="https://github.com/rancher/remotedialer">rancher/remotedialer</a>, the same library Rancher uses to reach
+websocket tunnels. That way nothing on the ship side has to be exposed to the internet. I didn&rsquo;t write that tunnel
+layer. I used <a href="https://github.com/rancher/remotedialer">rancher/remotedialer</a>, the same library Rancher uses to reach
 downstream cluster agents. I spent years around that code at Rancher, so it was the obvious pick. What I didn&rsquo;t
 expect was for my CI&rsquo;s race job to find two data races in it in the first week.</p>
 <h3 id="ci-was-the-only-place--race-could-run">CI was the only place -race could run</h3>
-<p><code>-race</code> needs cgo, which needs a C compiler. Neither machine I was writing shipmates on had one at the time, and every
-agent session that tried <code>go test -race</code> hit <code>cgo: C compiler &quot;gcc&quot; not found</code>. So when I moved shipmates CI onto my
-<a href="/blog/2026/08/ephemerd-one-daemon-every-os/">ephemerd</a> runners in <a href="https://github.com/luthermonson/shipmates/pull/26">PR #26</a>,
-I added a dedicated race job on linux-x64. Today it runs in a <code>golang:1.26.6-bookworm</code> container, which ships gcc:</p>
+<p><code>-race</code> needs cgo, which needs a C compiler. Neither machine I was writing shipmates on had one at the time. Every
+agent session that tried <code>go test -race</code> hit <code>cgo: C compiler &quot;gcc&quot; not found</code>. So I moved shipmates CI onto my
+<a href="/blog/2026/08/ephemerd-one-daemon-every-os/">ephemerd</a> runners in <a href="https://github.com/luthermonson/shipmates/pull/26">PR #26</a>.
+At the same time I added a dedicated race job on linux-x64. Today it runs in a <code>golang:1.26.6-bookworm</code> container,
+which ships gcc:</p>
 <div class="highlight"><pre tabindex="0" class="chroma"><code class="language-yaml" data-lang="yaml"><span class="line"><span class="cl"><span class="nt">race</span><span class="p">:</span><span class="w">
 </span></span></span><span class="line"><span class="cl"><span class="w">  </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l">race (linux-x64)</span><span class="w">
 </span></span></span><span class="line"><span class="cl"><span class="w">  </span><span class="nt">runs-on</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="l">self-hosted, linux, x64]</span><span class="w">
@@ -292,8 +296,8 @@ I added a dedicated race job on linux-x64. Today it runs in a <code>golang:1.26.
 </span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="c"># ...</span><span class="w">
 </span></span></span><span class="line"><span class="cl"><span class="w">    </span>- <span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l">Test with race detector</span><span class="w">
 </span></span></span><span class="line"><span class="cl"><span class="w">      </span><span class="nt">run</span><span class="p">:</span><span class="w"> </span><span class="l">go test -race -count=1 ./...</span><span class="w">
-</span></span></span></code></pre></div><p>The shipmates fleet tests open and tear down real tunnels quickly, and that job went red inside remotedialer
-v0.6.1, not in my code.</p>
+</span></span></span></code></pre></div><p>The shipmates fleet tests open and tear down real tunnels quickly. That job went red inside remotedialer v0.6.1, not in
+my code.</p>
 <h3 id="race-1-sessionpingcancel">Race 1: Session.pingCancel</h3>
 <p><code>ConnectToProxyWithDialer</code> builds the racing pair itself. It runs <code>Serve</code> on a goroutine and defers <code>Close</code>:</p>
 <div class="highlight"><pre tabindex="0" class="chroma"><code class="language-go" data-lang="go"><span class="line"><span class="cl"><span class="k">go</span><span class="w"> </span><span class="kd">func</span><span class="p">()</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nx">session</span><span class="p">.</span><span class="nf">Serve</span><span class="p">(</span><span class="nx">ctx</span><span class="p">)</span><span class="w"> </span><span class="p">}()</span><span class="w">   </span><span class="c1">// Serve -&gt; startPings: s.pingCancel = cancel   (write, no lock)</span><span class="w">
@@ -317,23 +321,27 @@ v0.6.1, not in my code.</p>
 </span></span></span><span class="line"><span class="cl"><span class="w">	</span><span class="nx">s</span><span class="p">.</span><span class="nx">pingWait</span><span class="p">.</span><span class="nf">Wait</span><span class="p">()</span><span class="w">
 </span></span></span><span class="line"><span class="cl"><span class="p">}</span><span class="w">
 </span></span></span></code></pre></div><p><code>Session</code> already embeds a <code>sync.RWMutex</code> and the neighboring fields use it. <code>pingCancel</code> just never got put under
-it. In production the write and the read are separated by the lifetime of a session, so you only see it when sessions
-open and close quickly: a reconnect storm, or a test suite driving real tunnels.</p>
+it. In production the write and the read are separated by the lifetime of a session. You only see it when sessions
+open and close quickly, like in a reconnect storm or a test suite driving real tunnels.</p>
 <h3 id="race-2-connectionerr">Race 2: connection.err</h3>
-<p><code>doTunnelClose</code> does an unguarded check-then-set on <code>c.err</code>, and it can be called at the same time from a pipe copy
-noticing its peer failed, from <code>Session.Close</code> tearing everything down, and from <code>serveMessage</code> on a protocol error.
-<code>connection</code> had no synchronization at all. The kicker is that remotedialer&rsquo;s own <code>TestExceedBuffer</code> trips this
-race as soon as you turn the detector on. Upstream&rsquo;s Makefile <code>test</code> target didn&rsquo;t use <code>-race</code>, which is how both of
+<p><code>doTunnelClose</code> does an unguarded check-then-set on <code>c.err</code>. Three callers can hit it at the same time:</p>
+<ul>
+<li>a pipe copy noticing its peer failed</li>
+<li><code>Session.Close</code> tearing everything down</li>
+<li><code>serveMessage</code> on a protocol error</li>
+</ul>
+<p><code>connection</code> had no synchronization at all. The kicker is that remotedialer&rsquo;s own <code>TestExceedBuffer</code> trips this
+race as soon as you turn the detector on. Upstream&rsquo;s Makefile <code>test</code> target didn&rsquo;t use <code>-race</code>. That&rsquo;s how both of
 these survived.</p>
 <h3 id="fork-reproduce-first-then-fix">Fork, reproduce first, then fix</h3>
-<p>I forked it and did the red/green thing on purpose so the detector&rsquo;s report against unfixed code would be on record:</p>
+<p>I forked it and did the red/green thing on purpose. I wanted the detector&rsquo;s report against unfixed code on record:</p>
 <ul>
 <li><a href="https://github.com/luthermonson/remotedialer/commit/cf2b3354b0f9f6eac268f08f81fe8c980a9e6aa0"><code>cf2b335</code></a>: add
 <code>TestSessionCloseDoesNotRaceServeStartup</code> and turn on <code>-race</code> in <code>make test</code>. This commit fails.</li>
 <li><a href="https://github.com/luthermonson/remotedialer/commit/7e65b789c52478b79589c8f1e8f63d0b3943dfac"><code>7e65b78</code></a>: lock
 <code>pingCancel</code>, add an <code>errMu</code> around <code>connection.err</code>. Green.</li>
 </ul>
-<p>The test does what <code>ConnectToProxyWithDialer</code> does, in a loop, so the detector gets repeated shots at the startup
+<p>The test does what <code>ConnectToProxyWithDialer</code> does in a loop. That gives the detector repeated shots at the startup
 window:</p>
 <div class="highlight"><pre tabindex="0" class="chroma"><code class="language-go" data-lang="go"><span class="line"><span class="cl"><span class="kd">func</span><span class="w"> </span><span class="nf">TestSessionCloseDoesNotRaceServeStartup</span><span class="p">(</span><span class="nx">t</span><span class="w"> </span><span class="o">*</span><span class="nx">testing</span><span class="p">.</span><span class="nx">T</span><span class="p">)</span><span class="w"> </span><span class="p">{</span><span class="w">
 </span></span></span><span class="line"><span class="cl"><span class="w">	</span><span class="k">for</span><span class="w"> </span><span class="nx">i</span><span class="w"> </span><span class="o">:=</span><span class="w"> </span><span class="mi">0</span><span class="p">;</span><span class="w"> </span><span class="nx">i</span><span class="w"> </span><span class="p">&lt;</span><span class="w"> </span><span class="mi">200</span><span class="p">;</span><span class="w"> </span><span class="nx">i</span><span class="o">++</span><span class="w"> </span><span class="p">{</span><span class="w">
@@ -356,42 +364,44 @@ window:</p>
 </span></span></span><span class="line"><span class="cl"><span class="w">		</span><span class="nx">s</span><span class="p">.</span><span class="nx">pingWait</span><span class="p">.</span><span class="nf">Wait</span><span class="p">()</span><span class="w">
 </span></span></span><span class="line"><span class="cl"><span class="w">	</span><span class="p">}</span><span class="w">
 </span></span></span><span class="line"><span class="cl"><span class="p">}</span><span class="w">
-</span></span></span></code></pre></div><p>The fix for <code>stopPings</code> grabs the cancel func under the lock and releases the lock <em>before</em> cancelling, so
-<code>pingWait.Wait()</code> is never awaited while holding a lock the ping goroutine&rsquo;s callees (<code>getSessionKeys</code> via
-<code>sendSyncConnections</code>) also take. Nil-ing the field makes a second <code>Close</code> a no-op.</p>
+</span></span></span></code></pre></div><p>The fix for <code>stopPings</code> grabs the cancel func under the lock and releases the lock <em>before</em> cancelling. The ping
+goroutine&rsquo;s callees also take that lock (<code>getSessionKeys</code> via <code>sendSyncConnections</code>). So <code>pingWait.Wait()</code> is never
+awaited while holding it. Nil-ing the field makes a second <code>Close</code> a no-op.</p>
 <p>Then in shipmates, <a href="https://github.com/luthermonson/shipmates/commit/84e0d0e"><code>84e0d0e</code></a> pointed the dependency at the
 fork:</p>
 <pre tabindex="0"><code>replace github.com/rancher/remotedialer =&gt; github.com/luthermonson/remotedialer v0.2.6-0.20260805014355-7e65b789c524
-</code></pre><p>v0.6.1 and upstream main had zero Go-file difference at that point, so the fork was exactly the pinned version plus
+</code></pre><p>v0.6.1 and upstream main had zero Go-file difference at that point. So the fork was exactly the pinned version plus
 these fixes. Upstream PR to follow, drop the replace when it lands. Done, I thought.</p>
 <h3 id="the-third-commit">The third commit</h3>
-<p>About three hours after those two commits, and a minute after pinning shipmates to them, I opened
-<a href="https://github.com/rancher/remotedialer/pull/265">rancher/remotedialer#265</a> with them, and within the hour the new test caught one more thing on a machine with more hardware threads
-(it failed about half of runs at 32). Look at what <code>7e65b78</code> did to <code>startPings</code>:</p>
+<p>About three hours after those two commits, I opened
+<a href="https://github.com/rancher/remotedialer/pull/265">rancher/remotedialer#265</a> with them. That was a minute after pinning
+shipmates to them. Within the hour the new test caught one more thing on a machine with more hardware threads. It
+failed about half of runs at 32. Look at what <code>7e65b78</code> did to <code>startPings</code>:</p>
 <div class="highlight"><pre tabindex="0" class="chroma"><code class="language-go" data-lang="go"><span class="line"><span class="cl"><span class="nx">s</span><span class="p">.</span><span class="nf">Lock</span><span class="p">()</span><span class="w">
 </span></span></span><span class="line"><span class="cl"><span class="nx">s</span><span class="p">.</span><span class="nx">pingCancel</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="nx">cancel</span><span class="w">
 </span></span></span><span class="line"><span class="cl"><span class="nx">s</span><span class="p">.</span><span class="nf">Unlock</span><span class="p">()</span><span class="w">
 </span></span></span><span class="line"><span class="cl"><span class="nx">s</span><span class="p">.</span><span class="nx">pingWait</span><span class="p">.</span><span class="nf">Add</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span><span class="w">   </span><span class="c1">// still outside the lock</span><span class="w">
-</span></span></span></code></pre></div><p><code>stopPings</code> now reads <code>pingCancel</code> under the lock, sees it non-nil, and goes on to <code>pingWait.Wait()</code>. But nothing says
+</span></span></span></code></pre></div><p><code>stopPings</code> now reads <code>pingCancel</code> under the lock, sees it non-nil and goes on to <code>pingWait.Wait()</code>. But nothing says
 the <code>Add(1)</code> has happened yet. A <code>Close</code> that lands between the <code>Unlock</code> and the <code>Add</code> calls <code>Wait</code> concurrently with
-<code>Add</code> on a zero counter. The race detector flags it, and at runtime it can panic with
-<code>sync: WaitGroup misuse: Add called concurrently with Wait</code>, in exactly the reconnect storm the PR was supposed to fix.</p>
+<code>Add</code> on a zero counter. The race detector flags it. At runtime it can panic with
+<code>sync: WaitGroup misuse: Add called concurrently with Wait</code>. That happens in exactly the reconnect storm the PR was
+supposed to fix.</p>
 <p>The third commit, <code>00b5151</code>, moves the <code>Add</code> inside the same critical section:</p>
 <div class="highlight"><pre tabindex="0" class="chroma"><code class="language-go" data-lang="go"><span class="line"><span class="cl"><span class="nx">s</span><span class="p">.</span><span class="nf">Lock</span><span class="p">()</span><span class="w">
 </span></span></span><span class="line"><span class="cl"><span class="nx">s</span><span class="p">.</span><span class="nx">pingCancel</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="nx">cancel</span><span class="w">
 </span></span></span><span class="line"><span class="cl"><span class="nx">s</span><span class="p">.</span><span class="nx">pingWait</span><span class="p">.</span><span class="nf">Add</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span><span class="w">
 </span></span></span><span class="line"><span class="cl"><span class="nx">s</span><span class="p">.</span><span class="nf">Unlock</span><span class="p">()</span><span class="w">
 </span></span></span></code></pre></div><p>Now observing a non-nil cancel implies the <code>Add</code> happened-before the <code>Wait</code>. I pushed it to the PR branch and moved on.</p>
-<p>What I didn&rsquo;t do was bump the <code>replace</code>. shipmates stayed pinned to <code>7e65b789</code>, the <em>middle</em> commit of the PR, stamped
-about three hours before the PR even existed. I had the <code>connection.err</code> fix in full and two-thirds of the
-<code>pingCancel</code> fix. It took until a review pass right before the v0.5.0 release, thirteen days later, to notice, and
+<p>What I didn&rsquo;t do was bump the <code>replace</code>. shipmates stayed pinned to <code>7e65b789</code>, the <em>middle</em> commit of the PR. Its
+stamp was about three hours before the PR even existed. I had the <code>connection.err</code> fix in full and two-thirds of the
+<code>pingCancel</code> fix. I didn&rsquo;t notice until a review pass right before the v0.5.0 release, thirteen days later.
 <a href="https://github.com/luthermonson/shipmates/pull/50">PR #50</a> bumped it to the PR head:</p>
 <pre tabindex="0"><code>replace github.com/rancher/remotedialer =&gt; github.com/luthermonson/remotedialer v0.2.6-0.20260805053951-00b5151280f8
-</code></pre><p>and I checked that the resolved module actually carries <code>Add(1)</code> between <code>s.Lock()</code> and <code>s.Unlock()</code> rather than
-trusting the pseudo-version.</p>
+</code></pre><p>Then I checked that the resolved module carries <code>Add(1)</code> between <code>s.Lock()</code> and <code>s.Unlock()</code>. I didn&rsquo;t trust the
+pseudo-version.</p>
 <h3 id="seeing-all-three-states">Seeing all three states</h3>
-<p>To write this up I ran the same reproducer against all three versions straight out of the module cache: upstream
-v0.6.1, the middle commit, and the PR head, 20 iterations each with <code>-race</code> on Linux.</p>
+<p>To write this up I ran the same reproducer against all three versions straight out of the module cache. That&rsquo;s
+upstream v0.6.1, the middle commit and the PR head. Each got 20 iterations with <code>-race</code> on Linux.</p>
 <p>v0.6.1 is race 1, exactly as described. Write in <code>startPings</code>, read in <code>stopPings</code>:</p>
 <pre tabindex="0"><code>WARNING: DATA RACE
 Write at 0x00c000416de0 by goroutine 2007:
@@ -408,7 +418,7 @@ Previous read at 0x00c000416de0 by goroutine 1614:
 ...
 --- FAIL: TestSessionCloseDoesNotRaceServeStartup (0.01s)
     testing.go:1712: race detected during execution of test
-</code></pre><p>The middle commit, the one I&rsquo;d been shipping, still fails, but now it&rsquo;s the WaitGroup. <code>session.go:231</code> is
+</code></pre><p>The middle commit, the one I&rsquo;d been shipping, still fails. But now it&rsquo;s the WaitGroup. <code>session.go:231</code> is
 <code>s.pingWait.Wait()</code> and <code>session.go:179</code> is the <code>s.pingWait.Add(1)</code> that sat outside the lock:</p>
 <pre tabindex="0"><code>WARNING: DATA RACE
 Write at 0x00c00047e6a0 by goroutine 6057:
@@ -432,7 +442,7 @@ Previous read at 0x00c00047e6a0 by goroutine 6276:
 </code></pre><p>And the head is clean:</p>
 <pre tabindex="0"><code>ok  	github.com/rancher/remotedialer	1.218s
 </code></pre><p>The lesson I keep relearning: a <code>replace</code> to a pseudo-version is a pin to a commit, not to &ldquo;my fix&rdquo;. If the branch
-moves after you pin, you&rsquo;re on whatever you pinned, and nothing will tell you.</p>
+moves after you pin, you&rsquo;re on whatever you pinned. Nothing will tell you.</p>
 <h3 id="side-effect-go-install-stops-working">Side effect: go install stops working</h3>
 <p>A <code>replace</code> directive in your <code>go.mod</code> means people can&rsquo;t <code>go install</code> your module:</p>
 <pre tabindex="0"><code>$ go install github.com/luthermonson/shipmates@v0.5.0
@@ -440,10 +450,10 @@ go: github.com/luthermonson/shipmates@v0.5.0 (in github.com/luthermonson/shipmat
 	The go.mod file for the module providing named packages contains one or
 	more replace directives. It must not contain directives that would cause
 	it to be interpreted differently than if it were the main module.
-</code></pre><p>Release binaries are fine, goreleaser builds in the module so it honors the replace. So the README and the v0.5.0
-release notes (<a href="https://github.com/luthermonson/shipmates/commit/f2c4bdf"><code>f2c4bdf</code></a>) say to grab a release binary or
-<code>git clone</code> and <code>go build</code> until #265 merges. As of this writing the upstream PR is open, has no reviews, and is
-showing merge conflicts, so the fork stays for now.</p>
+</code></pre><p>Release binaries are fine. goreleaser builds in the module, so it honors the replace. The README and the v0.5.0
+release notes (<a href="https://github.com/luthermonson/shipmates/commit/f2c4bdf"><code>f2c4bdf</code></a>) say to grab a release binary. The
+other option is <code>git clone</code> and <code>go build</code> until #265 merges. As of this writing the upstream PR is open with no
+reviews. It&rsquo;s showing merge conflicts, so the fork stays for now.</p>
 <h3 id="takeaways">Takeaways</h3>
 <ul>
 <li>If your project depends on something concurrent, run <em>your</em> tests with <code>-race</code> even if upstream doesn&rsquo;t. A suite
@@ -453,10 +463,15 @@ rerun all three states here.</li>
 <li>After you pin a fork, check the pin again when the PR is final.</li>
 </ul>
 <h3 id="how-i-measured">How I measured</h3>
-<p>The race output above came from copying each version of the module out of my Go module cache (<code>rancher/remotedialer@v0.6.1</code>,
-<code>luthermonson/remotedialer@...-7e65b789c524</code> and <code>@...-00b5151280f8</code>), dropping the fork&rsquo;s <code>session_close_race_test.go</code>
-into the two that didn&rsquo;t have it, and running <code>go test -race -count=20 -run TestSessionCloseDoesNotRaceServeStartup .</code>
-in each under WSL2 (Go 1.26.0, gcc 15.2, 32 hardware threads on a Ryzen 9 5950X). Paths in the output are trimmed.</p>
+<p>The race output above came from three steps:</p>
+<ul>
+<li>copy each version of the module out of my Go module cache (<code>rancher/remotedialer@v0.6.1</code>,
+<code>luthermonson/remotedialer@...-7e65b789c524</code> and <code>@...-00b5151280f8</code>)</li>
+<li>drop the fork&rsquo;s <code>session_close_race_test.go</code> into the two that didn&rsquo;t have it</li>
+<li>run <code>go test -race -count=20 -run TestSessionCloseDoesNotRaceServeStartup .</code> in each</li>
+</ul>
+<p>That ran under WSL2 with Go 1.26.0, gcc 15.2 and 32 hardware threads on a Ryzen 9 5950X. Paths in the output are
+trimmed.</p>
 <h3 id="links">Links</h3>
 <ul>
 <li><a href="https://github.com/rancher/remotedialer/pull/265">rancher/remotedialer#265</a> (the upstream PR, three commits)</li>

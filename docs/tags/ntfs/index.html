@@ -218,7 +218,7 @@
       <h2><a href="/blog/2026/08/ntfs-atomic-file-replacement-not-rename-fsync/">Atomic File Replacement on NTFS Is Not rename &#43; fsync</a></h2>
     
     
-      <p>The Unix recipe for durable atomic file replacement doesn&#39;t translate to Windows. What shipmates uses instead, and the delete-pending window that made an 8-way test fail only when the whole suite ran.</p>
+      <p>The Unix recipe for durable atomic file replacement doesn&#39;t translate to Windows. This is what shipmates uses instead, plus the delete-pending window that made an 8-way test fail only when the whole suite ran.</p>
     
   </div>
   <div class="meta">
@@ -233,11 +233,11 @@
     <img class="" src="/img/2026/09/ntfs-atomic-file-replacement-not-rename-fsync-cover.svg" alt="How long a losing concurrent replacer waits on NTFS, idle disk vs a disk under fsync load">
   </a>
     
-    <p><a href="https://github.com/luthermonson/shipmates">shipmates</a> writes a lot of small state files that other
-processes read: voyage plans and state, tracker files. Each of them has to be replaced atomically (a reader sees
-the old file or the new one, never half of each) and durably (when the function returns success, a power cut doesn&rsquo;t
-take it back). Every Unix programmer knows the recipe for that. It doesn&rsquo;t work on Windows, and the reasons are more
-interesting than &ldquo;Windows is different&rdquo;.</p>
+    <p><a href="https://github.com/luthermonson/shipmates">shipmates</a> writes a lot of small state files that other processes read.
+Voyage plans and state, tracker files. Each of them has to be replaced atomically, so a reader sees the old file or the
+new one and never half of each. Each also has to be replaced durably. When the function returns success, a power cut
+doesn&rsquo;t take it back. Every Unix programmer knows the recipe for that. It doesn&rsquo;t work on Windows, and the reasons are
+more interesting than &ldquo;Windows is different&rdquo;.</p>
   </div>
   <footer>
     <a href="/blog/2026/08/ntfs-atomic-file-replacement-not-rename-fsync/" class="button big">Read More</a>
@@ -300,10 +300,10 @@ interesting than &ldquo;Windows is different&rdquo;.</p>
     <img class="" src="/img/2026/08/windows-dynamic-disk-usb-wsl2-usbip-layout.svg" alt="GPT layout of the 1 TB drive with LDM metadata and a 930 GiB LDM data partition, and the two paths: the Windows storage stack refusing it and usbipd passing it to WSL2">
   </a>
     
-    <p>I pulled a 1 TB NVMe out of an old Windows box, dropped it in a USB enclosure, plugged it in, and Windows showed nothing.
-No drive letter, no &ldquo;initialize this disk&rdquo; prompt, nothing in Explorer. Disk Management listed it as <code>Invalid</code>, and the
-enclosure&rsquo;s booklet said to &ldquo;bring the disk online&rdquo;, which silently did nothing. The data was completely intact. Windows was
-refusing on <strong>policy</strong> grounds, not because anything was broken, and getting it back meant going around the&hellip;</p>
+    <p>I pulled a 1 TB NVMe out of an old Windows box, dropped it in a USB enclosure and plugged it in. Windows showed nothing.
+No drive letter, no &ldquo;initialize this disk&rdquo; prompt, nothing in Explorer. Disk Management listed it as <code>Invalid</code>. The
+enclosure&rsquo;s booklet said to &ldquo;bring the disk online&rdquo;, which silently did nothing. The data was completely intact. Windows
+was refusing on <strong>policy</strong> grounds, not because anything was broken. Getting it back meant going around the Windows&hellip;</p>
   </div>
   <footer>
     <a href="/blog/2026/08/windows-dynamic-disk-usb-wsl2-usbip/" class="button big">Read More</a>

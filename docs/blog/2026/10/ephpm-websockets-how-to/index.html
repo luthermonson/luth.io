@@ -10,14 +10,14 @@
     gtag('config', 'G-MSTSKGFWTX');
 </script><meta charset="utf-8">
 <title>WebSockets in ePHPm, From Zero to a Working Chat - Luther Monson</title>
-<meta name="description" content="How to run WebSockets in ePHPm with a single PHP file: turning them on, sharing the login session, pushing messages from normal HTTP requests, serving it over TLS, and the limits to know about.">
+<meta name="description" content="How to run WebSockets in ePHPm with a single PHP file. It covers turning them on, sharing the login session, pushing messages from normal HTTP requests, serving over TLS and the limits to know about.">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
 <meta name="twitter:card" content="summary_large_image"><meta name="twitter:site" content="@luthermonson">
 
 <meta property="og:site_name" content="Luther Monson">
 <meta property="og:title" content="WebSockets in ePHPm, From Zero to a Working Chat">
-<meta property="og:description" content="How to run WebSockets in ePHPm with a single PHP file: turning them on, sharing the login session, pushing messages from normal HTTP requests, serving it over TLS, and the limits to know about.">
+<meta property="og:description" content="How to run WebSockets in ePHPm with a single PHP file. It covers turning them on, sharing the login session, pushing messages from normal HTTP requests, serving over TLS and the limits to know about.">
 <meta property="og:type" content="article">
 <meta property="og:url" content="https://luth.io/blog/2026/10/ephpm-websockets-how-to/">
     <meta property="og:image" content="https://luth.io/img/2026/10/ephpm-websockets-how-to-cover.svg">
@@ -215,7 +215,7 @@
       <h2><a href="/blog/2026/10/ephpm-websockets-how-to/">WebSockets in ePHPm, From Zero to a Working Chat</a></h2>
     
     
-      <p>How to run WebSockets in ePHPm with a single PHP file: turning them on, sharing the login session, pushing messages from normal HTTP requests, serving it over TLS, and the limits to know about.</p>
+      <p>How to run WebSockets in ePHPm with a single PHP file. It covers turning them on, sharing the login session, pushing messages from normal HTTP requests, serving over TLS and the limits to know about.</p>
     
   </div>
   <div class="meta">
@@ -272,11 +272,11 @@
       </div>
       <div class="content">
         
-        <p>I covered the design of <a href="https://github.com/ephpm/ephpm">ePHPm</a>&rsquo;s native WebSockets in a few paragraphs of the
-<a href="/blog/2026/09/ephpm-smaller-angles/">odds and ends post</a>: Rust owns the socket, PHP runs once per event, and an idle
+        <p>I covered the design of <a href="https://github.com/ephpm/ephpm">ePHPm</a>&rsquo;s native WebSockets in a few paragraphs of the <a href="/blog/2026/09/ephpm-smaller-angles/">odds
+and ends post</a>. Rust owns the socket and PHP runs once per event. An idle
 connection never costs you a PHP thread. That was the why. This post is the how. We&rsquo;ll build a small chat app with
-login, per-user push notifications from ordinary HTTP requests, and a browser client. Then we&rsquo;ll serve it over TLS
-and look at the limits, the sharp edges, and how to debug it when the browser only tells you <code>1006</code>.</p>
+login, per-user push notifications from ordinary HTTP requests and a browser client. Then we&rsquo;ll serve it over TLS.
+Last come the limits, the sharp edges and how to debug it when the browser only tells you <code>1006</code>.</p>
 <p>Everything here runs on ePHPm v0.11.3 (the current release). I ran it on Windows and on Linux. The WebSocket code on
 <code>main</code> hasn&rsquo;t changed since that tag, so this is current. Every snippet below is the file I tested, and the
 transcripts are from those runs.</p>
@@ -290,21 +290,21 @@ transcripts are from those runs.</p>
 </span></span><span class="line"><span class="cl"><span class="p">[</span><span class="nx">server</span><span class="p">.</span><span class="nx">websocket</span><span class="p">]</span>
 </span></span><span class="line"><span class="cl"><span class="nx">enabled</span> <span class="p">=</span> <span class="kc">true</span>
 </span></span></code></pre></div><div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl">ephpm serve -c ephpm.toml
-</span></span></code></pre></div><p>With the feature on, an HTTP/1.1 <code>GET</code> with <code>Connection: Upgrade</code> and <code>Upgrade: websocket</code> takes a separate route. ePHPm looks
-for an entrypoint in the vhost&rsquo;s document root, <code>websocket.php</code> by default (<code>[server] websocket_files</code> changes the
-name, <code>index_files</code> style). If the file isn&rsquo;t there, every upgrade gets a 404. It never falls through to <code>index.php</code> or
-a static file. The URL path doesn&rsquo;t matter either: <code>/ws</code>, <code>/</code>, and <code>/chat/room-7</code> all run the same script, and the script
-can read the path and query string if it cares.</p>
+</span></span></code></pre></div><p>With the feature on, an HTTP/1.1 <code>GET</code> with <code>Connection: Upgrade</code> and <code>Upgrade: websocket</code> takes a separate route.
+ePHPm looks for an entrypoint in the vhost&rsquo;s document root, <code>websocket.php</code> by default. <code>[server] websocket_files</code>
+changes the name, <code>index_files</code> style. If the file isn&rsquo;t there, every upgrade gets a 404. It never falls through to
+<code>index.php</code> or a static file. The URL path doesn&rsquo;t matter either. <code>/ws</code>, <code>/</code> and <code>/chat/room-7</code> all run the same
+script. The script can read the path and query string if it cares.</p>
 <p>Two startup checks are worth knowing. <code>[php] mode = &quot;worker&quot;</code> together with WebSockets is a hard config error, because
 worker mode never runs the entrypoint. Use the default per-request mode. And an empty <code>websocket_files</code> with the
 feature enabled is also an error rather than a silent 404 machine.</p>
 <h3 id="one-script-three-events">One script, three events</h3>
-<p>Everything goes through one file. ePHPm sets <code>$_SERVER['WS_EVENT']</code> to <code>connect</code>, <code>message</code> or <code>disconnect</code>, and
+<p>Everything goes through one file. ePHPm sets <code>$_SERVER['WS_EVENT']</code> to <code>connect</code>, <code>message</code> or <code>disconnect</code>. It sets
 <code>$_SERVER['WS_CONNECTION_ID']</code> to 32 hex characters (128 random bits). On <code>message</code> it also sets <code>WS_OPCODE</code> (<code>text</code>
-or <code>binary</code>), and the frame payload is the request body, so you read it with <code>php://input</code>.</p>
+or <code>binary</code>). The frame payload is the request body, so you read it with <code>php://input</code>.</p>
 <p>The part that makes this pleasant is that every event is an ordinary PHP request on the normal request path. The
 upgrade request&rsquo;s URI, query string, headers and cookies are replayed on every event. <code>$_COOKIE</code>, <code>$_GET</code> and
-<code>$_SERVER['HTTP_*']</code> in a <code>message</code> handler look exactly like they did at <code>connect</code>, so your session works.</p>
+<code>$_SERVER['HTTP_*']</code> in a <code>message</code> handler look exactly like they did at <code>connect</code>. So your session works.</p>
 <p>Here&rsquo;s the whole server side of the chat:</p>
 <div class="highlight"><pre tabindex="0" class="chroma"><code class="language-php" data-lang="php"><span class="line"><span class="cl"><span class="o">&lt;?</span><span class="nx">php</span>
 </span></span><span class="line"><span class="cl"><span class="c1">// public/websocket.php: one script, three events.
@@ -358,21 +358,21 @@ upgrade request&rsquo;s URI, query string, headers and cookies are replayed on e
 </span></span><span class="line"><span class="cl"><span class="p">}</span>
 </span></span></code></pre></div><p>There are a few things here you can&rsquo;t get from reading the function list.</p>
 <p><strong><code>connect</code> runs before the handshake finishes.</strong> It runs on the real upgrade request, and its status code decides the
-upgrade. A 2xx gets a <code>101 Switching Protocols</code>. Anything else goes back to the client verbatim, status, headers and
-body, and no socket is ever created. This is the only place you can refuse a connection, so auth goes here.</p>
+upgrade. A 2xx gets a <code>101 Switching Protocols</code>. Any other status goes back to the client verbatim with its headers and
+body. No socket is ever created. This is the only place you can refuse a connection, so auth goes here.</p>
 <p><strong>The connection is live during <code>connect</code>.</strong> It&rsquo;s registered before your script runs, so you can subscribe it to
 channels and even queue a welcome frame. The frame goes out right after the 101.</p>
 <p><strong>Output from <code>message</code> and <code>disconnect</code> goes nowhere.</strong> The response from those events is discarded. An <code>echo</code> in a
 message handler doesn&rsquo;t reach the client. I checked: a handler that only <code>echo</code>es sends nothing. To reply, call
 <code>ephpm_ws_send()</code>. The same goes for headers. On a successful <code>connect</code> the 101 is built fresh, so a <code>Set-Cookie</code> or
 <code>session_regenerate_id()</code> there doesn&rsquo;t reach the browser. Log people in over plain HTTP.</p>
-<p><strong>Check <code>Origin</code>.</strong> Browsers send cookies on a WebSocket upgrade from any site, and the same-origin policy doesn&rsquo;t
-apply to WebSockets. If your auth is a cookie, any page the user visits can open a socket as them unless you check
-<code>Origin</code>. ePHPm doesn&rsquo;t do this for you. The check above compares against the request&rsquo;s own scheme and host, which
-is right for a same-origin app.</p>
+<p><strong>Check <code>Origin</code>.</strong> Browsers send cookies on a WebSocket upgrade from any site. The same-origin policy doesn&rsquo;t apply to
+WebSockets. If your auth is a cookie, any page the user visits can open a socket as them unless you check <code>Origin</code>.
+ePHPm doesn&rsquo;t do this for you. The check above compares against the request&rsquo;s own scheme and host. That&rsquo;s right for a
+same-origin app.</p>
 <p><strong>Use <code>read_and_close</code>.</strong> Every message is a full request, and PHP&rsquo;s file sessions lock. Opening the session read-only
 means a chatty socket can&rsquo;t block the same user&rsquo;s page loads. I only call <code>session_start()</code> when there&rsquo;s a session
-cookie, so anonymous upgrade attempts don&rsquo;t create empty sessions.</p>
+cookie. That way anonymous upgrade attempts don&rsquo;t create empty sessions.</p>
 <p><strong>Messages from one socket run strictly in order.</strong> The socket isn&rsquo;t read again until the handler returns. Messages
 from different sockets run in parallel on the PHP thread pool.</p>
 <h3 id="logging-in-and-pushing-from-http">Logging in and pushing from HTTP</h3>
@@ -386,10 +386,10 @@ from different sockets run in parallel on the PHP thread pool.</p>
 </span></span><span class="line"><span class="cl"><span class="nv">$_SESSION</span><span class="p">[</span><span class="s1">&#39;user&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="nv">$name</span><span class="p">;</span>
 </span></span><span class="line"><span class="cl"><span class="k">echo</span> <span class="s2">&#34;logged in as </span><span class="si">$name\n</span><span class="s2">&#34;</span><span class="p">;</span>
 </span></span></code></pre></div><p>The feature that sold me on this model is that any PHP execution can push to a socket, not just a WebSocket event.
-Your &ldquo;order shipped&rdquo; handler, a cron script, a webhook receiver: all of them can reach a connected browser. The guide
-suggests storing the connection id in <code>ephpm_kv_*</code> under the user id. I went another way and subscribe each connection to
-a <code>user:&lt;name&gt;</code> channel at connect time. That handles several tabs per user for free, and nothing needs cleaning up at
-<code>disconnect</code>, because the registry drops a closed connection from every channel itself.</p>
+Your &ldquo;order shipped&rdquo; handler, a cron script and a webhook receiver can all reach a connected browser. The guide
+suggests storing the connection id in <code>ephpm_kv_*</code> under the user id. I went another way and subscribe each connection
+to a <code>user:&lt;name&gt;</code> channel at connect time. That handles several tabs per user for free. Nothing needs cleaning up at
+<code>disconnect</code> either, because the registry drops a closed connection from every channel itself.</p>
 <div class="highlight"><pre tabindex="0" class="chroma"><code class="language-php" data-lang="php"><span class="line"><span class="cl"><span class="o">&lt;?</span><span class="nx">php</span>
 </span></span><span class="line"><span class="cl"><span class="c1">// POST /notify.php user=alice text=... : an ordinary HTTP request pushing
 </span></span></span><span class="line"><span class="cl"><span class="c1">// to every socket that user has open. In a real app this is your
@@ -405,16 +405,16 @@ a <code>user:&lt;name&gt;</code> channel at connect time. That handles several t
 </span></span><span class="line"><span class="cl"><span class="nx">header</span><span class="p">(</span><span class="s1">&#39;Content-Type: application/json&#39;</span><span class="p">);</span>
 </span></span><span class="line"><span class="cl"><span class="k">echo</span> <span class="nx">json_encode</span><span class="p">([</span><span class="s1">&#39;queued_to&#39;</span> <span class="o">=&gt;</span> <span class="nv">$sent</span><span class="p">]),</span> <span class="s2">&#34;</span><span class="se">\n</span><span class="s2">&#34;</span><span class="p">;</span>
 </span></span></code></pre></div><p><code>ephpm_ws_broadcast()</code> returns how many connections the frame was queued to. That&rsquo;s queued, not delivered.
-<code>ephpm_ws_connection_send($id, ...)</code> does the same for one connection id. The implicit forms, <code>ephpm_ws_send()</code> and
-<code>ephpm_ws_close()</code>, mean &ldquo;the connection that fired this event&rdquo;. Call one from a plain HTTP request and it throws
+<code>ephpm_ws_connection_send($id, ...)</code> does the same for one connection id. The implicit forms are <code>ephpm_ws_send()</code> and
+<code>ephpm_ws_close()</code>. They mean &ldquo;the connection that fired this event&rdquo;. Call one from a plain HTTP request and it throws
 instead of quietly doing nothing:</p>
 <div class="highlight"><pre tabindex="0" class="chroma"><code class="language-text" data-lang="text"><span class="line"><span class="cl">Exception: ephpm_ws: no current websocket connection. The implicit form is only valid inside a
 </span></span><span class="line"><span class="cl">websocket event; from an ordinary HTTP request use the ephpm_ws_connection_*() form with an
 </span></span><span class="line"><span class="cl">explicit connection id
-</span></span></code></pre></div><p>The rule is consistent: <code>false</code> means the connection couldn&rsquo;t be reached (gone, another site&rsquo;s, or its queue is
-full), and an exception means the call could never have worked. Connection ids and channel names are scoped to the
-vhost, so on a multi-tenant node, <code>lobby</code> on one site isn&rsquo;t <code>lobby</code> on another, and a leaked id from site A is useless
-to site B.</p>
+</span></span></code></pre></div><p>The rule is consistent. <code>false</code> means the connection couldn&rsquo;t be reached. It&rsquo;s gone, it&rsquo;s another site&rsquo;s, or its queue
+is full. An exception means the call could never have worked. Connection ids and channel names are scoped to the
+vhost. On a multi-tenant node, <code>lobby</code> on one site isn&rsquo;t <code>lobby</code> on another. A leaked id from site A is useless to
+site B.</p>
 <h3 id="the-browser-side">The browser side</h3>
 <p>Nothing ePHPm-specific here, which is the point. One thing to watch: the reconnect.</p>
 <div class="highlight"><pre tabindex="0" class="chroma"><code class="language-html" data-lang="html"><span class="line"><span class="cl"><span class="cp">&lt;!doctype html&gt;</span>
@@ -451,14 +451,15 @@ to site B.</p>
 </span></span><span class="line"><span class="cl"><span class="p">};</span>
 </span></span><span class="line"><span class="cl"><span class="nx">connect</span><span class="p">();</span>
 </span></span><span class="line"><span class="cl"><span class="p">&lt;/</span><span class="nt">script</span><span class="p">&gt;</span>
-</span></span></code></pre></div><p>Reconnecting with backoff isn&rsquo;t optional. Graceful shutdown doesn&rsquo;t drain WebSockets, a restart drops every socket,
-and a slow reader gets shed (more on that below). I drove this page in headless Edge. Before logging in, the log shows
+</span></span></code></pre></div><p>Reconnecting with backoff isn&rsquo;t optional. Graceful shutdown doesn&rsquo;t drain WebSockets, and a restart drops every socket.
+A slow reader gets shed too (more on that below). I drove this page in headless Edge. Before logging in, the log shows
 <code>closed 1006 | closed 1006</code>. After a <code>fetch('/login.php')</code> and a reload, it shows
 <code>connected | * welcome, carol | carol: hello from a browser</code>.</p>
 <p>Don&rsquo;t pass a subprotocol (<code>new WebSocket(url, ['chat.v1'])</code>). ePHPm never sends <code>Sec-WebSocket-Protocol</code> back, and
 a browser that asked for one fails the handshake. Edge closed with 1006 in my test. Put versioning in the URL or the
 first message instead.</p>
-<p>Here&rsquo;s an excerpt of the run from a Go test client that does what two browsers would. It was the same on Windows and Linux:</p>
+<p>Here&rsquo;s an excerpt of the run from a Go test client that does what two browsers would. It was the same on Windows and
+Linux:</p>
 <div class="highlight"><pre tabindex="0" class="chroma"><code class="language-text" data-lang="text"><span class="line"><span class="cl">[anon] dial refused: 401 Unauthorized body=&#34;log in first&#34;
 </span></span><span class="line"><span class="cl">[evil-origin] dial refused: 403 Forbidden body=&#34;bad origin&#34;
 </span></span><span class="line"><span class="cl">[alice] connected: 101 Switching Protocols subprotocol=&#34;&#34;
@@ -474,13 +475,13 @@ first message instead.</p>
 </span></span><span class="line"><span class="cl">[bob-tab2] &lt;- {&#34;type&#34;:&#34;notice&#34;,&#34;text&#34;:&#34;your build finished&#34;}
 </span></span></code></pre></div><h3 id="wss">wss://</h3>
 <p>ePHPm terminates TLS itself, so there&rsquo;s nothing extra to set up. <code>wss://</code> is served by the same listener as
-<code>https://</code>, and <code>$_SERVER['HTTPS']</code> is set for the events, so the origin check above works unchanged:</p>
+<code>https://</code>. <code>$_SERVER['HTTPS']</code> is set for the events, so the origin check above works unchanged:</p>
 <div class="highlight"><pre tabindex="0" class="chroma"><code class="language-toml" data-lang="toml"><span class="line"><span class="cl"><span class="p">[</span><span class="nx">server</span><span class="p">.</span><span class="nx">tls</span><span class="p">]</span>
 </span></span><span class="line"><span class="cl"><span class="nx">cert</span> <span class="p">=</span> <span class="s2">&#34;/etc/ephpm/cert.pem&#34;</span>
 </span></span><span class="line"><span class="cl"><span class="nx">key</span>  <span class="p">=</span> <span class="s2">&#34;/etc/ephpm/key.pem&#34;</span>
 </span></span><span class="line"><span class="cl"><span class="nx">listen</span> <span class="p">=</span> <span class="s2">&#34;0.0.0.0:443&#34;</span>
-</span></span></code></pre></div><p>Upgrades are HTTP/1.1 only. RFC 8441 (WebSockets over HTTP/2) isn&rsquo;t implemented, which browsers handle fine: they
-open a separate HTTP/1.1 connection for <code>wss:</code> when the server doesn&rsquo;t offer it over h2.</p>
+</span></span></code></pre></div><p>Upgrades are HTTP/1.1 only. RFC 8441 (WebSockets over HTTP/2) isn&rsquo;t implemented. Browsers handle that fine. They open
+a separate HTTP/1.1 connection for <code>wss:</code> when the server doesn&rsquo;t offer it over h2.</p>
 <h3 id="limits-and-backpressure">Limits and backpressure</h3>
 <p>Every bound has a default under <code>[server.websocket]</code>:</p>
 <table>
@@ -523,37 +524,37 @@ open a separate HTTP/1.1 connection for <code>wss:</code> when the server doesn&
 1000 sockets, not 10000. My benchmark&rsquo;s 1001st connection got a 503 and the log said
 <code>websocket connection limit reached for this site</code>. If you run one app on a box, raise or zero
 <code>max_connections_per_site</code>. There are also fixed limits of 64 channels per connection and 256-byte channel names.</p>
-<p>Backpressure is the part I like best. When a client stops reading, its 64-frame queue fills, and the next send isn&rsquo;t
-buffered. It returns <code>false</code>, the broadcast doesn&rsquo;t count that subscriber, and the socket is closed with 1013 (Try
-Again Later). The close jumps ahead of the backlog. To see it, I connected a client that never reads and broadcast
-1000 frames of 60 KB at it from one HTTP request:</p>
+<p>Backpressure is the part I like best. When a client stops reading, its 64-frame queue fills. The next send isn&rsquo;t
+buffered. It returns <code>false</code>, and the broadcast doesn&rsquo;t count that subscriber. The socket is closed with 1013 (Try
+Again Later), and the close jumps ahead of the backlog. To see it, I connected a client that never reads. Then I
+broadcast 1000 frames of 60 KB at it from one HTTP request:</p>
 <div class="highlight"><pre tabindex="0" class="chroma"><code class="language-text" data-lang="text"><span class="line"><span class="cl">GET /flood.php (1000 x 60 KB) -&gt; accepted=109 refused=891
 </span></span><span class="line"><span class="cl">drained 45 data frames, then close code 1013
 </span></span></code></pre></div><p>That&rsquo;s Linux. Windows accepted 70 and delivered 6 before the 1013. The exact numbers depend on how much the kernel&rsquo;s
-socket buffers absorb, but the shape is the point: one slow reader costs one connection, never the server&rsquo;s memory.
-An oversized payload is different. It returns <code>false</code> but doesn&rsquo;t shed the connection, because that&rsquo;s your bug, not the
+socket buffers absorb. The shape is the point: one slow reader costs one connection, never the server&rsquo;s memory. An
+oversized payload is different. It returns <code>false</code> but doesn&rsquo;t shed the connection, because that&rsquo;s your bug, not the
 peer&rsquo;s.</p>
 <h3 id="what-isnt-there">What isn&rsquo;t there</h3>
 <ul>
 <li><strong>No cross-node fan-out.</strong> The registry lives in one process. In an ePHPm cluster, a broadcast reaches sockets on
-the node that ran it and nowhere else. If you run more than one node, either pin WebSocket traffic to one, or
-relay the push yourself.</li>
-<li><strong>No worker mode</strong> (startup error), <strong>no subprotocol negotiation</strong>, <strong>no per-message compression</strong>, and <strong>no
-HTTP/2 or HTTP/3 upgrades</strong>.</li>
+the node that ran it and nowhere else. If you run more than one node, either pin WebSocket traffic to one or relay
+the push yourself.</li>
+<li><strong>No worker mode</strong> (startup error), <strong>no subprotocol negotiation</strong>, <strong>no per-message compression</strong>, and <strong>no HTTP/2
+or HTTP/3 upgrades</strong>.</li>
 <li><strong><code>disconnect</code> is best-effort.</strong> If the process dies, it never runs. Treat it as a cleanup hint and put a TTL on
 anything you write at <code>connect</code>.</li>
 <li><strong>Graceful shutdown doesn&rsquo;t wait for sockets.</strong> Clients have to reconnect, which is what the backoff above is for.</li>
 <li><strong>Slow handlers.</strong> A <code>message</code> handler that runs past <code>[server.timeouts] request</code> is supposed to close its socket
-with 1011, so a second message can&rsquo;t run alongside the stuck one. In practice the PHP pool has its own timeout of
-the same length. When it fires first, the stuck thread is abandoned, the event gets an internal 504, and the socket
-stays open. In my tests (request timeout 2 s, handler <code>sleep(5)</code>, then a second message) the second message was
-answered at 2.0 s, while the first handler was still sleeping, on 6 of 8 Linux runs. The other 2 got the 1011.
-On Windows the socket stayed open in all four of my runs. Keep handlers short and send slow work to a job queue that pushes back with
-<code>ephpm_ws_broadcast()</code> when it&rsquo;s done.</li>
+with 1011. That way a second message can&rsquo;t run alongside the stuck one. In practice the PHP pool has its own timeout
+of the same length. When it fires first, the stuck thread is abandoned and the event gets an internal 504. The
+socket stays open. My tests used a request timeout of 2 s, a handler that does <code>sleep(5)</code>, then a second message. On
+6 of 8 Linux runs the second message was answered at 2.0 s, while the first handler was still sleeping. The other 2
+got the 1011. On Windows the socket stayed open in all four of my runs. Keep handlers short. Send slow work to a job
+queue that pushes back with <code>ephpm_ws_broadcast()</code> when it&rsquo;s done.</li>
 </ul>
 <h3 id="debugging">Debugging</h3>
-<p>The browser hides almost everything. A refused upgrade shows up as <code>close 1006</code> with no status, so use curl to
-see what <code>connect</code> said:</p>
+<p>The browser hides almost everything. A refused upgrade shows up as <code>close 1006</code> with no status. Use curl to see what
+<code>connect</code> said:</p>
 <div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl">curl -i -H <span class="s1">&#39;Connection: Upgrade&#39;</span> -H <span class="s1">&#39;Upgrade: websocket&#39;</span> <span class="se">\
 </span></span></span><span class="line"><span class="cl">     -H <span class="s1">&#39;Sec-WebSocket-Version: 13&#39;</span> -H <span class="s1">&#39;Sec-WebSocket-Key: dGhlIHNhbXBsZSBub25jZQ==&#39;</span> <span class="se">\
 </span></span></span><span class="line"><span class="cl">     -H <span class="s1">&#39;Origin: http://localhost:8080&#39;</span> http://localhost:8080/ws
@@ -570,39 +571,48 @@ A 400 <code>Bad WebSocket Handshake</code> means a missing key or a version othe
 <li><strong>Restart after editing PHP.</strong> <code>ephpm serve</code> turns OPcache timestamp validation off and says so at startup. If
 your change to <code>websocket.php</code> doesn&rsquo;t seem to do anything, it isn&rsquo;t loaded yet.</li>
 <li><strong><code>error_log()</code> goes to the ePHPm log.</strong> My <code>disconnect</code> lines showed up there as <code>[PHP] ws: bob left (...)</code>.</li>
-<li><strong><code>ephpm serve -v</code></strong> logs why an upgrade was refused (no entrypoint, no tenant, capacity) and when a
+<li><strong><code>ephpm serve -v</code></strong> logs why an upgrade was refused (no entrypoint, no tenant, capacity). It also logs when a
 connection is established or closed for being idle.</li>
-<li><strong>Metrics.</strong> With <code>[server.metrics] enabled = true</code>, alert on <code>ephpm_ws_send_queue_overflow_total</code> (clients
-being shed) and <code>ephpm_ws_cross_site_denied_total</code>, which should stay at zero.</li>
+<li><strong>Metrics.</strong> With <code>[server.metrics] enabled = true</code>, alert on <code>ephpm_ws_send_queue_overflow_total</code>, which counts
+clients being shed. Also alert on <code>ephpm_ws_cross_site_denied_total</code>, which should stay at zero.</li>
 </ul>
 <h3 id="how-i-measured">How I measured</h3>
-<p>The claim that an idle socket costs no PHP is easy to make, so I measured what it does cost. The setup: the Linux
-v0.11.3 release binary (PHP 8.4.23) on WSL2 (kernel 6.18), an AMD Ryzen 9 5950X (16 cores, 32 threads), and a Go
-client using gorilla/websocket on the same machine. <code>websocket.php</code> subscribes every connection to one channel at
-<code>connect</code> and does nothing else. The config raised <code>max_connections</code> to 20000 and set <code>max_connections_per_site = 0</code>.
-The client opens connections in steps (64 dials in flight), waits 3 seconds, reads <code>VmRSS</code> from <code>/proc/&lt;pid&gt;/status</code>, then does 20
-rounds of a <code>GET /bcast.php</code> that calls <code>ephpm_ws_broadcast()</code> with a 100-byte payload carrying the send timestamp.
-For each round I record how long until the last socket had the frame. I did two full runs.</p>
+<p>The claim that an idle socket costs no PHP is easy to make, so I measured what it does cost. The setup:</p>
+<ul>
+<li>the Linux v0.11.3 release binary (PHP 8.4.23) on WSL2 (kernel 6.18)</li>
+<li>an AMD Ryzen 9 5950X (16 cores, 32 threads)</li>
+<li>a Go client using gorilla/websocket on the same machine</li>
+</ul>
+<p><code>websocket.php</code> subscribes every connection to one channel at <code>connect</code> and does nothing else. The config raised
+<code>max_connections</code> to 20000 and set <code>max_connections_per_site = 0</code>. The client opens connections in steps, with 64
+dials in flight. At each step it waits 3 seconds and reads <code>VmRSS</code> from <code>/proc/&lt;pid&gt;/status</code>. Then it does 20 rounds
+of a <code>GET /bcast.php</code> that calls <code>ephpm_ws_broadcast()</code> with a 100-byte payload carrying the send timestamp. For each
+round I record how long until the last socket had the frame. I did two full runs.</p>
 <p><img src="/img/2026/10/ephpm-websockets-how-to-memory.svg" alt="Server RSS vs idle WebSocket connections"></p>
-<p>The jump from 72 MiB to 150 MiB at the first 100 connections is the PHP thread pool waking up to run their
-<code>connect</code> events, not the sockets. After that the growth is a straight line. From 1,000 to 15,000 connections, RSS
+<p>The jump from 72 MiB to 150 MiB at the first 100 connections isn&rsquo;t the sockets. It&rsquo;s the PHP thread pool waking up to
+run their <code>connect</code> events. After that the growth is a straight line. From 1,000 to 15,000 connections, RSS
 went from 180 to 713 MiB on run 1 and from 178 to 711 MiB on run 2. That&rsquo;s 38 to 39 KB per idle connection in
 userspace, with no PHP thread held. Opening 5,000 more connections, each running a PHP <code>connect</code>, took 0.7 s.</p>
 <p><img src="/img/2026/10/ephpm-websockets-how-to-fanout.svg" alt="Broadcast fan-out time vs connections"></p>
-<p>The fan-out is linear too. The median time until all subscribers had the frame was 5.0 ms at 1,000 connections,
-11 ms at 5,000, 21 to 22 ms at 10,000 and 30 to 31 ms at 15,000. The worst of 20 rounds at 15,000 was 44 ms. Almost
-all of it is the <code>ephpm_ws_broadcast()</code> call itself, enqueueing one frame per subscriber (about 2 µs each), and
-delivery overlaps the loop. Everything ran on one machine over loopback, so treat these as the server&rsquo;s own cost,
-not what users on a real network will see.</p>
-<p>The functional tests ran on Windows 11 with the Windows build of the same release, plus Linux for the
-TLS runs. Everything in this post behaved the same on both, apart from the queue counts noted above and the
-slow-handler race.</p>
+<p>The fan-out is linear too. Here&rsquo;s the median time until all subscribers had the frame:</p>
+<ul>
+<li>5.0 ms at 1,000 connections</li>
+<li>11 ms at 5,000</li>
+<li>21 to 22 ms at 10,000</li>
+<li>30 to 31 ms at 15,000</li>
+</ul>
+<p>The worst of 20 rounds at 15,000 was 44 ms. Almost all of it is the <code>ephpm_ws_broadcast()</code> call itself. It enqueues
+one frame per subscriber, at about 2 µs each, and delivery overlaps the loop. Everything ran on one machine over
+loopback. Treat these as the server&rsquo;s own cost, not what users on a real network will see.</p>
+<p>The functional tests ran on Windows 11 with the Windows build of the same release. The TLS runs were on Linux.
+Everything in this post behaved the same on both, apart from the queue counts noted above and the slow-handler race.</p>
 <h3 id="links">Links</h3>
 <ul>
 <li><a href="https://github.com/ephpm/ephpm/pull/304">Native WebSockets: ephpm #304</a>, with follow-ups
 <a href="https://github.com/ephpm/ephpm/pull/318">#318</a> (Windows FFI fix) and
 <a href="https://github.com/ephpm/ephpm/pull/310">#310</a> (backpressure e2e coverage)</li>
-<li>Source: <a href="https://github.com/ephpm/ephpm/blob/main/crates/ephpm-server/src/websocket.rs"><code>crates/ephpm-server/src/websocket.rs</code></a>,
+<li>Source:
+<a href="https://github.com/ephpm/ephpm/blob/main/crates/ephpm-server/src/websocket.rs"><code>crates/ephpm-server/src/websocket.rs</code></a>,
 <a href="https://github.com/ephpm/ephpm/blob/main/crates/ephpm-ws/src/registry.rs"><code>crates/ephpm-ws/src/registry.rs</code></a>,
 <a href="https://github.com/ephpm/ephpm/blob/main/crates/ephpm-e2e/tests/websockets.rs"><code>crates/ephpm-e2e/tests/websockets.rs</code></a></li>
 <li><a href="https://github.com/ephpm/ephpm/blob/main/site/content/guides/websockets.md">ePHPm WebSockets guide</a></li>

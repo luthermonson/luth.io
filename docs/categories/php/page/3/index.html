@@ -233,9 +233,9 @@
     <img class="" src="/img/2026/08/libxml2-214-php-windows-def-missing-symbols.svg" alt="Bar chart: legacy php_libxml2.def entries missing from libxml2 headers - 0 for 2.11.9 and 2.13.0, 294 for 2.14.0 and 2.15.0">
   </a>
     
-    <p>Back in April I was getting the embed SAPI building on Windows through my fork of
-<a href="https://github.com/crazywhalecc/static-php-cli">static-php-cli</a> (SPC) for <a href="https://github.com/ephpm/ephpm">ePHPm</a>, and the
-link step for <code>php8ts.dll</code> fell over with a wall of errors that all looked like this:</p>
+    <p>Back in April I was getting the embed SAPI building on Windows for <a href="https://github.com/ephpm/ephpm">ePHPm</a>. I was
+using my fork of <a href="https://github.com/crazywhalecc/static-php-cli">static-php-cli</a> (SPC). The link step for
+<code>php8ts.dll</code> fell over with a wall of errors that all looked like this:</p>
   </div>
   <footer>
     <a href="/blog/2026/08/libxml2-2-14-broke-php-windows-builds/" class="button big">Read More</a>
@@ -298,10 +298,10 @@ link step for <code>php8ts.dll</code> fell over with a wall of errors that all l
     <img class="" src="/img/2026/08/building-a-custom-php-sapi-cover.svg" alt="Table mapping PHP operations like echo, header(), $_POST, $_COOKIE and $_SERVER to SAPI callbacks and to the Rust side of ePHPm">
   </a>
     
-    <p>If you&rsquo;ve only ever run PHP behind nginx you&rsquo;ve probably never had to think about how <code>echo</code> reaches a socket. When you
-embed PHP, as <a href="https://github.com/ephpm/ephpm">ePHPm</a> does, it&rsquo;s the first thing you have to answer, and the answer is a
-SAPI. There is very little written about implementing one. Most of what I know came from reading <code>sapi/cli</code>,
-<code>sapi/cgi</code> and <code>sapi/embed</code> in php-src and then finding out which parts I&rsquo;d misread. This is the write-up I wanted back
+    <p>If you&rsquo;ve only ever run PHP behind nginx, you&rsquo;ve probably never had to think about how <code>echo</code> reaches a socket. When
+you embed PHP like <a href="https://github.com/ephpm/ephpm">ePHPm</a> does, it&rsquo;s the first thing you have to answer. The answer
+is a SAPI. There is very little written about implementing one. Most of what I know came from reading <code>sapi/cli</code>,
+<code>sapi/cgi</code> and <code>sapi/embed</code> in php-src. Then I found out which parts I&rsquo;d misread. This is the write-up I wanted back
 in March.</p>
   </div>
   <footer>
@@ -369,7 +369,7 @@ in March.</p>
     
     <p>One of the first things that broke when I started building PHP on Windows with
 <a href="https://github.com/crazywhalecc/static-php-cli">static-php-cli</a> (SPC) wasn&rsquo;t PHP at all. It was unpacking the source
-tarballs. libxml2, xz, a couple of others would die partway through extraction with:</p>
+tarballs. libxml2, xz and a couple of others would die partway through extraction with:</p>
   </div>
   <footer>
     <a href="/blog/2026/07/spc-windows-archive-extraction/" class="button big">Read More</a>
@@ -434,8 +434,8 @@ tarballs. libxml2, xz, a couple of others would die partway through extraction w
     
     <p><a href="https://github.com/ephpm/ephpm">ePHPm</a> tagged <a href="https://github.com/ephpm/ephpm/releases/tag/v0.1.0">v0.1.0</a> this
 week, three months after the first commit. Before the feature list grows any further I want to write down how
-decisions get made on it, mostly for myself, because the easiest way to ruin a project like this is to let it turn into
-a checklist of things other projects have.</p>
+decisions get made on it. This is mostly for myself. The easiest way to ruin a project like this is to let it turn
+into a checklist of things other projects have.</p>
   </div>
   <footer>
     <a href="/blog/2026/06/ephpm-pragmatism/" class="button big">Read More</a>
@@ -500,8 +500,8 @@ a checklist of things other projects have.</p>
     
     <p>Last week I wrote about <a href="/blog/2026/04/why-rust-for-php-embedding/">why ePHPm embeds PHP from Rust</a> and promised the
 signal bug its own post. Here it is. It&rsquo;s the kind of bug where the fix is about ten lines and the explanation is the
-whole post, because nothing in PHP&rsquo;s embed documentation (there&rsquo;s barely any) tells you that initializing PHP has
-process-wide side effects that assume PHP is the only thing in the process.</p>
+whole post. Nothing in PHP&rsquo;s embed documentation (there&rsquo;s barely any) tells you that initializing PHP has
+process-wide side effects. Those side effects assume PHP is the only thing in the process.</p>
   </div>
   <footer>
     <a href="/blog/2026/04/php-signal-safety-init-ordering/" class="button big">Read More</a>
@@ -568,11 +568,11 @@ process-wide side effects that assume PHP is the only thing in the process.</p>
     <img class="" src="/img/2026/04/why-rust-for-php-embedding-cover.svg" alt="Diagram of a request flowing from hyper/tokio through a Rust blocking thread, a C wrapper with setjmp, and libphp, with SAPI callbacks writing into thread-local C buffers">
   </a>
     
-    <p>Go is my primary language and has been for a long time, so when I started building <a href="https://github.com/ephpm/ephpm">ePHPm</a>
-a few weeks ago the obvious move was to write it in Go. ePHPm is a PHP application server: one binary that embeds the
-real PHP interpreter (<code>libphp</code>, the Zend engine) and puts an HTTP server, TLS, a KV cache and a database proxy around it,
-so a PHP app doesn&rsquo;t need nginx + php-fpm + Redis to run. <a href="https://frankenphp.dev/">FrankenPHP</a> already proved the
-&ldquo;PHP inside a Go web server&rdquo; idea works, and it works well. I wrote&hellip;</p>
+    <p>Go is my primary language and has been for a long time. When I started building <a href="https://github.com/ephpm/ephpm">ePHPm</a>
+a few weeks ago the obvious move was to write it in Go. ePHPm is a PHP application server. It&rsquo;s one binary that embeds
+the real PHP interpreter (<code>libphp</code>, the Zend engine) and puts an HTTP server, TLS, a KV cache and a database proxy
+around it. A PHP app doesn&rsquo;t need nginx + php-fpm + Redis to run. <a href="https://frankenphp.dev/">FrankenPHP</a> already proved
+the &ldquo;PHP inside a Go web server&rdquo; idea works, and it works well. I&hellip;</p>
   </div>
   <footer>
     <a href="/blog/2026/04/why-rust-for-php-embedding/" class="button big">Read More</a>

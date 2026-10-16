@@ -233,11 +233,11 @@
     <img class="" src="/img/2026/09/calling-rust-from-php-without-a-socket-part-1-cover.svg" alt="Two paths from PHP to the ePHPm KV store: over a RESP socket, or through a native function and a function pointer table">
   </a>
     
-    <p><a href="https://github.com/ephpm/ephpm">ePHPm</a> is a single Rust binary that embeds PHP, and it carries its own KV store and its
-own SQLite-backed database in the same process. For a long time the only way PHP code could reach that KV store was the
-same way it reaches Redis: open a TCP socket to the RESP listener ePHPm runs on localhost, encode a command, wait for the
-reply. That works, and every PHP Redis client in existence already speaks it, but it is a strange thing to do when the
-hash map you&rsquo;re talking to lives a few&hellip;</p>
+    <p><a href="https://github.com/ephpm/ephpm">ePHPm</a> is a single Rust binary that embeds PHP. It carries its own KV store and its own
+SQLite-backed database in the same process. For a long time PHP code could only reach that KV store the same way it
+reaches Redis. It opened a TCP socket to the RESP listener ePHPm runs on localhost, encoded a command and waited for the
+reply. That works, and every PHP Redis client in existence already speaks it. But it is a strange thing to do when the
+hash map you&rsquo;re talking to lives a few pointers&hellip;</p>
   </div>
   <footer>
     <a href="/blog/2026/09/calling-rust-from-php-without-a-socket-part-1/" class="button big">Read More</a>
@@ -306,9 +306,9 @@ hash map you&rsquo;re talking to lives a few&hellip;</p>
     
     <p><a href="https://github.com/ephpm/ephpm">ePHPm</a> middleware runs <em>before</em> PHP. It&rsquo;s a small versioned C ABI, loaded with
 <code>dlopen</code>, that gets to look at a request and reject it before PHP boots or the request body is read. That&rsquo;s the
-right shape for a gateway, and it&rsquo;s the wrong shape for most PHP shops, who want to write their middleware in PHP.
-This is the story of compiling PHP into a native <code>.so</code> to fit that ABI, finding exactly where it broke, and then
-building the lane that should have existed in the first place.</p>
+right shape for a gateway. It&rsquo;s the wrong shape for most PHP shops, who want to write their middleware in PHP. This is
+the story of compiling PHP into a native <code>.so</code> to fit that ABI and finding exactly where it broke. Then I built the lane
+that should have existed in the first place.</p>
   </div>
   <footer>
     <a href="/blog/2026/08/php-middleware-elephc/" class="button big">Read More</a>
@@ -373,11 +373,11 @@ building the lane that should have existed in the first place.</p>
     <img class="" src="/img/2026/04/why-rust-for-php-embedding-cover.svg" alt="Diagram of a request flowing from hyper/tokio through a Rust blocking thread, a C wrapper with setjmp, and libphp, with SAPI callbacks writing into thread-local C buffers">
   </a>
     
-    <p>Go is my primary language and has been for a long time, so when I started building <a href="https://github.com/ephpm/ephpm">ePHPm</a>
-a few weeks ago the obvious move was to write it in Go. ePHPm is a PHP application server: one binary that embeds the
-real PHP interpreter (<code>libphp</code>, the Zend engine) and puts an HTTP server, TLS, a KV cache and a database proxy around it,
-so a PHP app doesn&rsquo;t need nginx + php-fpm + Redis to run. <a href="https://frankenphp.dev/">FrankenPHP</a> already proved the
-&ldquo;PHP inside a Go web server&rdquo; idea works, and it works well. I wrote&hellip;</p>
+    <p>Go is my primary language and has been for a long time. When I started building <a href="https://github.com/ephpm/ephpm">ePHPm</a>
+a few weeks ago the obvious move was to write it in Go. ePHPm is a PHP application server. It&rsquo;s one binary that embeds
+the real PHP interpreter (<code>libphp</code>, the Zend engine) and puts an HTTP server, TLS, a KV cache and a database proxy
+around it. A PHP app doesn&rsquo;t need nginx + php-fpm + Redis to run. <a href="https://frankenphp.dev/">FrankenPHP</a> already proved
+the &ldquo;PHP inside a Go web server&rdquo; idea works, and it works well. I&hellip;</p>
   </div>
   <footer>
     <a href="/blog/2026/04/why-rust-for-php-embedding/" class="button big">Read More</a>

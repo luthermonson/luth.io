@@ -218,7 +218,7 @@
       <h2><a href="/blog/2026/10/windows-sigterm-sparse-files/">Windows Grab-Bag: SIGTERM That Doesn&#39;t Exist and Sparse Files That Break Docker</a></h2>
     
     
-      <p>Two Windows-only bugs from ephemerd: Go can&#39;t SIGTERM a child on Windows, so cloudflared processes piled up, and Delivery Optimization&#39;s sparse temp files broke image layer commits.</p>
+      <p>Go can&#39;t SIGTERM a child on Windows, so ephemerd&#39;s cloudflared processes piled up. Separately, Delivery Optimization&#39;s sparse temp files broke its Windows image layer commits.</p>
     
   </div>
   <div class="meta">
@@ -285,13 +285,13 @@ long way from the cause.</p>
       <h2><a href="/blog/2026/10/php-jit-use-after-free/">An Upstream PHP JIT Use-After-Free, and Why Our Default Flipped Twice</a></h2>
     
     
-      <p>ePHPm turned PHP&#39;s tracing JIT on by default, then off three days later when stock Laravel died after three requests. The bug was upstream; here is the bisect, the root cause and where the fix landed.</p>
+      <p>ePHPm turned PHP&#39;s tracing JIT on by default, then off three days later when stock Laravel died after three requests. The bug was upstream, and this is the bisect, the root cause and where the fix landed.</p>
     
   </div>
   <div class="meta">
     <time datetime="2026-10-01 20:10:00 -0700 PDT">October 1, 2026</time>
     
-    <p>9-Minute Read</p>
+    <p>10-Minute Read</p>
   </div>
 </header>
 
@@ -301,10 +301,10 @@ long way from the cause.</p>
   </a>
     
     <p>In August, <a href="https://github.com/ephpm/ephpm">ePHPm</a> turned PHP&rsquo;s tracing JIT on by default in single-site serve mode.
-Three days later it went back off, on every platform, and it&rsquo;s still off. The reason turned out to be a
-use-after-free in PHP&rsquo;s tracing JIT that has nothing to do with ePHPm: stock <code>php -S</code> with a stock Laravel skeleton
-dies on it in a couple of requests. The fix is now released upstream, so this seemed like the right time to write up
-how we got there, and what still has to happen before the&hellip;</p>
+Three days later it went back off on every platform, and it&rsquo;s still off. The reason turned out to be a use-after-free
+in PHP&rsquo;s tracing JIT that has nothing to do with ePHPm. Stock <code>php -S</code> with a stock Laravel skeleton dies on it in a
+couple of requests. The fix is now released upstream. So this seemed like the right time to write up how we got there,
+and what still has to happen before the default&hellip;</p>
   </div>
   <footer>
     <a href="/blog/2026/10/php-jit-use-after-free/" class="button big">Read More</a>
@@ -354,7 +354,7 @@ how we got there, and what still has to happen before the&hellip;</p>
       <h2><a href="/blog/2026/09/process-containment-job-objects-process-groups-cgroups/">Cross-Platform Process Containment: Job Objects vs Process Groups vs cgroups</a></h2>
     
     
-      <p>How shipmates bounds and tears down agent process trees on Windows, Linux and macOS, why I deleted 1,206 lines of cgroup code, and the grandchild that escaped the memory cap everywhere except my dev box.</p>
+      <p>How shipmates bounds and tears down agent process trees on Windows, Linux and macOS. It also covers why I deleted 1,206 lines of cgroup code and the grandchild that escaped the memory cap everywhere except my dev box.</p>
     
   </div>
   <div class="meta">
@@ -369,8 +369,8 @@ how we got there, and what still has to happen before the&hellip;</p>
     <img class="" src="/img/2026/09/process-containment-job-objects-process-groups-cgroups-cover.svg" alt="Agent process tree with the scope of kill and measurement on Windows, Linux and macOS">
   </a>
     
-    <p>Every turn a <a href="/blog/2026/08/shipmates-persona-based-ai-coding-crews/">shipmates</a> crew member takes is a subprocess:
-<code>claude</code> or the <code>codex</code> app-server, which in turn spawns shells, <code>go test</code>, <code>npm</code>, whatever the task calls for. Two
+    <p>Every turn a <a href="/blog/2026/08/shipmates-persona-based-ai-coding-crews/">shipmates</a> crew member takes is a subprocess. It&rsquo;s
+<code>claude</code> or the <code>codex</code> app-server. That in turn spawns shells, <code>go test</code>, <code>npm</code> or whatever the task calls for. Two
 things have to be true about that tree. When a turn ends or gets killed, the <em>whole</em> tree goes, including the
 grandchildren. And if somebody sets a memory or CPU budget, the budget applies to the whole tree, not just the
 process I happened to start.</p>
@@ -443,9 +443,9 @@ process I happened to start.</p>
   </a>
     
     <p>On August 16th a <code>server.test.exe</code> from <a href="/blog/2026/08/shipmates-persona-based-ai-coding-crews/">shipmates</a> climbed to
-roughly <strong>1 TB of commit charge</strong> on my Windows workstation. Windows Terminal, which was hosting several agent sessions
-in tabs, hard-faulted with <code>E_OUTOFMEMORY</code> and every one of those sessions died at the same moment. It wasn&rsquo;t the first
-time either. An earlier one hit about 236 GB through an infinite <code>filepath.Dir</code> loop.</p>
+roughly <strong>1 TB of commit charge</strong> on my Windows workstation. Windows Terminal was hosting several agent sessions in
+tabs. It hard-faulted with <code>E_OUTOFMEMORY</code>, and every one of those sessions died at the same moment. It wasn&rsquo;t the
+first time either. An earlier one hit about 236 GB through an infinite <code>filepath.Dir</code> loop.</p>
   </div>
   <footer>
     <a href="/blog/2026/09/memory-watchdog-for-go-test/" class="button big">Read More</a>
@@ -493,7 +493,7 @@ time either. An earlier one hit about 236 GB through an infinite <code>filepath.
       <h2><a href="/blog/2026/08/opcache-on-windows-two-silent-failures/">OPcache on Windows: Two Silent Failures</a></h2>
     
     
-      <p>An ASLR fatal that looked like a memory-size lottery, and Windows PHP 8.3 builds that never had an opcode cache, with the fix sitting unpicked for three weeks.</p>
+      <p>An ASLR fatal on Windows looked like a memory-size lottery. Separately, Windows PHP 8.3 builds never had an opcode cache, and the fix sat unpicked for three weeks.</p>
     
   </div>
   <div class="meta">
@@ -509,9 +509,9 @@ time either. An earlier one hit about 236 GB through an infinite <code>filepath.
   </a>
     
     <p>Windows is the platform where <a href="https://github.com/ephpm/ephpm">ePHPm</a> gets the least traffic and the most surprises.
-Last week closed out two OPcache bugs that only exist there, and both were quiet in their own way. One killed the
-server at startup with nothing in our own logs. The other didn&rsquo;t kill anything: it just ran PHP 8.3 with no opcode
-cache at all, and for three weeks after a fixed SDK was published every check stayed green.</p>
+Last week closed out two OPcache bugs that only exist there. Both were quiet in their own way. One killed the server
+at startup with nothing in our own logs. The other didn&rsquo;t kill anything. It just ran PHP 8.3 with no opcode cache at
+all. For three weeks after a fixed SDK was published, every check stayed green.</p>
   </div>
   <footer>
     <a href="/blog/2026/08/opcache-on-windows-two-silent-failures/" class="button big">Read More</a>
@@ -574,10 +574,10 @@ cache at all, and for three weeks after a fixed SDK was published every check st
     <img class="" src="/img/2026/08/windows-container-egress-firewall-paths.svg" alt="Packet path of a Windows container on an HNS NAT network versus an L2Bridge network">
   </a>
     
-    <p><a href="/blog/2026/08/ephemerd-one-daemon-every-os/">ephemerd</a> runs CI jobs from pull requests, and one of the rules is that a job
-can reach the internet but not my LAN. On Linux that&rsquo;s a few iptables rules in the <code>FORWARD</code> path and I didn&rsquo;t think about it
+    <p><a href="/blog/2026/08/ephemerd-one-daemon-every-os/">ephemerd</a> runs CI jobs from pull requests. One of the rules is that a job can
+reach the internet but not my LAN. On Linux that&rsquo;s a few iptables rules in the <code>FORWARD</code> path, and I didn&rsquo;t think about it
 much. On Windows I spent about a week finding out how many ways there are to write a firewall rule that Windows accepts,
-lists, and then never applies.</p>
+lists and never applies.</p>
   </div>
   <footer>
     <a href="/blog/2026/08/windows-container-egress-firewall/" class="button big">Read More</a>
@@ -631,7 +631,7 @@ lists, and then never applies.</p>
       <h2><a href="/blog/2026/08/benchmark-4x-wrong-wsl-drvfs-cwd/">My Benchmark Was 4x Wrong Because of WSL</a></h2>
     
     
-      <p>Launching the server with its working directory on /mnt/c cost ePHPm about 4x on a light workload, and the report built a wrong explanation on top of it. Here&#39;s the strace that shows why.</p>
+      <p>Launching the server with its working directory on /mnt/c cost ePHPm about 4x on a light workload. The report built a wrong explanation on top of it, and the strace shows why.</p>
     
   </div>
   <div class="meta">
@@ -646,11 +646,11 @@ lists, and then never applies.</p>
     <img class="" src="/img/2026/08/benchmark-4x-wrong-wsl-drvfs-cwd-depth.svg" alt="Bar chart of ePHPm requests per second by working directory: native ext4 far ahead of DrvFs, with DrvFs throughput falling as the cwd path gets deeper">
   </a>
     
-    <p>I do most of my benchmarking on a Windows box in WSL2, because it&rsquo;s the machine with 32 threads and 62 GB of RAM on
-my desk. Everybody who does that learns the first rule early: don&rsquo;t put your data on <code>/mnt/c</code>. DrvFs, the 9p-backed
-mount that exposes the Windows drives inside WSL, is slow for file-heavy work, so the databases, the docroot and the
-build output all live on the WSL ext4 disk. My scaling harness for <a href="https://github.com/ephpm/ephpm">ePHPm</a> even
-says so in capital letters in its README.</p>
+    <p>I do most of my benchmarking on a Windows box in WSL2. It&rsquo;s the machine on my desk with 32 threads and 62 GB of RAM.
+Everybody who does that learns the first rule early: don&rsquo;t put your data on <code>/mnt/c</code>. DrvFs is the 9p-backed mount that
+exposes the Windows drives inside WSL, and it&rsquo;s slow for file-heavy work. So the databases, the docroot and the build
+output all live on the WSL ext4 disk. My scaling harness for <a href="https://github.com/ephpm/ephpm">ePHPm</a> even says so in
+capital letters in its README.</p>
   </div>
   <footer>
     <a href="/blog/2026/08/benchmark-4x-wrong-wsl-drvfs-cwd/" class="button big">Read More</a>
@@ -715,9 +715,9 @@ says so in capital letters in its README.</p>
     <img class="" src="/img/2026/08/libxml2-214-php-windows-def-missing-symbols.svg" alt="Bar chart: legacy php_libxml2.def entries missing from libxml2 headers - 0 for 2.11.9 and 2.13.0, 294 for 2.14.0 and 2.15.0">
   </a>
     
-    <p>Back in April I was getting the embed SAPI building on Windows through my fork of
-<a href="https://github.com/crazywhalecc/static-php-cli">static-php-cli</a> (SPC) for <a href="https://github.com/ephpm/ephpm">ePHPm</a>, and the
-link step for <code>php8ts.dll</code> fell over with a wall of errors that all looked like this:</p>
+    <p>Back in April I was getting the embed SAPI building on Windows for <a href="https://github.com/ephpm/ephpm">ePHPm</a>. I was
+using my fork of <a href="https://github.com/crazywhalecc/static-php-cli">static-php-cli</a> (SPC). The link step for
+<code>php8ts.dll</code> fell over with a wall of errors that all looked like this:</p>
   </div>
   <footer>
     <a href="/blog/2026/08/libxml2-2-14-broke-php-windows-builds/" class="button big">Read More</a>
@@ -765,7 +765,7 @@ link step for <code>php8ts.dll</code> fell over with a wall of errors that all l
       <h2><a href="/blog/2026/08/ntfs-atomic-file-replacement-not-rename-fsync/">Atomic File Replacement on NTFS Is Not rename &#43; fsync</a></h2>
     
     
-      <p>The Unix recipe for durable atomic file replacement doesn&#39;t translate to Windows. What shipmates uses instead, and the delete-pending window that made an 8-way test fail only when the whole suite ran.</p>
+      <p>The Unix recipe for durable atomic file replacement doesn&#39;t translate to Windows. This is what shipmates uses instead, plus the delete-pending window that made an 8-way test fail only when the whole suite ran.</p>
     
   </div>
   <div class="meta">
@@ -780,11 +780,11 @@ link step for <code>php8ts.dll</code> fell over with a wall of errors that all l
     <img class="" src="/img/2026/09/ntfs-atomic-file-replacement-not-rename-fsync-cover.svg" alt="How long a losing concurrent replacer waits on NTFS, idle disk vs a disk under fsync load">
   </a>
     
-    <p><a href="https://github.com/luthermonson/shipmates">shipmates</a> writes a lot of small state files that other
-processes read: voyage plans and state, tracker files. Each of them has to be replaced atomically (a reader sees
-the old file or the new one, never half of each) and durably (when the function returns success, a power cut doesn&rsquo;t
-take it back). Every Unix programmer knows the recipe for that. It doesn&rsquo;t work on Windows, and the reasons are more
-interesting than &ldquo;Windows is different&rdquo;.</p>
+    <p><a href="https://github.com/luthermonson/shipmates">shipmates</a> writes a lot of small state files that other processes read.
+Voyage plans and state, tracker files. Each of them has to be replaced atomically, so a reader sees the old file or the
+new one and never half of each. Each also has to be replaced durably. When the function returns success, a power cut
+doesn&rsquo;t take it back. Every Unix programmer knows the recipe for that. It doesn&rsquo;t work on Windows, and the reasons are
+more interesting than &ldquo;Windows is different&rdquo;.</p>
   </div>
   <footer>
     <a href="/blog/2026/08/ntfs-atomic-file-replacement-not-rename-fsync/" class="button big">Read More</a>
@@ -847,10 +847,10 @@ interesting than &ldquo;Windows is different&rdquo;.</p>
     <img class="" src="/img/2026/08/windows-dynamic-disk-usb-wsl2-usbip-layout.svg" alt="GPT layout of the 1 TB drive with LDM metadata and a 930 GiB LDM data partition, and the two paths: the Windows storage stack refusing it and usbipd passing it to WSL2">
   </a>
     
-    <p>I pulled a 1 TB NVMe out of an old Windows box, dropped it in a USB enclosure, plugged it in, and Windows showed nothing.
-No drive letter, no &ldquo;initialize this disk&rdquo; prompt, nothing in Explorer. Disk Management listed it as <code>Invalid</code>, and the
-enclosure&rsquo;s booklet said to &ldquo;bring the disk online&rdquo;, which silently did nothing. The data was completely intact. Windows was
-refusing on <strong>policy</strong> grounds, not because anything was broken, and getting it back meant going around the&hellip;</p>
+    <p>I pulled a 1 TB NVMe out of an old Windows box, dropped it in a USB enclosure and plugged it in. Windows showed nothing.
+No drive letter, no &ldquo;initialize this disk&rdquo; prompt, nothing in Explorer. Disk Management listed it as <code>Invalid</code>. The
+enclosure&rsquo;s booklet said to &ldquo;bring the disk online&rdquo;, which silently did nothing. The data was completely intact. Windows
+was refusing on <strong>policy</strong> grounds, not because anything was broken. Getting it back meant going around the Windows&hellip;</p>
   </div>
   <footer>
     <a href="/blog/2026/08/windows-dynamic-disk-usb-wsl2-usbip/" class="button big">Read More</a>

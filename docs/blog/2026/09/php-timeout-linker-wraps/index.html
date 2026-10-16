@@ -10,14 +10,14 @@
     gtag('config', 'G-MSTSKGFWTX');
 </script><meta charset="utf-8">
 <title>The Bugs Were Our Own Linker Wraps: Making a PHP Timeout Actually Time Out - Luther Monson</title>
-<meta name="description" content="max_execution_time did nothing in ePHPm because we had wrapped zend_set_timeout to a no-op. The SDK already had per-thread timers; we just had to stop switching them off.">
+<meta name="description" content="max_execution_time did nothing in ePHPm because we had wrapped zend_set_timeout to a no-op. The SDK already had per-thread timers. We just had to stop switching them off.">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
 <meta name="twitter:card" content="summary_large_image"><meta name="twitter:site" content="@luthermonson">
 
 <meta property="og:site_name" content="Luther Monson">
 <meta property="og:title" content="The Bugs Were Our Own Linker Wraps: Making a PHP Timeout Actually Time Out">
-<meta property="og:description" content="max_execution_time did nothing in ePHPm because we had wrapped zend_set_timeout to a no-op. The SDK already had per-thread timers; we just had to stop switching them off.">
+<meta property="og:description" content="max_execution_time did nothing in ePHPm because we had wrapped zend_set_timeout to a no-op. The SDK already had per-thread timers. We just had to stop switching them off.">
 <meta property="og:type" content="article">
 <meta property="og:url" content="https://luth.io/blog/2026/09/php-timeout-linker-wraps/">
     <meta property="og:image" content="https://luth.io/img/2026/09/php-timeout-linker-wraps-cover.svg">
@@ -215,7 +215,7 @@
       <h2><a href="/blog/2026/09/php-timeout-linker-wraps/">The Bugs Were Our Own Linker Wraps: Making a PHP Timeout Actually Time Out</a></h2>
     
     
-      <p>max_execution_time did nothing in ePHPm because we had wrapped zend_set_timeout to a no-op. The SDK already had per-thread timers; we just had to stop switching them off.</p>
+      <p>max_execution_time did nothing in ePHPm because we had wrapped zend_set_timeout to a no-op. The SDK already had per-thread timers. We just had to stop switching them off.</p>
     
   </div>
   <div class="meta">
@@ -271,22 +271,25 @@
 
       </div>
       <div class="content">
+              <figure class="post-cover">
+                <img src="/img/2026/09/php-timeout-linker-wraps-cover.svg" alt="Side by side: a process-wide SIGPROF timer that can land on the wrong thread, versus a per-thread POSIX timer that delivers SIGRTMIN to the PHP thread that armed it">
+              </figure>
         
         <p>In <a href="/blog/2026/09/php-stack-guard-segfault-containment/">the stack guard post</a> the villain was a <code>-Wl,--wrap</code> linker
 flag that turned off PHP&rsquo;s C-stack overflow guard. It wasn&rsquo;t the only one. Until August, <code>max_execution_time</code> did
-nothing in <a href="https://github.com/ephpm/ephpm">ePHPm</a> on Linux, for the same reason: we had wrapped the function that
-arms it to a no-op. A runaway script ran until the HTTP layer&rsquo;s request timeout gave up on it and sent a 504, and the
-PHP thread kept burning CPU after that.</p>
-<p>This one is shorter, and it&rsquo;s really about a habit: a setting you parse and don&rsquo;t enforce is worse than a setting you
+nothing in <a href="https://github.com/ephpm/ephpm">ePHPm</a> on Linux, for the same reason. We had wrapped the function that arms
+it to a no-op. A runaway script ran until the HTTP layer&rsquo;s request timeout gave up on it and sent a 504. The PHP thread
+kept burning CPU after that.</p>
+<p>This one is shorter, and it&rsquo;s really about a habit. A setting you parse and don&rsquo;t enforce is worse than a setting you
 don&rsquo;t have.</p>
 <h3 id="why-the-wrap-existed-in-the-first-place">Why the wrap existed in the first place</h3>
 <p>When you embed PHP, you inherit its global side effects, and signals are the worst of them. PHP&rsquo;s classic timeout uses
 <code>setitimer(ITIMER_PROF)</code>, which delivers SIGPROF to the <em>process</em>. The kernel then hands it to whatever thread it
 likes. In php-fpm that&rsquo;s fine, since each process has one PHP thread. In ePHPm, SIGPROF could land on a tokio worker
-thread with no PHP state at all, and PHP&rsquo;s handler would dereference per-request globals that don&rsquo;t exist there and
+thread with no PHP state at all. PHP&rsquo;s handler would dereference per-request globals that don&rsquo;t exist there and
 segfault.</p>
-<p>So early in the project, <code>build.rs</code> wrapped PHP&rsquo;s signal plumbing and the timeout functions, and the C wrapper
-replaced them with no-ops:</p>
+<p>So early in the project, <code>build.rs</code> wrapped PHP&rsquo;s signal plumbing and the timeout functions. The C wrapper replaced them
+with no-ops:</p>
 <div class="highlight"><pre tabindex="0" class="chroma"><code class="language-c" data-lang="c"><span class="line"><span class="cl"><span class="kt">void</span> <span class="nf">__wrap_zend_set_timeout</span><span class="p">(</span><span class="kt">long</span> <span class="n">seconds</span><span class="p">,</span> <span class="kt">int</span> <span class="n">reset_signals</span><span class="p">)</span>
 </span></span><span class="line"><span class="cl"><span class="p">{</span>
 </span></span><span class="line"><span class="cl">    <span class="p">(</span><span class="kt">void</span><span class="p">)</span><span class="n">seconds</span><span class="p">;</span>
@@ -299,24 +302,24 @@ replaced them with no-ops:</p>
 </span></span><span class="line"><span class="cl">    <span class="cm">/* no-op */</span>
 </span></span><span class="line"><span class="cl"><span class="p">}</span>
 </span></span></code></pre></div><p><code>--wrap=zend_set_timeout</code> makes GNU ld resolve every call to <code>zend_set_timeout</code> inside <code>libphp.a</code> to
-<code>__wrap_zend_set_timeout</code> instead. It&rsquo;s a clean way to override a function in a static archive you didn&rsquo;t compile,
-and at the time it was the correct call. But it meant <code>[php] max_execution_time</code> was parsed, documented and ignored.
-A docs audit landing the same week had it marked &ldquo;parsed but not enforced&rdquo;.</p>
+<code>__wrap_zend_set_timeout</code> instead. It&rsquo;s a clean way to override a function in a static archive you didn&rsquo;t compile. At
+the time it was the correct call. But it meant <code>[php] max_execution_time</code> was parsed, documented and ignored. A docs
+audit landing the same week had it marked &ldquo;parsed but not enforced&rdquo;.</p>
 <h3 id="the-sdk-already-had-the-fix-compiled-in">The SDK already had the fix compiled in</h3>
 <p>PHP added <code>--enable-zend-max-execution-timers</code> partway through the 8.1 line (8.1.18 and 8.2.5, April 2023). It
-replaces the process-wide itimer with a per-thread POSIX timer. The question was whether our SDK had it. php-fpm users never think about this flag, and the docs for it are
-thin, so I checked the artifacts directly:</p>
+replaces the process-wide itimer with a per-thread POSIX timer. The question was whether our SDK had it. php-fpm users
+never think about this flag, and the docs for it are thin. So I checked the artifacts directly:</p>
 <ul>
 <li><code>php_config.h</code> in the Linux ZTS SDK has <code>#define ZEND_MAX_EXECUTION_TIMERS 1</code>.</li>
 <li><code>libphp.a</code> defines <code>zend_max_execution_timer_init</code>, <code>_settime</code> and <code>_shutdown</code>, and they reference
 <code>timer_create</code> and <code>timer_settime</code>.</li>
 <li>Disassembling <code>zend_max_execution_timer_init</code> shows the important part:
-<code>timer_create(CLOCK_BOOTTIME, SIGEV_THREAD_ID -&gt; gettid(), SIGRTMIN)</code>, with the handler installed through a raw
-<code>sigaction</code> and not through the <code>zend_signal_*</code> functions we also wrap.</li>
+<code>timer_create(CLOCK_BOOTTIME, SIGEV_THREAD_ID -&gt; gettid(), SIGRTMIN)</code>. The handler is installed through a raw
+<code>sigaction</code>, not through the <code>zend_signal_*</code> functions we also wrap.</li>
 </ul>
-<p>That last point matters. <code>SIGEV_THREAD_ID</code> means the kernel delivers the signal to one specific thread, the PHP thread
-that armed it. The whole reason for the wrap was gone. The source matches what the disassembly shows,
-in <code>Zend/zend_max_execution_timer.c</code>:</p>
+<p>That last point matters. <code>SIGEV_THREAD_ID</code> means the kernel delivers the signal to one specific thread. That&rsquo;s the PHP
+thread that armed it. The whole reason for the wrap was gone. The source in <code>Zend/zend_max_execution_timer.c</code> matches
+what the disassembly shows:</p>
 <div class="highlight"><pre tabindex="0" class="chroma"><code class="language-c" data-lang="c"><span class="line"><span class="cl"><span class="n">sev</span><span class="p">.</span><span class="n">sigev_notify</span> <span class="o">=</span> <span class="n">SIGEV_THREAD_ID</span><span class="p">;</span>
 </span></span><span class="line"><span class="cl"><span class="n">sev</span><span class="p">.</span><span class="n">sigev_signo</span> <span class="o">=</span> <span class="n">SIGRTMIN</span><span class="p">;</span>
 </span></span><span class="line"><span class="cl"><span class="p">...</span>
@@ -324,9 +327,9 @@ in <code>Zend/zend_max_execution_timer.c</code>:</p>
 </span></span></code></pre></div><p>and <code>zend_set_timeout()</code> calls into <code>zend_max_execution_timer_settime()</code> when that&rsquo;s compiled in. So the only thing
 standing between ePHPm and a working timeout was our own linker flag.</p>
 <h3 id="probe-dont-assume">Probe, don&rsquo;t assume</h3>
-<p>The fix in <a href="https://github.com/ephpm/ephpm/pull/277">ephpm#277</a> doesn&rsquo;t just delete the wrap, because not every SDK
-we build against has per-thread timers (macOS doesn&rsquo;t, for one). Both build scripts read <code>php_config.h</code> and only drop
-the wrap when the define is present:</p>
+<p>The fix in <a href="https://github.com/ephpm/ephpm/pull/277">ephpm#277</a> doesn&rsquo;t just delete the wrap. Not every SDK we build
+against has per-thread timers. macOS doesn&rsquo;t, for one. Both build scripts read <code>php_config.h</code> and only drop the wrap
+when the define is present:</p>
 <div class="highlight"><pre tabindex="0" class="chroma"><code class="language-rust" data-lang="rust"><span class="line"><span class="cl"><span class="kd">let</span><span class="w"> </span><span class="n">has_exec_timers</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">php_config_has_max_exec_timers</span><span class="p">(</span><span class="o">&amp;</span><span class="n">sdk_path</span><span class="p">.</span><span class="n">join</span><span class="p">(</span><span class="s">&#34;include&#34;</span><span class="p">).</span><span class="n">join</span><span class="p">(</span><span class="s">&#34;php&#34;</span><span class="p">));</span><span class="w">
 </span></span></span><span class="line"><span class="cl"><span class="k">if</span><span class="w"> </span><span class="n">has_exec_timers</span><span class="w"> </span><span class="p">{</span><span class="w">
 </span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="fm">println!</span><span class="p">(</span><span class="s">&#34;cargo::rustc-cfg=php_max_exec_timers&#34;</span><span class="p">);</span><span class="w">
@@ -348,8 +351,8 @@ the wrap when the define is present:</p>
 </span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="n">wrap_funcs</span><span class="p">.</span><span class="n">push</span><span class="p">(</span><span class="s">&#34;zend_set_timeout&#34;</span><span class="p">);</span><span class="w">
 </span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="n">wrap_funcs</span><span class="p">.</span><span class="n">push</span><span class="p">(</span><span class="s">&#34;zend_unset_timeout&#34;</span><span class="p">);</span><span class="w">
 </span></span></span><span class="line"><span class="cl"><span class="p">}</span><span class="w">
-</span></span></span></code></pre></div><p>The C side gets the matching <code>EPHPM_NATIVE_EXEC_TIMER</code> define, and the no-op stubs only compile when it&rsquo;s absent.
-On builds without the timers nothing changes: the HTTP request timeout is the only ceiling, and startup warns.</p>
+</span></span></span></code></pre></div><p>The C side gets the matching <code>EPHPM_NATIVE_EXEC_TIMER</code> define, and the no-op stubs only compile when it&rsquo;s absent. On
+builds without the timers nothing changes. The HTTP request timeout is the only ceiling, and startup warns.</p>
 <h3 id="the-second-thing-turning-it-off-the-embed-sapi">The second thing turning it off: the embed SAPI</h3>
 <p>Dropping the wrap wasn&rsquo;t enough on its own. The timer got created and stayed disarmed. The embed SAPI ships its own
 defaults, and <code>max_execution_time=0</code> is one of them:</p>
@@ -359,9 +362,9 @@ defaults, and <code>max_execution_time=0</code> is one of them:</p>
 </span></span><span class="line"><span class="cl">	<span class="s">&#34;output_buffering=0</span><span class="se">\n</span><span class="s">&#34;</span>
 </span></span><span class="line"><span class="cl">	<span class="s">&#34;max_execution_time=0</span><span class="se">\n</span><span class="s">&#34;</span>
 </span></span><span class="line"><span class="cl">	<span class="s">&#34;max_input_time=-1</span><span class="se">\n\0</span><span class="s">&#34;</span><span class="p">;</span>
-</span></span></code></pre></div><p>In our setup, by the time a script ran, both the ini entry and <code>EG(timeout_seconds)</code> read 0, so PHP&rsquo;s own
-ini-to-timer chain armed nothing. Instead of fighting that, ePHPm records the configured value once from Rust after
-<code>php_embed_init()</code> and arms the timer explicitly per request, right before executing the script:</p>
+</span></span></code></pre></div><p>In our setup, by the time a script ran, both the ini entry and <code>EG(timeout_seconds)</code> read 0. PHP&rsquo;s own ini-to-timer
+chain armed nothing. Instead of fighting that, ePHPm records the configured value once from Rust after
+<code>php_embed_init()</code>. Then it arms the timer explicitly per request, right before executing the script:</p>
 <div class="highlight"><pre tabindex="0" class="chroma"><code class="language-c" data-lang="c"><span class="line"><span class="cl"><span class="cp">#ifdef EPHPM_NATIVE_EXEC_TIMER
 </span></span></span><span class="line"><span class="cl">    <span class="cm">/* php_request_startup above already created the timer but armed it from
 </span></span></span><span class="line"><span class="cl"><span class="cm">     * EG(timeout_seconds), which the embed SAPI has reset to 0, so we arm
@@ -369,12 +372,12 @@ ini-to-timer chain armed nothing. Instead of fighting that, ePHPm records the co
 </span></span></span><span class="line"><span class="cl"><span class="cm">     * (re)installs the SIGRTMIN disposition. */</span>
 </span></span><span class="line"><span class="cl">    <span class="nf">zend_set_timeout</span><span class="p">(</span><span class="n">g_configured_max_exec_secs</span><span class="p">,</span> <span class="mi">1</span><span class="p">);</span>
 </span></span><span class="line"><span class="cl"><span class="cp">#endif
-</span></span></span></code></pre></div><p>Arming from a process-wide configured value has a nice side effect: a previous request&rsquo;s <code>set_time_limit(0)</code> (which
-changes the ini entry at runtime) can&rsquo;t leak into the next request on the same thread. <code>set_time_limit()</code> during a
+</span></span></span></code></pre></div><p>Arming from a process-wide configured value has a nice side effect. A previous request&rsquo;s <code>set_time_limit(0)</code> changes
+the ini entry at runtime, but it can&rsquo;t leak into the next request on the same thread. <code>set_time_limit()</code> during a
 request still re-arms the timer live on top of it, the same as in php-fpm.</p>
-<p>The result also needed its own status code. A timeout unwinds through <code>zend_bailout()</code> like an out-of-memory fatal,
-and since <a href="/blog/2026/08/requests-that-end-wrong/">ephpm#255</a> a bailout&rsquo;s partial output gets discarded. But a timeout&rsquo;s
-output is a legitimate php-fpm-style error page, so it&rsquo;s told apart by PHP&rsquo;s own message and delivered:</p>
+<p>The result also needed its own status code. A timeout unwinds through <code>zend_bailout()</code> like an out-of-memory fatal.
+Since <a href="/blog/2026/08/requests-that-end-wrong/">ephpm#255</a> a bailout&rsquo;s partial output gets discarded. But a timeout&rsquo;s
+output is a legitimate php-fpm-style error page. So it&rsquo;s told apart by PHP&rsquo;s own message and delivered:</p>
 <div class="highlight"><pre tabindex="0" class="chroma"><code class="language-c" data-lang="c"><span class="line"><span class="cl"><span class="k">if</span> <span class="p">(</span><span class="nf">PG</span><span class="p">(</span><span class="n">last_error_message</span><span class="p">)</span>
 </span></span><span class="line"><span class="cl">    <span class="o">&amp;&amp;</span> <span class="nf">strncmp</span><span class="p">(</span><span class="nf">ZSTR_VAL</span><span class="p">(</span><span class="nf">PG</span><span class="p">(</span><span class="n">last_error_message</span><span class="p">)),</span>
 </span></span><span class="line"><span class="cl">               <span class="s">&#34;Maximum execution time of&#34;</span><span class="p">,</span> <span class="mi">25</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">)</span> <span class="p">{</span>
@@ -418,39 +421,38 @@ output is a legitimate php-fpm-style error page, so it&rsquo;s told apart by PHP
       </tr>
   </tbody>
 </table>
-<p>The FIFO row is my favorite. The timer interrupts a read that&rsquo;s blocked in the kernel, which the HTTP-layer timeout
-could never do: it could only stop waiting for the thread, not stop the thread. Worker mode got the same treatment,
-plus disarm-on-idle so a worker sitting in <code>take_request()</code> for longer than the limit doesn&rsquo;t fatal itself, and a
-cross-request test proving a <code>set_time_limit(0)</code> in one request doesn&rsquo;t leave the next one unlimited.</p>
-<p>So there are two layers now, and the docs say so: <code>max_execution_time</code> is PHP&rsquo;s own catchable, <code>set_time_limit</code>-able,
-wall-clock limit that answers 500, and <code>[server.timeouts] request</code> is the outer 504 backstop. Startup warns when
+<p>The FIFO row is my favorite. The timer interrupts a read that&rsquo;s blocked in the kernel. The HTTP-layer timeout could
+never do that. It could only stop waiting for the thread, not stop the thread. Worker mode got the same treatment. It
+also got disarm-on-idle, so a worker sitting in <code>take_request()</code> for longer than the limit doesn&rsquo;t fatal itself. A
+cross-request test proves a <code>set_time_limit(0)</code> in one request doesn&rsquo;t leave the next one unlimited.</p>
+<p>So there are two layers now, and the docs say so. <code>max_execution_time</code> is PHP&rsquo;s own wall-clock limit that answers 500.
+It&rsquo;s catchable and <code>set_time_limit</code>-able. <code>[server.timeouts] request</code> is the outer 504 backstop. Startup warns when
 <code>max_execution_time &gt;= request</code>, since the inner limit could then never fire first.</p>
 <h3 id="the-wider-pattern-silent-settings">The wider pattern: silent settings</h3>
 <p>Two linker wraps in this project switched off a PHP feature and left the config pretending otherwise. Once I started
 looking, the same thing turned up without any linker involved.</p>
-<p><strong>An idle timeout that was parsed and thrown away.</strong> <code>[server.timeouts] idle</code> was read into a variable and dropped,
-so the documented 60-second default did nothing. <a href="https://github.com/ephpm/ephpm/pull/106">ephpm#106</a> implemented it
-(an I/O adapter stamps activity on every byte and a re-arming watchdog triggers hyper&rsquo;s graceful shutdown after a
-quiet window), and in the same pass turned every other silent no-op it found into either a working knob or a loud
-startup warning.</p>
-<p><strong>Typos and knobs from newer versions.</strong> A config key the binary didn&rsquo;t know was silently ignored. This bit for real:
-<code>per_site = true</code> on a binary that predated the knob parsed fine, got dropped on the floor, and brought the node up
-with every tenant sharing one database, with every health check green.
-<a href="https://github.com/ephpm/ephpm/pull/434">ephpm#434</a> made every config section <code>deny_unknown_fields</code>, so an unknown
-key is a startup error that names the key. The top-level struct deliberately stays lenient, because figment maps
-every <code>EPHPM_*</code> environment variable to a top-level key, and ePHPm sets one itself when it runs as a Windows service.
-The migration note in that PR has my favorite sentence of the year: if startup fails naming a key, that key was
-already doing nothing.</p>
-<p><strong>Estimates nobody measured.</strong> Two old perf issues estimated that rebuilding <code>$_SERVER</code> per request and round-tripping
-response headers as text cost about 0.15 ms and 0.05 ms. When <a href="https://github.com/ephpm/ephpm/pull/457">ephpm#457</a>
-actually measured them, they were about 4 µs and 1 µs, off by roughly 40x. The fix still went in (it also closed a
-header-injection gap on the worker path), but it&rsquo;s a few microseconds per request, not the 20% the estimates implied.</p>
-<p>The common thread: a knob that&rsquo;s parsed but doesn&rsquo;t do anything, a feature compiled in and wrapped out, a number
+<p><strong>An idle timeout that was parsed and thrown away.</strong> <code>[server.timeouts] idle</code> was read into a variable and dropped.
+The documented 60-second default did nothing. <a href="https://github.com/ephpm/ephpm/pull/106">ephpm#106</a> implemented it. An
+I/O adapter stamps activity on every byte. A re-arming watchdog triggers hyper&rsquo;s graceful shutdown after a quiet window.
+In the same pass it turned every other silent no-op it found into either a working knob or a loud startup warning.</p>
+<p><strong>Typos and knobs from newer versions.</strong> A config key the binary didn&rsquo;t know was silently ignored. This bit for real.
+<code>per_site = true</code> on a binary that predated the knob parsed fine and got dropped on the floor. The node came up with
+every tenant sharing one database, with every health check green.
+<a href="https://github.com/ephpm/ephpm/pull/434">ephpm#434</a> made every config section <code>deny_unknown_fields</code>. An unknown key is
+now a startup error that names the key. The top-level struct deliberately stays lenient. figment maps every <code>EPHPM_*</code>
+environment variable to a top-level key, and ePHPm sets one itself when it runs as a Windows service. The migration
+note in that PR has my favorite sentence of the year: if startup fails naming a key, that key was already doing nothing.</p>
+<p><strong>Estimates nobody measured.</strong> Two old perf issues estimated the cost of two things. Rebuilding <code>$_SERVER</code> per request
+was put at about 0.15 ms. Round-tripping response headers as text was put at 0.05 ms. When
+<a href="https://github.com/ephpm/ephpm/pull/457">ephpm#457</a> measured them, they were about 4 µs and 1 µs. That&rsquo;s off by
+roughly 40x. The fix still went in, and it also closed a header-injection gap on the worker path. But it&rsquo;s a few
+microseconds per request, not the 20% the estimates implied.</p>
+<p>The common thread is a knob that&rsquo;s parsed but doesn&rsquo;t do anything, a feature compiled in and wrapped out, a number
 nobody measured. Each one looks fine from the outside. For the linker case specifically, every <code>--wrap</code> in an
-embedder&rsquo;s build is a runtime feature you&rsquo;ve switched off, and it should have a test that fails the day its reason
-stops being true. The stack-guard regression tests do that now: they fail with a transport error, not a status
-mismatch, if the guard ever goes away again. The timeout matrix above was still run by hand when it merged, and
-turning it into an automated e2e test is on the follow-up list. Writing this post is a decent reminder to go do it.</p>
+embedder&rsquo;s build is a runtime feature you&rsquo;ve switched off. It should have a test that fails the day its reason stops
+being true. The stack-guard regression tests do that now. If the guard ever goes away again, they fail with a transport
+error, not a status mismatch. The timeout matrix above was still run by hand when it merged. Turning it into an
+automated e2e test is on the follow-up list. Writing this post is a decent reminder to go do it.</p>
 <h3 id="links">Links</h3>
 <ul>
 <li><a href="https://github.com/ephpm/ephpm/pull/277">ephpm#277</a> - natively enforce <code>max_execution_time</code> via per-thread timers</li>

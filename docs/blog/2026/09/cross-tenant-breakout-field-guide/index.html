@@ -273,21 +273,21 @@
       <div class="content">
         
         <p><a href="https://github.com/ephpm/ephpm">ePHPm</a> can serve a directory full of sites out of one process. Point <code>sites_dir</code> at
-a folder, every subdirectory is a virtual host, and the Host header decides which one you get. That&rsquo;s how the PR preview
-environment runs: every pull request gets a subdomain, and the code behind it is whatever somebody pushed. One process
-holding many tenants means every per-tenant boundary is something ePHPm enforces itself, in-process. There&rsquo;s no
-container wall between site A and site B unless you add one.</p>
-<p>So I spent a couple of weeks attacking it. Every item below was found by deliberately trying to break out,
-reproduced against a real PHP-linked binary, and is fixed. I&rsquo;m writing them up together because they&rsquo;re a better
-checklist than any I could have written from scratch, and because they cluster into a handful of patterns that apply to
+a folder and every subdirectory is a virtual host. The Host header decides which one you get. That&rsquo;s how the PR preview
+environment runs. Every pull request gets a subdomain, and the code behind it is whatever somebody pushed. One process
+holding many tenants means ePHPm enforces every per-tenant boundary itself, in-process. There&rsquo;s no container wall
+between site A and site B unless you add one.</p>
+<p>So I spent a couple of weeks attacking it. Every item below was found by deliberately trying to break out. Each one was
+reproduced against a real PHP-linked binary, and each one is fixed. I&rsquo;m writing them up together because they&rsquo;re a
+better checklist than any I could have written from scratch. They also cluster into a handful of patterns that apply to
 any multi-tenant runtime.</p>
 <p><img src="/img/2026/09/cross-tenant-breakout-field-guide-cover.svg" alt="The boundaries that broke"></p>
-<p>One note before the list: ePHPm&rsquo;s own docs say plainly that <code>open_basedir</code> is an in-process boundary, not a container
+<p>One note before the list. ePHPm&rsquo;s own docs say plainly that <code>open_basedir</code> is an in-process boundary, not a container
 boundary. Untrusted per-PR code still deserves real per-preview isolation. None of what follows changes that advice.
-It&rsquo;s about making the in-process boundary actually hold.</p>
+It&rsquo;s about making the in-process boundary hold.</p>
 <h3 id="1-the-host-header-was-a-path">1. The Host header was a path</h3>
 <p>In <code>sites_dir</code> mode the document root was <code>sites_dir.join(raw_host)</code>, with no sanitization of the Host header. The
-downstream containment checks were anchored to <em>that</em> root, so they canonicalized to the escaped directory and passed.
+downstream containment checks were anchored to <em>that</em> root. So they canonicalized to the escaped directory and passed.
 Pre-auth, no tenant code needed:</p>
 <table>
   <thead>
@@ -311,41 +311,41 @@ Pre-auth, no tenant code needed:</p>
       </tr>
   </tbody>
 </table>
-<p>The only prior mitigation was <code>trusted_hosts</code>, which is empty by default and exact-match only, so it&rsquo;s unusable for
+<p>The only prior mitigation was <code>trusted_hosts</code>. It&rsquo;s empty by default and exact-match only, so it&rsquo;s unusable for
 per-PR hostnames.</p>
 <p>The fix (<a href="https://github.com/ephpm/ephpm/pull/280">#280</a>) validates the normalized host as a strict DNS-label
 allowlist: <code>[a-z0-9._-]</code>, and no empty label. That one &ldquo;no empty label&rdquo; rule rejects <code>.</code>, <code>..</code>, <code>a..b</code>, and leading or
-trailing dots in a single test, and <code>/</code>, <code>\</code> and NUL fall outside the charset. After that, <code>sites_dir.join(key)</code> can only
+trailing dots in a single test. <code>/</code>, <code>\</code> and NUL fall outside the charset. After that, <code>sites_dir.join(key)</code> can only
 ever name a direct child. A malformed host is a 404 before any filesystem join.</p>
-<p>The fix is lexical on purpose. The obvious alternative is <code>canonicalize().starts_with(sites_dir)</code>, but the router
-deliberately supports a site directory that&rsquo;s a symlink to a release tree <em>outside</em> <code>sites_dir</code>, which is the
+<p>The fix is lexical on purpose. The obvious alternative is <code>canonicalize().starts_with(sites_dir)</code>. But the router
+deliberately supports a site directory that&rsquo;s a symlink to a release tree <em>outside</em> <code>sites_dir</code>. That&rsquo;s the
 atomic-deploy layout. A canonical containment check would break that. Once the label can&rsquo;t contain traversal
 primitives, a direct child is all you need.</p>
 <h3 id="2-the-suffix-that-collapsed-every-tenant-into-one">2. The suffix that collapsed every tenant into one</h3>
-<p>Preview hosts look like <code>pr-123.preview.example.com</code>, and <code>sites_domain_suffix</code> strips the shared suffix to get the
-site key. The validation from #1 ran on the host <em>before</em> stripping, and the stripped result was used without being
-checked again. With a dotless suffix (say <code>localhost</code>), the request <code>Host: localhost</code> stripped to the empty string,
-and <code>sites_dir.join(&quot;&quot;)</code> is <code>sites_dir</code> itself. That&rsquo;s one virtual host whose document root and <code>open_basedir</code> are
-the entire tenant fleet, with read and write to every site. The empty key also selected DB file <code>.db</code>, KV keyspace
-<code>&quot;&quot;</code> and the override lookup, so the whole tenant identity collapsed.</p>
-<p><a href="https://github.com/ephpm/ephpm/pull/401">#401</a> re-validates the stripped key (an empty or invalid key falls through to
-the default site, never to a <code>sites_dir</code>-rooted basedir) and rejects a suffix without a leading dot at config load. A
-legitimate suffix always starts with <code>.</code>, so a dotless one has no valid use.</p>
+<p>Preview hosts look like <code>pr-123.preview.example.com</code>. <code>sites_domain_suffix</code> strips the shared suffix to get the site
+key. The validation from #1 ran on the host <em>before</em> stripping. The stripped result was used without being checked
+again. Take a dotless suffix like <code>localhost</code>. The request <code>Host: localhost</code> stripped to the empty string, and
+<code>sites_dir.join(&quot;&quot;)</code> is <code>sites_dir</code> itself. That&rsquo;s one virtual host whose document root and <code>open_basedir</code> are the
+entire tenant fleet, with read and write to every site. The empty key also selected DB file <code>.db</code>, KV keyspace <code>&quot;&quot;</code>
+and the override lookup. The whole tenant identity collapsed.</p>
+<p><a href="https://github.com/ephpm/ephpm/pull/401">#401</a> re-validates the stripped key. An empty or invalid key falls through to
+the default site, never to a <code>sites_dir</code>-rooted basedir. It also rejects a suffix without a leading dot at config load.
+A legitimate suffix always starts with <code>.</code>, so a dotless one has no valid use.</p>
 <h3 id="3-swapping-your-own-web-root-for-a-symlink">3. Swapping your own web root for a symlink</h3>
-<p>Sites can declare a document root override, so <code>document_root = &quot;web&quot;</code> serves <code>&lt;site&gt;/web</code> while PHP can still
-<code>require</code> upward into the site&rsquo;s container. The override was validated with <code>starts_with(container)</code> once, at load. But
-the resolved root got re-canonicalized every couple of seconds, following symlinks, with no containment re-check. And
-the static file path&rsquo;s only boundary is that root; it has no <code>open_basedir</code> backstop.</p>
-<p>The tenant can&rsquo;t plant the link from PHP. <code>symlink()</code> checks both the link path and its target against <code>open_basedir</code>,
-so <code>symlink('/', 'web')</code> from a tenant script just fails with an open_basedir warning. But PHP isn&rsquo;t the only thing that
-writes into a site directory. On the preview environment the site is a checkout of whatever somebody pushed, and git
-stores symlinks as symlinks:</p>
+<p>Sites can declare a document root override. <code>document_root = &quot;web&quot;</code> serves <code>&lt;site&gt;/web</code> while PHP can still <code>require</code>
+upward into the site&rsquo;s container. The override was validated with <code>starts_with(container)</code> once, at load. But the
+resolved root got re-canonicalized every couple of seconds, following symlinks, with no containment re-check. And the
+static file path&rsquo;s only boundary is that root. It has no <code>open_basedir</code> backstop.</p>
+<p>The tenant can&rsquo;t plant the link from PHP. <code>symlink()</code> checks both the link path and its target against <code>open_basedir</code>.
+So <code>symlink('/', 'web')</code> from a tenant script just fails with an open_basedir warning. But PHP isn&rsquo;t the only thing that
+writes into a site directory. On the preview environment the site is a checkout of whatever somebody pushed. Git stores
+symlinks as symlinks:</p>
 <div class="highlight"><pre tabindex="0" class="chroma"><code class="language-sh" data-lang="sh"><span class="line"><span class="cl">git rm -r web
 </span></span><span class="line"><span class="cl">ln -s / web
 </span></span><span class="line"><span class="cl">git add web <span class="o">&amp;&amp;</span> git commit -m <span class="s1">&#39;tidy&#39;</span> <span class="o">&amp;&amp;</span> git push
-</span></span></code></pre></div><p>The same goes for an archive the deploy unpacks, SFTP, or a shell on the box. Once a link like that exists after the
-override was validated, nothing looked at it again. The test for the fix plants it from outside PHP the same way, and on
-a Windows test box the next static requests looked like this:</p>
+</span></span></code></pre></div><p>The same goes for an archive the deploy unpacks, SFTP or a shell on the box. Once a link like that exists after the
+override was validated, nothing looked at it again. The test for the fix plants it from outside PHP the same way. On a
+Windows test box the next static requests looked like this:</p>
 <table>
   <thead>
       <tr>
@@ -373,11 +373,11 @@ a Windows test box the next static requests looked like this:</p>
   </tbody>
 </table>
 <p><a href="https://github.com/ephpm/ephpm/pull/398">#398</a> re-asserts <code>canonical_document_root.starts_with(canonical_container)</code>
-on every resolve, against the operator-chosen container that no override can change. It fails closed (static 404, PHP
-403), and when no override is in play the second canonicalize is skipped, so it costs nothing on normal sites. This
-one never shipped in a release; it was caught between the override feature merging and the next tag.</p>
+on every resolve. It checks against the operator-chosen container that no override can change. It fails closed with a
+static 404 or a PHP 403. When no override is in play the second canonicalize is skipped, so it costs nothing on normal
+sites. This one never shipped in a release. It was caught between the override feature merging and the next tag.</p>
 <h3 id="4-everybodys-tmp">4. Everybody&rsquo;s /tmp</h3>
-<p>Every vhost&rsquo;s <code>open_basedir</code> included the same system temp directory, and <code>session.save_path</code>, <code>sys_temp_dir</code> and
+<p>Every vhost&rsquo;s <code>open_basedir</code> included the same system temp directory. <code>session.save_path</code>, <code>sys_temp_dir</code> and
 <code>upload_tmp_dir</code> were never set per tenant. So every site&rsquo;s sessions sat in one shared directory that was inside every
 site&rsquo;s sandbox:</p>
 <pre tabindex="0"><code># from site-b:
@@ -385,15 +385,15 @@ CROSS_READ_site_a_session_file (/tmp/sess_bb469cd9...) =&gt;
   READ: &#39;site_a_session_secret|s:20:&#34;SITE_A_SESSION_VALUE&#34;;&#39;
 sess_glob_own_tmp=[7 other tenants&#39; sess_* files]
 </code></pre><p>That&rsquo;s session hijack and tamper across tenants. <a href="https://github.com/ephpm/ephpm/pull/285">#285</a> gives each vhost a
-private state root, <code>&lt;temp&gt;/ephpm-vhosts/&lt;label&gt;-&lt;digest&gt;</code>, derived from the already-validated document root, with
+private state root, <code>&lt;temp&gt;/ephpm-vhosts/&lt;label&gt;-&lt;digest&gt;</code>. It&rsquo;s derived from the already-validated document root, with
 <code>tmp/</code> and <code>sessions/</code> underneath at <code>0700</code>. <code>open_basedir</code> becomes the document root plus that state root only.</p>
-<p>Fixing it exposed a second bug. Per-request ini overrides were applied <em>after</em> <code>php_request_startup()</code>, but
-<code>php_request_startup()</code> is where the multipart parser writes uploaded files, using <code>upload_tmp_dir</code> as it is at that
+<p>Fixing it exposed a second bug. Per-request ini overrides were applied <em>after</em> <code>php_request_startup()</code>. But
+<code>php_request_startup()</code> is where the multipart parser writes uploaded files. It uses <code>upload_tmp_dir</code> as it is at that
 moment. Uploads kept landing in shared <code>/tmp</code>, now outside <code>open_basedir</code>, so <code>move_uploaded_file()</code> failed. The ini
 replay now runs both before and after startup.</p>
 <h3 id="5-attach-database-as-a-filesystem-primitive">5. ATTACH DATABASE as a filesystem primitive</h3>
 <p>This was the worst one, filed as #274 after live exploitation. The embedded SQLite engine runs inside the ePHPm
-process, not under any tenant&rsquo;s <code>open_basedir</code>, and in multi-site mode every vhost shared one database. From a hostile
+process, not under any tenant&rsquo;s <code>open_basedir</code>. In multi-site mode every vhost shared one database. From a hostile
 vhost:</p>
 <ol>
 <li><code>mysqli_connect</code> with junk credentials connected (the proxy didn&rsquo;t validate them) and read another site&rsquo;s
@@ -406,26 +406,26 @@ vhost:</p>
 have closed it.</li>
 </ol>
 <p><a href="https://github.com/ephpm/ephpm/pull/284">#284</a> made the database <em>file</em> the tenant boundary, since the engine has no
-per-schema ACLs: <code>[db.sqlite] dir</code> gives every site its own <code>&lt;key&gt;.db</code>, required and fail-closed in multi-site mode. The
-shared wire listeners don&rsquo;t start in multi-site mode at all (one listener for all tenants is the original bug), and
-<code>ATTACH</code>, <code>DETACH</code>, <code>VACUUM</code> and path <code>PRAGMA</code>s are rejected on the tenant path with ePHPm&rsquo;s own error, independent of
-the engine&rsquo;s defaults. <a href="https://github.com/ephpm/ephpm/pull/351">#351</a> pins it with an end-to-end test from real PHP
+per-schema ACLs. <code>[db.sqlite] dir</code> gives every site its own <code>&lt;key&gt;.db</code>, required and fail-closed in multi-site mode. The
+shared wire listeners don&rsquo;t start in multi-site mode at all. One listener for all tenants is the original bug. <code>ATTACH</code>,
+<code>DETACH</code>, <code>VACUUM</code> and path <code>PRAGMA</code>s are rejected on the tenant path with ePHPm&rsquo;s own error, independent of the
+engine&rsquo;s defaults. <a href="https://github.com/ephpm/ephpm/pull/351">#351</a> pins it with an end-to-end test from real PHP
 userland on both the native and wire paths.</p>
-<p>The follow-up pentest found the screen matched on a statement&rsquo;s <em>leading keyword</em>, so <code>EXPLAIN ATTACH DATABASE '...'</code>
-sailed past it, stopped only by the engine&rsquo;s &ldquo;ATTACH is experimental&rdquo; default.
-<a href="https://github.com/ephpm/ephpm/pull/287">#287</a> peels <code>EXPLAIN</code> and <code>EXPLAIN QUERY PLAN</code> (stacked, with comments in
-between) before checking the verb. A denylist has to see the statement the way the engine will see it.</p>
+<p>The follow-up pentest found the screen matched on a statement&rsquo;s <em>leading keyword</em>. So <code>EXPLAIN ATTACH DATABASE '...'</code>
+sailed past it. Only the engine&rsquo;s &ldquo;ATTACH is experimental&rdquo; default stopped it.
+<a href="https://github.com/ephpm/ephpm/pull/287">#287</a> peels <code>EXPLAIN</code> and <code>EXPLAIN QUERY PLAN</code> before checking the verb. That
+handles them stacked and with comments in between. A denylist has to see the statement the way the engine will see it.</p>
 <h3 id="6-two-names-one-docroot-two-databases">6. Two names, one docroot, two databases</h3>
 <p>The same pentest round found the derivations disagreeing with each other. Docroot lookup stripped the domain suffix and
-the DB key didn&rsquo;t, so <code>Host: shop.local</code> and <code>Host: shop</code> shared a document root and a session directory but wrote to
+the DB key didn&rsquo;t. So <code>Host: shop.local</code> and <code>Host: shop</code> shared a document root and a session directory but wrote to
 different databases. The KV keyspace used the raw Host, so <code>ALICE</code> and <code>alice</code> were different keyspaces on the same
 site. <a href="https://github.com/ephpm/ephpm/pull/293">#293</a> didn&rsquo;t patch the DB key. It made <code>resolve_site</code> return the key it
-actually matched and derived everything else (DB file, wire credential, KV keyspace, OPcache vhost, temp root) from
-that one value. A host that matches no site mints no identity at all.</p>
+matched. Everything else is derived from that one value: DB file, wire credential, KV keyspace, OPcache vhost and temp
+root. A host that matches no site mints no identity at all.</p>
 <h3 id="7-loopback-has-more-than-one-address">7. Loopback has more than one address</h3>
-<p>The per-vhost eBPF policy lets a tenant run a sidecar on localhost and stops other tenants from connecting to its
+<p>The per-vhost eBPF policy lets a tenant run a sidecar on localhost. It stops other tenants from connecting to its
 ports. The <code>cgroup/connect</code> classifier recognized exactly <code>127.0.0.1</code> and <code>::1</code> as loopback. Linux treats all of
-<code>127.0.0.0/8</code> as loopback, and an IPv4-mapped IPv6 address reaches the same IPv4 stack. Anything the classifier didn&rsquo;t
+<code>127.0.0.0/8</code> as loopback. An IPv4-mapped IPv6 address reaches the same IPv4 stack. Anything the classifier didn&rsquo;t
 call loopback skipped the port-ownership check:</p>
 <table>
   <thead>
@@ -474,21 +474,21 @@ call loopback skipped the port-ownership check:</p>
 </span></span><span class="line"><span class="cl">        <span class="k">return</span> <span class="nf">is_loopback4_be</span><span class="p">(</span><span class="n">ip6</span><span class="p">[</span><span class="mi">3</span><span class="p">]);</span>
 </span></span><span class="line"><span class="cl">    <span class="k">return</span> <span class="mi">0</span><span class="p">;</span>
 </span></span><span class="line"><span class="cl"><span class="p">}</span>
-</span></span></code></pre></div><p>Deprecated IPv4-<em>compatible</em> addresses (<code>::a.b.c.d</code>) are deliberately not folded in: Linux doesn&rsquo;t route them onto v4
-loopback, and treating that prefix as &ldquo;classify by embedded v4&rdquo; would misclassify <code>::1</code> itself.</p>
+</span></span></code></pre></div><p>Deprecated IPv4-<em>compatible</em> addresses (<code>::a.b.c.d</code>) are deliberately not folded in. Linux doesn&rsquo;t route them onto v4
+loopback. Treating that prefix as &ldquo;classify by embedded v4&rdquo; would misclassify <code>::1</code> itself.</p>
 <h3 id="8-a-login-cookie-that-worked-on-every-site">8. A login cookie that worked on every site</h3>
 <p>Previews sit behind a GitHub OAuth gate. One module does the OAuth round trip at login and mints an HS256 session with
-a <code>site</code> claim; a second verifies that session on every request. The issuer always set <code>site</code>. The verifier never
+a <code>site</code> claim. A second module verifies that session on every request. The issuer always set <code>site</code>. The verifier never
 checked it, so a session for preview A verified on every preview on the node.
 <a href="https://github.com/ephpm/ephpm/pull/488">#488</a> passes the request&rsquo;s canonical site key into the verifier as
-<code>expected_site</code>, and a missing, non-string or mismatched claim fails closed. The issuer now takes its site from the
-same canonical key instead of re-normalizing the raw Host, so the two agree by construction.</p>
+<code>expected_site</code>. A missing, non-string or mismatched claim fails closed. The issuer now takes its site from the same
+canonical key instead of re-normalizing the raw Host. The two agree by construction.</p>
 <h3 id="the-patterns">The patterns</h3>
 <p>Looking back at the list, almost none of these were exotic. They fall into four groups:</p>
 <ul>
 <li><strong>The identity of a tenant was derived more than once.</strong> Host to docroot, host to DB file, host to KV keyspace,
 issuer versus verifier. Every time two pieces of code derived &ldquo;which tenant is this&rdquo; separately, they eventually
-disagreed (#1, #2, #6, #8). The fix that stuck was one derivation, passed everywhere.</li>
+disagreed (#1, #2, #6, #8). The fix that stuck was one derivation, passed to every consumer.</li>
 <li><strong>A check ran once and the thing it checked kept changing.</strong> Validate-at-load with live symlink resolution (#3), and
 validate-before-strip (#2). If a value can change after you check it, check it where you use it.</li>
 <li><strong>The boundary was in the wrong layer.</strong> <code>open_basedir</code> doesn&rsquo;t cover the SQLite engine (#5) or the static file
@@ -497,8 +497,8 @@ path (#3). Any component running inside the process but outside PHP needs its ow
 way the kernel or the engine will interpret it, not the way you&rsquo;d write it.</li>
 </ul>
 <p>The other habit that paid off was writing each fix with a test that fails on the old code. Several of the PRs above
-say exactly that in their test sections, including temporarily reverting the fix to watch the test go red. When the
-subject is security, a test you&rsquo;ve never seen fail isn&rsquo;t telling you much.</p>
+say exactly that in their test sections. Some temporarily reverted the fix to watch the test go red. When the subject
+is security, a test you&rsquo;ve never seen fail isn&rsquo;t telling you much.</p>
 <h3 id="links">Links</h3>
 <ul>
 <li>Host header traversal: <a href="https://github.com/ephpm/ephpm/pull/280">#280</a></li>

@@ -233,11 +233,11 @@
     <img class="" src="/img/2026/09/os-exec-stdoutpipe-wait-footgun-cover.svg" alt="Timeline of a child process exiting, Wait closing the pipe, and the reader losing buffered frames">
   </a>
     
-    <p><a href="/blog/2026/08/shipmates-persona-based-ai-coding-crews/">shipmates</a> spends most of its life spawning <code>claude</code> (and <code>codex</code>)
-processes and reading newline-delimited JSON off their stdout. The last frame of a turn is the important one, a
-<code>result</code> frame with the cost, the model and the final text. Stderr matters too, because that&rsquo;s where Claude Code
-tells you <code>Invalid API key · Please run /login</code>. For a while I was throwing both away under load, and the cause is
-documented right there in the <code>os/exec</code> godoc. I fixed it in one package and then found the exact&hellip;</p>
+    <p><a href="/blog/2026/08/shipmates-persona-based-ai-coding-crews/">shipmates</a> spends most of its life spawning <code>claude</code> (and
+<code>codex</code>) processes and reading newline-delimited JSON off their stdout. The last frame of a turn is the important one.
+It&rsquo;s a <code>result</code> frame with the cost, the model and the final text. Stderr matters too, because that&rsquo;s where Claude Code
+tells you <code>Invalid API key · Please run /login</code>. For a while I was throwing both away under load. The cause is
+documented right there in the <code>os/exec</code> godoc. I fixed it in one package and then found the&hellip;</p>
   </div>
   <footer>
     <a href="/blog/2026/09/os-exec-stdoutpipe-wait-footgun/" class="button big">Read More</a>
@@ -281,7 +281,7 @@ documented right there in the <code>os/exec</code> godoc. I fixed it in one pack
       <h2><a href="/blog/2026/09/own-your-php-thread-pool/">Stop Running PHP on tokio&#39;s spawn_blocking - Own Your Thread Pool</a></h2>
     
     
-      <p>Why ePHPm moved PHP execution off tokio&#39;s generic blocking pool onto threads it owns, how the switch was rolled out behind a knob, and what it did to memory, throughput and overload.</p>
+      <p>Why ePHPm moved PHP execution off tokio&#39;s generic blocking pool onto threads it owns. How the switch rolled out behind a knob and what it did to memory, throughput and overload.</p>
     
   </div>
   <div class="meta">
@@ -297,10 +297,10 @@ documented right there in the <code>os/exec</code> godoc. I fixed it in one pack
   </a>
     
     <p>For most of its life, <a href="https://github.com/ephpm/ephpm">ePHPm</a> ran every PHP request on tokio&rsquo;s <code>spawn_blocking</code>
-pool. It works. It passes tests, it serves benchmarks fine, and it&rsquo;s the first thing anybody reaches for when they
-need to call blocking code from async Rust. It&rsquo;s also quietly wrong for a language runtime, in ways that only show up
-under overload or after a crash. Over the last three weeks it got replaced with a pool of OS threads that ePHPm owns,
-first behind a config flag, then as the default, and as&hellip;</p>
+pool. It works. It passes tests and it serves benchmarks fine. It&rsquo;s the first thing anybody reaches for when they need
+to call blocking code from async Rust. It&rsquo;s also quietly wrong for a language runtime. The problems only show up under
+overload or after a crash. Over the last three weeks it got replaced with a pool of OS threads that ePHPm owns. That
+pool shipped first behind a config flag, then as&hellip;</p>
   </div>
   <footer>
     <a href="/blog/2026/09/own-your-php-thread-pool/" class="button big">Read More</a>
@@ -348,7 +348,7 @@ first behind a config flag, then as the default, and as&hellip;</p>
       <h2><a href="/blog/2026/07/go-proxmox-watch-close-withretry/">Two Small go-proxmox Fixes: A Watch Channel That Never Closed, and WithRetry</a></h2>
     
     
-      <p>A task log channel that only closed on the happy path, and a composable RoundTripper that retries the 502s and 503s Proxmox throws during cluster transitions.</p>
+      <p>go-proxmox had a task log channel that only closed on the happy path. It also gained a composable RoundTripper that retries the 502s and 503s Proxmox throws during cluster transitions.</p>
     
   </div>
   <div class="meta">
@@ -363,9 +363,9 @@ first behind a config flag, then as the default, and as&hellip;</p>
     <img class="" src="/img/2022/02/proxmox-logo.png" alt="Proxmox VE Logo">
   </a>
     
-    <p>Two changes from the v0.5 to v0.7 stretch of <a href="https://github.com/luthermonson/go-proxmox">go-proxmox</a> that are too small
-for a post each but are worth knowing about if you write long-running tooling against Proxmox. One is a bug in code I
-wrote about in 2022, the other is a feature that replaces a retry loop everybody was writing for themselves.</p>
+    <p>Here are two changes from the v0.5 to v0.7 stretch of <a href="https://github.com/luthermonson/go-proxmox">go-proxmox</a>. They&rsquo;re
+too small for a post each. They&rsquo;re worth knowing about if you write long-running tooling against Proxmox. One is a bug
+in code I wrote about in 2022. The other is a feature that replaces a retry loop everybody was writing for themselves.</p>
   </div>
   <footer>
     <a href="/blog/2026/07/go-proxmox-watch-close-withretry/" class="button big">Read More</a>

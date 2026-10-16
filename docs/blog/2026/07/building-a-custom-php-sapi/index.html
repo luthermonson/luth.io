@@ -271,17 +271,20 @@
 
       </div>
       <div class="content">
+              <figure class="post-cover">
+                <img src="/img/2026/08/building-a-custom-php-sapi-cover.svg" alt="Table mapping PHP operations like echo, header(), $_POST, $_COOKIE and $_SERVER to SAPI callbacks and to the Rust side of ePHPm">
+              </figure>
         
-        <p>If you&rsquo;ve only ever run PHP behind nginx you&rsquo;ve probably never had to think about how <code>echo</code> reaches a socket. When you
-embed PHP, as <a href="https://github.com/ephpm/ephpm">ePHPm</a> does, it&rsquo;s the first thing you have to answer, and the answer is a
-SAPI. There is very little written about implementing one. Most of what I know came from reading <code>sapi/cli</code>,
-<code>sapi/cgi</code> and <code>sapi/embed</code> in php-src and then finding out which parts I&rsquo;d misread. This is the write-up I wanted back
+        <p>If you&rsquo;ve only ever run PHP behind nginx, you&rsquo;ve probably never had to think about how <code>echo</code> reaches a socket. When
+you embed PHP like <a href="https://github.com/ephpm/ephpm">ePHPm</a> does, it&rsquo;s the first thing you have to answer. The answer
+is a SAPI. There is very little written about implementing one. Most of what I know came from reading <code>sapi/cli</code>,
+<code>sapi/cgi</code> and <code>sapi/embed</code> in php-src. Then I found out which parts I&rsquo;d misread. This is the write-up I wanted back
 in March.</p>
 <h3 id="what-a-sapi-is">What a SAPI is</h3>
-<p>The Server API is PHP&rsquo;s boundary with whatever is hosting it. In C it&rsquo;s <code>sapi_module_struct</code>: a name plus a few dozen
-function pointers that the engine calls whenever it needs something from the outside world. php-fpm is a SAPI, Apache&rsquo;s
-mod_php is a SAPI, the CLI is a SAPI, and so are the built-in dev server and the embed SAPI. They all run the same
-engine. What differs is what these callbacks do:</p>
+<p>The Server API is PHP&rsquo;s boundary with whatever is hosting it. In C it&rsquo;s <code>sapi_module_struct</code>. That&rsquo;s a name plus a few
+dozen function pointers that the engine calls whenever it needs something from the outside world. php-fpm is a SAPI.
+So are Apache&rsquo;s mod_php, the CLI, the built-in dev server and the embed SAPI. They all run the same engine. What
+differs is what these callbacks do:</p>
 <table>
   <thead>
       <tr>
@@ -320,8 +323,8 @@ engine. What differs is what these callbacks do:</p>
       </tr>
   </tbody>
 </table>
-<p>ePHPm starts from the embed SAPI (<code>php_embed_init()</code> gives you a working engine with stdout-oriented defaults) and then
-overwrites the callbacks with its own:</p>
+<p>ePHPm starts from the embed SAPI. <code>php_embed_init()</code> gives you a working engine with stdout-oriented defaults. Then
+ePHPm overwrites the callbacks with its own:</p>
 <div class="highlight"><pre tabindex="0" class="chroma"><code class="language-c" data-lang="c"><span class="line"><span class="cl"><span class="kt">void</span> <span class="nf">ephpm_install_sapi</span><span class="p">(</span><span class="kt">void</span><span class="p">)</span>
 </span></span><span class="line"><span class="cl"><span class="p">{</span>
 </span></span><span class="line"><span class="cl">    <span class="n">sapi_module</span><span class="p">.</span><span class="n">ub_write</span> <span class="o">=</span> <span class="n">ephpm_sapi_ub_write</span><span class="p">;</span>
@@ -335,11 +338,11 @@ overwrites the callbacks with its own:</p>
 </span></span><span class="line"><span class="cl">    <span class="n">sapi_module</span><span class="p">.</span><span class="n">name</span> <span class="o">=</span> <span class="s">&#34;ephpm&#34;</span><span class="p">;</span>
 </span></span><span class="line"><span class="cl">    <span class="n">sapi_module</span><span class="p">.</span><span class="n">pretty_name</span> <span class="o">=</span> <span class="s">&#34;ePHPm Embedded Server&#34;</span><span class="p">;</span>
 </span></span><span class="line"><span class="cl"><span class="p">}</span>
-</span></span></code></pre></div><p><code>sapi_module.name</code> is what <code>php_sapi_name()</code> returns, so frameworks that branch on <code>cli</code> vs everything else see <code>ephpm</code>
-and treat it as a web SAPI. All of this is C, not Rust, for the reason I covered in
-<a href="/blog/2026/04/why-rust-for-php-embedding/">the Rust post</a>: PHP can <code>longjmp</code> out from under any of these callbacks, so
-they never call into Rust while the engine is live. They read and write thread-local C buffers, and Rust copies things
-in before the script runs and out after it finishes.</p>
+</span></span></code></pre></div><p><code>sapi_module.name</code> is what <code>php_sapi_name()</code> returns. Frameworks that branch on <code>cli</code> vs everything else see <code>ephpm</code>
+and treat it as a web SAPI. All of this is C, not Rust, for the reason I covered in <a href="/blog/2026/04/why-rust-for-php-embedding/">the Rust
+post</a>. PHP can <code>longjmp</code> out from under any of these callbacks, so they
+never call into Rust while the engine is live. They read and write thread-local C buffers. Rust copies things in
+before the script runs and out after it finishes.</p>
 <h3 id="output-ub_write">Output: ub_write</h3>
 <p>Output is the simplest one. PHP hands over a pointer and a length and expects to be told how many bytes were taken.
 ePHPm appends to a per-thread buffer that doubles as needed:</p>
@@ -358,24 +361,24 @@ ePHPm appends to a per-thread buffer that doubles as needed:</p>
 </span></span><span class="line"><span class="cl">    <span class="n">output_len</span> <span class="o">+=</span> <span class="n">str_length</span><span class="p">;</span>
 </span></span><span class="line"><span class="cl">    <span class="k">return</span> <span class="n">str_length</span><span class="p">;</span>
 </span></span><span class="line"><span class="cl"><span class="p">}</span>
-</span></span></code></pre></div><p>The buffer is <code>__thread</code> (<code>__declspec(thread)</code> on MSVC, behind a macro), because under ZTS several threads run PHP at
-once. It&rsquo;s never freed between requests, only reset to length zero, so a thread that served one big page keeps that
+</span></span></code></pre></div><p>The buffer is <code>__thread</code> because under ZTS several threads run PHP at once. On MSVC it&rsquo;s <code>__declspec(thread)</code>, behind
+a macro. It&rsquo;s never freed between requests, only reset to length zero. So a thread that served one big page keeps that
 capacity around. That&rsquo;s a deliberate trade: no allocation on the hot path in exchange for some memory per thread.</p>
 <p>Returning <code>0</code> from <code>ub_write</code> tells PHP the client went away. If <code>realloc</code> fails, that&rsquo;s the honest answer.</p>
 <h3 id="headers-send_headers-is-almost-a-no-op">Headers: send_headers is almost a no-op</h3>
-<p>This one surprised me. <code>send_headers</code> is called once, right before the first byte of output, so a SAPI like php-fpm
-can write the status line and headers to the FastCGI stream. ePHPm doesn&rsquo;t stream PHP output in this mode, it buffers
-the whole response, so its <code>send_headers</code> just says &ldquo;done&rdquo;:</p>
+<p>This one surprised me. <code>send_headers</code> is called once, right before the first byte of output. That&rsquo;s where a SAPI like
+php-fpm writes the status line and headers to the FastCGI stream. ePHPm doesn&rsquo;t stream PHP output in this mode. It
+buffers the whole response, so its <code>send_headers</code> just says &ldquo;done&rdquo;:</p>
 <div class="highlight"><pre tabindex="0" class="chroma"><code class="language-c" data-lang="c"><span class="line"><span class="cl"><span class="k">static</span> <span class="kt">int</span> <span class="nf">ephpm_sapi_send_headers</span><span class="p">(</span><span class="n">sapi_headers_struct</span> <span class="o">*</span><span class="n">sapi_headers</span><span class="p">)</span>
 </span></span><span class="line"><span class="cl"><span class="p">{</span>
 </span></span><span class="line"><span class="cl">    <span class="p">(</span><span class="kt">void</span><span class="p">)</span><span class="n">sapi_headers</span><span class="p">;</span>
 </span></span><span class="line"><span class="cl">    <span class="k">return</span> <span class="n">SAPI_HEADER_SENT_SUCCESSFULLY</span><span class="p">;</span>
 </span></span><span class="line"><span class="cl"><span class="p">}</span>
-</span></span></code></pre></div><p>The real header capture happens after the script finishes, by walking <code>SG(sapi_headers).headers</code> (the <code>zend_llist</code>
-that <code>header()</code> appends to) while the request is still alive, and reading <code>SG(sapi_headers).http_response_code</code> for the
-status. One subtlety: if a script never outputs anything, the default <code>Content-Type</code> never makes it into that list,
-because PHP adds it as part of sending headers. So the capture code synthesizes it from <code>SG(sapi_headers).mimetype</code>, or
-<code>default_mimetype</code> + <code>default_charset</code>, when no <code>Content-Type</code> was set.</p>
+</span></span></code></pre></div><p>The real header capture happens after the script finishes, while the request is still alive. It walks
+<code>SG(sapi_headers).headers</code>, which is the <code>zend_llist</code> that <code>header()</code> appends to. It reads
+<code>SG(sapi_headers).http_response_code</code> for the status. One subtlety: if a script never outputs anything, the default
+<code>Content-Type</code> never makes it into that list. PHP adds it as part of sending headers. So when no <code>Content-Type</code> was
+set, the capture code synthesizes one. It uses <code>SG(sapi_headers).mimetype</code>, or <code>default_mimetype</code> + <code>default_charset</code>.</p>
 <h3 id="input-read_post-and-read_cookies">Input: read_post and read_cookies</h3>
 <p><code>read_post</code> is a cursor over the request body Rust handed in:</p>
 <div class="highlight"><pre tabindex="0" class="chroma"><code class="language-c" data-lang="c"><span class="line"><span class="cl"><span class="k">static</span> <span class="kt">size_t</span> <span class="nf">ephpm_sapi_read_post</span><span class="p">(</span><span class="kt">char</span> <span class="o">*</span><span class="n">buffer</span><span class="p">,</span> <span class="kt">size_t</span> <span class="n">count_bytes</span><span class="p">)</span>
@@ -390,16 +393,16 @@ because PHP adds it as part of sending headers. So the capture code synthesizes 
 </span></span><span class="line"><span class="cl">    <span class="k">return</span> <span class="n">to_copy</span><span class="p">;</span>
 </span></span><span class="line"><span class="cl"><span class="p">}</span>
 </span></span></code></pre></div><p>and <code>read_cookies</code> returns the raw <code>Cookie</code> header and lets PHP parse it.</p>
-<p>Here&rsquo;s one of the things you only learn by reading <code>main/SAPI.c</code>: <code>sapi_activate()</code> only reads and parses the POST body
-into <code>$_POST</code> if <code>SG(server_context)</code> is non-NULL. That pointer is how the CGI and built-in server SAPIs say &ldquo;this is a
-real request&rdquo; as opposed to a CLI run. ePHPm&rsquo;s callbacks don&rsquo;t use it for anything, so it gets a stable non-NULL
-sentinel, and without that line <code>$_POST</code> was quietly empty while <code>php://input</code> still worked. Another: PHP 8.4 exports
-<code>sapi_read_post_data()</code>, but in 8.3 the same function is <code>static</code> inside <code>main/SAPI.c</code>, so there&rsquo;s nothing to call.
-ePHPm supports 8.3, so for <code>PHP_VERSION_ID &lt; 80400</code> the wrapper carries a verbatim copy of 8.4&rsquo;s function.</p>
+<p>Here&rsquo;s one of the things you only learn by reading <code>main/SAPI.c</code>. <code>sapi_activate()</code> only reads and parses the POST
+body into <code>$_POST</code> if <code>SG(server_context)</code> is non-NULL. That pointer is how the CGI and built-in server SAPIs say
+&ldquo;this is a real request&rdquo; as opposed to a CLI run. ePHPm&rsquo;s callbacks don&rsquo;t use it for anything, so it gets a stable
+non-NULL sentinel. Without that line <code>$_POST</code> was quietly empty while <code>php://input</code> still worked. Here&rsquo;s another. PHP
+8.4 exports <code>sapi_read_post_data()</code>, but in 8.3 the same function is <code>static</code> inside <code>main/SAPI.c</code>. There&rsquo;s nothing to
+call. ePHPm supports 8.3, so for <code>PHP_VERSION_ID &lt; 80400</code> the wrapper carries a verbatim copy of 8.4&rsquo;s function.</p>
 <h3 id="_server-from-a-hyper-request">$_SERVER from a hyper request</h3>
-<p><code>register_server_variables</code> walks a list of key/value pairs that Rust built from the hyper request. Here&rsquo;s the original
-version of that builder (it&rsquo;s since been reworked to skip the per-header allocations and map names in a single ASCII
-pass, but the mapping is the same):</p>
+<p><code>register_server_variables</code> walks a list of key/value pairs that Rust built from the hyper request. Here&rsquo;s the
+original version of that builder. It&rsquo;s since been reworked to skip the per-header allocations and map names in a
+single ASCII pass, but the mapping is the same:</p>
 <div class="highlight"><pre tabindex="0" class="chroma"><code class="language-rust" data-lang="rust"><span class="line"><span class="cl"><span class="kd">let</span><span class="w"> </span><span class="k">mut</span><span class="w"> </span><span class="n">vars</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="fm">vec!</span><span class="p">[</span><span class="w">
 </span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="p">(</span><span class="s">&#34;REQUEST_METHOD&#34;</span><span class="p">.</span><span class="n">into</span><span class="p">(),</span><span class="w"> </span><span class="bp">self</span><span class="p">.</span><span class="n">method</span><span class="p">.</span><span class="n">clone</span><span class="p">()),</span><span class="w">
 </span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="p">(</span><span class="s">&#34;REQUEST_URI&#34;</span><span class="p">.</span><span class="n">into</span><span class="p">(),</span><span class="w"> </span><span class="bp">self</span><span class="p">.</span><span class="n">uri</span><span class="p">.</span><span class="n">clone</span><span class="p">()),</span><span class="w">
@@ -430,40 +433,48 @@ pass, but the mapping is the same):</p>
 </span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="n">vars</span><span class="p">.</span><span class="n">push</span><span class="p">((</span><span class="n">key</span><span class="p">,</span><span class="w"> </span><span class="n">value</span><span class="p">.</span><span class="n">clone</span><span class="p">()));</span><span class="w">
 </span></span></span><span class="line"><span class="cl"><span class="p">}</span><span class="w">
 </span></span></span></code></pre></div><p>That&rsquo;s the CGI/1.1 variable set every PHP framework expects. <code>SCRIPT_NAME</code> is derived from the resolved script path
-relative to the document root, not from the URI, so it stays right after a front-controller rewrite
-(<code>/blog/hello</code> → <code>/index.php</code>). <code>HTTPS=on</code> is added for TLS requests, and <code>REDIRECT_STATUS=200</code> keeps code that was
+relative to the document root, not from the URI. That way it stays right after a front-controller rewrite
+(<code>/blog/hello</code> → <code>/index.php</code>). <code>HTTPS=on</code> is added for TLS requests. <code>REDIRECT_STATUS=200</code> keeps code that was
 written for <code>cgi.force_redirect</code> happy.</p>
 <p>Two sharp edges in that header loop, both worth knowing about if you write your own:</p>
 <ul>
 <li><strong>httpoxy.</strong> A client-sent <code>Proxy:</code> header becomes <code>HTTP_PROXY</code>, which a lot of HTTP client libraries read as &ldquo;use
 this proxy for outbound requests.&rdquo; That&rsquo;s the 2016 <a href="https://httpoxy.org/">httpoxy</a> bug class, and the generic
-<code>HTTP_*</code> mapping walks right into it. As of last week ePHPm strips <code>Proxy</code> (and any configured JWT claims header) at
-request ingest, before middleware runs and before anything crosses into PHP
+<code>HTTP_*</code> mapping walks right into it. As of last week ePHPm strips <code>Proxy</code> at request ingest, along with any
+configured JWT claims header. That happens before middleware runs and before the request crosses into PHP
 (<a href="https://github.com/ephpm/ephpm/pull/200">#200</a>).</li>
-<li><strong>A fixed-size table.</strong> On the C side the server variables live in a <code>__thread</code> array of 128 pairs, and
-<code>ephpm_request_add_server_var()</code> silently drops anything past that. Sixteen-odd CGI variables plus a request with more
-than about a hundred headers will lose the tail. Nobody has hit it, but &ldquo;silently&rdquo; is the word I don&rsquo;t like there.</li>
+<li><strong>A fixed-size table.</strong> On the C side the server variables live in a <code>__thread</code> array of 128 pairs.
+<code>ephpm_request_add_server_var()</code> silently drops entries past that. Sixteen-odd CGI variables plus a request with
+more than about a hundred headers will lose the tail. Nobody has hit it, but &ldquo;silently&rdquo; is the word I don&rsquo;t like
+there.</li>
 </ul>
 <h3 id="the-shortcut-that-broke-wordpress">The shortcut that broke WordPress</h3>
-<p>The interesting part of a SAPI isn&rsquo;t the callbacks, it&rsquo;s the lifecycle around them. A normal SAPI does this for every
+<p>The interesting part of a SAPI isn&rsquo;t the callbacks. It&rsquo;s the lifecycle around them. A normal SAPI does this for every
 request:</p>
 <pre tabindex="0"><code>php_request_startup()   -&gt; superglobals built, executor fresh
 php_execute_script()
 php_request_shutdown()  -&gt; user functions, classes, constants, globals, statics destroyed
-</code></pre><p>In March, <code>php_request_startup()</code> crashed on tokio&rsquo;s <code>spawn_blocking</code> threads (the signal and stack-probe functions it
-calls were the problem, <a href="/blog/2026/04/php-signal-safety-init-ordering/">same family as the SIGPROF bug</a>). So the first
-version of ePHPm took a shortcut: start one request when the thread is registered with TSRM, and <em>reuse it forever</em>.
-Between HTTP requests it only reset the SAPI request info and rebuilt the superglobals by hand: destroy the
-<code>PG(http_globals)</code> arrays, rebuild <code>$_SERVER</code> through the callback, run <code>treat_data</code> over the query string for <code>$_GET</code>,
-call <code>sapi_handle_post()</code> for <code>$_POST</code>/<code>$_FILES</code>, parse cookies manually, merge <code>$_REQUEST</code>.</p>
+</code></pre><p>In March, <code>php_request_startup()</code> crashed on tokio&rsquo;s <code>spawn_blocking</code> threads. The signal and stack-probe functions it
+calls were the problem, <a href="/blog/2026/04/php-signal-safety-init-ordering/">same family as the SIGPROF bug</a>. So the first
+version of ePHPm took a shortcut. It started one request when the thread was registered with TSRM and <em>reused it
+forever</em>. Between HTTP requests it only reset the SAPI request info and rebuilt the superglobals by hand:</p>
+<ul>
+<li>destroy the <code>PG(http_globals)</code> arrays</li>
+<li>rebuild <code>$_SERVER</code> through the callback</li>
+<li>run <code>treat_data</code> over the query string for <code>$_GET</code></li>
+<li>call <code>sapi_handle_post()</code> for <code>$_POST</code>/<code>$_FILES</code></li>
+<li>parse cookies manually</li>
+<li>merge <code>$_REQUEST</code></li>
+</ul>
 <p>That passed every test I had, because every test was a script that didn&rsquo;t care what the previous request left behind.
 WordPress cares. <a href="https://github.com/bryanspears">Bryan Spears</a> tracked it down at the end of June
-(<a href="https://github.com/ephpm/ephpm/commit/9715d61f893a910b1b0655bb211113a15035d937"><code>9715d61</code></a>): user functions, classes,
-constants, function statics and the global symbol table all survived between requests on the same thread. WordPress&rsquo;s
-<code>wp-blog-header.php</code> checks <code>$wp_did_header</code> (a global) and defines <code>WP_USE_THEMES</code> (a constant), so on the second request
-to a warmed thread it decided it had already bootstrapped and skipped everything. Request #1 on a thread was a full 68KB
-page. Requests #2 and later were 119-byte blank pages containing a &ldquo;constant already defined&rdquo; warning.</p>
-<p>By then the functions that made <code>php_request_startup()</code> crash were already <code>--wrap</code>&rsquo;d to no-ops, so the fix was to do
+(<a href="https://github.com/ephpm/ephpm/commit/9715d61f893a910b1b0655bb211113a15035d937"><code>9715d61</code></a>). User functions,
+classes, constants, function statics and the global symbol table all survived between requests on the same thread.
+WordPress&rsquo;s <code>wp-blog-header.php</code> checks <code>$wp_did_header</code>, a global. It defines <code>WP_USE_THEMES</code>, a constant. So on the
+second request to a warmed thread it decided it had already bootstrapped and skipped everything. Request #1 on a
+thread was a full 68KB page. Requests #2 and later were 119-byte blank pages containing a &ldquo;constant already defined&rdquo;
+warning.</p>
+<p>By then the functions that made <code>php_request_startup()</code> crash were already <code>--wrap</code>&rsquo;d to no-ops. So the fix was to do
 what every other SAPI does:</p>
 <div class="highlight"><pre tabindex="0" class="chroma"><code class="language-c" data-lang="c"><span class="line"><span class="cl"><span class="kt">int</span> <span class="nf">ephpm_execute_request</span><span class="p">(</span><span class="k">const</span> <span class="kt">char</span> <span class="o">*</span><span class="n">filename</span><span class="p">)</span>
 </span></span><span class="line"><span class="cl"><span class="p">{</span>
@@ -501,21 +512,21 @@ what every other SAPI does:</p>
 </span></span><span class="line"><span class="cl">
 </span></span><span class="line"><span class="cl">    <span class="cm">/* ... replay per-request INI (open_basedir etc.), then execute under SETJMP ... */</span>
 </span></span><span class="line"><span class="cl"><span class="p">}</span>
-</span></span></code></pre></div><p>The ordering in there is the lesson. <code>SG(request_info)</code> has to be filled in <em>before</em> <code>php_request_startup()</code>, because
-startup is what builds the superglobals, through the callbacks, from those fields. Once startup owned that job, the old
-hand-rebuild became actively harmful: it destroyed the arrays startup had just created and re-ran <code>treat_data</code> over
-them, which was a use-after-free inside <code>php_default_treat_data</code> under load. The correct amount of superglobal code in
+</span></span></code></pre></div><p>The ordering in there is the lesson. <code>SG(request_info)</code> has to be filled in <em>before</em> <code>php_request_startup()</code>. Startup
+is what builds the superglobals from those fields, through the callbacks. Once startup owned that job, the old
+hand-rebuild became actively harmful. It destroyed the arrays startup had just created and re-ran <code>treat_data</code> over
+them. That was a use-after-free inside <code>php_default_treat_data</code> under load. The correct amount of superglobal code in
 a SAPI turned out to be none. Set the inputs, let PHP build them.</p>
-<p>The cost: about 5% on a trivial no-op script, per the commit&rsquo;s own measurement, and nothing noticeable on a real page,
-because OPcache&rsquo;s compiled bytecode and the JIT buffer live in shared memory and survive request shutdown. It&rsquo;s the
-classic php-fpm + OPcache model, just with threads instead of processes. WordPress went from one good page per warmed
-thread to 40 out of 40 under concurrency.</p>
-<p>The status code reset in that block is the same kind of bug in miniature: <code>http_response_code(201)</code> on one request
-came back as the status of the next request on that thread, because the embed path doesn&rsquo;t reset it during startup.</p>
+<p>The cost was about 5% on a trivial no-op script, per the commit&rsquo;s own measurement. On a real page it&rsquo;s nothing
+noticeable. OPcache&rsquo;s compiled bytecode and the JIT buffer live in shared memory and survive request shutdown. It&rsquo;s
+the classic php-fpm + OPcache model, just with threads instead of processes. WordPress went from one good page per
+warmed thread to 40 out of 40 under concurrency.</p>
+<p>The status code reset in that block is the same kind of bug in miniature. <code>http_response_code(201)</code> on one request
+came back as the status of the next request on that thread. The embed path doesn&rsquo;t reset it during startup.</p>
 <h3 id="what-id-tell-someone-writing-a-sapi">What I&rsquo;d tell someone writing a SAPI</h3>
 <ul>
 <li>Read <code>sapi/cgi/cgi_main.c</code> and <code>sapi/cli/php_cli_server.c</code> before you read the embed SAPI. Embed is the smallest, but
-it&rsquo;s built for &ldquo;run one script and exit,&rdquo; and the gaps are exactly the parts a server needs.</li>
+it&rsquo;s built for &ldquo;run one script and exit.&rdquo; The gaps are exactly the parts a server needs.</li>
 <li>Never skip <code>php_request_shutdown()</code>. It is the isolation boundary between requests. If something crashes during
 request startup, fix that instead of reusing a request.</li>
 <li>Set <code>SG(request_info)</code> before startup and let PHP build the superglobals.</li>
@@ -526,7 +537,8 @@ lifecycle bugs immediately.</li>
 <h3 id="links">Links</h3>
 <ul>
 <li><a href="https://github.com/ephpm/ephpm">ePHPm</a>, the SAPI lives in <code>crates/ephpm-php/ephpm_wrapper.c</code></li>
-<li><a href="https://github.com/ephpm/ephpm/commit/9715d61f893a910b1b0655bb211113a15035d937"><code>9715d61</code></a> per-request shutdown/startup</li>
+<li><a href="https://github.com/ephpm/ephpm/commit/9715d61f893a910b1b0655bb211113a15035d937"><code>9715d61</code></a> per-request
+shutdown/startup</li>
 <li><a href="https://github.com/ephpm/ephpm/pull/200">#200</a> strip <code>Proxy</code> and claims headers at ingest</li>
 <li><a href="https://github.com/php/php-src/blob/master/main/SAPI.h">php-src <code>main/SAPI.h</code></a> for <code>sapi_module_struct</code></li>
 <li><a href="https://github.com/php/php-src/tree/master/sapi">php-src <code>sapi/</code></a> for every SAPI that ships with PHP</li>

@@ -17,36 +17,37 @@ images:
 
 Part of a hobby of mine is running a home lab and using on [Proxmox VE](https://www.proxmox.com/en/) to do the virtualization.
 Since I work in the space I'm slowly trying to build tooling around Proxmox that will let me use the home lab full time for work.
-Usually my work involves building Kubernetes management tooling, you can imagine waiting for public cloud APIs all day 
-can take away hours of your day at cost to your employer for both your time and the compute resources.
+Usually my work involves building Kubernetes management tooling. You can imagine waiting for public cloud APIs all day
+can take away hours of your day. That's at cost to your employer for both your time and the compute resources.
 
 There's also a real problem today with cloud offerings of Windows. Booting a Windows 2019 or 2022 server in Amazon EC2 today
 can take up to 4 or 5 minutes before you are given access to the Administrator password. If you build up and tear down constantly
 the waiting can get tiring. Proxmox just runs qemu under the hood and with snapshotting I Just get everything working
 and take a quick snapshot. When I want to roll back a cluster for another provision run I can simply shut down the VMs and
-restore from backup and up and running again in no time.
+restore from backup. I'm up and running again in no time.
 
 ### go-proxmox
 To accomplish everything I'll need I first started out building a Go [client for Proxmox](https://github.com/luthermonson/go-proxmox).
 Go is my primary language and gives everything will need to start from a well-built with proper Go types for all responses. This
 is in comparison to the most popular Go client which uses `map[string]interface{}` for everything. Beyond mapping REST endpoints
-to structs the real power of the client will be to build in functions to more easily automate things PVE gives you access too
-but forces you to the host cli as they haven't built the tooling into their API/UI yet.
+to structs, the real power of the client will be to build in functions to more easily automate things. PVE gives you access to
+these but forces you to the host cli, as they haven't built the tooling into their API/UI yet.
 
-A great example of this is loading a VM from a [qcow disk image](https://en.wikipedia.org/wiki/Qcow). A wonderfully simple
-image format and the way we want to use them for work is to specify a local network storage URL and tell Proxmox to pull
-and build a VM from the image, all things possible in qemu directly on the host as per [Jamie Phillips' blog post](https://www.phillipsj.net/posts/proxmox-linux-templates/)
-which outlines the idea.
+A great example of this is loading a VM from a [qcow disk image](https://en.wikipedia.org/wiki/Qcow). It's a wonderfully
+simple image format. The way we want to use them for work is to specify a local network storage URL and tell Proxmox to pull
+and build a VM from the image. All of that is possible in qemu directly on the host, as per
+[Jamie Phillips' blog post](https://www.phillipsj.net/posts/proxmox-linux-templates/) which outlines the idea.
 
 ### xterm.js Backwards Engineering
-I wanted to recreate what the UI was doing to get on to a host, it's native and works right out of the box with no extra 
-additions to Proxmox after installation. Back tracing how some of this worked I went down some rabbit holes looking into 
-implementing a VNC client in Go. There are some people who have built have some packages [1](https://github.com/mitchellh/go-vnc) 
-[2](https://github.com/amitbet/vnc2video) but all I was trying to do is get on the Debian host and make some calls and this
+I wanted to recreate what the UI was doing to get on to a host. It's native and works right out of the box with no extra
+additions to Proxmox after installation. Back tracing how some of this worked I went down some rabbit holes looking into
+implementing a VNC client in Go. There are some people who have built some packages [1](https://github.com/mitchellh/go-vnc)
+[2](https://github.com/amitbet/vnc2video). But all I was trying to do is get on the Debian host and make some calls, and this
 was overkill.
 
-I traced back the xterm.js functionality built into the UI and landed on exactly what I needed... for reference [here](https://gist.github.com/luthermonson/9d2196725ecc1402ac01c7e835ab4f0f) is the
-entire `main.js file I found used and I'll walk you through how I backwards engineered it in Go and got exactly what I wanted.
+I traced back the xterm.js functionality built into the UI and landed on exactly what I needed. For reference,
+[here](https://gist.github.com/luthermonson/9d2196725ecc1402ac01c7e835ab4f0f) is the entire `main.js file I found used.
+I'll walk you through how I backwards engineered it in Go and got exactly what I wanted.
 
 #### Step 1, websocket connection
 Grab [gorilla/websocket](https://github.com/gorilla/websocket) and negotiate the connection. While reading the implementation
@@ -58,27 +59,28 @@ engineering the UI requests.
 ![termproxy and vnc websocket](/img/2022/02/vncwebsocket.png)
 
 You can see in the bottom right there is a call to termproxy then immediately to vncwebsocket. This was easily confirmed
-by the [Proxmox API docs](https://pve.proxmox.com/pve-docs/api-viewer/index.html) and validated my suspicious that this 
-code could be reusable as node ([termproxy](https://pve.proxmox.com/pve-docs/api-viewer/index.html#/nodes/{node}/termproxy) 
+by the [Proxmox API docs](https://pve.proxmox.com/pve-docs/api-viewer/index.html). It validated my suspicion that this
+code could be reusable, as node ([termproxy](https://pve.proxmox.com/pve-docs/api-viewer/index.html#/nodes/{node}/termproxy) 
 [vncwebsocket](https://pve.proxmox.com/pve-docs/api-viewer/index.html#/nodes/{node}/vncwebsocket)), qemu
 ([termproxy](https://pve.proxmox.com/pve-docs/api-viewer/index.html#/nodes/{node}/qemu/{vmid}/termproxy) 
 [vncwebsocket](https://pve.proxmox.com/pve-docs/api-viewer/index.html#/nodes/{node}/qemu/{vmid}/vncwebsocket)) and lxc 
 ([termproxy](https://pve.proxmox.com/pve-docs/api-viewer/index.html#/nodes/{node}/lxc/{vmid}/termproxy) 
 [vncwebsocket](https://pve.proxmox.com/pve-docs/api-viewer/index.html#/nodes/{node}/lxc/{vmid}/vncwebsocket)) all had 
-duplicate API endpoints. Reading the main.js you can quite clearly see every where `socket.send()` is called and decode
+duplicate API endpoints. Reading the main.js you can quite clearly see every where `socket.send()` is called. You can decode
 the [login](https://gist.github.com/luthermonson/9d2196725ecc1402ac01c7e835ab4f0f#file-main-js-L192), [ping](https://gist.github.com/luthermonson/9d2196725ecc1402ac01c7e835ab4f0f#file-main-js-L181)
-and [data send](https://gist.github.com/luthermonson/9d2196725ecc1402ac01c7e835ab4f0f#file-main-js-L176) along with what looks
-like a [resizer](https://gist.github.com/luthermonson/9d2196725ecc1402ac01c7e835ab4f0f#file-main-js-L110) if you make your browser bigger or smaller.  This was perfect, everything I needed to get into the host and send shell commands!
+and [data send](https://gist.github.com/luthermonson/9d2196725ecc1402ac01c7e835ab4f0f#file-main-js-L176), along with what looks
+like a [resizer](https://gist.github.com/luthermonson/9d2196725ecc1402ac01c7e835ab4f0f#file-main-js-L110) if you make your
+browser bigger or smaller. This was perfect. It was everything I needed to get into the host and send shell commands!
 
 #### Step 2, recreating the login
-Recreating the login was trivial, call to the `termproxy` endpoint results in a response which includes a user and a ticket.
-Call to the web socket with those in the [get params](https://github.com/luthermonson/go-proxmox/blob/994cc14849773c502735682ac83d76c5d1308a54/nodes.go#L33-L34)
-and the web socket boots right up, just make sure you pass the [PVEAuthCookie](https://github.com/luthermonson/go-proxmox/blob/994cc14849773c502735682ac83d76c5d1308a54/proxmox.go#L209)
+Recreating the login was trivial. A call to the `termproxy` endpoint results in a response which includes a user and a
+ticket. Call the web socket with those in the [get params](https://github.com/luthermonson/go-proxmox/blob/994cc14849773c502735682ac83d76c5d1308a54/nodes.go#L33-L34)
+and the web socket boots right up. Just make sure you pass the [PVEAuthCookie](https://github.com/luthermonson/go-proxmox/blob/994cc14849773c502735682ac83d76c5d1308a54/proxmox.go#L209)
 header in the dialer.
 
-The socket only sends/receives binary messages so the next step is to start negotiating the web socket to elevate your permissions
-to send commands to the host. The first thing the Javascript did was [login](https://gist.github.com/luthermonson/9d2196725ecc1402ac01c7e835ab4f0f#file-main-js-L192)
-again via the socket and in Go after connected simply do
+The socket only sends/receives binary messages. The next step is to start negotiating the web socket to elevate your
+permissions to send commands to the host. The first thing the Javascript did was [login](https://gist.github.com/luthermonson/9d2196725ecc1402ac01c7e835ab4f0f#file-main-js-L192)
+again via the socket. In Go after connecting simply do
 
 ```go
 err := conn.WriteMessage(websocket.BinaryMessage, []byte(vnc.User+":"+vnc.Ticket+"\n"))
@@ -108,11 +110,11 @@ func (c *Client) VNCWebSocket(path string, vnc *VNC) (chan string, chan string, 
 ```
 And this will let the client manage things the consumer doesn't care about like the keep alive. To interface with the web 
 socket you will need to spin off two go routines, one for reading the web socket and one for writing to the web socket. 
-You can't concurrently write to a web socket or you'll panic so try and make sure you're keeping a clean `select` statement, 
-or you will accidentally write to the socket twice.
+You can't concurrently write to a web socket or you'll panic. So try and make sure you're keeping a clean `select`
+statement, or you will accidentally write to the socket twice.
 
-To perform the keep alive it was quite obvious they're sending a binary `2` for a [ping](https://gist.github.com/luthermonson/9d2196725ecc1402ac01c7e835ab4f0f#file-main-js-L181)
-so to recreate that I simply added a case for a 30s ticker.
+To perform the keep alive it was quite obvious they're sending a binary `2` for a [ping](https://gist.github.com/luthermonson/9d2196725ecc1402ac01c7e835ab4f0f#file-main-js-L181).
+To recreate that I simply added a case for a 30s ticker.
 
 ```go
 case <-ticker.C:
@@ -121,8 +123,8 @@ case <-ticker.C:
         errors <- err
     }
 ```
-You also want to close the socket when youre done so another case is a simple `CloseMessage` with an empty `[]byte{}` which will
-only happen when the closer is called by the client implementor.
+You also want to close the socket when you're done. So another case is a simple `CloseMessage` with an empty `[]byte{}`,
+which will only happen when the closer is called by the client implementor.
 
 ```go
 case <-done:
@@ -134,8 +136,8 @@ case <-done:
 
 To support terminal resizing I decided to add a height/width calculator and implement a watcher to notify the web socket
 in the event the user resizes the terminal. To get the terminal size I used [buger/goterm](https://github.com/buger/goterm).
-I simply captured the height/width when the func is called and pass it to a go routine to check every second and
-notify a channel if it changes and obeys the done channel closed by the closer.
+I simply captured the height/width when the func is called and pass it to a go routine. It checks every second and
+notifies a channel if it changes. It also obeys the done channel closed by the closer.
 
 ```go
 type size struct {
@@ -182,7 +184,8 @@ case resized := <-resize:
 ```
 
 Finally, all we need to do is send/receive messages on the channel. I wanted the implementor to call the `VNCWebSocket` func 
-and send and receive strings. I added the channels and handled them by converting to a `[]byte` and sending the message format as specified in the [xterm.js version](https://gist.github.com/luthermonson/9d2196725ecc1402ac01c7e835ab4f0f#file-main-js-L176)
+and send and receive strings. I added the channels and handled them by converting to a `[]byte`. Then I send the message
+format as specified in the [xterm.js version](https://gist.github.com/luthermonson/9d2196725ecc1402ac01c7e835ab4f0f#file-main-js-L176).
 
 ```go
 case msg := <-send:
@@ -256,12 +259,12 @@ send <- "exit"
 time.Sleep(5 * time.Second)
 ```
 
-It ends up looking quite easy, just grab the `TermProxy` vnc response which includes the ticket, pass to `VNCWebSocket` and
-you get your string channels, error channel and a closer. Start a go routine to watch the receive and error channels and 
-start sending messages to the send channel.
+It ends up looking quite easy. Just grab the `TermProxy` vnc response which includes the ticket and pass it to
+`VNCWebSocket`. You get your string channels, error channel and a closer. Start a go routine to watch the receive and
+error channels and start sending messages to the send channel.
 
 ##### Step 5, testing...
-The output from my test looked like the following with all debug enabled and you can see you can interact with the host
+The output from my test looked like the following with all debug enabled. You can see you can interact with the host
 with no restrictions right from Go.
 
 ```bash

@@ -218,7 +218,7 @@
       <h2><a href="/blog/2023/08/proxmox-api-auth-tickets-tokens-go/">Logging In to Proxmox From Go: Tickets, CSRF Tokens and API Tokens</a></h2>
     
     
-      <p>The two ways to authenticate against the Proxmox VE API, how go-proxmox handles each one, and why the client is now configured entirely with functional options.</p>
+      <p>Proxmox VE has two ways to authenticate against its API. Here&#39;s how go-proxmox handles each one and why the client is now configured entirely with functional options.</p>
     
   </div>
   <div class="meta">
@@ -233,9 +233,9 @@
     <img class="" src="/img/2023/08/proxmox-api-auth-tickets-tokens-go-flow.svg" alt="Diagram of the ticket login flow and the API token header for the Proxmox VE API">
   </a>
     
-    <p>I just spent a week of evenings on the access side of <a href="https://github.com/luthermonson/go-proxmox">go-proxmox</a>: realms,
-groups, users and roles all landed, and before any of that I reworked how a client gets its credentials in
-the first place. Proxmox gives you two different ways to authenticate and they behave differently enough that it&rsquo;s worth
+    <p>I just spent a week of evenings on the access side of <a href="https://github.com/luthermonson/go-proxmox">go-proxmox</a>.
+Realms, groups, users and roles all landed. Before any of that, I reworked how a client gets its credentials in the
+first place. Proxmox gives you two different ways to authenticate. They behave differently enough that it&rsquo;s worth
 writing down how each one works on the wire and what the client does with it.</p>
   </div>
   <footer>
@@ -295,10 +295,10 @@ writing down how each one works on the wire and what the client does with it.</p
     <img class="" src="/img/2022/03/proxmox-tasks-upid-wait-go-anatomy.svg" alt="Diagram breaking a Proxmox UPID string into node, pid, pstart, starttime, type, id and user">
   </a>
     
-    <p>If you start automating <a href="https://www.proxmox.com/en/">Proxmox VE</a> through the API, the first thing that trips you up is
-that almost nothing you ask it to do is finished when the HTTP call returns. Start a VM, clone a template, download an
-ISO to storage, delete a disk&hellip; the response is a single string that looks like a typo and the actual work is happening
-in a worker process on the node. If your next call depends on that work being done you have to go find out when it&rsquo;s done.</p>
+    <p>If you start automating <a href="https://www.proxmox.com/en/">Proxmox VE</a> through the API, one thing trips you up first.
+Almost nothing you ask it to do is finished when the HTTP call returns. Start a VM, clone a template, download an ISO
+to storage, delete a disk&hellip; the response is a single string that looks like a typo. The actual work is happening in a
+worker process on the node. If your next call depends on that work being done, you have to go find out when it&rsquo;s done.</p>
   </div>
   <footer>
     <a href="/blog/2022/03/proxmox-tasks-upid-wait-go/" class="button big">Read More</a>
@@ -359,8 +359,8 @@ in a worker process on the node. If your next call depends on that work being do
     
     <p>Part of a hobby of mine is running a home lab and using on <a href="https://www.proxmox.com/en/">Proxmox VE</a> to do the virtualization.
 Since I work in the space I&rsquo;m slowly trying to build tooling around Proxmox that will let me use the home lab full time for work.
-Usually my work involves building Kubernetes management tooling, you can imagine waiting for public cloud APIs all day
-can take away hours of your day at cost to your employer for both your time and the compute resources.</p>
+Usually my work involves building Kubernetes management tooling. You can imagine waiting for public cloud APIs all day
+can take away hours of your day. That&rsquo;s at cost to your employer for both your time and the compute resources.</p>
   </div>
   <footer>
     <a href="/blog/2022/02/recreating-proxmox-ve-xtermjs-in-go/" class="button big">Read More</a>
@@ -417,11 +417,11 @@ can take away hours of your day at cost to your employer for both your time and 
   <div class="content">
     
     
-    <p>I recently had to spend some time to learn <a href="https://cuelang.org/">Cue</a> and felt the examples/tutorials were a bit lacking
-and the paradigm shift to the entire language sort of messed with my head and some things Cue does were a bit foreign to me.
-To get started, note that the two places I spent all of my time to get this information came from their main <a href="https://cuelang.org/docs/">docs</a>
-and a community <a href="https://cuetorials.com/">Cuetorials</a> site. This will be a tutorial on how you can use Cue to generate
-two different YAML documents using Cue all starting with Go types to&hellip;</p>
+    <p>I recently had to spend some time to learn <a href="https://cuelang.org/">Cue</a> and felt the examples/tutorials were a bit lacking.
+The paradigm shift to the entire language sort of messed with my head, and some things Cue does were a bit foreign to me.
+To get started, note that I spent all of my time getting this information from two places: their main
+<a href="https://cuelang.org/docs/">docs</a> and a community <a href="https://cuetorials.com/">Cuetorials</a> site. This will be a tutorial on
+how you can use Cue to generate two different YAML documents, all starting with Go types to generate Cue files.</p>
   </div>
   <footer>
     <a href="/blog/2022/01/practical-cue-example/" class="button big">Read More</a>
@@ -476,8 +476,8 @@ two different YAML documents using Cue all starting with Go types to&hellip;</p>
     <img class="" src="/img/2022/01/github-pages-logo.png" alt="Github Pages Logo">
   </a>
     
-    <p>Since I just rode this merry-go-round here is a quick overview of how you can achieve a professional
-looking personal blog with custom DNS with minimal effort at no cost and completely run out of a single Github Repository.</p>
+    <p>Since I just rode this merry-go-round here is a quick overview of how you can get a professional looking personal blog
+with custom DNS. It takes minimal effort, costs nothing and runs completely out of a single Github Repository.</p>
   </div>
   <footer>
     <a href="/blog/2022/01/free-personal-blog-hugo-github-pages/" class="button big">Read More</a>
@@ -529,7 +529,7 @@ looking personal blog with custom DNS with minimal effort at no cost and complet
     
     
     <p>Getting a blog up and running to get some of the thoughts out of my head and into a markdown file. For reference on
-who I am please check out the <a href="/about/">about</a> section and stay tuned for more content related to what it is I do everyday.</p>
+who I am please check out the <a href="/about/">about</a> section. Stay tuned for more content related to what it is I do everyday.</p>
   </div>
   <footer>
     <a href="/blog/introduction/" class="button big">Read More</a>

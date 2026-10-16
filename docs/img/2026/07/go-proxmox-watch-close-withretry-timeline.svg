@@ -1,0 +1,112 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 880 720" font-family="system-ui, -apple-system, Segoe UI, Roboto, sans-serif">
+  <title>go-proxmox Watch channel close and WithRetry timelines</title>
+  <desc>Top: Task.Watch before and after #255. Before, the tasktail goroutine closed the watch channel only when the task stopped running; when ctx is cancelled the next Ping fails, the goroutine returns the error and exits, the channel stays open and the range over logChan blocks forever. After, the goroutine does defer close(watch), so the error path closes the channel and the range ends; the caller checks ctx.Err() to learn why. Bottom: WithRetry from #326. Attempt 1 gets a 503, the body is drained and the client sleeps a random time in [0, 200ms); attempt 2 rewinds the body and gets a 502, sleeps in [0, 400ms) or the Retry-After value capped at the max; attempt 3 gets a 200 and returns. A cancelled context is never retried, 4xx other than 429 fails fast, and the knobs are WithRetryMax, WithRetryBackoff and WithRetryCondition.</desc>
+  <defs>
+    <marker id="a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#57606a"/></marker>
+  </defs>
+  <rect width="880" height="720" fill="#ffffff"/>
+  <text x="440" y="32" text-anchor="middle" font-size="20" font-weight="600" fill="#1f2328">Watch's channel and WithRetry, step by step</text>
+
+  <!-- ================= PART A: Watch ================= -->
+  <text x="20" y="64" font-size="16" font-weight="600" fill="#1f2328">task.Watch(ctx, 0): who closes the channel</text>
+
+  <!-- BEFORE panel -->
+  <rect x="10" y="76" width="860" height="176" rx="8" fill="#f6f8fa" stroke="#57606a" stroke-width="1.5" stroke-dasharray="7 5"/>
+  <text x="24" y="98" font-size="14" font-weight="600" fill="#1f2328">Before (#254): close(watch) only when the task stops running</text>
+  <g font-size="13" font-weight="600" fill="#1f2328">
+    <text x="24" y="131">tasktail goroutine</text>
+    <text x="24" y="171">watch channel</text>
+    <text x="24" y="211">range logChan</text>
+  </g>
+  <!-- goroutine -->
+  <rect x="160" y="113" width="220" height="28" rx="4" fill="#0550ae"/>
+  <text x="270" y="132" text-anchor="middle" font-size="13" fill="#fff">Ping, Log, send lines</text>
+  <rect x="390" y="113" width="200" height="28" rx="4" fill="#ffffff" stroke="#a34700" stroke-width="1.5"/>
+  <text x="490" y="132" text-anchor="middle" font-size="13" fill="#1f2328">Ping fails: return err</text>
+  <text x="600" y="132" font-size="13" fill="#57606a">goroutine exits, no close</text>
+  <!-- channel -->
+  <rect x="160" y="153" width="220" height="28" rx="4" fill="#00707a"/>
+  <text x="270" y="172" text-anchor="middle" font-size="13" fill="#fff">open</text>
+  <rect x="380" y="153" width="476" height="28" rx="4" fill="#ffffff" stroke="#a34700" stroke-width="1.5" stroke-dasharray="6 4"/>
+  <text x="618" y="172" text-anchor="middle" font-size="13" fill="#a34700">still open: nobody will write to it or close it</text>
+  <!-- caller -->
+  <rect x="160" y="193" width="220" height="28" rx="4" fill="#57606a"/>
+  <text x="270" y="212" text-anchor="middle" font-size="13" fill="#fff">receives log lines</text>
+  <rect x="380" y="193" width="476" height="28" rx="4" fill="#ffffff" stroke="#a34700" stroke-width="1.5" stroke-dasharray="6 4"/>
+  <text x="618" y="212" text-anchor="middle" font-size="13" font-weight="600" fill="#a34700">✗ blocks forever</text>
+  <!-- cancel line -->
+  <line x1="380" y1="104" x2="380" y2="226" stroke="#a0287f" stroke-width="2" stroke-dasharray="5 4"/>
+  <text x="380" y="243" text-anchor="middle" font-size="12" font-weight="600" fill="#a0287f">ctx cancelled (or a network blip)</text>
+
+  <!-- AFTER panel -->
+  <rect x="10" y="264" width="860" height="200" rx="8" fill="#ffffff" stroke="#0550ae" stroke-width="2"/>
+  <text x="24" y="286" font-size="14" font-weight="600" fill="#0550ae">After #255: the goroutine that sends owns the close, via defer</text>
+  <g font-size="13" font-weight="600" fill="#1f2328">
+    <text x="24" y="319">tasktail goroutine</text>
+    <text x="24" y="359">watch channel</text>
+    <text x="24" y="399">range logChan</text>
+  </g>
+  <!-- goroutine -->
+  <rect x="160" y="301" width="220" height="28" rx="4" fill="#0550ae"/>
+  <text x="270" y="320" text-anchor="middle" font-size="13" fill="#fff">Ping, Log, send lines</text>
+  <rect x="390" y="301" width="200" height="28" rx="4" fill="#ffffff" stroke="#a34700" stroke-width="1.5"/>
+  <text x="490" y="320" text-anchor="middle" font-size="13" fill="#1f2328">Ping fails: return err</text>
+  <rect x="600" y="301" width="150" height="28" rx="4" fill="#00707a"/>
+  <text x="675" y="320" text-anchor="middle" font-size="13" fill="#fff" font-family="ui-monospace, Consolas, Menlo, monospace">defer close(watch)</text>
+  <!-- channel -->
+  <rect x="160" y="341" width="590" height="28" rx="4" fill="#00707a"/>
+  <text x="455" y="360" text-anchor="middle" font-size="13" fill="#fff">open</text>
+  <line x1="750" y1="335" x2="750" y2="375" stroke="#1f2328" stroke-width="3"/>
+  <text x="760" y="360" font-size="13" font-weight="600" fill="#1f2328">closed</text>
+  <!-- caller -->
+  <rect x="160" y="381" width="590" height="28" rx="4" fill="#57606a"/>
+  <text x="455" y="400" text-anchor="middle" font-size="13" fill="#fff">receives log lines</text>
+  <rect x="756" y="381" width="100" height="28" rx="4" fill="#ffffff" stroke="#0550ae" stroke-width="1.5"/>
+  <text x="806" y="400" text-anchor="middle" font-size="13" font-weight="600" fill="#0550ae">✓ loop ends</text>
+  <!-- cancel line -->
+  <line x1="380" y1="292" x2="380" y2="414" stroke="#a0287f" stroke-width="2" stroke-dasharray="5 4"/>
+  <text x="24" y="434" font-size="12" fill="#57606a">A closed channel looks the same either way: check ctx.Err() after the loop, or Ping and read ExitStatus.</text>
+  <text x="24" y="453" font-size="12" fill="#57606a">Errors before the goroutine starts now return nil, err instead of a real, unclosed channel.</text>
+
+  <!-- ================= PART B: WithRetry ================= -->
+  <text x="20" y="500" font-size="16" font-weight="600" fill="#1f2328">proxmox.WithRetry() (#326): an http.RoundTripper around the transport</text>
+  <text x="20" y="520" font-size="12" fill="#57606a">defaults: 3 attempts, 200ms-5s backoff, retries 502/503/504/429 and network errors. Example run, not from a real trace:</text>
+
+  <!-- attempt boxes -->
+  <rect x="20" y="536" width="160" height="60" rx="6" fill="#f6f8fa" stroke="#57606a" stroke-width="1.5"/>
+  <text x="100" y="558" text-anchor="middle" font-size="14" font-weight="600" fill="#1f2328">attempt 1</text>
+  <text x="100" y="580" text-anchor="middle" font-size="13" fill="#1f2328">RoundTrip: 503</text>
+
+  <line x1="180" y1="566" x2="326" y2="566" stroke="#57606a" stroke-width="1.8" stroke-dasharray="6 4" marker-end="url(#a)"/>
+  <text x="253" y="556" text-anchor="middle" font-size="12" fill="#57606a">drain body, sleep</text>
+  <text x="253" y="584" text-anchor="middle" font-size="13" fill="#1f2328" font-family="ui-monospace, Consolas, Menlo, monospace">[0, 200ms)</text>
+
+  <rect x="330" y="536" width="170" height="60" rx="6" fill="#f6f8fa" stroke="#57606a" stroke-width="1.5"/>
+  <text x="415" y="558" text-anchor="middle" font-size="14" font-weight="600" fill="#1f2328">attempt 2</text>
+  <text x="415" y="580" text-anchor="middle" font-size="13" fill="#1f2328">body rewound: 502</text>
+
+  <line x1="500" y1="566" x2="666" y2="566" stroke="#57606a" stroke-width="1.8" stroke-dasharray="6 4" marker-end="url(#a)"/>
+  <text x="583" y="556" text-anchor="middle" font-size="12" fill="#57606a">drain body, sleep</text>
+  <text x="583" y="584" text-anchor="middle" font-size="13" fill="#1f2328" font-family="ui-monospace, Consolas, Menlo, monospace">[0, 400ms)</text>
+  <text x="583" y="602" text-anchor="middle" font-size="12" fill="#57606a">or Retry-After, capped</text>
+
+  <rect x="670" y="536" width="190" height="60" rx="6" fill="#ffffff" stroke="#0550ae" stroke-width="2"/>
+  <text x="765" y="558" text-anchor="middle" font-size="14" font-weight="600" fill="#0550ae">attempt 3</text>
+  <text x="765" y="580" text-anchor="middle" font-size="13" fill="#1f2328">✓ 200: return res</text>
+
+  <text x="440" y="630" text-anchor="middle" font-size="13" fill="#1f2328">full jitter: wait = random in <tspan font-family="ui-monospace, Consolas, Menlo, monospace">[0, min(5s, 200ms × 2^attempt))</tspan></text>
+
+  <!-- rules -->
+  <rect x="20" y="646" width="268" height="58" rx="6" fill="#ffffff" stroke="#a0287f" stroke-width="1.5"/>
+  <text x="154" y="669" text-anchor="middle" font-size="13" font-weight="600" fill="#a0287f">ctx cancelled: never retried</text>
+  <text x="154" y="688" text-anchor="middle" font-size="12" fill="#1f2328">sleep selects on ctx.Done()</text>
+
+  <rect x="306" y="646" width="268" height="58" rx="6" fill="#ffffff" stroke="#a34700" stroke-width="1.5"/>
+  <text x="440" y="669" text-anchor="middle" font-size="13" font-weight="600" fill="#a34700">4xx other than 429</text>
+  <text x="440" y="688" text-anchor="middle" font-size="12" fill="#1f2328">fails fast on the first attempt</text>
+
+  <rect x="592" y="646" width="268" height="58" rx="6" fill="#f6f8fa" stroke="#d0d7de"/>
+  <text x="726" y="669" text-anchor="middle" font-size="12" fill="#1f2328" font-family="ui-monospace, Consolas, Menlo, monospace">WithRetryMax(n)</text>
+  <text x="726" y="684" text-anchor="middle" font-size="12" fill="#1f2328" font-family="ui-monospace, Consolas, Menlo, monospace">WithRetryBackoff(initial, max)</text>
+  <text x="726" y="699" text-anchor="middle" font-size="12" fill="#1f2328" font-family="ui-monospace, Consolas, Menlo, monospace">WithRetryCondition(fn)</text>
+</svg>

@@ -272,35 +272,36 @@
       </div>
       <div class="content">
         
-        <p>I recently had to spend some time to learn <a href="https://cuelang.org/">Cue</a> and felt the examples/tutorials were a bit lacking
-and the paradigm shift to the entire language sort of messed with my head and some things Cue does were a bit foreign to me.
-To get started, note that the two places I spent all of my time to get this information came from their main <a href="https://cuelang.org/docs/">docs</a>
-and a community <a href="https://cuetorials.com/">Cuetorials</a> site. This will be a tutorial on how you can use Cue to generate
-two different YAML documents using Cue all starting with Go types to generate Cue files.</p>
-<p>As Cue changes this could become out of date, this was all done using Cue <strong>v0.4.1</strong>. All code for this tutorial can be
+        <p>I recently had to spend some time to learn <a href="https://cuelang.org/">Cue</a> and felt the examples/tutorials were a bit lacking.
+The paradigm shift to the entire language sort of messed with my head, and some things Cue does were a bit foreign to me.
+To get started, note that I spent all of my time getting this information from two places: their main
+<a href="https://cuelang.org/docs/">docs</a> and a community <a href="https://cuetorials.com/">Cuetorials</a> site. This will be a tutorial on
+how you can use Cue to generate two different YAML documents, all starting with Go types to generate Cue files.</p>
+<p><img src="/img/2022/01/practical-cue-example-flow.svg" alt="Flow from types.go through cue get go to types_go_gen.cue, then main.cue with prod.cue and qa.cue, exported with cue export ./cue -t prod or -t qa into two YAML documents"></p>
+<p>As Cue changes this could become out of date. This was all done using Cue <strong>v0.4.1</strong>. All code for this tutorial can be
 found in this <a href="https://github.com/luthermonson/tutorials/tree/main/2022/01/cue">github repository</a>.</p>
 <h3 id="prerequisites">Prerequisites</h3>
-<p>You&rsquo;ll need to <a href="https://cuelang.org/docs/install/">install</a> Cue and I recommend you get some basic understanding of the
+<p>You&rsquo;ll need to <a href="https://cuelang.org/docs/install/">install</a> Cue. I recommend you get some basic understanding of the
 cli commands as there is some power there for your project. I also recommend you get used to
-<a href="https://cuelang.org/docs/concepts/packages/#modules">modules</a> and the <code>mod</code> command and the directory structure it will
-create for you. Note the Cue takes a lot of it&rsquo;s packaging and generating inspiration from <a href="https://go.dev/">Go</a> itself so
-if you&rsquo;ve already done some of this in Go you may already recognize some of these features.</p>
+<a href="https://cuelang.org/docs/concepts/packages/#modules">modules</a>, the <code>mod</code> command and the directory structure it will
+create for you. Note that Cue takes a lot of its packaging and generating inspiration from <a href="https://go.dev/">Go</a> itself.
+If you&rsquo;ve already done some of this in Go you may already recognize some of these features.</p>
 <h3 id="go-types-to-config-yaml">Go Types to Config YAML</h3>
-<p>Here is a simple scenario we will use to setup this example, we are building a server daemon in Go with a
-<code>--config</code> flag which is a file path to a YAML configuration document for database drive application with host/port configurations
-along with a worker pool setting for processing a work queue.</p>
+<p>Here is a simple scenario we will use to setup this example. We are building a server daemon in Go with a <code>--config</code>
+flag. The flag is a file path to a YAML configuration document for a database driven application. It has host/port
+configurations along with a worker pool setting for processing a work queue.</p>
 <p>Sample Config:</p>
 <pre tabindex="0"><code>app:
     host: mydomain.com
     post: 443
     workers: 2
     db-dsn: root:test@tcp(mysql.domain.com:3306)/test?charset=utf8&amp;parseTime=True&amp;loc=Local
-</code></pre><p>This idea is actually pretty simple from Cue&rsquo;s perspective if you write this up by hand but what makes your life
-easier is if the Go types generate your Cue files so you can import the types into your app and consume your generated config
+</code></pre><p>This idea is actually pretty simple from Cue&rsquo;s perspective if you write this up by hand. What makes your life easier is
+if the Go types generate your Cue files. Then you can import the types into your app and consume your generated config
 file via unmarshalling.</p>
 <h3 id="setting-up-the-cue-module">Setting Up the Cue Module</h3>
-<p>To get this project setup you&rsquo;ll probably want to use a sub-directory in your project and intialize it as a cue module and
-place a go file with some types at the root.</p>
+<p>To get this project setup you&rsquo;ll probably want to use a sub-directory in your project and initialize it as a cue module.
+Then place a go file with some types at the root.</p>
 <div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl">$ <span class="nb">cd</span> config
 </span></span><span class="line"><span class="cl">$ cue init mod github.com/username/project/config
 </span></span></code></pre></div><p>And put your types into the types.go file</p>
@@ -367,7 +368,7 @@ place a go file with some types at the root.</p>
 </span></span><span class="line"><span class="cl">  workers: <span class="m">2</span>
 </span></span><span class="line"><span class="cl">  dsn: root:test@tcp<span class="o">(</span>mysql.domain.com:3306<span class="o">)</span>/test?charset<span class="o">=</span>utf8<span class="p">&amp;</span><span class="nv">parseTime</span><span class="o">=</span>True<span class="p">&amp;</span><span class="nv">loc</span><span class="o">=</span>Local
 </span></span></code></pre></div><h3 id="using-tags-in-cue-for-better-config-files">Using Tags in Cue for Better Config Files</h3>
-<p>Tags are a construct in Cue to let you pass in variables at call time so let&rsquo;s change our Cue file to use tags and consume
+<p>Tags are a construct in Cue to let you pass in variables at call time. Let&rsquo;s change our Cue file to use tags and consume
 some environment files based on tag to generate two YAML files. Change the main.cue file to set host/workers/dsn as a variable&hellip;</p>
 <div class="highlight"><pre tabindex="0" class="chroma"><code class="language-cue" data-lang="cue"><span class="line"><span class="cl"><span class="k">package</span> <span class="n">config</span>
 </span></span><span class="line"><span class="cl">
@@ -399,9 +400,9 @@ some environment files based on tag to generate two YAML files. Change the main.
 </span></span><span class="line"><span class="cl"><span class="n">#dsn</span><span class="o">:</span> <span class="s">&#34;root:qa@tcp(mysql-qa.domain.com:3306)/test?charset=utf8&amp;parseTime=True&amp;loc=Local&#34;</span>
 </span></span></code></pre></div><p>Now when you run <code>cue export</code> pass a <code>-t qa</code> or <code>-t prod</code>. The <code>@if()</code> at the top of the file will check if the tags are set
 and only include those files if the tag was passed. This is a different pattern than say only evaluating certain cue files
-like <code>cue eval main.cue prod.cue</code> and <code>cue eval main.cue qa.cue</code> which is a pattern outlined by this <a href="https://cuetorials.com/patterns/inject/">tutorial</a>.
-I like the benefits of evaluating cue on a directory of files and passing tags at call time instead of having to figure out
-which files within the directory need evaluating.</p>
+like <code>cue eval main.cue prod.cue</code> and <code>cue eval main.cue qa.cue</code>. That pattern is outlined by this
+<a href="https://cuetorials.com/patterns/inject/">tutorial</a>. I like the benefits of evaluating cue on a directory of files and
+passing tags at call time. That beats having to figure out which files within the directory need evaluating.</p>
 <div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl">$ cue <span class="nb">export</span> ./cue -t prod --out yaml
 </span></span><span class="line"><span class="cl">app:
 </span></span><span class="line"><span class="cl">  host: mydomain.com
@@ -416,9 +417,10 @@ which files within the directory need evaluating.</p>
 </span></span><span class="line"><span class="cl">  dsn: root:qa@tcp<span class="o">(</span>mysql-qa.domain.com:3306<span class="o">)</span>/test?charset<span class="o">=</span>utf8<span class="p">&amp;</span><span class="nv">parseTime</span><span class="o">=</span>True<span class="p">&amp;</span><span class="nv">loc</span><span class="o">=</span>Local
 </span></span></code></pre></div><h3 id="conclusion">Conclusion</h3>
 <p>Please checkout the code for this tutorial on the <a href="https://github.com/luthermonson/tutorials/tree/main/2022/01/cue">github repository</a>.
-This was ultimately a very basic interpretation of the Cue language itself but gives you some ideas for structuring your Cue modules.
-The language is far more feature rich than this tutorial gives it credit and I will likely do followup blog post on the
-language itself after and using it to validate your configuration files before they ever hit your application runtime.</p>
+This was ultimately a very basic interpretation of the Cue language itself, but it gives you some ideas for structuring
+your Cue modules. The language is far more feature rich than this tutorial gives it credit for. I will likely do a
+followup blog post on the language itself and on using it to validate your configuration files before they ever hit your
+application runtime.</p>
 
       </div>
       <footer>

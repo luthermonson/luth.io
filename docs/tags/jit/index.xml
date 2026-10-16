@@ -13,7 +13,7 @@
       <link>https://luth.io/blog/2026/10/php-jit-use-after-free/</link>
       <pubDate>Thu, 01 Oct 2026 20:10:00 -0700</pubDate>
       <guid>https://luth.io/blog/2026/10/php-jit-use-after-free/</guid>
-      <description>&lt;p&gt;In August, &lt;a href=&#34;https://github.com/ephpm/ephpm&#34;&gt;ePHPm&lt;/a&gt; turned PHP&amp;rsquo;s tracing JIT on by default in single-site serve mode.&#xA;Three days later it went back off, on every platform, and it&amp;rsquo;s still off. The reason turned out to be a&#xA;use-after-free in PHP&amp;rsquo;s tracing JIT that has nothing to do with ePHPm: stock &lt;code&gt;php -S&lt;/code&gt; with a stock Laravel skeleton&#xA;dies on it in a couple of requests. The fix is now released upstream, so this seemed like the right time to write up&#xA;how we got there, and what still has to happen before the default can flip again.&lt;/p&gt;</description>
+      <description>&lt;p&gt;In August, &lt;a href=&#34;https://github.com/ephpm/ephpm&#34;&gt;ePHPm&lt;/a&gt; turned PHP&amp;rsquo;s tracing JIT on by default in single-site serve mode.&#xA;Three days later it went back off on every platform, and it&amp;rsquo;s still off. The reason turned out to be a use-after-free&#xA;in PHP&amp;rsquo;s tracing JIT that has nothing to do with ePHPm. Stock &lt;code&gt;php -S&lt;/code&gt; with a stock Laravel skeleton dies on it in a&#xA;couple of requests. The fix is now released upstream. So this seemed like the right time to write up how we got there,&#xA;and what still has to happen before the default can flip again.&lt;/p&gt;</description>
     </item>
   </channel>
 </rss>

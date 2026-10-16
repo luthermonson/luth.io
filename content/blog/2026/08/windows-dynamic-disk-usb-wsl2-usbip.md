@@ -11,11 +11,11 @@ images:
 draft: false
 ---
 
-I pulled a 1 TB NVMe out of an old Windows box, dropped it in a USB enclosure, plugged it in, and Windows showed nothing.
-No drive letter, no "initialize this disk" prompt, nothing in Explorer. Disk Management listed it as `Invalid`, and the
-enclosure's booklet said to "bring the disk online", which silently did nothing. The data was completely intact. Windows was
-refusing on **policy** grounds, not because anything was broken, and getting it back meant going around the Windows storage
-stack entirely and handing the raw USB device to a Linux kernel that doesn't share Windows' opinions.
+I pulled a 1 TB NVMe out of an old Windows box, dropped it in a USB enclosure and plugged it in. Windows showed nothing.
+No drive letter, no "initialize this disk" prompt, nothing in Explorer. Disk Management listed it as `Invalid`. The
+enclosure's booklet said to "bring the disk online", which silently did nothing. The data was completely intact. Windows
+was refusing on **policy** grounds, not because anything was broken. Getting it back meant going around the Windows
+storage stack entirely. I handed the raw USB device to a Linux kernel that doesn't share Windows' opinions.
 
 ### The setup
 
@@ -25,7 +25,7 @@ stack entirely and handing the raw USB device to a Linux kernel that doesn't sha
 
 ### Five tools, four answers
 
-The most useful part of the diagnosis was that the Windows storage tools disagree with each other, and the disagreement is
+The most useful part of the diagnosis was that the Windows storage tools disagree with each other. The disagreement is
 the clue:
 
 | Tool | What it says |
@@ -44,14 +44,18 @@ explicitly:
 The requested object could not be found.
 ```
 
-Anything built on the modern storage API is structurally blind to this disk. Remember that, it comes back later.
+Any tool built on the modern storage API is structurally blind to this disk. Remember that. It comes back later.
 
 ### Reading the partition table by hand
 
-At this point I stopped guessing. `\\.\PHYSICALDRIVE<n>` can be opened read-only like a file, and a GPT is a simple enough
-structure to walk in a page of PowerShell: a protective MBR at LBA 0 (partition type `0xEE`), a header at LBA 1 that starts
-with `EFI PART`, and an array of 128-byte partition entries wherever the header says. It's completely non-destructive and it
-answers the question definitively. Here's a version of it:
+At this point I stopped guessing. `\\.\PHYSICALDRIVE<n>` can be opened read-only like a file. A GPT is a simple enough
+structure to walk in a page of PowerShell:
+
+- a protective MBR at LBA 0 (partition type `0xEE`)
+- a header at LBA 1 that starts with `EFI PART`
+- an array of 128-byte partition entries wherever the header says
+
+It's completely non-destructive and it answers the question definitively. Here's a version of it:
 
 ```powershell
 param([string]$Path = '\\.\PHYSICALDRIVE1', [int]$SectorSize = 512)
@@ -108,7 +112,7 @@ try {
 } finally { $fs.Dispose() }
 ```
 
-It needs an elevated shell. For reference, here's what it prints against my internal system disk, which is a normal basic
+It needs an elevated shell. For reference, here's what it prints against my internal system disk. That's a normal basic
 disk:
 
 ```
@@ -131,29 +135,30 @@ On the USB drive the partition table was perfectly healthy. The smoking gun was 
 | 5 | LDM Data | 660 KB |
 | 6 | Windows Recovery | 1.1 GB |
 
-That's a **dynamic disk**: Microsoft's Logical Disk Manager, the volume manager from before Storage Spaces. And Windows will
-not bring a dynamic disk online on a USB or other removable bus. Not "can't", won't. There's no supported override.
+That's a **dynamic disk**. It's Microsoft's Logical Disk Manager, the volume manager from before Storage Spaces. And
+Windows will not bring a dynamic disk online on a USB or other removable bus. Not "can't", won't. There's no supported
+override.
 
 I never asked for a dynamic disk. Nobody does. Disk Management offers the conversion in passing when you extend a volume
-into non-contiguous space or span or stripe across disks, and it's a one-way trip: converting back to basic through the UI
-wants the volumes deleted first. Somewhere along the way, that old D: got converted.
+into non-contiguous space. It also offers it when you span or stripe across disks. It's a one-way trip. Converting back
+to basic through the UI wants the volumes deleted first. Somewhere along the way, that old D: got converted.
 
 ### The check that makes it recoverable
 
-The LDM metadata is how Windows knows what volumes live in the LDM data partition. If the volume is spanned, striped or
-mirrored, its filesystem is scattered and you need that metadata to put it back together. But if it's a **simple** volume,
+The LDM metadata is how Windows knows what volumes live in the LDM data partition. A spanned, striped or mirrored
+volume has its filesystem scattered. You need that metadata to put it back together. But if it's a **simple** volume,
 the filesystem is just sitting in the partition.
 
 The `NTFS    ` OEM ID check in the script above settles it. On the USB drive, partition 4 had the NTFS boot sector at
-**offset +0**, and the NTFS volume size matched the partition size exactly. A simple volume. No LDM database parsing needed:
-any OS that ignores the type GUID and just mounts the partition gets a perfectly good NTFS filesystem.
+**offset +0**. The NTFS volume size matched the partition size exactly. A simple volume. No LDM database parsing needed.
+An OS that ignores the type GUID and just mounts the partition gets a perfectly good NTFS filesystem.
 
 That size check is the safety check for this whole post. On a spanned or striped volume the filesystem extends past the
-partition, and mounting it raw (let alone writing to it) would corrupt it. If those numbers don't match, stop and use
+partition. Mounting it raw would corrupt it, let alone writing to it. If those numbers don't match, stop and use
 [ldmtool](https://github.com/mdbooth/libldm) or one of the alternatives at the end.
 
-Linux ignores the type GUID. Its GPT parser creates `/dev/sdX4` regardless of what the partition claims to be, and `lsblk`
-reports `FSTYPE=ntfs`. So the plan was: get the disk in front of the Linux kernel inside WSL2.
+Linux ignores the type GUID. Its GPT parser creates `/dev/sdX4` regardless of what the partition claims to be. `lsblk`
+reports `FSTYPE=ntfs`. So the plan was to get the disk in front of the Linux kernel inside WSL2.
 
 ### Dead end #1: wsl --mount
 
@@ -165,15 +170,15 @@ Failed to attach disk '\\.\PHYSICALDRIVE1' to WSL2: The system cannot find the f
 Error code: Wsl/Service/AttachDisk/MountDisk/ERROR_FILE_NOT_FOUND
 ```
 
-That looks like a path bug. It isn't. `wsl --mount` appears to go through the same Storage Management layer that has no object for
-this disk, the same one that told `Set-Disk` it couldn't find it. Windows can't hand WSL a disk it refuses to acknowledge,
-and this can never work, so don't burn time on it. A tool inherits the blind spots of the layer it's built on, and the
-error message won't tell you which layer failed.
+That looks like a path bug. It isn't. `wsl --mount` appears to go through the same Storage Management layer that has no
+object for this disk. That's the same one that told `Set-Disk` it couldn't find it. Windows can't hand WSL a disk it
+refuses to acknowledge. This can never work, so don't burn time on it. A tool inherits the blind spots of the layer it's
+built on. The error message won't tell you which layer failed.
 
 ### Dead end #2: the usbipd race
 
 The right idea is to pass the *USB device* through instead of the disk. [usbipd-win](https://github.com/dorssel/usbipd-win)
-shares a USB device over USB/IP, and WSL2's kernel has the `vhci_hcd` client built in, so the enclosure shows up inside Linux
+shares a USB device over USB/IP. WSL2's kernel has the `vhci_hcd` client built in. So the enclosure shows up inside Linux
 as if it were plugged into the VM. Windows never has to understand what's on it.
 
 First attempt:
@@ -182,19 +187,19 @@ First attempt:
 WSL usbip: error: Attach Request for 2-7 failed - Device in error state
 ```
 
-It took a while to see what was going on. The RTL9210 bridge **re-enumerates every time its driver is swapped**, and it
+It took a while to see what was going on. The RTL9210 bridge **re-enumerates every time its driver is swapped**. It
 flips between two different USB identities:
 
 - UAS mode: busid `2-7`, "USB Attached SCSI (UAS) Mass Storage Device"
 - BOT mode: busid `2-3`, "USB Mass Storage Device"
 
-Each has its own instance ID. `usbipd bind` claims one identity, which swaps the driver, which makes the device reset into the
-other identity, and then `usbipd attach` targets the one that's already gone. Tracking by `--hardware-id` instead of busid
-doesn't help, because the flip happens between the two commands regardless.
+Each has its own instance ID. `usbipd bind` claims one identity, which swaps the driver. That makes the device reset
+into the other identity. Then `usbipd attach` targets the one that's already gone. Tracking by `--hardware-id` instead
+of busid doesn't help. The flip happens between the two commands regardless.
 
 The fix is dumb and effective: **bind in a loop until both identities are registered**. Then whichever one is live is
-already shared, and attach succeeds. And rather than scraping the table `usbipd list` prints, `usbipd state` emits JSON,
-which is the robust thing to script against.
+already shared, and attach succeeds. Don't scrape the table `usbipd list` prints. `usbipd state` emits JSON, which is
+the robust thing to script against.
 
 ![GPT layout of the drive and the two paths: Windows refusing it, usbipd passing it to WSL2](/img/2026/08/windows-dynamic-disk-usb-wsl2-usbip-layout.svg)
 
@@ -232,8 +237,8 @@ CONFIG_USBIP_VHCI_NR_HCS=1
 # CONFIG_NTFS_FS is not set
 ```
 
-So it's `ntfs-3g` over FUSE. Find the right device with `lsblk -p` first (it was `/dev/sde` for me, but that isn't stable),
-and look for the 931.5G disk with six partitions:
+So it's `ntfs-3g` over FUSE. Find the right device with `lsblk -p` first. It was `/dev/sde` for me, but that isn't
+stable. Look for the 931.5G disk with six partitions:
 
 ```bash
 apt-get install -y ntfs-3g
@@ -247,9 +252,10 @@ And from Windows, the whole old drive is a folder in Explorer:
 explorer.exe \\wsl.localhost\Ubuntu\mnt\old
 ```
 
-Mount **read-only first, always**. Prove you can read what you came for before you give yourself the ability to destroy it.
-When I did need to clean things up, the remount was `umount /mnt/old; mount -t ntfs-3g /dev/sde4 /mnt/old` and a check that
-`mount` shows `rw`. Close the Explorer window before remounting, because Windows caches the read-only attribute.
+Mount **read-only first, always**. Prove you can read what you came for before you give yourself the ability to destroy
+it. When I did need to clean things up, the remount was `umount /mnt/old; mount -t ntfs-3g /dev/sde4 /mnt/old`. Then I
+checked that `mount` shows `rw`. Close the Explorer window before remounting, because Windows caches the read-only
+attribute.
 
 Teardown is the reverse, and the order matters:
 
@@ -263,27 +269,31 @@ usbipd unbind --all
 
 - While attached over USB/IP the drive **disappears from Windows entirely**. That's how USB/IP works, not a bug.
 - There is **no Recycle Bin on a `\\wsl.localhost` path**. Deletes are immediate and permanent.
-- **The keepalive matters.** If the WSL VM shuts down on idle, the USB attachment goes with it, which mid-write is a real
+- **The keepalive matters.** If the WSL VM shuts down on idle, the USB attachment goes with it. Mid-write, that's a real
   problem. The `sleep 7200` also runs out, so restart it for long sessions.
-- `ntfs-3g` buffers writes. `umount` before `usbipd detach`, never just yank it.
-- A dirty NTFS flag (from hibernation or Fast Startup on the old install) blocks a read-write mount. No `hiberfil.sys` on the
-  volume is the quick tell that you're clean.
+- `ntfs-3g` buffers writes. `umount` before `usbipd detach`. Never just yank it.
+- A dirty NTFS flag blocks a read-write mount. Hibernation or Fast Startup on the old install sets it. No `hiberfil.sys`
+  on the volume is the quick tell that you're clean.
 - Copying through `\\wsl.localhost` goes over WSL's file sharing, so it's not fast. Fine for pulling folders out, not what
   I'd use to move the whole terabyte.
 
 ### Takeaways
 
-- **"Invalid" is a policy verdict, not a health verdict.** Windows had a perfectly readable GPT in front of it and chose not
-  to proceed. Nothing in the UI tells you the difference, and the "bring the disk online" advice actively misleads.
-- **When abstraction layers disagree, drop below all of them.** Reading the partition table by hand settled in a few minutes
-  what four tools were giving four different non-answers about.
-- **USB/IP is a general escape hatch.** Any USB device Windows mishandles can be handed to a Linux kernel that doesn't care.
-  This isn't really a dynamic disk trick, it's having a second opinion available on demand.
+- **"Invalid" is a policy verdict, not a health verdict.** Windows had a perfectly readable GPT in front of it and chose
+  not to proceed. Nothing in the UI tells you the difference. The "bring the disk online" advice actively misleads.
+- **When abstraction layers disagree, drop below all of them.** Reading the partition table by hand settled in a few
+  minutes what four tools were giving four different non-answers about.
+- **USB/IP is a general escape hatch.** A USB device Windows mishandles can be handed to a Linux kernel that doesn't
+  care. This isn't really a dynamic disk trick. It's having a second opinion available on demand.
 
-To be honest about the cheaper options so nobody over-engineers this: put the drive in an **internal M.2 slot** (Windows
-imports dynamic disks fine on an internal bus, zero risk, full speed), boot a **Linux live USB** (`ldmtool create all`, or
-mount the partition directly), or use **DMDE** or **R-Studio**, which read LDM straight off a raw disk from Windows. The
-WSL route wins when you don't want to open a case and you want the files in Explorer.
+To be honest, there are cheaper options, so nobody over-engineers this:
+
+- Put the drive in an **internal M.2 slot**. Windows imports dynamic disks fine on an internal bus. Zero risk, full
+  speed.
+- Boot a **Linux live USB** and run `ldmtool create all`, or mount the partition directly.
+- Use **DMDE** or **R-Studio**, which read LDM straight off a raw disk from Windows.
+
+The WSL route wins when you don't want to open a case and you want the files in Explorer.
 
 ### Links
 

@@ -10,14 +10,14 @@
     gtag('config', 'G-MSTSKGFWTX');
 </script><meta charset="utf-8">
 <title>An Upstream PHP JIT Use-After-Free, and Why Our Default Flipped Twice - Luther Monson</title>
-<meta name="description" content="ePHPm turned PHP&#39;s tracing JIT on by default, then off three days later when stock Laravel died after three requests. The bug was upstream; here is the bisect, the root cause and where the fix landed.">
+<meta name="description" content="ePHPm turned PHP&#39;s tracing JIT on by default, then off three days later when stock Laravel died after three requests. The bug was upstream, and this is the bisect, the root cause and where the fix landed.">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
 <meta name="twitter:card" content="summary_large_image"><meta name="twitter:site" content="@luthermonson">
 
 <meta property="og:site_name" content="Luther Monson">
 <meta property="og:title" content="An Upstream PHP JIT Use-After-Free, and Why Our Default Flipped Twice">
-<meta property="og:description" content="ePHPm turned PHP&#39;s tracing JIT on by default, then off three days later when stock Laravel died after three requests. The bug was upstream; here is the bisect, the root cause and where the fix landed.">
+<meta property="og:description" content="ePHPm turned PHP&#39;s tracing JIT on by default, then off three days later when stock Laravel died after three requests. The bug was upstream, and this is the bisect, the root cause and where the fix landed.">
 <meta property="og:type" content="article">
 <meta property="og:url" content="https://luth.io/blog/2026/10/php-jit-use-after-free/">
     <meta property="og:image" content="https://luth.io/img/2026/10/php-jit-use-after-free-bisect.svg">
@@ -215,13 +215,13 @@
       <h2><a href="/blog/2026/10/php-jit-use-after-free/">An Upstream PHP JIT Use-After-Free, and Why Our Default Flipped Twice</a></h2>
     
     
-      <p>ePHPm turned PHP&#39;s tracing JIT on by default, then off three days later when stock Laravel died after three requests. The bug was upstream; here is the bisect, the root cause and where the fix landed.</p>
+      <p>ePHPm turned PHP&#39;s tracing JIT on by default, then off three days later when stock Laravel died after three requests. The bug was upstream, and this is the bisect, the root cause and where the fix landed.</p>
     
   </div>
   <div class="meta">
     <time datetime="2026-10-01 20:10:00 -0700 PDT">October 1, 2026</time>
     
-    <p>9-Minute Read</p>
+    <p>10-Minute Read</p>
   </div>
 </header>
 
@@ -273,16 +273,16 @@
       <div class="content">
         
         <p>In August, <a href="https://github.com/ephpm/ephpm">ePHPm</a> turned PHP&rsquo;s tracing JIT on by default in single-site serve mode.
-Three days later it went back off, on every platform, and it&rsquo;s still off. The reason turned out to be a
-use-after-free in PHP&rsquo;s tracing JIT that has nothing to do with ePHPm: stock <code>php -S</code> with a stock Laravel skeleton
-dies on it in a couple of requests. The fix is now released upstream, so this seemed like the right time to write up
-how we got there, and what still has to happen before the default can flip again.</p>
+Three days later it went back off on every platform, and it&rsquo;s still off. The reason turned out to be a use-after-free
+in PHP&rsquo;s tracing JIT that has nothing to do with ePHPm. Stock <code>php -S</code> with a stock Laravel skeleton dies on it in a
+couple of requests. The fix is now released upstream. So this seemed like the right time to write up how we got there,
+and what still has to happen before the default can flip again.</p>
 <h3 id="flip-one-on-because-the-numbers-said-so">Flip one: on, because the numbers said so</h3>
-<p>ePHPm had kept the JIT off since July for a measured reason: on our <code>cpu.php</code> benchmark, which spends most of its time
-in the <code>hash()</code> builtin, <code>opcache.jit=tracing</code> cost 17% RPS. JIT compiles PHP bytecode, and when the hot code is a C
-builtin there&rsquo;s nothing for it to compile, so the tracing overhead is pure cost.</p>
-<p>Then the Windows performance work happened. MSVC-built PHP gets the slowest VM dispatch mode, and on a pure-PHP CPU
-loop on my Ryzen 9 5950X, the JIT took a request from 5.56 ms to 2.33 ms. So
+<p>ePHPm had kept the JIT off since July for a measured reason. On our <code>cpu.php</code> benchmark, <code>opcache.jit=tracing</code> cost
+17% RPS. That benchmark spends most of its time in the <code>hash()</code> builtin. JIT compiles PHP bytecode. When the hot code
+is a C builtin there&rsquo;s nothing for it to compile, so the tracing overhead is pure cost.</p>
+<p>Then the Windows performance work happened. MSVC-built PHP gets the slowest VM dispatch mode. On a pure-PHP CPU loop on
+my Ryzen 9 5950X, the JIT took a request from 5.56 ms to 2.33 ms. So
 <a href="https://github.com/ephpm/ephpm/pull/350">ephpm#350</a> shipped a <em>shaped</em> default and not a global one:</p>
 <table>
   <thead>
@@ -310,27 +310,27 @@ loop on my Ryzen 9 5950X, the JIT took a request from 5.56 ms to 2.33 ms. So
       </tr>
   </tbody>
 </table>
-<p>Multi-tenant stayed off because of a second measurement: per-site <code>opcache_invalidate()</code> never reclaims JIT buffer
-(<code>buffer_free</code> doesn&rsquo;t move, only a full <code>opcache_reset</code> gets it back, and the hardening preset disables that). In a
-host where tenants deploy all day, the buffer would fill and the JIT would quietly stop compiling. There&rsquo;s a knob
-(<code>[php] opcache_jit = &quot;tracing&quot; | &quot;function&quot; | &quot;disable&quot;</code>), a startup line that says what the JIT is doing and why, and
-two gauges for buffer size and free space.</p>
+<p>Multi-tenant stayed off because of a second measurement. Per-site <code>opcache_invalidate()</code> never reclaims JIT buffer.
+<code>buffer_free</code> doesn&rsquo;t move. Only a full <code>opcache_reset</code> gets it back, and the hardening preset disables that. In a host
+where tenants deploy all day, the buffer would fill and the JIT would quietly stop compiling. There&rsquo;s a knob
+(<code>[php] opcache_jit = &quot;tracing&quot; | &quot;function&quot; | &quot;disable&quot;</code>). There&rsquo;s a startup line that says what the JIT is doing and
+why, plus two gauges for buffer size and free space.</p>
 <p>The PR&rsquo;s own risk section named the worst case of turning it on: &ldquo;a JIT miscompile&hellip; a process-level SIGSEGV/access
 violation with no crash containment&rdquo;. That&rsquo;s what happened.</p>
 <h3 id="flip-two-off-because-laravel-died-after-three-requests">Flip two: off, because Laravel died after three requests</h3>
-<p><a href="https://github.com/ephpm/ephpm/issues/365">ephpm#365</a>: a Windows release build serving a <strong>stock Laravel 13 app with
-the default config</strong> died with <code>0xC0000005</code> after exactly three requests. Deterministic. ePHPm logged nothing, because
-there&rsquo;s no fatal-signal handler on Windows; the process just vanished.</p>
-<p>It was found during an experiment with an in-memory code bundle, and it got blamed on that experiment twice before the
-right control was run: with the bundle feature switched entirely off, it still crashed 3 out of 3. The controls that
-pinned it on the JIT:</p>
+<p><a href="https://github.com/ephpm/ephpm/issues/365">ephpm#365</a> was a Windows release build serving a <strong>stock Laravel 13 app
+with the default config</strong>. It died with <code>0xC0000005</code> after exactly three requests. Deterministic. ePHPm logged nothing,
+because there&rsquo;s no fatal-signal handler on Windows. The process just vanished.</p>
+<p>It was found during an experiment with an in-memory code bundle. It got blamed on that experiment twice before the
+right control was run. With the bundle feature switched entirely off, it still crashed 3 out of 3. These are the
+controls that pinned it on the JIT:</p>
 <ul>
 <li><code>opcache.jit=disable</code> survived 150 requests every time.</li>
 <li>A unique <code>opcache.cache_id</code> didn&rsquo;t help, so it wasn&rsquo;t the
-<a href="/blog/2026/08/opcache-on-windows-two-silent-failures/">OPcache ASLR collision</a> from earlier that same day,
-despite looking a lot like it.</li>
-<li>None of the ePHPm-side levers helped either: one worker, the dedicated pool (that only delayed it to request 35),
-a smaller JIT buffer.</li>
+<a href="/blog/2026/08/opcache-on-windows-two-silent-failures/">OPcache ASLR collision</a> from earlier that same day.
+It did look a lot like it.</li>
+<li>None of the ePHPm-side levers helped either. That covered one worker, the dedicated pool (which only delayed it to
+request 35), and a smaller JIT buffer.</li>
 </ul>
 <p>A crash dump symbolized to the same frames every time:</p>
 <pre tabindex="0"><code>php8ts!zend_jit_escape_if_undef+0x103        &lt;- mov rcx,qword ptr [rax+rcx*8+0D0h]
@@ -340,14 +340,15 @@ php8ts!zend_jit_compile_side_trace+0x1c3
 php8ts!zend_jit_trace_hot_side+0x47f
 php8ts!zend_jit_trace_exit+0x7fb
 0x00001000`10000644                          &lt;- side exit out of JIT&#39;d code
-</code></pre><p>Read bottom-up: JIT-compiled code took a side exit, the exit got hot, so the JIT started compiling a <em>side trace</em> for
-it, and while doing that it read through a pointer into an unmapped heap region. The faulting read is
+</code></pre><p>Read it bottom-up. JIT-compiled code took a side exit and the exit got hot. So the JIT started compiling a <em>side trace</em>
+for it. While doing that it read through a pointer into an unmapped heap region. The faulting read is
 <code>op_array-&gt;reserved[0]</code>, which is <code>ZEND_FUNC_INFO(exit_info-&gt;op_array)</code> in <code>zend_jit_ir.c</code>.</p>
 <h3 id="bisecting-it-without-ephpm">Bisecting it without ePHPm</h3>
-<p>The fastest way to stop arguing about whose bug it is: take your own code out of the picture. Same Laravel app,
-official Windows x64 TS builds from php.net, plain <code>php -S</code>, an ini with OPcache and <code>opcache.jit = tracing</code>,
-150 requests per cell, one process per cell. Every cell checked that <code>opcache_get_status()['jit']['on']</code> was really
-<code>true</code>. My first pass had a false negative on 8.4 because OPcache is a separate DLL there and I hadn&rsquo;t loaded it.</p>
+<p>The fastest way to stop arguing about whose bug it is: take your own code out of the picture. I used the same Laravel
+app with official Windows x64 TS builds from php.net and plain <code>php -S</code>. The ini had OPcache and
+<code>opcache.jit = tracing</code>. Each cell was 150 requests in its own process. Every cell checked that
+<code>opcache_get_status()['jit']['on']</code> was really <code>true</code>. My first pass had a false negative on 8.4. OPcache is a separate
+DLL there and I hadn&rsquo;t loaded it.</p>
 <p><img src="/img/2026/10/php-jit-use-after-free-bisect.svg" alt="Bar chart of requests served before a crash per PHP version"></p>
 <table>
   <thead>
@@ -387,25 +388,26 @@ official Windows x64 TS builds from php.net, plain <code>php -S</code>, an ini w
       </tr>
   </tbody>
 </table>
-<p>That window brackets one change on both branches: <a href="https://github.com/php/php-src/pull/21368">php-src#21368</a>, a
-fix for a JIT infinite loop, merged to PHP-8.4 on March 16th and first released in 8.4.20 and 8.5.5. There was
-already an open upstream fix attempt, <a href="https://github.com/php/php-src/pull/21710">php-src#21710</a> from Ilia Alshanetsky,
-chasing a crash another user had hit under IIS with FastCGI, and Arnaud Le Blanc had posted the root cause there the week before.</p>
+<p>That window brackets one change on both branches. <a href="https://github.com/php/php-src/pull/21368">php-src#21368</a> was a fix
+for a JIT infinite loop. It merged to PHP-8.4 on March 16th and was first released in 8.4.20 and 8.5.5. There was
+already an open upstream fix attempt, <a href="https://github.com/php/php-src/pull/21710">php-src#21710</a> from Ilia
+Alshanetsky. It was chasing a crash another user had hit under IIS with FastCGI. Arnaud Le Blanc had posted the root
+cause there the week before.</p>
 <h3 id="the-root-cause">The root cause</h3>
-<p>When the tracing JIT creates an exit point, it records the <code>op_array</code> the trace was in, so it can find the function&rsquo;s
-metadata later. It took that pointer from the current call frame. Usually that&rsquo;s the <code>op_array</code> in OPcache shared
-memory, which lives as long as the cache. But for <strong>methods of a class whose parent isn&rsquo;t in shared memory</strong>, class
-linking copies the method&rsquo;s <code>op_array</code> header to the request heap, and that copy is what&rsquo;s on the frame. The copy is
-freed at request shutdown. The trace metadata lives on in shared memory.</p>
-<p>So: request 1 records a trace through such a method and the exit point keeps a pointer to the heap copy. Request 2
-takes that exit often enough to make it hot, the JIT compiles a side trace, follows <code>exit_info-&gt;op_array</code>, and reads
-freed memory. Whether that crashes depends on what the allocator did with the memory in between, which is why the
-request count varies by version and app.</p>
-<p>Why Windows first? Upstream&rsquo;s guess, which matches what I saw, is that on Windows linked classes miss the inheritance
-cache more often. But it&rsquo;s not Windows-only. On Linux under ePHPm, 20,000 requests of stock Laravel were clean, and
-then one route linking a class whose parent wasn&rsquo;t in shared memory died at <strong>request 2</strong>, five runs out of five. The
-same route under stock <code>php -S</code> on Linux died at request 2 too, on 8.5.7 and 8.4.23. And <code>eval</code> is just one way to
-get an uncached parent:</p>
+<p>When the tracing JIT creates an exit point, it records the <code>op_array</code> the trace was in. That way it can find the
+function&rsquo;s metadata later. It took that pointer from the current call frame. Usually that&rsquo;s the <code>op_array</code> in OPcache
+shared memory, which lives as long as the cache. <strong>Methods of a class whose parent isn&rsquo;t in shared memory</strong> are
+different. Class linking copies the method&rsquo;s <code>op_array</code> header to the request heap, and that copy is what&rsquo;s on the
+frame. The copy is freed at request shutdown. The trace metadata lives on in shared memory.</p>
+<p>So request 1 records a trace through such a method, and the exit point keeps a pointer to the heap copy. Request 2
+takes that exit often enough to make it hot. The JIT compiles a side trace, follows <code>exit_info-&gt;op_array</code>, and reads
+freed memory. Whether that crashes depends on what the allocator did with the memory in between. That&rsquo;s why the request
+count varies by version and app.</p>
+<p>Why Windows first? Upstream&rsquo;s guess matches what I saw. On Windows, linked classes miss the inheritance cache more
+often. But it&rsquo;s not Windows-only. On Linux under ePHPm, 20,000 requests of stock Laravel were clean. Then one route
+linking a class whose parent wasn&rsquo;t in shared memory died at <strong>request 2</strong>, five runs out of five. The same route under
+stock <code>php -S</code> on Linux died at request 2 too, on 8.5.7 and 8.4.23. And <code>eval</code> is just one way to get an uncached
+parent:</p>
 <table>
   <thead>
       <tr>
@@ -432,61 +434,62 @@ get an uncached parent:</p>
       </tr>
   </tbody>
 </table>
-<p>Mock and proxy generators (PHPUnit, Mockery, ProxyManager) generate exactly this kind of class, and so does an
-oversized or blacklisted parent file. So the exposure isn&rsquo;t &ldquo;apps that use <code>eval</code>&rdquo;. It&rsquo;s any app where some class
-extends a parent OPcache didn&rsquo;t cache.</p>
+<p>Mock and proxy generators (PHPUnit, Mockery, ProxyManager) generate exactly this kind of class. So does an oversized or
+blacklisted parent file. So the exposure isn&rsquo;t &ldquo;apps that use <code>eval</code>&rdquo;. It&rsquo;s any app where some class extends a parent
+OPcache didn&rsquo;t cache.</p>
 <h3 id="the-default-goes-off-everywhere">The default goes off everywhere</h3>
 <p><a href="https://github.com/ephpm/ephpm/pull/372">ephpm#372</a> started as a Windows-only change. Re-testing the &ldquo;Linux is an
-accepted risk&rdquo; assumption is what produced the Linux numbers above, and by the time it merged the default was
-<code>disable</code> on every platform. The startup line says why:</p>
+accepted risk&rdquo; assumption is what produced the Linux numbers above. By the time it merged the default was <code>disable</code> on
+every platform. The startup line says why:</p>
 <pre tabindex="0"><code>INFO ephpm: opcache JIT OFF — default since #365: PHP&#39;s tracing JIT (8.5.5+, and 8.4.24+)
 reads a freed op_array when it compiles a side trace in a later request and kills the
 process — no PHP error, no log line (php-src PR 21710, still open; reproduces on stock php
 too, on Linux and Windows alike). Set [php] opcache_jit = &#34;function&#34; for the unaffected JIT
 mode, or &#34;tracing&#34; to accept the risk
-</code></pre><p>The &ldquo;8.4.24+&rdquo; in that line undersells it: on the 8.4 branch the regression first shipped in 8.4.20.</p>
-<p>Two other workarounds held in testing: <code>opcache.jit=function</code> (never builds traces, so it can&rsquo;t get to this code) and
-<code>opcache.jit_hot_side_exit=0</code> (keeps root traces, never compiles a side trace). I didn&rsquo;t make the side-exit setting
-the default. The other reporter saw a <em>different</em> faulting site after changing JIT flags, which says the stale pointer
-can bite in more than one place, and turning off side traces removes most of what the tracing JIT is worth anyway.
-<code>&quot;function&quot;</code> is documented as the middle setting for anyone who wants some JIT.</p>
+</code></pre><p>The &ldquo;8.4.24+&rdquo; in that line undersells it. On the 8.4 branch the regression first shipped in 8.4.20.</p>
+<p>Two other workarounds held in testing:</p>
+<ul>
+<li><code>opcache.jit=function</code> never builds traces, so it can&rsquo;t get to this code.</li>
+<li><code>opcache.jit_hot_side_exit=0</code> keeps root traces and never compiles a side trace.</li>
+</ul>
+<p>I didn&rsquo;t make the side-exit setting the default. The other reporter saw a <em>different</em> faulting site after changing JIT
+flags. That says the stale pointer can bite in more than one place. Turning off side traces also removes most of what
+the tracing JIT is worth anyway. <code>&quot;function&quot;</code> is documented as the middle setting for anyone who wants some JIT.</p>
 <p>What it cost us is small. On the real Laravel app, the tracing JIT used about 0.3 MB of its 64 MB buffer over 20,000
-requests. There&rsquo;s just not much for it to compile in a request/response app. The big wins were on synthetic CPU loops,
-and the failure mode is a silent process kill that takes every in-flight request with it. Easy call.</p>
+requests. There&rsquo;s just not much for it to compile in a request/response app. The big wins were on synthetic CPU loops.
+The failure mode is a silent process kill that takes every in-flight request with it. Easy call.</p>
 <h3 id="upstream">Upstream</h3>
-<p>The Laravel reproduction and the bisect went onto php-src#21710 on August 22nd, mostly because it was a simpler repro
-than the existing ones: no IIS, no FastCGI, no <code>pcntl_fork</code>, just <code>php.exe -S</code> and a skeleton app dying in seconds.
-Ilia Alshanetsky committed the fix two hours later, &ldquo;JIT: persist the SHM op_array in trace exit_info&rdquo;:</p>
+<p>The Laravel reproduction and the bisect went onto php-src#21710 on August 22nd. That was mostly because it was a
+simpler repro than the existing ones. No IIS, no FastCGI, no <code>pcntl_fork</code>, just <code>php.exe -S</code> and a skeleton app dying
+in seconds. Ilia Alshanetsky committed the fix two hours later, &ldquo;JIT: persist the SHM op_array in trace exit_info&rdquo;:</p>
 <blockquote>
 <p>exit_info.op_array was taken from the current frame. Methods of linked classes that miss the inheritance cache use
 a heap copy of the op_array header, so that pointer is invalid in other processes and later requests. Store the
 original from the JIT extension, as root traces already do.</p>
 </blockquote>
-<p>The PR was closed as landed on August 24th, and the fix shipped in <strong>PHP 8.4.26 and 8.5.11</strong>, tagged September 22nd and
-released on the 24th. I checked the release tags against the fix commit, and both contain it. Our <a href="https://github.com/ephpm/php-sdk">php-sdk</a>
-pipeline published 8.5.11 and 8.4.26 builds at the end of September.</p>
-<p>For this post I also tried to build a toy reproducer (an <code>eval</code>&rsquo;d parent, a child class with a method that sees a
-different type each request) to show 8.5.9 crashing and 8.5.11 not. I couldn&rsquo;t get the toy to crash on 8.5.9, even
-though the JIT debug output showed it compiling a side trace off the method&rsquo;s root trace. My best guess is that the
-stale read happens but lands on memory that&rsquo;s still mapped, and the real apps crashed because their allocation
-pattern had reused or released that memory by the time the side trace compiled. That&rsquo;s the nature of a
-use-after-free, and
-it&rsquo;s also why I&rsquo;m not going to call the fix verified on our side until the Laravel cell from the table above runs
-clean on 8.5.11.</p>
+<p>The PR was closed as landed on August 24th. The fix shipped in <strong>PHP 8.4.26 and 8.5.11</strong>, tagged September 22nd and
+released on the 24th. I checked the release tags against the fix commit, and both contain it. Our
+<a href="https://github.com/ephpm/php-sdk">php-sdk</a> pipeline published 8.5.11 and 8.4.26 builds at the end of September.</p>
+<p>For this post I also tried to build a toy reproducer to show 8.5.9 crashing and 8.5.11 not. It used an <code>eval</code>&rsquo;d parent
+and a child class with a method that sees a different type each request. I couldn&rsquo;t get the toy to crash on 8.5.9. The
+JIT debug output did show it compiling a side trace off the method&rsquo;s root trace. My best guess is that the stale read
+happens but lands on memory that&rsquo;s still mapped. The real apps crashed because their allocation pattern had reused or
+released that memory by the time the side trace compiled. That&rsquo;s the nature of a use-after-free. It&rsquo;s also why I&rsquo;m not
+going to call the fix verified on our side until the Laravel cell from the table above runs clean on 8.5.11.</p>
 <h3 id="what-has-to-happen-before-it-flips-a-third-time">What has to happen before it flips a third time</h3>
-<p>As of today ePHPm&rsquo;s SDK pins are still 8.4.23 and 8.5.7, both affected, so the default stays <code>disable</code>. The comment on
-the reason enum already says to revisit &ldquo;when php-src PR 21710 merges and the pinned SDK is bumped past it&rdquo;. The first
-half is done. For the second half the bar is:</p>
+<p>As of today ePHPm&rsquo;s SDK pins are still 8.4.23 and 8.5.7. Both are affected, so the default stays <code>disable</code>. The comment
+on the reason enum already says to revisit &ldquo;when php-src PR 21710 merges and the pinned SDK is bumped past it&rdquo;. The
+first half is done. For the second half the bar is:</p>
 <ol>
 <li>Bump the pins to 8.4.26 and 8.5.11 or later.</li>
-<li>Re-run both bisect fixtures on the new SDKs: the Windows Laravel skeleton and the Linux uncached-parent route,
-with <code>opcache_jit = &quot;tracing&quot;</code> forced on.</li>
+<li>Re-run both bisect fixtures on the new SDKs with <code>opcache_jit = &quot;tracing&quot;</code> forced on. That&rsquo;s the Windows Laravel
+skeleton and the Linux uncached-parent route.</li>
 <li>Only then reconsider the single-site default, and only there. The multi-tenant reason for keeping it off (buffer
 that never comes back) has nothing to do with this bug.</li>
 </ol>
 <p>The broader lesson for me is about which default to pick when the upside is a benchmark and the downside is a crash
-with no log line. The JIT made a synthetic loop 2.4x faster, did roughly nothing for a real Laravel app, and had a
-known-unknown failure mode that our own risk section called out. A default like that should be something you opt in
+with no log line. The JIT made a synthetic loop 2.4x faster. It did roughly nothing for a real Laravel app. And it had
+a known-unknown failure mode that our own risk section called out. A default like that should be something you opt in
 to, at least until the upstream bug class has been quiet for a while.</p>
 <h3 id="links">Links</h3>
 <ul>

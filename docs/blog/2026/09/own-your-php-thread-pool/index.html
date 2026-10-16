@@ -10,14 +10,14 @@
     gtag('config', 'G-MSTSKGFWTX');
 </script><meta charset="utf-8">
 <title>Stop Running PHP on tokio&#39;s spawn_blocking - Own Your Thread Pool - Luther Monson</title>
-<meta name="description" content="Why ePHPm moved PHP execution off tokio&#39;s generic blocking pool onto threads it owns, how the switch was rolled out behind a knob, and what it did to memory, throughput and overload.">
+<meta name="description" content="Why ePHPm moved PHP execution off tokio&#39;s generic blocking pool onto threads it owns. How the switch rolled out behind a knob and what it did to memory, throughput and overload.">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
 <meta name="twitter:card" content="summary_large_image"><meta name="twitter:site" content="@luthermonson">
 
 <meta property="og:site_name" content="Luther Monson">
 <meta property="og:title" content="Stop Running PHP on tokio&#39;s spawn_blocking - Own Your Thread Pool">
-<meta property="og:description" content="Why ePHPm moved PHP execution off tokio&#39;s generic blocking pool onto threads it owns, how the switch was rolled out behind a knob, and what it did to memory, throughput and overload.">
+<meta property="og:description" content="Why ePHPm moved PHP execution off tokio&#39;s generic blocking pool onto threads it owns. How the switch rolled out behind a knob and what it did to memory, throughput and overload.">
 <meta property="og:type" content="article">
 <meta property="og:url" content="https://luth.io/blog/2026/09/own-your-php-thread-pool/">
     <meta property="og:image" content="https://luth.io/img/2026/09/own-your-php-thread-pool-rss.svg">
@@ -215,7 +215,7 @@
       <h2><a href="/blog/2026/09/own-your-php-thread-pool/">Stop Running PHP on tokio&#39;s spawn_blocking - Own Your Thread Pool</a></h2>
     
     
-      <p>Why ePHPm moved PHP execution off tokio&#39;s generic blocking pool onto threads it owns, how the switch was rolled out behind a knob, and what it did to memory, throughput and overload.</p>
+      <p>Why ePHPm moved PHP execution off tokio&#39;s generic blocking pool onto threads it owns. How the switch rolled out behind a knob and what it did to memory, throughput and overload.</p>
     
   </div>
   <div class="meta">
@@ -273,36 +273,37 @@
       <div class="content">
         
         <p>For most of its life, <a href="https://github.com/ephpm/ephpm">ePHPm</a> ran every PHP request on tokio&rsquo;s <code>spawn_blocking</code>
-pool. It works. It passes tests, it serves benchmarks fine, and it&rsquo;s the first thing anybody reaches for when they
-need to call blocking code from async Rust. It&rsquo;s also quietly wrong for a language runtime, in ways that only show up
-under overload or after a crash. Over the last three weeks it got replaced with a pool of OS threads that ePHPm owns,
-first behind a config flag, then as the default, and as of v0.9.0 the <code>spawn_blocking</code> engine is gone.</p>
-<p>One thing up front, because it&rsquo;s the first question I get: this is <strong>not</strong> &ldquo;drop tokio&rdquo;. hyper, TLS, the database
-wire protocols, gossip and every timer still run on tokio, and that&rsquo;s 95% of what tokio does for us.
-<code>spawn_blocking</code> is tokio&rsquo;s most generic component, and it&rsquo;s the only thing that got replaced.</p>
+pool. It works. It passes tests and it serves benchmarks fine. It&rsquo;s the first thing anybody reaches for when they need
+to call blocking code from async Rust. It&rsquo;s also quietly wrong for a language runtime. The problems only show up under
+overload or after a crash. Over the last three weeks it got replaced with a pool of OS threads that ePHPm owns. That
+pool shipped first behind a config flag, then as the default. As of v0.9.0 the <code>spawn_blocking</code> engine is gone.</p>
+<p>One thing up front, because it&rsquo;s the first question I get. This is <strong>not</strong> &ldquo;drop tokio&rdquo;. hyper, TLS, the database
+wire protocols, gossip and every timer still run on tokio. That&rsquo;s 95% of what tokio does for us. <code>spawn_blocking</code> is
+tokio&rsquo;s most generic component, and it&rsquo;s the only thing that got replaced.</p>
 <h3 id="why-spawn_blocking-is-the-wrong-home-for-php">Why spawn_blocking is the wrong home for PHP</h3>
 <p><code>spawn_blocking</code> is a convenience: &ldquo;run this sync closure somewhere that isn&rsquo;t the reactor&rdquo;. tokio grows the pool on
-demand up to a ceiling of 512 threads, reaps threads that sit idle, and shares the pool with everything else that
+demand up to a ceiling of 512 threads. It reaps threads that sit idle. It shares the pool with everything else that
 blocks, including static file I/O. For PHP that causes three problems.</p>
-<p><strong>You can&rsquo;t retire a poisoned thread.</strong> This is what actually forced the change. The segfault containment work
-needed to abandon a thread whose Zend context was corrupt after a contained crash and start a fresh one. tokio owns its blocking threads and recycles them on its own
-schedule, and there&rsquo;s no &ldquo;kill this one&rdquo; API. The containment spike proved the mechanism worked (the PID survived 220
-induced crashes), but a tenant sharing the box saw only 13.7% of its requests succeed during a crash storm, because
-the poisoned threads couldn&rsquo;t be replaced. More on that in its own post.</p>
-<p><strong>Concurrency is unbounded, so memory is a function of traffic.</strong> Every in-flight request gets a blocking thread,
-and every PHP thread carries its own ZTS context. 512 concurrent requests means roughly 512 PHP contexts. On
-Kubernetes, that&rsquo;s the OOM-kill-under-flood failure mode: the pod&rsquo;s memory ceiling is set by how hard you get hit,
-not by anything you configured.</p>
+<p><strong>You can&rsquo;t retire a poisoned thread.</strong> This is what forced the change. After a contained crash, the segfault
+containment work needed to abandon the thread with the corrupt Zend context and start a fresh one. tokio owns its
+blocking threads and recycles them on its own schedule. There&rsquo;s no &ldquo;kill this one&rdquo; API. The containment spike proved
+the mechanism worked, and the PID survived 220 induced crashes. But a tenant sharing the box saw only 13.7% of its
+requests succeed during a crash storm, because the poisoned threads couldn&rsquo;t be replaced. More on that in its own
+post.</p>
+<p><strong>Concurrency is unbounded, so memory is a function of traffic.</strong> Every in-flight request gets a blocking thread.
+Every PHP thread carries its own ZTS context. 512 concurrent requests means roughly 512 PHP contexts. On Kubernetes
+that&rsquo;s the OOM-kill-under-flood failure mode. The pod&rsquo;s memory ceiling is set by how hard you get hit, not by
+anything you configured.</p>
 <p><strong>Two halves of the config disagreed.</strong> ePHPm&rsquo;s memory autotune divides a memory budget by N workers to pick
-<code>memory_limit</code>. The runtime then happily ran many times N requests at once (tokio&rsquo;s blocking pool goes to 512
-threads). The sizing logic and the execution engine
-were making different assumptions and nothing reconciled them.</p>
+<code>memory_limit</code>. The runtime then happily ran many times N requests at once, since tokio&rsquo;s blocking pool goes to 512
+threads. The sizing logic and the execution engine made different assumptions and nothing reconciled them.</p>
 <h3 id="parity-by-construction">Parity by construction</h3>
 <p>The new engine is a fixed pool of <code>std::thread</code>s. Each registers with TSRM once, then loops pulling jobs off a
 bounded <code>async_channel</code> and answering on a <code>oneshot</code>. Pool size is the concurrency cap. The part I&rsquo;d recommend to
-anyone doing a swap like this is how the two engines were wired: the per-request body (per-site DB session, KV
-keyspace, <code>open_basedir</code> and temp-dir INI, OPcache invalidation, the bailout guard) was factored into <strong>one closure</strong>,
-and the engines differ only in which thread runs it. This is the dispatch from the router while both engines existed:</p>
+anyone doing a swap like this is how the two engines were wired. The per-request body was factored into <strong>one
+closure</strong>. That covers the per-site DB session, KV keyspace, <code>open_basedir</code> and temp-dir INI, OPcache invalidation and
+the bailout guard. The engines differ only in which thread runs it. This is the dispatch from the router while both
+engines existed:</p>
 <div class="highlight"><pre tabindex="0" class="chroma"><code class="language-rust" data-lang="rust"><span class="line"><span class="cl"><span class="p">}</span><span class="w"> </span><span class="k">else</span><span class="w"> </span><span class="p">{</span><span class="w">
 </span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="c1">// Cap concurrent PHP executions when [php].workers is set.
 </span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="c1">// Once the closure reaches spawn_blocking it is committed to tokio&#39;s
@@ -320,29 +321,29 @@ and the engines differ only in which thread runs it. This is the dispatch from t
 </span></span></span><span class="line"><span class="cl"><span class="w">            </span><span class="p">.</span><span class="k">await</span><span class="w">
 </span></span></span><span class="line"><span class="cl"><span class="w">            </span><span class="p">.</span><span class="n">map_err</span><span class="p">(</span><span class="n">ShedReason</span>::<span class="n">from</span><span class="p">),</span><span class="w">
 </span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="p">};</span><span class="w">
-</span></span></span></code></pre></div><p>Same <code>run_php</code>, different thread. That made the code review tractable and made the benchmark a genuinely
+</span></span></span></code></pre></div><p>Same <code>run_php</code>, different thread. That made the code review tractable. It also made the benchmark a true
 single-variable comparison.</p>
 <h3 id="the-rollout-a-knob-then-data-then-a-default">The rollout: a knob, then data, then a default</h3>
 <p>Nothing about this was a big-bang migration:</p>
 <ol>
 <li><strong>Opt-in</strong> (<a href="https://github.com/ephpm/ephpm/pull/296">ephpm#296</a>, August 15th). <code>[php] fpm_engine = &quot;pool&quot;</code>,
-default unchanged. It&rsquo;s a real enum, so a typo is a startup error, and it&rsquo;s env-overridable
-(<code>EPHPM_PHP__FPM_ENGINE=pool</code>), so the benchmark lab could flip engines on the same binary with no code changes.</li>
+default unchanged. It&rsquo;s a real enum, so a typo is a startup error. It&rsquo;s also env-overridable
+(<code>EPHPM_PHP__FPM_ENGINE=pool</code>). The benchmark lab could flip engines on the same binary with no code changes.</li>
 <li><strong>Benchmark in the lab</strong>, closed-loop and open-loop, and fix what the benchmarks found.</li>
 <li><strong>Make it the default</strong> (<a href="https://github.com/ephpm/ephpm/pull/460">ephpm#460</a>, September 2nd). The PR left
-<code>spawn_blocking</code> in as an opt-out, but it never shipped that way: #462 removed it the same night, before v0.9.0 was
+<code>spawn_blocking</code> in as an opt-out, but it never shipped that way. #462 removed it the same night, before v0.9.0 was
 tagged.</li>
 <li><strong>Delete the old engine</strong> (<a href="https://github.com/ephpm/ephpm/pull/462">ephpm#462</a>, v0.9.0) and rename the
-concurrency config to match what actually exists now: <code>[php] concurrency</code> and <code>queue_depth</code>, not <code>workers</code>,
+concurrency config to match what exists now. That&rsquo;s <code>[php] concurrency</code> and <code>queue_depth</code>, not <code>workers</code>,
 <code>worker_count</code> and <code>worker_backlog</code>.</li>
 </ol>
 <h3 id="what-the-lab-measured">What the lab measured</h3>
 <p>The first head-to-head came from the
-<a href="https://github.com/ephpm/multitenant-scalebench/blob/main/report/ENGINE-COMPARISON.md">multitenant-scalebench</a> repo,
-same binary, only the env var changed, on a 32-core WSL2 box with the pool sized to 32. Those runs were later found to
-have a harness bug that capped the light workload about 4x low (that&rsquo;s
-<a href="/blog/2026/08/benchmark-4x-wrong-wsl-drvfs-cwd/">its own post</a>), so I only trust the <em>relative</em> engine comparison
-and the memory numbers from them. On real WordPress, which is CPU-bound and wasn&rsquo;t affected by the harness bug:</p>
+<a href="https://github.com/ephpm/multitenant-scalebench/blob/main/report/ENGINE-COMPARISON.md">multitenant-scalebench</a> repo.
+It used the same binary with only the env var changed, on a 32-core WSL2 box with the pool sized to 32. Those runs
+were later found to have a harness bug that capped the light workload about 4x low. That&rsquo;s
+<a href="/blog/2026/08/benchmark-4x-wrong-wsl-drvfs-cwd/">its own post</a>. From those runs I only trust the <em>relative</em> engine
+comparison and the memory numbers. Real WordPress is CPU-bound and wasn&rsquo;t affected by the harness bug:</p>
 <table>
   <thead>
       <tr>
@@ -369,18 +370,19 @@ and the memory numbers from them. On real WordPress, which is CPU-bound and wasn
       </tr>
   </tbody>
 </table>
-<p>Better on both axes. With the CPU already saturated, 128 blocking threads just add scheduling contention; 32 pool
+<p>Better on both axes. With the CPU already saturated, 128 blocking threads just add scheduling contention. 32 pool
 threads, one per core, run cleaner. The re-run on the fixed harness
 (<a href="https://github.com/ephpm/multitenant-scalebench/blob/main/report/BEFORE-AFTER.md">BEFORE-AFTER.md</a>) landed in the
 same place: +7% RPS, p99 -22%, RSS -82% (574 MB vs 3.2 GB).</p>
-<p>The honest tradeoff showed up on the light path. When there are more clients than pool threads, the extras queue,
-and the tail stretches: p99 went from 28 ms to 70 ms on a light endpoint at c=128. <code>spawn_blocking</code> buys a tight,
-uniform tail by running everything at once and paying for it in RAM.</p>
+<p>The honest tradeoff showed up on the light path. When there are more clients than pool threads, the extras queue and
+the tail stretches. p99 went from 28 ms to 70 ms on a light endpoint at c=128. <code>spawn_blocking</code> buys a tight, uniform
+tail by running everything at once. It pays for that in RAM.</p>
 <h3 id="measuring-it-again-myself">Measuring it again myself</h3>
-<p>Since v0.8.9 was the last release with both engines in it, I re-ran the closed-loop comparison on it before the old
-engine disappeared. The workload is one PHP page that does about 10 ms of CPU work (build 4,000 rows, <code>usort</code>, render
-1,500 list items, <code>hash()</code> the result). There&rsquo;s no database, so it&rsquo;s purely about how the two engines schedule PHP.
-Same binary for every run; the only difference is <code>EPHPM_PHP__FPM_ENGINE</code>. The pool autotuned to 32 threads.</p>
+<p>v0.8.9 was the last release with both engines in it. I re-ran the closed-loop comparison on it before the old engine
+disappeared. The workload is one PHP page that does about 10 ms of CPU work. It builds 4,000 rows, runs <code>usort</code>,
+renders 1,500 list items and runs <code>hash()</code> on the result. There&rsquo;s no database, so it&rsquo;s purely about how the two
+engines schedule PHP. Every run used the same binary. The only difference is <code>EPHPM_PHP__FPM_ENGINE</code>. The pool
+autotuned to 32 threads.</p>
 <p><img src="/img/2026/09/own-your-php-thread-pool-rss.svg" alt="Bar chart: steady RSS at c=32, 128 and 512. spawn_blocking 394, 2179 and 3002 MB; owned pool 263, 265 and 281 MB"></p>
 <table>
   <thead>
@@ -451,24 +453,28 @@ Same binary for every run; the only difference is <code>EPHPM_PHP__FPM_ENGINE</c
       </tr>
   </tbody>
 </table>
-<p>The memory line is the headline: <code>spawn_blocking</code> grows with the number of clients, because it&rsquo;s holding one PHP
-context per in-flight request, and the pool stays flat at whatever 32 threads cost. On this CPU-bound page the pool
-also wins on throughput (+18% at c=128) and on the tail, the same shape as the real WordPress result above. It&rsquo;s when
-the work is very light that <code>spawn_blocking</code>&rsquo;s run-everything-at-once approach gets its tighter tail back.</p>
+<p>The memory line is the headline. <code>spawn_blocking</code> grows with the number of clients because it holds one PHP context
+per in-flight request. The pool stays flat at whatever 32 threads cost. On this CPU-bound page the pool also wins on
+throughput (+18% at c=128) and on the tail. That&rsquo;s the same shape as the real WordPress result above. Only when the
+work is very light does <code>spawn_blocking</code>&rsquo;s run-everything-at-once approach get its tighter tail back.</p>
 <p><img src="/img/2026/09/own-your-php-thread-pool-p99.svg" alt="Bar chart of p99 latency at c=32, 128 and 512 for both engines"></p>
 <h3 id="open-loop-is-where-it-stops-being-close">Open-loop is where it stops being close</h3>
-<p>Closed-loop benchmarks can&rsquo;t show you overload: every client waits for its response before sending another, so an
-overloaded server just makes the clients slower and reports zero errors. The open-loop runs (requests arrive at a
-fixed rate whether or not earlier ones finished) are written up in detail in
-<a href="/blog/2026/08/what-an-overloaded-php-server-actually-returns/">What an Overloaded PHP Server Actually Returns</a>. The
-short version for real WordPress at 1.5x capacity: <code>spawn_blocking</code> delivered a burst, then went to <strong>zero goodput
-and never recovered</strong>, with RSS climbing to 5-6 GB. Its queue is unbounded and uncancellable, so requests whose
-clients had already given up still ran, ahead of every new arrival. The pool stayed around 0.6 GB and recovered within
-30 seconds, because a queued-but-unstarted job is dropped when its client disconnects.</p>
-<p>I ran my own version of that against the same 10 ms page on v0.8.9: 4,444 requests per second (1.5x the pool&rsquo;s
-measured capacity) for 40 seconds, 10-second client timeout, then a 20-second cooldown and a light probe. Three arms:
-<code>spawn_blocking</code> with the default <code>wait</code> policy, the pool with <code>wait</code>, and the pool with <code>overload_policy = &quot;shed&quot;</code>
-from #305.</p>
+<p>Closed-loop benchmarks can&rsquo;t show you overload. Every client waits for its response before sending another. An
+overloaded server just makes the clients slower and reports zero errors. In open-loop runs, requests arrive at a fixed
+rate whether or not earlier ones finished. Those runs are written up in detail in
+<a href="/blog/2026/08/what-an-overloaded-php-server-actually-returns/">What an Overloaded PHP Server Actually Returns</a>. Here&rsquo;s
+the short version for real WordPress at 1.5x capacity. <code>spawn_blocking</code> delivered a burst, then went to <strong>zero goodput
+and never recovered</strong>. RSS climbed to 5-6 GB. Its queue is unbounded and uncancellable. Requests whose clients had
+already given up still ran, ahead of every new arrival. The pool stayed around 0.6 GB and recovered within 30 seconds.
+It drops a queued-but-unstarted job when its client disconnects.</p>
+<p>I ran my own version of that against the same 10 ms page on v0.8.9. The flood was 4,444 requests per second for 40
+seconds, which is 1.5x the pool&rsquo;s measured capacity. Clients had a 10-second timeout. After the flood came a 20-second
+cooldown and a light probe. There were three arms:</p>
+<ul>
+<li><code>spawn_blocking</code> with the default <code>wait</code> policy</li>
+<li>the pool with <code>wait</code></li>
+<li>the pool with <code>overload_policy = &quot;shed&quot;</code> from #305</li>
+</ul>
 <p><img src="/img/2026/09/own-your-php-thread-pool-open.svg" alt="Line chart of 2xx responses per second during a 40-second open-loop flood for three configurations"></p>
 <table>
   <thead>
@@ -505,24 +511,27 @@ from #305.</p>
   </tbody>
 </table>
 <p><code>spawn_blocking</code> went to zero goodput about 13 seconds in and stayed there until the flood stopped. The pool with
-<code>wait</code> held capacity for about 15 seconds and then degraded too, because tens of thousands of connections waiting on a
-queue is its own problem. The shed arm is the one that behaves like a server should: it served right at capacity the
-whole time, answered everything else with an instant 503, and RSS didn&rsquo;t move.</p>
-<p>Two honest caveats. The load generator itself was strained on the two <code>wait</code> arms (up to 38,000 requests in flight,
-up to 1.7 s of scheduling lag, and the connection errors are client-side), so read the middle of those two curves as
-shape, not as precise numbers. And unlike the WordPress lab, all three arms recovered once the flood stopped; the
-spike at 47 seconds is <code>spawn_blocking</code>&rsquo;s backlog draining all at once. With a 10 ms page the stale queue is seconds of
-work. With WordPress at 100 to 500 ms a request, it was minutes to hours.</p>
-<p>The flood also flushed out three real bugs, which is a decent argument for open-loop testing all by itself: the
-connection limiter wrote a 503 and then <strong>served the rejected connection anyway</strong>
-(<a href="https://github.com/ephpm/ephpm/issues/299">#299</a>), a thread-local destructor panic took down the whole process when
-a PHP thread retired (<a href="https://github.com/ephpm/ephpm/issues/300">#300</a>), and there was no request-level shedding at
-all (<a href="https://github.com/ephpm/ephpm/issues/301">#301</a>). Shedding turned out to be engine-specific too. With the pool,
-a request that can&rsquo;t get into the bounded queue gets a 503 and no PHP has run. With <code>spawn_blocking</code>, once the closure
-is handed over there is nothing to reject from.</p>
+<code>wait</code> held capacity for about 15 seconds and then degraded too. Tens of thousands of connections waiting on a queue
+is its own problem. The shed arm is the one that behaves like a server should. It served right at capacity the whole
+time and answered everything else with an instant 503. RSS didn&rsquo;t move.</p>
+<p>Two honest caveats. First, the load generator itself was strained on the two <code>wait</code> arms. It had up to 38,000
+requests in flight and up to 1.7 s of scheduling lag. The connection errors are client-side too. Read the middle of
+those two curves as shape, not as precise numbers. Second, unlike the WordPress lab, all three arms recovered once the
+flood stopped. The spike at 47 seconds is <code>spawn_blocking</code>&rsquo;s backlog draining all at once. With a 10 ms page the stale
+queue is seconds of work. With WordPress at 100 to 500 ms a request, it was minutes to hours.</p>
+<p>The flood also flushed out three real bugs. That&rsquo;s a decent argument for open-loop testing all by itself:</p>
+<ul>
+<li>The connection limiter wrote a 503 and then <strong>served the rejected connection anyway</strong>
+(<a href="https://github.com/ephpm/ephpm/issues/299">#299</a>).</li>
+<li>A thread-local destructor panic took down the whole process when a PHP thread retired
+(<a href="https://github.com/ephpm/ephpm/issues/300">#300</a>).</li>
+<li>There was no request-level shedding at all (<a href="https://github.com/ephpm/ephpm/issues/301">#301</a>).</li>
+</ul>
+<p>Shedding turned out to be engine-specific too. With the pool, a request that can&rsquo;t get into the bounded queue gets a
+503 and no PHP has run. With <code>spawn_blocking</code>, once the closure is handed over there is nothing to reject from.</p>
 <h3 id="the-numbers-that-made-it-the-default">The numbers that made it the default</h3>
-<p>The default flip in #460 was decided on a Laravel benchmark: wrk 10 threads, 100 connections, 30 seconds, three
-rounds, one binary with the engine flipped by env and nginx+php-fpm as an in-session control.</p>
+<p>The default flip in #460 was decided on a Laravel benchmark. It ran wrk with 10 threads and 100 connections for 30
+seconds, three rounds. One binary had the engine flipped by env. nginx+php-fpm ran as an in-session control.</p>
 <table>
   <thead>
       <tr>
@@ -550,24 +559,28 @@ rounds, one binary with the engine flipped by env and nginx+php-fpm as an in-ses
       </tr>
   </tbody>
 </table>
-<p>The pool&rsquo;s worst round beat <code>spawn_blocking</code>&rsquo;s best round in all 12 endpoint cells, with lower latency at every
-percentile. Under a 200-connection overload at default settings, <code>spawn_blocking</code> sat at 486 threads and 1,056 MB;
-the pool at 65 threads and 193 MB, serving more.</p>
+<p>The pool&rsquo;s worst round beat <code>spawn_blocking</code>&rsquo;s best round in all 12 endpoint cells. Latency was lower at every
+percentile. Under a 200-connection overload at default settings, <code>spawn_blocking</code> sat at 486 threads and 1,056 MB.
+The pool sat at 65 threads and 193 MB, serving more.</p>
 <h3 id="what-id-tell-someone-else-embedding-a-runtime">What I&rsquo;d tell someone else embedding a runtime</h3>
-<p>&ldquo;Own your threads&rdquo; cost nothing in dispatch overhead, and that fear is what kept us on <code>spawn_blocking</code> for months.
-A bounded channel and a <code>oneshot</code> per request is noise next to a PHP request. What you get for it is a thread you can
-retire, a concurrency cap that&rsquo;s the same number your memory sizing uses, and a queue you can actually cancel from or
-reject from. One thing the owned pool did <strong>not</strong> fix by itself was fairness: the bounded channel turned out to let
-new requests cut in line, and that&rsquo;s the next thing I&rsquo;ll write up.</p>
+<p>&ldquo;Own your threads&rdquo; cost nothing in dispatch overhead. That fear is what kept us on <code>spawn_blocking</code> for months. A
+bounded channel and a <code>oneshot</code> per request is noise next to a PHP request. What you get for it:</p>
+<ul>
+<li>a thread you can retire</li>
+<li>a concurrency cap that&rsquo;s the same number your memory sizing uses</li>
+<li>a queue you can cancel from or reject from</li>
+</ul>
+<p>One thing the owned pool did <strong>not</strong> fix by itself was fairness. The bounded channel turned out to let new requests
+cut in line. That&rsquo;s the next thing I&rsquo;ll write up.</p>
 <h3 id="how-i-measured">How I measured</h3>
 <ul>
 <li>Hardware: AMD Ryzen 9 5950X (16 cores, 32 threads), 62 GiB, WSL2 kernel 6.18.33.2-microsoft-standard-WSL2.</li>
 <li>Binary: the official <code>ephpm-v0.8.9+php8.5.7-linux-x86_64</code> release, checksum verified against the release&rsquo;s
 <code>SHA256SUMS</code>. PHP 8.5.7 ZTS, <code>[php] mode = &quot;fpm&quot;</code>, single site, everything else default.</li>
-<li>Load: the Go load generator from multitenant-scalebench (<code>-c</code> for closed-loop, <code>-rate</code> for open-loop), 5 s warmup and
-20 s measured per closed-loop point, a fresh server per point, RSS and CPU sampled from <code>/proc</code> at 1 Hz. The server
-was started from a WSL-native directory, and before each run the harness checked that the listening PID&rsquo;s
-<code>/proc/&lt;pid&gt;/exe</code> was the binary under test.</li>
+<li>Load: the Go load generator from multitenant-scalebench (<code>-c</code> for closed-loop, <code>-rate</code> for open-loop). Each
+closed-loop point had a 5 s warmup and 20 s measured, with a fresh server per point. RSS and CPU were sampled from
+<code>/proc</code> at 1 Hz. The server was started from a WSL-native directory. Before each run the harness checked that the
+listening PID&rsquo;s <code>/proc/&lt;pid&gt;/exe</code> was the binary under test.</li>
 <li>Single run per point on a dev box, so treat differences of a few percent as noise. Scripts and raw JSON are kept
 with my notes for this post.</li>
 </ul>

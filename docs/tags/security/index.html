@@ -218,7 +218,7 @@
       <h2><a href="/blog/2026/09/agent-shell-allowlist-bypassable/">Your Agent&#39;s Shell Allowlist Is Bypassable</a></h2>
     
     
-      <p>A permission gate for AI agents&#39; shell commands judged spellings instead of commands. The classes of bypass I found in shipmates&#39; own gate, and the one idea that fixes most of them.</p>
+      <p>A permission gate for AI agents&#39; shell commands judged spellings instead of commands. I found several classes of bypass in shipmates&#39; own gate, and one idea fixes most of them.</p>
     
   </div>
   <div class="meta">
@@ -233,11 +233,9 @@
     <img class="" src="/img/2026/09/agent-shell-allowlist-bypassable-cover.svg" alt="A shell command decomposed into the nested command lines the permission gate has to judge">
   </a>
     
-    <p>Every <a href="/blog/2026/08/shipmates-persona-based-ai-coding-crews/">shipmates</a> crew member runs shell commands, and before any
-of them runs it goes through a permission gate. The gate uses the same rule syntax as Claude Code settings,
-<code>Bash(git status)</code>, <code>Bash(rm *)</code>, <code>Write(**/.claude/settings.json)</code>, merged from several layers: a fleet-wide deny list
-pushed from Fleet Command, per-persona policy files, project settings, and the Brig, which compiles shipmates&rsquo; fifteen
-&ldquo;Ship&rsquo;s Articles&rdquo; into deny and ask rules. Deny beats ask, ask beats&hellip;</p>
+    <p>Every <a href="/blog/2026/08/shipmates-persona-based-ai-coding-crews/">shipmates</a> crew member runs shell commands. Before any of
+them runs, it goes through a permission gate. The gate uses the same rule syntax as Claude Code settings:
+<code>Bash(git status)</code>, <code>Bash(rm *)</code>, <code>Write(**/.claude/settings.json)</code>. The rules are merged from several layers:</p>
   </div>
   <footer>
     <a href="/blog/2026/09/agent-shell-allowlist-bypassable/" class="button big">Read More</a>
@@ -302,11 +300,11 @@ pushed from Fleet Command, per-persona policy files, project settings, and the B
     <img class="" src="/img/2026/09/bind-mounts-across-mount-namespaces-toctou.svg" alt="Sequence diagram of the bind mount TOCTOU race and the openat2 plus staging fix">
   </a>
     
-    <p>GitHub Actions has a <code>container:</code> key that runs a job&rsquo;s steps inside an image of your choosing. It&rsquo;s popular because it
-gives you a reproducible toolchain without building a custom runner image. On a self-hosted runner it works by having the
-runner drive Docker, and on <a href="/blog/2026/08/ephemerd-one-daemon-every-os/">ephemerd</a> &ldquo;Docker&rdquo; is a shim that speaks the
-Docker API and creates containers in containerd. Getting bind mounts right through that shim took four PRs in a week. A
-couple of months later the version that&hellip;</p>
+    <p>GitHub Actions has a <code>container:</code> key that runs a job&rsquo;s steps inside an image of your choosing. It&rsquo;s popular because
+it gives you a reproducible toolchain without building a custom runner image. On a self-hosted runner it works by
+having the runner drive Docker. On <a href="/blog/2026/08/ephemerd-one-daemon-every-os/">ephemerd</a>, &ldquo;Docker&rdquo; is a shim that
+speaks the Docker API and creates containers in containerd. Getting bind mounts right through that shim took four PRs
+in a week. A couple of months later the version that worked&hellip;</p>
   </div>
   <footer>
     <a href="/blog/2026/09/bind-mounts-across-mount-namespaces/" class="button big">Read More</a>
@@ -376,10 +374,10 @@ couple of months later the version that&hellip;</p>
   </a>
     
     <p><a href="https://github.com/ephpm/ephpm">ePHPm</a> can serve a directory full of sites out of one process. Point <code>sites_dir</code> at
-a folder, every subdirectory is a virtual host, and the Host header decides which one you get. That&rsquo;s how the PR preview
-environment runs: every pull request gets a subdomain, and the code behind it is whatever somebody pushed. One process
-holding many tenants means every per-tenant boundary is something ePHPm enforces itself, in-process. There&rsquo;s no
-container wall between site A and site B unless you add&hellip;</p>
+a folder and every subdirectory is a virtual host. The Host header decides which one you get. That&rsquo;s how the PR preview
+environment runs. Every pull request gets a subdomain, and the code behind it is whatever somebody pushed. One process
+holding many tenants means ePHPm enforces every per-tenant boundary itself, in-process. There&rsquo;s no container wall
+between site A and site B unless you add one.</p>
   </div>
   <footer>
     <a href="/blog/2026/09/cross-tenant-breakout-field-guide/" class="button big">Read More</a>
@@ -427,7 +425,7 @@ container wall between site A and site B unless you add&hellip;</p>
       <h2><a href="/blog/2026/08/hardening-rust-database-proxy/">Security and Performance Hardening of a Rust Database Proxy</a></h2>
     
     
-      <p>One week of hardening litewire: a memory bug in a dependency, a site that could open its neighbor&#39;s database, a security rule that lived only in a comment, and a needless 1 MB clear on every query.</p>
+      <p>What a week of hardening litewire turned up. A dependency had a memory bug, one site could open its neighbor&#39;s database, a security rule lived only in a comment and every query paid for a needless 1 MB clear.</p>
     
   </div>
   <div class="meta">
@@ -443,10 +441,8 @@ container wall between site A and site B unless you add&hellip;</p>
   </a>
     
     <p><a href="https://github.com/ephpm/litewire">litewire</a> is the piece of ePHPm that lets PHP apps talk MySQL to a SQLite file. I
-wrote about <a href="/blog/2026/07/sqlite-production-database-protocol-translation/">how it works</a> and about
-<a href="/blog/2026/08/faking-mysql-quirks-wordpress/">the MySQL quirks WordPress depends on</a>. This one is the less visible
-half of August: an audit pass on litewire, a multi-tenant mode that turned a database proxy into a security boundary,
-and a performance regression I shipped and then had to go find.</p>
+wrote about <a href="/blog/2026/07/sqlite-production-database-protocol-translation/">how it works</a> and about <a href="/blog/2026/08/faking-mysql-quirks-wordpress/">the MySQL quirks
+WordPress depends on</a>. This one is the less visible half of August:</p>
   </div>
   <footer>
     <a href="/blog/2026/08/hardening-rust-database-proxy/" class="button big">Read More</a>
@@ -515,8 +511,8 @@ and a performance regression I shipped and then had to go find.</p>
     
     <p>After a week of Windows firewall rules that <a href="/blog/2026/08/windows-container-egress-firewall/">listed fine and enforced nothing</a>,
 I went back to the Linux side of <a href="https://github.com/ephpm/ephemerd">ephemerd</a> feeling pretty good about it. iptables is
-the boring, well-understood one. Then I looked at the packet counters on a live node and found a rule that had never
-matched a packet in its life, on a node that had pushed 9.8 GB through the same chain.</p>
+the boring, well-understood one. Then I looked at the packet counters on a live node. I found a rule that had never
+matched a packet in its life. That node had pushed 9.8 GB through the same chain.</p>
   </div>
   <footer>
     <a href="/blog/2026/08/iptables-rule-zero-packets/" class="button big">Read More</a>
@@ -581,10 +577,10 @@ matched a packet in its life, on a node that had pushed 9.8 GB through the same 
     <img class="" src="/img/2026/08/windows-container-egress-firewall-paths.svg" alt="Packet path of a Windows container on an HNS NAT network versus an L2Bridge network">
   </a>
     
-    <p><a href="/blog/2026/08/ephemerd-one-daemon-every-os/">ephemerd</a> runs CI jobs from pull requests, and one of the rules is that a job
-can reach the internet but not my LAN. On Linux that&rsquo;s a few iptables rules in the <code>FORWARD</code> path and I didn&rsquo;t think about it
+    <p><a href="/blog/2026/08/ephemerd-one-daemon-every-os/">ephemerd</a> runs CI jobs from pull requests. One of the rules is that a job can
+reach the internet but not my LAN. On Linux that&rsquo;s a few iptables rules in the <code>FORWARD</code> path, and I didn&rsquo;t think about it
 much. On Windows I spent about a week finding out how many ways there are to write a firewall rule that Windows accepts,
-lists, and then never applies.</p>
+lists and never applies.</p>
   </div>
   <footer>
     <a href="/blog/2026/08/windows-container-egress-firewall/" class="button big">Read More</a>

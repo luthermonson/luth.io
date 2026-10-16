@@ -13,7 +13,7 @@
       <link>https://luth.io/blog/2026/09/single-binary-wordpress/</link>
       <pubDate>Tue, 08 Sep 2026 20:25:00 -0700</pubDate>
       <guid>https://luth.io/blog/2026/09/single-binary-wordpress/</guid>
-      <description>&lt;p&gt;The standard way to run a WordPress site is four services: nginx for HTTP and TLS, php-fpm to run PHP, MySQL for data,&#xA;and Redis once the site gets slow enough that someone installs an object cache plugin. That&amp;rsquo;s four processes, four&#xA;config files, three sockets between them, and four things to upgrade. For a big site that&amp;rsquo;s fine. For a brochure site, a&#xA;staging copy, a PR preview, a CI job that needs a real WordPress to test a plugin against, or a box at the edge, it&amp;rsquo;s&#xA;absurd.&lt;/p&gt;</description>
+      <description>&lt;p&gt;The standard way to run a WordPress site is four services:&lt;/p&gt;&#xA;&lt;ul&gt;&#xA;&lt;li&gt;nginx for HTTP and TLS&lt;/li&gt;&#xA;&lt;li&gt;php-fpm to run PHP&lt;/li&gt;&#xA;&lt;li&gt;MySQL for data&lt;/li&gt;&#xA;&lt;li&gt;Redis, once the site gets slow enough that someone installs an object cache plugin&lt;/li&gt;&#xA;&lt;/ul&gt;&#xA;&lt;p&gt;That&amp;rsquo;s four processes and four config files. There are three sockets between them and four things to upgrade. For a&#xA;big site that&amp;rsquo;s fine. For a brochure site or a staging copy it&amp;rsquo;s absurd. The same goes for a PR preview, a box at the&#xA;edge, or a CI job that needs a real WordPress to test a plugin against.&lt;/p&gt;</description>
     </item>
   </channel>
 </rss>

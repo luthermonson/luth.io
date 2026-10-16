@@ -234,8 +234,8 @@
   </a>
     
     <p><a href="/blog/2026/08/shipmates-persona-based-ai-coding-crews/">shipmates</a> ships connect to Fleet Command over outbound
-websocket tunnels so nothing on the ship side has to be exposed to the internet. I didn&rsquo;t write that tunnel layer,
-I used <a href="https://github.com/rancher/remotedialer">rancher/remotedialer</a>, the same library Rancher uses to reach
+websocket tunnels. That way nothing on the ship side has to be exposed to the internet. I didn&rsquo;t write that tunnel
+layer. I used <a href="https://github.com/rancher/remotedialer">rancher/remotedialer</a>, the same library Rancher uses to reach
 downstream cluster agents. I spent years around that code at Rancher, so it was the obvious pick. What I didn&rsquo;t
 expect was for my CI&rsquo;s race job to find two data races in it in the first week.</p>
   </div>

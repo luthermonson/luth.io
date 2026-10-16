@@ -13,7 +13,7 @@
       <link>https://luth.io/blog/2026/08/ntfs-atomic-file-replacement-not-rename-fsync/</link>
       <pubDate>Thu, 06 Aug 2026 21:27:00 -0700</pubDate>
       <guid>https://luth.io/blog/2026/08/ntfs-atomic-file-replacement-not-rename-fsync/</guid>
-      <description>&lt;p&gt;&lt;a href=&#34;https://github.com/luthermonson/shipmates&#34;&gt;shipmates&lt;/a&gt; writes a lot of small state files that other&#xA;processes read: voyage plans and state, tracker files. Each of them has to be replaced atomically (a reader sees&#xA;the old file or the new one, never half of each) and durably (when the function returns success, a power cut doesn&amp;rsquo;t&#xA;take it back). Every Unix programmer knows the recipe for that. It doesn&amp;rsquo;t work on Windows, and the reasons are more&#xA;interesting than &amp;ldquo;Windows is different&amp;rdquo;.&lt;/p&gt;</description>
+      <description>&lt;p&gt;&lt;a href=&#34;https://github.com/luthermonson/shipmates&#34;&gt;shipmates&lt;/a&gt; writes a lot of small state files that other processes read.&#xA;Voyage plans and state, tracker files. Each of them has to be replaced atomically, so a reader sees the old file or the&#xA;new one and never half of each. Each also has to be replaced durably. When the function returns success, a power cut&#xA;doesn&amp;rsquo;t take it back. Every Unix programmer knows the recipe for that. It doesn&amp;rsquo;t work on Windows, and the reasons are&#xA;more interesting than &amp;ldquo;Windows is different&amp;rdquo;.&lt;/p&gt;</description>
     </item>
   </channel>
 </rss>

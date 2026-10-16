@@ -272,18 +272,20 @@
       </div>
       <div class="content">
         
-        <p><a href="/blog/2026/08/ephemerd-one-daemon-every-os/">ephemerd</a> runs CI jobs from pull requests, and one of the rules is that a job
-can reach the internet but not my LAN. On Linux that&rsquo;s a few iptables rules in the <code>FORWARD</code> path and I didn&rsquo;t think about it
+        <p><a href="/blog/2026/08/ephemerd-one-daemon-every-os/">ephemerd</a> runs CI jobs from pull requests. One of the rules is that a job can
+reach the internet but not my LAN. On Linux that&rsquo;s a few iptables rules in the <code>FORWARD</code> path, and I didn&rsquo;t think about it
 much. On Windows I spent about a week finding out how many ways there are to write a firewall rule that Windows accepts,
-lists, and then never applies.</p>
-<p>The setup: Windows Server 2025 (build 26100), job containers running with Hyper-V isolation, on the default HNS NAT network
-that every Windows container tutorial uses (<code>10.88.0.0/16</code> in ephemerd&rsquo;s case, gateway <code>10.88.0.1</code>). The target is the same
-as Linux: block <code>10.0.0.0/8</code>, <code>172.16.0.0/12</code>, <code>192.168.0.0/16</code> and <code>169.254.0.0/16</code>, allow everything else.</p>
+lists and never applies.</p>
+<p>The setup is Windows Server 2025 (build 26100) with job containers running under Hyper-V isolation. They sit on the default
+HNS NAT network that every Windows container tutorial uses. In ephemerd&rsquo;s case that&rsquo;s <code>10.88.0.0/16</code> with gateway
+<code>10.88.0.1</code>. The target is the same as Linux. Block <code>10.0.0.0/8</code>, <code>172.16.0.0/12</code>, <code>192.168.0.0/16</code> and <code>169.254.0.0/16</code>,
+and allow everything else.</p>
 <h3 id="how-i-knew-it-was-broken">How I knew it was broken</h3>
-<p>The repo has a containment suite (<code>.github/workflows/containment.yml</code>, first drafted in
-<a href="https://github.com/ephpm/ephemerd/pull/134">#134</a> and landed in consolidated form on August 15th), a workflow that runs
-inside a real job on each platform and tries to reach things it shouldn&rsquo;t. For Windows it probes the management planes on my LAN: two Proxmox
-hosts, an Incus API and Grafana. Every attempt below was judged by this output from inside a live job (addresses changed):</p>
+<p>The repo has a containment suite, <code>.github/workflows/containment.yml</code>. It was first drafted in
+<a href="https://github.com/ephpm/ephemerd/pull/134">#134</a> and landed in consolidated form on August 15th. It&rsquo;s a workflow that runs
+inside a real job on each platform and tries to reach things it shouldn&rsquo;t. For Windows it probes the management planes on my
+LAN: two Proxmox hosts, an Incus API and Grafana. Every attempt below was judged by this output from inside a live job
+(addresses changed):</p>
 <pre tabindex="0"><code>FAIL: reached Proxmox host A at 10.0.0.11:8006
 FAIL: reached Proxmox host B at 10.0.0.12:8006
 FAIL: reached Incus daemon   at 10.0.1.13:8443
@@ -291,9 +293,9 @@ FAIL: reached Grafana        at 10.0.2.45:3000
 </code></pre><p>I saw those four lines a lot.</p>
 <p><img src="/img/2026/08/windows-container-egress-firewall-paths.svg" alt="Windows container packet paths"></p>
 <h3 id="1-host-windows-firewall-scoped-to-the-container-source">1. Host Windows Firewall, scoped to the container source</h3>
-<p>#136. The theory: WinNAT routes and NATs container traffic through the host,
-so a host firewall rule should be in the path. <code>netsh advfirewall</code> outbound blocks for the private ranges, scoped
-<code>localip=10.88.0.0/16</code> so the host&rsquo;s own LAN traffic could never match.</p>
+<p>#136. The theory was that WinNAT routes and NATs container traffic through the host. So a host firewall rule should be in
+the path. The rules were <code>netsh advfirewall</code> outbound blocks for the private ranges. They were scoped <code>localip=10.88.0.0/16</code>
+so the host&rsquo;s own LAN traffic could never match.</p>
 <p>One wrinkle made the rule set interesting. Windows Firewall has no rule ordering. Block always beats Allow, so the Linux
 pattern of &ldquo;allow the gateway, then deny 10/8&rdquo; can&rsquo;t be ported. If <code>10.88.0.1</code> ends up inside a block range, DNS and NAT die
 and no allow rule can rescue it. So the container subnet gets subtracted from each blocked range up front with a little CIDR
@@ -314,38 +316,42 @@ arithmetic:</p>
 </span></span></span><span class="line"><span class="cl"><span class="w">	</span><span class="p">})</span><span class="w">
 </span></span></span><span class="line"><span class="cl"><span class="p">}</span><span class="w">
 </span></span></span></code></pre></div><p><code>10.0.0.0/8</code> becomes <code>10.0.0.0-10.87.255.255,10.89.0.0-10.255.255.255</code>. Unit tested, idempotent, very tidy. On the real node
-it did nothing. The PR body had even flagged the source-IP assumption as unverified without hardware, and that&rsquo;s the
-assumption that was wrong.</p>
+it did nothing. The PR body had even flagged the source-IP assumption as unverified without hardware. That&rsquo;s the assumption
+that was wrong.</p>
 <h3 id="2-the-hyper-v-firewall">2. The Hyper-V firewall</h3>
-<p>#140. Server 2025 ships <code>New-NetFirewallHyperVRule</code>, a firewall that filters
-at the VM&rsquo;s vNIC, before NAT, scoped by a <code>VMCreatorId</code>. That&rsquo;s Microsoft&rsquo;s purpose-built answer for exactly this problem,
-and it&rsquo;s what WSL uses. There&rsquo;s no documented creator GUID for Windows containers, so ephemerd discovered it at runtime with
-<code>Get-NetFirewallHyperVVMCreator</code>, skipping WSL&rsquo;s well-known one.</p>
+<p>#140. Server 2025 ships <code>New-NetFirewallHyperVRule</code>. It&rsquo;s a firewall that filters at the VM&rsquo;s vNIC before NAT, scoped by a
+<code>VMCreatorId</code>. That&rsquo;s Microsoft&rsquo;s purpose-built answer for exactly this problem, and it&rsquo;s what WSL uses. There&rsquo;s no
+documented creator GUID for Windows containers. So ephemerd discovered it at runtime with <code>Get-NetFirewallHyperVVMCreator</code>,
+skipping WSL&rsquo;s well-known one.</p>
 <p>On metal, <code>Get-NetFirewallHyperVVMCreator</code> and <code>Get-NetFirewallHyperVPort</code> both came back empty, even with a live container
 running. There&rsquo;s no creator to scope a rule to, so the rules never attach to anything.</p>
 <h3 id="3-hns-endpoint-acls">3. HNS endpoint ACLs</h3>
 <p>These were in the code from the start: HNS ACL policies with <code>RuleType: Switch</code> on each container&rsquo;s endpoint. While a
-containment run was held open I pulled the live endpoint and the rules were right there:</p>
+containment run was held open I pulled the live endpoint. The rules were right there:</p>
 <div class="highlight"><pre tabindex="0" class="chroma"><code class="language-json" data-lang="json"><span class="line"><span class="cl"><span class="p">[{</span><span class="nt">&#34;Action&#34;</span><span class="p">:</span><span class="s2">&#34;Block&#34;</span><span class="p">,</span><span class="nt">&#34;Direction&#34;</span><span class="p">:</span><span class="s2">&#34;Out&#34;</span><span class="p">,</span><span class="nt">&#34;Priority&#34;</span><span class="p">:</span><span class="mi">100</span><span class="p">,</span><span class="nt">&#34;Protocols&#34;</span><span class="p">:</span><span class="s2">&#34;6,17&#34;</span><span class="p">,</span>
 </span></span><span class="line"><span class="cl">  <span class="nt">&#34;RemoteAddresses&#34;</span><span class="p">:</span><span class="s2">&#34;10.0.0.0/8&#34;</span><span class="p">,</span><span class="nt">&#34;RuleType&#34;</span><span class="p">:</span><span class="s2">&#34;Switch&#34;</span><span class="p">,</span><span class="nt">&#34;Type&#34;</span><span class="p">:</span><span class="s2">&#34;ACL&#34;</span><span class="p">},</span> <span class="err">...</span><span class="p">]</span>
-</span></span></code></pre></div><p>Present, correct, and inert. <code>vfpctrl /list-vmswitch-port</code> would enumerate the ports, but every port-scoped operation failed:</p>
+</span></span></code></pre></div><p>Present, correct and inert. <code>vfpctrl /list-vmswitch-port</code> would enumerate the ports, but every port-scoped operation failed:</p>
 <pre tabindex="0"><code>vfpctrl /port &lt;port&gt; /get-port-state  -&gt; ERROR (2) The system cannot find the file specified.
 vfpctrl /port &lt;port&gt; /list-layer      -&gt; exit 1
 vfpctrl /list-nat-range               -&gt; ERROR (87) The parameter is incorrect.
-</code></pre><p>VFP, the switch extension that actually enforces those ACLs, isn&rsquo;t managing the ports on a NAT network. The policy gets
+</code></pre><p>VFP is the switch extension that actually enforces those ACLs. It isn&rsquo;t managing the ports on a NAT network. The policy gets
 stored on the endpoint object and nothing ever reads it.</p>
 <h3 id="4-route-blackholes-and-a-firewall-inside-the-container">4. Route blackholes and a firewall inside the container</h3>
-<p>At this point I tried doing it from inside the container. A route for each private range pointing at a dead on-link next
-hop installed fine and the planes were still reachable, because the NAT gateway answers ARP for everything (proxy-ARP).
-Routing to <code>127.0.0.1</code> instead got <code>The route addition failed: The parameter is incorrect.</code></p>
+<p>At this point I tried doing it from inside the container. I added a route for each private range pointing at a dead on-link
+next hop. It installed fine, but the planes were still reachable because the NAT gateway answers ARP for everything
+(proxy-ARP). Routing to <code>127.0.0.1</code> instead got <code>The route addition failed: The parameter is incorrect.</code></p>
 <p>The in-container Windows Firewall was a non-starter. <code>Get-NetFirewallProfile</code> returned system error 1753, and
 <code>Start-Service BFE</code> returned &ldquo;Cannot start service&rdquo;. There&rsquo;s no Base Filtering Engine running inside a Server Core container.</p>
-<p>At this point I wrote it up as a negative result (#142, closed without merging): the write-up dropped the code&rsquo;s
-&ldquo;refusing to start unfirewalled&rdquo; claim in favour of a warning that Windows egress isn&rsquo;t enforced on this host class,
-recommended putting the Windows runner on a VLAN whose router drops RFC1918, and noted the one software avenue left. The
-warning itself shipped with the L2Bridge work below.</p>
+<p>That&rsquo;s when I wrote it up as a negative result in #142, which was closed without merging. The write-up did three things:</p>
+<ul>
+<li>It dropped the code&rsquo;s &ldquo;refusing to start unfirewalled&rdquo; claim in favour of a warning that Windows egress isn&rsquo;t enforced on
+this host class.</li>
+<li>It recommended putting the Windows runner on a VLAN whose router drops RFC1918.</li>
+<li>It noted the one software avenue left.</li>
+</ul>
+<p>The warning itself shipped with the L2Bridge work below.</p>
 <h3 id="5-raw-wfp-at-the-forwarding-layer">5. Raw WFP at the forwarding layer</h3>
-<p>On Linux the container rules live in <code>FORWARD</code>, and the Windows Filtering Platform has a direct analogue:
+<p>On Linux the container rules live in <code>FORWARD</code>. The Windows Filtering Platform has a direct analogue:
 <code>FWPM_LAYER_IPFORWARD_V4</code>. A plain block filter there needs no callout driver and no kernel signing. Tailscale&rsquo;s pure-Go
 <a href="https://github.com/tailscale/wf">wf</a> package made it easy to try from a small spike binary:</p>
 <div class="highlight"><pre tabindex="0" class="chroma"><code class="language-go" data-lang="go"><span class="line"><span class="cl"><span class="nx">s</span><span class="p">.</span><span class="nf">AddRule</span><span class="p">(</span><span class="o">&amp;</span><span class="nx">wf</span><span class="p">.</span><span class="nx">Rule</span><span class="p">{</span><span class="w">
@@ -358,8 +364,8 @@ warning itself shipped with the L2Bridge work below.</p>
 </span></span></span><span class="line"><span class="cl"><span class="w">	</span><span class="p">},</span><span class="w">
 </span></span></span><span class="line"><span class="cl"><span class="p">})</span><span class="w">
 </span></span></span></code></pre></div><p>First lesson: enumerate the fields of the layer on the build you&rsquo;re actually running. On this one, <code>IPFORWARD_V4</code> has no
-<code>IP_ARRIVAL_INTERFACE</code>. The arrival interface is <code>IP_LOCAL_INTERFACE</code> and the destination is <code>IP_DESTINATION_ADDRESS</code>, so
-both conditions in my plan had to be remapped before any result meant anything.</p>
+<code>IP_ARRIVAL_INTERFACE</code>. The arrival interface is <code>IP_LOCAL_INTERFACE</code> and the destination is <code>IP_DESTINATION_ADDRESS</code>. Both
+conditions in my plan had to be remapped before any result meant anything.</p>
 <p>I targeted Grafana only, since blocking it can&rsquo;t cut the runner off from GitHub. A working filter would have dropped one
 <code>FAIL</code> line and kept the other three. Results:</p>
 <table>
@@ -394,24 +400,23 @@ both conditions in my plan had to be remapped before any result meant anything.<
   </tbody>
 </table>
 <p>The one that convinced me was the post-NAT <code>OUTBOUND_IPPACKET_V4</code> filter on destination alone. After NAT the packet has to
-leave the host&rsquo;s LAN NIC addressed to Grafana, and that filter didn&rsquo;t see it either.</p>
-<p>When a filter matches nothing you have to rule out &ldquo;my filter is broken&rdquo;, so I ran a positive control: the same layer, same
-field, pointed at the host&rsquo;s own traffic to <code>1.1.1.1</code>.</p>
+leave the host&rsquo;s LAN NIC addressed to Grafana. That filter didn&rsquo;t see it either.</p>
+<p>When a filter matches nothing you have to rule out &ldquo;my filter is broken&rdquo;. So I ran a positive control. It used the same
+layer and field, pointed at the host&rsquo;s own traffic to <code>1.1.1.1</code>.</p>
 <pre tabindex="0"><code>ALE_AUTH_CONNECT_V4  block IP_REMOTE_ADDRESS=1.1.1.1 -&gt; host-&gt;1.1.1.1:443 reachable=False
 OUTBOUND_IPPACKET_V4 block IP_REMOTE_ADDRESS=1.1.1.1 -&gt; host-&gt;1.1.1.1:443 reachable=False
 (after provider removed)                             -&gt; host-&gt;1.1.1.1 restored=True
 </code></pre><p>So WFP works and the method was right. The container&rsquo;s packets just never pass through the host&rsquo;s <code>tcpip.sys</code> at all. Two
-more facts point the same way: <code>Get-NetNat</code> is empty (the HNS NAT isn&rsquo;t a NetNat object), and IP forwarding is <code>Disabled</code> on
-both the vSwitch vNIC and the LAN NIC. The NAT happens inside the Hyper-V switch datapath, beside the host stack rather than
-through it. All of this went into an investigation doc in the repo (<code>docs/arch/windows-egress-wfp-investigation.md</code>, PR
-#143) with a reproducer, so nobody starts attempt six from scratch.</p>
+more facts point the same way. <code>Get-NetNat</code> is empty, since the HNS NAT isn&rsquo;t a NetNat object. And IP forwarding is
+<code>Disabled</code> on both the vSwitch vNIC and the LAN NIC. The NAT happens inside the Hyper-V switch datapath, beside the host
+stack rather than through it. All of this went into an investigation doc in the repo with a reproducer, so nobody starts
+attempt six from scratch. That&rsquo;s <code>docs/arch/windows-egress-wfp-investigation.md</code>, in PR #143.</p>
 <h3 id="what-worked-l2bridge-and-vfp">What worked: L2Bridge and VFP</h3>
 <p>Attempt 3 had the right enforcement point (the vSwitch port) on the wrong network type. On an HNS <strong>L2Bridge</strong> network, VFP
-is engaged and the same <code>RuleType: Switch</code> ACLs are enforced. The container stops being NAT&rsquo;d and becomes a peer on the
-host&rsquo;s LAN with its own address. That&rsquo;s #144, opt-in behind
-<code>network.l2bridge_egress</code>.</p>
+is engaged and the same <code>RuleType: Switch</code> ACLs are enforced. The container stops being NAT&rsquo;d. It becomes a peer on the
+host&rsquo;s LAN with its own address. That&rsquo;s #144, opt-in behind <code>network.l2bridge_egress</code>.</p>
 <p>The non-obvious part is that <strong>VFP goes default-deny the moment any ACL exists on a port</strong>. A port with only block rules
-blocks everything, internet included. So the rules are a ladder, lower priority number wins:</p>
+blocks everything, internet included. So the rules are a ladder, and the lower priority number wins:</p>
 <table>
   <thead>
       <tr>
@@ -460,8 +465,8 @@ blocks everything, internet included. So the rules are a ladder, lower priority 
       </tr>
   </tbody>
 </table>
-<p>That last row is the one nobody tells you about. Without an inbound allow-any, outbound SYNs leave just fine and every connection dies when
-the SYN-ACK comes back, including to destinations the ladder explicitly allows. From the code:</p>
+<p>That last row is the one nobody tells you about. Without an inbound allow-any, outbound SYNs leave just fine. Then every
+connection dies when the SYN-ACK comes back. That includes destinations the ladder explicitly allows. From the code:</p>
 <div class="highlight"><pre tabindex="0" class="chroma"><code class="language-go" data-lang="go"><span class="line"><span class="cl"><span class="c1">// Tier: allow-any Out AND In (lowest precedence). BOTH are mandatory:</span><span class="w">
 </span></span></span><span class="line"><span class="cl"><span class="c1">// without them the port default-denies everything (internet included), and</span><span class="w">
 </span></span></span><span class="line"><span class="cl"><span class="c1">// the INBOUND allow is required or TCP return traffic (SYN-ACK) is dropped</span><span class="w">
@@ -479,21 +484,23 @@ the SYN-ACK comes back, including to destinations the ladder explicitly allows. 
 </span></span></span><span class="line"><span class="cl"><span class="w">	</span><span class="p">}</span><span class="w">
 </span></span></span><span class="line"><span class="cl"><span class="p">}</span><span class="w">
 </span></span></span></code></pre></div><p>The blocks are whole supernets, with no carve-out for the container&rsquo;s own subnet or gateway. On L2Bridge the container
-subnet <em>is</em> the management LAN, so a &ldquo;except my own subnet&rdquo; exception would exempt exactly the hosts I&rsquo;m trying to protect.
-Containers still route through the gateway as a next hop, they just can&rsquo;t address it. Verified from inside a container:
-Grafana, Incus, both Proxmox hosts, the router&rsquo;s web UI and the ephemerd host blocked; <code>1.1.1.1:443</code>, <code>8.8.8.8:53</code>, DNS and
-<code>https://example.com</code> fine.</p>
+subnet <em>is</em> the management LAN. An &ldquo;except my own subnet&rdquo; exception would exempt exactly the hosts I&rsquo;m trying to protect.
+Containers still route through the gateway as a next hop. They just can&rsquo;t address it. I verified it from inside a container:</p>
+<ul>
+<li>Blocked: Grafana, Incus, both Proxmox hosts, the router&rsquo;s web UI and the ephemerd host.</li>
+<li>Fine: <code>1.1.1.1:443</code>, <code>8.8.8.8:53</code>, DNS and <code>https://example.com</code>.</li>
+</ul>
 <p>Things that bit me on the way:</p>
 <ul>
 <li>
 <p><strong>Port-scoped ACLs blackhole the whole port.</strong> An early ladder had UDP 67/68 allows for DHCP, with ports and no address
-scope. HNS returned success and then nothing egressed at all. Every rule is now address-scoped, and a test fails the build
-if anyone adds a port scope back.</p>
+scope. HNS returned success and then nothing egressed at all. Every rule is now address-scoped. A test fails the build if
+anyone adds a port scope back.</p>
 </li>
 <li>
 <p><strong>HNS won&rsquo;t do DHCP for you.</strong> Without a declared subnet, HNS refuses to create the network (<code>0x803b0005</code>). With one, it
-hands out addresses from it on its own, which on a real LAN means colliding with your DHCP server. So
-<code>network.ip_pool</code> is required, with no default, and ephemerd does the allocation:</p>
+hands out addresses from it on its own. On a real LAN that means colliding with your DHCP server. So <code>network.ip_pool</code> is
+required, with no default, and ephemerd does the allocation:</p>
 <div class="highlight"><pre tabindex="0" class="chroma"><code class="language-toml" data-lang="toml"><span class="line"><span class="cl"><span class="p">[</span><span class="nx">network</span><span class="p">]</span>
 </span></span><span class="line"><span class="cl"><span class="nx">l2bridge_egress</span> <span class="p">=</span> <span class="kc">true</span>
 </span></span><span class="line"><span class="cl"><span class="nx">host_nic</span> <span class="p">=</span> <span class="s2">&#34;Ethernet&#34;</span>
@@ -501,31 +508,30 @@ hands out addresses from it on its own, which on a real LAN means colliding with
 </span></span></code></pre></div></li>
 <li>
 <p><strong>Things were bound to <code>10.88.0.1</code>.</strong> The per-job Docker API listener and the Go module proxy bound to the NAT gateway
-address, which doesn&rsquo;t exist on L2Bridge, so every job failed to provision. They now bind the host&rsquo;s adapter address, and
-the <code>/32</code> allow at priority 90 lets containers reach it.</p>
+address. That address doesn&rsquo;t exist on L2Bridge, so every job failed to provision. They now bind the host&rsquo;s adapter
+address. The <code>/32</code> allow at priority 90 lets containers reach it.</p>
 </li>
 <li>
-<p><strong>That <code>/32</code> opens every port on the host.</strong> It can&rsquo;t be port-scoped (see above), so port precision moved to the host&rsquo;s
-own firewall, which works here because without NAT the container&rsquo;s real address is on the packet. A pen test from inside
-a job then reached the host&rsquo;s WinRM (5985) and RPC endpoint mapper (135), because a stock Windows host allows those from
-the LAN and the container is now a LAN peer. <a href="https://github.com/ephpm/ephemerd/commit/da802c9"><code>da802c9</code></a> adds inbound
-blocks for 135, 139, 445, 3389, 5985, 5986 and 47001 scoped to the pool, and
-#158 extended them to UDP plus the name-resolution ports.</p>
+<p><strong>That <code>/32</code> opens every port on the host.</strong> It can&rsquo;t be port-scoped (see above). So port precision moved to the host&rsquo;s
+own firewall. That works here because without NAT the container&rsquo;s real address is on the packet. A pen test from inside a
+job then reached the host&rsquo;s WinRM (5985) and RPC endpoint mapper (135). A stock Windows host allows those from the LAN,
+and the container is now a LAN peer. <a href="https://github.com/ephpm/ephemerd/commit/da802c9"><code>da802c9</code></a> adds inbound blocks for
+135, 139, 445, 3389, 5985, 5986 and 47001 scoped to the pool. #158 extended them to UDP plus the name-resolution ports.</p>
 </li>
 <li>
-<p><strong>Switching needs a reboot.</strong> Creating an L2Bridge network next to a live NAT network wedged HNS on my test node badly
-enough that recovery took a hard reset from Proxmox. Cordon, drain, reboot, then start ephemerd.</p>
+<p><strong>Switching needs a reboot.</strong> Creating an L2Bridge network next to a live NAT network wedged HNS on my test node. It was
+bad enough that recovery took a hard reset from Proxmox. Cordon, drain, reboot, then start ephemerd.</p>
 </li>
 </ul>
-<p>L2Bridge isn&rsquo;t a perfect sandbox either. A container on the LAN segment can see broadcast and multicast from its peers, and
-there&rsquo;s no anti-spoof policy I could apply with confidence yet. The security guide says to pair it with a VLAN, and I&rsquo;d
+<p>L2Bridge isn&rsquo;t a perfect sandbox either. A container on the LAN segment can see broadcast and multicast from its peers.
+There&rsquo;s also no anti-spoof policy I could apply with confidence yet. The security guide says to pair it with a VLAN, and I&rsquo;d
 still do that.</p>
 <h3 id="what-i-took-away-from-it">What I took away from it</h3>
-<p>The common thread in all five failures is that Windows accepted the configuration every time. <code>netsh</code> added the rule,
-<code>ApplyPolicy</code> returned success, the ACL showed up on the endpoint, WFP listed seven installed filters. None of that tells you
-the packet passes through the thing you configured. The only test that meant anything was a probe from inside a real job,
-and when it said &ldquo;reached&rdquo;, a positive control against traffic I knew went through the engine was what told me whether the
-filter or the path was wrong.</p>
+<p>The common thread in all five failures is that Windows accepted the configuration every time. <code>netsh</code> added the rule.
+<code>ApplyPolicy</code> returned success. The ACL showed up on the endpoint. WFP listed seven installed filters. None of that tells
+you the packet passes through the thing you configured. The only test that meant anything was a probe from inside a real
+job. When it said &ldquo;reached&rdquo;, a positive control told me whether the filter or the path was wrong. That control used traffic
+I knew went through the engine.</p>
 <h3 id="links">Links</h3>
 <ul>
 <li><a href="https://github.com/ephpm/ephemerd">ephemerd</a> (PRs #136, #140, #142, #143 and #144 carry the full evidence)</li>

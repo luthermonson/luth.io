@@ -11,14 +11,14 @@ images:
 draft: false
 ---
 
-If you start automating [Proxmox VE](https://www.proxmox.com/en/) through the API, the first thing that trips you up is
-that almost nothing you ask it to do is finished when the HTTP call returns. Start a VM, clone a template, download an
-ISO to storage, delete a disk... the response is a single string that looks like a typo and the actual work is happening
-in a worker process on the node. If your next call depends on that work being done you have to go find out when it's done.
+If you start automating [Proxmox VE](https://www.proxmox.com/en/) through the API, one thing trips you up first.
+Almost nothing you ask it to do is finished when the HTTP call returns. Start a VM, clone a template, download an ISO
+to storage, delete a disk... the response is a single string that looks like a typo. The actual work is happening in a
+worker process on the node. If your next call depends on that work being done, you have to go find out when it's done.
 
-I've been building that part of [go-proxmox](https://github.com/luthermonson/go-proxmox) over the last couple of months
-(the [xterm.js post](/blog/2022/02/recreating-proxmox-ve-xtermjs-in-go/) covered the shell side) and with the simpler
-`WaitFor` that just landed I think the shape is settled enough to write up.
+I've been building that part of [go-proxmox](https://github.com/luthermonson/go-proxmox) over the last couple of
+months. The [xterm.js post](/blog/2022/02/recreating-proxmox-ve-xtermjs-in-go/) covered the shell side. With the
+simpler `WaitFor` that just landed, I think the shape is settled enough to write up.
 
 ### The UPID
 
@@ -32,13 +32,17 @@ That is a Unique Process ID, and it's more useful than it looks. It's colon sepa
 
 ![Anatomy of a Proxmox UPID](/img/2022/03/proxmox-tasks-upid-wait-go-anatomy.svg)
 
-The middle three are hex. `00303F51` is the PID of the worker on the node (3161937), `09D93CFE` is the process start time
-in clock ticks that Proxmox uses to tell PIDs apart after they get reused, and `61CCA568` is a unix timestamp (1640801640,
-December 29th 2021 at 18:14 UTC, which is when I was testing this). The rest is plain text: the task type, an id (the VMID
-for VM tasks, the file name for a download) and the user that started it.
+The middle three are hex:
 
-The important bit is the node. Task status lives at `/nodes/{node}/tasks/{upid}/status`, so if you parse the node out of
-the UPID you can poll it without the caller having to remember where the work was scheduled. That's the entire reason
+- `00303F51` is the PID of the worker on the node (3161937).
+- `09D93CFE` is the process start time in clock ticks. Proxmox uses it to tell PIDs apart after they get reused.
+- `61CCA568` is a unix timestamp (1640801640). That's December 29th 2021 at 18:14 UTC, which is when I was testing this.
+
+The rest is plain text. There's the task type, then an id, then the user that started it. The id is the VMID for VM
+tasks and the file name for a download.
+
+The important bit is the node. Task status lives at `/nodes/{node}/tasks/{upid}/status`. If you parse the node out of
+the UPID, you can poll it without the caller having to remember where the work was scheduled. That's the entire reason
 `NewTask` exists:
 
 ```go
@@ -80,13 +84,13 @@ func (v *VirtualMachine) Start() (*Task, error) {
 }
 ```
 
-The response body for these calls is `{"data": "UPID:..."}`, so unmarshalling straight into a `UPID` (which is just a
-`string` type) works with no special handling.
+The response body for these calls is `{"data": "UPID:..."}`. A `UPID` is just a `string` type, so unmarshalling
+straight into one works with no special handling.
 
 ### Ping, Wait and WaitFor
 
-Once you have a `*Task`, `Ping` refreshes it from the status endpoint. The status payload has `status` (`running` or
-`stopped`) and, once it's stopped, `exitstatus`, which is `OK` or the error text.
+Once you have a `*Task`, `Ping` refreshes it from the status endpoint. The status payload has `status`, which is
+`running` or `stopped`. Once it's stopped it also has `exitstatus`, which is `OK` or the error text.
 
 ```go
 func (t *Task) Ping() error {
@@ -95,10 +99,10 @@ func (t *Task) Ping() error {
 ```
 
 Note it unmarshals right back into the task itself. The status response has the same fields the UPID encodes plus the
-ones that change, so the struct just keeps filling in as you poll it.
+ones that change. So the struct just keeps filling in as you poll it.
 
-`Wait` is a polling loop with an interval and a max. I went with a plain `select` on a `time.After` because I wanted
-the timeout to be a real error you can check for, not a silent return:
+`Wait` is a polling loop with an interval and a max. I went with a plain `select` on a `time.After`. I wanted the
+timeout to be a real error you can check for, not a silent return:
 
 ```go
 func (t *Task) Wait(interval, max time.Duration) error {
@@ -128,7 +132,7 @@ func (t *Task) Wait(interval, max time.Duration) error {
 }
 ```
 
-After writing `task.Wait(1*time.Second, 10*time.Second)` twenty times across the integration tests I added the lazy
+After writing `task.Wait(1*time.Second, 10*time.Second)` twenty times across the integration tests, I added the lazy
 version. Most of the time you just want "poll every second, give up after N seconds":
 
 ```go
@@ -139,15 +143,15 @@ func (t *Task) WaitFor(seconds int) error {
 }
 ```
 
-One thing to be aware of: `Wait` returning `nil` means the task is no longer *running*, not that it worked. A clone onto
-storage that's full stops just as fast as one that succeeds. Check `task.ExitStatus` after the wait if you care, which
-you probably do.
+One thing to be aware of: `Wait` returning `nil` means the task is no longer *running*, not that it worked. A clone
+onto storage that's full stops just as fast as one that succeeds. Check `task.ExitStatus` after the wait if you care.
+You probably do.
 
 ### Watching the log
 
-Some tasks take long enough that you want to see what they're doing. A big ISO download is the obvious one, Proxmox
-writes progress lines to the task log as it goes. The log endpoint is paged with `start` and `limit`, so `Watch` reads
-what's there, hands it back on a channel and then tails it until the task stops:
+Some tasks take long enough that you want to see what they're doing. A big ISO download is the obvious one. Proxmox
+writes progress lines to the task log as it goes. The log endpoint is paged with `start` and `limit`. `Watch` reads
+what's there and hands it back on a channel. Then it tails the log until the task stops:
 
 ```go
 func tasktail(start int, watch chan string, task *Task) error {
@@ -176,14 +180,14 @@ func tasktail(start int, watch chan string, task *Task) error {
 }
 ```
 
-There is a small race at the front of this. If you call `Watch` immediately after starting a task the log can be empty
-for a moment, so `Watch` retries the first read three times with a one second sleep before it gives up with
-`no logs available`. The channel is closed when the task finishes so you can just `range` over it.
+There is a small race at the front of this. If you call `Watch` immediately after starting a task, the log can be
+empty for a moment. So `Watch` retries the first read three times with a one second sleep. After that it gives up with
+`no logs available`. The channel is closed when the task finishes, so you can just `range` over it.
 
 ### Putting it together
 
-The integration test fixture for VMs is the best example of all of this in one place. Download a tinycore ISO, wait for
-it, create a VM with it attached, wait, configure it, wait:
+The integration test fixture for VMs is the best example of all of this in one place. Download a tinycore ISO and wait
+for it. Create a VM with it attached and wait. Configure it and wait:
 
 ```go
 isoName := name + ".iso"
@@ -205,14 +209,18 @@ require.NoError(t, err)
 require.NoError(t, task.Wait(1*time.Second, 10*time.Second))
 ```
 
-And the task test itself downloads an Ubuntu ISO big enough to still be running after 30 seconds, waits on it in a
-goroutine with a 30 second max so it has to hit the timeout, stops the task with a `DELETE` on the task path, and reads
-the `Watch` channel on the main goroutine until it closes. One test, the whole lifecycle: start, poll, time out, tail,
-cancel.
+And the task test itself covers the rest:
 
-That's the plumbing. With tasks working, clone (which landed in February) and the rest of the VM lifecycle calls are
-just "post, wrap the UPID, return the task", and the next thing I want on top of it is booting a VM straight from a qcow
-URL without touching the node's shell.
+- It downloads an Ubuntu ISO big enough to still be running after 30 seconds.
+- It waits on it in a goroutine with a 30 second max, so it has to hit the timeout.
+- It stops the task with a `DELETE` on the task path.
+- It reads the `Watch` channel on the main goroutine until it closes.
+
+One test, the whole lifecycle: start, poll, time out, tail, cancel.
+
+That's the plumbing. Clone landed in February. With tasks working, it and the rest of the VM lifecycle calls are just
+"post, wrap the UPID, return the task". The next thing I want on top of it is booting a VM straight from a qcow URL
+without touching the node's shell.
 
 ### Links
 - [go-proxmox](https://github.com/luthermonson/go-proxmox)

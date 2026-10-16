@@ -10,14 +10,14 @@
     gtag('config', 'G-MSTSKGFWTX');
 </script><meta charset="utf-8">
 <title>Zero-Dependency Deployments - Single Binary for WordPress - Luther Monson</title>
-<meta name="description" content="WordPress with no nginx, no php-fpm, no Redis and no MySQL: one ePHPm binary, a SQLite file, and a distroless container image. What&#39;s in the binary, how it gets built, and what it actually takes to run.">
+<meta name="description" content="WordPress with no nginx, no php-fpm, no Redis and no MySQL. It runs from one ePHPm binary, a SQLite file and a distroless container image.">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
 <meta name="twitter:card" content="summary_large_image"><meta name="twitter:site" content="@luthermonson">
 
 <meta property="og:site_name" content="Luther Monson">
 <meta property="og:title" content="Zero-Dependency Deployments - Single Binary for WordPress">
-<meta property="og:description" content="WordPress with no nginx, no php-fpm, no Redis and no MySQL: one ePHPm binary, a SQLite file, and a distroless container image. What&#39;s in the binary, how it gets built, and what it actually takes to run.">
+<meta property="og:description" content="WordPress with no nginx, no php-fpm, no Redis and no MySQL. It runs from one ePHPm binary, a SQLite file and a distroless container image.">
 <meta property="og:type" content="article">
 <meta property="og:url" content="https://luth.io/blog/2026/09/single-binary-wordpress/">
     <meta property="og:image" content="https://luth.io/img/2026/09/single-binary-wordpress-cover.svg">
@@ -215,7 +215,7 @@
       <h2><a href="/blog/2026/09/single-binary-wordpress/">Zero-Dependency Deployments - Single Binary for WordPress</a></h2>
     
     
-      <p>WordPress with no nginx, no php-fpm, no Redis and no MySQL: one ePHPm binary, a SQLite file, and a distroless container image. What&#39;s in the binary, how it gets built, and what it actually takes to run.</p>
+      <p>WordPress with no nginx, no php-fpm, no Redis and no MySQL. It runs from one ePHPm binary, a SQLite file and a distroless container image.</p>
     
   </div>
   <div class="meta">
@@ -271,24 +271,33 @@
 
       </div>
       <div class="content">
+              <figure class="post-cover">
+                <img src="/img/2026/09/single-binary-wordpress-cover.svg" alt="Side by side: nginx, php-fpm, Redis and MySQL as four services, versus one ephpm process containing the HTTP server, embedded PHP, KV store and SQLite">
+              </figure>
         
-        <p>The standard way to run a WordPress site is four services: nginx for HTTP and TLS, php-fpm to run PHP, MySQL for data,
-and Redis once the site gets slow enough that someone installs an object cache plugin. That&rsquo;s four processes, four
-config files, three sockets between them, and four things to upgrade. For a big site that&rsquo;s fine. For a brochure site, a
-staging copy, a PR preview, a CI job that needs a real WordPress to test a plugin against, or a box at the edge, it&rsquo;s
-absurd.</p>
+        <p>The standard way to run a WordPress site is four services:</p>
+<ul>
+<li>nginx for HTTP and TLS</li>
+<li>php-fpm to run PHP</li>
+<li>MySQL for data</li>
+<li>Redis, once the site gets slow enough that someone installs an object cache plugin</li>
+</ul>
+<p>That&rsquo;s four processes and four config files. There are three sockets between them and four things to upgrade. For a
+big site that&rsquo;s fine. For a brochure site or a staging copy it&rsquo;s absurd. The same goes for a PR preview, a box at the
+edge, or a CI job that needs a real WordPress to test a plugin against.</p>
 <p><a href="https://github.com/ephpm/ephpm">ePHPm</a> is my attempt at making that one thing. This post walks through running stock
-WordPress from a single binary with no other services, building a container image that is just that binary and the site,
-and what&rsquo;s actually inside it, as of <a href="https://github.com/ephpm/ephpm/releases/tag/v0.8.2">v0.8.2</a>.</p>
+WordPress from a single binary with no other services. Then it builds a container image that is just that binary and
+the site. Along the way it covers what&rsquo;s inside the binary as of
+<a href="https://github.com/ephpm/ephpm/releases/tag/v0.8.2">v0.8.2</a>.</p>
 <h3 id="whats-in-the-binary">What&rsquo;s in the binary</h3>
-<p>One <code>ephpm</code> executable (about 132 MB for the Linux x86_64 build with PHP 8.5.7) carries:</p>
+<p>The Linux x86_64 build with PHP 8.5.7 is about 132 MB. That one <code>ephpm</code> executable carries:</p>
 <ul>
 <li><strong>An HTTP server</strong>: hyper with HTTP/1.1 and HTTP/2, rustls TLS with ACME certificates, static files with ETags and
 compression, virtual hosts.</li>
-<li><strong>PHP itself</strong>: <code>libphp</code> statically linked, ZTS, with OPcache and the usual extensions compiled in (<code>mysqli</code>,
-<code>pdo_mysql</code>, <code>pdo_sqlite</code>, <code>gd</code>, <code>intl</code>, <code>mbstring</code>, <code>curl</code>, <code>zip</code> and friends). The same binary is also a PHP CLI:
-<code>ephpm php -v</code>.</li>
-<li><strong>A KV store</strong> that PHP can call directly through native functions, which is what the WordPress object cache uses.</li>
+<li><strong>PHP itself</strong>: <code>libphp</code> statically linked and ZTS, with OPcache and the usual extensions compiled in. Those are
+<code>mysqli</code>, <code>pdo_mysql</code>, <code>pdo_sqlite</code>, <code>gd</code>, <code>intl</code>, <code>mbstring</code>, <code>curl</code>, <code>zip</code> and friends. The same binary is also a
+PHP CLI: <code>ephpm php -v</code>.</li>
+<li><strong>A KV store</strong> that PHP can call directly through native functions. That&rsquo;s what the WordPress object cache uses.</li>
 <li><strong>A database layer</strong>: either a pooling proxy in front of a real MySQL, or no database server at all.</li>
 </ul>
 <p>&ldquo;Zero dependency&rdquo; needs one footnote. The Linux release is dynamically linked against glibc, not a static musl binary:</p>
@@ -305,25 +314,32 @@ compression, virtual hosts.</li>
 
 $ objdump -T ephpm | grep -o &#39;GLIBC_[0-9.]*&#39; | sort -uV | tail -1
 GLIBC_2.28
-</code></pre><p>Everything above is glibc&rsquo;s own family plus <code>libgcc_s</code>. The newest symbol version it needs is 2.28, because release
-builds happen in an AlmaLinux 8 container, so it runs on basically any Linux from 2018 onward. I went glibc over musl on
-purpose: native middleware modules are loaded with <code>dlopen</code>, and a fully static musl binary can&rsquo;t do that.</p>
+</code></pre><p>Everything above is glibc&rsquo;s own family plus <code>libgcc_s</code>. Release builds happen in an AlmaLinux 8 container, so the
+newest symbol version it needs is 2.28. That means it runs on basically any Linux from 2018 onward. I went glibc over
+musl on purpose. Native middleware modules are loaded with <code>dlopen</code>, and a fully static musl binary can&rsquo;t do that.</p>
 <h3 id="how-the-binary-gets-built">How the binary gets built</h3>
-<p>Building PHP is the slow, fragile part of all of this, so it&rsquo;s done once per PHP version, not once per ePHPm build.
+<p>Building PHP is the slow, fragile part of all of this. So it&rsquo;s done once per PHP version, not once per ePHPm build.
 <a href="https://github.com/crazywhalecc/static-php-cli">static-php-cli</a> compiles <code>libphp</code> with the embed SAPI and its library
-dependencies into static archives, and <a href="https://github.com/ephpm/php-sdk">ephpm/php-sdk</a> publishes those as release
-assets per OS, architecture and PHP version. ePHPm&rsquo;s build is a cargo <code>xtask</code>:</p>
+dependencies into static archives. <a href="https://github.com/ephpm/php-sdk">ephpm/php-sdk</a> publishes those as release assets
+per OS, architecture and PHP version. ePHPm&rsquo;s build is a cargo <code>xtask</code>:</p>
 <div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl">cargo xtask release 8.5     <span class="c1"># resolve 8.5 -&gt; pinned 8.5.7, download the SDK, build with PHP linked</span>
-</span></span></code></pre></div><p><code>xtask release</code> resolves the PHP minor to a pinned patch version, downloads and unpacks the matching SDK, points
-<code>PHP_SDK_PATH</code> at it, and runs the cargo build with the shipped feature set. <code>build.rs</code> compiles the C SAPI wrapper and
-emits the link flags for <code>libphp.a</code>. A plain <code>cargo build</code> without an SDK builds a stub that answers every PHP request
-with a &ldquo;PHP not linked&rdquo; page, so the Rust side can be developed and tested without PHP at all.</p>
-<p>It&rsquo;s not a cross-compiler: each platform&rsquo;s release is built on that platform (Linux x86_64 and aarch64 in the AlmaLinux
-container, macOS arm64 and Windows x86_64 natively), for PHP 8.3, 8.4 and 8.5.</p>
+</span></span></code></pre></div><p><code>xtask release</code> does four things:</p>
+<ul>
+<li>resolves the PHP minor to a pinned patch version</li>
+<li>downloads and unpacks the matching SDK</li>
+<li>points <code>PHP_SDK_PATH</code> at it</li>
+<li>runs the cargo build with the shipped feature set</li>
+</ul>
+<p><code>build.rs</code> compiles the C SAPI wrapper and emits the link flags for <code>libphp.a</code>. A plain <code>cargo build</code> without an SDK
+builds a stub that answers every PHP request with a &ldquo;PHP not linked&rdquo; page. That way the Rust side can be developed and
+tested without PHP at all.</p>
+<p>It&rsquo;s not a cross-compiler. Each platform&rsquo;s release is built on that platform, for PHP 8.3, 8.4 and 8.5. Linux x86_64
+and aarch64 build in the AlmaLinux container. macOS arm64 and Windows x86_64 build natively.</p>
 <h3 id="wordpress-with-nothing-else">WordPress with nothing else</h3>
-<p>Here&rsquo;s the whole setup. Grab WordPress, the official
-<a href="https://wordpress.org/plugins/sqlite-database-integration/">SQLite Database Integration</a> drop-in (WordPress&rsquo;s own
-project for running on SQLite), and the <a href="https://github.com/ephpm/cache-wordpress">ephpm/cache-wordpress</a> object cache:</p>
+<p>Here&rsquo;s the whole setup. Grab WordPress and the official <a href="https://wordpress.org/plugins/sqlite-database-integration/">SQLite Database
+Integration</a> drop-in. That drop-in is WordPress&rsquo;s own
+project for running on SQLite. Then add the <a href="https://github.com/ephpm/cache-wordpress">ephpm/cache-wordpress</a> object
+cache:</p>
 <div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl">curl -sSL https://wordpress.org/wordpress-7.1.tar.gz <span class="p">|</span> tar xz
 </span></span><span class="line"><span class="cl">
 </span></span><span class="line"><span class="cl"><span class="c1"># SQLite instead of MySQL</span>
@@ -336,15 +352,15 @@ project for running on SQLite), and the <a href="https://github.com/ephpm/cache-
 </span></span><span class="line"><span class="cl">git clone https://github.com/ephpm/cache-wordpress wordpress/wp-content/cache-wordpress
 </span></span><span class="line"><span class="cl"><span class="nb">printf</span> <span class="s2">&#34;&lt;?php\nrequire __DIR__ . &#39;/cache-wordpress/dropin/object-cache.php&#39;;\n&#34;</span> <span class="se">\
 </span></span></span><span class="line"><span class="cl">  &gt; wordpress/wp-content/object-cache.php
-</span></span></code></pre></div><p>Copy <code>wp-config-sample.php</code> to <code>wp-config.php</code>, leave the DB credentials as placeholders (the SQLite drop-in ignores
-them), add <code>define( 'WP_CACHE', true );</code>, and start it:</p>
+</span></span></code></pre></div><p>Copy <code>wp-config-sample.php</code> to <code>wp-config.php</code>. Leave the DB credentials as placeholders, since the SQLite drop-in
+ignores them. Add <code>define( 'WP_CACHE', true );</code> and start it:</p>
 <div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl">ephpm dev --port <span class="m">8088</span> --document-root <span class="s2">&#34;</span><span class="k">$(</span><span class="nb">pwd</span><span class="k">)</span><span class="s2">/wordpress&#34;</span>
-</span></span></code></pre></div><p>That&rsquo;s a working WordPress on <code>http://127.0.0.1:8088</code>, with the installer, admin, themes and plugins. The database is a
-file at <code>wp-content/database/.ht.sqlite</code>. The object cache lives in the same process as PHP: <code>wp_cache_get()</code> goes
-straight from the Zend engine into the KV store through <code>ephpm_kv_*</code> native functions, no socket and no Redis.</p>
+</span></span></code></pre></div><p>That&rsquo;s a working WordPress on <code>http://127.0.0.1:8088</code>, with the installer, admin, themes and plugins. The database is
+a file at <code>wp-content/database/.ht.sqlite</code>. The object cache lives in the same process as PHP. <code>wp_cache_get()</code> goes
+straight from the Zend engine into the KV store through <code>ephpm_kv_*</code> native functions. There&rsquo;s no socket and no Redis.</p>
 <h3 id="the-container-is-the-binary-and-the-site">The container is the binary and the site</h3>
 <p>Since there&rsquo;s nothing else to run, the image doesn&rsquo;t need a distro. <code>gcr.io/distroless/cc-debian12</code> is glibc, libssl,
-CA certificates, tzdata and <code>libgcc</code>, with no shell and no package manager, and that covers exactly what the <code>ldd</code>
+CA certificates, tzdata and <code>libgcc</code>. It has no shell and no package manager. That covers exactly what the <code>ldd</code>
 output above asks for:</p>
 <div class="highlight"><pre tabindex="0" class="chroma"><code class="language-dockerfile" data-lang="dockerfile"><span class="line"><span class="cl"><span class="c"># The whole runtime: glibc + libgcc from distroless, one binary, the site.</span><span class="err">
 </span></span></span><span class="line"><span class="cl"><span class="k">FROM</span><span class="w"> </span><span class="s">gcr.io/distroless/cc-debian12:nonroot</span><span class="err">
@@ -360,8 +376,8 @@ output above asks for:</p>
 </span></span><span class="line"><span class="cl">
 </span></span><span class="line"><span class="cl"><span class="p">[</span><span class="nx">kv</span><span class="p">]</span>
 </span></span><span class="line"><span class="cl"><span class="nx">memory_limit</span> <span class="p">=</span> <span class="s2">&#34;64MB&#34;</span>
-</span></span></code></pre></div><p>I built that with v0.8.2 (PHP 8.5.7), WordPress 7.1, SQLite Database Integration 3.0.1 and cache-wordpress, ran it,
-and installed WordPress by posting the installer form with <code>curl</code>:</p>
+</span></span></code></pre></div><p>I built that with v0.8.2 (PHP 8.5.7), WordPress 7.1, SQLite Database Integration 3.0.1 and cache-wordpress. Then I ran
+it and installed WordPress by posting the installer form with <code>curl</code>:</p>
 <pre tabindex="0"><code>$ podman images
 localhost/blog-wp-zerodep:latest       271 MB
 gcr.io/distroless/cc-debian12:nonroot  25.1 MB
@@ -375,42 +391,43 @@ $ podman history --format &#39;{{.Size}} {{.CreatedBy}}&#39; localhost/blog-wp-z
 
 install step2: 200
 &lt;h1&gt;Success!&lt;/h1&gt;
-</code></pre><p>After that the front page served normally. To confirm the pieces were really the ones I thought, I dropped a five-line <code>check.php</code> into the docroot that loads
-WordPress and prints what it&rsquo;s running on:</p>
+</code></pre><p>After that the front page served normally. I wanted to confirm the pieces were really the ones I thought. So I dropped
+a five-line <code>check.php</code> into the docroot that loads WordPress and prints what it&rsquo;s running on:</p>
 <pre tabindex="0"><code>persistent object cache: yes
 cache class: Ephpm\Cache\WordPress\ObjectCache
 db driver: WP_SQLite_DB
 sapi: ephpm
-</code></pre><p>The container sat at about 76 MB of memory after the install and a handful of page views (<code>podman stats</code>), and the
-whole database was one small SQLite file. Out of 271 MB of image, about half is the WordPress tree and half is the binary;
-distroless itself is 25 MB. There&rsquo;s no shell in the container at all, which is nice for security and occasionally
-annoying for debugging (<code>podman exec ... /usr/local/bin/ephpm php -r '...'</code> is the escape hatch, since the binary is also
-a PHP CLI).</p>
+</code></pre><p>After the install and a handful of page views, <code>podman stats</code> had the container at about 76 MB of memory. The whole
+database was one small SQLite file. Out of 271 MB of image, about half is the WordPress tree and half is the binary.
+Distroless itself is 25 MB. There&rsquo;s no shell in the container at all. That&rsquo;s nice for security and occasionally
+annoying for debugging. The binary is also a PHP CLI, so <code>podman exec ... /usr/local/bin/ephpm php -r '...'</code> is the
+escape hatch.</p>
 <h3 id="where-this-is-the-right-tool-and-where-it-isnt">Where this is the right tool, and where it isn&rsquo;t</h3>
 <p>Where one binary with a SQLite file makes sense:</p>
 <ul>
 <li><strong>CI</strong>: testing a plugin or theme against a real WordPress without starting MySQL and a web server in the job.</li>
 <li><strong>PR previews and staging copies</strong>, where spinning up and tearing down is the main workload.</li>
-<li><strong>Edge and small boxes</strong>: a Raspberry Pi, a $5 VM, an appliance. Anywhere the LEMP stack is most of the resource budget.</li>
+<li><strong>Edge and small boxes</strong>: a Raspberry Pi, a $5 VM, an appliance. Any box where the LEMP stack is most of the resource
+budget.</li>
 <li><strong>Low-traffic sites</strong> whose real requirement is &ldquo;it stays up and I don&rsquo;t have to babysit it.&rdquo;</li>
 </ul>
 <p>Where it isn&rsquo;t:</p>
 <ul>
-<li><strong>Write-heavy, multi-writer sites.</strong> SQLite is one writer at a time. A busy WooCommerce store with concurrent checkouts
-wants a real MySQL. ePHPm still helps there: point <code>[db.mysql]</code> at the MySQL server and its proxy pools connections, and
-you&rsquo;ve still dropped nginx, php-fpm and Redis.</li>
-<li><strong>Plugins that assume MySQL-specific SQL</strong> in ways the SQLite drop-in can&rsquo;t translate. WordPress&rsquo;s SQLite project has
-come a long way, but test your plugin list before you commit.</li>
-<li><strong>Anything that needs the cache to survive a restart.</strong> The KV store is a cache; the object cache starts cold.</li>
+<li><strong>Write-heavy, multi-writer sites.</strong> SQLite is one writer at a time. A busy WooCommerce store with concurrent
+checkouts wants a real MySQL. ePHPm still helps there. Point <code>[db.mysql]</code> at the MySQL server and its proxy pools
+connections. You&rsquo;ve still dropped nginx, php-fpm and Redis.</li>
+<li><strong>Plugins that assume MySQL-specific SQL</strong> in ways the SQLite drop-in can&rsquo;t translate. WordPress&rsquo;s SQLite project
+has come a long way, but test your plugin list before you commit.</li>
+<li><strong>Setups that need the cache to survive a restart.</strong> The KV store is a cache. The object cache starts cold.</li>
 </ul>
 <h3 id="whats-next">What&rsquo;s next</h3>
-<p>The single binary is the easy part to show. The interesting work is behind it: making the embedded engine behave like
-php-fpm for the apps that assume php-fpm, and making the database side do more than SQLite-in-a-file without bringing a
-server back. That&rsquo;s where most of the ePHPm commits are going right now.</p>
+<p>The single binary is the easy part to show. The interesting work is behind it. One part is making the embedded engine
+behave like php-fpm for the apps that assume php-fpm. The other is making the database side do more than
+SQLite-in-a-file without bringing a server back. That&rsquo;s where most of the ePHPm commits are going right now.</p>
 <h3 id="how-i-ran-it">How I ran it</h3>
-<p>AMD Ryzen 9 5950X, Windows 11 with WSL2 and Podman 5 (rootful machine). Image built from the files above with
-<code>podman build</code>, run with <code>-p 18300:8080</code>, installer posted from the Ubuntu WSL distro with <code>curl</code>. The three <code>GET /</code>
-timings are the first three requests after install from a cold OPcache, not a benchmark.</p>
+<p>AMD Ryzen 9 5950X, Windows 11 with WSL2 and Podman 5 (rootful machine). I built the image from the files above with
+<code>podman build</code> and ran it with <code>-p 18300:8080</code>. The installer was posted from the Ubuntu WSL distro with <code>curl</code>. The
+three <code>GET /</code> timings are the first three requests after install from a cold OPcache, not a benchmark.</p>
 <h3 id="links">Links</h3>
 <ul>
 <li><a href="https://github.com/ephpm/ephpm">ePHPm</a> and the <a href="https://github.com/ephpm/ephpm/releases/tag/v0.8.2">v0.8.2 release</a></li>

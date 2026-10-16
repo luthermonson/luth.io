@@ -218,7 +218,7 @@
       <h2><a href="/blog/2026/08/clustered-sqlite-adding-turso/">Clustered SQLite in ePHPm, Part 2: Adding Turso</a></h2>
     
     
-      <p>Deciding a beta database engine is ready by testing it instead of reading its version number, and replacing both rusqlite and sqld with Turso in ePHPm v0.7.0.</p>
+      <p>How I decided a beta database engine was ready by testing it instead of reading its version number. ePHPm v0.7.0 replaces both rusqlite and sqld with Turso.</p>
     
   </div>
   <div class="meta">
@@ -233,10 +233,10 @@
     <img class="" src="/img/2026/08/clustered-sqlite-adding-turso-four-lanes.svg" alt="Bar chart of four SQLite lanes at 16 concurrent connections: rusqlite and Turso single node, sqld and Turso CDC clustered">
   </a>
     
-    <p><a href="/blog/2026/08/clustered-sqlite-sqld-sidecar/">Part 1</a> ended with ePHPm running two SQLite engines: rusqlite in-process
-for a single node, and an embedded sqld child process for a cluster. The sidecar fell off a cliff past four concurrent
-writers and the best fix I could ship was a semaphore set to 1. This post is about replacing both engines with one, and
-about how I decided that engine was ready.</p>
+    <p><a href="/blog/2026/08/clustered-sqlite-sqld-sidecar/">Part 1</a> ended with ePHPm running two SQLite engines. rusqlite ran
+in-process for a single node, and an embedded sqld child process ran for a cluster. The sidecar fell off a cliff past
+four concurrent writers. The best fix I could ship was a semaphore set to 1. This post is about replacing both engines
+with one, and about how I decided that engine was ready.</p>
   </div>
   <footer>
     <a href="/blog/2026/08/clustered-sqlite-adding-turso/" class="button big">Read More</a>

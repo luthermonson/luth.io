@@ -218,7 +218,7 @@
       <h2><a href="/blog/2026/09/clustered-sqlite-cdc-cluster-channel/">Clustered SQLite in ePHPm, Part 3: CDC Over the Cluster Channel</a></h2>
     
     
-      <p>Shipping Turso&#39;s change data capture stream between ePHPm nodes over one authenticated, multiplexed TCP connection, and the two failover bugs that showed up when the e2e suite killed the primary.</p>
+      <p>ePHPm ships Turso&#39;s change data capture stream between nodes over one authenticated, multiplexed TCP connection. This covers how that works and the two failover bugs that showed up when the e2e suite killed the primary.</p>
     
   </div>
   <div class="meta">
@@ -233,9 +233,9 @@
     <img class="" src="/img/2026/09/clustered-sqlite-cluster-channel-topology.svg" alt="Two ePHPm nodes connected by gossip on UDP 7946, the KV data plane on TCP 7947 and the cluster channel on TCP 7948 carrying cdc, snapshot and sql streams">
   </a>
     
-    <p>By the end of <a href="/blog/2026/08/clustered-sqlite-adding-turso/">Part 2</a> ePHPm v0.7.0 ran exactly one SQLite engine, Turso, in
-process, for single-node and clustered mode alike. The sidecar was gone. What I skipped over is how a replica actually gets
-the primary&rsquo;s writes, and what happens when the primary dies with data on it. That&rsquo;s this post.</p>
+    <p>By the end of <a href="/blog/2026/08/clustered-sqlite-adding-turso/">Part 2</a> ePHPm v0.7.0 ran exactly one SQLite engine in
+process. That was Turso, for single-node and clustered mode alike. The sidecar was gone. What I skipped over is how a
+replica actually gets the primary&rsquo;s writes, and what happens when the primary dies with data on it. That&rsquo;s this post.</p>
   </div>
   <footer>
     <a href="/blog/2026/09/clustered-sqlite-cdc-cluster-channel/" class="button big">Read More</a>
@@ -287,7 +287,7 @@ the primary&rsquo;s writes, and what happens when the primary dies with data on 
       <h2><a href="/blog/2026/08/hardening-rust-database-proxy/">Security and Performance Hardening of a Rust Database Proxy</a></h2>
     
     
-      <p>One week of hardening litewire: a memory bug in a dependency, a site that could open its neighbor&#39;s database, a security rule that lived only in a comment, and a needless 1 MB clear on every query.</p>
+      <p>What a week of hardening litewire turned up. A dependency had a memory bug, one site could open its neighbor&#39;s database, a security rule lived only in a comment and every query paid for a needless 1 MB clear.</p>
     
   </div>
   <div class="meta">
@@ -303,10 +303,8 @@ the primary&rsquo;s writes, and what happens when the primary dies with data on 
   </a>
     
     <p><a href="https://github.com/ephpm/litewire">litewire</a> is the piece of ePHPm that lets PHP apps talk MySQL to a SQLite file. I
-wrote about <a href="/blog/2026/07/sqlite-production-database-protocol-translation/">how it works</a> and about
-<a href="/blog/2026/08/faking-mysql-quirks-wordpress/">the MySQL quirks WordPress depends on</a>. This one is the less visible
-half of August: an audit pass on litewire, a multi-tenant mode that turned a database proxy into a security boundary,
-and a performance regression I shipped and then had to go find.</p>
+wrote about <a href="/blog/2026/07/sqlite-production-database-protocol-translation/">how it works</a> and about <a href="/blog/2026/08/faking-mysql-quirks-wordpress/">the MySQL quirks
+WordPress depends on</a>. This one is the less visible half of August:</p>
   </div>
   <footer>
     <a href="/blog/2026/08/hardening-rust-database-proxy/" class="button big">Read More</a>
@@ -358,7 +356,7 @@ and a performance regression I shipped and then had to go find.</p>
       <h2><a href="/blog/2026/08/what-does-one-more-wordpress-site-cost/">What Does One More WordPress Site Cost?</a></h2>
     
     
-      <p>Marginal RAM, file descriptors, CPU and disk for each extra WordPress tenant on one ePHPm instance, measured from 10 to 1000 sites.</p>
+      <p>I measured what each extra WordPress tenant on one ePHPm instance costs in RAM, file descriptors, CPU and disk. The sweep ran from 10 to 1000 sites.</p>
     
   </div>
   <div class="meta">
@@ -373,11 +371,10 @@ and a performance regression I shipped and then had to go find.</p>
     <img class="" src="/img/2026/08/what-does-one-more-wordpress-site-cost-rss.svg" alt="Line chart of ePHPm steady RSS against tenant site count: linear at about 2.2 MB per site with every site open, flat past the default LRU cap of 256">
   </a>
     
-    <p>ePHPm v0.7.0 shipped per-site multi-tenancy: point <code>[server] sites_dir</code> at a directory, every <code>Host</code> maps to its own
-docroot and its own Turso database file, and one process serves all of them. The first question anybody asks about
-that is &ldquo;how many sites fit on a box?&rdquo;, and the honest way to answer it is to turn the question around. What does
-<strong>one more</strong> site cost? If you know the marginal RAM, file descriptors, CPU and disk for a tenant, the box size falls
-out of arithmetic.</p>
+    <p>ePHPm v0.7.0 shipped per-site multi-tenancy. Point <code>[server] sites_dir</code> at a directory and every <code>Host</code> maps to its own
+docroot and its own Turso database file. One process serves all of them. The first question anybody asks about that is
+&ldquo;how many sites fit on a box?&rdquo; The honest way to answer it is to turn the question around. What does <strong>one more</strong> site
+cost? If you know the marginal RAM, file descriptors, CPU and disk for a tenant, the box size falls out of arithmetic.</p>
   </div>
   <footer>
     <a href="/blog/2026/08/what-does-one-more-wordpress-site-cost/" class="button big">Read More</a>
@@ -429,7 +426,7 @@ out of arithmetic.</p>
       <h2><a href="/blog/2026/08/clustered-sqlite-adding-turso/">Clustered SQLite in ePHPm, Part 2: Adding Turso</a></h2>
     
     
-      <p>Deciding a beta database engine is ready by testing it instead of reading its version number, and replacing both rusqlite and sqld with Turso in ePHPm v0.7.0.</p>
+      <p>How I decided a beta database engine was ready by testing it instead of reading its version number. ePHPm v0.7.0 replaces both rusqlite and sqld with Turso.</p>
     
   </div>
   <div class="meta">
@@ -444,10 +441,10 @@ out of arithmetic.</p>
     <img class="" src="/img/2026/08/clustered-sqlite-adding-turso-four-lanes.svg" alt="Bar chart of four SQLite lanes at 16 concurrent connections: rusqlite and Turso single node, sqld and Turso CDC clustered">
   </a>
     
-    <p><a href="/blog/2026/08/clustered-sqlite-sqld-sidecar/">Part 1</a> ended with ePHPm running two SQLite engines: rusqlite in-process
-for a single node, and an embedded sqld child process for a cluster. The sidecar fell off a cliff past four concurrent
-writers and the best fix I could ship was a semaphore set to 1. This post is about replacing both engines with one, and
-about how I decided that engine was ready.</p>
+    <p><a href="/blog/2026/08/clustered-sqlite-sqld-sidecar/">Part 1</a> ended with ePHPm running two SQLite engines. rusqlite ran
+in-process for a single node, and an embedded sqld child process ran for a cluster. The sidecar fell off a cliff past
+four concurrent writers. The best fix I could ship was a semaphore set to 1. This post is about replacing both engines
+with one, and about how I decided that engine was ready.</p>
   </div>
   <footer>
     <a href="/blog/2026/08/clustered-sqlite-adding-turso/" class="button big">Read More</a>
@@ -495,13 +492,13 @@ about how I decided that engine was ready.</p>
       <h2><a href="/blog/2026/08/rolling-your-own-kv-store/">Rolling Your Own KV Store Instead of Embedding Redis</a></h2>
     
     
-      <p>Why ePHPm has its own Redis-compatible cache built in instead of running Redis, a bug that hid in it for four months, and how it compares to real Redis on the same machine.</p>
+      <p>Why ePHPm has its own Redis-compatible cache built in instead of running Redis. It also covers a bug that hid in it for four months and how it compares to real Redis on the same machine.</p>
     
   </div>
   <div class="meta">
     <time datetime="2026-08-17 20:44:00 -0700 PDT">August 17, 2026</time>
     
-    <p>10-Minute Read</p>
+    <p>11-Minute Read</p>
   </div>
 </header>
 
@@ -512,9 +509,9 @@ about how I decided that engine was ready.</p>
     
     <p>Every PHP deployment I&rsquo;ve run eventually grew a Redis. Sessions, the WordPress object cache, Laravel&rsquo;s cache and locks,
 rate limiting. <a href="https://github.com/ephpm/ephpm">ePHPm</a> is supposed to be one binary that replaces nginx + php-fpm +
-Redis, so it needed a cache in the box. I didn&rsquo;t want to write one. This post is why I did anyway, how it&rsquo;s built, the
-bug that sat in its eviction code from March until last month, and how it holds up against a stock Redis on the same
-machine with <code>redis-benchmark</code> doing the&hellip;</p>
+Redis, so it needed a cache in the box. I didn&rsquo;t want to write one. This post covers why I did anyway and how it&rsquo;s
+built. It also covers the bug that sat in its eviction code from March until last month. Then I compare it against a
+stock Redis on the same machine with&hellip;</p>
   </div>
   <footer>
     <a href="/blog/2026/08/rolling-your-own-kv-store/" class="button big">Read More</a>
@@ -566,7 +563,7 @@ machine with <code>redis-benchmark</code> doing the&hellip;</p>
       <h2><a href="/blog/2026/08/faking-mysql-quirks-wordpress/">Faking MySQL&#39;s Quirks Well Enough to Fool WordPress</a></h2>
     
     
-      <p>Passing WordPress&#39;s install tests didn&#39;t mean litewire behaved like MySQL. This is the second round of fixes: the small MySQL behaviors that WordPress and Laravel quietly depend on.</p>
+      <p>Passing WordPress&#39;s install tests didn&#39;t mean litewire behaved like MySQL. This is the second round of fixes, for the small MySQL behaviors that WordPress and Laravel quietly depend on.</p>
     
   </div>
   <div class="meta">
@@ -582,11 +579,8 @@ machine with <code>redis-benchmark</code> doing the&hellip;</p>
   </a>
     
     <p>Last month I wrote about <a href="/blog/2026/07/sqlite-production-database-protocol-translation/">running SQLite behind a MySQL socket</a>
-with <a href="https://github.com/ephpm/litewire">litewire</a>, and ended on &ldquo;passing an install suite is not the same thing as
-behaving like MySQL&rdquo;. That turned out to be accurate. On August 10th a few things happened at once: I put a real
-WordPress 7.0.3 site through a benchmark on ePHPm, A/B tested the new in-process database bridge against the wire path, and started building
-<a href="https://github.com/ephpm/db-wordpress">ephpm/db-wordpress</a>, a <code>wpdb</code> drop-in that talks to the database in-process
-instead of over a&hellip;</p>
+with <a href="https://github.com/ephpm/litewire">litewire</a>. I ended on &ldquo;passing an install suite is not the same thing as
+behaving like MySQL&rdquo;. That turned out to be accurate. On August 10th a few things happened at once:</p>
   </div>
   <footer>
     <a href="/blog/2026/08/faking-mysql-quirks-wordpress/" class="button big">Read More</a>
@@ -636,7 +630,7 @@ instead of over a&hellip;</p>
       <h2><a href="/blog/2026/08/db-connection-pooling-smart-reset/">Database Connection Pooling with Smart Reset</a></h2>
     
     
-      <p>PHP opens a new MySQL connection on every request. ePHPm reuses them and cleans up only the ones that need it. How it works, two bugs it had, and how much load it takes off MySQL.</p>
+      <p>PHP opens a new MySQL connection on every request, but ePHPm reuses them and cleans up only the ones that need it. Here&#39;s how that works, two bugs it had and how much load it takes off MySQL.</p>
     
   </div>
   <div class="meta">
@@ -651,11 +645,11 @@ instead of over a&hellip;</p>
     <img class="" src="/img/2026/08/db-connection-pooling-smart-reset-cover.svg" alt="PHP request connecting to the ePHPm MySQL proxy, which lends it a pooled backend connection and resets it only if the session was dirtied">
   </a>
     
-    <p>PHP&rsquo;s share-nothing model is one of its best properties and it has one expensive side effect: a request can&rsquo;t keep a
-database connection for the next request. php-fpm gives you <code>PDO::ATTR_PERSISTENT</code> and <code>mysqli</code>&rsquo;s <code>p:</code> hosts, but
-those are per-worker-process, PDO&rsquo;s keep whatever session state the last request left behind (mysqli at least resets
-the session with <code>COM_CHANGE_USER</code> on reuse), and almost nobody turns them on. So in practice every PHP request does a
-TCP connect, a&hellip;</p>
+    <p>PHP&rsquo;s share-nothing model is one of its best properties. It has one expensive side effect: a request can&rsquo;t keep a
+database connection for the next request. php-fpm gives you <code>PDO::ATTR_PERSISTENT</code> and <code>mysqli</code>&rsquo;s <code>p:</code> hosts. But
+those are per-worker-process. PDO&rsquo;s keep whatever session state the last request left behind. mysqli at least resets
+the session with <code>COM_CHANGE_USER</code> on reuse. And almost nobody turns them on. So in practice every PHP request does a
+TCP connect, a MySQL&hellip;</p>
   </div>
   <footer>
     <a href="/blog/2026/08/db-connection-pooling-smart-reset/" class="button big">Read More</a>
@@ -703,13 +697,13 @@ TCP connect, a&hellip;</p>
       <h2><a href="/blog/2026/08/clustered-sqlite-sqld-sidecar/">Clustered SQLite in ePHPm, Part 1: Replication by Sidecar</a></h2>
     
     
-      <p>How ePHPm first made SQLite highly available by embedding sqld as a child process, and the list of things that went wrong with it.</p>
+      <p>ePHPm first made SQLite highly available by embedding sqld as a child process. This is how that worked and the list of things that went wrong with it.</p>
     
   </div>
   <div class="meta">
     <time datetime="2026-08-08 20:14:00 -0700 PDT">August 8, 2026</time>
     
-    <p>8-Minute Read</p>
+    <p>9-Minute Read</p>
   </div>
 </header>
 
@@ -720,9 +714,9 @@ TCP connect, a&hellip;</p>
     
     <p>Most PHP sites I have run in the last twenty years did not need a MySQL server. They needed <em>a</em> database, and MySQL was the
 one every framework spoke. With <a href="https://github.com/ephpm/ephpm">ePHPm</a> I have been trying to get rid of that server for
-the common case, and the piece that makes it possible is <a href="https://github.com/ephpm/litewire">litewire</a>: PHP connects with
-plain <code>pdo_mysql</code>, litewire speaks the MySQL wire protocol, and the queries land in a SQLite file. WordPress and Laravel
-don&rsquo;t know the difference. No <code>mysqld</code>, no child processes, just <code>ephpm</code> and a <code>.db&hellip;</code></p>
+the common case. The piece that makes it possible is <a href="https://github.com/ephpm/litewire">litewire</a>. PHP connects with
+plain <code>pdo_mysql</code>. litewire speaks the MySQL wire protocol, and the queries land in a SQLite file. WordPress and Laravel
+don&rsquo;t know the difference. No <code>mysqld</code>, no child processes, just <code>ephpm</code> and a <code>.db</code> file.</p>
   </div>
   <footer>
     <a href="/blog/2026/08/clustered-sqlite-sqld-sidecar/" class="button big">Read More</a>
@@ -772,7 +766,7 @@ don&rsquo;t know the difference. No <code>mysqld</code>, no child processes, jus
       <h2><a href="/blog/2026/07/sqlite-production-database-protocol-translation/">SQLite as a Production Database via Protocol Translation</a></h2>
     
     
-      <p>litewire speaks the MySQL wire protocol on one side and SQLite on the other, so WordPress and Laravel run against a .db file without a code change. Here&#39;s how it works and what it took.</p>
+      <p>litewire speaks the MySQL wire protocol on one side and SQLite on the other. That lets WordPress and Laravel run against a .db file without a code change.</p>
     
   </div>
   <div class="meta">
@@ -787,11 +781,11 @@ don&rsquo;t know the difference. No <code>mysqld</code>, no child processes, jus
     <img class="" src="/img/2026/07/sqlite-production-database-protocol-translation-cover.svg" alt="A PHP app connecting over the MySQL wire protocol on port 3306 to litewire, which translates the SQL and runs it against a SQLite file">
   </a>
     
-    <p>Most of the PHP sites I&rsquo;d put on <a href="https://github.com/ephpm/ephpm">ePHPm</a> don&rsquo;t need a MySQL server. A brochure WordPress,
-an internal Laravel tool, a preview environment that lives for an afternoon. What they do need is something that
-<em>looks</em> like MySQL, because <code>mysqli</code> and <code>pdo_mysql</code> are the only database drivers their code has ever been pointed at.
-I mentioned this in the <a href="/blog/2026/06/ephpm-pragmatism/">ePHPm pragmatism post</a> as a one-paragraph &ldquo;because&rdquo;. This is the
-longer version, now that WordPress 7.0 and Laravel 13 both install and&hellip;</p>
+    <p>Most of the PHP sites I&rsquo;d put on <a href="https://github.com/ephpm/ephpm">ePHPm</a> don&rsquo;t need a MySQL server. A brochure
+WordPress, an internal Laravel tool, a preview environment that lives for an afternoon. What they do need is something
+that <em>looks</em> like MySQL, because <code>mysqli</code> and <code>pdo_mysql</code> are the only database drivers their code has ever been
+pointed at. I mentioned this in the <a href="/blog/2026/06/ephpm-pragmatism/">ePHPm pragmatism post</a> as a one-paragraph
+&ldquo;because&rdquo;. This is the longer version, now that WordPress 7.0 and Laravel 13 both install and&hellip;</p>
   </div>
   <footer>
     <a href="/blog/2026/07/sqlite-production-database-protocol-translation/" class="button big">Read More</a>

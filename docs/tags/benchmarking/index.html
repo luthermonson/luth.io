@@ -299,10 +299,10 @@ runtimes and compares them. Our fork with the ePHPm runner is <a href="https://g
   </a>
     
     <p>A third-party Laravel runtime comparison put <a href="https://github.com/ephpm/ephpm">ePHPm</a>&rsquo;s worker mode at the top on
-throughput, about 19% ahead of FrankenPHP on <code>/api/static</code>, and at the bottom of the fast group on tail latency: P99 of
-157 ms against FrankenPHP&rsquo;s 57 ms. Best throughput plus the fattest tail is a shape worth chasing, because fast
-execution can&rsquo;t produce it. Making requests faster lowers the mean <em>and</em> the tail. Only waiting can pull them apart,
-and specifically, unfair waiting.</p>
+throughput. It was about 19% ahead of FrankenPHP on <code>/api/static</code>. It was also at the bottom of the fast group on tail
+latency, with a P99 of 157 ms against FrankenPHP&rsquo;s 57 ms. Best throughput plus the fattest tail is a shape worth
+chasing, because fast execution can&rsquo;t produce it. Making requests faster lowers the mean <em>and</em> the tail. Only waiting
+can pull them apart. Specifically, unfair waiting.</p>
   </div>
   <footer>
     <a href="/blog/2026/09/php-dispatch-fair-queue-p99/" class="button big">Read More</a>
@@ -352,7 +352,7 @@ and specifically, unfair waiting.</p>
       <h2><a href="/blog/2026/09/own-your-php-thread-pool/">Stop Running PHP on tokio&#39;s spawn_blocking - Own Your Thread Pool</a></h2>
     
     
-      <p>Why ePHPm moved PHP execution off tokio&#39;s generic blocking pool onto threads it owns, how the switch was rolled out behind a knob, and what it did to memory, throughput and overload.</p>
+      <p>Why ePHPm moved PHP execution off tokio&#39;s generic blocking pool onto threads it owns. How the switch rolled out behind a knob and what it did to memory, throughput and overload.</p>
     
   </div>
   <div class="meta">
@@ -368,10 +368,10 @@ and specifically, unfair waiting.</p>
   </a>
     
     <p>For most of its life, <a href="https://github.com/ephpm/ephpm">ePHPm</a> ran every PHP request on tokio&rsquo;s <code>spawn_blocking</code>
-pool. It works. It passes tests, it serves benchmarks fine, and it&rsquo;s the first thing anybody reaches for when they
-need to call blocking code from async Rust. It&rsquo;s also quietly wrong for a language runtime, in ways that only show up
-under overload or after a crash. Over the last three weeks it got replaced with a pool of OS threads that ePHPm owns,
-first behind a config flag, then as the default, and as&hellip;</p>
+pool. It works. It passes tests and it serves benchmarks fine. It&rsquo;s the first thing anybody reaches for when they need
+to call blocking code from async Rust. It&rsquo;s also quietly wrong for a language runtime. The problems only show up under
+overload or after a crash. Over the last three weeks it got replaced with a pool of OS threads that ePHPm owns. That
+pool shipped first behind a config flag, then as&hellip;</p>
   </div>
   <footer>
     <a href="/blog/2026/09/own-your-php-thread-pool/" class="button big">Read More</a>
@@ -419,7 +419,7 @@ first behind a config flag, then as the default, and as&hellip;</p>
       <h2><a href="/blog/2026/08/what-does-one-more-wordpress-site-cost/">What Does One More WordPress Site Cost?</a></h2>
     
     
-      <p>Marginal RAM, file descriptors, CPU and disk for each extra WordPress tenant on one ePHPm instance, measured from 10 to 1000 sites.</p>
+      <p>I measured what each extra WordPress tenant on one ePHPm instance costs in RAM, file descriptors, CPU and disk. The sweep ran from 10 to 1000 sites.</p>
     
   </div>
   <div class="meta">
@@ -434,11 +434,10 @@ first behind a config flag, then as the default, and as&hellip;</p>
     <img class="" src="/img/2026/08/what-does-one-more-wordpress-site-cost-rss.svg" alt="Line chart of ePHPm steady RSS against tenant site count: linear at about 2.2 MB per site with every site open, flat past the default LRU cap of 256">
   </a>
     
-    <p>ePHPm v0.7.0 shipped per-site multi-tenancy: point <code>[server] sites_dir</code> at a directory, every <code>Host</code> maps to its own
-docroot and its own Turso database file, and one process serves all of them. The first question anybody asks about
-that is &ldquo;how many sites fit on a box?&rdquo;, and the honest way to answer it is to turn the question around. What does
-<strong>one more</strong> site cost? If you know the marginal RAM, file descriptors, CPU and disk for a tenant, the box size falls
-out of arithmetic.</p>
+    <p>ePHPm v0.7.0 shipped per-site multi-tenancy. Point <code>[server] sites_dir</code> at a directory and every <code>Host</code> maps to its own
+docroot and its own Turso database file. One process serves all of them. The first question anybody asks about that is
+&ldquo;how many sites fit on a box?&rdquo; The honest way to answer it is to turn the question around. What does <strong>one more</strong> site
+cost? If you know the marginal RAM, file descriptors, CPU and disk for a tenant, the box size falls out of arithmetic.</p>
   </div>
   <footer>
     <a href="/blog/2026/08/what-does-one-more-wordpress-site-cost/" class="button big">Read More</a>
@@ -507,9 +506,9 @@ out of arithmetic.</p>
     
     <p>Ask most people what their PHP server does when it&rsquo;s overloaded and you&rsquo;ll hear &ldquo;it returns 503s.&rdquo; Ask them how they
 know and it usually comes down to a config setting they read about. I was in that camp for <a href="https://github.com/ephpm/ephpm">ePHPm</a>.
-We had a <code>[server.limits] max_connections</code> knob, the docs said it returned 503 at the cap, and every benchmark we had
-ever run reported zero errors under heavy load. Then I wrote a load generator that could actually produce overload,
-and the honest answer was&hellip;</p>
+We had a <code>[server.limits] max_connections</code> knob, and the docs said it returned 503 at the cap. Every benchmark we had
+ever run reported zero errors under heavy load. Then I wrote a load generator that could produce overload. The honest
+answer was that an&hellip;</p>
   </div>
   <footer>
     <a href="/blog/2026/08/what-an-overloaded-php-server-actually-returns/" class="button big">Read More</a>
@@ -557,7 +556,7 @@ and the honest answer was&hellip;</p>
       <h2><a href="/blog/2026/08/benchmark-4x-wrong-wsl-drvfs-cwd/">My Benchmark Was 4x Wrong Because of WSL</a></h2>
     
     
-      <p>Launching the server with its working directory on /mnt/c cost ePHPm about 4x on a light workload, and the report built a wrong explanation on top of it. Here&#39;s the strace that shows why.</p>
+      <p>Launching the server with its working directory on /mnt/c cost ePHPm about 4x on a light workload. The report built a wrong explanation on top of it, and the strace shows why.</p>
     
   </div>
   <div class="meta">
@@ -572,11 +571,11 @@ and the honest answer was&hellip;</p>
     <img class="" src="/img/2026/08/benchmark-4x-wrong-wsl-drvfs-cwd-depth.svg" alt="Bar chart of ePHPm requests per second by working directory: native ext4 far ahead of DrvFs, with DrvFs throughput falling as the cwd path gets deeper">
   </a>
     
-    <p>I do most of my benchmarking on a Windows box in WSL2, because it&rsquo;s the machine with 32 threads and 62 GB of RAM on
-my desk. Everybody who does that learns the first rule early: don&rsquo;t put your data on <code>/mnt/c</code>. DrvFs, the 9p-backed
-mount that exposes the Windows drives inside WSL, is slow for file-heavy work, so the databases, the docroot and the
-build output all live on the WSL ext4 disk. My scaling harness for <a href="https://github.com/ephpm/ephpm">ePHPm</a> even
-says so in capital letters in its README.</p>
+    <p>I do most of my benchmarking on a Windows box in WSL2. It&rsquo;s the machine on my desk with 32 threads and 62 GB of RAM.
+Everybody who does that learns the first rule early: don&rsquo;t put your data on <code>/mnt/c</code>. DrvFs is the 9p-backed mount that
+exposes the Windows drives inside WSL, and it&rsquo;s slow for file-heavy work. So the databases, the docroot and the build
+output all live on the WSL ext4 disk. My scaling harness for <a href="https://github.com/ephpm/ephpm">ePHPm</a> even says so in
+capital letters in its README.</p>
   </div>
   <footer>
     <a href="/blog/2026/08/benchmark-4x-wrong-wsl-drvfs-cwd/" class="button big">Read More</a>

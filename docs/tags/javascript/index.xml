@@ -13,7 +13,7 @@
       <link>https://luth.io/blog/2022/02/recreating-proxmox-ve-xtermjs-in-go/</link>
       <pubDate>Sun, 06 Feb 2022 21:54:53 -0700</pubDate>
       <guid>https://luth.io/blog/2022/02/recreating-proxmox-ve-xtermjs-in-go/</guid>
-      <description>&lt;p&gt;Part of a hobby of mine is running a home lab and using on &lt;a href=&#34;https://www.proxmox.com/en/&#34;&gt;Proxmox VE&lt;/a&gt; to do the virtualization.&#xA;Since I work in the space I&amp;rsquo;m slowly trying to build tooling around Proxmox that will let me use the home lab full time for work.&#xA;Usually my work involves building Kubernetes management tooling, you can imagine waiting for public cloud APIs all day&#xA;can take away hours of your day at cost to your employer for both your time and the compute resources.&lt;/p&gt;</description>
+      <description>&lt;p&gt;Part of a hobby of mine is running a home lab and using on &lt;a href=&#34;https://www.proxmox.com/en/&#34;&gt;Proxmox VE&lt;/a&gt; to do the virtualization.&#xA;Since I work in the space I&amp;rsquo;m slowly trying to build tooling around Proxmox that will let me use the home lab full time for work.&#xA;Usually my work involves building Kubernetes management tooling. You can imagine waiting for public cloud APIs all day&#xA;can take away hours of your day. That&amp;rsquo;s at cost to your employer for both your time and the compute resources.&lt;/p&gt;</description>
     </item>
   </channel>
 </rss>

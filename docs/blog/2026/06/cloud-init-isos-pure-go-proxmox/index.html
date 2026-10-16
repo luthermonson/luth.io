@@ -273,13 +273,14 @@
       <div class="content">
         
         <p>Proxmox&rsquo;s built-in cloud-init support is fine for the basics: a user, an SSH key, an IP config. It falls apart the second you
-want your own <code>user-data</code>, <code>vendor-data</code> or a real <code>network-config</code>, because the GUI and the <code>ci*</code> options only expose a
-handful of fields, and the escape hatch (<code>cicustom</code> pointing at snippet files) means getting files onto the Proxmox host&rsquo;s
-filesystem first. The usual alternative is building a nocloud ISO yourself with <code>genisoimage</code> or <code>mkisofs</code>, which means a
-system dependency on whatever machine runs your automation, a different package name on every OS, and a subprocess to babysit.</p>
+want your own <code>user-data</code>, <code>vendor-data</code> or a real <code>network-config</code>. The GUI and the <code>ci*</code> options only expose a handful of
+fields. The escape hatch is <code>cicustom</code> pointing at snippet files, and that means getting files onto the Proxmox host&rsquo;s
+filesystem first. The usual alternative is building a nocloud ISO yourself with <code>genisoimage</code> or <code>mkisofs</code>. That means a
+system dependency on whatever machine runs your automation. You get a different package name on every OS and a subprocess to
+babysit.</p>
 <p><a href="https://github.com/luthermonson/go-proxmox">go-proxmox</a> has done this in Go since early 2023 with <code>vm.CloudInit()</code>. After
-the <a href="/blog/2026/05/go-diskfs-rock-ridge-joliet-windows/">Joliet work in go-diskfs</a> last month it works for Windows guests too,
-and v0.6.0 added the ability to choose where the ISO goes, so this seemed like a good time to walk through it.</p>
+the <a href="/blog/2026/05/go-diskfs-rock-ridge-joliet-windows/">Joliet work in go-diskfs</a> last month it works for Windows guests
+too. v0.6.0 added the ability to choose where the ISO goes. So this seemed like a good time to walk through it.</p>
 <p><img src="/img/2026/06/cloud-init-isos-pure-go-proxmox-lifecycle.svg" alt="Cloud-init ISO lifecycle: build, upload, mount, boot, clean up"></p>
 <h3 id="prerequisites">Prerequisites</h3>
 <ul>
@@ -369,7 +370,7 @@ and cloud-init picks it up on first boot.</p>
 the VM.</p>
 <h3 id="building-the-iso">Building the ISO</h3>
 <p>All the interesting work is in <code>makeCloudInitISO()</code>. go-diskfs needs a backing file, so it creates an empty one in the OS
-temp dir, wraps it, and creates an ISO 9660 filesystem on it with a 2048-byte block size:</p>
+temp dir. It wraps it and creates an ISO 9660 filesystem on it with a 2048-byte block size:</p>
 <div class="highlight"><pre tabindex="0" class="chroma"><code class="language-go" data-lang="go"><span class="line"><span class="cl"><span class="kd">func</span><span class="w"> </span><span class="nf">makeCloudInitISO</span><span class="p">(</span><span class="nx">filename</span><span class="p">,</span><span class="w"> </span><span class="nx">userdata</span><span class="p">,</span><span class="w"> </span><span class="nx">metadata</span><span class="p">,</span><span class="w"> </span><span class="nx">vendordata</span><span class="p">,</span><span class="w"> </span><span class="nx">networkconfig</span><span class="w"> </span><span class="kt">string</span><span class="p">)</span><span class="w"> </span><span class="p">(</span><span class="nx">isopath</span><span class="w"> </span><span class="kt">string</span><span class="p">,</span><span class="w"> </span><span class="nx">err</span><span class="w"> </span><span class="kt">error</span><span class="p">)</span><span class="w"> </span><span class="p">{</span><span class="w">
 </span></span></span><span class="line"><span class="cl"><span class="w">	</span><span class="nx">isopath</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="nx">filepath</span><span class="p">.</span><span class="nf">Join</span><span class="p">(</span><span class="nx">os</span><span class="p">.</span><span class="nf">TempDir</span><span class="p">(),</span><span class="w"> </span><span class="nx">filename</span><span class="p">)</span><span class="w">
 </span></span></span><span class="line"><span class="cl"><span class="w">
@@ -401,8 +402,8 @@ temp dir, wraps it, and creates an ISO 9660 filesystem on it with a 2048-byte bl
 </span></span></span><span class="line"><span class="cl"><span class="w">	</span><span class="k">if</span><span class="w"> </span><span class="nx">err</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="nx">fs</span><span class="p">.</span><span class="nf">Mkdir</span><span class="p">(</span><span class="s">&#34;/&#34;</span><span class="p">);</span><span class="w"> </span><span class="nx">err</span><span class="w"> </span><span class="o">!=</span><span class="w"> </span><span class="kc">nil</span><span class="w"> </span><span class="p">{</span><span class="w">
 </span></span></span><span class="line"><span class="cl"><span class="w">		</span><span class="k">return</span><span class="w"> </span><span class="s">&#34;&#34;</span><span class="p">,</span><span class="w"> </span><span class="nx">err</span><span class="w">
 </span></span></span><span class="line"><span class="cl"><span class="w">	</span><span class="p">}</span><span class="w">
-</span></span></span></code></pre></div><p>Then it writes whichever files were provided. The <code>Close()</code> inside the loop matters: with Joliet enabled, go-diskfs v1.9
-records each file&rsquo;s size when its handle closes, so writing without closing before <code>Finalize</code> gives you a Joliet tree with the
+</span></span></span></code></pre></div><p>Then it writes whichever files were provided. The <code>Close()</code> inside the loop matters. With Joliet enabled, go-diskfs v1.9
+records each file&rsquo;s size when its handle closes. Writing without closing before <code>Finalize</code> gives you a Joliet tree with the
 wrong sizes. (I found that one while switching go-proxmox over to Joliet for v0.5.0.)</p>
 <div class="highlight"><pre tabindex="0" class="chroma"><code class="language-go" data-lang="go"><span class="line"><span class="cl"><span class="w">	</span><span class="nx">cifiles</span><span class="w"> </span><span class="o">:=</span><span class="w"> </span><span class="kd">map</span><span class="p">[</span><span class="kt">string</span><span class="p">]</span><span class="kt">string</span><span class="p">{</span><span class="w">
 </span></span></span><span class="line"><span class="cl"><span class="w">		</span><span class="s">&#34;user-data&#34;</span><span class="p">:</span><span class="w"> </span><span class="nx">userdata</span><span class="p">,</span><span class="w">
@@ -443,14 +444,14 @@ wrong sizes. (I found that one while switching go-proxmox over to Joliet for v0.
 </span></span></span><span class="line"><span class="cl"><span class="w">	</span><span class="k">return</span><span class="w">
 </span></span></span><span class="line"><span class="cl"><span class="p">}</span><span class="w">
 </span></span></span></code></pre></div><p>Both extensions are on for a reason. Plain ISO 9660 names are 8.3 uppercase, so <code>user-data</code> is stored as <code>USER_DAT.;1</code>.
-<strong>Rock Ridge</strong> adds the real name (and POSIX modes and timestamps) in a way Linux reads, which is what cloud-init on a Linux
-guest sees. <strong>Joliet</strong> adds a second directory tree with UCS-2 names, which is the only thing Windows reads, and what
-cloudbase-init needs. The <a href="/blog/2026/05/go-diskfs-rock-ridge-joliet-windows/">go-diskfs post</a> has the full story of getting
-both right, including the bug where the Joliet label came out as 捩摡瑡.</p>
+<strong>Rock Ridge</strong> adds the real name in a way Linux reads, along with POSIX modes and timestamps. That&rsquo;s what cloud-init on a
+Linux guest sees. <strong>Joliet</strong> adds a second directory tree with UCS-2 names. That&rsquo;s the only thing Windows reads, and it&rsquo;s
+what cloudbase-init needs. The <a href="/blog/2026/05/go-diskfs-rock-ridge-joliet-windows/">go-diskfs post</a> has the full story of
+getting both right. That includes the bug where the Joliet label came out as 捩摡瑡.</p>
 <p>The result is tiny. A three-file ISO like this comes in well under 100 KB.</p>
 <h3 id="uploading-and-mounting">Uploading and mounting</h3>
-<p><code>CloudInit()</code> strings the rest together. It builds the ISO, always removes the temp file on the way out, resolves which storage
-to use, uploads, tags the VM and points a CD-ROM drive at the ISO:</p>
+<p><code>CloudInit()</code> strings the rest together. It builds the ISO and always removes the temp file on the way out. Then it resolves
+which storage to use, uploads, tags the VM and points a CD-ROM drive at the ISO:</p>
 <div class="highlight"><pre tabindex="0" class="chroma"><code class="language-go" data-lang="go"><span class="line"><span class="cl"><span class="kd">func</span><span class="w"> </span><span class="p">(</span><span class="nx">v</span><span class="w"> </span><span class="o">*</span><span class="nx">VirtualMachine</span><span class="p">)</span><span class="w"> </span><span class="nf">CloudInit</span><span class="p">(</span><span class="nx">ctx</span><span class="w"> </span><span class="nx">context</span><span class="p">.</span><span class="nx">Context</span><span class="p">,</span><span class="w"> </span><span class="nx">device</span><span class="p">,</span><span class="w"> </span><span class="nx">userdata</span><span class="p">,</span><span class="w"> </span><span class="nx">metadata</span><span class="p">,</span><span class="w"> </span><span class="nx">vendordata</span><span class="p">,</span><span class="w"> </span><span class="nx">networkconfig</span><span class="w"> </span><span class="kt">string</span><span class="p">,</span><span class="w"> </span><span class="nx">opts</span><span class="w"> </span><span class="o">...</span><span class="nx">CloudInitOption</span><span class="p">)</span><span class="w"> </span><span class="kt">error</span><span class="w"> </span><span class="p">{</span><span class="w">
 </span></span></span><span class="line"><span class="cl"><span class="w">	</span><span class="kd">var</span><span class="w"> </span><span class="nx">cfg</span><span class="w"> </span><span class="nx">cloudInitConfig</span><span class="w">
 </span></span></span><span class="line"><span class="cl"><span class="w">	</span><span class="k">for</span><span class="w"> </span><span class="nx">_</span><span class="p">,</span><span class="w"> </span><span class="nx">opt</span><span class="w"> </span><span class="o">:=</span><span class="w"> </span><span class="k">range</span><span class="w"> </span><span class="nx">opts</span><span class="w"> </span><span class="p">{</span><span class="w">
@@ -507,9 +508,9 @@ to use, uploads, tags the VM and points a CD-ROM drive at the ISO:</p>
 </span></span></span><span class="line"><span class="cl"><span class="w">
 </span></span></span><span class="line"><span class="cl"><span class="w">	</span><span class="k">return</span><span class="w"> </span><span class="nx">task</span><span class="p">.</span><span class="nf">WaitFor</span><span class="p">(</span><span class="nx">ctx</span><span class="p">,</span><span class="w"> </span><span class="mi">2</span><span class="p">)</span><span class="w">
 </span></span></span><span class="line"><span class="cl"><span class="p">}</span><span class="w">
-</span></span></span></code></pre></div><p>The storage selection is the new bit in v0.6.0 (<a href="https://github.com/luthermonson/go-proxmox/pull/272">#272</a>, closing a
-long-standing <a href="https://github.com/luthermonson/go-proxmox/issues/119">#119</a>). Before, the ISO went to the first enabled storage
-on the node that accepted <code>iso</code> content, which is non-deterministic when a node has more than one. Now
+</span></span></span></code></pre></div><p>The storage selection is the new bit in v0.6.0 (<a href="https://github.com/luthermonson/go-proxmox/pull/272">#272</a>). It closes a
+long-standing <a href="https://github.com/luthermonson/go-proxmox/issues/119">#119</a>. Before, the ISO went to the first enabled
+storage on the node that accepted <code>iso</code> content. That&rsquo;s non-deterministic when a node has more than one. Now
 <code>WithCloudInitStorage(&quot;name&quot;)</code> picks one explicitly and validates that it takes ISOs:</p>
 <div class="highlight"><pre tabindex="0" class="chroma"><code class="language-go" data-lang="go"><span class="line"><span class="cl"><span class="kd">func</span><span class="w"> </span><span class="nf">resolveCloudInitStorage</span><span class="p">(</span><span class="nx">ctx</span><span class="w"> </span><span class="nx">context</span><span class="p">.</span><span class="nx">Context</span><span class="p">,</span><span class="w"> </span><span class="nx">node</span><span class="w"> </span><span class="o">*</span><span class="nx">Node</span><span class="p">,</span><span class="w"> </span><span class="nx">cfg</span><span class="w"> </span><span class="o">*</span><span class="nx">cloudInitConfig</span><span class="p">)</span><span class="w"> </span><span class="p">(</span><span class="o">*</span><span class="nx">Storage</span><span class="p">,</span><span class="w"> </span><span class="kt">error</span><span class="p">)</span><span class="w"> </span><span class="p">{</span><span class="w">
 </span></span></span><span class="line"><span class="cl"><span class="w">	</span><span class="k">if</span><span class="w"> </span><span class="nx">cfg</span><span class="p">.</span><span class="nx">storage</span><span class="w"> </span><span class="o">==</span><span class="w"> </span><span class="s">&#34;&#34;</span><span class="w"> </span><span class="p">{</span><span class="w">
@@ -527,14 +528,14 @@ on the node that accepted <code>iso</code> content, which is non-deterministic w
 </span></span></span></code></pre></div><h3 id="cleaning-up-after-yourself">Cleaning up after yourself</h3>
 <p>The <code>cloud-init</code> tag is how go-proxmox remembers that a VM has an ISO lying around. Once the guest has booted and cloud-init
 has done its thing, <code>vm.UnmountCloudInitISO(ctx, &quot;ide2&quot;)</code> empties the drive (<code>none,media=cdrom</code>) and deletes the ISO. And
-<code>vm.Delete()</code> checks for the tag first and removes the ISO before deleting the VM, so you don&rsquo;t slowly fill your ISO storage
-with <code>user-data-1xx.iso</code> files from VMs that no longer exist. Since the storage is now selectable, the delete path scans every
-enabled ISO-capable storage on the node for the file instead of assuming the default one.</p>
+<code>vm.Delete()</code> checks for the tag first and removes the ISO before deleting the VM. That way you don&rsquo;t slowly fill your ISO
+storage with <code>user-data-1xx.iso</code> files from VMs that no longer exist. Since the storage is now selectable, the delete path
+scans every enabled ISO-capable storage on the node for the file. It doesn&rsquo;t assume the default one.</p>
 <h3 id="why-not-just-shell-out">Why not just shell out</h3>
-<p>I like the benefits of keeping this in-process. There&rsquo;s nothing to install on the machine that runs the automation, so the
-same code works from a Linux CI runner, my Mac, and the Windows box I&rsquo;m writing this on. The ISO is built from strings in
-memory and a temp file, so there&rsquo;s no templating a directory tree on disk and no parsing a subprocess&rsquo;s exit code. And it&rsquo;s
-easy to test: the ISO is just bytes you can read back with the same library.</p>
+<p>I like the benefits of keeping this in-process. There&rsquo;s nothing to install on the machine that runs the automation. The same
+code works from a Linux CI runner, my Mac and the Windows box I&rsquo;m writing this on. The ISO is built from strings in memory
+and a temp file. There&rsquo;s no templating a directory tree on disk and no parsing a subprocess&rsquo;s exit code. And it&rsquo;s easy to
+test, because the ISO is just bytes you can read back with the same library.</p>
 <p>If you want the ISO without the Proxmox part, I have an old standalone CLI called <a href="https://github.com/luthermonson/quiso">quiso</a>
 that does the same job from the command line.</p>
 <h3 id="links">Links</h3>

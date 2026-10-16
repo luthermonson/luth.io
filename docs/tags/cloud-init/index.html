@@ -218,7 +218,7 @@
       <h2><a href="/blog/2026/07/five-ways-to-url-encode-an-ssh-key/">Five Ways to URL-Encode an SSH Key (and Why Proxmox Rejects Them)</a></h2>
     
     
-      <p>Proxmox&#39;s sshkeys parameter wants Python-style percent encoding that no single Go function produces. A two-year-old issue, a one-line fix, and a related double-encoding bug in guest file writes.</p>
+      <p>Proxmox&#39;s sshkeys parameter wants Python-style percent encoding that no single Go function produces. This covers a two-year-old issue, its one-line fix, and a related double-encoding bug in guest file writes.</p>
     
   </div>
   <div class="meta">
@@ -233,10 +233,10 @@
     <img class="" src="/img/2026/07/five-ways-to-url-encode-an-ssh-key-results.svg" alt="Table of seven ways to encode an SSH public key and whether each passes Proxmox&#39;s urlencoded validator">
   </a>
     
-    <p><a href="https://github.com/luthermonson/go-proxmox/issues/144">Issue #144</a> on go-proxmox was opened in April 2024 with the title
-&ldquo;Weird sshkeys SSH public key validation error&rdquo; and it is one of my less proud threads. Thirteen comments of people,
-including me, trying to get a public key into a cloud-init VM through the API, and the working answer took more than a
-year to show up. The fix that finally landed in May is one line. Here&rsquo;s why it took so long.</p>
+    <p><a href="https://github.com/luthermonson/go-proxmox/issues/144">Issue #144</a> on go-proxmox was opened in April 2024 with the
+title &ldquo;Weird sshkeys SSH public key validation error&rdquo;. It is one of my less proud threads. It&rsquo;s thirteen comments of
+people, including me, trying to get a public key into a cloud-init VM through the API. The working answer took more
+than a year to show up. The fix that finally landed in May is one line. Here&rsquo;s why it took so long.</p>
   </div>
   <footer>
     <a href="/blog/2026/07/five-ways-to-url-encode-an-ssh-key/" class="button big">Read More</a>
@@ -298,9 +298,9 @@ year to show up. The fix that finally landed in May is one line. Here&rsquo;s wh
   </a>
     
     <p>Proxmox&rsquo;s built-in cloud-init support is fine for the basics: a user, an SSH key, an IP config. It falls apart the second you
-want your own <code>user-data</code>, <code>vendor-data</code> or a real <code>network-config</code>, because the GUI and the <code>ci*</code> options only expose a
-handful of fields, and the escape hatch (<code>cicustom</code> pointing at snippet files) means getting files onto the Proxmox host&rsquo;s
-filesystem first. The usual alternative is building a nocloud ISO yourself with <code>genisoimage</code> or <code>mkisofs</code>, which means a
+want your own <code>user-data</code>, <code>vendor-data</code> or a real <code>network-config</code>. The GUI and the <code>ci*</code> options only expose a handful of
+fields. The escape hatch is <code>cicustom</code> pointing at snippet files, and that means getting files onto the Proxmox host&rsquo;s
+filesystem first. The usual alternative is building a nocloud ISO yourself with <code>genisoimage</code> or <code>mkisofs</code>. That means a
 system&hellip;</p>
   </div>
   <footer>
@@ -349,7 +349,7 @@ system&hellip;</p>
       <h2><a href="/blog/2026/05/go-diskfs-rock-ridge-joliet-windows/">go-diskfs: Getting Rock Ridge Working for Joliet on Windows</a></h2>
     
     
-      <p>Fixing Rock Ridge, adding Joliet, and then finding out what Windows actually wanted, all so a Go-built cloud-init ISO works for cloudbase-init.</p>
+      <p>I fixed Rock Ridge and added Joliet to go-diskfs so a Go-built cloud-init ISO works for cloudbase-init. Then I found out what Windows actually wanted.</p>
     
   </div>
   <div class="meta">
@@ -366,7 +366,7 @@ system&hellip;</p>
     
     <p><a href="https://github.com/luthermonson/go-proxmox">go-proxmox</a> has had a <code>CloudInit()</code> helper since 2023. It builds a small
 nocloud ISO in Go, uploads it to Proxmox and mounts it on the VM as a CD-ROM. It&rsquo;s always worked fine for Linux guests. It
-has never worked for Windows guests running <a href="https://cloudbase.it/cloudbase-init/">cloudbase-init</a>, and the reason is a
+has never worked for Windows guests running <a href="https://cloudbase.it/cloudbase-init/">cloudbase-init</a>. The reason is a
 filesystem extension from 1995 called Joliet.</p>
   </div>
   <footer>

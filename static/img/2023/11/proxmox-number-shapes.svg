@@ -1,0 +1,108 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 840 540" font-family="system-ui, -apple-system, Segoe UI, Roboto, sans-serif">
+  <title>Proxmox JSON shapes funneling into go-proxmox StringOr and IntOrBool types</title>
+  <desc>Three rows. Memory arrives as 2048, "2048" or 2048.0; StringOrInt (and StringOrUint64, which works the same way) strips quotes, parses with ParseFloat and truncates with math.Trunc, giving 2048. cpulimit arrives as 0.4, "0.4" or an empty string; StringOrFloat64 strips quotes, maps the empty string to 0, checks the regex ^[0-9.]*$ and calls ParseFloat, giving 0.4, or 0 for the empty string. Booleans arrive as 1 from most endpoints or true from some; IntOrBool uses strconv.ParseBool and gives true, and marshals back as 1 or 0. A footer notes that a plain float64 rejects "0.4" and the ,string tag rejects 0.4 and the empty string.</desc>
+  <defs>
+    <marker id="a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#57606a"/></marker>
+  </defs>
+  <rect width="840" height="540" fill="#ffffff"/>
+  <text x="420" y="32" text-anchor="middle" font-size="20" font-weight="600" fill="#1f2328">Same field, different JSON shapes, one Go value</text>
+
+  <g font-size="13" font-weight="600" fill="#57606a">
+    <text x="130" y="64" text-anchor="middle">JSON from Proxmox</text>
+    <text x="455" y="64" text-anchor="middle">go-proxmox type</text>
+    <text x="745" y="64" text-anchor="middle">Go value</text>
+  </g>
+
+  <!-- ===== lane 1: memory ===== -->
+  <g font-family="ui-monospace, Consolas, Menlo, monospace" font-size="16" fill="#1f2328">
+    <rect x="30" y="80" width="200" height="34" rx="6" fill="#f6f8fa" stroke="#d0d7de"/>
+    <text x="44" y="103">2048</text>
+    <rect x="30" y="122" width="200" height="34" rx="6" fill="#f6f8fa" stroke="#d0d7de"/>
+    <text x="44" y="145">"2048"</text>
+    <rect x="30" y="164" width="200" height="34" rx="6" fill="#f6f8fa" stroke="#d0d7de"/>
+    <text x="44" y="187">2048.0</text>
+  </g>
+  <g font-size="12" fill="#57606a" text-anchor="end">
+    <text x="220" y="102">number</text>
+    <text x="220" y="144">quoted string</text>
+    <text x="220" y="186">decimal</text>
+  </g>
+  <g stroke="#57606a" stroke-width="1.8" fill="none" marker-end="url(#a)">
+    <path d="M230,97 C275,97 280,139 316,139"/>
+    <path d="M230,139 L316,139"/>
+    <path d="M230,181 C275,181 280,139 316,139"/>
+  </g>
+  <rect x="320" y="84" width="270" height="110" rx="8" fill="#ffffff" stroke="#0550ae" stroke-width="2"/>
+  <text x="455" y="109" text-anchor="middle" font-size="16" font-weight="600" fill="#0550ae">StringOrInt</text>
+  <text x="455" y="127" text-anchor="middle" font-size="12" fill="#57606a">(StringOrUint64 works the same)</text>
+  <text x="455" y="152" text-anchor="middle" font-size="13" fill="#1f2328">strip quotes</text>
+  <text x="455" y="172" text-anchor="middle" font-size="13" fill="#1f2328">ParseFloat, then math.Trunc</text>
+  <line x1="590" y1="139" x2="666" y2="139" stroke="#57606a" stroke-width="1.8" marker-end="url(#a)"/>
+  <rect x="670" y="108" width="150" height="62" rx="8" fill="#f6f8fa" stroke="#0550ae" stroke-width="2"/>
+  <text x="745" y="128" text-anchor="middle" font-size="12" fill="#57606a">Memory</text>
+  <text x="745" y="155" text-anchor="middle" font-size="19" font-weight="600" fill="#0550ae" font-family="ui-monospace, Consolas, Menlo, monospace">2048</text>
+
+  <line x1="20" y1="214" x2="820" y2="214" stroke="#d0d7de" stroke-dasharray="4 4"/>
+
+  <!-- ===== lane 2: cpulimit ===== -->
+  <g font-family="ui-monospace, Consolas, Menlo, monospace" font-size="16" fill="#1f2328">
+    <rect x="30" y="232" width="200" height="34" rx="6" fill="#f6f8fa" stroke="#d0d7de"/>
+    <text x="44" y="255">0.4</text>
+    <rect x="30" y="274" width="200" height="34" rx="6" fill="#f6f8fa" stroke="#d0d7de"/>
+    <text x="44" y="297">"0.4"</text>
+    <rect x="30" y="316" width="200" height="34" rx="6" fill="#f6f8fa" stroke="#d0d7de"/>
+    <text x="44" y="339">""</text>
+  </g>
+  <g font-size="12" fill="#57606a" text-anchor="end">
+    <text x="220" y="254">number</text>
+    <text x="220" y="296">quoted string</text>
+    <text x="220" y="338">empty string</text>
+  </g>
+  <g stroke="#57606a" stroke-width="1.8" fill="none" marker-end="url(#a)">
+    <path d="M230,249 C275,249 280,291 316,291"/>
+    <path d="M230,291 L316,291"/>
+    <path d="M230,333 C275,333 280,291 316,291"/>
+  </g>
+  <rect x="320" y="228" width="270" height="126" rx="8" fill="#ffffff" stroke="#00707a" stroke-width="2"/>
+  <text x="455" y="253" text-anchor="middle" font-size="16" font-weight="600" fill="#00707a">StringOrFloat64</text>
+  <text x="455" y="277" text-anchor="middle" font-size="13" fill="#1f2328">strip quotes; "" becomes 0</text>
+  <text x="455" y="299" text-anchor="middle" font-size="13" fill="#1f2328">must match <tspan font-family="ui-monospace, Consolas, Menlo, monospace">^[0-9.]*$</tspan></text>
+  <text x="455" y="321" text-anchor="middle" font-size="13" fill="#1f2328">strconv.ParseFloat</text>
+  <text x="455" y="341" text-anchor="middle" font-size="12" fill="#57606a">garbage fails with the value in the error</text>
+  <line x1="590" y1="270" x2="666" y2="270" stroke="#57606a" stroke-width="1.8" marker-end="url(#a)"/>
+  <rect x="670" y="239" width="150" height="62" rx="8" fill="#f6f8fa" stroke="#00707a" stroke-width="2"/>
+  <text x="745" y="259" text-anchor="middle" font-size="12" fill="#57606a">CPULimit</text>
+  <text x="745" y="286" text-anchor="middle" font-size="19" font-weight="600" fill="#00707a" font-family="ui-monospace, Consolas, Menlo, monospace">0.4</text>
+  <line x1="590" y1="333" x2="666" y2="333" stroke="#57606a" stroke-width="1.5" stroke-dasharray="5 4" marker-end="url(#a)"/>
+  <rect x="670" y="316" width="150" height="34" rx="6" fill="#ffffff" stroke="#00707a" stroke-dasharray="5 4"/>
+  <text x="745" y="338" text-anchor="middle" font-size="13" fill="#1f2328">"" gives <tspan font-family="ui-monospace, Consolas, Menlo, monospace" font-weight="600">0</tspan></text>
+
+  <line x1="20" y1="370" x2="820" y2="370" stroke="#d0d7de" stroke-dasharray="4 4"/>
+
+  <!-- ===== lane 3: booleans ===== -->
+  <g font-family="ui-monospace, Consolas, Menlo, monospace" font-size="16" fill="#1f2328">
+    <rect x="30" y="390" width="200" height="34" rx="6" fill="#f6f8fa" stroke="#d0d7de"/>
+    <text x="44" y="413">1</text>
+    <rect x="30" y="432" width="200" height="34" rx="6" fill="#f6f8fa" stroke="#d0d7de"/>
+    <text x="44" y="455">true</text>
+  </g>
+  <g font-size="12" fill="#57606a" text-anchor="end">
+    <text x="220" y="412">most endpoints</text>
+    <text x="220" y="454">some endpoints</text>
+  </g>
+  <g stroke="#57606a" stroke-width="1.8" fill="none" marker-end="url(#a)">
+    <path d="M230,407 C275,407 280,428 316,428"/>
+    <path d="M230,449 C275,449 280,428 316,428"/>
+  </g>
+  <rect x="320" y="384" width="270" height="88" rx="8" fill="#ffffff" stroke="#a0287f" stroke-width="2"/>
+  <text x="455" y="409" text-anchor="middle" font-size="16" font-weight="600" fill="#a0287f">IntOrBool</text>
+  <text x="455" y="433" text-anchor="middle" font-size="13" fill="#1f2328">strconv.ParseBool</text>
+  <text x="455" y="455" text-anchor="middle" font-size="12" fill="#57606a">marshals back as 1 / 0</text>
+  <line x1="590" y1="428" x2="666" y2="428" stroke="#57606a" stroke-width="1.8" marker-end="url(#a)"/>
+  <rect x="670" y="397" width="150" height="62" rx="8" fill="#f6f8fa" stroke="#a0287f" stroke-width="2"/>
+  <text x="745" y="417" text-anchor="middle" font-size="12" fill="#57606a">bool</text>
+  <text x="745" y="444" text-anchor="middle" font-size="19" font-weight="600" fill="#a0287f" font-family="ui-monospace, Consolas, Menlo, monospace">true</text>
+
+  <!-- footer -->
+  <text x="420" y="508" text-anchor="middle" font-size="13" fill="#57606a">For contrast: a plain float64 rejects "0.4"; the ,string tag rejects 0.4 and "".</text>
+</svg>

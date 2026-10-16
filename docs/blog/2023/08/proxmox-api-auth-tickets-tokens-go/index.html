@@ -10,14 +10,14 @@
     gtag('config', 'G-MSTSKGFWTX');
 </script><meta charset="utf-8">
 <title>Logging In to Proxmox From Go: Tickets, CSRF Tokens and API Tokens - Luther Monson</title>
-<meta name="description" content="The two ways to authenticate against the Proxmox VE API, how go-proxmox handles each one, and why the client is now configured entirely with functional options.">
+<meta name="description" content="Proxmox VE has two ways to authenticate against its API. Here&#39;s how go-proxmox handles each one and why the client is now configured entirely with functional options.">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
 <meta name="twitter:card" content="summary_large_image"><meta name="twitter:site" content="@luthermonson">
 
 <meta property="og:site_name" content="Luther Monson">
 <meta property="og:title" content="Logging In to Proxmox From Go: Tickets, CSRF Tokens and API Tokens">
-<meta property="og:description" content="The two ways to authenticate against the Proxmox VE API, how go-proxmox handles each one, and why the client is now configured entirely with functional options.">
+<meta property="og:description" content="Proxmox VE has two ways to authenticate against its API. Here&#39;s how go-proxmox handles each one and why the client is now configured entirely with functional options.">
 <meta property="og:type" content="article">
 <meta property="og:url" content="https://luth.io/blog/2023/08/proxmox-api-auth-tickets-tokens-go/">
     <meta property="og:image" content="https://luth.io/img/2023/08/proxmox-api-auth-tickets-tokens-go-flow.svg">
@@ -215,7 +215,7 @@
       <h2><a href="/blog/2023/08/proxmox-api-auth-tickets-tokens-go/">Logging In to Proxmox From Go: Tickets, CSRF Tokens and API Tokens</a></h2>
     
     
-      <p>The two ways to authenticate against the Proxmox VE API, how go-proxmox handles each one, and why the client is now configured entirely with functional options.</p>
+      <p>Proxmox VE has two ways to authenticate against its API. Here&#39;s how go-proxmox handles each one and why the client is now configured entirely with functional options.</p>
     
   </div>
   <div class="meta">
@@ -272,14 +272,14 @@
       </div>
       <div class="content">
         
-        <p>I just spent a week of evenings on the access side of <a href="https://github.com/luthermonson/go-proxmox">go-proxmox</a>: realms,
-groups, users and roles all landed, and before any of that I reworked how a client gets its credentials in
-the first place. Proxmox gives you two different ways to authenticate and they behave differently enough that it&rsquo;s worth
+        <p>I just spent a week of evenings on the access side of <a href="https://github.com/luthermonson/go-proxmox">go-proxmox</a>.
+Realms, groups, users and roles all landed. Before any of that, I reworked how a client gets its credentials in the
+first place. Proxmox gives you two different ways to authenticate. They behave differently enough that it&rsquo;s worth
 writing down how each one works on the wire and what the client does with it.</p>
 <p><img src="/img/2023/08/proxmox-api-auth-tickets-tokens-go-flow.svg" alt="Ticket and API token flows"></p>
 <h3 id="tickets">Tickets</h3>
-<p>This is what the web UI does. You <code>POST /access/ticket</code> with a username and password (plus an <code>otp</code> if the user has TFA,
-and optionally a <code>realm</code>) and get back a ticket and a CSRF token:</p>
+<p>This is what the web UI does. You <code>POST /access/ticket</code> with a username and password and get back a ticket and a CSRF
+token. Add an <code>otp</code> if the user has TFA, and optionally a <code>realm</code>:</p>
 <div class="highlight"><pre tabindex="0" class="chroma"><code class="language-go" data-lang="go"><span class="line"><span class="cl"><span class="kd">type</span><span class="w"> </span><span class="nx">Credentials</span><span class="w"> </span><span class="kd">struct</span><span class="w"> </span><span class="p">{</span><span class="w">
 </span></span></span><span class="line"><span class="cl"><span class="w">	</span><span class="nx">Username</span><span class="w"> </span><span class="kt">string</span><span class="w"> </span><span class="s">`json:&#34;username&#34;`</span><span class="w">
 </span></span></span><span class="line"><span class="cl"><span class="w">	</span><span class="nx">Password</span><span class="w"> </span><span class="kt">string</span><span class="w"> </span><span class="s">`json:&#34;password&#34;`</span><span class="w">
@@ -298,20 +298,21 @@ and optionally a <code>realm</code>) and get back a ticket and a CSRF token:</p>
 </span></span></span><span class="line"><span class="cl"><span class="w">	</span><span class="nx">ClusterName</span><span class="w"> </span><span class="kt">string</span><span class="w">                    </span><span class="s">`json:&#34;clustername,omitempty&#34;`</span><span class="w">
 </span></span></span><span class="line"><span class="cl"><span class="w">	</span><span class="nx">Ticket</span><span class="w">      </span><span class="kt">string</span><span class="w">                    </span><span class="s">`json:&#34;ticket,omitempty&#34;`</span><span class="w">
 </span></span></span><span class="line"><span class="cl"><span class="p">}</span><span class="w">
-</span></span></span></code></pre></div><p>The ticket goes back to Proxmox as a cookie named <code>PVEAuthCookie</code>. The <code>CSRFPreventionToken</code> goes in a header of the same
-name and Proxmox requires it on anything that writes (<code>POST</code>, <code>PUT</code>, <code>DELETE</code>). A <code>GET</code> with just the cookie works, a
-<code>POST</code> with just the cookie gets you a 401, which is a fun one to debug the first time. The client sends both on every
-request so you never have to think about it.</p>
-<p>The thing to know about tickets is that they expire. Proxmox signs them with a lifetime of two hours (<code>$ticket_lifetime = 3600 * 2</code> in <code>PVE::AccessControl</code>), which is great for a browser tab and less great for a daemon.</p>
+</span></span></span></code></pre></div><p>The ticket goes back to Proxmox as a cookie named <code>PVEAuthCookie</code>. The <code>CSRFPreventionToken</code> goes in a header of the
+same name. Proxmox requires it on every request that writes (<code>POST</code>, <code>PUT</code>, <code>DELETE</code>). A <code>GET</code> with just the cookie
+works. A <code>POST</code> with just the cookie gets you a 401, which is a fun one to debug the first time. The client sends both
+on every request, so you never have to think about it.</p>
+<p>The thing to know about tickets is that they expire. Proxmox signs them with a lifetime of two hours
+(<code>$ticket_lifetime = 3600 * 2</code> in <code>PVE::AccessControl</code>). That&rsquo;s great for a browser tab and less great for a daemon.</p>
 <h3 id="api-tokens">API tokens</h3>
-<p>Tokens are the better fit for automation. You create one under a user in the UI (Datacenter, Permissions, API Tokens)
-and you get a token ID like <code>root@pam!mytoken</code> and a UUID secret, shown exactly once. There is no login round trip, you
+<p>Tokens are the better fit for automation. You create one under a user in the UI (Datacenter, Permissions, API Tokens).
+You get a token ID like <code>root@pam!mytoken</code> and a UUID secret, shown exactly once. There is no login round trip. You
 send a single header on every request:</p>
 <pre tabindex="0"><code>Authorization: PVEAPIToken=root@pam!mytoken=&lt;uuid secret&gt;
-</code></pre><p>No CSRF token, no cookie, and no two hour expiry (tokens can have an expiry date but default to none). The one decision
-you make when creating one is privilege separation. With <code>privsep</code> on (the default) the token only gets the permissions
-you grant to the token itself, with it off the token has everything the user has. For a CI job or a provisioning tool I
-always leave it on and grant exactly what the tool needs.</p>
+</code></pre><p>No CSRF token, no cookie, and no two hour expiry. Tokens can have an expiry date but default to none. The one decision
+you make when creating one is privilege separation. With <code>privsep</code> on, which is the default, the token only gets the
+permissions you grant to the token itself. With it off, the token has everything the user has. For a CI job or a
+provisioning tool I always leave it on and grant exactly what the tool needs.</p>
 <p>Picking between the two happens in one place in the client:</p>
 <div class="highlight"><pre tabindex="0" class="chroma"><code class="language-go" data-lang="go"><span class="line"><span class="cl"><span class="kd">func</span><span class="w"> </span><span class="p">(</span><span class="nx">c</span><span class="w"> </span><span class="o">*</span><span class="nx">Client</span><span class="p">)</span><span class="w"> </span><span class="nf">authHeaders</span><span class="p">(</span><span class="nx">header</span><span class="w"> </span><span class="o">*</span><span class="nx">http</span><span class="p">.</span><span class="nx">Header</span><span class="p">)</span><span class="w"> </span><span class="p">{</span><span class="w">
 </span></span></span><span class="line"><span class="cl"><span class="w">	</span><span class="nx">header</span><span class="p">.</span><span class="nf">Add</span><span class="p">(</span><span class="s">&#34;User-Agent&#34;</span><span class="p">,</span><span class="w"> </span><span class="nx">c</span><span class="p">.</span><span class="nx">userAgent</span><span class="p">)</span><span class="w">
@@ -324,8 +325,9 @@ always leave it on and grant exactly what the tool needs.</p>
 </span></span></span><span class="line"><span class="cl"><span class="w">	</span><span class="p">}</span><span class="w">
 </span></span></span><span class="line"><span class="cl"><span class="p">}</span><span class="w">
 </span></span></span></code></pre></div><h3 id="logging-in-lazily">Logging in lazily</h3>
-<p>When you give the client credentials it doesn&rsquo;t log in when you construct it. The first request goes out with no auth,
-Proxmox answers 401, and <code>Req</code> notices it has credentials but no session, grabs a ticket and replays the request:</p>
+<p>When you give the client credentials, it doesn&rsquo;t log in when you construct it. The first request goes out with no
+auth, and Proxmox answers 401. <code>Req</code> notices it has credentials but no session. It grabs a ticket and replays the
+request:</p>
 <div class="highlight"><pre tabindex="0" class="chroma"><code class="language-go" data-lang="go"><span class="line"><span class="cl"><span class="k">if</span><span class="w"> </span><span class="nx">res</span><span class="p">.</span><span class="nx">StatusCode</span><span class="w"> </span><span class="o">==</span><span class="w"> </span><span class="nx">http</span><span class="p">.</span><span class="nx">StatusUnauthorized</span><span class="w"> </span><span class="o">||</span><span class="w"> </span><span class="nx">res</span><span class="p">.</span><span class="nx">StatusCode</span><span class="w"> </span><span class="o">==</span><span class="w"> </span><span class="nx">http</span><span class="p">.</span><span class="nx">StatusForbidden</span><span class="w"> </span><span class="p">{</span><span class="w">
 </span></span></span><span class="line"><span class="cl"><span class="w">	</span><span class="k">if</span><span class="w"> </span><span class="nx">path</span><span class="w"> </span><span class="o">==</span><span class="w"> </span><span class="p">(</span><span class="nx">c</span><span class="p">.</span><span class="nx">baseURL</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="s">&#34;/access/ticket&#34;</span><span class="p">)</span><span class="w"> </span><span class="p">{</span><span class="w">
 </span></span></span><span class="line"><span class="cl"><span class="w">		</span><span class="c1">// received an unauthorized while trying to create a session</span><span class="w">
@@ -341,16 +343,15 @@ Proxmox answers 401, and <code>Req</code> notices it has credentials but no sess
 </span></span></span><span class="line"><span class="cl"><span class="w">	</span><span class="p">}</span><span class="w">
 </span></span></span><span class="line"><span class="cl"><span class="w">	</span><span class="k">return</span><span class="w"> </span><span class="nx">ErrNotAuthorized</span><span class="w">
 </span></span></span><span class="line"><span class="cl"><span class="p">}</span><span class="w">
-</span></span></span></code></pre></div><p><code>NewClient</code> can&rsquo;t return an error the way it&rsquo;s built and I didn&rsquo;t want a constructor that makes network calls anyway,
-so lazy login keeps it cheap. The <code>/access/ticket</code> check is there so a bad password returns <code>ErrNotAuthorized</code> instead
-of recursing.</p>
-<p>Read that <code>c.session == nil</code> condition again though. Once a session exists the client never logs in again, so when the
-ticket hits its two hour limit every call after that comes back <code>ErrNotAuthorized</code>. For a CLI that runs for ten seconds
-that&rsquo;s irrelevant. For something long running, use an API token until I get renewal sorted out.</p>
+</span></span></span></code></pre></div><p><code>NewClient</code> can&rsquo;t return an error the way it&rsquo;s built. I didn&rsquo;t want a constructor that makes network calls anyway, so
+lazy login keeps it cheap. The <code>/access/ticket</code> check is there so a bad password returns <code>ErrNotAuthorized</code> instead of
+recursing.</p>
+<p>Read that <code>c.session == nil</code> condition again though. Once a session exists, the client never logs in again. So when
+the ticket hits its two hour limit, every call after that comes back <code>ErrNotAuthorized</code>. For a CLI that runs for ten
+seconds that&rsquo;s irrelevant. For something long running, use an API token until I get renewal sorted out.</p>
 <h3 id="everything-is-an-option-now">Everything is an option now</h3>
-<p>The other half of this round of work was getting rid of the setters. The client used to have <code>client.Login(user, pass)</code>
-and <code>client.APIToken(id, secret)</code> that you called after <code>NewClient</code>, which meant there was a window where you had a
-client that wasn&rsquo;t configured yet. Now everything goes through functional options:</p>
+<p>The other half of this round of work was getting rid of the setters. The client used to have <code>client.Login(user, pass)</code> and <code>client.APIToken(id, secret)</code> that you called after <code>NewClient</code>. That meant there was a window where you
+had a client that wasn&rsquo;t configured yet. Now everything goes through functional options:</p>
 <div class="highlight"><pre tabindex="0" class="chroma"><code class="language-go" data-lang="go"><span class="line"><span class="cl"><span class="kd">type</span><span class="w"> </span><span class="nx">Option</span><span class="w"> </span><span class="kd">func</span><span class="p">(</span><span class="o">*</span><span class="nx">Client</span><span class="p">)</span><span class="w">
 </span></span></span><span class="line"><span class="cl"><span class="w">
 </span></span></span><span class="line"><span class="cl"><span class="kd">func</span><span class="w"> </span><span class="nf">WithCredentials</span><span class="p">(</span><span class="nx">credentials</span><span class="w"> </span><span class="o">*</span><span class="nx">Credentials</span><span class="p">)</span><span class="w"> </span><span class="nx">Option</span><span class="w"> </span><span class="p">{</span><span class="w">
@@ -374,9 +375,9 @@ client that wasn&rsquo;t configured yet. Now everything goes through functional 
 </span></span></span><span class="line"><span class="cl"><span class="w">		</span><span class="p">}</span><span class="w">
 </span></span></span><span class="line"><span class="cl"><span class="w">	</span><span class="p">}</span><span class="w">
 </span></span></span><span class="line"><span class="cl"><span class="p">}</span><span class="w">
-</span></span></span></code></pre></div><p><code>WithSession</code> is for when something else already did the login, like a web app that is passing through a user&rsquo;s ticket.
-The old <code>Login</code>, <code>APIToken</code>, <code>WithLogins</code> and <code>WithClient</code> are still there with <code>// Deprecated:</code> comments pointing at the
-replacements so nobody&rsquo;s build breaks on the next alpha.</p>
+</span></span></span></code></pre></div><p><code>WithSession</code> is for when something else already did the login, like a web app that is passing through a user&rsquo;s
+ticket. The old <code>Login</code>, <code>APIToken</code>, <code>WithLogins</code> and <code>WithClient</code> are still there. They have <code>// Deprecated:</code>
+comments pointing at the replacements, so nobody&rsquo;s build breaks on the next alpha.</p>
 <p>A token client with a self-signed lab cert looks like this:</p>
 <div class="highlight"><pre tabindex="0" class="chroma"><code class="language-go" data-lang="go"><span class="line"><span class="cl"><span class="nx">insecureHTTPClient</span><span class="w"> </span><span class="o">:=</span><span class="w"> </span><span class="nx">http</span><span class="p">.</span><span class="nx">Client</span><span class="p">{</span><span class="w">
 </span></span></span><span class="line"><span class="cl"><span class="w">	</span><span class="nx">Transport</span><span class="p">:</span><span class="w"> </span><span class="o">&amp;</span><span class="nx">http</span><span class="p">.</span><span class="nx">Transport</span><span class="p">{</span><span class="w">
@@ -396,9 +397,9 @@ replacements so nobody&rsquo;s build breaks on the next alpha.</p>
 </span></span></span><span class="line"><span class="cl"><span class="w">	</span><span class="nb">panic</span><span class="p">(</span><span class="nx">err</span><span class="p">)</span><span class="w">
 </span></span></span><span class="line"><span class="cl"><span class="p">}</span><span class="w">
 </span></span></span><span class="line"><span class="cl"><span class="nx">fmt</span><span class="p">.</span><span class="nf">Println</span><span class="p">(</span><span class="nx">version</span><span class="p">.</span><span class="nx">Release</span><span class="p">)</span><span class="w">
-</span></span></span></code></pre></div><p>Users and their tokens are readable from Go now too (the token list comes back on the user), so the next step is the
-write side: creating a token from a password-based client and handing it to whatever runs unattended. That&rsquo;s how I want
-the integration tests to bootstrap themselves.</p>
+</span></span></span></code></pre></div><p>Users and their tokens are readable from Go now too. The token list comes back on the user. So the next step is the
+write side: creating a token from a password-based client and handing it to whatever runs unattended. That&rsquo;s how I
+want the integration tests to bootstrap themselves.</p>
 <h3 id="links">Links</h3>
 <ul>
 <li><a href="https://github.com/luthermonson/go-proxmox">go-proxmox</a></li>

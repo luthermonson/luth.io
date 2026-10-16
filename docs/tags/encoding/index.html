@@ -218,7 +218,7 @@
       <h2><a href="/blog/2026/07/five-ways-to-url-encode-an-ssh-key/">Five Ways to URL-Encode an SSH Key (and Why Proxmox Rejects Them)</a></h2>
     
     
-      <p>Proxmox&#39;s sshkeys parameter wants Python-style percent encoding that no single Go function produces. A two-year-old issue, a one-line fix, and a related double-encoding bug in guest file writes.</p>
+      <p>Proxmox&#39;s sshkeys parameter wants Python-style percent encoding that no single Go function produces. This covers a two-year-old issue, its one-line fix, and a related double-encoding bug in guest file writes.</p>
     
   </div>
   <div class="meta">
@@ -233,10 +233,10 @@
     <img class="" src="/img/2026/07/five-ways-to-url-encode-an-ssh-key-results.svg" alt="Table of seven ways to encode an SSH public key and whether each passes Proxmox&#39;s urlencoded validator">
   </a>
     
-    <p><a href="https://github.com/luthermonson/go-proxmox/issues/144">Issue #144</a> on go-proxmox was opened in April 2024 with the title
-&ldquo;Weird sshkeys SSH public key validation error&rdquo; and it is one of my less proud threads. Thirteen comments of people,
-including me, trying to get a public key into a cloud-init VM through the API, and the working answer took more than a
-year to show up. The fix that finally landed in May is one line. Here&rsquo;s why it took so long.</p>
+    <p><a href="https://github.com/luthermonson/go-proxmox/issues/144">Issue #144</a> on go-proxmox was opened in April 2024 with the
+title &ldquo;Weird sshkeys SSH public key validation error&rdquo;. It is one of my less proud threads. It&rsquo;s thirteen comments of
+people, including me, trying to get a public key into a cloud-init VM through the API. The working answer took more
+than a year to show up. The fix that finally landed in May is one line. Here&rsquo;s why it took so long.</p>
   </div>
   <footer>
     <a href="/blog/2026/07/five-ways-to-url-encode-an-ssh-key/" class="button big">Read More</a>

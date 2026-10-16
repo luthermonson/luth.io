@@ -218,7 +218,7 @@
       <h2><a href="/blog/2026/08/clustered-sqlite-adding-turso/">Clustered SQLite in ePHPm, Part 2: Adding Turso</a></h2>
     
     
-      <p>Deciding a beta database engine is ready by testing it instead of reading its version number, and replacing both rusqlite and sqld with Turso in ePHPm v0.7.0.</p>
+      <p>How I decided a beta database engine was ready by testing it instead of reading its version number. ePHPm v0.7.0 replaces both rusqlite and sqld with Turso.</p>
     
   </div>
   <div class="meta">
@@ -233,10 +233,10 @@
     <img class="" src="/img/2026/08/clustered-sqlite-adding-turso-four-lanes.svg" alt="Bar chart of four SQLite lanes at 16 concurrent connections: rusqlite and Turso single node, sqld and Turso CDC clustered">
   </a>
     
-    <p><a href="/blog/2026/08/clustered-sqlite-sqld-sidecar/">Part 1</a> ended with ePHPm running two SQLite engines: rusqlite in-process
-for a single node, and an embedded sqld child process for a cluster. The sidecar fell off a cliff past four concurrent
-writers and the best fix I could ship was a semaphore set to 1. This post is about replacing both engines with one, and
-about how I decided that engine was ready.</p>
+    <p><a href="/blog/2026/08/clustered-sqlite-sqld-sidecar/">Part 1</a> ended with ePHPm running two SQLite engines. rusqlite ran
+in-process for a single node, and an embedded sqld child process ran for a cluster. The sidecar fell off a cliff past
+four concurrent writers. The best fix I could ship was a semaphore set to 1. This post is about replacing both engines
+with one, and about how I decided that engine was ready.</p>
   </div>
   <footer>
     <a href="/blog/2026/08/clustered-sqlite-adding-turso/" class="button big">Read More</a>
@@ -299,10 +299,10 @@ about how I decided that engine was ready.</p>
     <img class="" src="/img/2026/08/ephemerd-one-daemon-every-os-arch.svg" alt="ephemerd architecture across Linux, Windows and macOS hosts">
   </a>
     
-    <p>I have CI that needs Linux amd64, Linux arm64, Windows and macOS, and GitHub-hosted runners for all four get expensive fast,
+    <p>I have CI that needs Linux amd64, Linux arm64, Windows and macOS. GitHub-hosted runners for all four get expensive fast,
 especially the arm64 and Mac minutes. Self-hosted runners fix the bill and create a different problem. A stock
-<code>actions/runner</code> on a box you own runs whatever the workflow says, keeps whatever the last job left behind, and is one fork
-PR away from somebody running code on your LAN.</p>
+<code>actions/runner</code> on a box you own runs whatever the workflow says. It keeps whatever the last job left behind. And it&rsquo;s
+one fork PR away from somebody running code on your LAN.</p>
   </div>
   <footer>
     <a href="/blog/2026/08/ephemerd-one-daemon-every-os/" class="button big">Read More</a>
@@ -354,13 +354,13 @@ PR away from somebody running code on your LAN.</p>
       <h2><a href="/blog/2026/08/rolling-your-own-kv-store/">Rolling Your Own KV Store Instead of Embedding Redis</a></h2>
     
     
-      <p>Why ePHPm has its own Redis-compatible cache built in instead of running Redis, a bug that hid in it for four months, and how it compares to real Redis on the same machine.</p>
+      <p>Why ePHPm has its own Redis-compatible cache built in instead of running Redis. It also covers a bug that hid in it for four months and how it compares to real Redis on the same machine.</p>
     
   </div>
   <div class="meta">
     <time datetime="2026-08-17 20:44:00 -0700 PDT">August 17, 2026</time>
     
-    <p>10-Minute Read</p>
+    <p>11-Minute Read</p>
   </div>
 </header>
 
@@ -371,9 +371,9 @@ PR away from somebody running code on your LAN.</p>
     
     <p>Every PHP deployment I&rsquo;ve run eventually grew a Redis. Sessions, the WordPress object cache, Laravel&rsquo;s cache and locks,
 rate limiting. <a href="https://github.com/ephpm/ephpm">ePHPm</a> is supposed to be one binary that replaces nginx + php-fpm +
-Redis, so it needed a cache in the box. I didn&rsquo;t want to write one. This post is why I did anyway, how it&rsquo;s built, the
-bug that sat in its eviction code from March until last month, and how it holds up against a stock Redis on the same
-machine with <code>redis-benchmark</code> doing the&hellip;</p>
+Redis, so it needed a cache in the box. I didn&rsquo;t want to write one. This post covers why I did anyway and how it&rsquo;s
+built. It also covers the bug that sat in its eviction code from March until last month. Then I compare it against a
+stock Redis on the same machine with&hellip;</p>
   </div>
   <footer>
     <a href="/blog/2026/08/rolling-your-own-kv-store/" class="button big">Read More</a>
@@ -425,7 +425,7 @@ machine with <code>redis-benchmark</code> doing the&hellip;</p>
       <h2><a href="/blog/2026/08/faking-mysql-quirks-wordpress/">Faking MySQL&#39;s Quirks Well Enough to Fool WordPress</a></h2>
     
     
-      <p>Passing WordPress&#39;s install tests didn&#39;t mean litewire behaved like MySQL. This is the second round of fixes: the small MySQL behaviors that WordPress and Laravel quietly depend on.</p>
+      <p>Passing WordPress&#39;s install tests didn&#39;t mean litewire behaved like MySQL. This is the second round of fixes, for the small MySQL behaviors that WordPress and Laravel quietly depend on.</p>
     
   </div>
   <div class="meta">
@@ -441,11 +441,8 @@ machine with <code>redis-benchmark</code> doing the&hellip;</p>
   </a>
     
     <p>Last month I wrote about <a href="/blog/2026/07/sqlite-production-database-protocol-translation/">running SQLite behind a MySQL socket</a>
-with <a href="https://github.com/ephpm/litewire">litewire</a>, and ended on &ldquo;passing an install suite is not the same thing as
-behaving like MySQL&rdquo;. That turned out to be accurate. On August 10th a few things happened at once: I put a real
-WordPress 7.0.3 site through a benchmark on ePHPm, A/B tested the new in-process database bridge against the wire path, and started building
-<a href="https://github.com/ephpm/db-wordpress">ephpm/db-wordpress</a>, a <code>wpdb</code> drop-in that talks to the database in-process
-instead of over a&hellip;</p>
+with <a href="https://github.com/ephpm/litewire">litewire</a>. I ended on &ldquo;passing an install suite is not the same thing as
+behaving like MySQL&rdquo;. That turned out to be accurate. On August 10th a few things happened at once:</p>
   </div>
   <footer>
     <a href="/blog/2026/08/faking-mysql-quirks-wordpress/" class="button big">Read More</a>
@@ -495,7 +492,7 @@ instead of over a&hellip;</p>
       <h2><a href="/blog/2026/08/requests-that-end-wrong/">Requests That End Wrong: A 200 That Was Really a Crash</a></h2>
     
     
-      <p>Three ePHPm bugs in how an embedded PHP request starts and ends: a bailout that returned 200, an empty $_POST, and a SIGTERM that corrupted the heap.</p>
+      <p>Three ePHPm bugs lived in how an embedded PHP request starts and ends. A bailout returned 200, $_POST came up empty and a SIGTERM corrupted the heap.</p>
     
   </div>
   <div class="meta">
@@ -510,9 +507,9 @@ instead of over a&hellip;</p>
     <img class="" src="/img/2026/08/requests-that-end-wrong-cover.svg" alt="Diagram of a bare zend_bailout being absorbed by php_execute_script&#39;s own zend_try instead of reaching ePHPm&#39;s guard">
   </a>
     
-    <p>The scariest response a server can send isn&rsquo;t a 500. It&rsquo;s a 200 that should have been a 500. A crash is loud: the
-pod restarts, an alert fires, somebody looks. A truncated page with a success status code gets cached by your CDN,
-the health check calls the box healthy, and a client parses half a document as if it were the whole thing.</p>
+    <p>The scariest response a server can send isn&rsquo;t a 500. It&rsquo;s a 200 that should have been a 500. A crash is loud. The pod
+restarts, an alert fires, somebody looks. A truncated page with a success status code is quiet. Your CDN caches it and
+the health check calls the box healthy. A client parses half a document as if it were the whole thing.</p>
   </div>
   <footer>
     <a href="/blog/2026/08/requests-that-end-wrong/" class="button big">Read More</a>
@@ -575,9 +572,9 @@ the health check calls the box healthy, and a client parses half a document as i
     <img class="" src="/img/2026/08/libxml2-214-php-windows-def-missing-symbols.svg" alt="Bar chart: legacy php_libxml2.def entries missing from libxml2 headers - 0 for 2.11.9 and 2.13.0, 294 for 2.14.0 and 2.15.0">
   </a>
     
-    <p>Back in April I was getting the embed SAPI building on Windows through my fork of
-<a href="https://github.com/crazywhalecc/static-php-cli">static-php-cli</a> (SPC) for <a href="https://github.com/ephpm/ephpm">ePHPm</a>, and the
-link step for <code>php8ts.dll</code> fell over with a wall of errors that all looked like this:</p>
+    <p>Back in April I was getting the embed SAPI building on Windows for <a href="https://github.com/ephpm/ephpm">ePHPm</a>. I was
+using my fork of <a href="https://github.com/crazywhalecc/static-php-cli">static-php-cli</a> (SPC). The link step for
+<code>php8ts.dll</code> fell over with a wall of errors that all looked like this:</p>
   </div>
   <footer>
     <a href="/blog/2026/08/libxml2-2-14-broke-php-windows-builds/" class="button big">Read More</a>
@@ -625,7 +622,7 @@ link step for <code>php8ts.dll</code> fell over with a wall of errors that all l
       <h2><a href="/blog/2026/08/db-connection-pooling-smart-reset/">Database Connection Pooling with Smart Reset</a></h2>
     
     
-      <p>PHP opens a new MySQL connection on every request. ePHPm reuses them and cleans up only the ones that need it. How it works, two bugs it had, and how much load it takes off MySQL.</p>
+      <p>PHP opens a new MySQL connection on every request, but ePHPm reuses them and cleans up only the ones that need it. Here&#39;s how that works, two bugs it had and how much load it takes off MySQL.</p>
     
   </div>
   <div class="meta">
@@ -640,11 +637,11 @@ link step for <code>php8ts.dll</code> fell over with a wall of errors that all l
     <img class="" src="/img/2026/08/db-connection-pooling-smart-reset-cover.svg" alt="PHP request connecting to the ePHPm MySQL proxy, which lends it a pooled backend connection and resets it only if the session was dirtied">
   </a>
     
-    <p>PHP&rsquo;s share-nothing model is one of its best properties and it has one expensive side effect: a request can&rsquo;t keep a
-database connection for the next request. php-fpm gives you <code>PDO::ATTR_PERSISTENT</code> and <code>mysqli</code>&rsquo;s <code>p:</code> hosts, but
-those are per-worker-process, PDO&rsquo;s keep whatever session state the last request left behind (mysqli at least resets
-the session with <code>COM_CHANGE_USER</code> on reuse), and almost nobody turns them on. So in practice every PHP request does a
-TCP connect, a&hellip;</p>
+    <p>PHP&rsquo;s share-nothing model is one of its best properties. It has one expensive side effect: a request can&rsquo;t keep a
+database connection for the next request. php-fpm gives you <code>PDO::ATTR_PERSISTENT</code> and <code>mysqli</code>&rsquo;s <code>p:</code> hosts. But
+those are per-worker-process. PDO&rsquo;s keep whatever session state the last request left behind. mysqli at least resets
+the session with <code>COM_CHANGE_USER</code> on reuse. And almost nobody turns them on. So in practice every PHP request does a
+TCP connect, a MySQL&hellip;</p>
   </div>
   <footer>
     <a href="/blog/2026/08/db-connection-pooling-smart-reset/" class="button big">Read More</a>
@@ -692,13 +689,13 @@ TCP connect, a&hellip;</p>
       <h2><a href="/blog/2026/08/clustered-sqlite-sqld-sidecar/">Clustered SQLite in ePHPm, Part 1: Replication by Sidecar</a></h2>
     
     
-      <p>How ePHPm first made SQLite highly available by embedding sqld as a child process, and the list of things that went wrong with it.</p>
+      <p>ePHPm first made SQLite highly available by embedding sqld as a child process. This is how that worked and the list of things that went wrong with it.</p>
     
   </div>
   <div class="meta">
     <time datetime="2026-08-08 20:14:00 -0700 PDT">August 8, 2026</time>
     
-    <p>8-Minute Read</p>
+    <p>9-Minute Read</p>
   </div>
 </header>
 
@@ -709,9 +706,9 @@ TCP connect, a&hellip;</p>
     
     <p>Most PHP sites I have run in the last twenty years did not need a MySQL server. They needed <em>a</em> database, and MySQL was the
 one every framework spoke. With <a href="https://github.com/ephpm/ephpm">ePHPm</a> I have been trying to get rid of that server for
-the common case, and the piece that makes it possible is <a href="https://github.com/ephpm/litewire">litewire</a>: PHP connects with
-plain <code>pdo_mysql</code>, litewire speaks the MySQL wire protocol, and the queries land in a SQLite file. WordPress and Laravel
-don&rsquo;t know the difference. No <code>mysqld</code>, no child processes, just <code>ephpm</code> and a <code>.db&hellip;</code></p>
+the common case. The piece that makes it possible is <a href="https://github.com/ephpm/litewire">litewire</a>. PHP connects with
+plain <code>pdo_mysql</code>. litewire speaks the MySQL wire protocol, and the queries land in a SQLite file. WordPress and Laravel
+don&rsquo;t know the difference. No <code>mysqld</code>, no child processes, just <code>ephpm</code> and a <code>.db</code> file.</p>
   </div>
   <footer>
     <a href="/blog/2026/08/clustered-sqlite-sqld-sidecar/" class="button big">Read More</a>
@@ -761,7 +758,7 @@ don&rsquo;t know the difference. No <code>mysqld</code>, no child processes, jus
       <h2><a href="/blog/2026/08/ntfs-atomic-file-replacement-not-rename-fsync/">Atomic File Replacement on NTFS Is Not rename &#43; fsync</a></h2>
     
     
-      <p>The Unix recipe for durable atomic file replacement doesn&#39;t translate to Windows. What shipmates uses instead, and the delete-pending window that made an 8-way test fail only when the whole suite ran.</p>
+      <p>The Unix recipe for durable atomic file replacement doesn&#39;t translate to Windows. This is what shipmates uses instead, plus the delete-pending window that made an 8-way test fail only when the whole suite ran.</p>
     
   </div>
   <div class="meta">
@@ -776,11 +773,11 @@ don&rsquo;t know the difference. No <code>mysqld</code>, no child processes, jus
     <img class="" src="/img/2026/09/ntfs-atomic-file-replacement-not-rename-fsync-cover.svg" alt="How long a losing concurrent replacer waits on NTFS, idle disk vs a disk under fsync load">
   </a>
     
-    <p><a href="https://github.com/luthermonson/shipmates">shipmates</a> writes a lot of small state files that other
-processes read: voyage plans and state, tracker files. Each of them has to be replaced atomically (a reader sees
-the old file or the new one, never half of each) and durably (when the function returns success, a power cut doesn&rsquo;t
-take it back). Every Unix programmer knows the recipe for that. It doesn&rsquo;t work on Windows, and the reasons are more
-interesting than &ldquo;Windows is different&rdquo;.</p>
+    <p><a href="https://github.com/luthermonson/shipmates">shipmates</a> writes a lot of small state files that other processes read.
+Voyage plans and state, tracker files. Each of them has to be replaced atomically, so a reader sees the old file or the
+new one and never half of each. Each also has to be replaced durably. When the function returns success, a power cut
+doesn&rsquo;t take it back. Every Unix programmer knows the recipe for that. It doesn&rsquo;t work on Windows, and the reasons are
+more interesting than &ldquo;Windows is different&rdquo;.</p>
   </div>
   <footer>
     <a href="/blog/2026/08/ntfs-atomic-file-replacement-not-rename-fsync/" class="button big">Read More</a>
@@ -828,7 +825,7 @@ interesting than &ldquo;Windows is different&rdquo;.</p>
       <h2><a href="/blog/2026/08/gossip-clustering-for-php/">Gossip-Based Clustering for PHP Apps</a></h2>
     
     
-      <p>How ePHPm servers find each other and share data, what happens when a server joins or leaves, how fast a write reaches the other servers, and a bug I found while measuring it.</p>
+      <p>How ePHPm servers find each other, share data and handle a server joining or leaving. It also measures how fast a write reaches the other servers and covers a bug I found while measuring it.</p>
     
   </div>
   <div class="meta">
@@ -843,10 +840,10 @@ interesting than &ldquo;Windows is different&rdquo;.</p>
     <img class="" src="/img/2026/08/gossip-clustering-php-cover.svg" alt="Three ePHPm nodes: small values replicated to every node over gossip, a large value stored on its owner and one replica over a TCP data plane">
   </a>
     
-    <p>Most PHP developers never touch clustering primitives, and that&rsquo;s by design. PHP is share-nothing: each request starts
-from zero, and anything shared lives somewhere else. Sessions go in Redis, cache goes in Redis or Memcached, locks go in
-Redis, and when you run two app servers the &ldquo;cluster&rdquo; is really two stateless boxes pointed at the same Redis. That works
-until Redis is the thing you&rsquo;re trying not to run.</p>
+    <p>Most PHP developers never touch clustering primitives. That&rsquo;s by design. PHP is share-nothing. Each request starts
+from zero, and anything shared lives somewhere else. Sessions go in Redis. Cache goes in Redis or Memcached. Locks go
+in Redis. When you run two app servers, the &ldquo;cluster&rdquo; is really two stateless boxes pointed at the same Redis. That
+works until Redis is the thing you&rsquo;re trying not to run.</p>
   </div>
   <footer>
     <a href="/blog/2026/08/gossip-clustering-for-php/" class="button big">Read More</a>

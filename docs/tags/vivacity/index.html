@@ -234,10 +234,11 @@
   </a>
     
     <p>The pitch for <a href="https://github.com/ephpm/ephpm">ePHPm</a> is one binary in place of php-fpm, nginx and Redis. There was
-always a hole in it though. To deploy a PHP app you still need to run <code>composer install</code>, and that drags PHP and
-<code>composer.phar</code> back onto the box, or into the container build, just for that one step. <code>ephpm composer install</code> now
+always a hole in it though. To deploy a PHP app you still need to run <code>composer install</code>. That drags PHP and
+<code>composer.phar</code> back onto the box or into the container build, just for that one step. <code>ephpm composer install</code> now
 runs a pure-Rust, Composer-compatible installer called <a href="https://github.com/Adelagric/vivacity">vivacity</a> inside the
-ePHPm binary. One binary serves the app and installs its dependencies, and on Windows that works with no PHP installed&hellip;</p>
+ePHPm binary. One binary serves the app and installs its dependencies. On Windows that works with no PHP installed at
+all.&hellip;</p>
   </div>
   <footer>
     <a href="/blog/2026/10/composer-without-php-vivacity/" class="button big">Read More</a>

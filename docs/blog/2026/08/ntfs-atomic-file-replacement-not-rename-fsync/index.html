@@ -10,14 +10,14 @@
     gtag('config', 'G-MSTSKGFWTX');
 </script><meta charset="utf-8">
 <title>Atomic File Replacement on NTFS Is Not rename &#43; fsync - Luther Monson</title>
-<meta name="description" content="The Unix recipe for durable atomic file replacement doesn&#39;t translate to Windows. What shipmates uses instead, and the delete-pending window that made an 8-way test fail only when the whole suite ran.">
+<meta name="description" content="The Unix recipe for durable atomic file replacement doesn&#39;t translate to Windows. This is what shipmates uses instead, plus the delete-pending window that made an 8-way test fail only when the whole suite ran.">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
 <meta name="twitter:card" content="summary_large_image"><meta name="twitter:site" content="@luthermonson">
 
 <meta property="og:site_name" content="Luther Monson">
 <meta property="og:title" content="Atomic File Replacement on NTFS Is Not rename &#43; fsync">
-<meta property="og:description" content="The Unix recipe for durable atomic file replacement doesn&#39;t translate to Windows. What shipmates uses instead, and the delete-pending window that made an 8-way test fail only when the whole suite ran.">
+<meta property="og:description" content="The Unix recipe for durable atomic file replacement doesn&#39;t translate to Windows. This is what shipmates uses instead, plus the delete-pending window that made an 8-way test fail only when the whole suite ran.">
 <meta property="og:type" content="article">
 <meta property="og:url" content="https://luth.io/blog/2026/08/ntfs-atomic-file-replacement-not-rename-fsync/">
     <meta property="og:image" content="https://luth.io/img/2026/09/ntfs-atomic-file-replacement-not-rename-fsync-cover.svg">
@@ -215,7 +215,7 @@
       <h2><a href="/blog/2026/08/ntfs-atomic-file-replacement-not-rename-fsync/">Atomic File Replacement on NTFS Is Not rename &#43; fsync</a></h2>
     
     
-      <p>The Unix recipe for durable atomic file replacement doesn&#39;t translate to Windows. What shipmates uses instead, and the delete-pending window that made an 8-way test fail only when the whole suite ran.</p>
+      <p>The Unix recipe for durable atomic file replacement doesn&#39;t translate to Windows. This is what shipmates uses instead, plus the delete-pending window that made an 8-way test fail only when the whole suite ran.</p>
     
   </div>
   <div class="meta">
@@ -272,11 +272,11 @@
       </div>
       <div class="content">
         
-        <p><a href="https://github.com/luthermonson/shipmates">shipmates</a> writes a lot of small state files that other
-processes read: voyage plans and state, tracker files. Each of them has to be replaced atomically (a reader sees
-the old file or the new one, never half of each) and durably (when the function returns success, a power cut doesn&rsquo;t
-take it back). Every Unix programmer knows the recipe for that. It doesn&rsquo;t work on Windows, and the reasons are more
-interesting than &ldquo;Windows is different&rdquo;.</p>
+        <p><a href="https://github.com/luthermonson/shipmates">shipmates</a> writes a lot of small state files that other processes read.
+Voyage plans and state, tracker files. Each of them has to be replaced atomically, so a reader sees the old file or the
+new one and never half of each. Each also has to be replaced durably. When the function returns success, a power cut
+doesn&rsquo;t take it back. Every Unix programmer knows the recipe for that. It doesn&rsquo;t work on Windows, and the reasons are
+more interesting than &ldquo;Windows is different&rdquo;.</p>
 <h3 id="the-unix-recipe">The Unix recipe</h3>
 <p>Write the new content to a temp file in the same directory, <code>fsync</code> it, <code>rename</code> it over the target, then <code>fsync</code> the
 <em>directory</em>:</p>
@@ -296,24 +296,28 @@ interesting than &ldquo;Windows is different&rdquo;.</p>
 </span></span></span><span class="line"><span class="cl"><span class="w">	</span><span class="p">}</span><span class="w">
 </span></span></span><span class="line"><span class="cl"><span class="w">	</span><span class="k">return</span><span class="w"> </span><span class="nx">d</span><span class="p">.</span><span class="nf">Close</span><span class="p">()</span><span class="w">
 </span></span></span><span class="line"><span class="cl"><span class="p">}</span><span class="w">
-</span></span></span></code></pre></div><p>The directory fsync is the step people forget. <code>rename(2)</code> is atomic for other observers, but the new directory entry is
-just metadata in the page cache until the directory itself is flushed, and ext4&rsquo;s default <code>data=ordered</code> doesn&rsquo;t promise
+</span></span></span></code></pre></div><p>The directory fsync is the step people forget. <code>rename(2)</code> is atomic for other observers. But the new directory entry
+is just metadata in the page cache until the directory itself is flushed. ext4&rsquo;s default <code>data=ordered</code> doesn&rsquo;t promise
 otherwise. Crash between the rename and the flush and you can lose a file you reported as written.</p>
 <h3 id="neither-half-translates">Neither half translates</h3>
-<p>On Windows, <code>os.Rename</code> is <code>MoveFileEx</code> with <code>MOVEFILE_REPLACE_EXISTING</code> and without <code>MOVEFILE_WRITE_THROUGH</code>, so it can
+<p>On Windows, <code>os.Rename</code> is <code>MoveFileEx</code> with <code>MOVEFILE_REPLACE_EXISTING</code> and without <code>MOVEFILE_WRITE_THROUGH</code>. It can
 return before the change reaches the disk. Fine, flush the directory afterwards like on Unix. Except a straight port
 doesn&rsquo;t:</p>
 <pre tabindex="0"><code>1) dir.Sync(): sync .\ntfs-4015850362: Access is denied.
 </code></pre><p>That&rsquo;s <code>os.Open</code> on a directory followed by <code>Sync()</code>, on NTFS, Windows 11, Go 1.26.5. <code>Sync()</code> is <code>FlushFileBuffers</code>,
-which requires a handle with <code>GENERIC_WRITE</code>, and <code>os.Open</code> hands you a read-only one. NTFS itself is fine with flushing
-a directory: open it yourself with <code>CreateFile</code>, <code>GENERIC_READ|GENERIC_WRITE</code> and <code>FILE_FLAG_BACKUP_SEMANTICS</code>, and
-<code>FlushFileBuffers</code> on that handle succeeds. I checked both on this box: the read-only handle gets error 5, the
-read-write one flushes. So the portable code, as written, has two bad options: ignore the error and silently drop the
-durability guarantee, or return it and report failure for a write that actually landed. The working version is
-Windows-only code with its own <code>CreateFile</code> call, and once you&rsquo;re writing Windows-only code there&rsquo;s a better primitive.</p>
+which requires a handle with <code>GENERIC_WRITE</code>. <code>os.Open</code> hands you a read-only one. NTFS itself is fine with flushing a
+directory. Open it yourself with <code>CreateFile</code>, <code>GENERIC_READ|GENERIC_WRITE</code> and <code>FILE_FLAG_BACKUP_SEMANTICS</code>, and
+<code>FlushFileBuffers</code> on that handle succeeds. I checked both on this box. The read-only handle gets error 5 and the
+read-write one flushes. So the portable code, as written, has two bad options:</p>
+<ul>
+<li>ignore the error and silently drop the durability guarantee</li>
+<li>return it and report failure for a write that landed</li>
+</ul>
+<p>The working version is Windows-only code with its own <code>CreateFile</code> call. Once you&rsquo;re writing Windows-only code there&rsquo;s a
+better primitive.</p>
 <h3 id="one-call-instead-of-two">One call instead of two</h3>
 <p>Windows has a primitive that covers both halves. <code>MOVEFILE_WRITE_THROUGH</code> is documented to not return until the move
-has been flushed to disk, and on NTFS a rename is a single logged metadata transaction, so flushing it commits the new
+has been flushed to disk. On NTFS a rename is a single logged metadata transaction, so flushing it commits the new
 directory entry along with it. From <a href="https://github.com/luthermonson/shipmates/commit/416665e"><code>416665e</code></a>:</p>
 <div class="highlight"><pre tabindex="0" class="chroma"><code class="language-go" data-lang="go"><span class="line"><span class="cl"><span class="cp">//go:build windows</span><span class="w">
 </span></span></span><span class="line"><span class="cl"><span class="w">
@@ -339,32 +343,34 @@ directory entry along with it. From <a href="https://github.com/luthermonson/shi
 </span></span></span><span class="line"><span class="cl"><span class="w">		</span><span class="nx">time</span><span class="p">.</span><span class="nf">Sleep</span><span class="p">(</span><span class="mi">5</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="nx">time</span><span class="p">.</span><span class="nx">Millisecond</span><span class="p">)</span><span class="w">
 </span></span></span><span class="line"><span class="cl"><span class="w">	</span><span class="p">}</span><span class="w">
 </span></span></span><span class="line"><span class="cl"><span class="p">}</span><span class="w">
-</span></span></span></code></pre></div><p>Where Unix needs two ordered operations to make one rename durable, Windows needs one, and no extra handle to the
-directory. Both paths have to be on the same
-volume: across volumes, <code>MoveFileEx</code> degrades to copy-then-delete, which is neither atomic nor what any caller wants.
-Every caller in shipmates stages its temp file in the destination directory, so that holds.</p>
+</span></span></span></code></pre></div><p>Unix needs two ordered operations to make one rename durable. Windows needs one, and no extra handle to the directory.
+Both paths have to be on the same volume. Across volumes, <code>MoveFileEx</code> degrades to copy-then-delete, which is neither
+atomic nor what any caller wants. Every caller in shipmates stages its temp file in the destination directory, so that
+holds.</p>
 <p>That retry loop is the second half of the story.</p>
 <h3 id="losing-a-race-on-ntfs">Losing a race on NTFS</h3>
-<p>Voyage state publication in shipmates is deliberately retry-idempotent, so it&rsquo;s legal for several processes to publish
-the same successor state at once. <code>TestMigrateSuccessorConcurrentPublicationAndAtomicRetry</code> does exactly that, eight
+<p>Voyage state publication in shipmates is deliberately retry-idempotent. It&rsquo;s legal for several processes to publish the
+same successor state at once. <code>TestMigrateSuccessorConcurrentPublicationAndAtomicRetry</code> does exactly that, with eight
 goroutines racing <code>MigrateSuccessor</code> onto the same output path.</p>
-<p>On Unix the losers just replace the winner&rsquo;s file, which is fine, it has the same content. On NTFS the replace-existing
-path has to get rid of the old target, and while the winner&rsquo;s replace is in flight the old file sits in a
-<em>delete-pending</em> state. A loser that shows up during that window doesn&rsquo;t wait, it fails with <code>ERROR_ACCESS_DENIED</code> (or
+<p>On Unix the losers just replace the winner&rsquo;s file. That&rsquo;s fine because it has the same content. On NTFS the
+replace-existing path has to get rid of the old target. While the winner&rsquo;s replace is in flight the old file sits in a
+<em>delete-pending</em> state. A loser that shows up during that window doesn&rsquo;t wait. It fails with <code>ERROR_ACCESS_DENIED</code> (or
 <code>ERROR_SHARING_VIOLATION</code>).</p>
-<p>To see how common that is, I wrote a small experiment: 200 rounds of eight goroutines, each with its own staged and
-fsynced 4 KiB temp file, released at once to <code>MoveFileEx(REPLACE_EXISTING|WRITE_THROUGH)</code> onto the same target, no
-retries:</p>
+<p>To see how common that is, I wrote a small experiment. It runs 200 rounds of eight goroutines. Each one has its own
+staged and fsynced 4 KiB temp file. They&rsquo;re released at once to <code>MoveFileEx(REPLACE_EXISTING|WRITE_THROUGH)</code> onto the
+same target, with no retries:</p>
 <pre tabindex="0"><code>3) 200 rounds x 8 concurrent replacers, no retry:
    ok                           442 (27.6%)
    ERROR_ACCESS_DENIED         1158 (72.4%)
 </code></pre><p>A second run gave 386 ok and 1214 <code>ERROR_ACCESS_DENIED</code> (75.9%). So with eight concurrent replacers, roughly three out
-of four lose. That&rsquo;s why <code>DurableRename</code> treats exactly those two errors as transient and retries. Anything else, or the
-same errors past the deadline, is a real error and comes back to the caller. A genuine permission problem still surfaces.</p>
+of four lose. That&rsquo;s why <code>DurableRename</code> treats exactly those two errors as transient and retries. Anything else is a
+real error and comes back to the caller. So do the same errors past the deadline. A genuine permission problem still
+surfaces.</p>
 <h3 id="two-seconds-wasnt-enough">Two seconds wasn&rsquo;t enough</h3>
-<p>The original deadline in both <code>DurableRename</code> and voyage&rsquo;s <code>PublishSuccessor</code> was 2 seconds, and the 8-way test passed on its own. It failed with <code>Access is denied</code> only when the whole repository&rsquo;s tests ran at
-once. <a href="https://github.com/luthermonson/shipmates/commit/144af92"><code>144af92</code></a> explains why: the delete-pending window lasts
-as long as the winner&rsquo;s fsync-heavy write takes, and under a fully loaded test suite that was observed above <strong>9
+<p>The original deadline in both <code>DurableRename</code> and voyage&rsquo;s <code>PublishSuccessor</code> was 2 seconds. The 8-way test passed on
+its own. It failed with <code>Access is denied</code> only when the whole repository&rsquo;s tests ran at once.
+<a href="https://github.com/luthermonson/shipmates/commit/144af92"><code>144af92</code></a> explains why. The delete-pending window lasts as
+long as the winner&rsquo;s fsync-heavy write takes. Under a fully loaded test suite that was observed above <strong>9
 seconds</strong>. The fix bumped <code>DurableRename</code> to 15 s and <code>PublishSuccessor</code> to 60 s, still only for classified contention
 errors:</p>
 <div class="highlight"><pre tabindex="0" class="chroma"><code class="language-go" data-lang="go"><span class="line"><span class="cl"><span class="kd">func</span><span class="w"> </span><span class="nf">PublishSuccessor</span><span class="p">(</span><span class="nx">path</span><span class="w"> </span><span class="kt">string</span><span class="p">,</span><span class="w"> </span><span class="nx">state</span><span class="w"> </span><span class="o">*</span><span class="nx">State</span><span class="p">,</span><span class="w"> </span><span class="nx">plan</span><span class="w"> </span><span class="o">*</span><span class="nx">Plan</span><span class="p">,</span><span class="w"> </span><span class="nx">hash</span><span class="w"> </span><span class="kt">string</span><span class="p">)</span><span class="w"> </span><span class="p">(</span><span class="o">*</span><span class="nx">State</span><span class="p">,</span><span class="w"> </span><span class="kt">error</span><span class="p">)</span><span class="w"> </span><span class="p">{</span><span class="w">
@@ -374,9 +380,9 @@ errors:</p>
 </span></span></span><span class="line"><span class="cl"><span class="w">		</span><span class="k">if</span><span class="w"> </span><span class="nx">err</span><span class="w"> </span><span class="o">==</span><span class="w"> </span><span class="kc">nil</span><span class="w"> </span><span class="o">||</span><span class="w"> </span><span class="p">!</span><span class="nf">transientFSContention</span><span class="p">(</span><span class="nx">err</span><span class="p">)</span><span class="w"> </span><span class="o">||</span><span class="w"> </span><span class="nx">time</span><span class="p">.</span><span class="nf">Now</span><span class="p">().</span><span class="nf">After</span><span class="p">(</span><span class="nx">deadline</span><span class="p">)</span><span class="w"> </span><span class="p">{</span><span class="w">
 </span></span></span><span class="line"><span class="cl"><span class="w">			</span><span class="c1">// ...</span><span class="w">
 </span></span></span></code></pre></div><p>On Unix <code>transientFSContention</code> is simply <code>return false</code>.</p>
-<p>I wanted to see the window move with disk load on my own box, so the experiment&rsquo;s last part runs the same 8-way race
-with the retry loop (15 s deadline, 5 ms sleep) and records how long each process waited before its replace succeeded.
-Fifty rounds on an idle disk, then fifty more while 16 goroutines write, fsync and delete 1 MiB files in the same
+<p>I wanted to see the window move with disk load on my own box. The experiment&rsquo;s last part runs the same 8-way race with
+the retry loop (15 s deadline, 5 ms sleep). It records how long each process waited before its replace succeeded. I ran
+fifty rounds on an idle disk. Then I ran fifty more while 16 goroutines write, fsync and delete 1 MiB files in the same
 directory:</p>
 <p><img src="/img/2026/09/ntfs-atomic-file-replacement-not-rename-fsync-cover.svg" alt="Wait for a losing replacer, idle vs loaded disk"></p>
 <pre tabindex="0"><code>4) retry loop,  0 background fsync writers: n=400 failed=0 p50=14.523ms p99=38.7054ms max=39.3047ms
@@ -385,35 +391,41 @@ directory:</p>
 <pre tabindex="0"><code>4) retry loop,  0 background fsync writers: n=400 failed=0 p50=15.3158ms p99=134.9333ms max=204.3097ms
 4) retry loop, 16 background fsync writers: n=400 failed=0 p50=51.0538ms p99=1.7362467s max=4.486713s
 </code></pre><p>On an idle disk the worst wait was 39 ms in one run and 204 ms in the other. With the disk busy, the tail went past 4
-seconds in both runs, more than double the old 2 second deadline. My 16-writer load is a toy next to a full <code>go test ./...</code>
-on a big repo, so the 9 second observation from the commit doesn&rsquo;t surprise me. The median barely moves, which is exactly
-why this hid: most of the time the window is short, and a deadline sized from &ldquo;most of the time&rdquo; fails under load.</p>
+seconds in both runs. That&rsquo;s more than double the old 2 second deadline. My 16-writer load is a toy next to a full
+<code>go test ./...</code> on a big repo. So the 9 second observation from the commit doesn&rsquo;t surprise me. The median barely
+moves, which is exactly why this hid. Most of the time the window is short. A deadline sized from &ldquo;most of the time&rdquo;
+fails under load.</p>
 <h3 id="what-about-the-cost-of-write-through">What about the cost of write-through?</h3>
-<p>I also timed 500 renames each way with the same staging work. At the median I couldn&rsquo;t separate them (about 0.52 ms
-each in the first run; the second run&rsquo;s plain-rename median landed below the timer&rsquo;s resolution). Write-through had
-the fatter tail in both runs (p99 1.05 ms vs 0.67 ms, then 19 ms vs 1 ms), but at this scale and with this timer that&rsquo;s
-not a number I&rsquo;d hang much on. For small state files that are written once per task, write-through isn&rsquo;t the
-thing to optimize.</p>
+<p>I also timed 500 renames each way with the same staging work. At the median I couldn&rsquo;t separate them. Both were about
+0.52 ms in the first run. The second run&rsquo;s plain-rename median landed below the timer&rsquo;s resolution. Write-through had
+the fatter tail in both runs (p99 1.05 ms vs 0.67 ms, then 19 ms vs 1 ms). At this scale and with this timer that&rsquo;s not
+a number I&rsquo;d hang much on. For small state files that are written once per task, write-through isn&rsquo;t the thing to
+optimize.</p>
 <h3 id="takeaways">Takeaways</h3>
 <ul>
 <li>On Windows, durable atomic replace is one call: <code>MoveFileEx(MOVEFILE_REPLACE_EXISTING | MOVEFILE_WRITE_THROUGH)</code>.
-Don&rsquo;t port the directory fsync: <code>os.Open(dir).Sync()</code> fails with <code>Access is denied</code>, and making it work means opening
-the directory for write with <code>FILE_FLAG_BACKUP_SEMANTICS</code>, which you don&rsquo;t need.</li>
+Don&rsquo;t port the directory fsync. <code>os.Open(dir).Sync()</code> fails with <code>Access is denied</code>. Making it work means opening the
+directory for write with <code>FILE_FLAG_BACKUP_SEMANTICS</code>, which you don&rsquo;t need.</li>
 <li>Concurrent replacers of one file on NTFS see <code>ERROR_ACCESS_DENIED</code> / <code>ERROR_SHARING_VIOLATION</code> from the winner&rsquo;s
 delete-pending file. Retry those two specifically, and nothing else.</li>
 <li>Size retry windows for a saturated disk, not an idle one. If a test fails only when the whole suite runs, the suite is
 the load test you didn&rsquo;t know you had.</li>
 </ul>
 <h3 id="how-i-measured">How I measured</h3>
-<p>A standalone Go program (Go 1.26.5, <code>golang.org/x/sys/windows</code>) on Windows 11 Pro, AMD Ryzen 9 5950X, 128 GB RAM, with
-the files on the system NTFS volume (an ADATA LEGEND 860 SSD) under my user temp directory. The program creates a fresh directory, then:
-(1) <code>os.Open(dir).Sync()</code>; (2) 500 staged 4 KiB replacements each with <code>MOVEFILE_REPLACE_EXISTING</code> and with
-<code>|MOVEFILE_WRITE_THROUGH</code>, timing only the <code>MoveFileEx</code> call; (3) 200 rounds of 8 goroutines replacing the same target
-with no retry; (4) 50 rounds of the same race with <code>DurableRename</code>&rsquo;s retry loop, first with no background load and then
-with 16 goroutines continuously writing, fsyncing and deleting 1 MiB files in the same directory. I ran it twice
-back to back; both runs are shown above. Separately, I opened a directory with <code>CreateFileW</code> and
-<code>FILE_FLAG_BACKUP_SEMANTICS</code> twice, once <code>GENERIC_READ</code> and once <code>GENERIC_READ|GENERIC_WRITE</code>, and called
-<code>FlushFileBuffers</code> on each: the first fails with error 5, the second succeeds.</p>
+<p>A standalone Go program (Go 1.26.5, <code>golang.org/x/sys/windows</code>) on Windows 11 Pro, AMD Ryzen 9 5950X, 128 GB RAM. The
+files were on the system NTFS volume (an ADATA LEGEND 860 SSD) under my user temp directory. The program creates a
+fresh directory, then runs four steps:</p>
+<ol>
+<li><code>os.Open(dir).Sync()</code>.</li>
+<li>500 staged 4 KiB replacements each with <code>MOVEFILE_REPLACE_EXISTING</code> and with <code>|MOVEFILE_WRITE_THROUGH</code>, timing only
+the <code>MoveFileEx</code> call.</li>
+<li>200 rounds of 8 goroutines replacing the same target with no retry.</li>
+<li>50 rounds of the same race with <code>DurableRename</code>&rsquo;s retry loop. First with no background load, then with 16 goroutines
+continuously writing, fsyncing and deleting 1 MiB files in the same directory.</li>
+</ol>
+<p>I ran it twice back to back. Both runs are shown above. Separately, I opened a directory with <code>CreateFileW</code> and
+<code>FILE_FLAG_BACKUP_SEMANTICS</code> twice, once <code>GENERIC_READ</code> and once <code>GENERIC_READ|GENERIC_WRITE</code>. Then I called
+<code>FlushFileBuffers</code> on each. The first fails with error 5 and the second succeeds.</p>
 <h3 id="links">Links</h3>
 <ul>
 <li><a href="https://github.com/luthermonson/shipmates/commit/416665e"><code>416665e</code></a>: <code>DurableRename</code></li>

@@ -218,7 +218,7 @@
       <h2><a href="/blog/2026/06/go-proxmox-endpoint-coverage/">From 52% to 100%: Measuring a Go Client Against the Proxmox API Schema</a></h2>
     
     
-      <p>A stdlib-only mage target that pulls Proxmox&#39;s own API schema, regex-scans go-proxmox for HTTP call sites, and reports coverage. The tool was wrong more often than the code was.</p>
+      <p>I built a stdlib-only mage target that pulls Proxmox&#39;s own API schema and regex-scans go-proxmox for HTTP call sites to report coverage. The tool was wrong more often than the code was.</p>
     
   </div>
   <div class="meta">
@@ -234,9 +234,9 @@
   </a>
     
     <p>For five years the honest answer to &ldquo;how much of the Proxmox API does go-proxmox cover?&rdquo; was &ldquo;a lot of it? the parts
-people asked for?&rdquo;. Issues would come in for endpoints that didn&rsquo;t exist in the client and I&rsquo;d have no idea how many more
-were missing. At the end of May I finally built the thing that answers the question, and three days after the first run the
-answer was 100%. The more interesting part is how many times the measuring stick was wrong on the way&hellip;</p>
+people asked for?&rdquo;. Issues would come in for endpoints that didn&rsquo;t exist in the client. I&rsquo;d have no idea how many more
+were missing. At the end of May I finally built the thing that answers the question. Three days after the first run the
+answer was 100%. The more interesting part is how many times the measuring stick was wrong on the way there.</p>
   </div>
   <footer>
     <a href="/blog/2026/06/go-proxmox-endpoint-coverage/" class="button big">Read More</a>
@@ -298,9 +298,9 @@ answer was 100%. The more interesting part is how many times the measuring stick
   </a>
     
     <p>Proxmox&rsquo;s built-in cloud-init support is fine for the basics: a user, an SSH key, an IP config. It falls apart the second you
-want your own <code>user-data</code>, <code>vendor-data</code> or a real <code>network-config</code>, because the GUI and the <code>ci*</code> options only expose a
-handful of fields, and the escape hatch (<code>cicustom</code> pointing at snippet files) means getting files onto the Proxmox host&rsquo;s
-filesystem first. The usual alternative is building a nocloud ISO yourself with <code>genisoimage</code> or <code>mkisofs</code>, which means a
+want your own <code>user-data</code>, <code>vendor-data</code> or a real <code>network-config</code>. The GUI and the <code>ci*</code> options only expose a handful of
+fields. The escape hatch is <code>cicustom</code> pointing at snippet files, and that means getting files onto the Proxmox host&rsquo;s
+filesystem first. The usual alternative is building a nocloud ISO yourself with <code>genisoimage</code> or <code>mkisofs</code>. That means a
 system&hellip;</p>
   </div>
   <footer>
@@ -365,10 +365,9 @@ system&hellip;</p>
   </a>
     
     <p>Back in 2023 I wrote up <a href="/blog/2023/08/proxmox-api-auth-tickets-tokens-go/">how go-proxmox logs in</a> and ended it with a
-shrug: once a session existed the client never logged in again, so a ticket-based client died at the two hour mark and
-my advice was &ldquo;use an API token for anything long running&rdquo;. It took until this month to actually fix that properly, and
-it took three PRs from two of us to get there. Here&rsquo;s the whole arc, plus the one place where an API token
-isn&rsquo;t an option at all.</p>
+shrug. Once a session existed the client never logged in again. A ticket-based client died at the two hour mark. My
+advice was &ldquo;use an API token for anything long running&rdquo;. It took until this month to fix that properly. It took three
+PRs from two of us to get there. Here&rsquo;s the whole arc, plus the one place where an API token isn&rsquo;t an option at all.</p>
   </div>
   <footer>
     <a href="/blog/2026/05/staying-logged-in-to-proxmox/" class="button big">Read More</a>
@@ -414,7 +413,7 @@ isn&rsquo;t an option at all.</p>
       <h2><a href="/blog/2026/05/go-diskfs-rock-ridge-joliet-windows/">go-diskfs: Getting Rock Ridge Working for Joliet on Windows</a></h2>
     
     
-      <p>Fixing Rock Ridge, adding Joliet, and then finding out what Windows actually wanted, all so a Go-built cloud-init ISO works for cloudbase-init.</p>
+      <p>I fixed Rock Ridge and added Joliet to go-diskfs so a Go-built cloud-init ISO works for cloudbase-init. Then I found out what Windows actually wanted.</p>
     
   </div>
   <div class="meta">
@@ -431,7 +430,7 @@ isn&rsquo;t an option at all.</p>
     
     <p><a href="https://github.com/luthermonson/go-proxmox">go-proxmox</a> has had a <code>CloudInit()</code> helper since 2023. It builds a small
 nocloud ISO in Go, uploads it to Proxmox and mounts it on the VM as a CD-ROM. It&rsquo;s always worked fine for Linux guests. It
-has never worked for Windows guests running <a href="https://cloudbase.it/cloudbase-init/">cloudbase-init</a>, and the reason is a
+has never worked for Windows guests running <a href="https://cloudbase.it/cloudbase-init/">cloudbase-init</a>. The reason is a
 filesystem extension from 1995 called Joliet.</p>
   </div>
   <footer>
@@ -484,7 +483,7 @@ filesystem extension from 1995 called Joliet.</p>
       <h2><a href="/blog/2024/02/goodhosts/">Maintaining a Go Tool That Edits /etc/hosts on Every OS</a></h2>
     
     
-      <p>Notes from maintaining goodhosts, the hosts file CLI and Go library behind vagrant-goodhosts and ddev: Windows quirks, a HostsPerLine bug, and making the CLI testable.</p>
+      <p>Notes from maintaining goodhosts, the hosts file CLI and Go library behind vagrant-goodhosts and ddev. It covers Windows quirks, a HostsPerLine bug, and making the CLI testable.</p>
     
   </div>
   <div class="meta">
@@ -500,10 +499,10 @@ filesystem extension from 1995 called Joliet.</p>
   </a>
     
     <p>Editing the hosts file sounds like the most boring problem in software. Read a text file, add a line, write it back. Then you find out
-your binary is being shelled out to from a Ruby Vagrant plugin on a Windows laptop with UAC prompts, your library is being called in a
-loop by <a href="https://github.com/ddev/ddev">ddev</a>, and every hosts file you parse was hand-edited by somebody at some point.
-I&rsquo;ve been maintaining <a href="https://github.com/goodhosts">goodhosts</a> for a few years now, and since I just spent a chunk of the fall and the
-holidays on it, here&rsquo;s&hellip;</p>
+your binary is being shelled out to from a Ruby Vagrant plugin on a Windows laptop with UAC prompts. Your library is being called in a
+loop by <a href="https://github.com/ddev/ddev">ddev</a>. And every hosts file you parse was hand-edited by somebody at some point. I&rsquo;ve been
+maintaining <a href="https://github.com/goodhosts">goodhosts</a> for a few years now. I just spent a chunk of the fall and the holidays on it, so
+here&rsquo;s what that&hellip;</p>
   </div>
   <footer>
     <a href="/blog/2024/02/goodhosts/" class="button big">Read More</a>
@@ -551,7 +550,7 @@ holidays on it, here&rsquo;s&hellip;</p>
       <h2><a href="/blog/2023/11/proxmox-doesnt-know-what-type-a-number-is/">Proxmox Doesn&#39;t Know What Type a Number Is</a></h2>
     
     
-      <p>The Proxmox VE API returns the same field as 1234 in one place and &#34;1234&#34; in another. Why go-proxmox has StringOrInt, StringOrUint64, StringOrFloat64 and IntOrBool instead of plain Go types.</p>
+      <p>The Proxmox VE API returns the same field as 1234 in one place and &#34;1234&#34; in another. This is why go-proxmox has StringOrInt, StringOrUint64, StringOrFloat64 and IntOrBool instead of plain Go types.</p>
     
   </div>
   <div class="meta">
@@ -566,11 +565,11 @@ holidays on it, here&rsquo;s&hellip;</p>
     <img class="" src="/img/2022/02/proxmox-logo.png" alt="Proxmox VE Logo">
   </a>
     
-    <p>Every couple of months somebody opens an issue on <a href="https://github.com/luthermonson/go-proxmox">go-proxmox</a> with a title
-that starts with <code>json: cannot unmarshal string into Go struct field</code>. The most recent one was fixed last week, and it&rsquo;s the same
-root cause every time: the Proxmox VE API is backed by Perl, Perl doesn&rsquo;t really care whether a scalar is a number or a
-string, and the JSON encoder on the other end writes whatever the scalar happens to be at the time. So a field that is
-documented as an integer comes back as <code>2048&hellip;</code></p>
+    <p>Every couple of months somebody opens an issue on <a href="https://github.com/luthermonson/go-proxmox">go-proxmox</a> with a
+title that starts with <code>json: cannot unmarshal string into Go struct field</code>. The most recent one was fixed last week.
+It&rsquo;s the same root cause every time. The Proxmox VE API is backed by Perl, and Perl doesn&rsquo;t really care whether a
+scalar is a number or a string. The JSON encoder on the other end writes whatever the scalar happens to be at the time.
+So a field that is documented as an integer comes back as <code>2048</code> from&hellip;</p>
   </div>
   <footer>
     <a href="/blog/2023/11/proxmox-doesnt-know-what-type-a-number-is/" class="button big">Read More</a>
@@ -614,7 +613,7 @@ documented as an integer comes back as <code>2048&hellip;</code></p>
       <h2><a href="/blog/2023/08/proxmox-api-auth-tickets-tokens-go/">Logging In to Proxmox From Go: Tickets, CSRF Tokens and API Tokens</a></h2>
     
     
-      <p>The two ways to authenticate against the Proxmox VE API, how go-proxmox handles each one, and why the client is now configured entirely with functional options.</p>
+      <p>Proxmox VE has two ways to authenticate against its API. Here&#39;s how go-proxmox handles each one and why the client is now configured entirely with functional options.</p>
     
   </div>
   <div class="meta">
@@ -629,9 +628,9 @@ documented as an integer comes back as <code>2048&hellip;</code></p>
     <img class="" src="/img/2023/08/proxmox-api-auth-tickets-tokens-go-flow.svg" alt="Diagram of the ticket login flow and the API token header for the Proxmox VE API">
   </a>
     
-    <p>I just spent a week of evenings on the access side of <a href="https://github.com/luthermonson/go-proxmox">go-proxmox</a>: realms,
-groups, users and roles all landed, and before any of that I reworked how a client gets its credentials in
-the first place. Proxmox gives you two different ways to authenticate and they behave differently enough that it&rsquo;s worth
+    <p>I just spent a week of evenings on the access side of <a href="https://github.com/luthermonson/go-proxmox">go-proxmox</a>.
+Realms, groups, users and roles all landed. Before any of that, I reworked how a client gets its credentials in the
+first place. Proxmox gives you two different ways to authenticate. They behave differently enough that it&rsquo;s worth
 writing down how each one works on the wire and what the client does with it.</p>
   </div>
   <footer>
@@ -691,10 +690,10 @@ writing down how each one works on the wire and what the client does with it.</p
     <img class="" src="/img/2022/03/proxmox-tasks-upid-wait-go-anatomy.svg" alt="Diagram breaking a Proxmox UPID string into node, pid, pstart, starttime, type, id and user">
   </a>
     
-    <p>If you start automating <a href="https://www.proxmox.com/en/">Proxmox VE</a> through the API, the first thing that trips you up is
-that almost nothing you ask it to do is finished when the HTTP call returns. Start a VM, clone a template, download an
-ISO to storage, delete a disk&hellip; the response is a single string that looks like a typo and the actual work is happening
-in a worker process on the node. If your next call depends on that work being done you have to go find out when it&rsquo;s done.</p>
+    <p>If you start automating <a href="https://www.proxmox.com/en/">Proxmox VE</a> through the API, one thing trips you up first.
+Almost nothing you ask it to do is finished when the HTTP call returns. Start a VM, clone a template, download an ISO
+to storage, delete a disk&hellip; the response is a single string that looks like a typo. The actual work is happening in a
+worker process on the node. If your next call depends on that work being done, you have to go find out when it&rsquo;s done.</p>
   </div>
   <footer>
     <a href="/blog/2022/03/proxmox-tasks-upid-wait-go/" class="button big">Read More</a>
@@ -755,8 +754,8 @@ in a worker process on the node. If your next call depends on that work being do
     
     <p>Part of a hobby of mine is running a home lab and using on <a href="https://www.proxmox.com/en/">Proxmox VE</a> to do the virtualization.
 Since I work in the space I&rsquo;m slowly trying to build tooling around Proxmox that will let me use the home lab full time for work.
-Usually my work involves building Kubernetes management tooling, you can imagine waiting for public cloud APIs all day
-can take away hours of your day at cost to your employer for both your time and the compute resources.</p>
+Usually my work involves building Kubernetes management tooling. You can imagine waiting for public cloud APIs all day
+can take away hours of your day. That&rsquo;s at cost to your employer for both your time and the compute resources.</p>
   </div>
   <footer>
     <a href="/blog/2022/02/recreating-proxmox-ve-xtermjs-in-go/" class="button big">Read More</a>
@@ -813,11 +812,11 @@ can take away hours of your day at cost to your employer for both your time and 
   <div class="content">
     
     
-    <p>I recently had to spend some time to learn <a href="https://cuelang.org/">Cue</a> and felt the examples/tutorials were a bit lacking
-and the paradigm shift to the entire language sort of messed with my head and some things Cue does were a bit foreign to me.
-To get started, note that the two places I spent all of my time to get this information came from their main <a href="https://cuelang.org/docs/">docs</a>
-and a community <a href="https://cuetorials.com/">Cuetorials</a> site. This will be a tutorial on how you can use Cue to generate
-two different YAML documents using Cue all starting with Go types to&hellip;</p>
+    <p>I recently had to spend some time to learn <a href="https://cuelang.org/">Cue</a> and felt the examples/tutorials were a bit lacking.
+The paradigm shift to the entire language sort of messed with my head, and some things Cue does were a bit foreign to me.
+To get started, note that I spent all of my time getting this information from two places: their main
+<a href="https://cuelang.org/docs/">docs</a> and a community <a href="https://cuetorials.com/">Cuetorials</a> site. This will be a tutorial on
+how you can use Cue to generate two different YAML documents, all starting with Go types to generate Cue files.</p>
   </div>
   <footer>
     <a href="/blog/2022/01/practical-cue-example/" class="button big">Read More</a>

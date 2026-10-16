@@ -218,7 +218,7 @@
       <h2><a href="/blog/2026/10/webhooks-out-of-order-scheduler/">Webhooks Arrive Out of Order: How My Scheduler Killed Live Builds</a></h2>
     
     
-      <p>ephemerd&#39;s orphan sweep trusted webhook history over reality and destroyed a runner mid-build. The fix: rules only nominate, and a live busy check gets a veto.</p>
+      <p>ephemerd&#39;s orphan sweep trusted webhook history over reality and destroyed a runner mid-build. Now the rules only nominate, and a live busy check gets a veto.</p>
     
   </div>
   <div class="meta">
@@ -233,10 +233,10 @@
     <img class="" src="/img/2026/10/webhooks-out-of-order-scheduler-timeline.svg" alt="Timeline of three same-label jobs where a runner executing a build is destroyed 2.3 seconds before its in_progress webhook arrives">
   </a>
     
-    <p>The scheduler in <a href="/blog/2026/08/ephemerd-one-daemon-every-os/">ephemerd</a> is event-driven. GitHub sends a <code>workflow_job</code>
-webhook when a job is queued, when it starts and when it completes, and ephemerd creates and destroys runners to match.
-For a while that worked well enough that I stopped thinking about it. Then a <code>docker-build</code> job failed with &ldquo;The
-self-hosted runner lost communication with the server&rdquo;, and when I pulled the node&rsquo;s journal, ephemerd had destroyed that
+    <p>The scheduler in <a href="/blog/2026/08/ephemerd-one-daemon-every-os/">ephemerd</a> is event-driven. GitHub sends a
+<code>workflow_job</code> webhook when a job is queued, when it starts and when it completes. ephemerd creates and destroys runners
+to match. For a while that worked well enough that I stopped thinking about it. Then a <code>docker-build</code> job failed with
+&ldquo;The self-hosted runner lost communication with the server&rdquo;. I pulled the node&rsquo;s journal. ephemerd had destroyed that
 runner itself, on purpose, while it was running the build.</p>
   </div>
   <footer>
@@ -300,11 +300,11 @@ runner itself, on purpose, while it was running the build.</p>
     <img class="" src="/img/2026/09/bind-mounts-across-mount-namespaces-toctou.svg" alt="Sequence diagram of the bind mount TOCTOU race and the openat2 plus staging fix">
   </a>
     
-    <p>GitHub Actions has a <code>container:</code> key that runs a job&rsquo;s steps inside an image of your choosing. It&rsquo;s popular because it
-gives you a reproducible toolchain without building a custom runner image. On a self-hosted runner it works by having the
-runner drive Docker, and on <a href="/blog/2026/08/ephemerd-one-daemon-every-os/">ephemerd</a> &ldquo;Docker&rdquo; is a shim that speaks the
-Docker API and creates containers in containerd. Getting bind mounts right through that shim took four PRs in a week. A
-couple of months later the version that&hellip;</p>
+    <p>GitHub Actions has a <code>container:</code> key that runs a job&rsquo;s steps inside an image of your choosing. It&rsquo;s popular because
+it gives you a reproducible toolchain without building a custom runner image. On a self-hosted runner it works by
+having the runner drive Docker. On <a href="/blog/2026/08/ephemerd-one-daemon-every-os/">ephemerd</a>, &ldquo;Docker&rdquo; is a shim that
+speaks the Docker API and creates containers in containerd. Getting bind mounts right through that shim took four PRs
+in a week. A couple of months later the version that worked&hellip;</p>
   </div>
   <footer>
     <a href="/blog/2026/09/bind-mounts-across-mount-namespaces/" class="button big">Read More</a>
@@ -358,7 +358,7 @@ couple of months later the version that&hellip;</p>
       <h2><a href="/blog/2026/09/shipmates-short-ones-setup-go-and-voice/">shipmates Short Ones: 8 Minutes Extracting Go, and Three Voice-Loop Bugs</a></h2>
     
     
-      <p>Four small stories from shipmates: setup-go stuck extracting on Windows CI, Cloudflare&#39;s 100 second timeout, a voice loop that transcribed itself, and events lost to a timestamp watermark.</p>
+      <p>Four small stories from shipmates, starting with setup-go stuck extracting on Windows CI and Cloudflare&#39;s 100 second timeout. The other two are a voice loop that transcribed itself and events lost to a timestamp watermark.</p>
     
   </div>
   <div class="meta">
@@ -373,8 +373,8 @@ couple of months later the version that&hellip;</p>
     <img class="" src="/img/2026/09/shipmates-short-ones-setup-go-and-voice-cover.svg" alt="setup-go on Windows CI: 7 seconds to download, 473 seconds extracting before the timeout">
   </a>
     
-    <p>A few <a href="/blog/2026/08/shipmates-persona-based-ai-coding-crews/">shipmates</a> bugs that don&rsquo;t need a whole post each but
-were too good to leave in commit messages.</p>
+    <p>A few <a href="/blog/2026/08/shipmates-persona-based-ai-coding-crews/">shipmates</a> bugs don&rsquo;t need a whole post each. They were
+too good to leave in commit messages, though.</p>
   </div>
   <footer>
     <a href="/blog/2026/09/shipmates-short-ones-setup-go-and-voice/" class="button big">Read More</a>
@@ -441,10 +441,10 @@ were too good to leave in commit messages.</p>
     <img class="" src="/img/2026/08/ephemerd-one-daemon-every-os-arch.svg" alt="ephemerd architecture across Linux, Windows and macOS hosts">
   </a>
     
-    <p>I have CI that needs Linux amd64, Linux arm64, Windows and macOS, and GitHub-hosted runners for all four get expensive fast,
+    <p>I have CI that needs Linux amd64, Linux arm64, Windows and macOS. GitHub-hosted runners for all four get expensive fast,
 especially the arm64 and Mac minutes. Self-hosted runners fix the bill and create a different problem. A stock
-<code>actions/runner</code> on a box you own runs whatever the workflow says, keeps whatever the last job left behind, and is one fork
-PR away from somebody running code on your LAN.</p>
+<code>actions/runner</code> on a box you own runs whatever the workflow says. It keeps whatever the last job left behind. And it&rsquo;s
+one fork PR away from somebody running code on your LAN.</p>
   </div>
   <footer>
     <a href="/blog/2026/08/ephemerd-one-daemon-every-os/" class="button big">Read More</a>
@@ -512,7 +512,7 @@ PR away from somebody running code on your LAN.</p>
   </a>
     
     <p>I&rsquo;ve been building <a href="https://github.com/ephpm/ephemerd">ephemerd</a>, a daemon that runs self-hosted GitHub Actions runners
-with a fresh environment per job. On a Windows host, Windows jobs run in Hyper-V isolated containers, but Linux jobs still
+with a fresh environment per job. On a Windows host, Windows jobs run in Hyper-V isolated containers. Linux jobs still
 need a Linux kernel from somewhere. The obvious answer on Windows in 2026 is WSL2, and that&rsquo;s what I used first. It worked
 great from my terminal and fell over the moment ephemerd became a real Windows service.</p>
   </div>

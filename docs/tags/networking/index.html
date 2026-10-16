@@ -233,10 +233,10 @@
     <img class="" src="/img/2026/08/windows-container-egress-firewall-paths.svg" alt="Packet path of a Windows container on an HNS NAT network versus an L2Bridge network">
   </a>
     
-    <p><a href="/blog/2026/08/ephemerd-one-daemon-every-os/">ephemerd</a> runs CI jobs from pull requests, and one of the rules is that a job
-can reach the internet but not my LAN. On Linux that&rsquo;s a few iptables rules in the <code>FORWARD</code> path and I didn&rsquo;t think about it
+    <p><a href="/blog/2026/08/ephemerd-one-daemon-every-os/">ephemerd</a> runs CI jobs from pull requests. One of the rules is that a job can
+reach the internet but not my LAN. On Linux that&rsquo;s a few iptables rules in the <code>FORWARD</code> path, and I didn&rsquo;t think about it
 much. On Windows I spent about a week finding out how many ways there are to write a firewall rule that Windows accepts,
-lists, and then never applies.</p>
+lists and never applies.</p>
   </div>
   <footer>
     <a href="/blog/2026/08/windows-container-egress-firewall/" class="button big">Read More</a>
