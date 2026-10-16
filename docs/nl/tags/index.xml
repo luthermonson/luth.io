@@ -4,7 +4,8 @@
     <title>Tags on Luther Monson</title>
     <link>https://luth.io/nl/tags/</link>
     <description>Recent content in Tags on Luther Monson</description>
-    <generator>Hugo -- gohugo.io</generator>
-    <language>nl</language><atom:link href="https://luth.io/nl/tags/index.xml" rel="self" type="application/rss+xml" />
+    <generator>Hugo</generator>
+    <language>nl</language>
+    <atom:link href="https://luth.io/nl/tags/index.xml" rel="self" type="application/rss+xml" />
   </channel>
 </rss>

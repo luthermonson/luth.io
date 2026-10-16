@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>Hyper-V on Luther Monson</title>
+    <link>https://luth.io/tags/hyper-v/</link>
+    <description>Recent content in Hyper-V on Luther Monson</description>
+    <generator>Hugo</generator>
+    <language>en</language>
+    <lastBuildDate>Sat, 22 Aug 2026 19:40:00 -0700</lastBuildDate>
+    <atom:link href="https://luth.io/tags/hyper-v/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>Five Ways to Not Firewall a Windows Container (and the One That Works)</title>
+      <link>https://luth.io/blog/2026/08/windows-container-egress-firewall/</link>
+      <pubDate>Sat, 22 Aug 2026 19:40:00 -0700</pubDate>
+      <guid>https://luth.io/blog/2026/08/windows-container-egress-firewall/</guid>
+      <description>&lt;p&gt;&lt;a href=&#34;https://luth.io/blog/2026/08/ephemerd-one-daemon-every-os/&#34;&gt;ephemerd&lt;/a&gt; runs CI jobs from pull requests, and one of the rules is that a job&#xA;can reach the internet but not my LAN. On Linux that&amp;rsquo;s a few iptables rules in the &lt;code&gt;FORWARD&lt;/code&gt; path and I didn&amp;rsquo;t think about it&#xA;much. On Windows I spent about a week finding out how many ways there are to write a firewall rule that Windows accepts,&#xA;lists, and then never applies.&lt;/p&gt;&#xA;&lt;p&gt;The setup: Windows Server 2025 (build 26100), job containers running with Hyper-V isolation, on the default HNS NAT network&#xA;that every Windows container tutorial uses (&lt;code&gt;10.88.0.0/16&lt;/code&gt; in ephemerd&amp;rsquo;s case, gateway &lt;code&gt;10.88.0.1&lt;/code&gt;). The target is the same&#xA;as Linux: block &lt;code&gt;10.0.0.0/8&lt;/code&gt;, &lt;code&gt;172.16.0.0/12&lt;/code&gt;, &lt;code&gt;192.168.0.0/16&lt;/code&gt; and &lt;code&gt;169.254.0.0/16&lt;/code&gt;, allow everything else.&lt;/p&gt;</description>
+    </item>
+    <item>
+      <title>ephemerd: One Daemon, a Fresh Runner Per Job, Every OS</title>
+      <link>https://luth.io/blog/2026/08/ephemerd-one-daemon-every-os/</link>
+      <pubDate>Tue, 18 Aug 2026 21:05:00 -0700</pubDate>
+      <guid>https://luth.io/blog/2026/08/ephemerd-one-daemon-every-os/</guid>
+      <description>&lt;p&gt;I have CI that needs Linux amd64, Linux arm64, Windows and macOS, and GitHub-hosted runners for all four get expensive fast,&#xA;especially the arm64 and Mac minutes. Self-hosted runners fix the bill and create a different problem. A stock&#xA;&lt;code&gt;actions/runner&lt;/code&gt; on a box you own runs whatever the workflow says, keeps whatever the last job left behind, and is one fork&#xA;PR away from somebody running code on your LAN.&lt;/p&gt;</description>
+    </item>
+    <item>
+      <title>Escaping WSL: Booting My Own Linux VM Through Hyper-V&#39;s HCS API</title>
+      <link>https://luth.io/blog/2026/06/escaping-wsl-hcs-linux-vm/</link>
+      <pubDate>Sun, 14 Jun 2026 20:12:00 -0700</pubDate>
+      <guid>https://luth.io/blog/2026/06/escaping-wsl-hcs-linux-vm/</guid>
+      <description>&lt;p&gt;I&amp;rsquo;ve been building &lt;a href=&#34;https://github.com/ephpm/ephemerd&#34;&gt;ephemerd&lt;/a&gt;, a daemon that runs self-hosted GitHub Actions runners&#xA;with a fresh environment per job. On a Windows host, Windows jobs run in Hyper-V isolated containers, but Linux jobs still&#xA;need a Linux kernel from somewhere. The obvious answer on Windows in 2026 is WSL2, and that&amp;rsquo;s what I used first. It worked&#xA;great from my terminal and fell over the moment ephemerd became a real Windows service.&lt;/p&gt;</description>
+    </item>
+  </channel>
+</rss>

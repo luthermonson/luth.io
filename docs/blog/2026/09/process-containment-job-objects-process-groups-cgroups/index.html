@@ -1,0 +1,752 @@
+<!doctype html>
+<html lang="en">
+  <head>
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-MSTSKGFWTX"></script>
+<script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+
+    gtag('config', 'G-MSTSKGFWTX');
+</script><meta charset="utf-8">
+<title>Cross-Platform Process Containment: Job Objects vs Process Groups vs cgroups - Luther Monson</title>
+<meta name="description" content="How shipmates bounds and tears down agent process trees on Windows, Linux and macOS, why I deleted 1,206 lines of cgroup code, and the grandchild that escaped the memory cap everywhere except my dev box.">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<meta name="twitter:card" content="summary_large_image"><meta name="twitter:site" content="@luthermonson">
+
+<meta property="og:site_name" content="Luther Monson">
+<meta property="og:title" content="Cross-Platform Process Containment: Job Objects vs Process Groups vs cgroups">
+<meta property="og:description" content="How shipmates bounds and tears down agent process trees on Windows, Linux and macOS, why I deleted 1,206 lines of cgroup code, and the grandchild that escaped the memory cap everywhere except my dev box.">
+<meta property="og:type" content="article">
+<meta property="og:url" content="https://luth.io/blog/2026/09/process-containment-job-objects-process-groups-cgroups/">
+    <meta property="og:image" content="https://luth.io/img/2026/09/process-containment-job-objects-process-groups-cgroups-cover.svg">
+    <meta property="og:image:alt" content="Agent process tree with the scope of kill and measurement on Windows, Linux and macOS">
+
+
+  <link rel="manifest" href="/favicon/site.webmanifest?v=1">
+  <link rel="apple-touch-icon" sizes="180x180" href="/favicon/apple-touch-icon.png?v=1">
+  <link rel="icon" type="image/png" sizes="32x32" href="/favicon/favicon-32x32.png?v=1">
+  <link rel="icon" type="image/png" sizes="16x16" href="/favicon/favicon-16x16.png?v=1">
+  
+    <link rel="mask-icon" href="/favicon/safari-pinned-tab.svg?v=1" color="#ffffff">
+    <link rel="shortcut icon" href="/favicon/favicon.ico?v=1">
+    <meta name="msapplication-config" content="/favicon/browserconfig.xml?v=1">
+  
+  <meta name="msapplication-TileColor" content="#ffffff">
+  <meta name="theme-color" content="#ffffff">
+
+
+  <meta name="generator" content="Hugo 0.160.1">
+  <link rel="alternate" type="application/rss+xml" href="https://luth.io/index.xml" title="Luther Monson">
+  <link rel="stylesheet" href="/css/bundle.min.e1ffed86714fbb7eff75eab221c0c61b8260be0c7d1c08db0fcb7a2bdb6af7c9.css" integrity="sha256-4f/thnFPu37/deqyIcDGG4Jgvgx9HAjbD8t6K9tq98k="><link rel="stylesheet" href="/css/add-on.css">
+        <link rel="stylesheet" href="/css/code.css">
+        <link rel="stylesheet" href="/css/mobile.css">
+</head>
+
+  <body>
+    
+
+<header id="site-header">
+  <nav id="site-nav">
+    <h1 class="nav-title">
+      <a href="/" class="nav">
+        <img class="nav-avatar" src="/img/luther-monson-headshot.jpg" alt="" width="32" height="32">
+        
+          Blog
+        
+      </a>
+    </h1>
+    <menu id="site-nav-menu" class="flyout-menu menu">
+      
+        
+          
+          <a href="/" class="nav link"><i class='fa fa-home'></i> Home</a>
+        
+      
+        
+          
+          <a href="/about" class="nav link"><i class='far fa-id-card'></i> About</a>
+        
+      
+        
+          
+          <a href="/blog" class="nav link"><i class='far fa-newspaper'></i> Blog</a>
+        
+      
+        
+          
+          <a href="/archive" class="nav link"><i class='far fa-calendar-alt'></i> Archive</a>
+        
+      
+        
+          
+          <a href="/categories" class="nav link"><i class='fas fa-sitemap'></i> Categories</a>
+        
+      
+      <a href="#share-menu" class="nav link share-toggle"><i class="fas fa-share-alt">&nbsp;</i>Share</a>
+      <a href="#search-input" class="nav link search-toggle"><i class="fas fa-search">&nbsp;</i>Search</a>
+    </menu>
+    <a href="#search-input" class="nav search-toggle"><i class="fas fa-search fa-2x">&nbsp;</i></a>
+    <a href="#share-menu" class="nav share-toggle"><i class="fas fa-share-alt fa-2x">&nbsp;</i></a>
+    
+    <a href="#site-nav" class="nav nav-toggle"><i class="fas fa-bars fa-2x"></i></a>
+  </nav>
+  <menu id="search" class="menu"><input id="search-input" class="search-input menu"></input><div id="search-results" class="search-results menu"></div></menu>
+  
+  
+    <menu id="share-menu" class="flyout-menu menu">
+      <h1>Share Post</h1>
+      
+
+
+
+
+  
+    
+    <a href="//twitter.com/share?text=Cross-Platform%20Process%20Containment%3a%20Job%20Objects%20vs%20Process%20Groups%20vs%20cgroups&amp;url=https%3a%2f%2fluth.io%2fblog%2f2026%2f09%2fprocess-containment-job-objects-process-groups-cgroups%2f" target="_blank" rel="noopener" class="nav share-btn twitter">
+        <p>Twitter</p>
+      </a>
+  
+
+  
+      <a href="//www.facebook.com/sharer/sharer.php?u=https%3a%2f%2fluth.io%2fblog%2f2026%2f09%2fprocess-containment-job-objects-process-groups-cgroups%2f" target="_blank" rel="noopener" class="nav share-btn facebook">
+        <p>Facebook</p>
+        </a>
+  
+
+  
+    <a href="//www.reddit.com/submit?url=https%3a%2f%2fluth.io%2fblog%2f2026%2f09%2fprocess-containment-job-objects-process-groups-cgroups%2f&amp;title=Cross-Platform%20Process%20Containment%3a%20Job%20Objects%20vs%20Process%20Groups%20vs%20cgroups" target="_blank" rel="noopener" class="nav share-btn reddit">
+          <p>Reddit</p>
+        </a>
+  
+
+  
+        <a href="//www.linkedin.com/shareArticle?url=https%3a%2f%2fluth.io%2fblog%2f2026%2f09%2fprocess-containment-job-objects-process-groups-cgroups%2f&amp;title=Cross-Platform%20Process%20Containment%3a%20Job%20Objects%20vs%20Process%20Groups%20vs%20cgroups" target="_blank" rel="noopener" class="nav share-btn linkedin">
+            <p>LinkedIn</p>
+          </a>
+  
+
+  
+        <a href="//www.pinterest.com/pin/create/button/?url=https%3a%2f%2fluth.io%2fblog%2f2026%2f09%2fprocess-containment-job-objects-process-groups-cgroups%2f&amp;description=Cross-Platform%20Process%20Containment%3a%20Job%20Objects%20vs%20Process%20Groups%20vs%20cgroups" target="_blank" rel="noopener" class="nav share-btn pinterest">
+          <p>Pinterest</p>
+        </a>
+  
+
+  
+        <a href="mailto:?subject=Check%20out%20this%20post%20by Luther%20Monson&amp;body=https%3a%2f%2fluth.io%2fblog%2f2026%2f09%2fprocess-containment-job-objects-process-groups-cgroups%2f" target="_blank" class="nav share-btn email" data-proofer-ignore>
+          <p>Email</p>
+        </a>
+  
+
+
+    </menu>
+  
+</header>
+
+    <div id="wrapper">
+      <section id="site-intro" class="hidden-single-column">
+  <a href="/"><img src="/img/luther-monson-headshot.jpg" class="circle" width="100" alt="Luther Monson, Staff Software Engineer at SUSE" /></a>
+  <header>
+    <h1>Luther Monson</h1>
+  </header>
+  <main>
+    <p>Go by way of PHP &middot; Containers &middot; VMs &middot; Windows &middot; Kubernetes</p>
+  </main>
+  
+    <footer>
+      <ul class="socnet-icons">
+        
+
+        <li><a href="//github.com/luthermonson" target="_blank" rel="noopener" title="GitHub" class="fab fa-github"></a></li>
+
+
+
+
+
+
+
+
+
+
+
+<li><a href="//www.linkedin.com/in/luthermonson" target="_blank" rel="noopener" title="LinkedIn" class="fab fa-linkedin"></a></li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li><a href="//twitter.com/luthermonson" target="_blank" rel="noopener" title="Twitter" class="fab fa-twitter"></a></li>
+
+
+
+
+
+
+
+
+
+
+
+<li><a href="mailto:luther.monson@gmail.com" target="_blank" title="Email" class="far fa-envelope"></a></li>
+
+      </ul>
+    </footer>
+  
+</section>
+
+      <main id="site-main">
+        
+  <article>
+    <div class="post">
+      <header>
+  <div class="title">
+    
+      <h2><a href="/blog/2026/09/process-containment-job-objects-process-groups-cgroups/">Cross-Platform Process Containment: Job Objects vs Process Groups vs cgroups</a></h2>
+    
+    
+      <p>How shipmates bounds and tears down agent process trees on Windows, Linux and macOS, why I deleted 1,206 lines of cgroup code, and the grandchild that escaped the memory cap everywhere except my dev box.</p>
+    
+  </div>
+  <div class="meta">
+    <time datetime="2026-09-26 16:20:00 -0700 PDT">September 26, 2026</time>
+    
+    <p>8-Minute Read</p>
+  </div>
+</header>
+
+      <div id="socnet-share">
+        
+
+
+
+
+  
+    
+    <a href="//twitter.com/share?text=Cross-Platform%20Process%20Containment%3a%20Job%20Objects%20vs%20Process%20Groups%20vs%20cgroups&amp;url=https%3a%2f%2fluth.io%2fblog%2f2026%2f09%2fprocess-containment-job-objects-process-groups-cgroups%2f" target="_blank" rel="noopener" class="nav share-btn twitter">
+        <p>Twitter</p>
+      </a>
+  
+
+  
+      <a href="//www.facebook.com/sharer/sharer.php?u=https%3a%2f%2fluth.io%2fblog%2f2026%2f09%2fprocess-containment-job-objects-process-groups-cgroups%2f" target="_blank" rel="noopener" class="nav share-btn facebook">
+        <p>Facebook</p>
+        </a>
+  
+
+  
+    <a href="//www.reddit.com/submit?url=https%3a%2f%2fluth.io%2fblog%2f2026%2f09%2fprocess-containment-job-objects-process-groups-cgroups%2f&amp;title=Cross-Platform%20Process%20Containment%3a%20Job%20Objects%20vs%20Process%20Groups%20vs%20cgroups" target="_blank" rel="noopener" class="nav share-btn reddit">
+          <p>Reddit</p>
+        </a>
+  
+
+  
+        <a href="//www.linkedin.com/shareArticle?url=https%3a%2f%2fluth.io%2fblog%2f2026%2f09%2fprocess-containment-job-objects-process-groups-cgroups%2f&amp;title=Cross-Platform%20Process%20Containment%3a%20Job%20Objects%20vs%20Process%20Groups%20vs%20cgroups" target="_blank" rel="noopener" class="nav share-btn linkedin">
+            <p>LinkedIn</p>
+          </a>
+  
+
+  
+        <a href="//www.pinterest.com/pin/create/button/?url=https%3a%2f%2fluth.io%2fblog%2f2026%2f09%2fprocess-containment-job-objects-process-groups-cgroups%2f&amp;description=Cross-Platform%20Process%20Containment%3a%20Job%20Objects%20vs%20Process%20Groups%20vs%20cgroups" target="_blank" rel="noopener" class="nav share-btn pinterest">
+          <p>Pinterest</p>
+        </a>
+  
+
+  
+        <a href="mailto:?subject=Check%20out%20this%20post%20by Luther%20Monson&amp;body=https%3a%2f%2fluth.io%2fblog%2f2026%2f09%2fprocess-containment-job-objects-process-groups-cgroups%2f" target="_blank" class="nav share-btn email" data-proofer-ignore>
+          <p>Email</p>
+        </a>
+  
+
+
+      </div>
+      <div class="content">
+        
+        <p>Every turn a <a href="/blog/2026/08/shipmates-persona-based-ai-coding-crews/">shipmates</a> crew member takes is a subprocess:
+<code>claude</code> or the <code>codex</code> app-server, which in turn spawns shells, <code>go test</code>, <code>npm</code>, whatever the task calls for. Two
+things have to be true about that tree. When a turn ends or gets killed, the <em>whole</em> tree goes, including the
+grandchildren. And if somebody sets a memory or CPU budget, the budget applies to the whole tree, not just the
+process I happened to start.</p>
+<p>Each OS gives you a different primitive for that, and they&rsquo;re not equivalent. This is how shipmates ended up using
+Job Objects on Windows and process groups plus sampling on Linux and macOS, why the cgroup path got deleted, and the bug
+that only existed on the platforms I wasn&rsquo;t sitting in front of.</p>
+<h3 id="the-three-primitives">The three primitives</h3>
+<table>
+  <thead>
+      <tr>
+          <th></th>
+          <th>Windows Job Object</th>
+          <th>Unix process group</th>
+          <th>Linux cgroup v2</th>
+      </tr>
+  </thead>
+  <tbody>
+      <tr>
+          <td>Who&rsquo;s in it</td>
+          <td>every descendant, automatically, unless it breaks away</td>
+          <td>every descendant that doesn&rsquo;t call <code>setpgid</code>/<code>setsid</code></td>
+          <td>every descendant, can&rsquo;t leave without privileges</td>
+      </tr>
+      <tr>
+          <td>Tree kill</td>
+          <td><code>TerminateJobObject</code>, or <code>KILL_ON_JOB_CLOSE</code> when the last handle closes</td>
+          <td><code>kill(-pgid, SIGKILL)</code></td>
+          <td><code>cgroup.kill</code> (5.14+)</td>
+      </tr>
+      <tr>
+          <td>Memory cap</td>
+          <td>kernel-enforced, <code>JobMemoryLimit</code> on committed memory</td>
+          <td>none, you sample and kill</td>
+          <td>kernel-enforced, <code>memory.max</code></td>
+      </tr>
+      <tr>
+          <td>Process count cap</td>
+          <td>kernel-enforced, <code>ActiveProcessLimit</code></td>
+          <td>none</td>
+          <td><code>pids.max</code></td>
+      </tr>
+      <tr>
+          <td>Privileges</td>
+          <td>none</td>
+          <td>none</td>
+          <td>a delegated subtree (systemd scope, or root)</td>
+      </tr>
+  </tbody>
+</table>
+<p>On paper cgroups win. In practice, &ldquo;a delegated subtree&rdquo; is where it falls apart for a tool you install with a single
+binary: on a desktop you need a systemd user scope with the right controllers delegated, in a container you usually
+don&rsquo;t get one at all, and macOS doesn&rsquo;t have cgroups. Job Objects need nothing. Process groups need nothing.</p>
+<h3 id="deleting-the-cgroup-launcher">Deleting the cgroup launcher</h3>
+<p>The codex runtime originally carried its own Linux-only, cgroup-delegating launcher inside <code>internal/codexapp</code>. It
+was reachable only through the codex transport, only when an operator set <code>containment.mode: cgroup</code>, and its single
+real test was gated behind <code>SHIPMATES_REAL_CONTAINMENT_TEST=1</code>. Which meant it had <strong>never run in CI</strong>. When I
+<a href="https://github.com/luthermonson/shipmates/pull/26">moved CI to ephemerd</a> I even wrote down that the delegated-scope job
+was the gap. Everywhere else, and by default, codex ran with no containment at all.</p>
+<p><a href="https://github.com/luthermonson/shipmates/commit/24bd788"><code>24bd788</code></a> deleted it: <code>containment_linux.go</code>,
+<code>cgroup_discovery_linux.go</code>, their tests, <code>containment_pidfd_linux.go</code> and <code>containment_other.go</code>, 1,206 lines. Codex
+now spawns its app-server through the same <code>containment.Watcher</code> that Claude uses, so every runtime gets the same
+bounds on every OS.</p>
+<p>The part I care most about is what happens to configs that still say <code>cgroup</code>. The old docs said it &ldquo;degrades to
+<code>watchdog</code> with a warning&rdquo;. Now the config fails to resolve, with <code>config.ErrCgroupModeRemoved</code>:</p>
+<pre tabindex="0"><code>containment mode &#34;cgroup&#34; has been removed: shipmates now contains every runtime with the portable
+watchdog (RSS/CPU sampling plus process-tree teardown on Linux, macOS and Windows). Use mode: watchdog
+— your memory_limit_mb, cpu_limit_seconds and other limits carry over unchanged
+</code></pre><p>An operator who asked for kernel enforcement and quietly got polling has been told something untrue about their own
+deployment. A warning in a log nobody reads is still a lie. Same reasoning for <code>Caps.Containment</code>, which is now derived
+from whether the supervisor actually bounds anything, so the <code>none</code> watcher can&rsquo;t report that it contains.</p>
+<h3 id="windows-suspended-assigned-resumed">Windows: suspended, assigned, resumed</h3>
+<p>On Windows the watchdog creates the child suspended, puts it in a Job Object before it runs a single instruction, then
+resumes it. Assigning a running process leaves a window where it can spawn a child outside the job.</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-go" data-lang="go"><span class="line"><span class="cl"><span class="kd">func</span><span class="w"> </span><span class="nf">prepare</span><span class="p">(</span><span class="nx">cmd</span><span class="w"> </span><span class="o">*</span><span class="nx">exec</span><span class="p">.</span><span class="nx">Cmd</span><span class="p">,</span><span class="w"> </span><span class="nx">_</span><span class="w"> </span><span class="nx">containment</span><span class="p">.</span><span class="nx">Limits</span><span class="p">)</span><span class="w"> </span><span class="kt">error</span><span class="w"> </span><span class="p">{</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">	</span><span class="k">if</span><span class="w"> </span><span class="nx">cmd</span><span class="p">.</span><span class="nx">SysProcAttr</span><span class="w"> </span><span class="o">==</span><span class="w"> </span><span class="kc">nil</span><span class="w"> </span><span class="p">{</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">		</span><span class="nx">cmd</span><span class="p">.</span><span class="nx">SysProcAttr</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="o">&amp;</span><span class="nx">syscall</span><span class="p">.</span><span class="nx">SysProcAttr</span><span class="p">{}</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">	</span><span class="p">}</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">	</span><span class="nx">cmd</span><span class="p">.</span><span class="nx">SysProcAttr</span><span class="p">.</span><span class="nx">CreationFlags</span><span class="w"> </span><span class="o">|=</span><span class="w"> </span><span class="nx">windows</span><span class="p">.</span><span class="nx">CREATE_SUSPENDED</span><span class="w"> </span><span class="p">|</span><span class="w"> </span><span class="nx">windows</span><span class="p">.</span><span class="nx">CREATE_NEW_PROCESS_GROUP</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">	</span><span class="k">return</span><span class="w"> </span><span class="kc">nil</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="p">}</span><span class="w">
+</span></span></span></code></pre></div><p>Then <code>attach</code> creates the job with <code>JOB_OBJECT_LIMIT_KILL_ON_JOB_CLOSE</code> and layers on whatever limits were asked for:</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-go" data-lang="go"><span class="line"><span class="cl"><span class="nx">info</span><span class="w"> </span><span class="o">:=</span><span class="w"> </span><span class="nx">windows</span><span class="p">.</span><span class="nx">JOBOBJECT_EXTENDED_LIMIT_INFORMATION</span><span class="p">{</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">	</span><span class="nx">BasicLimitInformation</span><span class="p">:</span><span class="w"> </span><span class="nx">windows</span><span class="p">.</span><span class="nx">JOBOBJECT_BASIC_LIMIT_INFORMATION</span><span class="p">{</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">		</span><span class="nx">LimitFlags</span><span class="p">:</span><span class="w"> </span><span class="nx">windows</span><span class="p">.</span><span class="nx">JOB_OBJECT_LIMIT_KILL_ON_JOB_CLOSE</span><span class="p">,</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">	</span><span class="p">},</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="p">}</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="k">if</span><span class="w"> </span><span class="nx">limits</span><span class="p">.</span><span class="nx">MaxRSSBytes</span><span class="w"> </span><span class="p">&gt;</span><span class="w"> </span><span class="mi">0</span><span class="w"> </span><span class="p">{</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">	</span><span class="nx">info</span><span class="p">.</span><span class="nx">BasicLimitInformation</span><span class="p">.</span><span class="nx">LimitFlags</span><span class="w"> </span><span class="o">|=</span><span class="w"> </span><span class="nx">windows</span><span class="p">.</span><span class="nx">JOB_OBJECT_LIMIT_JOB_MEMORY</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">	</span><span class="nx">info</span><span class="p">.</span><span class="nx">JobMemoryLimit</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="nb">uintptr</span><span class="p">(</span><span class="nx">limits</span><span class="p">.</span><span class="nx">MaxRSSBytes</span><span class="p">)</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="p">}</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="k">if</span><span class="w"> </span><span class="nx">limits</span><span class="p">.</span><span class="nx">MaxProcesses</span><span class="w"> </span><span class="p">&gt;</span><span class="w"> </span><span class="mi">0</span><span class="w"> </span><span class="p">{</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">	</span><span class="nx">info</span><span class="p">.</span><span class="nx">BasicLimitInformation</span><span class="p">.</span><span class="nx">LimitFlags</span><span class="w"> </span><span class="o">|=</span><span class="w"> </span><span class="nx">windows</span><span class="p">.</span><span class="nx">JOB_OBJECT_LIMIT_ACTIVE_PROCESS</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">	</span><span class="nx">info</span><span class="p">.</span><span class="nx">BasicLimitInformation</span><span class="p">.</span><span class="nx">ActiveProcessLimit</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="nx">limits</span><span class="p">.</span><span class="nx">MaxProcesses</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="p">}</span><span class="w">
+</span></span></span></code></pre></div><p>Each flag is guarded on a non-zero limit, because setting a <code>LimitFlags</code> bit without its paired value is a no-op at best,
+and a caller who asked for nothing shouldn&rsquo;t silently get kernel enforcement. <code>KILL_ON_JOB_CLOSE</code> is always on, so even
+if shipmates itself dies, closing the last job handle takes the tree with it. That&rsquo;s the closest thing Windows has to
+Linux&rsquo;s <code>Pdeathsig</code>.</p>
+<p><code>JobMemoryLimit</code> is committed memory across <em>every</em> process in the job, enforced by the kernel when the allocation
+happens. To see it, I put a Go &ldquo;agent&rdquo; in a job with a 256 MiB limit and had it spawn a &ldquo;tool&rdquo; grandchild that commits
+16 MiB at a time:</p>
+<pre tabindex="0"><code>parent: agent in a job with a 256 MiB limit
+tool: 16 MiB committed
+tool: 32 MiB committed
+...
+tool: 208 MiB committed
+tool: 224 MiB committed
+runtime: VirtualAlloc of 16777216 bytes failed with errno=1455
+fatal error: out of memory
+</code></pre><p>Errno 1455 is <code>ERROR_COMMITMENT_LIMIT</code>. The grandchild was never touched by my code, it just inherited the job, and the
+kernel stopped it short of the budget the parent was given (the agent and the Go runtime overhead eat the rest).
+No polling gap.</p>
+<h3 id="linux-and-macos-process-groups-and-a-sampler">Linux and macOS: process groups and a sampler</h3>
+<p>On Unix the child is started as a process group leader with <code>Setpgid</code>, so its pid is the pgid and every descendant
+inherits the group. Teardown signals the group:</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-go" data-lang="go"><span class="line"><span class="cl"><span class="kd">func</span><span class="w"> </span><span class="nf">killTree</span><span class="p">(</span><span class="nx">cmd</span><span class="w"> </span><span class="o">*</span><span class="nx">exec</span><span class="p">.</span><span class="nx">Cmd</span><span class="p">,</span><span class="w"> </span><span class="nx">kill</span><span class="w"> </span><span class="kt">bool</span><span class="p">)</span><span class="w"> </span><span class="kt">error</span><span class="w"> </span><span class="p">{</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">	</span><span class="k">if</span><span class="w"> </span><span class="nx">cmd</span><span class="p">.</span><span class="nx">Process</span><span class="w"> </span><span class="o">==</span><span class="w"> </span><span class="kc">nil</span><span class="w"> </span><span class="p">{</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">		</span><span class="k">return</span><span class="w"> </span><span class="kc">nil</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">	</span><span class="p">}</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">	</span><span class="nx">sig</span><span class="w"> </span><span class="o">:=</span><span class="w"> </span><span class="nx">syscall</span><span class="p">.</span><span class="nx">SIGTERM</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">	</span><span class="k">if</span><span class="w"> </span><span class="nx">kill</span><span class="w"> </span><span class="p">{</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">		</span><span class="nx">sig</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="nx">syscall</span><span class="p">.</span><span class="nx">SIGKILL</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">	</span><span class="p">}</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">	</span><span class="nx">pgid</span><span class="p">,</span><span class="w"> </span><span class="nx">err</span><span class="w"> </span><span class="o">:=</span><span class="w"> </span><span class="nx">syscall</span><span class="p">.</span><span class="nf">Getpgid</span><span class="p">(</span><span class="nx">cmd</span><span class="p">.</span><span class="nx">Process</span><span class="p">.</span><span class="nx">Pid</span><span class="p">)</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">	</span><span class="k">if</span><span class="w"> </span><span class="nx">err</span><span class="w"> </span><span class="o">!=</span><span class="w"> </span><span class="kc">nil</span><span class="w"> </span><span class="p">{</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">		</span><span class="nx">pgid</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="nx">cmd</span><span class="p">.</span><span class="nx">Process</span><span class="p">.</span><span class="nx">Pid</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">	</span><span class="p">}</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">	</span><span class="k">return</span><span class="w"> </span><span class="nx">syscall</span><span class="p">.</span><span class="nf">Kill</span><span class="p">(</span><span class="o">-</span><span class="nx">pgid</span><span class="p">,</span><span class="w"> </span><span class="nx">sig</span><span class="p">)</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="p">}</span><span class="w">
+</span></span></span></code></pre></div><p>There&rsquo;s no kernel memory cap here, so a sampler polls RSS and CPU time on an interval and calls <code>killTree</code> when the
+budget is exceeded. Which brings us to the bug.</p>
+<h3 id="the-bug-my-dev-box-hid">The bug my dev box hid</h3>
+<p>A cross-platform sweep after v0.6.0 found it (<a href="https://github.com/luthermonson/shipmates/pull/58">PR #58</a>). The Unix
+sampler measured RSS and CPU for <code>cmd.Process.Pid</code>, the root, and nothing else. The kill covered the whole process
+group. So the <em>scope of measurement</em> and the <em>scope of enforcement</em> didn&rsquo;t match: a tool subprocess that hogged memory
+or spun CPU was invisible to the sampler, and the cap never fired.</p>
+<p>On Windows the Job Object enforces memory across the whole tree in the kernel, so the bug simply doesn&rsquo;t exist there.
+I develop shipmates on Windows. Every manual check I&rsquo;d ever done of the memory cap passed.</p>
+<p>Here&rsquo;s a small Linux program showing exactly what the old sampler saw. The &ldquo;agent&rdquo; is a tiny Go process that runs a
+&ldquo;tool&rdquo; child which touches 512 MiB:</p>
+<pre tabindex="0"><code>t=0.5s  root pid RSS:    2.7 MiB   process group RSS:  519.2 MiB (2 procs)
+t=1.0s  root pid RSS:    2.7 MiB   process group RSS:  519.2 MiB (2 procs)
+t=1.5s  root pid RSS:    2.7 MiB   process group RSS:  519.2 MiB (2 procs)
+t=2.0s  root pid RSS:    2.7 MiB   process group RSS:  519.2 MiB (2 procs)
+</code></pre><p>With a 256 MB cap, the old sampler would read 2.7 MiB forever.</p>
+<p>The fix (<a href="https://github.com/luthermonson/shipmates/commit/1642864"><code>1642864</code></a>) makes the Unix samplers measure the group.
+On Linux that&rsquo;s a walk of <code>/proc</code>, reading field 5 of each <code>/proc/&lt;pid&gt;/stat</code> (the pgrp) and summing <code>statm</code> RSS and
+<code>utime+stime</code> for the members. Field parsing has to count from the <em>last</em> <code>)</code>, because the comm field is parenthesized
+and can itself contain spaces and parentheses:</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-go" data-lang="go"><span class="line"><span class="cl"><span class="kd">func</span><span class="w"> </span><span class="nf">parseProcStatPgrp</span><span class="p">(</span><span class="nx">s</span><span class="w"> </span><span class="kt">string</span><span class="p">)</span><span class="w"> </span><span class="p">(</span><span class="kt">int</span><span class="p">,</span><span class="w"> </span><span class="kt">error</span><span class="p">)</span><span class="w"> </span><span class="p">{</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">	</span><span class="nx">closeIdx</span><span class="w"> </span><span class="o">:=</span><span class="w"> </span><span class="nx">strings</span><span class="p">.</span><span class="nf">LastIndex</span><span class="p">(</span><span class="nx">s</span><span class="p">,</span><span class="w"> </span><span class="s">&#34;)&#34;</span><span class="p">)</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">	</span><span class="k">if</span><span class="w"> </span><span class="nx">closeIdx</span><span class="w"> </span><span class="p">&lt;</span><span class="w"> </span><span class="mi">0</span><span class="w"> </span><span class="p">{</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">		</span><span class="k">return</span><span class="w"> </span><span class="mi">0</span><span class="p">,</span><span class="w"> </span><span class="nx">fmt</span><span class="p">.</span><span class="nf">Errorf</span><span class="p">(</span><span class="s">&#34;watchdog: malformed stat: %q&#34;</span><span class="p">,</span><span class="w"> </span><span class="nx">s</span><span class="p">)</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">	</span><span class="p">}</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">	</span><span class="nx">after</span><span class="w"> </span><span class="o">:=</span><span class="w"> </span><span class="nx">strings</span><span class="p">.</span><span class="nf">Fields</span><span class="p">(</span><span class="nx">s</span><span class="p">[</span><span class="nx">closeIdx</span><span class="o">+</span><span class="mi">1</span><span class="p">:])</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">	</span><span class="k">if</span><span class="w"> </span><span class="nb">len</span><span class="p">(</span><span class="nx">after</span><span class="p">)</span><span class="w"> </span><span class="p">&lt;</span><span class="w"> </span><span class="mi">3</span><span class="w"> </span><span class="p">{</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">		</span><span class="k">return</span><span class="w"> </span><span class="mi">0</span><span class="p">,</span><span class="w"> </span><span class="nx">fmt</span><span class="p">.</span><span class="nf">Errorf</span><span class="p">(</span><span class="s">&#34;watchdog: stat missing pgrp field&#34;</span><span class="p">)</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">	</span><span class="p">}</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">	</span><span class="nx">pgrp</span><span class="p">,</span><span class="w"> </span><span class="nx">err</span><span class="w"> </span><span class="o">:=</span><span class="w"> </span><span class="nx">strconv</span><span class="p">.</span><span class="nf">Atoi</span><span class="p">(</span><span class="nx">after</span><span class="p">[</span><span class="mi">2</span><span class="p">])</span><span class="w"> </span><span class="c1">// state ppid pgrp ...</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">	</span><span class="k">if</span><span class="w"> </span><span class="nx">err</span><span class="w"> </span><span class="o">!=</span><span class="w"> </span><span class="kc">nil</span><span class="w"> </span><span class="p">{</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">		</span><span class="k">return</span><span class="w"> </span><span class="mi">0</span><span class="p">,</span><span class="w"> </span><span class="nx">fmt</span><span class="p">.</span><span class="nf">Errorf</span><span class="p">(</span><span class="s">&#34;watchdog: bad pgrp: %w&#34;</span><span class="p">,</span><span class="w"> </span><span class="nx">err</span><span class="p">)</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">	</span><span class="p">}</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">	</span><span class="k">return</span><span class="w"> </span><span class="nx">pgrp</span><span class="p">,</span><span class="w"> </span><span class="kc">nil</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="p">}</span><span class="w">
+</span></span></span></code></pre></div><p>macOS has no <code>/proc</code>, and <code>ps</code> has no dependable &ldquo;select by process group&rdquo; flag, so it snapshots every process with
+<code>ps -Ao pgid=,rss=</code> (and <code>pgid=,time=</code> for CPU) and sums the rows whose pgid matches. Both versions treat &ldquo;no processes
+found in the group&rdquo; as a failed sample, not a zero. A gone group leader skips the tick rather than reporting a reading
+comfortably below the cap.</p>
+<p>The summation logic is factored into pure functions so it&rsquo;s unit tested on every platform, and there&rsquo;s a <code>linux || darwin</code>
+test that spawns a memory-hogging grandchild and fails against the old root-only sampler.</p>
+<h3 id="whats-still-uneven">What&rsquo;s still uneven</h3>
+<p>The Windows sampler is still root-only, on purpose. Memory is enforced tree-wide by the job, so the sampler there is
+defense in depth. CPU seconds are the exception. The Job Object doesn&rsquo;t express a CPU-seconds budget the way the
+watchdog does, so <code>cpu_limit_seconds</code> on Windows is approximated from the root process&rsquo;s times. A grandchild spinning
+CPU on Windows escapes that cap today. The cheap fix is probably <code>QueryInformationJobObject</code> with
+<code>JobObjectBasicAccountingInformation</code>, which reports total user and kernel time for everything that has ever run in the
+job, no tree walk required. That&rsquo;s next.</p>
+<p>And sampling is sampling. A process group can grow between two polls, and anything that calls <code>setsid</code> leaves the group
+entirely. For an agent&rsquo;s tool calls that&rsquo;s an acceptable trade for a single binary that needs no privileges. If you need
+a hard wall on Linux, run the ship inside a systemd scope or a container with <code>memory.max</code> set and let shipmates&rsquo; own
+limits be the inner layer.</p>
+<h3 id="how-i-measured">How I measured</h3>
+<p>Both demos are small standalone Go programs (Go 1.26.5 on Windows 11 Pro, cross-compiled and run under WSL2 kernel
+6.18.33.2 for the Linux one) on an AMD Ryzen 9 5950X with 128 GB RAM. The Linux one starts an &ldquo;agent&rdquo; with
+<code>Setpgid: true</code>, which runs a &ldquo;tool&rdquo; that allocates 32 x 16 MiB with every page touched, and prints <code>/proc/&lt;pid&gt;/statm</code>
+RSS for the root next to the sum over the process group every 500 ms. The Windows one creates a Job Object with
+<code>JOB_OBJECT_LIMIT_JOB_MEMORY</code> set to 256 MiB, assigns the agent, and lets the agent&rsquo;s child allocate 16 MiB at a time.</p>
+<h3 id="links">Links</h3>
+<ul>
+<li><a href="https://github.com/luthermonson/shipmates/commit/24bd788"><code>24bd788</code></a>: contain codex with the portable watchdog, delete cgroups</li>
+<li><a href="https://github.com/luthermonson/shipmates/pull/58">shipmates PR #58</a>: sample the whole process group</li>
+<li><a href="https://learn.microsoft.com/en-us/windows/win32/procthread/job-objects">Job Objects (Microsoft Learn)</a></li>
+<li><a href="https://learn.microsoft.com/en-us/windows/win32/api/winnt/ns-winnt-jobobject_basic_accounting_information">JOBOBJECT_BASIC_ACCOUNTING_INFORMATION</a></li>
+<li><a href="https://docs.kernel.org/admin-guide/cgroup-v2.html">cgroup v2 documentation</a></li>
+</ul>
+
+      </div>
+      <footer>
+        <div class="stats">
+  
+    <ul class="categories">
+      
+        
+          <li><a class="article-terms-link" href="/categories/go/">go</a></li>
+        
+          <li><a class="article-terms-link" href="/categories/windows/">windows</a></li>
+        
+          <li><a class="article-terms-link" href="/categories/containers/">containers</a></li>
+        
+      
+    </ul>
+  
+  
+    <ul class="tags">
+      
+        
+          <li><a class="article-terms-link" href="/tags/go/">go</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/windows/">windows</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/linux/">linux</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/macos/">macos</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/job-objects/">job-objects</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/cgroups/">cgroups</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/process-groups/">process-groups</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/shipmates/">shipmates</a></li>
+        
+      
+    </ul>
+  
+</div>
+
+      </footer>
+    </div>
+    
+      
+  
+  <div class='post giscus-wrap'>
+    <script src='https://giscus.app/client.js'
+            data-repo='luthermonson/luth.io'
+            data-repo-id='R_kgDOGvFBXQ'
+            data-category='Announcements'
+            data-category-id='DIC_kwDOGvFBXc4DH_gv'
+            data-mapping='pathname'
+            data-strict='1'
+            data-reactions-enabled='1'
+            data-emit-metadata='0'
+            data-input-position='top'
+            data-theme='light'
+            data-lang='en'
+            data-loading='lazy'
+            crossorigin='anonymous'
+            async>
+    </script>
+  </div>
+  
+
+
+
+    
+  </article>
+  
+    <nav class="post-nav">
+      
+        <a href="/blog/2026/09/bind-mounts-across-mount-namespaces/" class="post-nav-link older">
+          <span class="post-nav-label">&larr; Older</span>
+          <span class="post-nav-title">Bind Mounts Across Mount Namespaces: Four PRs and a Container Escape</span>
+        </a>
+      
+      
+        <a href="/blog/2026/09/agent-shell-allowlist-bypassable/" class="post-nav-link newer">
+          <span class="post-nav-label">Newer &rarr;</span>
+          <span class="post-nav-title">Your Agent&#39;s Shell Allowlist Is Bypassable</span>
+        </a>
+      
+    </nav>
+  
+
+      </main>
+      <section id="site-sidebar">
+  
+    <section id="recent-posts">
+      <header>
+        <h1>Recent Posts</h1>
+      </header>
+      
+      <article class="mini-post">
+          <a href="/blog/2026/10/ephpm-worker-mode-performance/" class="image" style="--bg-image: url('/img/2026/10/ephpm-worker-mode-performance-cover.svg');">
+    <img class="" src="/img/2026/10/ephpm-worker-mode-performance-cover.svg" alt="Diagram: before, hyper/tokio hands each request to one shared bounded channel whose waiter list all 20 PHP threads contend on; after, a dispatcher hands the job straight into the mailbox of the most recently idle PHP thread and only queues it in a FIFO overflow queue when every thread is busy">
+  </a>
+        <header>
+          <h2><a href="/blog/2026/10/ephpm-worker-mode-performance/">Fourth Place in Worker Mode, and Why It Wasn&#39;t PHP</a></h2>
+          <time class="published" datetime="2026-10-16 08:10:00 -0700 PDT">October 16, 2026</time>
+        </header>
+      </article>
+      
+      <article class="mini-post">
+          <a href="/blog/2026/10/ephpm-websockets-how-to/" class="image" style="--bg-image: url('/img/2026/10/ephpm-websockets-how-to-cover.svg');">
+    <img class="" src="/img/2026/10/ephpm-websockets-how-to-cover.svg" alt="Diagram: browsers hold sockets to ePHPm&#39;s Rust session tasks and registry; each connect, message and disconnect runs websocket.php once on the PHP thread pool, and ordinary HTTP requests push through ephpm_ws_broadcast">
+  </a>
+        <header>
+          <h2><a href="/blog/2026/10/ephpm-websockets-how-to/">WebSockets in ePHPm, From Zero to a Working Chat</a></h2>
+          <time class="published" datetime="2026-10-11 17:30:00 -0700 PDT">October 11, 2026</time>
+        </header>
+      </article>
+      
+      <article class="mini-post">
+          <a href="/blog/2026/10/webhooks-out-of-order-scheduler/" class="image" style="--bg-image: url('/img/2026/10/webhooks-out-of-order-scheduler-timeline.svg');">
+    <img class="" src="/img/2026/10/webhooks-out-of-order-scheduler-timeline.svg" alt="Timeline of three same-label jobs where a runner executing a build is destroyed 2.3 seconds before its in_progress webhook arrives">
+  </a>
+        <header>
+          <h2><a href="/blog/2026/10/webhooks-out-of-order-scheduler/">Webhooks Arrive Out of Order: How My Scheduler Killed Live Builds</a></h2>
+          <time class="published" datetime="2026-10-07 21:10:00 -0700 PDT">October 7, 2026</time>
+        </header>
+      </article>
+      
+      <article class="mini-post">
+          <a href="/blog/2026/10/go-proxmox-five-years-to-v0-8/" class="image" style="--bg-image: url('/img/2026/10/go-proxmox-five-years-to-v0-8-apidiff.svg');">
+    <img class="" src="/img/2026/10/go-proxmox-five-years-to-v0-8-apidiff.svg" alt="Horizontal bar chart of apidiff incompatible and compatible changes for every go-proxmox release from v0.1.0 to v0.8.2">
+  </a>
+        <header>
+          <h2><a href="/blog/2026/10/go-proxmox-five-years-to-v0-8/">Breaking Changes Without Breaking Trust: Five Years to go-proxmox v0.8</a></h2>
+          <time class="published" datetime="2026-10-04 19:40:00 -0700 PDT">October 4, 2026</time>
+        </header>
+      </article>
+      
+      <article class="mini-post">
+          <a href="/blog/2026/10/windows-sigterm-sparse-files/" class="image" style="--bg-image: url('/img/2026/10/windows-sigterm-sparse-files-connections.svg');">
+    <img class="" src="/img/2026/10/windows-sigterm-sparse-files-connections.svg" alt="Bar chart: 96 Cloudflare edge connections held by orphaned cloudflared processes versus 4 for the live daemon">
+  </a>
+        <header>
+          <h2><a href="/blog/2026/10/windows-sigterm-sparse-files/">Windows Grab-Bag: SIGTERM That Doesn&#39;t Exist and Sparse Files That Break Docker</a></h2>
+          <time class="published" datetime="2026-10-03 14:30:00 -0700 PDT">October 3, 2026</time>
+        </header>
+      </article>
+      
+      
+        <footer>
+          <a href="/blog" class="button">See More</a>
+        </footer>
+      
+    </section>
+  
+
+  
+    
+
+      <section id="categories">
+        <header>
+          <h1><a href="/categories">Categories</a></h1>
+        </header>
+        <ul>
+          
+          
+          <li>
+              <a href="/categories/ephpm/">ephpm<span class="count">33</span></a>
+          
+          <li>
+              <a href="/categories/go/">go<span class="count">30</span></a>
+          
+          <li>
+              <a href="/categories/php/">php<span class="count">23</span></a>
+          
+          <li>
+              <a href="/categories/rust/">rust<span class="count">15</span></a>
+          
+          <li>
+              <a href="/categories/homelab/">homelab<span class="count">14</span></a>
+          
+          <li>
+              <a href="/categories/windows/">windows<span class="count">14</span></a>
+          
+          <li>
+              <a href="/categories/ci/">ci<span class="count">9</span></a>
+          
+          <li>
+              <a href="/categories/databases/">databases<span class="count">9</span></a>
+          
+          <li>
+              <a href="/categories/security/">security<span class="count">9</span></a>
+          
+          <li>
+              <a href="/categories/containers/">containers<span class="count">7</span></a>
+          
+          <li>
+              <a href="/categories/tools/">tools<span class="count">5</span></a>
+          
+          <li>
+              <a href="/categories/ai-agents/">ai-agents<span class="count">4</span></a>
+          
+          </li>
+        </ul>
+      </section>
+    
+  
+
+  
+    <section id="mini-bio">
+      <header>
+        <h1>About</h1>
+      </header>
+      <p>Luther is a 20+ year software veteran specializing in backend APIs and architecting products. Employed at <a href='https://www.suse.com'>SUSE</a> as the Team Lead for the <a href='https://github.com/rancher/windows/issues'>Containers on Windows Team</a> working on <a href='https://rancher.com/'>Rancher</a> + <a href='https://kubernetes.io/'>Kubernetes</a></p>
+      <footer>
+        <a href="/about" class="button">Learn More</a>
+      </footer>
+    </section>
+  
+</section>
+
+      <footer id="site-footer">
+  
+      <ul class="socnet-icons">
+        
+
+        <li><a href="//github.com/luthermonson" target="_blank" rel="noopener" title="GitHub" class="fab fa-github"></a></li>
+
+
+
+
+
+
+
+
+
+
+
+<li><a href="//www.linkedin.com/in/luthermonson" target="_blank" rel="noopener" title="LinkedIn" class="fab fa-linkedin"></a></li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li><a href="//twitter.com/luthermonson" target="_blank" rel="noopener" title="Twitter" class="fab fa-twitter"></a></li>
+
+
+
+
+
+
+
+
+
+
+
+<li><a href="mailto:luther.monson@gmail.com" target="_blank" title="Email" class="far fa-envelope"></a></li>
+
+      </ul>
+  
+  <p class="copyright">
+    © 2026 Luther Monson
+      <br>
+    Theme: <a href='https://github.com/pacollins/hugo-future-imperfect-slim' target='_blank' rel='noopener'>Hugo Future Imperfect Slim</a><br>A <a href='https://html5up.net/future-imperfect' target='_blank' rel='noopener'>HTML5 UP port</a> | Powered by <a href='https://gohugo.io/' title='0.160.1' target='_blank' rel='noopener'>Hugo</a>
+  </p>
+</footer>
+<a id="back-to-top" href="#" class="fas fa-arrow-up fa-2x"></a>
+
+      <script src="/js/bundle.min.241b62ebc4792fe8c7a75879e5f710894f226f2b73342e9916b3a3b0526030cc.js" integrity="sha256-JBti68R5L&#43;jHp1h55fcQiU8ibytzNC6ZFrOjsFJgMMw="></script>
+    <script src="/js/add-on.js"></script>
+    </div>
+  </body>
+</html>

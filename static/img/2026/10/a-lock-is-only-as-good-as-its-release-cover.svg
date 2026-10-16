@@ -1,0 +1,33 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 880 380" font-family="system-ui, -apple-system, Segoe UI, sans-serif">
+  <rect width="880" height="380" fill="#ffffff"/>
+  <text x="440" y="30" text-anchor="middle" font-size="19" font-weight="600" fill="#222">A blind DEL releases someone else's lock</text>
+
+  <!-- time axis -->
+  <line x1="120" y1="320" x2="840" y2="320" stroke="#6b6b6b" stroke-width="1.2"/>
+  <text x="840" y="340" text-anchor="end" font-size="12" fill="#6b6b6b">time</text>
+
+  <!-- TTL expiry marker -->
+  <line x1="360" y1="56" x2="360" y2="320" stroke="#c0392b" stroke-dasharray="5,4"/>
+  <text x="364" y="70" font-size="12" fill="#c0392b">A's TTL expires</text>
+  <line x1="560" y1="56" x2="560" y2="320" stroke="#7d5ba6" stroke-dasharray="5,4"/>
+  <text x="564" y="70" font-size="12" fill="#7d5ba6">A: DEL lock</text>
+
+  <!-- A -->
+  <text x="24" y="122" font-size="15" font-weight="600" fill="#2b6cb0">request A</text>
+  <rect x="140" y="104" width="220" height="28" rx="4" fill="#2b6cb0" opacity="0.85"/>
+  <text x="250" y="123" text-anchor="middle" font-size="12" fill="#fff">holds lock (SETNX, TTL)</text>
+  <rect x="360" y="104" width="200" height="28" rx="4" fill="#ffffff" stroke="#2b6cb0" stroke-dasharray="4,3"/>
+  <text x="460" y="123" text-anchor="middle" font-size="12" fill="#2b6cb0">still working, unlocked</text>
+
+  <!-- B -->
+  <text x="24" y="192" font-size="15" font-weight="600" fill="#e07a1f">request B</text>
+  <rect x="400" y="174" width="420" height="28" rx="4" fill="#e07a1f" opacity="0.85"/>
+  <text x="610" y="193" text-anchor="middle" font-size="12" fill="#fff">acquires the free lock, thinks it is exclusive</text>
+
+  <!-- C -->
+  <text x="24" y="262" font-size="15" font-weight="600" fill="#3a9a5b">request C</text>
+  <rect x="600" y="244" width="220" height="28" rx="4" fill="#3a9a5b" opacity="0.85"/>
+  <text x="710" y="263" text-anchor="middle" font-size="12" fill="#fff">acquires too: B and C overlap</text>
+
+  <text x="440" y="366" text-anchor="middle" font-size="13" fill="#222">del_if_eq(key, A's token) is a no-op at the purple line, because the key now holds B's token</text>
+</svg>

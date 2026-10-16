@@ -1,0 +1,37 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 360" font-family="system-ui, -apple-system, Segoe UI, sans-serif">
+  <rect width="800" height="360" fill="#ffffff"/>
+  <text x="400" y="36" text-anchor="middle" font-size="20" font-weight="600" fill="#222">rancher/remotedialer#265: three commits, one pin</text>
+
+  <line x1="110" y1="140" x2="690" y2="140" stroke="#6b6b6b" stroke-width="3"/>
+
+  <!-- commit 1 -->
+  <circle cx="150" cy="140" r="16" fill="#c0392b"/>
+  <text x="150" y="100" text-anchor="middle" font-size="15" font-weight="600" fill="#222">cf2b335</text>
+  <text x="150" y="185" text-anchor="middle" font-size="13" fill="#444">reproducer + -race</text>
+  <text x="150" y="203" text-anchor="middle" font-size="13" fill="#c0392b">red: pingCancel race</text>
+
+  <!-- commit 2 -->
+  <circle cx="400" cy="140" r="16" fill="#e07a1f"/>
+  <text x="400" y="100" text-anchor="middle" font-size="15" font-weight="600" fill="#222">7e65b78</text>
+  <text x="400" y="185" text-anchor="middle" font-size="13" fill="#444">lock pingCancel, errMu on err</text>
+  <text x="400" y="203" text-anchor="middle" font-size="13" fill="#e07a1f">Add(1) still outside the lock</text>
+
+  <!-- commit 3 -->
+  <circle cx="650" cy="140" r="16" fill="#3a9a5b"/>
+  <text x="650" y="100" text-anchor="middle" font-size="15" font-weight="600" fill="#222">00b5151</text>
+  <text x="650" y="185" text-anchor="middle" font-size="13" fill="#444">Add(1) inside the lock</text>
+  <text x="650" y="203" text-anchor="middle" font-size="13" fill="#3a9a5b">green</text>
+
+  <!-- pins -->
+  <rect x="290" y="240" width="220" height="40" rx="6" fill="#ffffff" stroke="#e07a1f" stroke-width="2"/>
+  <text x="400" y="258" text-anchor="middle" font-size="13" fill="#222">shipmates replace, Aug 4</text>
+  <text x="400" y="274" text-anchor="middle" font-size="12" fill="#6b6b6b">(two-thirds of the fix)</text>
+  <line x1="400" y1="240" x2="400" y2="212" stroke="#e07a1f" stroke-width="2"/>
+
+  <rect x="540" y="240" width="220" height="40" rx="6" fill="#ffffff" stroke="#3a9a5b" stroke-width="2"/>
+  <text x="650" y="258" text-anchor="middle" font-size="13" fill="#222">shipmates PR #50, Aug 17</text>
+  <text x="650" y="274" text-anchor="middle" font-size="12" fill="#6b6b6b">(PR head)</text>
+  <line x1="650" y1="240" x2="650" y2="212" stroke="#3a9a5b" stroke-width="2"/>
+
+  <text x="400" y="330" text-anchor="middle" font-size="13" fill="#444">A pseudo-version pins a commit, not "my fix".</text>
+</svg>

@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>Tools &amp; CLIs on Luther Monson</title>
+    <link>https://luth.io/categories/tools/</link>
+    <description>Recent content in Tools &amp; CLIs on Luther Monson</description>
+    <generator>Hugo</generator>
+    <language>en</language>
+    <lastBuildDate>Wed, 09 Sep 2026 21:22:00 -0700</lastBuildDate>
+    <atom:link href="https://luth.io/categories/tools/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>Building k9s for Linode With Bubble Tea</title>
+      <link>https://luth.io/blog/2026/09/linode-tui/</link>
+      <pubDate>Wed, 09 Sep 2026 21:22:00 -0700</pubDate>
+      <guid>https://luth.io/blog/2026/09/linode-tui/</guid>
+      <description>&lt;p&gt;A lot of my day is spent in &lt;a href=&#34;https://k9scli.io/&#34;&gt;k9s&lt;/a&gt;, and when I need something from the Linode side of the house (a node that won&amp;rsquo;t&#xA;boot, a volume nobody cleaned up, the kubeconfig for a cluster I just made) I&amp;rsquo;m back in a browser tab or typing &lt;code&gt;linode-cli&lt;/code&gt; incantations.&#xA;I wanted the k9s workflow for the Linode API itself: &lt;code&gt;:&lt;/code&gt; to jump to a resource type, &lt;code&gt;/&lt;/code&gt; to filter, single-key actions on the selected row,&#xA;and Enter to go deeper. That turned into &lt;a href=&#34;https://github.com/luthermonson/linode-tui&#34;&gt;linode-tui&lt;/a&gt;, a Go TUI built on&#xA;&lt;a href=&#34;https://github.com/charmbracelet/bubbletea&#34;&gt;Bubble Tea&lt;/a&gt;, &lt;a href=&#34;https://github.com/linode/linodego&#34;&gt;linodego&lt;/a&gt; and urfave/cli v3.&lt;/p&gt;</description>
+    </item>
+    <item>
+      <title>Stop Ctrl-C-ing Your tail -f | grep</title>
+      <link>https://luth.io/blog/2026/06/tail-gunner/</link>
+      <pubDate>Sat, 20 Jun 2026 20:31:00 -0700</pubDate>
+      <guid>https://luth.io/blog/2026/06/tail-gunner/</guid>
+      <description>&lt;p&gt;Here&amp;rsquo;s a loop I end up in all the time: &lt;code&gt;tail -f app.log&lt;/code&gt;, something scrolls by that looks wrong, Ctrl-C, &lt;code&gt;tail -f app.log | grep ERROR&lt;/code&gt;,&#xA;wait for it to happen again, decide I also want to drop the health checks, Ctrl-C, &lt;code&gt;| grep -v healthz&lt;/code&gt;, wait again. Every filter tweak&#xA;throws away the stream and every line that already went past. I got tired of it and wrote &lt;a href=&#34;https://github.com/luthermonson/tail-gunner&#34;&gt;tail-gunner&lt;/a&gt;,&#xA;a &lt;code&gt;tail&lt;/code&gt; replacement that you can promote into a filtering TUI with one keystroke and drop back out of without the stream ever stopping.&lt;/p&gt;</description>
+    </item>
+    <item>
+      <title>Maintaining a Go Tool That Edits /etc/hosts on Every OS</title>
+      <link>https://luth.io/blog/2024/02/goodhosts/</link>
+      <pubDate>Sat, 03 Feb 2024 19:22:00 -0700</pubDate>
+      <guid>https://luth.io/blog/2024/02/goodhosts/</guid>
+      <description>&lt;p&gt;Editing the hosts file sounds like the most boring problem in software. Read a text file, add a line, write it back. Then you find out&#xA;your binary is being shelled out to from a Ruby Vagrant plugin on a Windows laptop with UAC prompts, your library is being called in a&#xA;loop by &lt;a href=&#34;https://github.com/ddev/ddev&#34;&gt;ddev&lt;/a&gt;, and every hosts file you parse was hand-edited by somebody at some point.&#xA;I&amp;rsquo;ve been maintaining &lt;a href=&#34;https://github.com/goodhosts&#34;&gt;goodhosts&lt;/a&gt; for a few years now, and since I just spent a chunk of the fall and the&#xA;holidays on it, here&amp;rsquo;s what that looks like.&lt;/p&gt;</description>
+    </item>
+    <item>
+      <title>Practical Cue Example, Produce YAML Config from Go Types</title>
+      <link>https://luth.io/blog/2022/01/practical-cue-example/</link>
+      <pubDate>Mon, 31 Jan 2022 09:57:26 -0700</pubDate>
+      <guid>https://luth.io/blog/2022/01/practical-cue-example/</guid>
+      <description>&lt;p&gt;I recently had to spend some time to learn &lt;a href=&#34;https://cuelang.org/&#34;&gt;Cue&lt;/a&gt; and felt the examples/tutorials were a bit lacking&#xA;and the paradigm shift to the entire language sort of messed with my head and some things Cue does were a bit foreign to me.&#xA;To get started, note that the two places I spent all of my time to get this information came from their main &lt;a href=&#34;https://cuelang.org/docs/&#34;&gt;docs&lt;/a&gt;&#xA;and a community &lt;a href=&#34;https://cuetorials.com/&#34;&gt;Cuetorials&lt;/a&gt; site. This will be a tutorial on how you can use Cue to generate&#xA;two different YAML documents using Cue all starting with Go types to generate Cue files.&lt;/p&gt;</description>
+    </item>
+    <item>
+      <title>Free Blog Hosting Using Hugo &#43; Github Pages</title>
+      <link>https://luth.io/blog/2022/01/free-personal-blog-hugo-github-pages/</link>
+      <pubDate>Thu, 27 Jan 2022 11:51:20 -0700</pubDate>
+      <guid>https://luth.io/blog/2022/01/free-personal-blog-hugo-github-pages/</guid>
+      <description>&lt;p&gt;Since I just rode this merry-go-round here is a quick overview of how you can achieve a professional&#xA;looking personal blog with custom DNS with minimal effort at no cost and completely run out of a single Github Repository.&lt;/p&gt;&#xA;&lt;h3 id=&#34;prerequisites&#34;&gt;Prerequisites&lt;/h3&gt;&#xA;&lt;p&gt;You&amp;rsquo;ll need to do your own homework on how to use &lt;a href=&#34;https://gohugo.io/&#34;&gt;Hugo&lt;/a&gt; and you should have a &lt;a href=&#34;https://github.com/&#34;&gt;Github&lt;/a&gt;&#xA;account and have a decent understanding of using git and getting changes committed and pushed to a repo. You should also&#xA;have a domain and know how to do some basic DNS changes. Note that the only thing you likely can&amp;rsquo;t get for free is a domain name as&#xA;there are registration costs through registrars but, you can get introductory $0.99USD domains for the first year if you shop around and don&amp;rsquo;t care the &lt;a href=&#34;https://en.wikipedia.org/wiki/Top-level_domain&#34;&gt;TLD&lt;/a&gt;&#xA;you end up with. For reference, luth.io cost me $30/year to register with &lt;a href=&#34;https://www.cloudflare.com/products/registrar/&#34;&gt;CloudFlare&lt;/a&gt;.&lt;/p&gt;</description>
+    </item>
+  </channel>
+</rss>

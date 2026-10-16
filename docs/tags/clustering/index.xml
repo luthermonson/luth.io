@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>Clustering on Luther Monson</title>
+    <link>https://luth.io/tags/clustering/</link>
+    <description>Recent content in Clustering on Luther Monson</description>
+    <generator>Hugo</generator>
+    <language>en</language>
+    <lastBuildDate>Tue, 15 Sep 2026 21:08:00 -0700</lastBuildDate>
+    <atom:link href="https://luth.io/tags/clustering/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>Clustered SQLite in ePHPm, Part 3: CDC Over the Cluster Channel</title>
+      <link>https://luth.io/blog/2026/09/clustered-sqlite-cdc-cluster-channel/</link>
+      <pubDate>Tue, 15 Sep 2026 21:08:00 -0700</pubDate>
+      <guid>https://luth.io/blog/2026/09/clustered-sqlite-cdc-cluster-channel/</guid>
+      <description>&lt;p&gt;By the end of &lt;a href=&#34;https://luth.io/blog/2026/08/clustered-sqlite-adding-turso/&#34;&gt;Part 2&lt;/a&gt; ePHPm v0.7.0 ran exactly one SQLite engine, Turso, in&#xA;process, for single-node and clustered mode alike. The sidecar was gone. What I skipped over is how a replica actually gets&#xA;the primary&amp;rsquo;s writes, and what happens when the primary dies with data on it. That&amp;rsquo;s this post.&lt;/p&gt;&#xA;&lt;ul&gt;&#xA;&lt;li&gt;&lt;a href=&#34;https://luth.io/blog/2026/08/clustered-sqlite-sqld-sidecar/&#34;&gt;Part 1: Replication by sidecar with sqld&lt;/a&gt;&lt;/li&gt;&#xA;&lt;li&gt;&lt;a href=&#34;https://luth.io/blog/2026/08/clustered-sqlite-adding-turso/&#34;&gt;Part 2: Adding Turso&lt;/a&gt;&lt;/li&gt;&#xA;&lt;li&gt;Part 3: CDC over the cluster channel (this post)&lt;/li&gt;&#xA;&lt;/ul&gt;&#xA;&lt;h3 id=&#34;cdc-from-the-engine-itself&#34;&gt;CDC from the engine itself&lt;/h3&gt;&#xA;&lt;p&gt;Turso has change data capture built in. Turn it on for a connection and every committed change lands in a &lt;code&gt;turso_cdc&lt;/code&gt;&#xA;table with a monotonically increasing &lt;code&gt;change_id&lt;/code&gt;, the table, the rowid, and before/after images of the record. The&#xA;primary tails that table and ships transaction batches. Replicas apply them. That&amp;rsquo;s the whole design, and it landed as an&#xA;experimental path in &lt;a href=&#34;https://github.com/ephpm/ephpm/pull/186&#34;&gt;#186&lt;/a&gt; at the end of July, with the tailer and applier in&#xA;litewire (&lt;a href=&#34;https://github.com/ephpm/litewire/pull/10&#34;&gt;litewire#10&lt;/a&gt;).&lt;/p&gt;</description>
+    </item>
+    <item>
+      <title>Clustered ACME in Production: Three Bugs That Took TLS Down</title>
+      <link>https://luth.io/blog/2026/09/clustered-acme-three-bugs/</link>
+      <pubDate>Wed, 02 Sep 2026 19:30:00 -0700</pubDate>
+      <guid>https://luth.io/blog/2026/09/clustered-acme-three-bugs/</guid>
+      <description>&lt;p&gt;&lt;a href=&#34;https://github.com/ephpm/ephpm&#34;&gt;ePHPm&lt;/a&gt; gets its own certificates from Let&amp;rsquo;s Encrypt, and in a cluster only one node&#xA;should be talking to the CA. The nodes elect an ACME leader over the shared KV store, the leader orders the cert, and&#xA;everybody else installs it from KV. That all had unit tests and had worked on single nodes for months. Then I tried to&#xA;move wildcard TLS termination for our preview environment off a separate proxy and onto the 3-node cluster itself, and&#xA;in about two days it found three separate bugs that each took TLS down. None of them showed up in a unit test, and all&#xA;of them are the kind of thing you only learn by putting the feature on real machines.&lt;/p&gt;</description>
+    </item>
+    <item>
+      <title>Clustered SQLite in ePHPm, Part 1: Replication by Sidecar</title>
+      <link>https://luth.io/blog/2026/08/clustered-sqlite-sqld-sidecar/</link>
+      <pubDate>Sat, 08 Aug 2026 20:14:00 -0700</pubDate>
+      <guid>https://luth.io/blog/2026/08/clustered-sqlite-sqld-sidecar/</guid>
+      <description>&lt;p&gt;Most PHP sites I have run in the last twenty years did not need a MySQL server. They needed &lt;em&gt;a&lt;/em&gt; database, and MySQL was the&#xA;one every framework spoke. With &lt;a href=&#34;https://github.com/ephpm/ephpm&#34;&gt;ePHPm&lt;/a&gt; I have been trying to get rid of that server for&#xA;the common case, and the piece that makes it possible is &lt;a href=&#34;https://github.com/ephpm/litewire&#34;&gt;litewire&lt;/a&gt;: PHP connects with&#xA;plain &lt;code&gt;pdo_mysql&lt;/code&gt;, litewire speaks the MySQL wire protocol, and the queries land in a SQLite file. WordPress and Laravel&#xA;don&amp;rsquo;t know the difference. No &lt;code&gt;mysqld&lt;/code&gt;, no child processes, just &lt;code&gt;ephpm&lt;/code&gt; and a &lt;code&gt;.db&lt;/code&gt; file.&lt;/p&gt;</description>
+    </item>
+    <item>
+      <title>Gossip-Based Clustering for PHP Apps</title>
+      <link>https://luth.io/blog/2026/08/gossip-clustering-for-php/</link>
+      <pubDate>Tue, 04 Aug 2026 20:52:00 -0700</pubDate>
+      <guid>https://luth.io/blog/2026/08/gossip-clustering-for-php/</guid>
+      <description>&lt;p&gt;Most PHP developers never touch clustering primitives, and that&amp;rsquo;s by design. PHP is share-nothing: each request starts&#xA;from zero, and anything shared lives somewhere else. Sessions go in Redis, cache goes in Redis or Memcached, locks go in&#xA;Redis, and when you run two app servers the &amp;ldquo;cluster&amp;rdquo; is really two stateless boxes pointed at the same Redis. That works&#xA;until Redis is the thing you&amp;rsquo;re trying not to run.&lt;/p&gt;</description>
+    </item>
+  </channel>
+</rss>

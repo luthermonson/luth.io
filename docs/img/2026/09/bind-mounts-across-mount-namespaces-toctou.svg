@@ -1,0 +1,64 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 560" font-family="system-ui, -apple-system, Segoe UI, Roboto, sans-serif" font-size="14">
+  <rect width="960" height="560" fill="#ffffff"/>
+  <defs>
+    <marker id="a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto">
+      <path d="M0,0 L10,5 L0,10 z" fill="#444"/>
+    </marker>
+  </defs>
+  <text x="480" y="30" text-anchor="middle" font-size="18" font-weight="600" fill="#222">Two walks of a job-controlled path, and the fix</text>
+
+  <!-- lanes -->
+  <text x="140" y="64" text-anchor="middle" font-weight="600" fill="#2b6cb0">ephemerd (dind shim)</text>
+  <text x="480" y="64" text-anchor="middle" font-weight="600" fill="#c0392b">the job (owns the runner rootfs)</text>
+  <text x="820" y="64" text-anchor="middle" font-weight="600" fill="#7d5ba6">runc (own mount ns)</text>
+  <line x1="140" y1="74" x2="140" y2="290" stroke="#ddd" stroke-width="2"/>
+  <line x1="480" y1="74" x2="480" y2="290" stroke="#ddd" stroke-width="2"/>
+  <line x1="820" y1="74" x2="820" y2="290" stroke="#ddd" stroke-width="2"/>
+
+  <text x="20" y="96" font-size="13" font-weight="600" fill="#c0392b">Before (#125)</text>
+  <rect x="40" y="104" width="200" height="50" rx="6" fill="#fff" stroke="#2b6cb0"/>
+  <text x="140" y="125" text-anchor="middle" fill="#222" font-size="13">os.Stat(rootfs + src)</text>
+  <text x="140" y="143" text-anchor="middle" fill="#222" font-size="13">validate, return path string</text>
+
+  <rect x="370" y="160" width="220" height="50" rx="6" fill="#fbf1f0" stroke="#c0392b"/>
+  <text x="480" y="181" text-anchor="middle" fill="#222" font-size="13">mv dir dir.old</text>
+  <text x="480" y="199" text-anchor="middle" fill="#222" font-size="13">ln -s / dir</text>
+
+  <rect x="710" y="216" width="220" height="50" rx="6" fill="#fff" stroke="#7d5ba6"/>
+  <text x="820" y="237" text-anchor="middle" fill="#222" font-size="13">walks the same string again</text>
+  <text x="820" y="255" text-anchor="middle" fill="#c0392b" font-size="13" font-weight="600">mounts the link's target</text>
+
+  <line x1="240" y1="129" x2="368" y2="180" stroke="#444" stroke-width="1.4" marker-end="url(#a)"/>
+  <line x1="590" y1="185" x2="708" y2="236" stroke="#444" stroke-width="1.4" marker-end="url(#a)"/>
+  <text x="300" y="282" fill="#444" font-size="13">reproduced against runc 1.3.4: rc=0, container saw the swapped target</text>
+
+  <line x1="20" y1="306" x2="940" y2="306" stroke="#ddd"/>
+
+  <text x="20" y="334" font-size="13" font-weight="600" fill="#3a9a5b">After (#173): resolve once to a descriptor, then stage</text>
+  <rect x="20" y="346" width="290" height="88" rx="6" fill="#f2f8f4" stroke="#3a9a5b"/>
+  <text x="34" y="370" fill="#222" font-size="13" font-weight="600">1. openat2(rootfsFd, src)</text>
+  <text x="34" y="390" fill="#444" font-size="13">RESOLVE_IN_ROOT | NO_MAGICLINKS</text>
+  <text x="34" y="410" fill="#444" font-size="13">held as an O_PATH fd: renames</text>
+  <text x="34" y="426" fill="#444" font-size="13">afterwards can't change its target</text>
+
+  <rect x="335" y="346" width="290" height="88" rx="6" fill="#f2f8f4" stroke="#3a9a5b"/>
+  <text x="349" y="370" fill="#222" font-size="13" font-weight="600">2. mount /proc/self/fd/N</text>
+  <text x="349" y="390" fill="#444" font-size="13">onto data/dind-binds/job/n</text>
+  <text x="349" y="410" fill="#444" font-size="13">in ephemerd's own namespace,</text>
+  <text x="349" y="426" fill="#444" font-size="13">where the fd path resolves</text>
+
+  <rect x="650" y="346" width="290" height="88" rx="6" fill="#f2f8f4" stroke="#3a9a5b"/>
+  <text x="664" y="370" fill="#222" font-size="13" font-weight="600">3. OCI spec gets the staging path</text>
+  <text x="664" y="390" fill="#444" font-size="13">root-owned, leaf is a counter,</text>
+  <text x="664" y="410" fill="#444" font-size="13">nothing from the request in it.</text>
+  <text x="664" y="426" fill="#444" font-size="13">runc can re-walk it safely</text>
+
+  <line x1="310" y1="390" x2="333" y2="390" stroke="#3a9a5b" stroke-width="1.6" marker-end="url(#a)"/>
+  <line x1="625" y1="390" x2="648" y2="390" stroke="#3a9a5b" stroke-width="1.6" marker-end="url(#a)"/>
+
+  <rect x="20" y="454" width="920" height="88" rx="6" fill="#fdf6ef" stroke="#e07a1f"/>
+  <text x="34" y="478" fill="#222" font-size="13" font-weight="600">Dead end kept as a test: put /proc/&lt;pid&gt;/fd/N straight in the spec</text>
+  <text x="34" y="500" fill="#444" font-size="13">runc: mount src=/proc/.../fd/3 ... flags=MS_BIND|MS_REC: invalid argument. A bind source has to resolve in the</text>
+  <text x="34" y="518" fill="#444" font-size="13">caller's mount namespace, and runc never shares ephemerd's. Every bind fails, legitimate ones included,</text>
+  <text x="34" y="536" fill="#444" font-size="13">which is how an earlier "hardening" branch turned out to be a regression rather than a fix.</text>
+</svg>

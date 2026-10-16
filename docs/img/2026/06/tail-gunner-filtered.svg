@@ -1,0 +1,68 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 868 480" width="868" height="480" font-family="ui-monospace,SFMono-Regular,Menlo,Consolas,monospace" font-size="14">
+<rect width="868" height="480" rx="8" fill="#1e1e1e"/>
+<rect width="868" height="26" rx="8" fill="#323233"/><rect y="18" width="868" height="8" fill="#323233"/>
+<circle cx="16" cy="13" r="5" fill="#ff5f56"/><circle cx="32" cy="13" r="5" fill="#ffbd2e"/><circle cx="48" cy="13" r="5" fill="#27c93f"/>
+<text x="434.0" y="17" fill="#9d9d9d" font-size="12" text-anchor="middle" font-family="system-ui,sans-serif">tail-gunner -f -n 200 app.log</text>
+<text x="14.0" y="47" fill="#f14c4c" xml:space="preserve" textLength="344.4" lengthAdjust="spacingAndGlyphs">22:22:33 ERROR req id=13 path=/api/orders</text>
+<rect x="366.8" y="34" width="75.6" height="18" fill="#f5f543"/>
+<text x="366.8" y="47" fill="#1e1e1e" xml:space="preserve" textLength="75.6" lengthAdjust="spacingAndGlyphs">dur=703ms</text>
+<text x="14.0" y="65" fill="#f14c4c" xml:space="preserve" textLength="327.6" lengthAdjust="spacingAndGlyphs">22:22:33 ERROR req id=32 path=/api/cart</text>
+<rect x="350.0" y="52" width="75.6" height="18" fill="#f5f543"/>
+<text x="350.0" y="65" fill="#1e1e1e" xml:space="preserve" textLength="75.6" lengthAdjust="spacingAndGlyphs">dur=703ms</text>
+<text x="14.0" y="83" fill="#f14c4c" xml:space="preserve" textLength="344.4" lengthAdjust="spacingAndGlyphs">22:22:33 ERROR req id=33 path=/api/orders</text>
+<rect x="366.8" y="70" width="75.6" height="18" fill="#f5f543"/>
+<text x="366.8" y="83" fill="#1e1e1e" xml:space="preserve" textLength="75.6" lengthAdjust="spacingAndGlyphs">dur=752ms</text>
+<text x="14.0" y="101" fill="#f14c4c" xml:space="preserve" textLength="327.6" lengthAdjust="spacingAndGlyphs">22:22:33 ERROR req id=63 path=/api/cart</text>
+<rect x="350.0" y="88" width="75.6" height="18" fill="#f5f543"/>
+<text x="350.0" y="101" fill="#1e1e1e" xml:space="preserve" textLength="75.6" lengthAdjust="spacingAndGlyphs">dur=809ms</text>
+<text x="14.0" y="119" fill="#f14c4c" xml:space="preserve" textLength="344.4" lengthAdjust="spacingAndGlyphs">22:22:33 ERROR req id=68 path=/api/orders</text>
+<rect x="366.8" y="106" width="75.6" height="18" fill="#f5f543"/>
+<text x="366.8" y="119" fill="#1e1e1e" xml:space="preserve" textLength="75.6" lengthAdjust="spacingAndGlyphs">dur=808ms</text>
+<text x="14.0" y="137" fill="#f14c4c" xml:space="preserve" textLength="336.0" lengthAdjust="spacingAndGlyphs">22:22:33 ERROR req id=69 path=/api/users</text>
+<rect x="358.4" y="124" width="75.6" height="18" fill="#f5f543"/>
+<text x="358.4" y="137" fill="#1e1e1e" xml:space="preserve" textLength="75.6" lengthAdjust="spacingAndGlyphs">dur=741ms</text>
+<text x="14.0" y="155" fill="#f14c4c" xml:space="preserve" textLength="344.4" lengthAdjust="spacingAndGlyphs">22:22:34 ERROR req id=77 path=/api/orders</text>
+<rect x="366.8" y="142" width="75.6" height="18" fill="#f5f543"/>
+<text x="366.8" y="155" fill="#1e1e1e" xml:space="preserve" textLength="75.6" lengthAdjust="spacingAndGlyphs">dur=864ms</text>
+<text x="14.0" y="173" fill="#f14c4c" xml:space="preserve" textLength="344.4" lengthAdjust="spacingAndGlyphs">22:22:34 ERROR req id=82 path=/api/orders</text>
+<rect x="366.8" y="160" width="75.6" height="18" fill="#f5f543"/>
+<text x="366.8" y="173" fill="#1e1e1e" xml:space="preserve" textLength="75.6" lengthAdjust="spacingAndGlyphs">dur=611ms</text>
+<text x="14.0" y="191" fill="#f14c4c" xml:space="preserve" textLength="344.4" lengthAdjust="spacingAndGlyphs">22:22:34 ERROR req id=105 path=/api/users</text>
+<rect x="366.8" y="178" width="75.6" height="18" fill="#f5f543"/>
+<text x="366.8" y="191" fill="#1e1e1e" xml:space="preserve" textLength="75.6" lengthAdjust="spacingAndGlyphs">dur=832ms</text>
+<text x="14.0" y="209" fill="#f14c4c" xml:space="preserve" textLength="336.0" lengthAdjust="spacingAndGlyphs">22:22:34 ERROR req id=127 path=/api/cart</text>
+<rect x="358.4" y="196" width="75.6" height="18" fill="#f5f543"/>
+<text x="358.4" y="209" fill="#1e1e1e" xml:space="preserve" textLength="75.6" lengthAdjust="spacingAndGlyphs">dur=621ms</text>
+<text x="14.0" y="227" fill="#f14c4c" xml:space="preserve" textLength="344.4" lengthAdjust="spacingAndGlyphs">22:22:34 ERROR req id=169 path=/api/users</text>
+<rect x="366.8" y="214" width="75.6" height="18" fill="#f5f543"/>
+<text x="366.8" y="227" fill="#1e1e1e" xml:space="preserve" textLength="75.6" lengthAdjust="spacingAndGlyphs">dur=631ms</text>
+<text x="14.0" y="245" fill="#f14c4c" xml:space="preserve" textLength="352.8" lengthAdjust="spacingAndGlyphs">22:22:34 ERROR req id=178 path=/api/orders</text>
+<rect x="375.2" y="232" width="75.6" height="18" fill="#f5f543"/>
+<text x="375.2" y="245" fill="#1e1e1e" xml:space="preserve" textLength="75.6" lengthAdjust="spacingAndGlyphs">dur=238ms</text>
+<text x="14.0" y="263" fill="#f14c4c" xml:space="preserve" textLength="344.4" lengthAdjust="spacingAndGlyphs">22:22:34 ERROR req id=180 path=/api/users</text>
+<rect x="366.8" y="250" width="75.6" height="18" fill="#f5f543"/>
+<text x="366.8" y="263" fill="#1e1e1e" xml:space="preserve" textLength="75.6" lengthAdjust="spacingAndGlyphs">dur=593ms</text>
+<text x="14.0" y="281" fill="#f14c4c" xml:space="preserve" textLength="352.8" lengthAdjust="spacingAndGlyphs">22:22:34 ERROR req id=190 path=/api/orders</text>
+<rect x="375.2" y="268" width="75.6" height="18" fill="#f5f543"/>
+<text x="375.2" y="281" fill="#1e1e1e" xml:space="preserve" textLength="75.6" lengthAdjust="spacingAndGlyphs">dur=660ms</text>
+<text x="14.0" y="299" fill="#f14c4c" xml:space="preserve" textLength="411.6" lengthAdjust="spacingAndGlyphs">22:22:34 ERROR req id=192 path=/api/cart dur=93ms</text>
+<text x="14.0" y="317" fill="#f14c4c" xml:space="preserve" textLength="352.8" lengthAdjust="spacingAndGlyphs">22:22:35 ERROR req id=217 path=/api/orders</text>
+<rect x="375.2" y="304" width="75.6" height="18" fill="#f5f543"/>
+<text x="375.2" y="317" fill="#1e1e1e" xml:space="preserve" textLength="75.6" lengthAdjust="spacingAndGlyphs">dur=332ms</text>
+<text x="14.0" y="335" fill="#f14c4c" xml:space="preserve" textLength="428.4" lengthAdjust="spacingAndGlyphs">22:22:36 ERROR req id=229 path=/api/orders dur=69ms</text>
+<text x="14.0" y="353" fill="#f14c4c" xml:space="preserve" textLength="336.0" lengthAdjust="spacingAndGlyphs">22:22:37 ERROR req id=244 path=/api/cart</text>
+<rect x="358.4" y="340" width="75.6" height="18" fill="#f5f543"/>
+<text x="358.4" y="353" fill="#1e1e1e" xml:space="preserve" textLength="75.6" lengthAdjust="spacingAndGlyphs">dur=354ms</text>
+<text x="14.0" y="371" fill="#f14c4c" xml:space="preserve" textLength="336.0" lengthAdjust="spacingAndGlyphs">22:22:37 ERROR req id=250 path=/api/cart</text>
+<rect x="358.4" y="358" width="75.6" height="18" fill="#f5f543"/>
+<text x="358.4" y="371" fill="#1e1e1e" xml:space="preserve" textLength="75.6" lengthAdjust="spacingAndGlyphs">dur=730ms</text>
+<text x="14.0" y="389" fill="#f14c4c" xml:space="preserve" textLength="336.0" lengthAdjust="spacingAndGlyphs">22:22:41 ERROR req id=320 path=/api/cart</text>
+<rect x="358.4" y="376" width="75.6" height="18" fill="#f5f543"/>
+<text x="358.4" y="389" fill="#1e1e1e" xml:space="preserve" textLength="75.6" lengthAdjust="spacingAndGlyphs">dur=713ms</text>
+<text x="14.0" y="407" fill="#f14c4c" xml:space="preserve" textLength="344.4" lengthAdjust="spacingAndGlyphs">22:22:41 ERROR req id=325 path=/api/users</text>
+<rect x="366.8" y="394" width="75.6" height="18" fill="#f5f543"/>
+<text x="366.8" y="407" fill="#1e1e1e" xml:space="preserve" textLength="75.6" lengthAdjust="spacingAndGlyphs">dur=664ms</text>
+<rect x="14.0" y="448" width="67.2" height="18" fill="#3b8eea"/>
+<text x="22.4" y="461" fill="#1e1e1e" xml:space="preserve" textLength="50.4" lengthAdjust="spacingAndGlyphs">FOLLOW</text>
+<text x="89.6" y="461" fill="#7a7a7a" xml:space="preserve" textLength="596.4" lengthAdjust="spacingAndGlyphs">tail-gunner │ app.log │ 21/328 │ in:ERROR out:healthz hl:dur=[0-9]{3}ms</text>
+</svg>

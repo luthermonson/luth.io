@@ -1,0 +1,1097 @@
+<!doctype html>
+<html lang="en">
+  <head>
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-MSTSKGFWTX"></script>
+<script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+
+    gtag('config', 'G-MSTSKGFWTX');
+</script><meta charset="utf-8">
+<title>Windows - Luther Monson</title>
+<meta name="description" content="Luther Monson&#39;s Blog about Software Engineering mostly using the Go Programming language. Focusing on Containers and Virtualization with an emphasis on Kubernetes distributions and provisioning.">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<meta name="twitter:card" content="summary_large_image"><meta name="twitter:site" content="@luthermonson">
+
+<meta property="og:site_name" content="Luther Monson">
+<meta property="og:title" content="Windows">
+<meta property="og:description" content="Luther Monson&#39;s Blog about Software Engineering mostly using the Go Programming language. Focusing on Containers and Virtualization with an emphasis on Kubernetes distributions and provisioning.">
+<meta property="og:type" content="article">
+<meta property="og:url" content="https://luth.io/tags/windows/">
+  <meta property="og:image" content="https://luth.io/img/luther-monson-headshot.jpg">
+
+
+
+  <link rel="manifest" href="/favicon/site.webmanifest?v=1">
+  <link rel="apple-touch-icon" sizes="180x180" href="/favicon/apple-touch-icon.png?v=1">
+  <link rel="icon" type="image/png" sizes="32x32" href="/favicon/favicon-32x32.png?v=1">
+  <link rel="icon" type="image/png" sizes="16x16" href="/favicon/favicon-16x16.png?v=1">
+  
+    <link rel="mask-icon" href="/favicon/safari-pinned-tab.svg?v=1" color="#ffffff">
+    <link rel="shortcut icon" href="/favicon/favicon.ico?v=1">
+    <meta name="msapplication-config" content="/favicon/browserconfig.xml?v=1">
+  
+  <meta name="msapplication-TileColor" content="#ffffff">
+  <meta name="theme-color" content="#ffffff">
+
+
+  <meta name="generator" content="Hugo 0.160.1">
+  <link rel="alternate" type="application/rss+xml" href="https://luth.io/index.xml" title="Luther Monson">
+  <link rel="stylesheet" href="/css/bundle.min.e1ffed86714fbb7eff75eab221c0c61b8260be0c7d1c08db0fcb7a2bdb6af7c9.css" integrity="sha256-4f/thnFPu37/deqyIcDGG4Jgvgx9HAjbD8t6K9tq98k="><link rel="stylesheet" href="/css/add-on.css">
+        <link rel="stylesheet" href="/css/code.css">
+        <link rel="stylesheet" href="/css/mobile.css">
+</head>
+
+  <body>
+    
+
+<header id="site-header">
+  <nav id="site-nav">
+    <h1 class="nav-title">
+      <a href="/" class="nav">
+        <img class="nav-avatar" src="/img/luther-monson-headshot.jpg" alt="" width="32" height="32">
+        
+          Tags
+        
+      </a>
+    </h1>
+    <menu id="site-nav-menu" class="flyout-menu menu">
+      
+        
+          
+          <a href="/" class="nav link"><i class='fa fa-home'></i> Home</a>
+        
+      
+        
+          
+          <a href="/about" class="nav link"><i class='far fa-id-card'></i> About</a>
+        
+      
+        
+          
+          <a href="/blog" class="nav link"><i class='far fa-newspaper'></i> Blog</a>
+        
+      
+        
+          
+          <a href="/archive" class="nav link"><i class='far fa-calendar-alt'></i> Archive</a>
+        
+      
+        
+          
+          <a href="/categories" class="nav link"><i class='fas fa-sitemap'></i> Categories</a>
+        
+      
+      <a href="#share-menu" class="nav link share-toggle"><i class="fas fa-share-alt">&nbsp;</i>Share</a>
+      <a href="#search-input" class="nav link search-toggle"><i class="fas fa-search">&nbsp;</i>Search</a>
+    </menu>
+    <a href="#search-input" class="nav search-toggle"><i class="fas fa-search fa-2x">&nbsp;</i></a>
+    <a href="#share-menu" class="nav share-toggle"><i class="fas fa-share-alt fa-2x">&nbsp;</i></a>
+    
+    <a href="#site-nav" class="nav nav-toggle"><i class="fas fa-bars fa-2x"></i></a>
+  </nav>
+  <menu id="search" class="menu"><input id="search-input" class="search-input menu"></input><div id="search-results" class="search-results menu"></div></menu>
+  
+  
+    <menu id="share-menu" class="flyout-menu menu">
+      <h1>Share Post</h1>
+      
+
+
+
+
+  
+    
+    <a href="//twitter.com/share?text=Windows&amp;url=https%3a%2f%2fluth.io%2ftags%2fwindows%2f" target="_blank" rel="noopener" class="nav share-btn twitter">
+        <p>Twitter</p>
+      </a>
+  
+
+  
+      <a href="//www.facebook.com/sharer/sharer.php?u=https%3a%2f%2fluth.io%2ftags%2fwindows%2f" target="_blank" rel="noopener" class="nav share-btn facebook">
+        <p>Facebook</p>
+        </a>
+  
+
+  
+    <a href="//www.reddit.com/submit?url=https%3a%2f%2fluth.io%2ftags%2fwindows%2f&amp;title=Windows" target="_blank" rel="noopener" class="nav share-btn reddit">
+          <p>Reddit</p>
+        </a>
+  
+
+  
+        <a href="//www.linkedin.com/shareArticle?url=https%3a%2f%2fluth.io%2ftags%2fwindows%2f&amp;title=Windows" target="_blank" rel="noopener" class="nav share-btn linkedin">
+            <p>LinkedIn</p>
+          </a>
+  
+
+  
+        <a href="//www.pinterest.com/pin/create/button/?url=https%3a%2f%2fluth.io%2ftags%2fwindows%2f&amp;description=Windows" target="_blank" rel="noopener" class="nav share-btn pinterest">
+          <p>Pinterest</p>
+        </a>
+  
+
+  
+        <a href="mailto:?subject=Check%20out%20this%20post%20by Luther%20Monson&amp;body=https%3a%2f%2fluth.io%2ftags%2fwindows%2f" target="_blank" class="nav share-btn email" data-proofer-ignore>
+          <p>Email</p>
+        </a>
+  
+
+
+    </menu>
+  
+</header>
+
+    <div id="wrapper">
+      <section id="site-intro" class="hidden-single-column">
+  <a href="/"><img src="/img/luther-monson-headshot.jpg" class="circle" width="100" alt="Luther Monson, Staff Software Engineer at SUSE" /></a>
+  <header>
+    <h1>Luther Monson</h1>
+  </header>
+  <main>
+    <p>Go by way of PHP &middot; Containers &middot; VMs &middot; Windows &middot; Kubernetes</p>
+  </main>
+  
+    <footer>
+      <ul class="socnet-icons">
+        
+    <li><a href="/tags/windows/index.xml" type="application/rss+xml" target="_blank" title="RSS" class="fas fa-rss"></a></li>
+
+
+        <li><a href="//github.com/luthermonson" target="_blank" rel="noopener" title="GitHub" class="fab fa-github"></a></li>
+
+
+
+
+
+
+
+
+
+
+
+<li><a href="//www.linkedin.com/in/luthermonson" target="_blank" rel="noopener" title="LinkedIn" class="fab fa-linkedin"></a></li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li><a href="//twitter.com/luthermonson" target="_blank" rel="noopener" title="Twitter" class="fab fa-twitter"></a></li>
+
+
+
+
+
+
+
+
+
+
+
+<li><a href="mailto:luther.monson@gmail.com" target="_blank" title="Email" class="far fa-envelope"></a></li>
+
+      </ul>
+    </footer>
+  
+</section>
+
+      <main id="site-main">
+        
+  
+  
+    <article class="post">
+  <header>
+  <div class="title">
+    
+      <h2><a href="/blog/2026/10/windows-sigterm-sparse-files/">Windows Grab-Bag: SIGTERM That Doesn&#39;t Exist and Sparse Files That Break Docker</a></h2>
+    
+    
+      <p>Two Windows-only bugs from ephemerd: Go can&#39;t SIGTERM a child on Windows, so cloudflared processes piled up, and Delivery Optimization&#39;s sparse temp files broke image layer commits.</p>
+    
+  </div>
+  <div class="meta">
+    <time datetime="2026-10-03 14:30:00 -0700 PDT">October 3, 2026</time>
+    
+    <p>7-Minute Read</p>
+  </div>
+</header>
+
+  <div class="content">
+    <a href="/blog/2026/10/windows-sigterm-sparse-files/" class="image" style="--bg-image: url('/img/2026/10/windows-sigterm-sparse-files-connections.svg');">
+    <img class="" src="/img/2026/10/windows-sigterm-sparse-files-connections.svg" alt="Bar chart: 96 Cloudflare edge connections held by orphaned cloudflared processes versus 4 for the live daemon">
+  </a>
+    
+    <p>Two short ones from the Windows node of <a href="/blog/2026/08/ephemerd-one-daemon-every-os/">ephemerd</a> from the last few weeks. Neither is
+complicated once you know what&rsquo;s going on. Both took longer than they should have to find, because the failure showed up a
+long way from the cause.</p>
+  </div>
+  <footer>
+    <a href="/blog/2026/10/windows-sigterm-sparse-files/" class="button big">Read More</a>
+    <div class="stats">
+  
+    <ul class="categories">
+      
+        
+          <li><a class="article-terms-link" href="/categories/windows/">windows</a></li>
+        
+          <li><a class="article-terms-link" href="/categories/ci/">ci</a></li>
+        
+          <li><a class="article-terms-link" href="/categories/go/">go</a></li>
+        
+      
+    </ul>
+  
+  
+    <ul class="tags">
+      
+        
+          <li><a class="article-terms-link" href="/tags/go/">go</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/windows/">windows</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/cloudflare/">cloudflare</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/containers/">containers</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/docker/">docker</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/ephemerd/">ephemerd</a></li>
+        
+      
+    </ul>
+  
+</div>
+
+  </footer>
+</article>
+
+  
+    <article class="post">
+  <header>
+  <div class="title">
+    
+      <h2><a href="/blog/2026/10/php-jit-use-after-free/">An Upstream PHP JIT Use-After-Free, and Why Our Default Flipped Twice</a></h2>
+    
+    
+      <p>ePHPm turned PHP&#39;s tracing JIT on by default, then off three days later when stock Laravel died after three requests. The bug was upstream; here is the bisect, the root cause and where the fix landed.</p>
+    
+  </div>
+  <div class="meta">
+    <time datetime="2026-10-01 20:10:00 -0700 PDT">October 1, 2026</time>
+    
+    <p>9-Minute Read</p>
+  </div>
+</header>
+
+  <div class="content">
+    <a href="/blog/2026/10/php-jit-use-after-free/" class="image" style="--bg-image: url('/img/2026/10/php-jit-use-after-free-bisect.svg');">
+    <img class="" src="/img/2026/10/php-jit-use-after-free-bisect.svg" alt="Bar chart of requests served before a crash per PHP version: 8.4.14, 8.5.0 and 8.5.4 never crash; 8.4.24 dies at 7, 8.5.5 at 1, 8.5.7 and 8.5.9 at 2">
+  </a>
+    
+    <p>In August, <a href="https://github.com/ephpm/ephpm">ePHPm</a> turned PHP&rsquo;s tracing JIT on by default in single-site serve mode.
+Three days later it went back off, on every platform, and it&rsquo;s still off. The reason turned out to be a
+use-after-free in PHP&rsquo;s tracing JIT that has nothing to do with ePHPm: stock <code>php -S</code> with a stock Laravel skeleton
+dies on it in a couple of requests. The fix is now released upstream, so this seemed like the right time to write up
+how we got there, and what still has to happen before the&hellip;</p>
+  </div>
+  <footer>
+    <a href="/blog/2026/10/php-jit-use-after-free/" class="button big">Read More</a>
+    <div class="stats">
+  
+    <ul class="categories">
+      
+        
+          <li><a class="article-terms-link" href="/categories/php/">php</a></li>
+        
+          <li><a class="article-terms-link" href="/categories/ephpm/">ephpm</a></li>
+        
+          <li><a class="article-terms-link" href="/categories/windows/">windows</a></li>
+        
+      
+    </ul>
+  
+  
+    <ul class="tags">
+      
+        
+          <li><a class="article-terms-link" href="/tags/php/">php</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/opcache/">opcache</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/jit/">jit</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/ephpm/">ephpm</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/windows/">windows</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/debugging/">debugging</a></li>
+        
+      
+    </ul>
+  
+</div>
+
+  </footer>
+</article>
+
+  
+    <article class="post">
+  <header>
+  <div class="title">
+    
+      <h2><a href="/blog/2026/09/process-containment-job-objects-process-groups-cgroups/">Cross-Platform Process Containment: Job Objects vs Process Groups vs cgroups</a></h2>
+    
+    
+      <p>How shipmates bounds and tears down agent process trees on Windows, Linux and macOS, why I deleted 1,206 lines of cgroup code, and the grandchild that escaped the memory cap everywhere except my dev box.</p>
+    
+  </div>
+  <div class="meta">
+    <time datetime="2026-09-26 16:20:00 -0700 PDT">September 26, 2026</time>
+    
+    <p>8-Minute Read</p>
+  </div>
+</header>
+
+  <div class="content">
+    <a href="/blog/2026/09/process-containment-job-objects-process-groups-cgroups/" class="image" style="--bg-image: url('/img/2026/09/process-containment-job-objects-process-groups-cgroups-cover.svg');">
+    <img class="" src="/img/2026/09/process-containment-job-objects-process-groups-cgroups-cover.svg" alt="Agent process tree with the scope of kill and measurement on Windows, Linux and macOS">
+  </a>
+    
+    <p>Every turn a <a href="/blog/2026/08/shipmates-persona-based-ai-coding-crews/">shipmates</a> crew member takes is a subprocess:
+<code>claude</code> or the <code>codex</code> app-server, which in turn spawns shells, <code>go test</code>, <code>npm</code>, whatever the task calls for. Two
+things have to be true about that tree. When a turn ends or gets killed, the <em>whole</em> tree goes, including the
+grandchildren. And if somebody sets a memory or CPU budget, the budget applies to the whole tree, not just the
+process I happened to start.</p>
+  </div>
+  <footer>
+    <a href="/blog/2026/09/process-containment-job-objects-process-groups-cgroups/" class="button big">Read More</a>
+    <div class="stats">
+  
+    <ul class="categories">
+      
+        
+          <li><a class="article-terms-link" href="/categories/go/">go</a></li>
+        
+          <li><a class="article-terms-link" href="/categories/windows/">windows</a></li>
+        
+          <li><a class="article-terms-link" href="/categories/containers/">containers</a></li>
+        
+      
+    </ul>
+  
+  
+    <ul class="tags">
+      
+        
+          <li><a class="article-terms-link" href="/tags/go/">go</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/windows/">windows</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/linux/">linux</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/macos/">macos</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/job-objects/">job-objects</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/cgroups/">cgroups</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/process-groups/">process-groups</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/shipmates/">shipmates</a></li>
+        
+      
+    </ul>
+  
+</div>
+
+  </footer>
+</article>
+
+  
+    <article class="post">
+  <header>
+  <div class="title">
+    
+      <h2><a href="/blog/2026/09/memory-watchdog-for-go-test/">A 1 TB Test: Building a Memory Watchdog for go test</a></h2>
+    
+    
+      <p>A runaway test binary hit about 1 TB of commit charge and took my desktop down. Here&#39;s the PowerShell and POSIX sh wrapper I put around go test, and the bug in it that the Windows box couldn&#39;t show me.</p>
+    
+  </div>
+  <div class="meta">
+    <time datetime="2026-09-22 20:48:00 -0700 PDT">September 22, 2026</time>
+    
+    <p>8-Minute Read</p>
+  </div>
+</header>
+
+  <div class="content">
+    <a href="/blog/2026/09/memory-watchdog-for-go-test/" class="image" style="--bg-image: url('/img/2026/09/memory-watchdog-for-go-test-cover.svg');">
+    <img class="" src="/img/2026/09/memory-watchdog-for-go-test-cover.svg" alt="go test process tree with per-package test binaries watched by the safe-test wrapper">
+  </a>
+    
+    <p>On August 16th a <code>server.test.exe</code> from <a href="/blog/2026/08/shipmates-persona-based-ai-coding-crews/">shipmates</a> climbed to
+roughly <strong>1 TB of commit charge</strong> on my Windows workstation. Windows Terminal, which was hosting several agent sessions
+in tabs, hard-faulted with <code>E_OUTOFMEMORY</code> and every one of those sessions died at the same moment. It wasn&rsquo;t the first
+time either. An earlier one hit about 236 GB through an infinite <code>filepath.Dir</code> loop.</p>
+  </div>
+  <footer>
+    <a href="/blog/2026/09/memory-watchdog-for-go-test/" class="button big">Read More</a>
+    <div class="stats">
+  
+    <ul class="categories">
+      
+        
+          <li><a class="article-terms-link" href="/categories/go/">go</a></li>
+        
+          <li><a class="article-terms-link" href="/categories/windows/">windows</a></li>
+        
+      
+    </ul>
+  
+  
+    <ul class="tags">
+      
+        
+          <li><a class="article-terms-link" href="/tags/go/">go</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/testing/">testing</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/windows/">windows</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/linux/">linux</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/powershell/">powershell</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/shipmates/">shipmates</a></li>
+        
+      
+    </ul>
+  
+</div>
+
+  </footer>
+</article>
+
+  
+    <article class="post">
+  <header>
+  <div class="title">
+    
+      <h2><a href="/blog/2026/09/shipmates-short-ones-setup-go-and-voice/">shipmates Short Ones: 8 Minutes Extracting Go, and Three Voice-Loop Bugs</a></h2>
+    
+    
+      <p>Four small stories from shipmates: setup-go stuck extracting on Windows CI, Cloudflare&#39;s 100 second timeout, a voice loop that transcribed itself, and events lost to a timestamp watermark.</p>
+    
+  </div>
+  <div class="meta">
+    <time datetime="2026-09-12 14:35:00 -0700 PDT">September 12, 2026</time>
+    
+    <p>5-Minute Read</p>
+  </div>
+</header>
+
+  <div class="content">
+    <a href="/blog/2026/09/shipmates-short-ones-setup-go-and-voice/" class="image" style="--bg-image: url('/img/2026/09/shipmates-short-ones-setup-go-and-voice-cover.svg');">
+    <img class="" src="/img/2026/09/shipmates-short-ones-setup-go-and-voice-cover.svg" alt="setup-go on Windows CI: 7 seconds to download, 473 seconds extracting before the timeout">
+  </a>
+    
+    <p>A few <a href="/blog/2026/08/shipmates-persona-based-ai-coding-crews/">shipmates</a> bugs that don&rsquo;t need a whole post each but
+were too good to leave in commit messages.</p>
+  </div>
+  <footer>
+    <a href="/blog/2026/09/shipmates-short-ones-setup-go-and-voice/" class="button big">Read More</a>
+    <div class="stats">
+  
+    <ul class="categories">
+      
+        
+          <li><a class="article-terms-link" href="/categories/ai-agents/">ai-agents</a></li>
+        
+          <li><a class="article-terms-link" href="/categories/go/">go</a></li>
+        
+          <li><a class="article-terms-link" href="/categories/ci/">ci</a></li>
+        
+      
+    </ul>
+  
+  
+    <ul class="tags">
+      
+        
+          <li><a class="article-terms-link" href="/tags/go/">go</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/github-actions/">github-actions</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/ci/">ci</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/windows/">windows</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/cloudflare/">cloudflare</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/voice/">voice</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/shipmates/">shipmates</a></li>
+        
+      
+    </ul>
+  
+</div>
+
+  </footer>
+</article>
+
+  
+    <article class="post">
+  <header>
+  <div class="title">
+    
+      <h2><a href="/blog/2026/08/opcache-on-windows-two-silent-failures/">OPcache on Windows: Two Silent Failures</a></h2>
+    
+    
+      <p>An ASLR fatal that looked like a memory-size lottery, and Windows PHP 8.3 builds that never had an opcode cache, with the fix sitting unpicked for three weeks.</p>
+    
+  </div>
+  <div class="meta">
+    <time datetime="2026-08-29 16:45:00 -0700 PDT">August 29, 2026</time>
+    
+    <p>8-Minute Read</p>
+  </div>
+</header>
+
+  <div class="content">
+    <a href="/blog/2026/08/opcache-on-windows-two-silent-failures/" class="image" style="--bg-image: url('/img/2026/08/opcache-windows-silent-failures-cover.svg');">
+    <img class="" src="/img/2026/08/opcache-windows-silent-failures-cover.svg" alt="Two ePHPm processes computing the same OPcache shared-memory name; the second reattaches and dies on the ASLR check">
+  </a>
+    
+    <p>Windows is the platform where <a href="https://github.com/ephpm/ephpm">ePHPm</a> gets the least traffic and the most surprises.
+Last week closed out two OPcache bugs that only exist there, and both were quiet in their own way. One killed the
+server at startup with nothing in our own logs. The other didn&rsquo;t kill anything: it just ran PHP 8.3 with no opcode
+cache at all, and for three weeks after a fixed SDK was published every check stayed green.</p>
+  </div>
+  <footer>
+    <a href="/blog/2026/08/opcache-on-windows-two-silent-failures/" class="button big">Read More</a>
+    <div class="stats">
+  
+    <ul class="categories">
+      
+        
+          <li><a class="article-terms-link" href="/categories/php/">php</a></li>
+        
+          <li><a class="article-terms-link" href="/categories/windows/">windows</a></li>
+        
+          <li><a class="article-terms-link" href="/categories/ephpm/">ephpm</a></li>
+        
+      
+    </ul>
+  
+  
+    <ul class="tags">
+      
+        
+          <li><a class="article-terms-link" href="/tags/php/">php</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/opcache/">opcache</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/windows/">windows</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/ephpm/">ephpm</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/debugging/">debugging</a></li>
+        
+      
+    </ul>
+  
+</div>
+
+  </footer>
+</article>
+
+  
+    <article class="post">
+  <header>
+  <div class="title">
+    
+      <h2><a href="/blog/2026/08/windows-container-egress-firewall/">Five Ways to Not Firewall a Windows Container (and the One That Works)</a></h2>
+    
+    
+      <p>Five different Windows firewall approaches failed to stop a container from reaching my home network. The sixth, a different network mode for the container, finally worked.</p>
+    
+  </div>
+  <div class="meta">
+    <time datetime="2026-08-22 19:40:00 -0700 PDT">August 22, 2026</time>
+    
+    <p>10-Minute Read</p>
+  </div>
+</header>
+
+  <div class="content">
+    <a href="/blog/2026/08/windows-container-egress-firewall/" class="image" style="--bg-image: url('/img/2026/08/windows-container-egress-firewall-paths.svg');">
+    <img class="" src="/img/2026/08/windows-container-egress-firewall-paths.svg" alt="Packet path of a Windows container on an HNS NAT network versus an L2Bridge network">
+  </a>
+    
+    <p><a href="/blog/2026/08/ephemerd-one-daemon-every-os/">ephemerd</a> runs CI jobs from pull requests, and one of the rules is that a job
+can reach the internet but not my LAN. On Linux that&rsquo;s a few iptables rules in the <code>FORWARD</code> path and I didn&rsquo;t think about it
+much. On Windows I spent about a week finding out how many ways there are to write a firewall rule that Windows accepts,
+lists, and then never applies.</p>
+  </div>
+  <footer>
+    <a href="/blog/2026/08/windows-container-egress-firewall/" class="button big">Read More</a>
+    <div class="stats">
+  
+    <ul class="categories">
+      
+        
+          <li><a class="article-terms-link" href="/categories/windows/">windows</a></li>
+        
+          <li><a class="article-terms-link" href="/categories/security/">security</a></li>
+        
+          <li><a class="article-terms-link" href="/categories/ci/">ci</a></li>
+        
+      
+    </ul>
+  
+  
+    <ul class="tags">
+      
+        
+          <li><a class="article-terms-link" href="/tags/windows/">windows</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/hyper-v/">hyper-v</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/networking/">networking</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/firewall/">firewall</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/wfp/">wfp</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/hns/">hns</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/security/">security</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/ephemerd/">ephemerd</a></li>
+        
+      
+    </ul>
+  
+</div>
+
+  </footer>
+</article>
+
+  
+    <article class="post">
+  <header>
+  <div class="title">
+    
+      <h2><a href="/blog/2026/08/benchmark-4x-wrong-wsl-drvfs-cwd/">My Benchmark Was 4x Wrong Because of WSL</a></h2>
+    
+    
+      <p>Launching the server with its working directory on /mnt/c cost ePHPm about 4x on a light workload, and the report built a wrong explanation on top of it. Here&#39;s the strace that shows why.</p>
+    
+  </div>
+  <div class="meta">
+    <time datetime="2026-08-20 20:45:00 -0700 PDT">August 20, 2026</time>
+    
+    <p>8-Minute Read</p>
+  </div>
+</header>
+
+  <div class="content">
+    <a href="/blog/2026/08/benchmark-4x-wrong-wsl-drvfs-cwd/" class="image" style="--bg-image: url('/img/2026/08/benchmark-4x-wrong-wsl-drvfs-cwd-depth.svg');">
+    <img class="" src="/img/2026/08/benchmark-4x-wrong-wsl-drvfs-cwd-depth.svg" alt="Bar chart of ePHPm requests per second by working directory: native ext4 far ahead of DrvFs, with DrvFs throughput falling as the cwd path gets deeper">
+  </a>
+    
+    <p>I do most of my benchmarking on a Windows box in WSL2, because it&rsquo;s the machine with 32 threads and 62 GB of RAM on
+my desk. Everybody who does that learns the first rule early: don&rsquo;t put your data on <code>/mnt/c</code>. DrvFs, the 9p-backed
+mount that exposes the Windows drives inside WSL, is slow for file-heavy work, so the databases, the docroot and the
+build output all live on the WSL ext4 disk. My scaling harness for <a href="https://github.com/ephpm/ephpm">ePHPm</a> even
+says so in capital letters in its README.</p>
+  </div>
+  <footer>
+    <a href="/blog/2026/08/benchmark-4x-wrong-wsl-drvfs-cwd/" class="button big">Read More</a>
+    <div class="stats">
+  
+    <ul class="categories">
+      
+        
+          <li><a class="article-terms-link" href="/categories/ephpm/">ephpm</a></li>
+        
+          <li><a class="article-terms-link" href="/categories/windows/">windows</a></li>
+        
+      
+    </ul>
+  
+  
+    <ul class="tags">
+      
+        
+          <li><a class="article-terms-link" href="/tags/wsl/">wsl</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/benchmarking/">benchmarking</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/php/">php</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/ephpm/">ephpm</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/windows/">windows</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/linux/">linux</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/strace/">strace</a></li>
+        
+      
+    </ul>
+  
+</div>
+
+  </footer>
+</article>
+
+  
+    <article class="post">
+  <header>
+  <div class="title">
+    
+      <h2><a href="/blog/2026/08/libxml2-2-14-broke-php-windows-builds/">libxml2 2.14 Broke PHP Windows Builds - And Nobody Noticed</a></h2>
+    
+    
+      <p>Why a static PHP build on Windows dies with hundreds of LNK2001 errors against modern libxml2, and why Linux never sees it.</p>
+    
+  </div>
+  <div class="meta">
+    <time datetime="2026-08-11 20:36:00 -0700 PDT">August 11, 2026</time>
+    
+    <p>9-Minute Read</p>
+  </div>
+</header>
+
+  <div class="content">
+    <a href="/blog/2026/08/libxml2-2-14-broke-php-windows-builds/" class="image" style="--bg-image: url('/img/2026/08/libxml2-214-php-windows-def-missing-symbols.svg');">
+    <img class="" src="/img/2026/08/libxml2-214-php-windows-def-missing-symbols.svg" alt="Bar chart: legacy php_libxml2.def entries missing from libxml2 headers - 0 for 2.11.9 and 2.13.0, 294 for 2.14.0 and 2.15.0">
+  </a>
+    
+    <p>Back in April I was getting the embed SAPI building on Windows through my fork of
+<a href="https://github.com/crazywhalecc/static-php-cli">static-php-cli</a> (SPC) for <a href="https://github.com/ephpm/ephpm">ePHPm</a>, and the
+link step for <code>php8ts.dll</code> fell over with a wall of errors that all looked like this:</p>
+  </div>
+  <footer>
+    <a href="/blog/2026/08/libxml2-2-14-broke-php-windows-builds/" class="button big">Read More</a>
+    <div class="stats">
+  
+    <ul class="categories">
+      
+        
+          <li><a class="article-terms-link" href="/categories/php/">php</a></li>
+        
+          <li><a class="article-terms-link" href="/categories/windows/">windows</a></li>
+        
+      
+    </ul>
+  
+  
+    <ul class="tags">
+      
+        
+          <li><a class="article-terms-link" href="/tags/php/">php</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/windows/">windows</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/libxml2/">libxml2</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/msvc/">msvc</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/static-php-cli/">static-php-cli</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/linker/">linker</a></li>
+        
+      
+    </ul>
+  
+</div>
+
+  </footer>
+</article>
+
+  
+    <article class="post">
+  <header>
+  <div class="title">
+    
+      <h2><a href="/blog/2026/08/ntfs-atomic-file-replacement-not-rename-fsync/">Atomic File Replacement on NTFS Is Not rename &#43; fsync</a></h2>
+    
+    
+      <p>The Unix recipe for durable atomic file replacement doesn&#39;t translate to Windows. What shipmates uses instead, and the delete-pending window that made an 8-way test fail only when the whole suite ran.</p>
+    
+  </div>
+  <div class="meta">
+    <time datetime="2026-08-06 21:27:00 -0700 PDT">August 6, 2026</time>
+    
+    <p>7-Minute Read</p>
+  </div>
+</header>
+
+  <div class="content">
+    <a href="/blog/2026/08/ntfs-atomic-file-replacement-not-rename-fsync/" class="image" style="--bg-image: url('/img/2026/09/ntfs-atomic-file-replacement-not-rename-fsync-cover.svg');">
+    <img class="" src="/img/2026/09/ntfs-atomic-file-replacement-not-rename-fsync-cover.svg" alt="How long a losing concurrent replacer waits on NTFS, idle disk vs a disk under fsync load">
+  </a>
+    
+    <p><a href="https://github.com/luthermonson/shipmates">shipmates</a> writes a lot of small state files that other
+processes read: voyage plans and state, tracker files. Each of them has to be replaced atomically (a reader sees
+the old file or the new one, never half of each) and durably (when the function returns success, a power cut doesn&rsquo;t
+take it back). Every Unix programmer knows the recipe for that. It doesn&rsquo;t work on Windows, and the reasons are more
+interesting than &ldquo;Windows is different&rdquo;.</p>
+  </div>
+  <footer>
+    <a href="/blog/2026/08/ntfs-atomic-file-replacement-not-rename-fsync/" class="button big">Read More</a>
+    <div class="stats">
+  
+    <ul class="categories">
+      
+        
+          <li><a class="article-terms-link" href="/categories/go/">go</a></li>
+        
+          <li><a class="article-terms-link" href="/categories/windows/">windows</a></li>
+        
+      
+    </ul>
+  
+  
+    <ul class="tags">
+      
+        
+          <li><a class="article-terms-link" href="/tags/go/">go</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/windows/">windows</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/ntfs/">ntfs</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/filesystems/">filesystems</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/durability/">durability</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/shipmates/">shipmates</a></li>
+        
+      
+    </ul>
+  
+</div>
+
+  </footer>
+</article>
+
+  
+  <div class="pagination">
+    
+    
+      <a href="/tags/windows/page/2/" class="button right"><span>Next Page</span></a>
+    
+  </div>
+
+      </main>
+      <section id="site-sidebar">
+  
+    <section id="recent-posts">
+      <header>
+        <h1>Recent Posts</h1>
+      </header>
+      
+      <article class="mini-post">
+          <a href="/blog/2026/10/ephpm-worker-mode-performance/" class="image" style="--bg-image: url('/img/2026/10/ephpm-worker-mode-performance-cover.svg');">
+    <img class="" src="/img/2026/10/ephpm-worker-mode-performance-cover.svg" alt="Diagram: before, hyper/tokio hands each request to one shared bounded channel whose waiter list all 20 PHP threads contend on; after, a dispatcher hands the job straight into the mailbox of the most recently idle PHP thread and only queues it in a FIFO overflow queue when every thread is busy">
+  </a>
+        <header>
+          <h2><a href="/blog/2026/10/ephpm-worker-mode-performance/">Fourth Place in Worker Mode, and Why It Wasn&#39;t PHP</a></h2>
+          <time class="published" datetime="2026-10-16 08:10:00 -0700 PDT">October 16, 2026</time>
+        </header>
+      </article>
+      
+      <article class="mini-post">
+          <a href="/blog/2026/10/ephpm-websockets-how-to/" class="image" style="--bg-image: url('/img/2026/10/ephpm-websockets-how-to-cover.svg');">
+    <img class="" src="/img/2026/10/ephpm-websockets-how-to-cover.svg" alt="Diagram: browsers hold sockets to ePHPm&#39;s Rust session tasks and registry; each connect, message and disconnect runs websocket.php once on the PHP thread pool, and ordinary HTTP requests push through ephpm_ws_broadcast">
+  </a>
+        <header>
+          <h2><a href="/blog/2026/10/ephpm-websockets-how-to/">WebSockets in ePHPm, From Zero to a Working Chat</a></h2>
+          <time class="published" datetime="2026-10-11 17:30:00 -0700 PDT">October 11, 2026</time>
+        </header>
+      </article>
+      
+      <article class="mini-post">
+          <a href="/blog/2026/10/webhooks-out-of-order-scheduler/" class="image" style="--bg-image: url('/img/2026/10/webhooks-out-of-order-scheduler-timeline.svg');">
+    <img class="" src="/img/2026/10/webhooks-out-of-order-scheduler-timeline.svg" alt="Timeline of three same-label jobs where a runner executing a build is destroyed 2.3 seconds before its in_progress webhook arrives">
+  </a>
+        <header>
+          <h2><a href="/blog/2026/10/webhooks-out-of-order-scheduler/">Webhooks Arrive Out of Order: How My Scheduler Killed Live Builds</a></h2>
+          <time class="published" datetime="2026-10-07 21:10:00 -0700 PDT">October 7, 2026</time>
+        </header>
+      </article>
+      
+      <article class="mini-post">
+          <a href="/blog/2026/10/go-proxmox-five-years-to-v0-8/" class="image" style="--bg-image: url('/img/2026/10/go-proxmox-five-years-to-v0-8-apidiff.svg');">
+    <img class="" src="/img/2026/10/go-proxmox-five-years-to-v0-8-apidiff.svg" alt="Horizontal bar chart of apidiff incompatible and compatible changes for every go-proxmox release from v0.1.0 to v0.8.2">
+  </a>
+        <header>
+          <h2><a href="/blog/2026/10/go-proxmox-five-years-to-v0-8/">Breaking Changes Without Breaking Trust: Five Years to go-proxmox v0.8</a></h2>
+          <time class="published" datetime="2026-10-04 19:40:00 -0700 PDT">October 4, 2026</time>
+        </header>
+      </article>
+      
+      <article class="mini-post">
+          <a href="/blog/2026/10/windows-sigterm-sparse-files/" class="image" style="--bg-image: url('/img/2026/10/windows-sigterm-sparse-files-connections.svg');">
+    <img class="" src="/img/2026/10/windows-sigterm-sparse-files-connections.svg" alt="Bar chart: 96 Cloudflare edge connections held by orphaned cloudflared processes versus 4 for the live daemon">
+  </a>
+        <header>
+          <h2><a href="/blog/2026/10/windows-sigterm-sparse-files/">Windows Grab-Bag: SIGTERM That Doesn&#39;t Exist and Sparse Files That Break Docker</a></h2>
+          <time class="published" datetime="2026-10-03 14:30:00 -0700 PDT">October 3, 2026</time>
+        </header>
+      </article>
+      
+      
+        <footer>
+          <a href="/blog" class="button">See More</a>
+        </footer>
+      
+    </section>
+  
+
+  
+    
+
+      <section id="categories">
+        <header>
+          <h1><a href="/categories">Categories</a></h1>
+        </header>
+        <ul>
+          
+          
+          <li>
+              <a href="/categories/ephpm/">ephpm<span class="count">33</span></a>
+          
+          <li>
+              <a href="/categories/go/">go<span class="count">30</span></a>
+          
+          <li>
+              <a href="/categories/php/">php<span class="count">23</span></a>
+          
+          <li>
+              <a href="/categories/rust/">rust<span class="count">15</span></a>
+          
+          <li>
+              <a href="/categories/homelab/">homelab<span class="count">14</span></a>
+          
+          <li>
+              <a href="/categories/windows/">windows<span class="count">14</span></a>
+          
+          <li>
+              <a href="/categories/ci/">ci<span class="count">9</span></a>
+          
+          <li>
+              <a href="/categories/databases/">databases<span class="count">9</span></a>
+          
+          <li>
+              <a href="/categories/security/">security<span class="count">9</span></a>
+          
+          <li>
+              <a href="/categories/containers/">containers<span class="count">7</span></a>
+          
+          <li>
+              <a href="/categories/tools/">tools<span class="count">5</span></a>
+          
+          <li>
+              <a href="/categories/ai-agents/">ai-agents<span class="count">4</span></a>
+          
+          </li>
+        </ul>
+      </section>
+    
+  
+
+  
+    <section id="mini-bio">
+      <header>
+        <h1>About</h1>
+      </header>
+      <p>Luther is a 20+ year software veteran specializing in backend APIs and architecting products. Employed at <a href='https://www.suse.com'>SUSE</a> as the Team Lead for the <a href='https://github.com/rancher/windows/issues'>Containers on Windows Team</a> working on <a href='https://rancher.com/'>Rancher</a> + <a href='https://kubernetes.io/'>Kubernetes</a></p>
+      <footer>
+        <a href="/about" class="button">Learn More</a>
+      </footer>
+    </section>
+  
+</section>
+
+      <footer id="site-footer">
+  
+      <ul class="socnet-icons">
+        
+    <li><a href="/tags/windows/index.xml" type="application/rss+xml" target="_blank" title="RSS" class="fas fa-rss"></a></li>
+
+
+        <li><a href="//github.com/luthermonson" target="_blank" rel="noopener" title="GitHub" class="fab fa-github"></a></li>
+
+
+
+
+
+
+
+
+
+
+
+<li><a href="//www.linkedin.com/in/luthermonson" target="_blank" rel="noopener" title="LinkedIn" class="fab fa-linkedin"></a></li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li><a href="//twitter.com/luthermonson" target="_blank" rel="noopener" title="Twitter" class="fab fa-twitter"></a></li>
+
+
+
+
+
+
+
+
+
+
+
+<li><a href="mailto:luther.monson@gmail.com" target="_blank" title="Email" class="far fa-envelope"></a></li>
+
+      </ul>
+  
+  <p class="copyright">
+    © 2026 Luther Monson
+      <br>
+    Theme: <a href='https://github.com/pacollins/hugo-future-imperfect-slim' target='_blank' rel='noopener'>Hugo Future Imperfect Slim</a><br>A <a href='https://html5up.net/future-imperfect' target='_blank' rel='noopener'>HTML5 UP port</a> | Powered by <a href='https://gohugo.io/' title='0.160.1' target='_blank' rel='noopener'>Hugo</a>
+  </p>
+</footer>
+<a id="back-to-top" href="#" class="fas fa-arrow-up fa-2x"></a>
+
+      <script src="/js/bundle.min.241b62ebc4792fe8c7a75879e5f710894f226f2b73342e9916b3a3b0526030cc.js" integrity="sha256-JBti68R5L&#43;jHp1h55fcQiU8ibytzNC6ZFrOjsFJgMMw="></script>
+    <script src="/js/add-on.js"></script>
+    </div>
+  </body>
+</html>

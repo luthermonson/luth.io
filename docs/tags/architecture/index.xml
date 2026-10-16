@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>Architecture on Luther Monson</title>
+    <link>https://luth.io/tags/architecture/</link>
+    <description>Recent content in Architecture on Luther Monson</description>
+    <generator>Hugo</generator>
+    <language>en</language>
+    <lastBuildDate>Sun, 21 Jun 2026 19:05:00 -0700</lastBuildDate>
+    <atom:link href="https://luth.io/tags/architecture/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>The Pragmatism of ePHPm - Every Decision Has a &#34;Because&#34; Behind It</title>
+      <link>https://luth.io/blog/2026/06/ephpm-pragmatism/</link>
+      <pubDate>Sun, 21 Jun 2026 19:05:00 -0700</pubDate>
+      <guid>https://luth.io/blog/2026/06/ephpm-pragmatism/</guid>
+      <description>&lt;p&gt;&lt;a href=&#34;https://github.com/ephpm/ephpm&#34;&gt;ePHPm&lt;/a&gt; tagged &lt;a href=&#34;https://github.com/ephpm/ephpm/releases/tag/v0.1.0&#34;&gt;v0.1.0&lt;/a&gt; this&#xA;week, three months after the first commit. Before the feature list grows any further I want to write down how&#xA;decisions get made on it, mostly for myself, because the easiest way to ruin a project like this is to let it turn into&#xA;a checklist of things other projects have.&lt;/p&gt;&#xA;&lt;p&gt;The pitch is simple: one binary that runs a PHP app with fewer moving parts than nginx + php-fpm + Redis + MySQL. Every&#xA;feature has to trace back to that. If I can&amp;rsquo;t finish the sentence &amp;ldquo;this exists because&amp;hellip;&amp;rdquo; with a real problem from&#xA;running PHP in production, it doesn&amp;rsquo;t go in.&lt;/p&gt;</description>
+    </item>
+  </channel>
+</rss>

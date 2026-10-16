@@ -1,0 +1,67 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 560" font-family="system-ui, -apple-system, Segoe UI, sans-serif">
+  <defs>
+    <marker id="ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#555"/>
+    </marker>
+  </defs>
+  <rect width="900" height="560" fill="#ffffff"/>
+  <text x="450" y="34" text-anchor="middle" font-size="20" font-weight="600" fill="#222">One process, one uid: telling vhosts apart at connect()</text>
+
+  <!-- request thread -->
+  <rect x="30" y="62" width="250" height="118" rx="8" fill="#eaf1f9"/>
+  <text x="45" y="88" font-size="14" font-weight="600" fill="#2b6cb0">PHP pool thread (TID 4127)</text>
+  <text x="45" y="112" font-size="13" fill="#333">request for blog.example</text>
+  <text x="45" y="134" font-size="13" fill="#333">TagGuard: tag[4127] = 7</text>
+  <text x="45" y="156" font-size="13" fill="#333">... PHP runs ... guard drops:</text>
+  <text x="45" y="172" font-size="13" fill="#333">delete tag[4127]</text>
+
+  <!-- tag map -->
+  <rect x="330" y="62" width="230" height="118" rx="8" fill="#f3eff8"/>
+  <text x="345" y="88" font-size="14" font-weight="600" fill="#6b46c1">BPF maps</text>
+  <text x="345" y="112" font-size="13" fill="#333" font-family="ui-monospace, Consolas, monospace">tag: tid -&gt; vhost</text>
+  <text x="345" y="132" font-size="13" fill="#333" font-family="ui-monospace, Consolas, monospace">assigned: (vhost,vport)-&gt;real</text>
+  <text x="345" y="152" font-size="13" fill="#333" font-family="ui-monospace, Consolas, monospace">port_owner: real -&gt; vhost</text>
+  <text x="345" y="172" font-size="13" fill="#333" font-family="ui-monospace, Consolas, monospace">infra_ports, port_pool</text>
+  <path d="M280,121 L326,121" stroke="#555" stroke-width="2" fill="none" marker-end="url(#ah)"/>
+
+  <!-- bind -->
+  <rect x="610" y="62" width="260" height="118" rx="8" fill="#edf7f0"/>
+  <text x="625" y="88" font-size="14" font-weight="600" fill="#3a9a5b">cgroup/bind4 + bind6</text>
+  <text x="625" y="112" font-size="13" fill="#333">tagged bind 127.0.0.1:8080</text>
+  <text x="625" y="132" font-size="13" fill="#333">quota check, pop pool port</text>
+  <text x="625" y="152" font-size="13" fill="#333">rewrite to :20000, record</text>
+  <text x="625" y="172" font-size="13" fill="#333">owner = vhost 7</text>
+  <path d="M560,121 L606,121" stroke="#555" stroke-width="2" fill="none" marker-end="url(#ah)"/>
+
+  <!-- connect decision -->
+  <text x="30" y="222" font-size="15" font-weight="600" fill="#222">cgroup/connect4 + connect6, for a connect() from a thread in ePHPm's cgroup</text>
+
+  <g font-size="13">
+    <rect x="30" y="236" width="560" height="38" rx="6" fill="#f4f4f4"/>
+    <text x="42" y="260" fill="#333">No tag for this TID (tokio threads, untagged work)</text>
+    <text x="610" y="260" fill="#333">pass through unchanged</text>
+
+    <rect x="30" y="280" width="560" height="38" rx="6" fill="#f4f4f4"/>
+    <text x="42" y="304" fill="#333">Destination not loopback (127.0.0.1 for connect4, ::1 for connect6)</text>
+    <text x="610" y="304" fill="#333">pass (nft / uid layer decides)</text>
+
+    <rect x="30" y="324" width="560" height="38" rx="6" fill="#edf7f0"/>
+    <text x="42" y="348" fill="#333">1. Port is one of this vhost's virtual ports</text>
+    <text x="610" y="348" fill="#3a9a5b" font-weight="600">rewrite to its real port</text>
+
+    <rect x="30" y="368" width="560" height="38" rx="6" fill="#edf7f0"/>
+    <text x="42" y="392" fill="#333">2. Port is ePHPm infra (MySQL wire, KV RESP)</text>
+    <text x="610" y="392" fill="#3a9a5b" font-weight="600">allow</text>
+
+    <rect x="30" y="412" width="560" height="38" rx="6" fill="#fdf2e8"/>
+    <text x="42" y="436" fill="#333">3. Port is a real sidecar port: owner == this vhost?</text>
+    <text x="610" y="436" fill="#3a9a5b" font-weight="600">yes: allow</text>
+    <text x="720" y="436" fill="#c53030" font-weight="600">no: EPERM</text>
+
+    <rect x="30" y="456" width="560" height="38" rx="6" fill="#fdecec"/>
+    <text x="42" y="480" fill="#333">4. Any other loopback port (ePHPm's own HTTP port included)</text>
+    <text x="610" y="480" fill="#c53030" font-weight="600">EPERM</text>
+  </g>
+
+  <text x="30" y="530" font-size="12" fill="#6b6b6b">Source: crates/ephpm-server/bpf/vhostnet.bpf.c. The tag lookup resolves the TID in ePHPm's own pid namespace (nscfg map).</text>
+</svg>

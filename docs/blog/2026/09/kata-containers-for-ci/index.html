@@ -1,0 +1,728 @@
+<!doctype html>
+<html lang="en">
+  <head>
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-MSTSKGFWTX"></script>
+<script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+
+    gtag('config', 'G-MSTSKGFWTX');
+</script><meta charset="utf-8">
+<title>Kata Containers for CI: Boot Cost Isn&#39;t the Problem, File I/O Is - Luther Monson</title>
+<meta name="description" content="Kata containers are safer for CI, but slower. Starting one takes 12x longer, which is fine, and reading small files is about 40x slower for the entire job, which isn&#39;t.">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<meta name="twitter:card" content="summary_large_image"><meta name="twitter:site" content="@luthermonson">
+
+<meta property="og:site_name" content="Luther Monson">
+<meta property="og:title" content="Kata Containers for CI: Boot Cost Isn&#39;t the Problem, File I/O Is">
+<meta property="og:description" content="Kata containers are safer for CI, but slower. Starting one takes 12x longer, which is fine, and reading small files is about 40x slower for the entire job, which isn&#39;t.">
+<meta property="og:type" content="article">
+<meta property="og:url" content="https://luth.io/blog/2026/09/kata-containers-for-ci/">
+    <meta property="og:image" content="https://luth.io/img/2026/08/kata-containers-for-ci-ratio.svg">
+    <meta property="og:image:alt" content="Bar chart of Kata slowdown versus runc for each measurement">
+
+
+  <link rel="manifest" href="/favicon/site.webmanifest?v=1">
+  <link rel="apple-touch-icon" sizes="180x180" href="/favicon/apple-touch-icon.png?v=1">
+  <link rel="icon" type="image/png" sizes="32x32" href="/favicon/favicon-32x32.png?v=1">
+  <link rel="icon" type="image/png" sizes="16x16" href="/favicon/favicon-16x16.png?v=1">
+  
+    <link rel="mask-icon" href="/favicon/safari-pinned-tab.svg?v=1" color="#ffffff">
+    <link rel="shortcut icon" href="/favicon/favicon.ico?v=1">
+    <meta name="msapplication-config" content="/favicon/browserconfig.xml?v=1">
+  
+  <meta name="msapplication-TileColor" content="#ffffff">
+  <meta name="theme-color" content="#ffffff">
+
+
+  <meta name="generator" content="Hugo 0.160.1">
+  <link rel="alternate" type="application/rss+xml" href="https://luth.io/index.xml" title="Luther Monson">
+  <link rel="stylesheet" href="/css/bundle.min.e1ffed86714fbb7eff75eab221c0c61b8260be0c7d1c08db0fcb7a2bdb6af7c9.css" integrity="sha256-4f/thnFPu37/deqyIcDGG4Jgvgx9HAjbD8t6K9tq98k="><link rel="stylesheet" href="/css/add-on.css">
+        <link rel="stylesheet" href="/css/code.css">
+        <link rel="stylesheet" href="/css/mobile.css">
+</head>
+
+  <body>
+    
+
+<header id="site-header">
+  <nav id="site-nav">
+    <h1 class="nav-title">
+      <a href="/" class="nav">
+        <img class="nav-avatar" src="/img/luther-monson-headshot.jpg" alt="" width="32" height="32">
+        
+          Blog
+        
+      </a>
+    </h1>
+    <menu id="site-nav-menu" class="flyout-menu menu">
+      
+        
+          
+          <a href="/" class="nav link"><i class='fa fa-home'></i> Home</a>
+        
+      
+        
+          
+          <a href="/about" class="nav link"><i class='far fa-id-card'></i> About</a>
+        
+      
+        
+          
+          <a href="/blog" class="nav link"><i class='far fa-newspaper'></i> Blog</a>
+        
+      
+        
+          
+          <a href="/archive" class="nav link"><i class='far fa-calendar-alt'></i> Archive</a>
+        
+      
+        
+          
+          <a href="/categories" class="nav link"><i class='fas fa-sitemap'></i> Categories</a>
+        
+      
+      <a href="#share-menu" class="nav link share-toggle"><i class="fas fa-share-alt">&nbsp;</i>Share</a>
+      <a href="#search-input" class="nav link search-toggle"><i class="fas fa-search">&nbsp;</i>Search</a>
+    </menu>
+    <a href="#search-input" class="nav search-toggle"><i class="fas fa-search fa-2x">&nbsp;</i></a>
+    <a href="#share-menu" class="nav share-toggle"><i class="fas fa-share-alt fa-2x">&nbsp;</i></a>
+    
+    <a href="#site-nav" class="nav nav-toggle"><i class="fas fa-bars fa-2x"></i></a>
+  </nav>
+  <menu id="search" class="menu"><input id="search-input" class="search-input menu"></input><div id="search-results" class="search-results menu"></div></menu>
+  
+  
+    <menu id="share-menu" class="flyout-menu menu">
+      <h1>Share Post</h1>
+      
+
+
+
+
+  
+    
+    <a href="//twitter.com/share?text=Kata%20Containers%20for%20CI%3a%20Boot%20Cost%20Isn%27t%20the%20Problem%2c%20File%20I%2fO%20Is&amp;url=https%3a%2f%2fluth.io%2fblog%2f2026%2f09%2fkata-containers-for-ci%2f" target="_blank" rel="noopener" class="nav share-btn twitter">
+        <p>Twitter</p>
+      </a>
+  
+
+  
+      <a href="//www.facebook.com/sharer/sharer.php?u=https%3a%2f%2fluth.io%2fblog%2f2026%2f09%2fkata-containers-for-ci%2f" target="_blank" rel="noopener" class="nav share-btn facebook">
+        <p>Facebook</p>
+        </a>
+  
+
+  
+    <a href="//www.reddit.com/submit?url=https%3a%2f%2fluth.io%2fblog%2f2026%2f09%2fkata-containers-for-ci%2f&amp;title=Kata%20Containers%20for%20CI%3a%20Boot%20Cost%20Isn%27t%20the%20Problem%2c%20File%20I%2fO%20Is" target="_blank" rel="noopener" class="nav share-btn reddit">
+          <p>Reddit</p>
+        </a>
+  
+
+  
+        <a href="//www.linkedin.com/shareArticle?url=https%3a%2f%2fluth.io%2fblog%2f2026%2f09%2fkata-containers-for-ci%2f&amp;title=Kata%20Containers%20for%20CI%3a%20Boot%20Cost%20Isn%27t%20the%20Problem%2c%20File%20I%2fO%20Is" target="_blank" rel="noopener" class="nav share-btn linkedin">
+            <p>LinkedIn</p>
+          </a>
+  
+
+  
+        <a href="//www.pinterest.com/pin/create/button/?url=https%3a%2f%2fluth.io%2fblog%2f2026%2f09%2fkata-containers-for-ci%2f&amp;description=Kata%20Containers%20for%20CI%3a%20Boot%20Cost%20Isn%27t%20the%20Problem%2c%20File%20I%2fO%20Is" target="_blank" rel="noopener" class="nav share-btn pinterest">
+          <p>Pinterest</p>
+        </a>
+  
+
+  
+        <a href="mailto:?subject=Check%20out%20this%20post%20by Luther%20Monson&amp;body=https%3a%2f%2fluth.io%2fblog%2f2026%2f09%2fkata-containers-for-ci%2f" target="_blank" class="nav share-btn email" data-proofer-ignore>
+          <p>Email</p>
+        </a>
+  
+
+
+    </menu>
+  
+</header>
+
+    <div id="wrapper">
+      <section id="site-intro" class="hidden-single-column">
+  <a href="/"><img src="/img/luther-monson-headshot.jpg" class="circle" width="100" alt="Luther Monson, Staff Software Engineer at SUSE" /></a>
+  <header>
+    <h1>Luther Monson</h1>
+  </header>
+  <main>
+    <p>Go by way of PHP &middot; Containers &middot; VMs &middot; Windows &middot; Kubernetes</p>
+  </main>
+  
+    <footer>
+      <ul class="socnet-icons">
+        
+
+        <li><a href="//github.com/luthermonson" target="_blank" rel="noopener" title="GitHub" class="fab fa-github"></a></li>
+
+
+
+
+
+
+
+
+
+
+
+<li><a href="//www.linkedin.com/in/luthermonson" target="_blank" rel="noopener" title="LinkedIn" class="fab fa-linkedin"></a></li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li><a href="//twitter.com/luthermonson" target="_blank" rel="noopener" title="Twitter" class="fab fa-twitter"></a></li>
+
+
+
+
+
+
+
+
+
+
+
+<li><a href="mailto:luther.monson@gmail.com" target="_blank" title="Email" class="far fa-envelope"></a></li>
+
+      </ul>
+    </footer>
+  
+</section>
+
+      <main id="site-main">
+        
+  <article>
+    <div class="post">
+      <header>
+  <div class="title">
+    
+      <h2><a href="/blog/2026/09/kata-containers-for-ci/">Kata Containers for CI: Boot Cost Isn&#39;t the Problem, File I/O Is</a></h2>
+    
+    
+      <p>Kata containers are safer for CI, but slower. Starting one takes 12x longer, which is fine, and reading small files is about 40x slower for the entire job, which isn&#39;t.</p>
+    
+  </div>
+  <div class="meta">
+    <time datetime="2026-09-03 21:35:00 -0700 PDT">September 3, 2026</time>
+    
+    <p>7-Minute Read</p>
+  </div>
+</header>
+
+      <div id="socnet-share">
+        
+
+
+
+
+  
+    
+    <a href="//twitter.com/share?text=Kata%20Containers%20for%20CI%3a%20Boot%20Cost%20Isn%27t%20the%20Problem%2c%20File%20I%2fO%20Is&amp;url=https%3a%2f%2fluth.io%2fblog%2f2026%2f09%2fkata-containers-for-ci%2f" target="_blank" rel="noopener" class="nav share-btn twitter">
+        <p>Twitter</p>
+      </a>
+  
+
+  
+      <a href="//www.facebook.com/sharer/sharer.php?u=https%3a%2f%2fluth.io%2fblog%2f2026%2f09%2fkata-containers-for-ci%2f" target="_blank" rel="noopener" class="nav share-btn facebook">
+        <p>Facebook</p>
+        </a>
+  
+
+  
+    <a href="//www.reddit.com/submit?url=https%3a%2f%2fluth.io%2fblog%2f2026%2f09%2fkata-containers-for-ci%2f&amp;title=Kata%20Containers%20for%20CI%3a%20Boot%20Cost%20Isn%27t%20the%20Problem%2c%20File%20I%2fO%20Is" target="_blank" rel="noopener" class="nav share-btn reddit">
+          <p>Reddit</p>
+        </a>
+  
+
+  
+        <a href="//www.linkedin.com/shareArticle?url=https%3a%2f%2fluth.io%2fblog%2f2026%2f09%2fkata-containers-for-ci%2f&amp;title=Kata%20Containers%20for%20CI%3a%20Boot%20Cost%20Isn%27t%20the%20Problem%2c%20File%20I%2fO%20Is" target="_blank" rel="noopener" class="nav share-btn linkedin">
+            <p>LinkedIn</p>
+          </a>
+  
+
+  
+        <a href="//www.pinterest.com/pin/create/button/?url=https%3a%2f%2fluth.io%2fblog%2f2026%2f09%2fkata-containers-for-ci%2f&amp;description=Kata%20Containers%20for%20CI%3a%20Boot%20Cost%20Isn%27t%20the%20Problem%2c%20File%20I%2fO%20Is" target="_blank" rel="noopener" class="nav share-btn pinterest">
+          <p>Pinterest</p>
+        </a>
+  
+
+  
+        <a href="mailto:?subject=Check%20out%20this%20post%20by Luther%20Monson&amp;body=https%3a%2f%2fluth.io%2fblog%2f2026%2f09%2fkata-containers-for-ci%2f" target="_blank" class="nav share-btn email" data-proofer-ignore>
+          <p>Email</p>
+        </a>
+  
+
+
+      </div>
+      <div class="content">
+        
+        <p>Of the three platforms <a href="/blog/2026/08/ephemerd-one-daemon-every-os/">ephemerd</a> runs jobs on, Linux has the weakest
+isolation. Windows jobs get a Hyper-V isolated container with its own kernel, macOS jobs get a whole VM, and a Linux job is
+an ordinary runc container sharing the host kernel. A kernel escape from a Linux job is a host compromise.
+<a href="https://katacontainers.io/">Kata Containers</a> fixes that by putting each container in a lightweight VM with its own kernel,
+and it plugs into containerd as just another runtime handler. So I added it in
+<a href="https://github.com/ephpm/ephemerd/pull/155">#155</a>, measured it, and left it off by default. This post is why.</p>
+<h3 id="wiring-it-in">Wiring it in</h3>
+<p>From containerd&rsquo;s point of view Kata is a different shim, <code>io.containerd.kata.v2</code>, so the change to the runtime is small. The
+job-container creation site used to hardcode runc and now resolves the handler from config:</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-go" data-lang="go"><span class="line"><span class="cl"><span class="kd">func</span><span class="w"> </span><span class="nf">resolveRuntimeName</span><span class="p">(</span><span class="nx">linuxRuntime</span><span class="p">,</span><span class="w"> </span><span class="nx">goos</span><span class="w"> </span><span class="kt">string</span><span class="p">)</span><span class="w"> </span><span class="kt">string</span><span class="w"> </span><span class="p">{</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">	</span><span class="k">if</span><span class="w"> </span><span class="nx">goos</span><span class="w"> </span><span class="o">==</span><span class="w"> </span><span class="s">&#34;windows&#34;</span><span class="w"> </span><span class="p">{</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">		</span><span class="k">return</span><span class="w"> </span><span class="s">&#34;io.containerd.runhcs.v1&#34;</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">	</span><span class="p">}</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">	</span><span class="k">if</span><span class="w"> </span><span class="nx">linuxRuntime</span><span class="w"> </span><span class="o">==</span><span class="w"> </span><span class="s">&#34;&#34;</span><span class="w"> </span><span class="p">{</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">		</span><span class="k">return</span><span class="w"> </span><span class="s">&#34;io.containerd.runc.v2&#34;</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">	</span><span class="p">}</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">	</span><span class="k">return</span><span class="w"> </span><span class="nx">linuxRuntime</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="p">}</span><span class="w">
+</span></span></span></code></pre></div><div class="highlight"><pre tabindex="0" class="chroma"><code class="language-toml" data-lang="toml"><span class="line"><span class="cl"><span class="p">[</span><span class="nx">runner</span><span class="p">.</span><span class="nx">linux</span><span class="p">]</span>
+</span></span><span class="line"><span class="cl"><span class="nx">runtime</span> <span class="p">=</span> <span class="s2">&#34;kata&#34;</span>   <span class="c"># &#34;runc&#34; (default) or &#34;kata&#34;</span>
+</span></span></code></pre></div><p>The more interesting decision was what happens when Kata is configured but can&rsquo;t run. ephemerd checks for
+<code>containerd-shim-kata-v2</code> on the <code>PATH</code> and that <code>/dev/kvm</code> exists <em>and opens</em>, and if either fails, the daemon refuses to
+start:</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-go" data-lang="go"><span class="line"><span class="cl"><span class="nx">f</span><span class="p">,</span><span class="w"> </span><span class="nx">err</span><span class="w"> </span><span class="o">:=</span><span class="w"> </span><span class="nx">os</span><span class="p">.</span><span class="nf">OpenFile</span><span class="p">(</span><span class="s">&#34;/dev/kvm&#34;</span><span class="p">,</span><span class="w"> </span><span class="nx">os</span><span class="p">.</span><span class="nx">O_RDWR</span><span class="p">,</span><span class="w"> </span><span class="mi">0</span><span class="p">)</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="k">if</span><span class="w"> </span><span class="nx">err</span><span class="w"> </span><span class="o">!=</span><span class="w"> </span><span class="kc">nil</span><span class="w"> </span><span class="p">{</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">	</span><span class="nx">hint</span><span class="w"> </span><span class="o">:=</span><span class="w"> </span><span class="s">&#34;this host has no usable KVM device&#34;</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">	</span><span class="k">if</span><span class="w"> </span><span class="nx">os</span><span class="p">.</span><span class="nf">IsNotExist</span><span class="p">(</span><span class="nx">err</span><span class="p">)</span><span class="w"> </span><span class="p">{</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">		</span><span class="nx">hint</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s">&#34;/dev/kvm does not exist — on a VM this usually means nested &#34;</span><span class="w"> </span><span class="o">+</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">			</span><span class="s">&#34;virtualization is not enabled for this guest&#34;</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">	</span><span class="p">}</span><span class="w"> </span><span class="k">else</span><span class="w"> </span><span class="k">if</span><span class="w"> </span><span class="nx">os</span><span class="p">.</span><span class="nf">IsPermission</span><span class="p">(</span><span class="nx">err</span><span class="p">)</span><span class="w"> </span><span class="p">{</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">		</span><span class="nx">hint</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s">&#34;/dev/kvm exists but is not openable — check that ephemerd runs &#34;</span><span class="w"> </span><span class="o">+</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">			</span><span class="s">&#34;as root or is in the kvm group&#34;</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">	</span><span class="p">}</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">	</span><span class="k">return</span><span class="w"> </span><span class="nx">fmt</span><span class="p">.</span><span class="nf">Errorf</span><span class="p">(</span><span class="s">`runner.linux.runtime = &#34;kata&#34; but %s: %w`</span><span class="p">,</span><span class="w"> </span><span class="nx">hint</span><span class="p">,</span><span class="w"> </span><span class="nx">err</span><span class="p">)</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="p">}</span><span class="w">
+</span></span></span></code></pre></div><p>The tempting alternative is falling back to runc with a warning. But then the config says &ldquo;VM isolation&rdquo; while untrusted CI
+runs on the host kernel, and nobody reads warnings. An outage is a better failure than a silent downgrade of an isolation
+guarantee.</p>
+<h3 id="the-numbers">The numbers</h3>
+<p>Measured on one of my amd64 fleet nodes: an 8-core Proxmox guest with nested virtualization, Kata 4.0.0 with QEMU, the same
+runner image, runc and Kata runs interleaved so neither got a quieter period. The full tables are in
+<a href="https://github.com/ephpm/ephemerd/pull/155">#155</a> and the
+<a href="https://github.com/ephpm/ephemerd/blob/main/docs/getting-started/configuration.md">configuration docs</a>; these charts are
+straight from them.</p>
+<table>
+  <thead>
+      <tr>
+          <th>Measurement</th>
+          <th>runc</th>
+          <th>Kata</th>
+          <th>Ratio</th>
+      </tr>
+  </thead>
+  <tbody>
+      <tr>
+          <td>Provision a job container, dind on (median, n=9)</td>
+          <td>203 ms</td>
+          <td>2,498 ms</td>
+          <td>12.3x</td>
+      </tr>
+      <tr>
+          <td>Create to running, dind off (median, n=18)</td>
+          <td>140 ms</td>
+          <td>4,146 ms</td>
+          <td>30x</td>
+      </tr>
+      <tr>
+          <td>Host RSS per idle container</td>
+          <td>~13.6 MB</td>
+          <td>~313 MB</td>
+          <td>23x</td>
+      </tr>
+      <tr>
+          <td>CPU-bound compile (median, n=4)</td>
+          <td>7.5 s</td>
+          <td>10.2 s</td>
+          <td>1.35x</td>
+      </tr>
+      <tr>
+          <td>Create 3,000 files on the rootfs (median, n=4)</td>
+          <td>645 ms</td>
+          <td>5,195 ms</td>
+          <td>8.1x</td>
+      </tr>
+      <tr>
+          <td>Read 3,000 files on the rootfs</td>
+          <td>79 ms</td>
+          <td>2,890 ms</td>
+          <td>37x</td>
+      </tr>
+      <tr>
+          <td>Create 3,000 files on the bind-mounted runner dir</td>
+          <td>435 ms</td>
+          <td>4,712 ms</td>
+          <td>10.8x</td>
+      </tr>
+      <tr>
+          <td>Read 3,000 files on the bind-mounted runner dir</td>
+          <td>73 ms</td>
+          <td>2,984 ms</td>
+          <td>41x</td>
+      </tr>
+  </tbody>
+</table>
+<p><img src="/img/2026/08/kata-containers-for-ci-ratio.svg" alt="Kata slowdown by measurement"></p>
+<p>The first thing everyone asks about with VM-per-container is boot time, and yes, it&rsquo;s there. A job container with dind
+enabled goes from about 200 ms to about 2.5 seconds, nearly all of it guest kernel boot during <code>task create</code>:</p>
+<p><img src="/img/2026/08/kata-containers-for-ci-start.svg" alt="Provisioning time"></p>
+<p>But I don&rsquo;t care much about 2.3 seconds per job. A CI job runs for minutes. The boot is paid once and it&rsquo;s done.</p>
+<h3 id="file-io-is-the-real-cost">File I/O is the real cost</h3>
+<p>The file numbers are the ones that matter, because they&rsquo;re paid for the entire life of the job. Both the guest&rsquo;s root
+filesystem and the bind-mounted runner directory reach the host through virtio-fs, so every <code>open()</code> and <code>stat()</code> crosses the
+VM boundary. Reading 3,000 small files goes from 79 ms to 2.9 seconds:</p>
+<p><img src="/img/2026/08/kata-containers-for-ci-fileio.svg" alt="File I/O"></p>
+<p>And small-file I/O is most of what CI does. <code>actions/checkout</code>, <code>npm ci</code>, <code>go mod download</code>, a <code>cargo build</code> walking its
+target directory, tests that glob fixtures. A CPU-bound compile only lost 35%, which would be an easy trade. A job that
+installs dependencies and runs a test suite is going to feel the 8-41x on every step.</p>
+<p>Memory is the other cost. About 310 MB of host RSS per idle job, most of it the QEMU process (~267 MB resident) versus
+~14 MB for runc. On a node running four jobs at a time, that&rsquo;s about 1.2 GB of headroom it didn&rsquo;t need before.</p>
+<p>One caveat from the PR worth repeating: the node kept serving production CI while I measured. The workload and memory runs
+had stable load. The dind-off start-latency runs saw load climb, so the 4.1 s median there overstates an idle node, which is
+part of why the dind-on number (2.5 s, tighter spread of 2,472 to 2,528 ms) is the one I quote for start cost.</p>
+<h3 id="swapping-the-hypervisor-doesnt-fix-it">Swapping the hypervisor doesn&rsquo;t fix it</h3>
+<p>Kata ships Cloud Hypervisor and Firecracker alongside QEMU, selectable by symlinking a different shim
+(<code>containerd-shim-kata-clh-v2</code>, <code>containerd-shim-kata-fc-v2</code>). I ran all three in the same session:</p>
+<p><img src="/img/2026/08/kata-containers-for-ci-hv.svg" alt="Hypervisor comparison"></p>
+<p>Firecracker came in about 9% under QEMU, Cloud Hypervisor about 8% over. (The repo docs summarize this as &ldquo;neither beat
+QEMU&rdquo;, which isn&rsquo;t quite what the Firecracker number says.) Either way, every one of them is in the five to six second range
+against runc&rsquo;s sub-200 ms (that session ran slower across the board than the runs in the table above, QEMU included).
+I only compared start latency across them. I didn&rsquo;t re-run the file tests under the other VMMs; with QEMU the file
+I/O cost comes from virtio-fs, and Firecracker&rsquo;s Kata config uses a block-device rootfs instead, so that comparison is
+still open. There&rsquo;s no cheap start-time win here from switching VMMs on stock configs.</p>
+<h3 id="its-not-just-slower-its-different">It&rsquo;s not just slower, it&rsquo;s different</h3>
+<p>A few behavior changes showed up that matter as much as the numbers:</p>
+<ul>
+<li><strong>arm64 can&rsquo;t run it at all on my fleet.</strong> The arm64 nodes have no <code>/dev/kvm</code>, so a fleet-wide default was never on the
+table.</li>
+<li><strong>AppArmor doesn&rsquo;t apply inside the guest.</strong> There&rsquo;s no AppArmor in the Kata kernel, so the profile ephemerd puts on job
+containers is gone. You trade in-guest defense-in-depth for the VM boundary.</li>
+<li><strong>cgroup memory limits don&rsquo;t translate.</strong> The guest reported 2.3 GB <code>MemTotal</code> regardless of a 512 MB limit.</li>
+<li><strong>The Docker socket can&rsquo;t cross the boundary.</strong> ephemerd normally bind-mounts a host unix socket at <code>/var/run/docker.sock</code>.
+Under Kata the bind becomes a virtio-fs passthrough that carries the socket <em>inode</em> into the guest but not its
+connectability, so the socket is there and every <code>connect()</code> gets <code>ECONNREFUSED</code>.</li>
+<li><strong>Sibling <code>-v</code> mounts from the job&rsquo;s own filesystem don&rsquo;t work.</strong> <code>docker run -v $GITHUB_WORKSPACE:/x</code> from inside a Kata
+job used to produce an empty directory with no error. Now it&rsquo;s an explicit 400.</li>
+</ul>
+<p>The Docker socket one had a fix sitting right there. Hyper-V isolated Windows containers are VMs with exactly the same
+constraint, and Windows jobs have always gotten the Docker API over TCP on the bridge gateway with <code>DOCKER_HOST=tcp://...</code>.
+The transport had been chosen by build tag, which was really standing in for &ldquo;does this container share the host kernel&rdquo;.
+Now it&rsquo;s chosen at runtime: unix socket for runc, TCP for Kata, TCP always on Windows.</p>
+<p>Moving it to TCP changes the security story, though. The Docker API authenticates nothing, and on Linux every container can
+address the bridge gateway. So the firewall is now the only thing deciding who can drive which job&rsquo;s Docker daemon. Each
+job&rsquo;s port gets an <code>ACCEPT</code> for that one container&rsquo;s <code>/32</code> followed by a <code>DROP</code> for the port from everyone else, in an
+<code>EPHEMERD-DIND</code> chain jumped from both <code>INPUT</code> and <code>EPHEMERD-FORWARD</code>. The isolation was checked with a negative control:
+the probe from a neighbour container times out, deleting the <code>DROP</code> makes it connect, restoring it blocks it again. That
+<code>INPUT</code> detail also led me to a bigger hole, which I wrote up in
+<a href="/blog/2026/08/iptables-rule-zero-packets/">My iptables Rule Matched 0 Packets in 9.8 GB</a>.</p>
+<h3 id="so-default-or-not">So, default or not?</h3>
+<p>Not, for now. Kata is the right answer for a node that runs untrusted public-fork PRs and can afford the I/O hit, and it&rsquo;s a
+one-line config change for those nodes. For my own repos on my own hardware, a 37x slower checkout for a kernel-escape class
+that AppArmor, dropped capabilities and the egress firewall already narrow down isn&rsquo;t worth it.</p>
+<p>If I come back to this, it&rsquo;ll be for the file I/O, not the boot. Getting the job&rsquo;s working directory off virtio-fs and onto
+something guest-local is where I&rsquo;d start looking.</p>
+<h3 id="how-these-were-measured">How these were measured</h3>
+<p>I didn&rsquo;t re-run these for this post. Kata isn&rsquo;t installed on my workstation and I wasn&rsquo;t going to fake a nested-virt setup
+to get numbers that would be less representative than the originals. Everything above comes from the measurements recorded
+with the PR: an 8-core amd64 Proxmox guest, Kata 4.0.0, QEMU, containerd handler <code>io.containerd.kata.v2</code>, runc and Kata
+interleaved against the same image on the same node, sample sizes as listed in the table.</p>
+<h3 id="links">Links</h3>
+<ul>
+<li><a href="https://github.com/ephpm/ephemerd/pull/155">#155 opt-in Kata Containers runtime</a></li>
+<li><a href="https://github.com/ephpm/ephemerd/blob/main/docs/getting-started/configuration.md">ephemerd configuration docs, <code>[runner.linux]</code></a></li>
+<li><a href="https://katacontainers.io/">Kata Containers</a></li>
+<li><a href="https://virtio-fs.gitlab.io/">virtio-fs</a></li>
+</ul>
+
+      </div>
+      <footer>
+        <div class="stats">
+  
+    <ul class="categories">
+      
+        
+          <li><a class="article-terms-link" href="/categories/containers/">containers</a></li>
+        
+          <li><a class="article-terms-link" href="/categories/ci/">ci</a></li>
+        
+      
+    </ul>
+  
+  
+    <ul class="tags">
+      
+        
+          <li><a class="article-terms-link" href="/tags/kata-containers/">kata-containers</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/containerd/">containerd</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/linux/">linux</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/kvm/">kvm</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/virtualization/">virtualization</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/ci/">ci</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/performance/">performance</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/ephemerd/">ephemerd</a></li>
+        
+      
+    </ul>
+  
+</div>
+
+      </footer>
+    </div>
+    
+      
+  
+  <div class='post giscus-wrap'>
+    <script src='https://giscus.app/client.js'
+            data-repo='luthermonson/luth.io'
+            data-repo-id='R_kgDOGvFBXQ'
+            data-category='Announcements'
+            data-category-id='DIC_kwDOGvFBXc4DH_gv'
+            data-mapping='pathname'
+            data-strict='1'
+            data-reactions-enabled='1'
+            data-emit-metadata='0'
+            data-input-position='top'
+            data-theme='light'
+            data-lang='en'
+            data-loading='lazy'
+            crossorigin='anonymous'
+            async>
+    </script>
+  </div>
+  
+
+
+
+    
+  </article>
+  
+    <nav class="post-nav">
+      
+        <a href="/blog/2026/09/clustered-acme-three-bugs/" class="post-nav-link older">
+          <span class="post-nav-label">&larr; Older</span>
+          <span class="post-nav-title">Clustered ACME in Production: Three Bugs That Took TLS Down</span>
+        </a>
+      
+      
+        <a href="/blog/2026/09/own-your-php-thread-pool/" class="post-nav-link newer">
+          <span class="post-nav-label">Newer &rarr;</span>
+          <span class="post-nav-title">Stop Running PHP on tokio&#39;s spawn_blocking - Own Your Thread Pool</span>
+        </a>
+      
+    </nav>
+  
+
+      </main>
+      <section id="site-sidebar">
+  
+    <section id="recent-posts">
+      <header>
+        <h1>Recent Posts</h1>
+      </header>
+      
+      <article class="mini-post">
+          <a href="/blog/2026/10/ephpm-worker-mode-performance/" class="image" style="--bg-image: url('/img/2026/10/ephpm-worker-mode-performance-cover.svg');">
+    <img class="" src="/img/2026/10/ephpm-worker-mode-performance-cover.svg" alt="Diagram: before, hyper/tokio hands each request to one shared bounded channel whose waiter list all 20 PHP threads contend on; after, a dispatcher hands the job straight into the mailbox of the most recently idle PHP thread and only queues it in a FIFO overflow queue when every thread is busy">
+  </a>
+        <header>
+          <h2><a href="/blog/2026/10/ephpm-worker-mode-performance/">Fourth Place in Worker Mode, and Why It Wasn&#39;t PHP</a></h2>
+          <time class="published" datetime="2026-10-16 08:10:00 -0700 PDT">October 16, 2026</time>
+        </header>
+      </article>
+      
+      <article class="mini-post">
+          <a href="/blog/2026/10/ephpm-websockets-how-to/" class="image" style="--bg-image: url('/img/2026/10/ephpm-websockets-how-to-cover.svg');">
+    <img class="" src="/img/2026/10/ephpm-websockets-how-to-cover.svg" alt="Diagram: browsers hold sockets to ePHPm&#39;s Rust session tasks and registry; each connect, message and disconnect runs websocket.php once on the PHP thread pool, and ordinary HTTP requests push through ephpm_ws_broadcast">
+  </a>
+        <header>
+          <h2><a href="/blog/2026/10/ephpm-websockets-how-to/">WebSockets in ePHPm, From Zero to a Working Chat</a></h2>
+          <time class="published" datetime="2026-10-11 17:30:00 -0700 PDT">October 11, 2026</time>
+        </header>
+      </article>
+      
+      <article class="mini-post">
+          <a href="/blog/2026/10/webhooks-out-of-order-scheduler/" class="image" style="--bg-image: url('/img/2026/10/webhooks-out-of-order-scheduler-timeline.svg');">
+    <img class="" src="/img/2026/10/webhooks-out-of-order-scheduler-timeline.svg" alt="Timeline of three same-label jobs where a runner executing a build is destroyed 2.3 seconds before its in_progress webhook arrives">
+  </a>
+        <header>
+          <h2><a href="/blog/2026/10/webhooks-out-of-order-scheduler/">Webhooks Arrive Out of Order: How My Scheduler Killed Live Builds</a></h2>
+          <time class="published" datetime="2026-10-07 21:10:00 -0700 PDT">October 7, 2026</time>
+        </header>
+      </article>
+      
+      <article class="mini-post">
+          <a href="/blog/2026/10/go-proxmox-five-years-to-v0-8/" class="image" style="--bg-image: url('/img/2026/10/go-proxmox-five-years-to-v0-8-apidiff.svg');">
+    <img class="" src="/img/2026/10/go-proxmox-five-years-to-v0-8-apidiff.svg" alt="Horizontal bar chart of apidiff incompatible and compatible changes for every go-proxmox release from v0.1.0 to v0.8.2">
+  </a>
+        <header>
+          <h2><a href="/blog/2026/10/go-proxmox-five-years-to-v0-8/">Breaking Changes Without Breaking Trust: Five Years to go-proxmox v0.8</a></h2>
+          <time class="published" datetime="2026-10-04 19:40:00 -0700 PDT">October 4, 2026</time>
+        </header>
+      </article>
+      
+      <article class="mini-post">
+          <a href="/blog/2026/10/windows-sigterm-sparse-files/" class="image" style="--bg-image: url('/img/2026/10/windows-sigterm-sparse-files-connections.svg');">
+    <img class="" src="/img/2026/10/windows-sigterm-sparse-files-connections.svg" alt="Bar chart: 96 Cloudflare edge connections held by orphaned cloudflared processes versus 4 for the live daemon">
+  </a>
+        <header>
+          <h2><a href="/blog/2026/10/windows-sigterm-sparse-files/">Windows Grab-Bag: SIGTERM That Doesn&#39;t Exist and Sparse Files That Break Docker</a></h2>
+          <time class="published" datetime="2026-10-03 14:30:00 -0700 PDT">October 3, 2026</time>
+        </header>
+      </article>
+      
+      
+        <footer>
+          <a href="/blog" class="button">See More</a>
+        </footer>
+      
+    </section>
+  
+
+  
+    
+
+      <section id="categories">
+        <header>
+          <h1><a href="/categories">Categories</a></h1>
+        </header>
+        <ul>
+          
+          
+          <li>
+              <a href="/categories/ephpm/">ephpm<span class="count">33</span></a>
+          
+          <li>
+              <a href="/categories/go/">go<span class="count">30</span></a>
+          
+          <li>
+              <a href="/categories/php/">php<span class="count">23</span></a>
+          
+          <li>
+              <a href="/categories/rust/">rust<span class="count">15</span></a>
+          
+          <li>
+              <a href="/categories/homelab/">homelab<span class="count">14</span></a>
+          
+          <li>
+              <a href="/categories/windows/">windows<span class="count">14</span></a>
+          
+          <li>
+              <a href="/categories/ci/">ci<span class="count">9</span></a>
+          
+          <li>
+              <a href="/categories/databases/">databases<span class="count">9</span></a>
+          
+          <li>
+              <a href="/categories/security/">security<span class="count">9</span></a>
+          
+          <li>
+              <a href="/categories/containers/">containers<span class="count">7</span></a>
+          
+          <li>
+              <a href="/categories/tools/">tools<span class="count">5</span></a>
+          
+          <li>
+              <a href="/categories/ai-agents/">ai-agents<span class="count">4</span></a>
+          
+          </li>
+        </ul>
+      </section>
+    
+  
+
+  
+    <section id="mini-bio">
+      <header>
+        <h1>About</h1>
+      </header>
+      <p>Luther is a 20+ year software veteran specializing in backend APIs and architecting products. Employed at <a href='https://www.suse.com'>SUSE</a> as the Team Lead for the <a href='https://github.com/rancher/windows/issues'>Containers on Windows Team</a> working on <a href='https://rancher.com/'>Rancher</a> + <a href='https://kubernetes.io/'>Kubernetes</a></p>
+      <footer>
+        <a href="/about" class="button">Learn More</a>
+      </footer>
+    </section>
+  
+</section>
+
+      <footer id="site-footer">
+  
+      <ul class="socnet-icons">
+        
+
+        <li><a href="//github.com/luthermonson" target="_blank" rel="noopener" title="GitHub" class="fab fa-github"></a></li>
+
+
+
+
+
+
+
+
+
+
+
+<li><a href="//www.linkedin.com/in/luthermonson" target="_blank" rel="noopener" title="LinkedIn" class="fab fa-linkedin"></a></li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li><a href="//twitter.com/luthermonson" target="_blank" rel="noopener" title="Twitter" class="fab fa-twitter"></a></li>
+
+
+
+
+
+
+
+
+
+
+
+<li><a href="mailto:luther.monson@gmail.com" target="_blank" title="Email" class="far fa-envelope"></a></li>
+
+      </ul>
+  
+  <p class="copyright">
+    © 2026 Luther Monson
+      <br>
+    Theme: <a href='https://github.com/pacollins/hugo-future-imperfect-slim' target='_blank' rel='noopener'>Hugo Future Imperfect Slim</a><br>A <a href='https://html5up.net/future-imperfect' target='_blank' rel='noopener'>HTML5 UP port</a> | Powered by <a href='https://gohugo.io/' title='0.160.1' target='_blank' rel='noopener'>Hugo</a>
+  </p>
+</footer>
+<a id="back-to-top" href="#" class="fas fa-arrow-up fa-2x"></a>
+
+      <script src="/js/bundle.min.241b62ebc4792fe8c7a75879e5f710894f226f2b73342e9916b3a3b0526030cc.js" integrity="sha256-JBti68R5L&#43;jHp1h55fcQiU8ibytzNC6ZFrOjsFJgMMw="></script>
+    <script src="/js/add-on.js"></script>
+    </div>
+  </body>
+</html>

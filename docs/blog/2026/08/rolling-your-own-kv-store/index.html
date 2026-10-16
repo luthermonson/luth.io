@@ -1,0 +1,779 @@
+<!doctype html>
+<html lang="en">
+  <head>
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-MSTSKGFWTX"></script>
+<script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+
+    gtag('config', 'G-MSTSKGFWTX');
+</script><meta charset="utf-8">
+<title>Rolling Your Own KV Store Instead of Embedding Redis - Luther Monson</title>
+<meta name="description" content="Why ePHPm has its own Redis-compatible cache built in instead of running Redis, a bug that hid in it for four months, and how it compares to real Redis on the same machine.">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<meta name="twitter:card" content="summary_large_image"><meta name="twitter:site" content="@luthermonson">
+
+<meta property="og:site_name" content="Luther Monson">
+<meta property="og:title" content="Rolling Your Own KV Store Instead of Embedding Redis">
+<meta property="og:description" content="Why ePHPm has its own Redis-compatible cache built in instead of running Redis, a bug that hid in it for four months, and how it compares to real Redis on the same machine.">
+<meta property="og:type" content="article">
+<meta property="og:url" content="https://luth.io/blog/2026/08/rolling-your-own-kv-store/">
+    <meta property="og:image" content="https://luth.io/img/2026/09/rolling-your-own-kv-store-bench.svg">
+    <meta property="og:image:alt" content="Bar chart of redis-benchmark GET and SET throughput against Redis 7.4, ePHPm v0.5.2 and ePHPm v0.2.0">
+
+
+  <link rel="manifest" href="/favicon/site.webmanifest?v=1">
+  <link rel="apple-touch-icon" sizes="180x180" href="/favicon/apple-touch-icon.png?v=1">
+  <link rel="icon" type="image/png" sizes="32x32" href="/favicon/favicon-32x32.png?v=1">
+  <link rel="icon" type="image/png" sizes="16x16" href="/favicon/favicon-16x16.png?v=1">
+  
+    <link rel="mask-icon" href="/favicon/safari-pinned-tab.svg?v=1" color="#ffffff">
+    <link rel="shortcut icon" href="/favicon/favicon.ico?v=1">
+    <meta name="msapplication-config" content="/favicon/browserconfig.xml?v=1">
+  
+  <meta name="msapplication-TileColor" content="#ffffff">
+  <meta name="theme-color" content="#ffffff">
+
+
+  <meta name="generator" content="Hugo 0.160.1">
+  <link rel="alternate" type="application/rss+xml" href="https://luth.io/index.xml" title="Luther Monson">
+  <link rel="stylesheet" href="/css/bundle.min.e1ffed86714fbb7eff75eab221c0c61b8260be0c7d1c08db0fcb7a2bdb6af7c9.css" integrity="sha256-4f/thnFPu37/deqyIcDGG4Jgvgx9HAjbD8t6K9tq98k="><link rel="stylesheet" href="/css/add-on.css">
+        <link rel="stylesheet" href="/css/code.css">
+        <link rel="stylesheet" href="/css/mobile.css">
+</head>
+
+  <body>
+    
+
+<header id="site-header">
+  <nav id="site-nav">
+    <h1 class="nav-title">
+      <a href="/" class="nav">
+        <img class="nav-avatar" src="/img/luther-monson-headshot.jpg" alt="" width="32" height="32">
+        
+          Blog
+        
+      </a>
+    </h1>
+    <menu id="site-nav-menu" class="flyout-menu menu">
+      
+        
+          
+          <a href="/" class="nav link"><i class='fa fa-home'></i> Home</a>
+        
+      
+        
+          
+          <a href="/about" class="nav link"><i class='far fa-id-card'></i> About</a>
+        
+      
+        
+          
+          <a href="/blog" class="nav link"><i class='far fa-newspaper'></i> Blog</a>
+        
+      
+        
+          
+          <a href="/archive" class="nav link"><i class='far fa-calendar-alt'></i> Archive</a>
+        
+      
+        
+          
+          <a href="/categories" class="nav link"><i class='fas fa-sitemap'></i> Categories</a>
+        
+      
+      <a href="#share-menu" class="nav link share-toggle"><i class="fas fa-share-alt">&nbsp;</i>Share</a>
+      <a href="#search-input" class="nav link search-toggle"><i class="fas fa-search">&nbsp;</i>Search</a>
+    </menu>
+    <a href="#search-input" class="nav search-toggle"><i class="fas fa-search fa-2x">&nbsp;</i></a>
+    <a href="#share-menu" class="nav share-toggle"><i class="fas fa-share-alt fa-2x">&nbsp;</i></a>
+    
+    <a href="#site-nav" class="nav nav-toggle"><i class="fas fa-bars fa-2x"></i></a>
+  </nav>
+  <menu id="search" class="menu"><input id="search-input" class="search-input menu"></input><div id="search-results" class="search-results menu"></div></menu>
+  
+  
+    <menu id="share-menu" class="flyout-menu menu">
+      <h1>Share Post</h1>
+      
+
+
+
+
+  
+    
+    <a href="//twitter.com/share?text=Rolling%20Your%20Own%20KV%20Store%20Instead%20of%20Embedding%20Redis&amp;url=https%3a%2f%2fluth.io%2fblog%2f2026%2f08%2frolling-your-own-kv-store%2f" target="_blank" rel="noopener" class="nav share-btn twitter">
+        <p>Twitter</p>
+      </a>
+  
+
+  
+      <a href="//www.facebook.com/sharer/sharer.php?u=https%3a%2f%2fluth.io%2fblog%2f2026%2f08%2frolling-your-own-kv-store%2f" target="_blank" rel="noopener" class="nav share-btn facebook">
+        <p>Facebook</p>
+        </a>
+  
+
+  
+    <a href="//www.reddit.com/submit?url=https%3a%2f%2fluth.io%2fblog%2f2026%2f08%2frolling-your-own-kv-store%2f&amp;title=Rolling%20Your%20Own%20KV%20Store%20Instead%20of%20Embedding%20Redis" target="_blank" rel="noopener" class="nav share-btn reddit">
+          <p>Reddit</p>
+        </a>
+  
+
+  
+        <a href="//www.linkedin.com/shareArticle?url=https%3a%2f%2fluth.io%2fblog%2f2026%2f08%2frolling-your-own-kv-store%2f&amp;title=Rolling%20Your%20Own%20KV%20Store%20Instead%20of%20Embedding%20Redis" target="_blank" rel="noopener" class="nav share-btn linkedin">
+            <p>LinkedIn</p>
+          </a>
+  
+
+  
+        <a href="//www.pinterest.com/pin/create/button/?url=https%3a%2f%2fluth.io%2fblog%2f2026%2f08%2frolling-your-own-kv-store%2f&amp;description=Rolling%20Your%20Own%20KV%20Store%20Instead%20of%20Embedding%20Redis" target="_blank" rel="noopener" class="nav share-btn pinterest">
+          <p>Pinterest</p>
+        </a>
+  
+
+  
+        <a href="mailto:?subject=Check%20out%20this%20post%20by Luther%20Monson&amp;body=https%3a%2f%2fluth.io%2fblog%2f2026%2f08%2frolling-your-own-kv-store%2f" target="_blank" class="nav share-btn email" data-proofer-ignore>
+          <p>Email</p>
+        </a>
+  
+
+
+    </menu>
+  
+</header>
+
+    <div id="wrapper">
+      <section id="site-intro" class="hidden-single-column">
+  <a href="/"><img src="/img/luther-monson-headshot.jpg" class="circle" width="100" alt="Luther Monson, Staff Software Engineer at SUSE" /></a>
+  <header>
+    <h1>Luther Monson</h1>
+  </header>
+  <main>
+    <p>Go by way of PHP &middot; Containers &middot; VMs &middot; Windows &middot; Kubernetes</p>
+  </main>
+  
+    <footer>
+      <ul class="socnet-icons">
+        
+
+        <li><a href="//github.com/luthermonson" target="_blank" rel="noopener" title="GitHub" class="fab fa-github"></a></li>
+
+
+
+
+
+
+
+
+
+
+
+<li><a href="//www.linkedin.com/in/luthermonson" target="_blank" rel="noopener" title="LinkedIn" class="fab fa-linkedin"></a></li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li><a href="//twitter.com/luthermonson" target="_blank" rel="noopener" title="Twitter" class="fab fa-twitter"></a></li>
+
+
+
+
+
+
+
+
+
+
+
+<li><a href="mailto:luther.monson@gmail.com" target="_blank" title="Email" class="far fa-envelope"></a></li>
+
+      </ul>
+    </footer>
+  
+</section>
+
+      <main id="site-main">
+        
+  <article>
+    <div class="post">
+      <header>
+  <div class="title">
+    
+      <h2><a href="/blog/2026/08/rolling-your-own-kv-store/">Rolling Your Own KV Store Instead of Embedding Redis</a></h2>
+    
+    
+      <p>Why ePHPm has its own Redis-compatible cache built in instead of running Redis, a bug that hid in it for four months, and how it compares to real Redis on the same machine.</p>
+    
+  </div>
+  <div class="meta">
+    <time datetime="2026-08-17 20:44:00 -0700 PDT">August 17, 2026</time>
+    
+    <p>10-Minute Read</p>
+  </div>
+</header>
+
+      <div id="socnet-share">
+        
+
+
+
+
+  
+    
+    <a href="//twitter.com/share?text=Rolling%20Your%20Own%20KV%20Store%20Instead%20of%20Embedding%20Redis&amp;url=https%3a%2f%2fluth.io%2fblog%2f2026%2f08%2frolling-your-own-kv-store%2f" target="_blank" rel="noopener" class="nav share-btn twitter">
+        <p>Twitter</p>
+      </a>
+  
+
+  
+      <a href="//www.facebook.com/sharer/sharer.php?u=https%3a%2f%2fluth.io%2fblog%2f2026%2f08%2frolling-your-own-kv-store%2f" target="_blank" rel="noopener" class="nav share-btn facebook">
+        <p>Facebook</p>
+        </a>
+  
+
+  
+    <a href="//www.reddit.com/submit?url=https%3a%2f%2fluth.io%2fblog%2f2026%2f08%2frolling-your-own-kv-store%2f&amp;title=Rolling%20Your%20Own%20KV%20Store%20Instead%20of%20Embedding%20Redis" target="_blank" rel="noopener" class="nav share-btn reddit">
+          <p>Reddit</p>
+        </a>
+  
+
+  
+        <a href="//www.linkedin.com/shareArticle?url=https%3a%2f%2fluth.io%2fblog%2f2026%2f08%2frolling-your-own-kv-store%2f&amp;title=Rolling%20Your%20Own%20KV%20Store%20Instead%20of%20Embedding%20Redis" target="_blank" rel="noopener" class="nav share-btn linkedin">
+            <p>LinkedIn</p>
+          </a>
+  
+
+  
+        <a href="//www.pinterest.com/pin/create/button/?url=https%3a%2f%2fluth.io%2fblog%2f2026%2f08%2frolling-your-own-kv-store%2f&amp;description=Rolling%20Your%20Own%20KV%20Store%20Instead%20of%20Embedding%20Redis" target="_blank" rel="noopener" class="nav share-btn pinterest">
+          <p>Pinterest</p>
+        </a>
+  
+
+  
+        <a href="mailto:?subject=Check%20out%20this%20post%20by Luther%20Monson&amp;body=https%3a%2f%2fluth.io%2fblog%2f2026%2f08%2frolling-your-own-kv-store%2f" target="_blank" class="nav share-btn email" data-proofer-ignore>
+          <p>Email</p>
+        </a>
+  
+
+
+      </div>
+      <div class="content">
+        
+        <p>Every PHP deployment I&rsquo;ve run eventually grew a Redis. Sessions, the WordPress object cache, Laravel&rsquo;s cache and locks,
+rate limiting. <a href="https://github.com/ephpm/ephpm">ePHPm</a> is supposed to be one binary that replaces nginx + php-fpm +
+Redis, so it needed a cache in the box. I didn&rsquo;t want to write one. This post is why I did anyway, how it&rsquo;s built, the
+bug that sat in its eviction code from March until last month, and how it holds up against a stock Redis on the same
+machine with <code>redis-benchmark</code> doing the talking.</p>
+<h3 id="what-i-tried-to-embed-first">What I tried to embed first</h3>
+<p>The goal was a library: something I could link into the same process, call from Rust, and expose to PHP. The usual
+suspects, and why each one didn&rsquo;t work:</p>
+<ul>
+<li><strong>Redis</strong> is a server, not a library. It owns its process, runs its own <code>ae</code> event loop and expects to be the only
+thing in <code>main()</code>. There is no <code>libredis.a</code>, and carving one out of the codebase would be a fork I&rsquo;d maintain forever.
+Its license also moved to RSALv2/SSPL with 7.4 in 2024 (AGPL was added as an option with 8.0), which is a lot of legal
+surface for something I&rsquo;d be redistributing inside another product.</li>
+<li><strong>Dragonfly</strong> is the most interesting one technically and the clearest no. It&rsquo;s a standalone C++ server built on
+<code>io_uring</code> and its own fiber runtime, which would fight tokio for the same cores. And its BSL 1.1 license permits use &ldquo;only as
+part of your own product or service, provided it is not an in-memory data store product or service.&rdquo; A PHP server
+whose headline feature includes a clustered in-memory cache is close enough to that line that I&rsquo;m not going near it.</li>
+<li><strong>Dragonfly&rsquo;s threading model</strong> is also wrong for this. It&rsquo;s shared-nothing: each thread owns a slice of the keyspace
+and requests get routed to the owning thread. In ePHPm any PHP worker thread needs to read any key, synchronously,
+from inside a request.</li>
+<li><strong>KeyDB, Garnet, Valkey</strong>: different licenses (Valkey is BSD, which is great), same shape. They&rsquo;re all servers that
+want to own a process.</li>
+</ul>
+<p>And all of them are built for millions of ops per second across many gigabytes, persistence, replication, Lua, streams.
+What PHP apps actually use Redis for is much narrower: get/set with a TTL, counters, a few hashes, <code>SETNX</code> for locks.</p>
+<h3 id="what-i-built-instead">What I built instead</h3>
+<p><code>crates/ephpm-kv</code> is the whole thing. As of v0.5.2 it&rsquo;s about 5,900 lines including its unit tests: a store, a RESP2 parser and
+encoder, a command dispatcher, and a TCP server. The core is two <a href="https://docs.rs/dashmap/">DashMap</a>s, one for strings and
+one for hashes, so <code>WRONGTYPE</code> falls out naturally:</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-rust" data-lang="rust"><span class="line"><span class="cl"><span class="k">pub</span><span class="w"> </span><span class="k">struct</span> <span class="nc">Store</span><span class="w"> </span><span class="p">{</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="sd">/// The main data map (string values).
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="n">data</span>: <span class="nc">DashMap</span><span class="o">&lt;</span><span class="nb">String</span><span class="p">,</span><span class="w"> </span><span class="n">Entry</span><span class="o">&gt;</span><span class="p">,</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="sd">/// Hash values stored separately to avoid Entry enum complexity.
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="n">hashes</span>: <span class="nc">DashMap</span><span class="o">&lt;</span><span class="nb">String</span><span class="p">,</span><span class="w"> </span><span class="n">HashEntry</span><span class="o">&gt;</span><span class="p">,</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="sd">/// Approximate total memory used by all entries.
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="n">mem_used</span>: <span class="nc">AtomicUsize</span><span class="p">,</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="n">config</span>: <span class="nc">StoreConfig</span><span class="p">,</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="p">}</span><span class="w">
+</span></span></span></code></pre></div><p>DashMap is a sharded concurrent hash map: a power-of-two number of shards (about 4 × CPU count by default), each an <code>RwLock</code> around a hashbrown
+table. Reads on different shards never touch the same lock, and reads on the same shard share a read lock. That&rsquo;s the
+property Dragonfly&rsquo;s model doesn&rsquo;t give me: any thread, any key, no routing.</p>
+<p>There are two ways in. PHP code can call native functions (<code>ephpm_kv_get()</code> and friends) that go straight from the Zend
+engine into this store with no socket at all. And there&rsquo;s a RESP2 listener, off by default, so existing clients
+(phpredis, Predis, <code>redis-cli</code>, Laravel&rsquo;s Redis driver) work unchanged against <code>127.0.0.1:6379</code>. The command set is
+deliberately the cache subset: <code>GET SET SETEX SETNX MGET MSET INCR/DECR[BY] APPEND STRLEN GETSET DEL EXISTS EXPIRE PEXPIRE TTL PTTL PERSIST TYPE RENAME KEYS DBSIZE FLUSHDB FLUSHALL</code>, the <code>H*</code> hash commands, <code>PING ECHO SELECT INFO</code>, and
+<code>SET</code> with <code>EX/PX/NX/XX/GET</code>. No lists, sets, sorted sets, streams, pub/sub, Lua or <code>MULTI</code>. If you need a queue, run
+a real Redis.</p>
+<h3 id="expiry-lazy-on-read-swept-in-the-background">Expiry: lazy on read, swept in the background</h3>
+<p>Each entry carries an optional absolute expiry. A read that finds an expired entry deletes it and reports a miss, so
+you never see stale data even if nothing else runs:</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-rust" data-lang="rust"><span class="line"><span class="cl"><span class="k">pub</span><span class="w"> </span><span class="k">fn</span> <span class="nf">get</span><span class="p">(</span><span class="o">&amp;</span><span class="bp">self</span><span class="p">,</span><span class="w"> </span><span class="n">key</span>: <span class="kp">&amp;</span><span class="kt">str</span><span class="p">)</span><span class="w"> </span>-&gt; <span class="nb">Option</span><span class="o">&lt;</span><span class="n">Bytes</span><span class="o">&gt;</span><span class="w"> </span><span class="p">{</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="kd">let</span><span class="w"> </span><span class="n">entry</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="bp">self</span><span class="p">.</span><span class="n">data</span><span class="p">.</span><span class="n">get</span><span class="p">(</span><span class="n">key</span><span class="p">)</span><span class="o">?</span><span class="p">;</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="n">entry</span><span class="p">.</span><span class="n">is_expired</span><span class="p">()</span><span class="w"> </span><span class="p">{</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">        </span><span class="nb">drop</span><span class="p">(</span><span class="n">entry</span><span class="p">);</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">        </span><span class="bp">self</span><span class="p">.</span><span class="n">remove_local</span><span class="p">(</span><span class="n">key</span><span class="p">);</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">        </span><span class="k">return</span><span class="w"> </span><span class="nb">None</span><span class="p">;</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="p">}</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="n">entry</span><span class="p">.</span><span class="n">touch</span><span class="p">(</span><span class="bp">self</span><span class="p">.</span><span class="n">now_nanos</span><span class="p">());</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="n">entry</span><span class="p">.</span><span class="n">compressed</span><span class="w"> </span><span class="p">{</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">        </span><span class="n">decompress_value</span><span class="p">(</span><span class="o">&amp;</span><span class="n">entry</span><span class="p">.</span><span class="n">data</span><span class="p">,</span><span class="w"> </span><span class="bp">self</span><span class="p">.</span><span class="n">config</span><span class="p">.</span><span class="n">compression</span><span class="p">.</span><span class="n">algo</span><span class="p">)</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="p">}</span><span class="w"> </span><span class="k">else</span><span class="w"> </span><span class="p">{</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">        </span><span class="nb">Some</span><span class="p">(</span><span class="n">entry</span><span class="p">.</span><span class="n">data</span><span class="p">.</span><span class="n">clone</span><span class="p">())</span><span class="w"> </span><span class="c1">// Bytes: a refcount bump, no memcpy
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="p">}</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="p">}</span><span class="w">
+</span></span></span></code></pre></div><p>Lazy expiry alone leaks memory for keys that are set and never read again (every abandoned session), so a background
+task runs <code>expire_pass()</code> periodically. Originally that walked every entry in the map to find expired ones. In July
+(<a href="https://github.com/ephpm/ephpm/pull/173">#173</a>) it got a side index, a <code>DashSet</code> of keys that have a TTL at all, so
+the sweep is proportional to the number of keys that <em>can</em> expire rather than all keys. The index is a hint, not the
+truth: the authoritative check is still <code>is_expired()</code> on the entry, and a stale hint just costs one lookup and gets
+pruned.</p>
+<h3 id="eviction-and-the-bug-that-hid-in-it">Eviction, and the bug that hid in it</h3>
+<p>There&rsquo;s a <code>memory_limit</code> (256MB by default) with Redis&rsquo;s policies: <code>noeviction</code>, <code>allkeys-lru</code>, <code>volatile-lru</code>,
+<code>allkeys-random</code>. Memory accounting is approximate on purpose (key + value + struct + a fixed overhead per entry), kept
+in an atomic, and checked on every write.</p>
+<p>An exact LRU needs a linked list threaded through every entry and re-linked on every read, which means a second lock
+on the read path. Redis doesn&rsquo;t do that either. It samples a handful of keys and evicts the one that was touched longest
+ago. ePHPm does the same: sample 16, evict the oldest, repeat until there&rsquo;s room.</p>
+<p>This is what that looked like from March until July:</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-rust" data-lang="rust"><span class="line"><span class="cl"><span class="c1">// Sample keys and find the one with the oldest last_accessed.
+</span></span></span><span class="line"><span class="cl"><span class="k">for</span><span class="w"> </span><span class="n">entry</span><span class="w"> </span><span class="k">in</span><span class="w"> </span><span class="o">&amp;</span><span class="bp">self</span><span class="p">.</span><span class="n">data</span><span class="w"> </span><span class="p">{</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="n">volatile_only</span><span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span><span class="n">entry</span><span class="p">.</span><span class="n">value</span><span class="p">().</span><span class="n">expires_at</span><span class="p">.</span><span class="n">is_none</span><span class="p">()</span><span class="w"> </span><span class="p">{</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">        </span><span class="k">continue</span><span class="p">;</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="p">}</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="c1">// ... keep the oldest ...
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="n">count</span><span class="w"> </span><span class="o">+=</span><span class="w"> </span><span class="mi">1</span><span class="p">;</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="n">count</span><span class="w"> </span><span class="o">&gt;=</span><span class="w"> </span><span class="n">sample_size</span><span class="w"> </span><span class="p">{</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">        </span><span class="k">break</span><span class="p">;</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="p">}</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="p">}</span><span class="w">
+</span></span></span></code></pre></div><p>That&rsquo;s not a sample. <code>&amp;self.data</code> iterates DashMap from shard 0 every time, so the &ldquo;random 16&rdquo; were always the first 16
+entries of the first shard or two. Keys in every other shard were never eviction candidates at all, and the same handful
+of keys got re-examined on every attempt. Under memory pressure it evicted whatever happened to hash into shard 0, hot or
+not. The tests passed because they used small stores where the first 16 entries were the whole store.</p>
+<p>The fix (<a href="https://github.com/ephpm/ephpm/pull/197">#197</a>, late July) uses DashMap&rsquo;s <code>raw-api</code> to start at a
+pseudo-random shard and walk shards from there, taking candidates until it has 16. It&rsquo;s the one <code>unsafe</code> block in the
+crate (dereferencing raw hashbrown buckets while holding that shard&rsquo;s read lock), and it&rsquo;s bounded: at most
+<code>shard_count + 16</code> entries visited per victim regardless of store size.</p>
+<p>Two other read-path changes in July are worth mentioning because they&rsquo;re the kind of thing you only find with a
+profiler:</p>
+<ul>
+<li><strong>Clone-on-read</strong> (<a href="https://github.com/ephpm/ephpm/pull/146">#146</a>). <code>get</code> returned <code>Vec&lt;u8&gt;</code>, a full copy of the value,
+and the RESP encoder then boxed it again. Values are now <code>bytes::Bytes</code>, so a <code>GET</code> is a refcount bump from the store
+to the socket. The RESP parser also slices bulk strings out of the read buffer with <code>split_to().freeze()</code>, so a <code>SET</code>
+payload goes from the network buffer into the store without a copy either.</li>
+<li><strong>The LRU touch</strong> (<a href="https://github.com/ephpm/ephpm/pull/146">#146</a>, <a href="https://github.com/ephpm/ephpm/pull/173">#173</a>).
+<code>last_accessed</code> was an <code>Instant</code>, which meant every <code>GET</code> took the shard&rsquo;s <em>write</em> lock to update it, so concurrent
+reads of the same shard serialized. It&rsquo;s now an <code>AtomicU64</code> of nanoseconds since a store-level anchor, updated with a
+relaxed store under the read lock. Then it got coarser: the touch only writes if the stored time is more than 100ms old.
+Hot keys read thousands of times per second were bouncing that cache line between cores on every read; now a read is
+a load, and the line stays shared.</li>
+</ul>
+<p>And one that wasn&rsquo;t in the store at all: every RESP connection, and the DB proxy, was missing <code>TCP_NODELAY</code>
+(<a href="https://github.com/ephpm/ephpm/pull/161">#161</a>). Nagle plus delayed ACK added a ~44ms stall on certain round trips.
+The HTTP accept loop already set it on every accepted socket, which is why nobody noticed on the web side.</p>
+<h3 id="against-a-real-redis">Against a real Redis</h3>
+<p>I wanted to know whether any of this was competitive or just &ldquo;good enough for PHP,&rdquo; so I pointed <code>redis-benchmark</code> at
+three servers on the same box: Redis 7.4.11 in a container, the v0.5.2 release of ePHPm (all of the above), and the v0.2.0
+release from the end of June (before the July read-path work), each with the RESP listener enabled. 50 clients, 256-byte
+values, 100,000 random keys, 1,000,000 requests per test, once without pipelining and once with 16 commands per
+pipeline, three runs each:</p>
+<p><img src="/img/2026/09/rolling-your-own-kv-store-bench.svg" alt="Bar chart of GET and SET throughput for Redis 7.4, ePHPm v0.5.2 and ePHPm v0.2.0"></p>
+<table>
+  <thead>
+      <tr>
+          <th>ops/s (median of 3)</th>
+          <th style="text-align: right">Redis 7.4.11</th>
+          <th style="text-align: right">ePHPm v0.5.2</th>
+          <th style="text-align: right">ePHPm v0.2.0</th>
+      </tr>
+  </thead>
+  <tbody>
+      <tr>
+          <td>GET, no pipelining</td>
+          <td style="text-align: right">51,929</td>
+          <td style="text-align: right">235,238</td>
+          <td style="text-align: right">95,211</td>
+      </tr>
+      <tr>
+          <td>SET, no pipelining</td>
+          <td style="text-align: right">51,929</td>
+          <td style="text-align: right">235,239</td>
+          <td style="text-align: right">64,491</td>
+      </tr>
+      <tr>
+          <td>GET, pipeline 16</td>
+          <td style="text-align: right">547,345</td>
+          <td style="text-align: right">1,175,641</td>
+          <td style="text-align: right">17,975</td>
+      </tr>
+      <tr>
+          <td>SET, pipeline 16</td>
+          <td style="text-align: right">547,345</td>
+          <td style="text-align: right">1,175,779</td>
+          <td style="text-align: right">17,582</td>
+      </tr>
+  </tbody>
+</table>
+<p>Before anyone screenshots that and posts &ldquo;Rust cache 4x faster than Redis&rdquo;: it isn&rsquo;t, not in the way that headline
+means. Redis executes commands on one thread. ePHPm handles RESP connections on a multi-threaded tokio runtime with 32
+worker threads on this box, against a sharded map. With 50 concurrent connections and a client that can push hard enough
+(<code>redis-benchmark --threads 4</code>), the multi-threaded server wins on throughput, which is what you&rsquo;d expect from 32 threads
+against one. Two more runs make the shape clearer:</p>
+<table>
+  <thead>
+      <tr>
+          <th></th>
+          <th style="text-align: right">Redis 7.4.11</th>
+          <th style="text-align: right">ePHPm v0.5.2</th>
+      </tr>
+  </thead>
+  <tbody>
+      <tr>
+          <td>1 client, GET, p50 latency</td>
+          <td style="text-align: right">0.079 ms (10,934 ops/s)</td>
+          <td style="text-align: right">0.079 ms (11,632 ops/s)</td>
+      </tr>
+      <tr>
+          <td>50 clients, single-threaded benchmark client, GET</td>
+          <td style="text-align: right">71,628 ops/s</td>
+          <td style="text-align: right">67,096 ops/s</td>
+      </tr>
+  </tbody>
+</table>
+<p>One connection at a time, they&rsquo;re the same speed: the round trip over loopback dominates, and neither server is the
+bottleneck. With a single-threaded benchmark client, the client is the bottleneck and Redis is a little ahead. So the
+honest summary is: per command, ePHPm&rsquo;s store is in the same league as Redis, and under concurrent load it scales
+across cores where stock Redis doesn&rsquo;t (Redis&rsquo;s I/O threads would close some of that gap; I ran it with defaults).
+That&rsquo;s plenty for a PHP cache.</p>
+<p>The more interesting comparison is v0.2.0 to v0.5.2, same server code path, a month apart. Unpipelined throughput went
+up 2.5x to 3.6x. Pipelined throughput went from about 18,000 ops/s, which is <em>slower</em> than the same version without
+pipelining, to 1.18 million. I haven&rsquo;t bisected which of the July changes fixed the pipelining collapse (it predates
+the copy removal, the atomic LRU touch, the coarse clock and <code>TCP_NODELAY</code>, and any of them could interact with
+batched writes), but it&rsquo;s a good reminder that &ldquo;works in the tests&rdquo; and &ldquo;works under a pipelining client&rdquo; are different
+claims.</p>
+<h3 id="what-it-isnt">What it isn&rsquo;t</h3>
+<p>It&rsquo;s a cache. There&rsquo;s no persistence, so a restart is an empty cache (that&rsquo;s what a cache is). The memory accounting is an
+estimate. There&rsquo;s no <code>MULTI</code>, no Lua, and no data types beyond strings and hashes. Every one of those is a deliberate
+&ldquo;not yet,&rdquo; and the RESP listener means the exit is cheap: if an app outgrows it, point the Redis client at a real Redis
+and nothing else changes.</p>
+<p>What it is: no second daemon, no second config file, no extra port open between PHP and its cache, and when PHP calls the
+native functions instead of RESP there&rsquo;s no socket at all. That last path is a whole topic of its own.</p>
+<h3 id="how-i-measured">How I measured</h3>
+<ul>
+<li>AMD Ryzen 9 5950X (16C/32T), 128 GB (62 GiB visible to WSL2), Windows 11 with WSL2. ePHPm ran in the Ubuntu WSL distro; Redis
+(<code>docker.io/library/redis:7-alpine</code>, 7.4.11, <code>--save '' --appendonly no</code>) and <code>redis-benchmark</code> ran in Podman with host
+networking, which on WSL2 shares the network namespace with the Ubuntu distro, so everything is loopback.</li>
+<li>ePHPm <code>v0.5.2+php8.4.23</code> and <code>v0.2.0+php8.4.22</code> release binaries, <code>[kv] memory_limit = &quot;2GB&quot;</code>, compression off,
+<code>[kv.redis_compat] enabled = true</code>.</li>
+<li><code>redis-benchmark -t set,get -n 1000000 -r 100000 -d 256 -c 50 -P 1 --threads 4 --csv</code> and the same with
+<code>-P 16 -n 10000000</code> (<code>-n 1000000</code> for v0.2.0, which would otherwise take ten minutes), three runs per configuration,
+median reported. The two extra rows are <code>-c 1 -t get -n 100000</code> and <code>-c 50</code> without <code>--threads</code>, one run each.</li>
+<li>Same machine for client and servers, so the client competes for CPU. Redis is single-threaded for command execution;
+ePHPm runs its RESP connections on a multi-threaded tokio runtime. That&rsquo;s an honest description of how each runs by
+default, not a tuned comparison.</li>
+</ul>
+<h3 id="links">Links</h3>
+<ul>
+<li><a href="https://github.com/ephpm/ephpm">ePHPm</a>, the store is <code>crates/ephpm-kv</code></li>
+<li><a href="https://github.com/ephpm/ephpm/pull/146">#146</a> Bytes values and atomic LRU touch,
+<a href="https://github.com/ephpm/ephpm/pull/161">#161</a> TCP_NODELAY,
+<a href="https://github.com/ephpm/ephpm/pull/173">#173</a> coarse LRU clock and TTL index,
+<a href="https://github.com/ephpm/ephpm/pull/197">#197</a> unbiased sampled eviction</li>
+<li><a href="https://github.com/xacrimon/dashmap">DashMap</a></li>
+<li><a href="https://redis.io/docs/latest/develop/reference/eviction/">Redis key eviction</a> (the sampled LRU this copies)</li>
+<li><a href="https://github.com/dragonflydb/dragonfly/blob/main/LICENSE.md">Dragonfly license</a></li>
+</ul>
+
+      </div>
+      <footer>
+        <div class="stats">
+  
+    <ul class="categories">
+      
+        
+          <li><a class="article-terms-link" href="/categories/ephpm/">ephpm</a></li>
+        
+          <li><a class="article-terms-link" href="/categories/rust/">rust</a></li>
+        
+          <li><a class="article-terms-link" href="/categories/databases/">databases</a></li>
+        
+      
+    </ul>
+  
+  
+    <ul class="tags">
+      
+        
+          <li><a class="article-terms-link" href="/tags/ephpm/">ephpm</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/rust/">rust</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/redis/">redis</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/kv/">kv</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/dashmap/">dashmap</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/caching/">caching</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/performance/">performance</a></li>
+        
+      
+    </ul>
+  
+</div>
+
+      </footer>
+    </div>
+    
+      
+  
+  <div class='post giscus-wrap'>
+    <script src='https://giscus.app/client.js'
+            data-repo='luthermonson/luth.io'
+            data-repo-id='R_kgDOGvFBXQ'
+            data-category='Announcements'
+            data-category-id='DIC_kwDOGvFBXc4DH_gv'
+            data-mapping='pathname'
+            data-strict='1'
+            data-reactions-enabled='1'
+            data-emit-metadata='0'
+            data-input-position='top'
+            data-theme='light'
+            data-lang='en'
+            data-loading='lazy'
+            crossorigin='anonymous'
+            async>
+    </script>
+  </div>
+  
+
+
+
+    
+  </article>
+  
+    <nav class="post-nav">
+      
+        <a href="/blog/2026/08/faking-mysql-quirks-wordpress/" class="post-nav-link older">
+          <span class="post-nav-label">&larr; Older</span>
+          <span class="post-nav-title">Faking MySQL&#39;s Quirks Well Enough to Fool WordPress</span>
+        </a>
+      
+      
+        <a href="/blog/2026/08/ephemerd-one-daemon-every-os/" class="post-nav-link newer">
+          <span class="post-nav-label">Newer &rarr;</span>
+          <span class="post-nav-title">ephemerd: One Daemon, a Fresh Runner Per Job, Every OS</span>
+        </a>
+      
+    </nav>
+  
+
+      </main>
+      <section id="site-sidebar">
+  
+    <section id="recent-posts">
+      <header>
+        <h1>Recent Posts</h1>
+      </header>
+      
+      <article class="mini-post">
+          <a href="/blog/2026/10/ephpm-worker-mode-performance/" class="image" style="--bg-image: url('/img/2026/10/ephpm-worker-mode-performance-cover.svg');">
+    <img class="" src="/img/2026/10/ephpm-worker-mode-performance-cover.svg" alt="Diagram: before, hyper/tokio hands each request to one shared bounded channel whose waiter list all 20 PHP threads contend on; after, a dispatcher hands the job straight into the mailbox of the most recently idle PHP thread and only queues it in a FIFO overflow queue when every thread is busy">
+  </a>
+        <header>
+          <h2><a href="/blog/2026/10/ephpm-worker-mode-performance/">Fourth Place in Worker Mode, and Why It Wasn&#39;t PHP</a></h2>
+          <time class="published" datetime="2026-10-16 08:10:00 -0700 PDT">October 16, 2026</time>
+        </header>
+      </article>
+      
+      <article class="mini-post">
+          <a href="/blog/2026/10/ephpm-websockets-how-to/" class="image" style="--bg-image: url('/img/2026/10/ephpm-websockets-how-to-cover.svg');">
+    <img class="" src="/img/2026/10/ephpm-websockets-how-to-cover.svg" alt="Diagram: browsers hold sockets to ePHPm&#39;s Rust session tasks and registry; each connect, message and disconnect runs websocket.php once on the PHP thread pool, and ordinary HTTP requests push through ephpm_ws_broadcast">
+  </a>
+        <header>
+          <h2><a href="/blog/2026/10/ephpm-websockets-how-to/">WebSockets in ePHPm, From Zero to a Working Chat</a></h2>
+          <time class="published" datetime="2026-10-11 17:30:00 -0700 PDT">October 11, 2026</time>
+        </header>
+      </article>
+      
+      <article class="mini-post">
+          <a href="/blog/2026/10/webhooks-out-of-order-scheduler/" class="image" style="--bg-image: url('/img/2026/10/webhooks-out-of-order-scheduler-timeline.svg');">
+    <img class="" src="/img/2026/10/webhooks-out-of-order-scheduler-timeline.svg" alt="Timeline of three same-label jobs where a runner executing a build is destroyed 2.3 seconds before its in_progress webhook arrives">
+  </a>
+        <header>
+          <h2><a href="/blog/2026/10/webhooks-out-of-order-scheduler/">Webhooks Arrive Out of Order: How My Scheduler Killed Live Builds</a></h2>
+          <time class="published" datetime="2026-10-07 21:10:00 -0700 PDT">October 7, 2026</time>
+        </header>
+      </article>
+      
+      <article class="mini-post">
+          <a href="/blog/2026/10/go-proxmox-five-years-to-v0-8/" class="image" style="--bg-image: url('/img/2026/10/go-proxmox-five-years-to-v0-8-apidiff.svg');">
+    <img class="" src="/img/2026/10/go-proxmox-five-years-to-v0-8-apidiff.svg" alt="Horizontal bar chart of apidiff incompatible and compatible changes for every go-proxmox release from v0.1.0 to v0.8.2">
+  </a>
+        <header>
+          <h2><a href="/blog/2026/10/go-proxmox-five-years-to-v0-8/">Breaking Changes Without Breaking Trust: Five Years to go-proxmox v0.8</a></h2>
+          <time class="published" datetime="2026-10-04 19:40:00 -0700 PDT">October 4, 2026</time>
+        </header>
+      </article>
+      
+      <article class="mini-post">
+          <a href="/blog/2026/10/windows-sigterm-sparse-files/" class="image" style="--bg-image: url('/img/2026/10/windows-sigterm-sparse-files-connections.svg');">
+    <img class="" src="/img/2026/10/windows-sigterm-sparse-files-connections.svg" alt="Bar chart: 96 Cloudflare edge connections held by orphaned cloudflared processes versus 4 for the live daemon">
+  </a>
+        <header>
+          <h2><a href="/blog/2026/10/windows-sigterm-sparse-files/">Windows Grab-Bag: SIGTERM That Doesn&#39;t Exist and Sparse Files That Break Docker</a></h2>
+          <time class="published" datetime="2026-10-03 14:30:00 -0700 PDT">October 3, 2026</time>
+        </header>
+      </article>
+      
+      
+        <footer>
+          <a href="/blog" class="button">See More</a>
+        </footer>
+      
+    </section>
+  
+
+  
+    
+
+      <section id="categories">
+        <header>
+          <h1><a href="/categories">Categories</a></h1>
+        </header>
+        <ul>
+          
+          
+          <li>
+              <a href="/categories/ephpm/">ephpm<span class="count">33</span></a>
+          
+          <li>
+              <a href="/categories/go/">go<span class="count">30</span></a>
+          
+          <li>
+              <a href="/categories/php/">php<span class="count">23</span></a>
+          
+          <li>
+              <a href="/categories/rust/">rust<span class="count">15</span></a>
+          
+          <li>
+              <a href="/categories/homelab/">homelab<span class="count">14</span></a>
+          
+          <li>
+              <a href="/categories/windows/">windows<span class="count">14</span></a>
+          
+          <li>
+              <a href="/categories/ci/">ci<span class="count">9</span></a>
+          
+          <li>
+              <a href="/categories/databases/">databases<span class="count">9</span></a>
+          
+          <li>
+              <a href="/categories/security/">security<span class="count">9</span></a>
+          
+          <li>
+              <a href="/categories/containers/">containers<span class="count">7</span></a>
+          
+          <li>
+              <a href="/categories/tools/">tools<span class="count">5</span></a>
+          
+          <li>
+              <a href="/categories/ai-agents/">ai-agents<span class="count">4</span></a>
+          
+          </li>
+        </ul>
+      </section>
+    
+  
+
+  
+    <section id="mini-bio">
+      <header>
+        <h1>About</h1>
+      </header>
+      <p>Luther is a 20+ year software veteran specializing in backend APIs and architecting products. Employed at <a href='https://www.suse.com'>SUSE</a> as the Team Lead for the <a href='https://github.com/rancher/windows/issues'>Containers on Windows Team</a> working on <a href='https://rancher.com/'>Rancher</a> + <a href='https://kubernetes.io/'>Kubernetes</a></p>
+      <footer>
+        <a href="/about" class="button">Learn More</a>
+      </footer>
+    </section>
+  
+</section>
+
+      <footer id="site-footer">
+  
+      <ul class="socnet-icons">
+        
+
+        <li><a href="//github.com/luthermonson" target="_blank" rel="noopener" title="GitHub" class="fab fa-github"></a></li>
+
+
+
+
+
+
+
+
+
+
+
+<li><a href="//www.linkedin.com/in/luthermonson" target="_blank" rel="noopener" title="LinkedIn" class="fab fa-linkedin"></a></li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li><a href="//twitter.com/luthermonson" target="_blank" rel="noopener" title="Twitter" class="fab fa-twitter"></a></li>
+
+
+
+
+
+
+
+
+
+
+
+<li><a href="mailto:luther.monson@gmail.com" target="_blank" title="Email" class="far fa-envelope"></a></li>
+
+      </ul>
+  
+  <p class="copyright">
+    © 2026 Luther Monson
+      <br>
+    Theme: <a href='https://github.com/pacollins/hugo-future-imperfect-slim' target='_blank' rel='noopener'>Hugo Future Imperfect Slim</a><br>A <a href='https://html5up.net/future-imperfect' target='_blank' rel='noopener'>HTML5 UP port</a> | Powered by <a href='https://gohugo.io/' title='0.160.1' target='_blank' rel='noopener'>Hugo</a>
+  </p>
+</footer>
+<a id="back-to-top" href="#" class="fas fa-arrow-up fa-2x"></a>
+
+      <script src="/js/bundle.min.241b62ebc4792fe8c7a75879e5f710894f226f2b73342e9916b3a3b0526030cc.js" integrity="sha256-JBti68R5L&#43;jHp1h55fcQiU8ibytzNC6ZFrOjsFJgMMw="></script>
+    <script src="/js/add-on.js"></script>
+    </div>
+  </body>
+</html>

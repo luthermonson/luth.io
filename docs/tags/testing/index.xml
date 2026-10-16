@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>Testing on Luther Monson</title>
+    <link>https://luth.io/tags/testing/</link>
+    <description>Recent content in Testing on Luther Monson</description>
+    <generator>Hugo</generator>
+    <language>en</language>
+    <lastBuildDate>Tue, 22 Sep 2026 20:48:00 -0700</lastBuildDate>
+    <atom:link href="https://luth.io/tags/testing/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>A 1 TB Test: Building a Memory Watchdog for go test</title>
+      <link>https://luth.io/blog/2026/09/memory-watchdog-for-go-test/</link>
+      <pubDate>Tue, 22 Sep 2026 20:48:00 -0700</pubDate>
+      <guid>https://luth.io/blog/2026/09/memory-watchdog-for-go-test/</guid>
+      <description>&lt;p&gt;On August 16th a &lt;code&gt;server.test.exe&lt;/code&gt; from &lt;a href=&#34;https://luth.io/blog/2026/08/shipmates-persona-based-ai-coding-crews/&#34;&gt;shipmates&lt;/a&gt; climbed to&#xA;roughly &lt;strong&gt;1 TB of commit charge&lt;/strong&gt; on my Windows workstation. Windows Terminal, which was hosting several agent sessions&#xA;in tabs, hard-faulted with &lt;code&gt;E_OUTOFMEMORY&lt;/code&gt; and every one of those sessions died at the same moment. It wasn&amp;rsquo;t the first&#xA;time either. An earlier one hit about 236 GB through an infinite &lt;code&gt;filepath.Dir&lt;/code&gt; loop.&lt;/p&gt;&#xA;&lt;p&gt;The machine has 128 GB of RAM. Commit charge doesn&amp;rsquo;t care, it&amp;rsquo;s backed by the page file, and Windows will happily let a&#xA;process reserve-and-commit until the commit limit is gone. Then everything else on the desktop starts failing&#xA;allocations too.&lt;/p&gt;</description>
+    </item>
+    <item>
+      <title>Making ephpm php Byte-for-Byte Indistinguishable From php-cli</title>
+      <link>https://luth.io/blog/2026/09/ephpm-php-cli-conformance/</link>
+      <pubDate>Thu, 10 Sep 2026 20:25:00 -0700</pubDate>
+      <guid>https://luth.io/blog/2026/09/ephpm-php-cli-conformance/</guid>
+      <description>&lt;p&gt;&lt;a href=&#34;https://github.com/ephpm/ephpm&#34;&gt;ePHPm&lt;/a&gt; embeds PHP into a single Rust binary, and the obvious follow-up question from&#xA;anybody deploying it is &amp;ldquo;do I still need a &lt;code&gt;php&lt;/code&gt; on the box?&amp;rdquo; Composer, WP-CLI, artisan, PHPUnit and every build&#xA;script in the world call &lt;code&gt;php&lt;/code&gt;. If &lt;code&gt;ephpm php&lt;/code&gt; can stand in for it then the answer is no, and the single binary actually&#xA;means a single binary. &amp;ldquo;Mostly works&amp;rdquo; isn&amp;rsquo;t good enough for that though. These tools parse PHP&amp;rsquo;s output, check its exit&#xA;codes and re-invoke it. So the goal was simple to state: &lt;code&gt;ephpm php&lt;/code&gt; should be indistinguishable from php-cli.&lt;/p&gt;</description>
+    </item>
+    <item>
+      <title>Maintaining a Go Tool That Edits /etc/hosts on Every OS</title>
+      <link>https://luth.io/blog/2024/02/goodhosts/</link>
+      <pubDate>Sat, 03 Feb 2024 19:22:00 -0700</pubDate>
+      <guid>https://luth.io/blog/2024/02/goodhosts/</guid>
+      <description>&lt;p&gt;Editing the hosts file sounds like the most boring problem in software. Read a text file, add a line, write it back. Then you find out&#xA;your binary is being shelled out to from a Ruby Vagrant plugin on a Windows laptop with UAC prompts, your library is being called in a&#xA;loop by &lt;a href=&#34;https://github.com/ddev/ddev&#34;&gt;ddev&lt;/a&gt;, and every hosts file you parse was hand-edited by somebody at some point.&#xA;I&amp;rsquo;ve been maintaining &lt;a href=&#34;https://github.com/goodhosts&#34;&gt;goodhosts&lt;/a&gt; for a few years now, and since I just spent a chunk of the fall and the&#xA;holidays on it, here&amp;rsquo;s what that looks like.&lt;/p&gt;</description>
+    </item>
+  </channel>
+</rss>

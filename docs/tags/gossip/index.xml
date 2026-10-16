@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>Gossip on Luther Monson</title>
+    <link>https://luth.io/tags/gossip/</link>
+    <description>Recent content in Gossip on Luther Monson</description>
+    <generator>Hugo</generator>
+    <language>en</language>
+    <lastBuildDate>Tue, 04 Aug 2026 20:52:00 -0700</lastBuildDate>
+    <atom:link href="https://luth.io/tags/gossip/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>Gossip-Based Clustering for PHP Apps</title>
+      <link>https://luth.io/blog/2026/08/gossip-clustering-for-php/</link>
+      <pubDate>Tue, 04 Aug 2026 20:52:00 -0700</pubDate>
+      <guid>https://luth.io/blog/2026/08/gossip-clustering-for-php/</guid>
+      <description>&lt;p&gt;Most PHP developers never touch clustering primitives, and that&amp;rsquo;s by design. PHP is share-nothing: each request starts&#xA;from zero, and anything shared lives somewhere else. Sessions go in Redis, cache goes in Redis or Memcached, locks go in&#xA;Redis, and when you run two app servers the &amp;ldquo;cluster&amp;rdquo; is really two stateless boxes pointed at the same Redis. That works&#xA;until Redis is the thing you&amp;rsquo;re trying not to run.&lt;/p&gt;</description>
+    </item>
+  </channel>
+</rss>

@@ -1,0 +1,43 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 430" font-family="system-ui, -apple-system, Segoe UI, sans-serif">
+  <rect width="800" height="430" fill="#ffffff"/>
+  <text x="400" y="34" text-anchor="middle" font-size="20" font-weight="600" fill="#222">Two ePHPm processes, one OPcache segment name</text>
+
+  <!-- process A -->
+  <rect x="40" y="62" width="220" height="120" rx="10" fill="#eef3fa" stroke="#2b6cb0" stroke-width="2"/>
+  <text x="150" y="88" text-anchor="middle" font-size="15" font-weight="600" fill="#2b6cb0">ephpm.exe (A)</text>
+  <text x="150" y="112" text-anchor="middle" font-size="13" fill="#444">randomized image base X</text>
+  <text x="150" y="134" text-anchor="middle" font-size="13" fill="#444">creates the section,</text>
+  <text x="150" y="152" text-anchor="middle" font-size="13" fill="#444">stores &amp;execute_ex in it</text>
+
+  <!-- process B -->
+  <rect x="40" y="250" width="220" height="120" rx="10" fill="#fdf1e6" stroke="#e07a1f" stroke-width="2"/>
+  <text x="150" y="276" text-anchor="middle" font-size="15" font-weight="600" fill="#b85f12">ephpm-call.exe (B)</text>
+  <text x="150" y="300" text-anchor="middle" font-size="13" fill="#444">same bytes, different path</text>
+  <text x="150" y="322" text-anchor="middle" font-size="13" fill="#444">randomized image base Y</text>
+  <text x="150" y="344" text-anchor="middle" font-size="13" fill="#444">computes the same name</text>
+
+  <!-- section -->
+  <rect x="330" y="150" width="440" height="110" rx="10" fill="#f4f4f4" stroke="#6b6b6b" stroke-width="2"/>
+  <text x="550" y="176" text-anchor="middle" font-size="14" font-weight="600" fill="#333">named section object</text>
+  <text x="550" y="200" text-anchor="middle" font-size="12" font-family="ui-monospace, Consolas, monospace" fill="#222">ZendOPcache.SharedMemoryArea@&lt;md5(user+cache_id)&gt;</text>
+  <text x="550" y="218" text-anchor="middle" font-size="12" font-family="ui-monospace, Consolas, monospace" fill="#222">@&lt;sapi&gt;@&lt;system_id&gt;&lt;requested_size_hex&gt;</text>
+  <text x="550" y="244" text-anchor="middle" font-size="12" fill="#444">size is part of the name, so it looks like a size lottery</text>
+
+  <path d="M 260 120 C 300 120, 310 160, 328 175" fill="none" stroke="#2b6cb0" stroke-width="2.5" marker-end="url(#b)"/>
+  <text x="285" y="112" font-size="12" fill="#2b6cb0">create</text>
+  <path d="M 260 300 C 300 300, 310 250, 328 238" fill="none" stroke="#e07a1f" stroke-width="2.5" marker-end="url(#o)"/>
+  <text x="272" y="322" font-size="12" fill="#b85f12">reattach</text>
+
+  <!-- outcome -->
+  <rect x="330" y="290" width="440" height="80" rx="10" fill="#fbeceb" stroke="#c0392b" stroke-width="2"/>
+  <text x="550" y="316" text-anchor="middle" font-size="13" font-family="ui-monospace, Consolas, monospace" fill="#c0392b">execute_ex != execute_ex_base</text>
+  <text x="550" y="340" text-anchor="middle" font-size="13" fill="#333">"Opcode handlers are unusable due to ASLR"</text>
+  <text x="550" y="360" text-anchor="middle" font-size="13" fill="#333">ACCEL_LOG_FATAL, so exit(-2) inside startup</text>
+
+  <text x="400" y="408" text-anchor="middle" font-size="13" fill="#2d7a47">fix: opcache.cache_id = ephpm-&lt;pid&gt; gives every process its own name, so it always creates</text>
+
+  <defs>
+    <marker id="b" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#2b6cb0"/></marker>
+    <marker id="o" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#e07a1f"/></marker>
+  </defs>
+</svg>

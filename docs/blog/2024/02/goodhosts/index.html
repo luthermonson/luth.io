@@ -1,0 +1,720 @@
+<!doctype html>
+<html lang="en">
+  <head>
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-MSTSKGFWTX"></script>
+<script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+
+    gtag('config', 'G-MSTSKGFWTX');
+</script><meta charset="utf-8">
+<title>Maintaining a Go Tool That Edits /etc/hosts on Every OS - Luther Monson</title>
+<meta name="description" content="Notes from maintaining goodhosts, the hosts file CLI and Go library behind vagrant-goodhosts and ddev: Windows quirks, a HostsPerLine bug, and making the CLI testable.">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<meta name="twitter:card" content="summary_large_image"><meta name="twitter:site" content="@luthermonson">
+
+<meta property="og:site_name" content="Luther Monson">
+<meta property="og:title" content="Maintaining a Go Tool That Edits /etc/hosts on Every OS">
+<meta property="og:description" content="Notes from maintaining goodhosts, the hosts file CLI and Go library behind vagrant-goodhosts and ddev: Windows quirks, a HostsPerLine bug, and making the CLI testable.">
+<meta property="og:type" content="article">
+<meta property="og:url" content="https://luth.io/blog/2024/02/goodhosts/">
+    <meta property="og:image" content="https://luth.io/img/2024/02/goodhosts-hosts-per-line.svg">
+    <meta property="og:image:alt" content="hosts file output from hostsfile v0.1.4, v0.1.5 and v0.1.6 for the same sequence of adds">
+
+
+  <link rel="manifest" href="/favicon/site.webmanifest?v=1">
+  <link rel="apple-touch-icon" sizes="180x180" href="/favicon/apple-touch-icon.png?v=1">
+  <link rel="icon" type="image/png" sizes="32x32" href="/favicon/favicon-32x32.png?v=1">
+  <link rel="icon" type="image/png" sizes="16x16" href="/favicon/favicon-16x16.png?v=1">
+  
+    <link rel="mask-icon" href="/favicon/safari-pinned-tab.svg?v=1" color="#ffffff">
+    <link rel="shortcut icon" href="/favicon/favicon.ico?v=1">
+    <meta name="msapplication-config" content="/favicon/browserconfig.xml?v=1">
+  
+  <meta name="msapplication-TileColor" content="#ffffff">
+  <meta name="theme-color" content="#ffffff">
+
+
+  <meta name="generator" content="Hugo 0.160.1">
+  <link rel="alternate" type="application/rss+xml" href="https://luth.io/index.xml" title="Luther Monson">
+  <link rel="stylesheet" href="/css/bundle.min.e1ffed86714fbb7eff75eab221c0c61b8260be0c7d1c08db0fcb7a2bdb6af7c9.css" integrity="sha256-4f/thnFPu37/deqyIcDGG4Jgvgx9HAjbD8t6K9tq98k="><link rel="stylesheet" href="/css/add-on.css">
+        <link rel="stylesheet" href="/css/code.css">
+        <link rel="stylesheet" href="/css/mobile.css">
+</head>
+
+  <body>
+    
+
+<header id="site-header">
+  <nav id="site-nav">
+    <h1 class="nav-title">
+      <a href="/" class="nav">
+        <img class="nav-avatar" src="/img/luther-monson-headshot.jpg" alt="" width="32" height="32">
+        
+          Blog
+        
+      </a>
+    </h1>
+    <menu id="site-nav-menu" class="flyout-menu menu">
+      
+        
+          
+          <a href="/" class="nav link"><i class='fa fa-home'></i> Home</a>
+        
+      
+        
+          
+          <a href="/about" class="nav link"><i class='far fa-id-card'></i> About</a>
+        
+      
+        
+          
+          <a href="/blog" class="nav link"><i class='far fa-newspaper'></i> Blog</a>
+        
+      
+        
+          
+          <a href="/archive" class="nav link"><i class='far fa-calendar-alt'></i> Archive</a>
+        
+      
+        
+          
+          <a href="/categories" class="nav link"><i class='fas fa-sitemap'></i> Categories</a>
+        
+      
+      <a href="#share-menu" class="nav link share-toggle"><i class="fas fa-share-alt">&nbsp;</i>Share</a>
+      <a href="#search-input" class="nav link search-toggle"><i class="fas fa-search">&nbsp;</i>Search</a>
+    </menu>
+    <a href="#search-input" class="nav search-toggle"><i class="fas fa-search fa-2x">&nbsp;</i></a>
+    <a href="#share-menu" class="nav share-toggle"><i class="fas fa-share-alt fa-2x">&nbsp;</i></a>
+    
+    <a href="#site-nav" class="nav nav-toggle"><i class="fas fa-bars fa-2x"></i></a>
+  </nav>
+  <menu id="search" class="menu"><input id="search-input" class="search-input menu"></input><div id="search-results" class="search-results menu"></div></menu>
+  
+  
+    <menu id="share-menu" class="flyout-menu menu">
+      <h1>Share Post</h1>
+      
+
+
+
+
+  
+    
+    <a href="//twitter.com/share?text=Maintaining%20a%20Go%20Tool%20That%20Edits%20%2fetc%2fhosts%20on%20Every%20OS&amp;url=https%3a%2f%2fluth.io%2fblog%2f2024%2f02%2fgoodhosts%2f" target="_blank" rel="noopener" class="nav share-btn twitter">
+        <p>Twitter</p>
+      </a>
+  
+
+  
+      <a href="//www.facebook.com/sharer/sharer.php?u=https%3a%2f%2fluth.io%2fblog%2f2024%2f02%2fgoodhosts%2f" target="_blank" rel="noopener" class="nav share-btn facebook">
+        <p>Facebook</p>
+        </a>
+  
+
+  
+    <a href="//www.reddit.com/submit?url=https%3a%2f%2fluth.io%2fblog%2f2024%2f02%2fgoodhosts%2f&amp;title=Maintaining%20a%20Go%20Tool%20That%20Edits%20%2fetc%2fhosts%20on%20Every%20OS" target="_blank" rel="noopener" class="nav share-btn reddit">
+          <p>Reddit</p>
+        </a>
+  
+
+  
+        <a href="//www.linkedin.com/shareArticle?url=https%3a%2f%2fluth.io%2fblog%2f2024%2f02%2fgoodhosts%2f&amp;title=Maintaining%20a%20Go%20Tool%20That%20Edits%20%2fetc%2fhosts%20on%20Every%20OS" target="_blank" rel="noopener" class="nav share-btn linkedin">
+            <p>LinkedIn</p>
+          </a>
+  
+
+  
+        <a href="//www.pinterest.com/pin/create/button/?url=https%3a%2f%2fluth.io%2fblog%2f2024%2f02%2fgoodhosts%2f&amp;description=Maintaining%20a%20Go%20Tool%20That%20Edits%20%2fetc%2fhosts%20on%20Every%20OS" target="_blank" rel="noopener" class="nav share-btn pinterest">
+          <p>Pinterest</p>
+        </a>
+  
+
+  
+        <a href="mailto:?subject=Check%20out%20this%20post%20by Luther%20Monson&amp;body=https%3a%2f%2fluth.io%2fblog%2f2024%2f02%2fgoodhosts%2f" target="_blank" class="nav share-btn email" data-proofer-ignore>
+          <p>Email</p>
+        </a>
+  
+
+
+    </menu>
+  
+</header>
+
+    <div id="wrapper">
+      <section id="site-intro" class="hidden-single-column">
+  <a href="/"><img src="/img/luther-monson-headshot.jpg" class="circle" width="100" alt="Luther Monson, Staff Software Engineer at SUSE" /></a>
+  <header>
+    <h1>Luther Monson</h1>
+  </header>
+  <main>
+    <p>Go by way of PHP &middot; Containers &middot; VMs &middot; Windows &middot; Kubernetes</p>
+  </main>
+  
+    <footer>
+      <ul class="socnet-icons">
+        
+
+        <li><a href="//github.com/luthermonson" target="_blank" rel="noopener" title="GitHub" class="fab fa-github"></a></li>
+
+
+
+
+
+
+
+
+
+
+
+<li><a href="//www.linkedin.com/in/luthermonson" target="_blank" rel="noopener" title="LinkedIn" class="fab fa-linkedin"></a></li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li><a href="//twitter.com/luthermonson" target="_blank" rel="noopener" title="Twitter" class="fab fa-twitter"></a></li>
+
+
+
+
+
+
+
+
+
+
+
+<li><a href="mailto:luther.monson@gmail.com" target="_blank" title="Email" class="far fa-envelope"></a></li>
+
+      </ul>
+    </footer>
+  
+</section>
+
+      <main id="site-main">
+        
+  <article>
+    <div class="post">
+      <header>
+  <div class="title">
+    
+      <h2><a href="/blog/2024/02/goodhosts/">Maintaining a Go Tool That Edits /etc/hosts on Every OS</a></h2>
+    
+    
+      <p>Notes from maintaining goodhosts, the hosts file CLI and Go library behind vagrant-goodhosts and ddev: Windows quirks, a HostsPerLine bug, and making the CLI testable.</p>
+    
+  </div>
+  <div class="meta">
+    <time datetime="2024-02-03 19:22:00 -0700 -0700">February 3, 2024</time>
+    
+    <p>8-Minute Read</p>
+  </div>
+</header>
+
+      <div id="socnet-share">
+        
+
+
+
+
+  
+    
+    <a href="//twitter.com/share?text=Maintaining%20a%20Go%20Tool%20That%20Edits%20%2fetc%2fhosts%20on%20Every%20OS&amp;url=https%3a%2f%2fluth.io%2fblog%2f2024%2f02%2fgoodhosts%2f" target="_blank" rel="noopener" class="nav share-btn twitter">
+        <p>Twitter</p>
+      </a>
+  
+
+  
+      <a href="//www.facebook.com/sharer/sharer.php?u=https%3a%2f%2fluth.io%2fblog%2f2024%2f02%2fgoodhosts%2f" target="_blank" rel="noopener" class="nav share-btn facebook">
+        <p>Facebook</p>
+        </a>
+  
+
+  
+    <a href="//www.reddit.com/submit?url=https%3a%2f%2fluth.io%2fblog%2f2024%2f02%2fgoodhosts%2f&amp;title=Maintaining%20a%20Go%20Tool%20That%20Edits%20%2fetc%2fhosts%20on%20Every%20OS" target="_blank" rel="noopener" class="nav share-btn reddit">
+          <p>Reddit</p>
+        </a>
+  
+
+  
+        <a href="//www.linkedin.com/shareArticle?url=https%3a%2f%2fluth.io%2fblog%2f2024%2f02%2fgoodhosts%2f&amp;title=Maintaining%20a%20Go%20Tool%20That%20Edits%20%2fetc%2fhosts%20on%20Every%20OS" target="_blank" rel="noopener" class="nav share-btn linkedin">
+            <p>LinkedIn</p>
+          </a>
+  
+
+  
+        <a href="//www.pinterest.com/pin/create/button/?url=https%3a%2f%2fluth.io%2fblog%2f2024%2f02%2fgoodhosts%2f&amp;description=Maintaining%20a%20Go%20Tool%20That%20Edits%20%2fetc%2fhosts%20on%20Every%20OS" target="_blank" rel="noopener" class="nav share-btn pinterest">
+          <p>Pinterest</p>
+        </a>
+  
+
+  
+        <a href="mailto:?subject=Check%20out%20this%20post%20by Luther%20Monson&amp;body=https%3a%2f%2fluth.io%2fblog%2f2024%2f02%2fgoodhosts%2f" target="_blank" class="nav share-btn email" data-proofer-ignore>
+          <p>Email</p>
+        </a>
+  
+
+
+      </div>
+      <div class="content">
+        
+        <p>Editing the hosts file sounds like the most boring problem in software. Read a text file, add a line, write it back. Then you find out
+your binary is being shelled out to from a Ruby Vagrant plugin on a Windows laptop with UAC prompts, your library is being called in a
+loop by <a href="https://github.com/ddev/ddev">ddev</a>, and every hosts file you parse was hand-edited by somebody at some point.
+I&rsquo;ve been maintaining <a href="https://github.com/goodhosts">goodhosts</a> for a few years now, and since I just spent a chunk of the fall and the
+holidays on it, here&rsquo;s what that looks like.</p>
+<h3 id="where-it-came-from">Where it came from</h3>
+<p>I didn&rsquo;t start it. <a href="https://github.com/lextoumbourou">Lex Toumbourou</a> wrote the original <code>goodhosts</code> CLI in Go in April 2015, and Windows
+support landed that June. In January 2020 I moved it into the <a href="https://github.com/goodhosts">goodhosts</a> org and split it in two:</p>
+<ul>
+<li><a href="https://github.com/goodhosts/hostsfile">goodhosts/hostsfile</a>, the Go library that parses a hosts file into structs, indexes it, and
+flushes it back to disk</li>
+<li><a href="https://github.com/goodhosts/cli">goodhosts/cli</a>, the <code>goodhosts</code> binary on top of it (<code>add</code>, <code>remove</code>, <code>list</code>, <code>check</code>, <code>clean</code>,
+<code>backup</code>, <code>restore</code>, <code>edit</code>)</li>
+</ul>
+<p>The biggest consumer of the CLI is <a href="https://github.com/goodhosts/vagrant">vagrant-goodhosts</a>, which has a longer history than either.
+It&rsquo;s descended from vagrant-hostsupdater (first commit April 2013), and in May 2020 Daniele Scasciafratte swapped its Ruby hosts file
+handling for the goodhosts CLI. The gem bundles a prebuilt binary per platform and picks one at runtime (trimmed; the current version also branches on arm64 vs amd64):</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-ruby" data-lang="ruby"><span class="line"><span class="cl"><span class="k">def</span> <span class="nf">get_os_binary</span>
+</span></span><span class="line"><span class="cl">  <span class="k">if</span> <span class="no">OS</span><span class="o">.</span><span class="n">windows?</span>
+</span></span><span class="line"><span class="cl">    <span class="k">return</span> <span class="s1">&#39;cli.exe&#39;</span>
+</span></span><span class="line"><span class="cl">  <span class="k">elsif</span> <span class="no">OS</span><span class="o">.</span><span class="n">mac?</span>
+</span></span><span class="line"><span class="cl">    <span class="k">return</span> <span class="s1">&#39;cli_osx&#39;</span>
+</span></span><span class="line"><span class="cl">  <span class="k">elsif</span> <span class="no">OS</span><span class="o">.</span><span class="n">linux?</span>
+</span></span><span class="line"><span class="cl">    <span class="k">return</span> <span class="s1">&#39;cli&#39;</span>
+</span></span><span class="line"><span class="cl">  <span class="k">else</span>
+</span></span><span class="line"><span class="cl">    <span class="k">raise</span> <span class="no">Error</span><span class="o">::</span><span class="no">WebDriverError</span><span class="p">,</span> <span class="s2">&#34;unknown os: </span><span class="si">#{</span><span class="n">host_os</span><span class="o">.</span><span class="n">inspect</span><span class="si">}</span><span class="s2">&#34;</span>
+</span></span><span class="line"><span class="cl">  <span class="k">end</span>
+</span></span><span class="line"><span class="cl"><span class="k">end</span>
+</span></span></code></pre></div><p>That&rsquo;s the main reason the CLI is Go. Ruby plugins that edit system files on three operating systems are miserable, while a static binary
+you can drop next to the gem works on all three. ddev uses the library directly.</p>
+<h3 id="every-os-is-two-files">&ldquo;Every OS&rdquo; is two files</h3>
+<p>The OS-specific surface of the library is small, and I want to keep it that way. Unix-likes get this:</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-go" data-lang="go"><span class="line"><span class="cl"><span class="cp">//go:build !windows</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="kn">package</span><span class="w"> </span><span class="nx">hostsfile</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="kd">var</span><span class="w"> </span><span class="p">(</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">	</span><span class="nx">HostsPerLine</span><span class="w">  </span><span class="p">=</span><span class="w"> </span><span class="o">-</span><span class="mi">1</span><span class="w"> </span><span class="c1">// unlimited</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">	</span><span class="nx">HostsFilePath</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s">&#34;/etc/hosts&#34;</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">	</span><span class="nx">eol</span><span class="w">           </span><span class="p">=</span><span class="w"> </span><span class="s">&#34;\n&#34;</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="p">)</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="kd">func</span><span class="w"> </span><span class="p">(</span><span class="nx">h</span><span class="w"> </span><span class="o">*</span><span class="nx">Hosts</span><span class="p">)</span><span class="w"> </span><span class="nf">preFlush</span><span class="p">()</span><span class="w"> </span><span class="kt">error</span><span class="w">  </span><span class="p">{</span><span class="w"> </span><span class="k">return</span><span class="w"> </span><span class="kc">nil</span><span class="w"> </span><span class="p">}</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="kd">func</span><span class="w"> </span><span class="p">(</span><span class="nx">h</span><span class="w"> </span><span class="o">*</span><span class="nx">Hosts</span><span class="p">)</span><span class="w"> </span><span class="nf">postFlush</span><span class="p">()</span><span class="w"> </span><span class="kt">error</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="k">return</span><span class="w"> </span><span class="kc">nil</span><span class="w"> </span><span class="p">}</span><span class="w">
+</span></span></span></code></pre></div><p>And Windows gets this:</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-go" data-lang="go"><span class="line"><span class="cl"><span class="kn">package</span><span class="w"> </span><span class="nx">hostsfile</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="kd">var</span><span class="w"> </span><span class="p">(</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">	</span><span class="nx">HostsPerLine</span><span class="w">  </span><span class="p">=</span><span class="w"> </span><span class="mi">9</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">	</span><span class="nx">HostsFilePath</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s">&#34;${SystemRoot}/System32/drivers/etc/hosts&#34;</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">	</span><span class="nx">eol</span><span class="w">           </span><span class="p">=</span><span class="w"> </span><span class="s">&#34;\r\n&#34;</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="p">)</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="kd">func</span><span class="w"> </span><span class="p">(</span><span class="nx">h</span><span class="w"> </span><span class="o">*</span><span class="nx">Hosts</span><span class="p">)</span><span class="w"> </span><span class="nf">preFlush</span><span class="p">()</span><span class="w"> </span><span class="kt">error</span><span class="w"> </span><span class="p">{</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">	</span><span class="c1">// need to force hosts per line always on windows see https://github.com/goodhosts/hostsfile/issues/18</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">	</span><span class="nx">h</span><span class="p">.</span><span class="nf">HostsPerLine</span><span class="p">(</span><span class="nx">HostsPerLine</span><span class="p">)</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">	</span><span class="k">return</span><span class="w"> </span><span class="kc">nil</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="p">}</span><span class="w">
+</span></span></span></code></pre></div><p>The <code>HostsPerLine</code> bit came from <a href="https://github.com/goodhosts/hostsfile/issues/18">issue #18</a>: a Vagrant user had 16 hostnames on one
+<code>127.0.0.1</code> line and sites stopped loading. Windows only honours the first 9 names on a hosts line (undocumented, but easy to reproduce), so on
+Windows every flush splits long lines into chunks of 9. Most of the other platform fixes over the years came from users too: Till Wegmüller fixed the build tags so it builds on
+the other POSIX platforms, Guillaume Rose closed a file descriptor that leaked after the writable check, and Christophe Fergeau added a
+missing <code>+build</code> directive.</p>
+<h3 id="the-bug-that-only-shows-up-in-a-loop">The bug that only shows up in a loop</h3>
+<p>From the end of September through October I did a round of cleanup on the library: a reindexer for the ip and hostname position lookups, a fix for duplicate removal
+reordering lines, keeping comments when cleaning, moving the build to <a href="https://magefile.org/">mage</a>, and coverage reporting. That went
+out as v0.1.2 through v0.1.4. A few hours after the v0.1.4 release, Randy Fay from ddev opened <a href="https://github.com/goodhosts/hostsfile/issues/51">#51</a>.
+ddev calls the library once per hostname, roughly like this:</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-go" data-lang="go"><span class="line"><span class="cl"><span class="nx">hosts</span><span class="p">,</span><span class="w"> </span><span class="nx">err</span><span class="w"> </span><span class="o">:=</span><span class="w"> </span><span class="nx">goodhosts</span><span class="p">.</span><span class="nf">NewCustomHosts</span><span class="p">(</span><span class="nx">osHostsFilePath</span><span class="p">)</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="k">if</span><span class="w"> </span><span class="nx">err</span><span class="w"> </span><span class="o">!=</span><span class="w"> </span><span class="kc">nil</span><span class="w"> </span><span class="p">{</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">	</span><span class="k">return</span><span class="w"> </span><span class="nx">err</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="p">}</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="nx">err</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="nx">hosts</span><span class="p">.</span><span class="nf">Add</span><span class="p">(</span><span class="nx">ip</span><span class="p">,</span><span class="w"> </span><span class="nx">name</span><span class="p">)</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="k">if</span><span class="w"> </span><span class="nx">err</span><span class="w"> </span><span class="o">!=</span><span class="w"> </span><span class="kc">nil</span><span class="w"> </span><span class="p">{</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">	</span><span class="k">return</span><span class="w"> </span><span class="nx">err</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="p">}</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="nx">hosts</span><span class="p">.</span><span class="nf">HostsPerLine</span><span class="p">(</span><span class="mi">8</span><span class="p">)</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="nx">err</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="nx">hosts</span><span class="p">.</span><span class="nf">Flush</span><span class="p">()</span><span class="w">
+</span></span></span></code></pre></div><p>Run that 15 times and the first line fills to 8 hosts, then every new hostname ends up on its own line, newest first. Each test in
+the suite called <code>Add</code> a bunch of times and then <code>HostsPerLine</code> once, and that was fine. Nothing tested the load, add, split, flush
+cycle repeated.</p>
+<p>I wrote a reproduction that does the same thing as ddev against a scratch file, reloading from disk for every add, and ran it against
+three tagged versions of the library. This is the real output:</p>
+<p><img src="/img/2024/02/goodhosts-hosts-per-line.svg" alt="hosts file output from hostsfile v0.1.4, v0.1.5 and v0.1.6"></p>
+<p>The cause was in <code>Add</code>. When the ip already existed it appended the new hostname to the <em>first</em> line with that ip:</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-go" data-lang="go"><span class="line"><span class="cl"><span class="c1">// add new host to the first one we find</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="nx">hostsCopy</span><span class="w"> </span><span class="o">:=</span><span class="w"> </span><span class="nx">h</span><span class="p">.</span><span class="nx">Lines</span><span class="p">[</span><span class="nx">position</span><span class="p">[</span><span class="mi">0</span><span class="p">]].</span><span class="nx">Hosts</span><span class="w">
+</span></span></span></code></pre></div><p>After the first split, the first <code>127.0.0.1</code> line is always full. So each add pushes it to 9 hosts, <code>HostsPerLine(8)</code> splits off the overflow
+into a new line directly below it, and the previous overflow lines get pushed down. That&rsquo;s the reversed staircase in the v0.1.4 output.
+It also wasn&rsquo;t copying the slice before appending, which is asking for trouble once <code>HostsPerLine</code> has handed out subslices of the same
+backing array to multiple lines.</p>
+<p><a href="https://github.com/goodhosts/hostsfile/pull/52">#52</a> switched to the last line for that ip, copied the slice properly, and added a test
+that does 50 rounds of add plus split and checks the result is identical to adding all 50 and splitting once:</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-go" data-lang="go"><span class="line"><span class="cl"><span class="c1">// test if multiple calls to HostsPerLine doesn&#39;t create havoc and has identical output as calling it once</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="nx">hosts</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="nf">newHosts</span><span class="p">()</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="k">for</span><span class="w"> </span><span class="nx">i</span><span class="w"> </span><span class="o">:=</span><span class="w"> </span><span class="mi">1</span><span class="p">;</span><span class="w"> </span><span class="nx">i</span><span class="w"> </span><span class="o">&lt;=</span><span class="w"> </span><span class="mi">50</span><span class="p">;</span><span class="w"> </span><span class="nx">i</span><span class="o">++</span><span class="w"> </span><span class="p">{</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">	</span><span class="nx">assert</span><span class="p">.</span><span class="nf">Nil</span><span class="p">(</span><span class="nx">t</span><span class="p">,</span><span class="w"> </span><span class="nx">hosts</span><span class="p">.</span><span class="nf">Add</span><span class="p">(</span><span class="s">&#34;127.0.0.1&#34;</span><span class="p">,</span><span class="w"> </span><span class="nx">fmt</span><span class="p">.</span><span class="nf">Sprintf</span><span class="p">(</span><span class="s">&#34;a%d.ddev.site&#34;</span><span class="p">,</span><span class="w"> </span><span class="nx">i</span><span class="p">)))</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">	</span><span class="nx">hosts</span><span class="p">.</span><span class="nf">HostsPerLine</span><span class="p">(</span><span class="mi">8</span><span class="p">)</span><span class="w"> </span><span class="c1">// 8</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="p">}</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="nx">hosts2</span><span class="w"> </span><span class="o">:=</span><span class="w"> </span><span class="nf">newHosts</span><span class="p">()</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="k">for</span><span class="w"> </span><span class="nx">i</span><span class="w"> </span><span class="o">:=</span><span class="w"> </span><span class="mi">1</span><span class="p">;</span><span class="w"> </span><span class="nx">i</span><span class="w"> </span><span class="o">&lt;=</span><span class="w"> </span><span class="mi">50</span><span class="p">;</span><span class="w"> </span><span class="nx">i</span><span class="o">++</span><span class="w"> </span><span class="p">{</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">	</span><span class="nx">assert</span><span class="p">.</span><span class="nf">Nil</span><span class="p">(</span><span class="nx">t</span><span class="p">,</span><span class="w"> </span><span class="nx">hosts2</span><span class="p">.</span><span class="nf">Add</span><span class="p">(</span><span class="s">&#34;127.0.0.1&#34;</span><span class="p">,</span><span class="w"> </span><span class="nx">fmt</span><span class="p">.</span><span class="nf">Sprintf</span><span class="p">(</span><span class="s">&#34;a%d.ddev.site&#34;</span><span class="p">,</span><span class="w"> </span><span class="nx">i</span><span class="p">)))</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="p">}</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="nx">hosts2</span><span class="p">.</span><span class="nf">HostsPerLine</span><span class="p">(</span><span class="mi">8</span><span class="p">)</span><span class="w"> </span><span class="c1">// 8</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="nx">assert</span><span class="p">.</span><span class="nf">Equal</span><span class="p">(</span><span class="nx">t</span><span class="p">,</span><span class="w"> </span><span class="nx">hosts</span><span class="p">.</span><span class="nf">String</span><span class="p">(),</span><span class="w"> </span><span class="nx">hosts2</span><span class="p">.</span><span class="nf">String</span><span class="p">())</span><span class="w">
+</span></span></span></code></pre></div><p>That went out as v0.1.5, and it had a bug of its own:</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-go" data-lang="go"><span class="line"><span class="cl"><span class="nx">loc</span><span class="w"> </span><span class="o">:=</span><span class="w"> </span><span class="nx">position</span><span class="p">[</span><span class="nb">len</span><span class="p">(</span><span class="nx">position</span><span class="p">)</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="w"> </span><span class="c1">// last element</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="nx">hostsCopy</span><span class="w"> </span><span class="o">:=</span><span class="w"> </span><span class="nb">make</span><span class="p">([]</span><span class="kt">string</span><span class="p">,</span><span class="w"> </span><span class="nb">len</span><span class="p">(</span><span class="nx">h</span><span class="p">.</span><span class="nx">Lines</span><span class="p">[</span><span class="nx">position</span><span class="p">[</span><span class="nx">loc</span><span class="p">]].</span><span class="nx">Hosts</span><span class="p">))</span><span class="w">
+</span></span></span></code></pre></div><p><code>position</code> is the list of line numbers for that ip, so <code>loc</code> is already a line number, and <code>position[loc]</code> indexes the list <em>with</em> a line
+number. In the test fixtures and in Randy&rsquo;s repro the <code>127.0.0.1</code> lines start at line 0 and run consecutively, so <code>position[n]</code> always
+happened to equal <code>n</code> and every test passed. Put two comments at the top of the file, like a real hosts file has, and the first add
+panics. That&rsquo;s the orange box in the image: <code>index out of range [2] with length 1</code>. <a href="https://github.com/goodhosts/hostsfile/pull/53">#53</a>
+changed <code>h.Lines[position[loc]]</code> to <code>h.Lines[loc]</code> and v0.1.6 was tagged under an hour after v0.1.5.</p>
+<p>The lesson for me was the fixtures. Hosts files in the wild start with comments, and most of the lines are for other ips. A fixture
+where the line you care about is line 0 hides a whole class of index bugs.</p>
+<h3 id="making-the-cli-testable">Making the CLI testable</h3>
+<p>The CLI had the opposite problem: it barely had tests. Over the holidays I fixed that, in
+<a href="https://github.com/goodhosts/cli/pull/40">#40</a> through <a href="https://github.com/goodhosts/cli/pull/43">#43</a>. The main obstacle was that the
+whole <code>cli.App</code> was built inside <code>main()</code> as a local variable, and the commands wrote straight to logrus, which <code>main</code> configured as a
+<code>fmt.Print</code> replacement. You can&rsquo;t drive that from a test without running a binary.</p>
+<p>So the app moved into the <code>cmd</code> package as an exported <code>App</code>, and <code>main</code> shrank to almost nothing:</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-go" data-lang="go"><span class="line"><span class="cl"><span class="kd">func</span><span class="w"> </span><span class="nf">main</span><span class="p">()</span><span class="w"> </span><span class="p">{</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">	</span><span class="k">if</span><span class="w"> </span><span class="nx">err</span><span class="w"> </span><span class="o">:=</span><span class="w"> </span><span class="nf">run</span><span class="p">(</span><span class="nx">os</span><span class="p">.</span><span class="nx">Args</span><span class="p">);</span><span class="w"> </span><span class="nx">err</span><span class="w"> </span><span class="o">!=</span><span class="w"> </span><span class="kc">nil</span><span class="w"> </span><span class="p">{</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">		</span><span class="nx">logrus</span><span class="p">.</span><span class="nf">Fatal</span><span class="p">(</span><span class="nx">err</span><span class="p">)</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">	</span><span class="p">}</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="p">}</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="kd">func</span><span class="w"> </span><span class="nf">run</span><span class="p">(</span><span class="nx">args</span><span class="w"> </span><span class="p">[]</span><span class="kt">string</span><span class="p">)</span><span class="w"> </span><span class="kt">error</span><span class="w"> </span><span class="p">{</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">	</span><span class="nx">cmd</span><span class="p">.</span><span class="nf">Version</span><span class="p">(</span><span class="nx">version</span><span class="p">,</span><span class="w"> </span><span class="nx">commit</span><span class="p">,</span><span class="w"> </span><span class="nx">date</span><span class="p">)</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">	</span><span class="k">return</span><span class="w"> </span><span class="nx">cmd</span><span class="p">.</span><span class="nx">App</span><span class="p">.</span><span class="nf">Run</span><span class="p">(</span><span class="nx">args</span><span class="p">)</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="p">}</span><span class="w">
+</span></span></span></code></pre></div><p>Errors come back out of <code>App.Run</code> where a test can assert on them, and only <code>main</code> turns them into <code>logrus.Fatal</code>. Output still goes
+through logrus, which makes capturing it easy: point logrus at a buffer and run the app with fake args.</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-go" data-lang="go"><span class="line"><span class="cl"><span class="c1">// Setup takes args slice and resets logrus and returns args to pass to App.Run</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="kd">func</span><span class="w"> </span><span class="nf">setup</span><span class="p">(</span><span class="nx">args</span><span class="w"> </span><span class="o">...</span><span class="kt">string</span><span class="p">)</span><span class="w"> </span><span class="p">([]</span><span class="kt">string</span><span class="p">,</span><span class="w"> </span><span class="o">*</span><span class="nx">bytes</span><span class="p">.</span><span class="nx">Buffer</span><span class="p">)</span><span class="w"> </span><span class="p">{</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">	</span><span class="nx">out</span><span class="w"> </span><span class="o">:=</span><span class="w"> </span><span class="o">&amp;</span><span class="nx">bytes</span><span class="p">.</span><span class="nx">Buffer</span><span class="p">{}</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">	</span><span class="nx">logrus</span><span class="p">.</span><span class="nf">SetOutput</span><span class="p">(</span><span class="nx">out</span><span class="p">)</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">	</span><span class="nx">a</span><span class="w"> </span><span class="o">:=</span><span class="w"> </span><span class="nx">os</span><span class="p">.</span><span class="nx">Args</span><span class="p">[</span><span class="mi">0</span><span class="p">:</span><span class="mi">1</span><span class="p">]</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">	</span><span class="nx">a</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="nb">append</span><span class="p">(</span><span class="nx">a</span><span class="p">,</span><span class="w"> </span><span class="nx">args</span><span class="o">...</span><span class="p">)</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">	</span><span class="k">return</span><span class="w"> </span><span class="nx">a</span><span class="p">,</span><span class="w"> </span><span class="nx">out</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="p">}</span><span class="w">
+</span></span></span></code></pre></div><p>With that, <code>list</code> tests are table-driven against hosts files written to disk, including the malformed-line marker:</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-go" data-lang="go"><span class="line"><span class="cl"><span class="s">&#34;malformed comment added to row&#34;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">	</span><span class="nx">input</span><span class="p">:</span><span class="w"> </span><span class="s">`127.x.x.x localhost
+</span></span></span><span class="line"><span class="cl"><span class="s">127.x.x.x localhost # comment
+</span></span></span><span class="line"><span class="cl"><span class="s">`</span><span class="p">,</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">	</span><span class="nx">expected</span><span class="p">:</span><span class="w"> </span><span class="s">`127.x.x.x localhost # &lt;&lt;&lt; Malformed!
+</span></span></span><span class="line"><span class="cl"><span class="s">127.x.x.x localhost # comment &lt;&lt;&lt; Malformed!
+</span></span></span><span class="line"><span class="cl"><span class="s">`</span><span class="p">,</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="p">},</span><span class="w">
+</span></span></span></code></pre></div><p>Writing those turned up a real bug right away: <code>list</code> loaded the hosts file in write mode, so it refused to run without elevated
+privileges just to print the file. It&rsquo;s read-only now. The tests also have to know which OS they&rsquo;re on, since the error for a missing
+file is <code>no such file or directory</code> on Linux and macOS and <code>The system cannot find the file specified.</code> on Windows. The <code>--debug</code> and <code>--quiet</code> flags
+got tests too (debug switches logrus to its text formatter, quiet discards output entirely), and <code>version</code> is now testable because the
+version string gets injected instead of read from package globals in <code>main</code>.</p>
+<p>The CLI and library both build with mage now instead of a Makefile. For a project where Windows is a first-class target, <code>mage ci</code>
+working the same in PowerShell and bash is worth more than make&rsquo;s familiarity. cli <a href="https://github.com/goodhosts/cli/releases/tag/v1.1.2">v1.1.2</a>
+went out last week with all of this and a codecov badge.</p>
+<h3 id="whats-next">What&rsquo;s next</h3>
+<p>The library&rsquo;s position indexes are the fragile part. Both bugs in this post were a line number pointing at the wrong place. The
+next round is testing <code>Remove</code> and <code>HostsPerLine</code> against hosts files that look like real ones, with comments at the top and other ips
+in between. If you use goodhosts in something, issues with a hosts file attached are the most useful bug reports I get.</p>
+<h3 id="links">Links</h3>
+<ul>
+<li><a href="https://github.com/goodhosts/hostsfile">goodhosts/hostsfile</a></li>
+<li><a href="https://github.com/goodhosts/cli">goodhosts/cli</a></li>
+<li><a href="https://github.com/goodhosts/vagrant">goodhosts/vagrant</a></li>
+<li><a href="https://github.com/goodhosts/hostsfile/issues/51">hostsfile#51</a>, <a href="https://github.com/goodhosts/hostsfile/pull/52">#52</a>, <a href="https://github.com/goodhosts/hostsfile/pull/53">#53</a></li>
+<li><a href="https://github.com/ddev/ddev">ddev</a></li>
+</ul>
+
+      </div>
+      <footer>
+        <div class="stats">
+  
+    <ul class="categories">
+      
+        
+          <li><a class="article-terms-link" href="/categories/go/">go</a></li>
+        
+          <li><a class="article-terms-link" href="/categories/tools/">tools</a></li>
+        
+          <li><a class="article-terms-link" href="/categories/windows/">windows</a></li>
+        
+      
+    </ul>
+  
+  
+    <ul class="tags">
+      
+        
+          <li><a class="article-terms-link" href="/tags/go/">go</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/goodhosts/">goodhosts</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/open-source/">open source</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/windows/">windows</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/testing/">testing</a></li>
+        
+      
+    </ul>
+  
+</div>
+
+      </footer>
+    </div>
+    
+      
+  
+  <div class='post giscus-wrap'>
+    <script src='https://giscus.app/client.js'
+            data-repo='luthermonson/luth.io'
+            data-repo-id='R_kgDOGvFBXQ'
+            data-category='Announcements'
+            data-category-id='DIC_kwDOGvFBXc4DH_gv'
+            data-mapping='pathname'
+            data-strict='1'
+            data-reactions-enabled='1'
+            data-emit-metadata='0'
+            data-input-position='top'
+            data-theme='light'
+            data-lang='en'
+            data-loading='lazy'
+            crossorigin='anonymous'
+            async>
+    </script>
+  </div>
+  
+
+
+
+    
+  </article>
+  
+    <nav class="post-nav">
+      
+        <a href="/blog/2023/11/proxmox-doesnt-know-what-type-a-number-is/" class="post-nav-link older">
+          <span class="post-nav-label">&larr; Older</span>
+          <span class="post-nav-title">Proxmox Doesn&#39;t Know What Type a Number Is</span>
+        </a>
+      
+      
+        <a href="/blog/2026/04/why-rust-for-php-embedding/" class="post-nav-link newer">
+          <span class="post-nav-label">Newer &rarr;</span>
+          <span class="post-nav-title">Why Rust for PHP Embedding (Not Go)</span>
+        </a>
+      
+    </nav>
+  
+
+      </main>
+      <section id="site-sidebar">
+  
+    <section id="recent-posts">
+      <header>
+        <h1>Recent Posts</h1>
+      </header>
+      
+      <article class="mini-post">
+          <a href="/blog/2026/10/ephpm-worker-mode-performance/" class="image" style="--bg-image: url('/img/2026/10/ephpm-worker-mode-performance-cover.svg');">
+    <img class="" src="/img/2026/10/ephpm-worker-mode-performance-cover.svg" alt="Diagram: before, hyper/tokio hands each request to one shared bounded channel whose waiter list all 20 PHP threads contend on; after, a dispatcher hands the job straight into the mailbox of the most recently idle PHP thread and only queues it in a FIFO overflow queue when every thread is busy">
+  </a>
+        <header>
+          <h2><a href="/blog/2026/10/ephpm-worker-mode-performance/">Fourth Place in Worker Mode, and Why It Wasn&#39;t PHP</a></h2>
+          <time class="published" datetime="2026-10-16 08:10:00 -0700 PDT">October 16, 2026</time>
+        </header>
+      </article>
+      
+      <article class="mini-post">
+          <a href="/blog/2026/10/ephpm-websockets-how-to/" class="image" style="--bg-image: url('/img/2026/10/ephpm-websockets-how-to-cover.svg');">
+    <img class="" src="/img/2026/10/ephpm-websockets-how-to-cover.svg" alt="Diagram: browsers hold sockets to ePHPm&#39;s Rust session tasks and registry; each connect, message and disconnect runs websocket.php once on the PHP thread pool, and ordinary HTTP requests push through ephpm_ws_broadcast">
+  </a>
+        <header>
+          <h2><a href="/blog/2026/10/ephpm-websockets-how-to/">WebSockets in ePHPm, From Zero to a Working Chat</a></h2>
+          <time class="published" datetime="2026-10-11 17:30:00 -0700 PDT">October 11, 2026</time>
+        </header>
+      </article>
+      
+      <article class="mini-post">
+          <a href="/blog/2026/10/webhooks-out-of-order-scheduler/" class="image" style="--bg-image: url('/img/2026/10/webhooks-out-of-order-scheduler-timeline.svg');">
+    <img class="" src="/img/2026/10/webhooks-out-of-order-scheduler-timeline.svg" alt="Timeline of three same-label jobs where a runner executing a build is destroyed 2.3 seconds before its in_progress webhook arrives">
+  </a>
+        <header>
+          <h2><a href="/blog/2026/10/webhooks-out-of-order-scheduler/">Webhooks Arrive Out of Order: How My Scheduler Killed Live Builds</a></h2>
+          <time class="published" datetime="2026-10-07 21:10:00 -0700 PDT">October 7, 2026</time>
+        </header>
+      </article>
+      
+      <article class="mini-post">
+          <a href="/blog/2026/10/go-proxmox-five-years-to-v0-8/" class="image" style="--bg-image: url('/img/2026/10/go-proxmox-five-years-to-v0-8-apidiff.svg');">
+    <img class="" src="/img/2026/10/go-proxmox-five-years-to-v0-8-apidiff.svg" alt="Horizontal bar chart of apidiff incompatible and compatible changes for every go-proxmox release from v0.1.0 to v0.8.2">
+  </a>
+        <header>
+          <h2><a href="/blog/2026/10/go-proxmox-five-years-to-v0-8/">Breaking Changes Without Breaking Trust: Five Years to go-proxmox v0.8</a></h2>
+          <time class="published" datetime="2026-10-04 19:40:00 -0700 PDT">October 4, 2026</time>
+        </header>
+      </article>
+      
+      <article class="mini-post">
+          <a href="/blog/2026/10/windows-sigterm-sparse-files/" class="image" style="--bg-image: url('/img/2026/10/windows-sigterm-sparse-files-connections.svg');">
+    <img class="" src="/img/2026/10/windows-sigterm-sparse-files-connections.svg" alt="Bar chart: 96 Cloudflare edge connections held by orphaned cloudflared processes versus 4 for the live daemon">
+  </a>
+        <header>
+          <h2><a href="/blog/2026/10/windows-sigterm-sparse-files/">Windows Grab-Bag: SIGTERM That Doesn&#39;t Exist and Sparse Files That Break Docker</a></h2>
+          <time class="published" datetime="2026-10-03 14:30:00 -0700 PDT">October 3, 2026</time>
+        </header>
+      </article>
+      
+      
+        <footer>
+          <a href="/blog" class="button">See More</a>
+        </footer>
+      
+    </section>
+  
+
+  
+    
+
+      <section id="categories">
+        <header>
+          <h1><a href="/categories">Categories</a></h1>
+        </header>
+        <ul>
+          
+          
+          <li>
+              <a href="/categories/ephpm/">ephpm<span class="count">33</span></a>
+          
+          <li>
+              <a href="/categories/go/">go<span class="count">30</span></a>
+          
+          <li>
+              <a href="/categories/php/">php<span class="count">23</span></a>
+          
+          <li>
+              <a href="/categories/rust/">rust<span class="count">15</span></a>
+          
+          <li>
+              <a href="/categories/homelab/">homelab<span class="count">14</span></a>
+          
+          <li>
+              <a href="/categories/windows/">windows<span class="count">14</span></a>
+          
+          <li>
+              <a href="/categories/ci/">ci<span class="count">9</span></a>
+          
+          <li>
+              <a href="/categories/databases/">databases<span class="count">9</span></a>
+          
+          <li>
+              <a href="/categories/security/">security<span class="count">9</span></a>
+          
+          <li>
+              <a href="/categories/containers/">containers<span class="count">7</span></a>
+          
+          <li>
+              <a href="/categories/tools/">tools<span class="count">5</span></a>
+          
+          <li>
+              <a href="/categories/ai-agents/">ai-agents<span class="count">4</span></a>
+          
+          </li>
+        </ul>
+      </section>
+    
+  
+
+  
+    <section id="mini-bio">
+      <header>
+        <h1>About</h1>
+      </header>
+      <p>Luther is a 20+ year software veteran specializing in backend APIs and architecting products. Employed at <a href='https://www.suse.com'>SUSE</a> as the Team Lead for the <a href='https://github.com/rancher/windows/issues'>Containers on Windows Team</a> working on <a href='https://rancher.com/'>Rancher</a> + <a href='https://kubernetes.io/'>Kubernetes</a></p>
+      <footer>
+        <a href="/about" class="button">Learn More</a>
+      </footer>
+    </section>
+  
+</section>
+
+      <footer id="site-footer">
+  
+      <ul class="socnet-icons">
+        
+
+        <li><a href="//github.com/luthermonson" target="_blank" rel="noopener" title="GitHub" class="fab fa-github"></a></li>
+
+
+
+
+
+
+
+
+
+
+
+<li><a href="//www.linkedin.com/in/luthermonson" target="_blank" rel="noopener" title="LinkedIn" class="fab fa-linkedin"></a></li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li><a href="//twitter.com/luthermonson" target="_blank" rel="noopener" title="Twitter" class="fab fa-twitter"></a></li>
+
+
+
+
+
+
+
+
+
+
+
+<li><a href="mailto:luther.monson@gmail.com" target="_blank" title="Email" class="far fa-envelope"></a></li>
+
+      </ul>
+  
+  <p class="copyright">
+    © 2026 Luther Monson
+      <br>
+    Theme: <a href='https://github.com/pacollins/hugo-future-imperfect-slim' target='_blank' rel='noopener'>Hugo Future Imperfect Slim</a><br>A <a href='https://html5up.net/future-imperfect' target='_blank' rel='noopener'>HTML5 UP port</a> | Powered by <a href='https://gohugo.io/' title='0.160.1' target='_blank' rel='noopener'>Hugo</a>
+  </p>
+</footer>
+<a id="back-to-top" href="#" class="fas fa-arrow-up fa-2x"></a>
+
+      <script src="/js/bundle.min.241b62ebc4792fe8c7a75879e5f710894f226f2b73342e9916b3a3b0526030cc.js" integrity="sha256-JBti68R5L&#43;jHp1h55fcQiU8ibytzNC6ZFrOjsFJgMMw="></script>
+    <script src="/js/add-on.js"></script>
+    </div>
+  </body>
+</html>

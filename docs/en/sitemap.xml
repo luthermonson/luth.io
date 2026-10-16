@@ -2,20 +2,23 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"
   xmlns:xhtml="http://www.w3.org/1999/xhtml">
   <url>
+    <loc>https://luth.io/tags/benchmarking/</loc>
+    <lastmod>2026-10-16T08:10:00-07:00</lastmod>
+  </url><url>
     <loc>https://luth.io/blog/</loc>
-    <lastmod>2022-02-06T21:54:53-07:00</lastmod>
+    <lastmod>2026-10-16T08:10:00-07:00</lastmod>
   </url><url>
     <loc>https://luth.io/categories/</loc>
-    <lastmod>2022-02-06T21:54:53-07:00</lastmod>
-    <xhtml:link
-                rel="alternate"
-                hreflang="fr"
-                href="https://luth.io/fr/categories/"
-                />
+    <lastmod>2026-10-16T08:10:00-07:00</lastmod>
     <xhtml:link
                 rel="alternate"
                 hreflang="pl"
                 href="https://luth.io/pl/categories/"
+                />
+    <xhtml:link
+                rel="alternate"
+                hreflang="fr"
+                href="https://luth.io/fr/categories/"
                 />
     <xhtml:link
                 rel="alternate"
@@ -34,12 +37,12 @@
                 />
     <xhtml:link
                 rel="alternate"
-                hreflang="zh-cn"
+                hreflang="zh-CN"
                 href="https://luth.io/zh-cn/categories/"
                 />
     <xhtml:link
                 rel="alternate"
-                hreflang="zh-tw"
+                hreflang="zh-TW"
                 href="https://luth.io/zh-tw/categories/"
                 />
     <xhtml:link
@@ -58,14 +61,17 @@
                 href="https://luth.io/categories/"
                 />
   </url><url>
-    <loc>https://luth.io/tags/go/</loc>
-    <lastmod>2022-02-06T21:54:53-07:00</lastmod>
+    <loc>https://luth.io/categories/ephpm/</loc>
+    <lastmod>2026-10-16T08:10:00-07:00</lastmod>
   </url><url>
-    <loc>https://luth.io/tags/javascript/</loc>
-    <lastmod>2022-02-06T21:54:53-07:00</lastmod>
+    <loc>https://luth.io/tags/ephpm/</loc>
+    <lastmod>2026-10-16T08:10:00-07:00</lastmod>
+  </url><url>
+    <loc>https://luth.io/blog/2026/10/ephpm-worker-mode-performance/</loc>
+    <lastmod>2026-10-16T08:10:00-07:00</lastmod>
   </url><url>
     <loc>https://luth.io/</loc>
-    <lastmod>2022-02-06T21:54:53-07:00</lastmod>
+    <lastmod>2026-10-16T08:10:00-07:00</lastmod>
     <xhtml:link
                 rel="alternate"
                 hreflang="fr"
@@ -93,12 +99,12 @@
                 />
     <xhtml:link
                 rel="alternate"
-                hreflang="zh-cn"
+                hreflang="zh-CN"
                 href="https://luth.io/zh-cn/"
                 />
     <xhtml:link
                 rel="alternate"
-                hreflang="zh-tw"
+                hreflang="zh-TW"
                 href="https://luth.io/zh-tw/"
                 />
     <xhtml:link
@@ -117,17 +123,23 @@
                 href="https://luth.io/"
                 />
   </url><url>
-    <loc>https://luth.io/categories/programming/</loc>
-    <lastmod>2022-02-06T21:54:53-07:00</lastmod>
+    <loc>https://luth.io/tags/mimalloc/</loc>
+    <lastmod>2026-10-16T08:10:00-07:00</lastmod>
   </url><url>
-    <loc>https://luth.io/tags/proxmox/</loc>
-    <lastmod>2022-02-06T21:54:53-07:00</lastmod>
+    <loc>https://luth.io/tags/performance/</loc>
+    <lastmod>2026-10-16T08:10:00-07:00</lastmod>
   </url><url>
-    <loc>https://luth.io/blog/2022/02/recreating-proxmox-ve-xtermjs-in-go/</loc>
-    <lastmod>2022-02-06T21:54:53-07:00</lastmod>
+    <loc>https://luth.io/tags/php/</loc>
+    <lastmod>2026-10-16T08:10:00-07:00</lastmod>
+  </url><url>
+    <loc>https://luth.io/categories/php/</loc>
+    <lastmod>2026-10-16T08:10:00-07:00</lastmod>
+  </url><url>
+    <loc>https://luth.io/tags/rust/</loc>
+    <lastmod>2026-10-16T08:10:00-07:00</lastmod>
   </url><url>
     <loc>https://luth.io/tags/</loc>
-    <lastmod>2022-02-06T21:54:53-07:00</lastmod>
+    <lastmod>2026-10-16T08:10:00-07:00</lastmod>
     <xhtml:link
                 rel="alternate"
                 hreflang="fr"
@@ -155,12 +167,12 @@
                 />
     <xhtml:link
                 rel="alternate"
-                hreflang="zh-cn"
+                hreflang="zh-CN"
                 href="https://luth.io/zh-cn/tags/"
                 />
     <xhtml:link
                 rel="alternate"
-                hreflang="zh-tw"
+                hreflang="zh-TW"
                 href="https://luth.io/zh-tw/tags/"
                 />
     <xhtml:link
@@ -180,6 +192,636 @@
                 />
   </url><url>
     <loc>https://luth.io/tags/websockets/</loc>
+    <lastmod>2026-10-11T17:30:00-07:00</lastmod>
+  </url><url>
+    <loc>https://luth.io/blog/2026/10/ephpm-websockets-how-to/</loc>
+    <lastmod>2026-10-11T17:30:00-07:00</lastmod>
+  </url><url>
+    <loc>https://luth.io/categories/ci/</loc>
+    <lastmod>2026-10-07T21:10:00-07:00</lastmod>
+  </url><url>
+    <loc>https://luth.io/tags/distributed-systems/</loc>
+    <lastmod>2026-10-07T21:10:00-07:00</lastmod>
+  </url><url>
+    <loc>https://luth.io/tags/ephemerd/</loc>
+    <lastmod>2026-10-07T21:10:00-07:00</lastmod>
+  </url><url>
+    <loc>https://luth.io/tags/github-actions/</loc>
+    <lastmod>2026-10-07T21:10:00-07:00</lastmod>
+  </url><url>
+    <loc>https://luth.io/categories/go/</loc>
+    <lastmod>2026-10-07T21:10:00-07:00</lastmod>
+  </url><url>
+    <loc>https://luth.io/tags/go/</loc>
+    <lastmod>2026-10-07T21:10:00-07:00</lastmod>
+  </url><url>
+    <loc>https://luth.io/tags/scheduling/</loc>
+    <lastmod>2026-10-07T21:10:00-07:00</lastmod>
+  </url><url>
+    <loc>https://luth.io/tags/webhooks/</loc>
+    <lastmod>2026-10-07T21:10:00-07:00</lastmod>
+  </url><url>
+    <loc>https://luth.io/blog/2026/10/webhooks-out-of-order-scheduler/</loc>
+    <lastmod>2026-10-07T21:10:00-07:00</lastmod>
+  </url><url>
+    <loc>https://luth.io/blog/2026/10/go-proxmox-five-years-to-v0-8/</loc>
+    <lastmod>2026-10-04T19:40:00-07:00</lastmod>
+  </url><url>
+    <loc>https://luth.io/tags/go-proxmox/</loc>
+    <lastmod>2026-10-04T19:40:00-07:00</lastmod>
+  </url><url>
+    <loc>https://luth.io/categories/homelab/</loc>
+    <lastmod>2026-10-04T19:40:00-07:00</lastmod>
+  </url><url>
+    <loc>https://luth.io/tags/open-source/</loc>
+    <lastmod>2026-10-04T19:40:00-07:00</lastmod>
+  </url><url>
+    <loc>https://luth.io/tags/proxmox/</loc>
+    <lastmod>2026-10-04T19:40:00-07:00</lastmod>
+  </url><url>
+    <loc>https://luth.io/tags/semver/</loc>
+    <lastmod>2026-10-04T19:40:00-07:00</lastmod>
+  </url><url>
+    <loc>https://luth.io/tags/cloudflare/</loc>
+    <lastmod>2026-10-03T14:30:00-07:00</lastmod>
+  </url><url>
+    <loc>https://luth.io/tags/containers/</loc>
+    <lastmod>2026-10-03T14:30:00-07:00</lastmod>
+  </url><url>
+    <loc>https://luth.io/tags/docker/</loc>
+    <lastmod>2026-10-03T14:30:00-07:00</lastmod>
+  </url><url>
+    <loc>https://luth.io/categories/windows/</loc>
+    <lastmod>2026-10-03T14:30:00-07:00</lastmod>
+  </url><url>
+    <loc>https://luth.io/tags/windows/</loc>
+    <lastmod>2026-10-03T14:30:00-07:00</lastmod>
+  </url><url>
+    <loc>https://luth.io/blog/2026/10/windows-sigterm-sparse-files/</loc>
+    <lastmod>2026-10-03T14:30:00-07:00</lastmod>
+  </url><url>
+    <loc>https://luth.io/blog/2026/10/php-jit-use-after-free/</loc>
+    <lastmod>2026-10-01T20:10:00-07:00</lastmod>
+  </url><url>
+    <loc>https://luth.io/tags/debugging/</loc>
+    <lastmod>2026-10-01T20:10:00-07:00</lastmod>
+  </url><url>
+    <loc>https://luth.io/tags/jit/</loc>
+    <lastmod>2026-10-01T20:10:00-07:00</lastmod>
+  </url><url>
+    <loc>https://luth.io/tags/opcache/</loc>
+    <lastmod>2026-10-01T20:10:00-07:00</lastmod>
+  </url><url>
+    <loc>https://luth.io/categories/ai-agents/</loc>
+    <lastmod>2026-09-29T20:30:00-07:00</lastmod>
+  </url><url>
+    <loc>https://luth.io/tags/ai-agents/</loc>
+    <lastmod>2026-09-29T20:30:00-07:00</lastmod>
+  </url><url>
+    <loc>https://luth.io/tags/powershell/</loc>
+    <lastmod>2026-09-29T20:30:00-07:00</lastmod>
+  </url><url>
+    <loc>https://luth.io/categories/security/</loc>
+    <lastmod>2026-09-29T20:30:00-07:00</lastmod>
+  </url><url>
+    <loc>https://luth.io/tags/security/</loc>
+    <lastmod>2026-09-29T20:30:00-07:00</lastmod>
+  </url><url>
+    <loc>https://luth.io/tags/shell/</loc>
+    <lastmod>2026-09-29T20:30:00-07:00</lastmod>
+  </url><url>
+    <loc>https://luth.io/tags/shipmates/</loc>
+    <lastmod>2026-09-29T20:30:00-07:00</lastmod>
+  </url><url>
+    <loc>https://luth.io/blog/2026/09/agent-shell-allowlist-bypassable/</loc>
+    <lastmod>2026-09-29T20:30:00-07:00</lastmod>
+  </url><url>
+    <loc>https://luth.io/tags/cgroups/</loc>
+    <lastmod>2026-09-26T16:20:00-07:00</lastmod>
+  </url><url>
+    <loc>https://luth.io/categories/containers/</loc>
+    <lastmod>2026-09-26T16:20:00-07:00</lastmod>
+  </url><url>
+    <loc>https://luth.io/blog/2026/09/process-containment-job-objects-process-groups-cgroups/</loc>
+    <lastmod>2026-09-26T16:20:00-07:00</lastmod>
+  </url><url>
+    <loc>https://luth.io/tags/job-objects/</loc>
+    <lastmod>2026-09-26T16:20:00-07:00</lastmod>
+  </url><url>
+    <loc>https://luth.io/tags/linux/</loc>
+    <lastmod>2026-09-26T16:20:00-07:00</lastmod>
+  </url><url>
+    <loc>https://luth.io/tags/macos/</loc>
+    <lastmod>2026-09-26T16:20:00-07:00</lastmod>
+  </url><url>
+    <loc>https://luth.io/tags/process-groups/</loc>
+    <lastmod>2026-09-26T16:20:00-07:00</lastmod>
+  </url><url>
+    <loc>https://luth.io/blog/2026/09/bind-mounts-across-mount-namespaces/</loc>
+    <lastmod>2026-09-24T21:02:00-07:00</lastmod>
+  </url><url>
+    <loc>https://luth.io/tags/containerd/</loc>
+    <lastmod>2026-09-24T21:02:00-07:00</lastmod>
+  </url><url>
+    <loc>https://luth.io/tags/mount-namespaces/</loc>
+    <lastmod>2026-09-24T21:02:00-07:00</lastmod>
+  </url><url>
+    <loc>https://luth.io/tags/runc/</loc>
+    <lastmod>2026-09-24T21:02:00-07:00</lastmod>
+  </url><url>
+    <loc>https://luth.io/blog/2026/09/memory-watchdog-for-go-test/</loc>
+    <lastmod>2026-09-22T20:48:00-07:00</lastmod>
+  </url><url>
+    <loc>https://luth.io/tags/testing/</loc>
+    <lastmod>2026-09-22T20:48:00-07:00</lastmod>
+  </url><url>
+    <loc>https://luth.io/blog/2026/09/calling-rust-from-php-without-a-socket-part-2/</loc>
+    <lastmod>2026-09-21T19:55:00-07:00</lastmod>
+  </url><url>
+    <loc>https://luth.io/tags/composer/</loc>
+    <lastmod>2026-09-21T19:55:00-07:00</lastmod>
+  </url><url>
+    <loc>https://luth.io/tags/laravel/</loc>
+    <lastmod>2026-09-21T19:55:00-07:00</lastmod>
+  </url><url>
+    <loc>https://luth.io/tags/redis/</loc>
+    <lastmod>2026-09-21T19:55:00-07:00</lastmod>
+  </url><url>
+    <loc>https://luth.io/tags/wordpress/</loc>
+    <lastmod>2026-09-21T19:55:00-07:00</lastmod>
+  </url><url>
+    <loc>https://luth.io/tags/ci/</loc>
+    <lastmod>2026-09-18T20:05:00-07:00</lastmod>
+  </url><url>
+    <loc>https://luth.io/blog/2026/09/ephpm-smaller-angles/</loc>
+    <lastmod>2026-09-18T20:05:00-07:00</lastmod>
+  </url><url>
+    <loc>https://luth.io/tags/tcp/</loc>
+    <lastmod>2026-09-18T20:05:00-07:00</lastmod>
+  </url><url>
+    <loc>https://luth.io/tags/concurrency/</loc>
+    <lastmod>2026-09-17T20:12:00-07:00</lastmod>
+  </url><url>
+    <loc>https://luth.io/tags/os-exec/</loc>
+    <lastmod>2026-09-17T20:12:00-07:00</lastmod>
+  </url><url>
+    <loc>https://luth.io/blog/2026/09/os-exec-stdoutpipe-wait-footgun/</loc>
+    <lastmod>2026-09-17T20:12:00-07:00</lastmod>
+  </url><url>
+    <loc>https://luth.io/tags/config/</loc>
+    <lastmod>2026-09-16T19:35:00-07:00</lastmod>
+  </url><url>
+    <loc>https://luth.io/tags/linker/</loc>
+    <lastmod>2026-09-16T19:35:00-07:00</lastmod>
+  </url><url>
+    <loc>https://luth.io/tags/signals/</loc>
+    <lastmod>2026-09-16T19:35:00-07:00</lastmod>
+  </url><url>
+    <loc>https://luth.io/blog/2026/09/php-timeout-linker-wraps/</loc>
+    <lastmod>2026-09-16T19:35:00-07:00</lastmod>
+  </url><url>
+    <loc>https://luth.io/tags/cdc/</loc>
+    <lastmod>2026-09-15T21:08:00-07:00</lastmod>
+  </url><url>
+    <loc>https://luth.io/blog/2026/09/clustered-sqlite-cdc-cluster-channel/</loc>
+    <lastmod>2026-09-15T21:08:00-07:00</lastmod>
+  </url><url>
+    <loc>https://luth.io/tags/clustering/</loc>
+    <lastmod>2026-09-15T21:08:00-07:00</lastmod>
+  </url><url>
+    <loc>https://luth.io/categories/databases/</loc>
+    <lastmod>2026-09-15T21:08:00-07:00</lastmod>
+  </url><url>
+    <loc>https://luth.io/categories/rust/</loc>
+    <lastmod>2026-09-15T21:08:00-07:00</lastmod>
+  </url><url>
+    <loc>https://luth.io/tags/sqlite/</loc>
+    <lastmod>2026-09-15T21:08:00-07:00</lastmod>
+  </url><url>
+    <loc>https://luth.io/tags/turso/</loc>
+    <lastmod>2026-09-15T21:08:00-07:00</lastmod>
+  </url><url>
+    <loc>https://luth.io/tags/yamux/</loc>
+    <lastmod>2026-09-15T21:08:00-07:00</lastmod>
+  </url><url>
+    <loc>https://luth.io/blog/2026/09/calling-rust-from-php-without-a-socket-part-1/</loc>
+    <lastmod>2026-09-14T20:40:00-07:00</lastmod>
+  </url><url>
+    <loc>https://luth.io/tags/ffi/</loc>
+    <lastmod>2026-09-14T20:40:00-07:00</lastmod>
+  </url><url>
+    <loc>https://luth.io/tags/zts/</loc>
+    <lastmod>2026-09-14T20:40:00-07:00</lastmod>
+  </url><url>
+    <loc>https://luth.io/blog/2026/09/cross-tenant-breakout-field-guide/</loc>
+    <lastmod>2026-09-13T16:20:00-07:00</lastmod>
+  </url><url>
+    <loc>https://luth.io/tags/multi-tenant/</loc>
+    <lastmod>2026-09-13T16:20:00-07:00</lastmod>
+  </url><url>
+    <loc>https://luth.io/blog/2026/09/shipmates-short-ones-setup-go-and-voice/</loc>
+    <lastmod>2026-09-12T14:35:00-07:00</lastmod>
+  </url><url>
+    <loc>https://luth.io/tags/voice/</loc>
+    <lastmod>2026-09-12T14:35:00-07:00</lastmod>
+  </url><url>
+    <loc>https://luth.io/tags/cli/</loc>
+    <lastmod>2026-09-10T20:25:00-07:00</lastmod>
+  </url><url>
+    <loc>https://luth.io/blog/2026/09/ephpm-php-cli-conformance/</loc>
+    <lastmod>2026-09-10T20:25:00-07:00</lastmod>
+  </url><url>
+    <loc>https://luth.io/tags/bubbletea/</loc>
+    <lastmod>2026-09-09T21:22:00-07:00</lastmod>
+  </url><url>
+    <loc>https://luth.io/blog/2026/09/linode-tui/</loc>
+    <lastmod>2026-09-09T21:22:00-07:00</lastmod>
+  </url><url>
+    <loc>https://luth.io/tags/k9s/</loc>
+    <lastmod>2026-09-09T21:22:00-07:00</lastmod>
+  </url><url>
+    <loc>https://luth.io/tags/kubernetes/</loc>
+    <lastmod>2026-09-09T21:22:00-07:00</lastmod>
+  </url><url>
+    <loc>https://luth.io/tags/linode/</loc>
+    <lastmod>2026-09-09T21:22:00-07:00</lastmod>
+  </url><url>
+    <loc>https://luth.io/categories/tools/</loc>
+    <lastmod>2026-09-09T21:22:00-07:00</lastmod>
+  </url><url>
+    <loc>https://luth.io/tags/tui/</loc>
+    <lastmod>2026-09-09T21:22:00-07:00</lastmod>
+  </url><url>
+    <loc>https://luth.io/tags/deployment/</loc>
+    <lastmod>2026-09-08T20:25:00-07:00</lastmod>
+  </url><url>
+    <loc>https://luth.io/blog/2026/09/single-binary-wordpress/</loc>
+    <lastmod>2026-09-08T20:25:00-07:00</lastmod>
+  </url><url>
+    <loc>https://luth.io/tags/latency/</loc>
+    <lastmod>2026-09-07T19:45:00-07:00</lastmod>
+  </url><url>
+    <loc>https://luth.io/blog/2026/09/php-dispatch-fair-queue-p99/</loc>
+    <lastmod>2026-09-07T19:45:00-07:00</lastmod>
+  </url><url>
+    <loc>https://luth.io/tags/queueing/</loc>
+    <lastmod>2026-09-07T19:45:00-07:00</lastmod>
+  </url><url>
+    <loc>https://luth.io/tags/tokio/</loc>
+    <lastmod>2026-09-07T19:45:00-07:00</lastmod>
+  </url><url>
+    <loc>https://luth.io/tags/segfault/</loc>
+    <lastmod>2026-09-06T15:05:00-07:00</lastmod>
+  </url><url>
+    <loc>https://luth.io/blog/2026/09/php-stack-guard-segfault-containment/</loc>
+    <lastmod>2026-09-06T15:05:00-07:00</lastmod>
+  </url><url>
+    <loc>https://luth.io/blog/2026/09/own-your-php-thread-pool/</loc>
+    <lastmod>2026-09-04T20:30:00-07:00</lastmod>
+  </url><url>
+    <loc>https://luth.io/blog/2026/09/kata-containers-for-ci/</loc>
+    <lastmod>2026-09-03T21:35:00-07:00</lastmod>
+  </url><url>
+    <loc>https://luth.io/tags/kata-containers/</loc>
+    <lastmod>2026-09-03T21:35:00-07:00</lastmod>
+  </url><url>
+    <loc>https://luth.io/tags/kvm/</loc>
+    <lastmod>2026-09-03T21:35:00-07:00</lastmod>
+  </url><url>
+    <loc>https://luth.io/tags/virtualization/</loc>
+    <lastmod>2026-09-03T21:35:00-07:00</lastmod>
+  </url><url>
+    <loc>https://luth.io/tags/acme/</loc>
+    <lastmod>2026-09-02T19:30:00-07:00</lastmod>
+  </url><url>
+    <loc>https://luth.io/blog/2026/09/clustered-acme-three-bugs/</loc>
+    <lastmod>2026-09-02T19:30:00-07:00</lastmod>
+  </url><url>
+    <loc>https://luth.io/tags/letsencrypt/</loc>
+    <lastmod>2026-09-02T19:30:00-07:00</lastmod>
+  </url><url>
+    <loc>https://luth.io/tags/tls/</loc>
+    <lastmod>2026-09-02T19:30:00-07:00</lastmod>
+  </url><url>
+    <loc>https://luth.io/blog/2026/09/remotedialer-data-race-two-thirds-fix/</loc>
+    <lastmod>2026-09-01T21:05:00-07:00</lastmod>
+  </url><url>
+    <loc>https://luth.io/tags/go-modules/</loc>
+    <lastmod>2026-09-01T21:05:00-07:00</lastmod>
+  </url><url>
+    <loc>https://luth.io/tags/race-detector/</loc>
+    <lastmod>2026-09-01T21:05:00-07:00</lastmod>
+  </url><url>
+    <loc>https://luth.io/tags/rancher/</loc>
+    <lastmod>2026-09-01T21:05:00-07:00</lastmod>
+  </url><url>
+    <loc>https://luth.io/tags/remotedialer/</loc>
+    <lastmod>2026-09-01T21:05:00-07:00</lastmod>
+  </url><url>
+    <loc>https://luth.io/tags/elephc/</loc>
+    <lastmod>2026-08-31T20:50:00-07:00</lastmod>
+  </url><url>
+    <loc>https://luth.io/tags/middleware/</loc>
+    <lastmod>2026-08-31T20:50:00-07:00</lastmod>
+  </url><url>
+    <loc>https://luth.io/blog/2026/08/php-middleware-elephc/</loc>
+    <lastmod>2026-08-31T20:50:00-07:00</lastmod>
+  </url><url>
+    <loc>https://luth.io/blog/2026/08/opcache-on-windows-two-silent-failures/</loc>
+    <lastmod>2026-08-29T16:45:00-07:00</lastmod>
+  </url><url>
+    <loc>https://luth.io/tags/ebpf/</loc>
+    <lastmod>2026-08-28T20:40:00-07:00</lastmod>
+  </url><url>
+    <loc>https://luth.io/blog/2026/08/ephpm-ebpf-per-vhost-network-policy/</loc>
+    <lastmod>2026-08-28T20:40:00-07:00</lastmod>
+  </url><url>
+    <loc>https://luth.io/tags/litewire/</loc>
+    <lastmod>2026-08-27T20:30:00-07:00</lastmod>
+  </url><url>
+    <loc>https://luth.io/tags/mysql/</loc>
+    <lastmod>2026-08-27T20:30:00-07:00</lastmod>
+  </url><url>
+    <loc>https://luth.io/blog/2026/08/hardening-rust-database-proxy/</loc>
+    <lastmod>2026-08-27T20:30:00-07:00</lastmod>
+  </url><url>
+    <loc>https://luth.io/tags/iptables/</loc>
+    <lastmod>2026-08-26T20:30:00-07:00</lastmod>
+  </url><url>
+    <loc>https://luth.io/blog/2026/08/iptables-rule-zero-packets/</loc>
+    <lastmod>2026-08-26T20:30:00-07:00</lastmod>
+  </url><url>
+    <loc>https://luth.io/tags/netfilter/</loc>
+    <lastmod>2026-08-26T20:30:00-07:00</lastmod>
+  </url><url>
+    <loc>https://luth.io/tags/capacity-planning/</loc>
+    <lastmod>2026-08-25T20:20:00-07:00</lastmod>
+  </url><url>
+    <loc>https://luth.io/blog/2026/08/what-does-one-more-wordpress-site-cost/</loc>
+    <lastmod>2026-08-25T20:20:00-07:00</lastmod>
+  </url><url>
+    <loc>https://luth.io/tags/load-testing/</loc>
+    <lastmod>2026-08-24T19:40:00-07:00</lastmod>
+  </url><url>
+    <loc>https://luth.io/blog/2026/08/what-an-overloaded-php-server-actually-returns/</loc>
+    <lastmod>2026-08-24T19:40:00-07:00</lastmod>
+  </url><url>
+    <loc>https://luth.io/tags/firewall/</loc>
+    <lastmod>2026-08-22T19:40:00-07:00</lastmod>
+  </url><url>
+    <loc>https://luth.io/blog/2026/08/windows-container-egress-firewall/</loc>
+    <lastmod>2026-08-22T19:40:00-07:00</lastmod>
+  </url><url>
+    <loc>https://luth.io/tags/hns/</loc>
+    <lastmod>2026-08-22T19:40:00-07:00</lastmod>
+  </url><url>
+    <loc>https://luth.io/tags/hyper-v/</loc>
+    <lastmod>2026-08-22T19:40:00-07:00</lastmod>
+  </url><url>
+    <loc>https://luth.io/tags/networking/</loc>
+    <lastmod>2026-08-22T19:40:00-07:00</lastmod>
+  </url><url>
+    <loc>https://luth.io/tags/wfp/</loc>
+    <lastmod>2026-08-22T19:40:00-07:00</lastmod>
+  </url><url>
+    <loc>https://luth.io/tags/claude-code/</loc>
+    <lastmod>2026-08-21T21:18:00-07:00</lastmod>
+  </url><url>
+    <loc>https://luth.io/blog/2026/08/shipmates-persona-based-ai-coding-crews/</loc>
+    <lastmod>2026-08-21T21:18:00-07:00</lastmod>
+  </url><url>
+    <loc>https://luth.io/blog/2026/08/benchmark-4x-wrong-wsl-drvfs-cwd/</loc>
+    <lastmod>2026-08-20T20:45:00-07:00</lastmod>
+  </url><url>
+    <loc>https://luth.io/tags/strace/</loc>
+    <lastmod>2026-08-20T20:45:00-07:00</lastmod>
+  </url><url>
+    <loc>https://luth.io/tags/wsl/</loc>
+    <lastmod>2026-08-20T20:45:00-07:00</lastmod>
+  </url><url>
+    <loc>https://luth.io/tags/benchmarks/</loc>
+    <lastmod>2026-08-19T20:37:00-07:00</lastmod>
+  </url><url>
+    <loc>https://luth.io/blog/2026/08/clustered-sqlite-adding-turso/</loc>
+    <lastmod>2026-08-19T20:37:00-07:00</lastmod>
+  </url><url>
+    <loc>https://luth.io/blog/2026/08/ephemerd-one-daemon-every-os/</loc>
+    <lastmod>2026-08-18T21:05:00-07:00</lastmod>
+  </url><url>
+    <loc>https://luth.io/tags/caching/</loc>
+    <lastmod>2026-08-17T20:44:00-07:00</lastmod>
+  </url><url>
+    <loc>https://luth.io/tags/dashmap/</loc>
+    <lastmod>2026-08-17T20:44:00-07:00</lastmod>
+  </url><url>
+    <loc>https://luth.io/tags/kv/</loc>
+    <lastmod>2026-08-17T20:44:00-07:00</lastmod>
+  </url><url>
+    <loc>https://luth.io/blog/2026/08/rolling-your-own-kv-store/</loc>
+    <lastmod>2026-08-17T20:44:00-07:00</lastmod>
+  </url><url>
+    <loc>https://luth.io/blog/2026/08/faking-mysql-quirks-wordpress/</loc>
+    <lastmod>2026-08-16T15:50:00-07:00</lastmod>
+  </url><url>
+    <loc>https://luth.io/blog/2026/08/requests-that-end-wrong/</loc>
+    <lastmod>2026-08-13T21:14:00-07:00</lastmod>
+  </url><url>
+    <loc>https://luth.io/tags/zend/</loc>
+    <lastmod>2026-08-13T21:14:00-07:00</lastmod>
+  </url><url>
+    <loc>https://luth.io/tags/libxml2/</loc>
+    <lastmod>2026-08-11T20:36:00-07:00</lastmod>
+  </url><url>
+    <loc>https://luth.io/blog/2026/08/libxml2-2-14-broke-php-windows-builds/</loc>
+    <lastmod>2026-08-11T20:36:00-07:00</lastmod>
+  </url><url>
+    <loc>https://luth.io/tags/msvc/</loc>
+    <lastmod>2026-08-11T20:36:00-07:00</lastmod>
+  </url><url>
+    <loc>https://luth.io/tags/static-php-cli/</loc>
+    <lastmod>2026-08-11T20:36:00-07:00</lastmod>
+  </url><url>
+    <loc>https://luth.io/tags/connection-pooling/</loc>
+    <lastmod>2026-08-09T16:25:00-07:00</lastmod>
+  </url><url>
+    <loc>https://luth.io/blog/2026/08/db-connection-pooling-smart-reset/</loc>
+    <lastmod>2026-08-09T16:25:00-07:00</lastmod>
+  </url><url>
+    <loc>https://luth.io/blog/2026/08/clustered-sqlite-sqld-sidecar/</loc>
+    <lastmod>2026-08-08T20:14:00-07:00</lastmod>
+  </url><url>
+    <loc>https://luth.io/tags/libsql/</loc>
+    <lastmod>2026-08-08T20:14:00-07:00</lastmod>
+  </url><url>
+    <loc>https://luth.io/tags/sqld/</loc>
+    <lastmod>2026-08-08T20:14:00-07:00</lastmod>
+  </url><url>
+    <loc>https://luth.io/blog/2026/08/ntfs-atomic-file-replacement-not-rename-fsync/</loc>
+    <lastmod>2026-08-06T21:27:00-07:00</lastmod>
+  </url><url>
+    <loc>https://luth.io/tags/durability/</loc>
+    <lastmod>2026-08-06T21:27:00-07:00</lastmod>
+  </url><url>
+    <loc>https://luth.io/tags/filesystems/</loc>
+    <lastmod>2026-08-06T21:27:00-07:00</lastmod>
+  </url><url>
+    <loc>https://luth.io/tags/ntfs/</loc>
+    <lastmod>2026-08-06T21:27:00-07:00</lastmod>
+  </url><url>
+    <loc>https://luth.io/tags/gossip/</loc>
+    <lastmod>2026-08-04T20:52:00-07:00</lastmod>
+  </url><url>
+    <loc>https://luth.io/blog/2026/08/gossip-clustering-for-php/</loc>
+    <lastmod>2026-08-04T20:52:00-07:00</lastmod>
+  </url><url>
+    <loc>https://luth.io/tags/gpt/</loc>
+    <lastmod>2026-08-01T13:15:00-07:00</lastmod>
+  </url><url>
+    <loc>https://luth.io/tags/homelab/</loc>
+    <lastmod>2026-08-01T13:15:00-07:00</lastmod>
+  </url><url>
+    <loc>https://luth.io/tags/ldm/</loc>
+    <lastmod>2026-08-01T13:15:00-07:00</lastmod>
+  </url><url>
+    <loc>https://luth.io/blog/2026/08/windows-dynamic-disk-usb-wsl2-usbip/</loc>
+    <lastmod>2026-08-01T13:15:00-07:00</lastmod>
+  </url><url>
+    <loc>https://luth.io/tags/usbip/</loc>
+    <lastmod>2026-08-01T13:15:00-07:00</lastmod>
+  </url><url>
+    <loc>https://luth.io/tags/wsl2/</loc>
+    <lastmod>2026-08-01T13:15:00-07:00</lastmod>
+  </url><url>
+    <loc>https://luth.io/blog/2026/07/building-a-custom-php-sapi/</loc>
+    <lastmod>2026-07-30T20:18:00-07:00</lastmod>
+  </url><url>
+    <loc>https://luth.io/tags/php-internals/</loc>
+    <lastmod>2026-07-30T20:18:00-07:00</lastmod>
+  </url><url>
+    <loc>https://luth.io/tags/sapi/</loc>
+    <lastmod>2026-07-30T20:18:00-07:00</lastmod>
+  </url><url>
+    <loc>https://luth.io/tags/cloud-init/</loc>
+    <lastmod>2026-07-28T20:12:00-07:00</lastmod>
+  </url><url>
+    <loc>https://luth.io/tags/encoding/</loc>
+    <lastmod>2026-07-28T20:12:00-07:00</lastmod>
+  </url><url>
+    <loc>https://luth.io/blog/2026/07/five-ways-to-url-encode-an-ssh-key/</loc>
+    <lastmod>2026-07-28T20:12:00-07:00</lastmod>
+  </url><url>
+    <loc>https://luth.io/blog/2026/07/sqlite-production-database-protocol-translation/</loc>
+    <lastmod>2026-07-25T20:40:00-07:00</lastmod>
+  </url><url>
+    <loc>https://luth.io/tags/7zip/</loc>
+    <lastmod>2026-07-18T16:10:00-07:00</lastmod>
+  </url><url>
+    <loc>https://luth.io/blog/2026/07/spc-windows-archive-extraction/</loc>
+    <lastmod>2026-07-18T16:10:00-07:00</lastmod>
+  </url><url>
+    <loc>https://luth.io/tags/tar/</loc>
+    <lastmod>2026-07-18T16:10:00-07:00</lastmod>
+  </url><url>
+    <loc>https://luth.io/tags/http/</loc>
+    <lastmod>2026-07-11T17:26:00-07:00</lastmod>
+  </url><url>
+    <loc>https://luth.io/blog/2026/07/go-proxmox-watch-close-withretry/</loc>
+    <lastmod>2026-07-11T17:26:00-07:00</lastmod>
+  </url><url>
+    <loc>https://luth.io/tags/agents/</loc>
+    <lastmod>2026-06-27T18:47:00-07:00</lastmod>
+  </url><url>
+    <loc>https://luth.io/tags/ai/</loc>
+    <lastmod>2026-06-27T18:47:00-07:00</lastmod>
+  </url><url>
+    <loc>https://luth.io/blog/2026/06/go-proxmox-agents-md/</loc>
+    <lastmod>2026-06-27T18:47:00-07:00</lastmod>
+  </url><url>
+    <loc>https://luth.io/tags/json/</loc>
+    <lastmod>2026-06-23T20:31:00-07:00</lastmod>
+  </url><url>
+    <loc>https://luth.io/blog/2026/06/proxmox-numbers-null-scientific-notation-net10/</loc>
+    <lastmod>2026-06-23T20:31:00-07:00</lastmod>
+  </url><url>
+    <loc>https://luth.io/tags/architecture/</loc>
+    <lastmod>2026-06-21T19:05:00-07:00</lastmod>
+  </url><url>
+    <loc>https://luth.io/blog/2026/06/ephpm-pragmatism/</loc>
+    <lastmod>2026-06-21T19:05:00-07:00</lastmod>
+  </url><url>
+    <loc>https://luth.io/blog/2026/06/tail-gunner/</loc>
+    <lastmod>2026-06-20T20:31:00-07:00</lastmod>
+  </url><url>
+    <loc>https://luth.io/blog/2026/06/escaping-wsl-hcs-linux-vm/</loc>
+    <lastmod>2026-06-14T20:12:00-07:00</lastmod>
+  </url><url>
+    <loc>https://luth.io/tags/hcs/</loc>
+    <lastmod>2026-06-14T20:12:00-07:00</lastmod>
+  </url><url>
+    <loc>https://luth.io/blog/2026/06/omitempty-zero-values-proxmox-defaults/</loc>
+    <lastmod>2026-06-13T19:52:00-07:00</lastmod>
+  </url><url>
+    <loc>https://luth.io/tags/api/</loc>
+    <lastmod>2026-06-07T21:36:00-07:00</lastmod>
+  </url><url>
+    <loc>https://luth.io/blog/2026/06/go-proxmox-endpoint-coverage/</loc>
+    <lastmod>2026-06-07T21:36:00-07:00</lastmod>
+  </url><url>
+    <loc>https://luth.io/tags/mage/</loc>
+    <lastmod>2026-06-07T21:36:00-07:00</lastmod>
+  </url><url>
+    <loc>https://luth.io/blog/2026/06/cloud-init-isos-pure-go-proxmox/</loc>
+    <lastmod>2026-06-06T15:20:00-07:00</lastmod>
+  </url><url>
+    <loc>https://luth.io/tags/go-diskfs/</loc>
+    <lastmod>2026-06-06T15:20:00-07:00</lastmod>
+  </url><url>
+    <loc>https://luth.io/tags/iso9660/</loc>
+    <lastmod>2026-06-06T15:20:00-07:00</lastmod>
+  </url><url>
+    <loc>https://luth.io/tags/authentication/</loc>
+    <lastmod>2026-05-31T20:24:00-07:00</lastmod>
+  </url><url>
+    <loc>https://luth.io/blog/2026/05/staying-logged-in-to-proxmox/</loc>
+    <lastmod>2026-05-31T20:24:00-07:00</lastmod>
+  </url><url>
+    <loc>https://luth.io/blog/2026/05/go-diskfs-rock-ridge-joliet-windows/</loc>
+    <lastmod>2026-05-17T20:40:00-07:00</lastmod>
+  </url><url>
+    <loc>https://luth.io/tags/joliet/</loc>
+    <lastmod>2026-05-17T20:40:00-07:00</lastmod>
+  </url><url>
+    <loc>https://luth.io/tags/rock-ridge/</loc>
+    <lastmod>2026-05-17T20:40:00-07:00</lastmod>
+  </url><url>
+    <loc>https://luth.io/blog/2026/04/php-signal-safety-init-ordering/</loc>
+    <lastmod>2026-04-12T20:15:00-07:00</lastmod>
+  </url><url>
+    <loc>https://luth.io/tags/cgo/</loc>
+    <lastmod>2026-04-05T19:40:00-07:00</lastmod>
+  </url><url>
+    <loc>https://luth.io/blog/2026/04/why-rust-for-php-embedding/</loc>
+    <lastmod>2026-04-05T19:40:00-07:00</lastmod>
+  </url><url>
+    <loc>https://luth.io/tags/goodhosts/</loc>
+    <lastmod>2024-02-03T19:22:00-07:00</lastmod>
+  </url><url>
+    <loc>https://luth.io/blog/2024/02/goodhosts/</loc>
+    <lastmod>2024-02-03T19:22:00-07:00</lastmod>
+  </url><url>
+    <loc>https://luth.io/blog/2023/11/proxmox-doesnt-know-what-type-a-number-is/</loc>
+    <lastmod>2023-11-25T20:05:00-07:00</lastmod>
+  </url><url>
+    <loc>https://luth.io/blog/2023/08/proxmox-api-auth-tickets-tokens-go/</loc>
+    <lastmod>2023-08-27T19:18:00-07:00</lastmod>
+  </url><url>
+    <loc>https://luth.io/blog/2022/03/proxmox-tasks-upid-wait-go/</loc>
+    <lastmod>2022-03-20T16:42:00-07:00</lastmod>
+  </url><url>
+    <loc>https://luth.io/tags/javascript/</loc>
+    <lastmod>2022-02-06T21:54:53-07:00</lastmod>
+  </url><url>
+    <loc>https://luth.io/blog/2022/02/recreating-proxmox-ve-xtermjs-in-go/</loc>
     <lastmod>2022-02-06T21:54:53-07:00</lastmod>
   </url><url>
     <loc>https://luth.io/tags/cue/</loc>
@@ -187,9 +829,6 @@
   </url><url>
     <loc>https://luth.io/blog/2022/01/practical-cue-example/</loc>
     <lastmod>2022-01-31T09:57:26-07:00</lastmod>
-  </url><url>
-    <loc>https://luth.io/tags/cloudflare/</loc>
-    <lastmod>2022-01-27T11:51:20-07:00</lastmod>
   </url><url>
     <loc>https://luth.io/blog/2022/01/free-personal-blog-hugo-github-pages/</loc>
     <lastmod>2022-01-27T11:51:20-07:00</lastmod>
@@ -205,5 +844,7 @@
   </url><url>
     <loc>https://luth.io/about/</loc>
     <lastmod>2022-01-26T08:26:16-07:00</lastmod>
+  </url><url>
+    <loc>https://luth.io/archive/</loc>
   </url>
 </urlset>

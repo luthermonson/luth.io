@@ -1,0 +1,57 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 600" width="1200" height="600" font-family="system-ui, -apple-system, Segoe UI, Roboto, sans-serif">
+  <rect width="1200" height="600" fill="#ffffff"/>
+  <text x="600" y="48" text-anchor="middle" font-size="26" font-weight="600" fill="#222">The app thinks it is talking to MySQL</text>
+  <text x="600" y="78" text-anchor="middle" font-size="16" fill="#6b6b6b">litewire inside ePHPm, single node (July 2026)</text>
+
+  <defs>
+    <marker id="a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#6b6b6b"/>
+    </marker>
+  </defs>
+
+  <!-- PHP app -->
+  <rect x="40" y="200" width="230" height="200" rx="12" fill="#fff" stroke="#7d5ba6" stroke-width="2"/>
+  <text x="155" y="236" text-anchor="middle" font-size="18" font-weight="600" fill="#7d5ba6">PHP app</text>
+  <text x="155" y="270" text-anchor="middle" font-size="15" fill="#333">WordPress / Laravel</text>
+  <text x="155" y="300" text-anchor="middle" font-size="15" fill="#333">mysqli, pdo_mysql</text>
+  <text x="155" y="340" text-anchor="middle" font-size="14" fill="#6b6b6b">DB_HOST=127.0.0.1</text>
+  <text x="155" y="362" text-anchor="middle" font-size="14" fill="#6b6b6b">unchanged code</text>
+
+  <line x1="272" y1="300" x2="338" y2="300" stroke="#6b6b6b" stroke-width="2" marker-end="url(#a)"/>
+  <text x="305" y="285" text-anchor="middle" font-size="13" fill="#6b6b6b">MySQL wire</text>
+  <text x="305" y="322" text-anchor="middle" font-size="13" fill="#6b6b6b">:3306</text>
+
+  <!-- litewire box -->
+  <rect x="340" y="120" width="560" height="360" rx="14" fill="#f7f9fc" stroke="#2b6cb0" stroke-width="2"/>
+  <text x="620" y="150" text-anchor="middle" font-size="18" font-weight="600" fill="#2b6cb0">litewire</text>
+
+  <rect x="370" y="175" width="230" height="80" rx="10" fill="#fff" stroke="#e07a1f" stroke-width="2"/>
+  <text x="485" y="208" text-anchor="middle" font-size="16" font-weight="600" fill="#e07a1f">MySQL frontend</text>
+  <text x="485" y="232" text-anchor="middle" font-size="13" fill="#333">opensrv-mysql shim</text>
+
+  <rect x="640" y="175" width="230" height="80" rx="10" fill="#fff" stroke="#6b6b6b" stroke-width="1.5" stroke-dasharray="6 4"/>
+  <text x="755" y="208" text-anchor="middle" font-size="15" fill="#6b6b6b">PG / TDS / Hrana</text>
+  <text x="755" y="232" text-anchor="middle" font-size="13" fill="#6b6b6b">other frontends</text>
+
+  <line x1="485" y1="257" x2="485" y2="293" stroke="#6b6b6b" stroke-width="2" marker-end="url(#a)"/>
+
+  <rect x="370" y="295" width="500" height="70" rx="10" fill="#fff" stroke="#3a9a5b" stroke-width="2"/>
+  <text x="620" y="325" text-anchor="middle" font-size="16" font-weight="600" fill="#3a9a5b">translate: metadata, no-ops, pre-passes, AST rewrite</text>
+  <text x="620" y="349" text-anchor="middle" font-size="13" fill="#333">sqlparser-rs, LRU cache in front</text>
+
+  <line x1="620" y1="367" x2="620" y2="395" stroke="#6b6b6b" stroke-width="2" marker-end="url(#a)"/>
+
+  <rect x="370" y="397" width="500" height="60" rx="10" fill="#fff" stroke="#2b6cb0" stroke-width="2"/>
+  <text x="620" y="424" text-anchor="middle" font-size="16" font-weight="600" fill="#2b6cb0">Backend::connect() per wire connection</text>
+  <text x="620" y="446" text-anchor="middle" font-size="13" fill="#333">rusqlite in-process, own transaction per client</text>
+
+  <line x1="902" y1="427" x2="968" y2="427" stroke="#6b6b6b" stroke-width="2" marker-end="url(#a)"/>
+
+  <!-- SQLite file -->
+  <ellipse cx="1060" cy="380" rx="80" ry="22" fill="#fff" stroke="#c0392b" stroke-width="2"/>
+  <path d="M980,380 L980,470 A80,22 0 0 0 1140,470 L1140,380" fill="#fff" stroke="#c0392b" stroke-width="2"/>
+  <text x="1060" y="440" text-anchor="middle" font-size="17" font-weight="600" fill="#c0392b">app.db</text>
+  <text x="1060" y="462" text-anchor="middle" font-size="13" fill="#333">SQLite, WAL</text>
+
+  <text x="600" y="540" text-anchor="middle" font-size="15" fill="#6b6b6b">One process, one file. No MySQL server, no sidecar.</text>
+</svg>

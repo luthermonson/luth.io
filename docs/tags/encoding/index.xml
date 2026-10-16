@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>Encoding on Luther Monson</title>
+    <link>https://luth.io/tags/encoding/</link>
+    <description>Recent content in Encoding on Luther Monson</description>
+    <generator>Hugo</generator>
+    <language>en</language>
+    <lastBuildDate>Tue, 28 Jul 2026 20:12:00 -0700</lastBuildDate>
+    <atom:link href="https://luth.io/tags/encoding/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>Five Ways to URL-Encode an SSH Key (and Why Proxmox Rejects Them)</title>
+      <link>https://luth.io/blog/2026/07/five-ways-to-url-encode-an-ssh-key/</link>
+      <pubDate>Tue, 28 Jul 2026 20:12:00 -0700</pubDate>
+      <guid>https://luth.io/blog/2026/07/five-ways-to-url-encode-an-ssh-key/</guid>
+      <description>&lt;p&gt;&lt;a href=&#34;https://github.com/luthermonson/go-proxmox/issues/144&#34;&gt;Issue #144&lt;/a&gt; on go-proxmox was opened in April 2024 with the title&#xA;&amp;ldquo;Weird sshkeys SSH public key validation error&amp;rdquo; and it is one of my less proud threads. Thirteen comments of people,&#xA;including me, trying to get a public key into a cloud-init VM through the API, and the working answer took more than a&#xA;year to show up. The fix that finally landed in May is one line. Here&amp;rsquo;s why it took so long.&lt;/p&gt;</description>
+    </item>
+  </channel>
+</rss>

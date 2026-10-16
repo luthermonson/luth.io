@@ -1,0 +1,60 @@
+<svg xmlns="http://www.w3.org/2000/svg" xml:space="preserve" viewBox="0 0 960 520" font-family="system-ui, -apple-system, Segoe UI, Roboto, sans-serif" font-size="14">
+  <rect width="960" height="520" fill="#ffffff"/>
+  <defs>
+    <marker id="a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto">
+      <path d="M0,0 L10,5 L0,10 z" fill="#444"/>
+    </marker>
+    <marker id="r" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto">
+      <path d="M0,0 L10,5 L0,10 z" fill="#c0392b"/>
+    </marker>
+    <marker id="g" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto">
+      <path d="M0,0 L10,5 L0,10 z" fill="#3a9a5b"/>
+    </marker>
+  </defs>
+  <text x="480" y="30" text-anchor="middle" font-size="18" font-weight="600" fill="#222">A container packet to the host never reaches FORWARD</text>
+
+  <rect x="20" y="70" width="170" height="60" rx="6" fill="#fff" stroke="#6b6b6b"/>
+  <text x="105" y="96" text-anchor="middle" font-weight="600" fill="#222">job container</text>
+  <text x="105" y="116" text-anchor="middle" fill="#444" font-size="13">10.88.0.0/16 on ephemerd0</text>
+
+  <rect x="230" y="70" width="150" height="60" rx="6" fill="#f2f2f2" stroke="#6b6b6b"/>
+  <text x="305" y="105" text-anchor="middle" font-weight="600" fill="#222">PREROUTING</text>
+
+  <rect x="420" y="70" width="170" height="60" rx="6" fill="#f2f2f2" stroke="#6b6b6b"/>
+  <text x="505" y="96" text-anchor="middle" font-weight="600" fill="#222">routing decision</text>
+  <text x="505" y="116" text-anchor="middle" fill="#444" font-size="13">is dst an address I own?</text>
+
+  <line x1="190" y1="100" x2="228" y2="100" stroke="#444" stroke-width="1.6" marker-end="url(#a)"/>
+  <line x1="380" y1="100" x2="418" y2="100" stroke="#444" stroke-width="1.6" marker-end="url(#a)"/>
+
+  <!-- forward branch -->
+  <line x1="590" y1="100" x2="648" y2="100" stroke="#444" stroke-width="1.6" marker-end="url(#a)"/>
+  <text x="598" y="90" fill="#444" font-size="12">no</text>
+  <rect x="650" y="62" width="290" height="190" rx="6" fill="#f4f7fb" stroke="#2b6cb0" stroke-width="1.5"/>
+  <text x="666" y="86" font-weight="600" fill="#2b6cb0">FORWARD -> EPHEMERD-FORWARD</text>
+  <text x="666" y="110" fill="#444" font-size="13">other LAN hosts, the internet</text>
+  <text x="666" y="138" fill="#444" font-size="12" font-family="ui-monospace, Consolas, monospace">#1 ESTABLISHED: 1614K pkts, 9814M</text>
+  <text x="666" y="158" fill="#444" font-size="12" font-family="ui-monospace, Consolas, monospace">#3 udp dpt:53 to gw: 0 pkts</text>
+  <text x="666" y="178" fill="#c0392b" font-size="12" font-weight="600" font-family="ui-monospace, Consolas, monospace">#5 tcp dpt:8082 to gw: 0 pkts, 0 bytes</text>
+  <text x="666" y="198" fill="#444" font-size="12" font-family="ui-monospace, Consolas, monospace">#6 REJECT 10.0.0.0/8 ...</text>
+  <text x="666" y="230" fill="#444" font-size="13">rules aimed at the gateway can't match:</text>
+  <text x="666" y="246" fill="#444" font-size="13">packets to the gateway never come here</text>
+
+  <!-- input branch -->
+  <line x1="505" y1="130" x2="505" y2="198" stroke="#c0392b" stroke-width="1.8" marker-end="url(#r)"/>
+  <text x="497" y="160" text-anchor="end" fill="#c0392b" font-size="12">yes: gateway 10.88.0.1,</text><text x="497" y="176" text-anchor="end" fill="#c0392b" font-size="12">the host's LAN IP</text>
+  <rect x="300" y="200" width="300" height="60" rx="6" fill="#fbf1f0" stroke="#c0392b"/>
+  <text x="450" y="226" text-anchor="middle" font-weight="600" fill="#222">INPUT (before the fix)</text>
+  <text x="450" y="246" text-anchor="middle" fill="#444" font-size="13">-P INPUT ACCEPT, zero rules</text>
+  <line x1="450" y1="260" x2="450" y2="298" stroke="#c0392b" stroke-width="1.8" marker-end="url(#r)"/>
+  <rect x="300" y="300" width="300" height="50" rx="6" fill="#fff" stroke="#c0392b"/>
+  <text x="450" y="330" text-anchor="middle" fill="#222">every port on the host, unfiltered</text>
+
+  <!-- fix -->
+  <line x1="20" y1="380" x2="940" y2="380" stroke="#ddd"/>
+  <text x="20" y="410" font-weight="600" fill="#3a9a5b">After #158: INPUT position 1, -s 10.88.0.0/16 -j EPHEMERD-INPUT</text>
+  <rect x="20" y="424" width="920" height="80" rx="6" fill="#f2f8f4" stroke="#3a9a5b" stroke-width="1.5"/>
+  <text x="36" y="450" fill="#222" font-size="13" font-family="ui-monospace, Consolas, monospace">-i lo ACCEPT  |  RELATED,ESTABLISHED ACCEPT  |  -d 10.88.0.1 udp/tcp 53 ACCEPT  |  -d 10.88.0.1 tcp GatewayPorts ACCEPT</text>
+  <text x="36" y="476" fill="#3a9a5b" font-size="13" font-weight="600" font-family="ui-monospace, Consolas, monospace">-j DROP   (a rule in our own chain, so the host's INPUT policy doesn't matter)</text>
+  <text x="36" y="496" fill="#444" font-size="13">jump matches on source, not on -i ephemerd0, and is installed last so a partial install never fails open</text>
+</svg>

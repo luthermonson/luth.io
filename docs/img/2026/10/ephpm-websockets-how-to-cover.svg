@@ -1,0 +1,87 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 520" font-family="system-ui, -apple-system, Segoe UI, Roboto, sans-serif">
+  <defs>
+    <marker id="a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#333"/>
+    </marker>
+    <marker id="ab" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#2b6cb0"/>
+    </marker>
+    <marker id="ao" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#e07a1f"/>
+    </marker>
+    <marker id="ag" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#3a9a5b"/>
+    </marker>
+  </defs>
+  <rect width="960" height="520" fill="#ffffff"/>
+  <text x="480" y="36" text-anchor="middle" font-size="22" font-weight="600" fill="#222">WebSockets in ePHPm: Rust owns the socket, PHP runs per event</text>
+
+  <!-- Browsers -->
+  <rect x="30" y="90" width="170" height="250" rx="10" fill="#f4f6f9" stroke="#6b6b6b"/>
+  <text x="115" y="116" text-anchor="middle" font-size="16" font-weight="600" fill="#222">Browsers</text>
+  <rect x="50" y="135" width="130" height="40" rx="6" fill="#fff" stroke="#6b6b6b"/>
+  <text x="115" y="160" text-anchor="middle" font-size="13" fill="#333">alice (tab 1)</text>
+  <rect x="50" y="190" width="130" height="40" rx="6" fill="#fff" stroke="#6b6b6b"/>
+  <text x="115" y="215" text-anchor="middle" font-size="13" fill="#333">bob (tab 1)</text>
+  <rect x="50" y="245" width="130" height="40" rx="6" fill="#fff" stroke="#6b6b6b"/>
+  <text x="115" y="270" text-anchor="middle" font-size="13" fill="#333">bob (tab 2)</text>
+  <text x="115" y="312" text-anchor="middle" font-size="12" fill="#6b6b6b">ws:// or wss://</text><text x="115" y="328" text-anchor="middle" font-size="11" fill="#6b6b6b">HTTP/1.1 upgrade</text>
+
+  <!-- Rust -->
+  <rect x="290" y="70" width="360" height="300" rx="10" fill="#eaf1fa" stroke="#2b6cb0" stroke-width="2"/>
+  <text x="470" y="356" text-anchor="middle" font-size="16" font-weight="600" fill="#2b6cb0">ePHPm (Rust, tokio)</text>
+  <rect x="310" y="115" width="150" height="150" rx="8" fill="#fff" stroke="#2b6cb0"/>
+  <text x="385" y="138" text-anchor="middle" font-size="13" font-weight="600" fill="#222">session task</text>
+  <text x="385" y="156" text-anchor="middle" font-size="12" fill="#333">one per socket</text>
+  <text x="385" y="182" text-anchor="middle" font-size="12" fill="#333">reads frames</text>
+  <text x="385" y="200" text-anchor="middle" font-size="12" fill="#333">pings every 30 s</text>
+  <text x="385" y="218" text-anchor="middle" font-size="12" fill="#333">writes from a</text>
+  <text x="385" y="236" text-anchor="middle" font-size="12" fill="#333">64-frame queue</text>
+  <text x="385" y="254" text-anchor="middle" font-size="11" fill="#c0392b">full queue: close 1013</text>
+  <rect x="480" y="115" width="150" height="150" rx="8" fill="#fff" stroke="#2b6cb0"/>
+  <text x="555" y="138" text-anchor="middle" font-size="13" font-weight="600" fill="#222">registry</text>
+  <text x="555" y="160" text-anchor="middle" font-size="12" fill="#333">connection id</text>
+  <text x="555" y="178" text-anchor="middle" font-size="12" fill="#333">→ queue</text>
+  <text x="555" y="204" text-anchor="middle" font-size="12" fill="#333">channel → ids</text>
+  <text x="555" y="222" text-anchor="middle" font-size="12" fill="#333">lobby, user:bob</text>
+  <text x="555" y="248" text-anchor="middle" font-size="11" fill="#6b6b6b">scoped per vhost</text>
+  <text x="470" y="292" text-anchor="middle" font-size="12" fill="#333">idle socket: no PHP thread, ~39 KB RSS</text>
+  <text x="470" y="312" text-anchor="middle" font-size="12" fill="#333">per process: no cross-node fan-out</text>
+
+  <!-- PHP -->
+  <rect x="740" y="70" width="190" height="300" rx="10" fill="#fdf1e6" stroke="#e07a1f" stroke-width="2"/>
+  <text x="835" y="98" text-anchor="middle" font-size="16" font-weight="600" fill="#e07a1f">PHP thread pool</text>
+  <rect x="757" y="115" width="156" height="120" rx="8" fill="#fff" stroke="#e07a1f"/>
+  <text x="835" y="138" text-anchor="middle" font-size="13" font-weight="600" fill="#222">websocket.php</text>
+  <text x="835" y="162" text-anchor="middle" font-size="12" fill="#333">WS_EVENT =</text>
+  <text x="835" y="182" text-anchor="middle" font-size="12" fill="#333">connect</text>
+  <text x="835" y="200" text-anchor="middle" font-size="12" fill="#333">message</text>
+  <text x="835" y="218" text-anchor="middle" font-size="12" fill="#333">disconnect</text>
+  <rect x="757" y="255" width="156" height="60" rx="8" fill="#fff" stroke="#e07a1f"/>
+  <text x="835" y="280" text-anchor="middle" font-size="13" font-weight="600" fill="#222">notify.php</text>
+  <text x="835" y="300" text-anchor="middle" font-size="12" fill="#333">plain HTTP request</text>
+  <text x="835" y="346" text-anchor="middle" font-size="11" fill="#6b6b6b">one execution per event</text>
+
+  <!-- arrows browsers <-> session -->
+  <line x1="200" y1="190" x2="305" y2="190" stroke="#333" stroke-width="2" marker-start="url(#a)" marker-end="url(#a)"/>
+  <text x="252" y="180" text-anchor="middle" font-size="11" fill="#333">frames</text>
+
+  <!-- session -> PHP (dispatch) -->
+  <path d="M460,128 C560,76 680,80 752,135" fill="none" stroke="#e07a1f" stroke-width="2" marker-end="url(#ao)"/>
+  <text x="695" y="150" text-anchor="middle" font-size="11" fill="#e07a1f">dispatch</text><text x="695" y="164" text-anchor="middle" font-size="11" fill="#e07a1f">event</text>
+
+  <!-- PHP -> registry (ephpm_ws_*) -->
+  <line x1="752" y1="205" x2="636" y2="205" stroke="#2b6cb0" stroke-width="2" marker-end="url(#ab)"/>
+  <text x="694" y="196" text-anchor="middle" font-size="11" fill="#2b6cb0">ephpm_ws_*</text>
+  <line x1="752" y1="285" x2="600" y2="262" stroke="#2b6cb0" stroke-width="2" marker-end="url(#ab)"/>
+  <text x="690" y="290" text-anchor="middle" font-size="11" fill="#2b6cb0">broadcast</text>
+
+  <!-- registry -> session queue -->
+  <line x1="480" y1="235" x2="464" y2="235" stroke="#3a9a5b" stroke-width="2" marker-end="url(#ag)"/>
+
+  <!-- Legend / footer -->
+  <rect x="30" y="400" width="900" height="96" rx="8" fill="#f8f8f8" stroke="#ddd"/>
+  <text x="50" y="428" font-size="13" fill="#222"><tspan font-weight="600">connect</tspan> runs on the real upgrade request before the 101: cookies, session, Origin, query string. Non-2xx refuses it.</text>
+  <text x="50" y="452" font-size="13" fill="#222"><tspan font-weight="600">message</tspan> runs once per inbound frame, strictly in order per socket. Its echo/output goes nowhere; reply with ephpm_ws_send().</text>
+  <text x="50" y="476" font-size="13" fill="#222"><tspan font-weight="600">any PHP request</tspan> can push with ephpm_ws_broadcast() or ephpm_ws_connection_send(): that is the point of the design.</text>
+</svg>

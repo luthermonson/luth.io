@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>Latency on Luther Monson</title>
+    <link>https://luth.io/tags/latency/</link>
+    <description>Recent content in Latency on Luther Monson</description>
+    <generator>Hugo</generator>
+    <language>en</language>
+    <lastBuildDate>Mon, 07 Sep 2026 19:45:00 -0700</lastBuildDate>
+    <atom:link href="https://luth.io/tags/latency/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>P99 From 280 ms to 58 ms by Making the Queue Fair</title>
+      <link>https://luth.io/blog/2026/09/php-dispatch-fair-queue-p99/</link>
+      <pubDate>Mon, 07 Sep 2026 19:45:00 -0700</pubDate>
+      <guid>https://luth.io/blog/2026/09/php-dispatch-fair-queue-p99/</guid>
+      <description>&lt;p&gt;A third-party Laravel runtime comparison put &lt;a href=&#34;https://github.com/ephpm/ephpm&#34;&gt;ePHPm&lt;/a&gt;&amp;rsquo;s worker mode at the top on&#xA;throughput, about 19% ahead of FrankenPHP on &lt;code&gt;/api/static&lt;/code&gt;, and at the bottom of the fast group on tail latency: P99 of&#xA;157 ms against FrankenPHP&amp;rsquo;s 57 ms. Best throughput plus the fattest tail is a shape worth chasing, because fast&#xA;execution can&amp;rsquo;t produce it. Making requests faster lowers the mean &lt;em&gt;and&lt;/em&gt; the tail. Only waiting can pull them apart,&#xA;and specifically, unfair waiting.&lt;/p&gt;</description>
+    </item>
+  </channel>
+</rss>

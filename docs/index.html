@@ -13,7 +13,7 @@
 <meta name="description" content="Luther Monson&#39;s Blog about Software Engineering mostly using the Go Programming language. Focusing on Containers and Virtualization with an emphasis on Kubernetes distributions and provisioning.">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:card" content="summary_large_image"><meta name="twitter:site" content="@luthermonson">
 
 <meta property="og:site_name" content="Luther Monson">
 <meta property="og:title" content="Luther Monson">
@@ -37,8 +37,11 @@
   <meta name="theme-color" content="#ffffff">
 
 
-  <meta name="generator" content="Hugo 0.92.0" />
-  <link rel="stylesheet" href="/css/bundle.min.5233f2a4cd515395301b4154f6c1c621695e8cf53faa0935b76ac52fed7f4585.css" integrity="sha256-UjPypM1RU5UwG0FU9sHGIWlejPU/qgk1t2rFL&#43;1/RYU="><link rel="stylesheet" href="/css/add-on.css">
+  <meta name="generator" content="Hugo 0.160.1">
+  <link rel="alternate" type="application/rss+xml" href="https://luth.io/index.xml" title="Luther Monson">
+  <link rel="stylesheet" href="/css/bundle.min.e1ffed86714fbb7eff75eab221c0c61b8260be0c7d1c08db0fcb7a2bdb6af7c9.css" integrity="sha256-4f/thnFPu37/deqyIcDGG4Jgvgx9HAjbD8t6K9tq98k="><link rel="stylesheet" href="/css/add-on.css">
+        <link rel="stylesheet" href="/css/code.css">
+        <link rel="stylesheet" href="/css/mobile.css">
 </head>
 
   <body>
@@ -48,6 +51,7 @@
   <nav id="site-nav">
     <h1 class="nav-title">
       <a href="/" class="nav">
+        <img class="nav-avatar" src="/img/luther-monson-headshot.jpg" alt="" width="32" height="32">
         
           LUTH.IO
         
@@ -72,6 +76,11 @@
       
         
           
+          <a href="/archive" class="nav link"><i class='far fa-calendar-alt'></i> Archive</a>
+        
+      
+        
+          
           <a href="/categories" class="nav link"><i class='fas fa-sitemap'></i> Categories</a>
         
       
@@ -80,34 +89,11 @@
     </menu>
     <a href="#search-input" class="nav search-toggle"><i class="fas fa-search fa-2x">&nbsp;</i></a>
     <a href="#share-menu" class="nav share-toggle"><i class="fas fa-share-alt fa-2x">&nbsp;</i></a>
-    <a href="#lang-menu" class="nav lang-toggle" lang="en">en</a>
+    
     <a href="#site-nav" class="nav nav-toggle"><i class="fas fa-bars fa-2x"></i></a>
   </nav>
   <menu id="search" class="menu"><input id="search-input" class="search-input menu"></input><div id="search-results" class="search-results menu"></div></menu>
-  <menu id="lang-menu" class="flyout-menu menu">
-  <a href="#" lang="en" class="nav link active">English (en)</a>
   
-      <a href="https://luth.io/fr/" lang="fr" class="nav link">Français (fr)</a>
-    
-      <a href="https://luth.io/pl/" lang="pl" class="nav link">Polski (pl)</a>
-    
-      <a href="https://luth.io/pt/" lang="pt" class="nav link">Português (pt)</a>
-    
-      <a href="https://luth.io/de/" lang="de" class="nav link">Deutsche (de)</a>
-    
-      <a href="https://luth.io/es/" lang="es" class="nav link">Española (es)</a>
-    
-      <a href="https://luth.io/zh-cn/" lang="zh-cn" class="nav link">中文 (简体) (zh-cn)</a>
-    
-      <a href="https://luth.io/zh-tw/" lang="zh-tw" class="nav link">中文 (正體) (zh-tw)</a>
-    
-      <a href="https://luth.io/ja/" lang="ja" class="nav link">日本語 (ja)</a>
-    
-      <a href="https://luth.io/nl/" lang="nl" class="nav link">Nederlands (nl)</a>
-    
-  
-</menu>
-
   
     <menu id="share-menu" class="flyout-menu menu">
       <h1>Share Post</h1>
@@ -148,7 +134,7 @@
   
 
   
-        <a href="mailto:?subject=Check%20out%20this%20post%20by %7b%20%20%20%20%20%20%20%20map%5b%5d%7d&amp;body=https%3a%2f%2fluth.io%2f" target="_blank" class="nav share-btn email" data-proofer-ignore>
+        <a href="mailto:?subject=Check%20out%20this%20post%20by Luther%20Monson&amp;body=https%3a%2f%2fluth.io%2f" target="_blank" class="nav share-btn email" data-proofer-ignore>
           <p>Email</p>
         </a>
   
@@ -229,92 +215,40 @@
   <header>
   <div class="title">
     
-      <h2><a href="/blog/2022/02/recreating-proxmox-ve-xtermjs-in-go/">Recreating Proxmox Ve Xtermjs in Go</a></h2>
+      <h2><a href="/blog/2026/10/ephpm-worker-mode-performance/">Fourth Place in Worker Mode, and Why It Wasn&#39;t PHP</a></h2>
     
     
-  </div>
-  <div class="meta">
-    <time datetime="2022-02-06 21:54:53 -0700 MST">February 6, 2022</time>
-    
-    <p>9-Minute Read</p>
-  </div>
-</header>
-
-  <div class="content">
-    <a href="/blog/2022/02/recreating-proxmox-ve-xtermjs-in-go/" class="image">
-    <img class="" src="/img/2022/02/proxmox-logo.png" alt="Proxmox VE Logo">
-  </a>
-    
-    <p>Part of a hobby of mine is running a home lab and using on <a href="https://www.proxmox.com/en/">Proxmox VE</a> to do the virtualization.
-Since I work in the space I&rsquo;m slowly trying to build tooling around Proxmox that will let me use the home lab full time for work.
-Usually my work involves building Kubernetes management tooling, you can imagine waiting for public cloud APIs all day
-can take away hours of your day at cost to your employer for both your time and the compute resources.</p>
-  </div>
-  <footer>
-    <a href="/blog/2022/02/recreating-proxmox-ve-xtermjs-in-go/" class="button big">Read More</a>
-    <div class="stats">
-  
-    <ul class="categories">
-      
-        
-          <li><a class="article-terms-link" href="/categories/programming/">programming</a></li>
-        
-      
-    </ul>
-  
-  
-    <ul class="tags">
-      
-        
-          <li><a class="article-terms-link" href="/tags/proxmox/">proxmox</a></li>
-        
-          <li><a class="article-terms-link" href="/tags/go/">go</a></li>
-        
-          <li><a class="article-terms-link" href="/tags/javascript/">javascript</a></li>
-        
-          <li><a class="article-terms-link" href="/tags/websockets/">websockets</a></li>
-        
-      
-    </ul>
-  
-</div>
-
-  </footer>
-</article>
-
-  
-    <article class="post">
-  <header>
-  <div class="title">
-    
-      <h2><a href="/blog/2022/01/practical-cue-example/">Practical Cue Example, Produce YAML Config from Go Types</a></h2>
-    
+      <p>ePHPm placed fourth in worker mode on the Yii3 benchmark. The slow part was the Rust layer, not PHP, and three fixes cut most of the gap.</p>
     
   </div>
   <div class="meta">
-    <time datetime="2022-01-31 09:57:26 -0700 MST">January 31, 2022</time>
+    <time datetime="2026-10-16 08:10:00 -0700 PDT">October 16, 2026</time>
     
     <p>5-Minute Read</p>
   </div>
 </header>
 
   <div class="content">
+    <a href="/blog/2026/10/ephpm-worker-mode-performance/" class="image" style="--bg-image: url('/img/2026/10/ephpm-worker-mode-performance-cover.svg');">
+    <img class="" src="/img/2026/10/ephpm-worker-mode-performance-cover.svg" alt="Diagram: before, hyper/tokio hands each request to one shared bounded channel whose waiter list all 20 PHP threads contend on; after, a dispatcher hands the job straight into the mailbox of the most recently idle PHP thread and only queues it in a FIFO overflow queue when every thread is busy">
+  </a>
     
-    
-    <p>I recently had to spend some time to learn <a href="https://cuelang.org/">Cue</a> and felt the examples/tutorials were a bit lacking
-and the paradigm shift to the entire language sort of messed with my head and some things Cue does were a bit foreign to me.
-To get started, note that the two places I spent all of my time to get this information came from their main <a href="https://cuelang.org/docs/">docs</a>
-and a community <a href="https://cuetorials.com/">Cuetorials</a> site. This will be a tutorial on how you can use Cue to generate
-two different YAML documents using Cue all starting with Go types to&hellip;</p>
+    <p>We added <a href="https://github.com/ephpm/ephpm">ePHPm</a> to the
+<a href="https://github.com/Yii3-Benchmarks/app-api">Yii3 runtime benchmark</a>, which runs the same Yii3 API app on a bunch of
+PHP runtimes and compares them (our fork with the ePHPm runner is <a href="https://github.com/ephpm/app-api">ephpm/app-api</a>).
+Most of the results were good. ePHPm came first in classic mode, the PHP-FPM style where every request starts fresh,
+and first on the database endpoint in both modes.</p>
   </div>
   <footer>
-    <a href="/blog/2022/01/practical-cue-example/" class="button big">Read More</a>
+    <a href="/blog/2026/10/ephpm-worker-mode-performance/" class="button big">Read More</a>
     <div class="stats">
   
     <ul class="categories">
       
         
-          <li><a class="article-terms-link" href="/categories/programming/">programming</a></li>
+          <li><a class="article-terms-link" href="/categories/ephpm/">ephpm</a></li>
+        
+          <li><a class="article-terms-link" href="/categories/php/">php</a></li>
         
       
     </ul>
@@ -323,9 +257,17 @@ two different YAML documents using Cue all starting with Go types to&hellip;</p>
     <ul class="tags">
       
         
-          <li><a class="article-terms-link" href="/tags/cue/">cue</a></li>
+          <li><a class="article-terms-link" href="/tags/php/">php</a></li>
         
-          <li><a class="article-terms-link" href="/tags/go/">go</a></li>
+          <li><a class="article-terms-link" href="/tags/ephpm/">ephpm</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/rust/">rust</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/performance/">performance</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/benchmarking/">benchmarking</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/mimalloc/">mimalloc</a></li>
         
       
     </ul>
@@ -340,44 +282,606 @@ two different YAML documents using Cue all starting with Go types to&hellip;</p>
   <header>
   <div class="title">
     
-      <h2><a href="/blog/2022/01/free-personal-blog-hugo-github-pages/">Free Blog Hosting Using Hugo &#43; Github Pages</a></h2>
+      <h2><a href="/blog/2026/10/ephpm-websockets-how-to/">WebSockets in ePHPm, From Zero to a Working Chat</a></h2>
     
     
-      <p>Upgrade your Personal Blog Game with Apex Records for No Cost</p>
+      <p>How to run WebSockets in ePHPm with a single PHP file: turning them on, sharing the login session, pushing messages from normal HTTP requests, serving it over TLS, and the limits to know about.</p>
     
   </div>
   <div class="meta">
-    <time datetime="2022-01-27 11:51:20 -0700 MST">January 27, 2022</time>
+    <time datetime="2026-10-11 17:30:00 -0700 PDT">October 11, 2026</time>
     
-    <p>4-Minute Read</p>
+    <p>14-Minute Read</p>
   </div>
 </header>
 
   <div class="content">
-    <a href="/blog/2022/01/free-personal-blog-hugo-github-pages/" class="image" style="--bg-image: url('/img/2022/01/github-pages-logo.png');">
-    <img class="" src="/img/2022/01/github-pages-logo.png" alt="Github Pages Logo">
+    <a href="/blog/2026/10/ephpm-websockets-how-to/" class="image" style="--bg-image: url('/img/2026/10/ephpm-websockets-how-to-cover.svg');">
+    <img class="" src="/img/2026/10/ephpm-websockets-how-to-cover.svg" alt="Diagram: browsers hold sockets to ePHPm&#39;s Rust session tasks and registry; each connect, message and disconnect runs websocket.php once on the PHP thread pool, and ordinary HTTP requests push through ephpm_ws_broadcast">
   </a>
     
-    <p>Since I just rode this merry-go-round here is a quick overview of how you can achieve a professional
-looking personal blog with custom DNS with minimal effort at no cost and completely run out of a single Github Repository.</p>
+    <p>I covered the design of <a href="https://github.com/ephpm/ephpm">ePHPm</a>&rsquo;s native WebSockets in a few paragraphs of the
+<a href="/blog/2026/09/ephpm-smaller-angles/">odds and ends post</a>: Rust owns the socket, PHP runs once per event, and an idle
+connection never costs you a PHP thread. That was the why. This post is the how. We&rsquo;ll build a small chat app with
+login, per-user push notifications from ordinary HTTP requests, and a browser client. Then we&rsquo;ll serve it over TLS
+and look at the limits, the sharp edges, and how to debug it when the browser only tells you&hellip;</p>
   </div>
   <footer>
-    <a href="/blog/2022/01/free-personal-blog-hugo-github-pages/" class="button big">Read More</a>
+    <a href="/blog/2026/10/ephpm-websockets-how-to/" class="button big">Read More</a>
     <div class="stats">
   
     <ul class="categories">
-      <li>None</li>
+      
+        
+          <li><a class="article-terms-link" href="/categories/ephpm/">ephpm</a></li>
+        
+          <li><a class="article-terms-link" href="/categories/php/">php</a></li>
+        
+      
     </ul>
   
   
     <ul class="tags">
       
         
-          <li><a class="article-terms-link" href="/tags/hugo/">hugo</a></li>
+          <li><a class="article-terms-link" href="/tags/php/">php</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/ephpm/">ephpm</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/websockets/">websockets</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/rust/">rust</a></li>
+        
+      
+    </ul>
+  
+</div>
+
+  </footer>
+</article>
+
+  
+    <article class="post">
+  <header>
+  <div class="title">
+    
+      <h2><a href="/blog/2026/10/webhooks-out-of-order-scheduler/">Webhooks Arrive Out of Order: How My Scheduler Killed Live Builds</a></h2>
+    
+    
+      <p>ephemerd&#39;s orphan sweep trusted webhook history over reality and destroyed a runner mid-build. The fix: rules only nominate, and a live busy check gets a veto.</p>
+    
+  </div>
+  <div class="meta">
+    <time datetime="2026-10-07 21:10:00 -0700 PDT">October 7, 2026</time>
+    
+    <p>9-Minute Read</p>
+  </div>
+</header>
+
+  <div class="content">
+    <a href="/blog/2026/10/webhooks-out-of-order-scheduler/" class="image" style="--bg-image: url('/img/2026/10/webhooks-out-of-order-scheduler-timeline.svg');">
+    <img class="" src="/img/2026/10/webhooks-out-of-order-scheduler-timeline.svg" alt="Timeline of three same-label jobs where a runner executing a build is destroyed 2.3 seconds before its in_progress webhook arrives">
+  </a>
+    
+    <p>The scheduler in <a href="/blog/2026/08/ephemerd-one-daemon-every-os/">ephemerd</a> is event-driven. GitHub sends a <code>workflow_job</code>
+webhook when a job is queued, when it starts and when it completes, and ephemerd creates and destroys runners to match.
+For a while that worked well enough that I stopped thinking about it. Then a <code>docker-build</code> job failed with &ldquo;The
+self-hosted runner lost communication with the server&rdquo;, and when I pulled the node&rsquo;s journal, ephemerd had destroyed that
+runner itself, on purpose, while it was running the build.</p>
+  </div>
+  <footer>
+    <a href="/blog/2026/10/webhooks-out-of-order-scheduler/" class="button big">Read More</a>
+    <div class="stats">
+  
+    <ul class="categories">
+      
+        
+          <li><a class="article-terms-link" href="/categories/ci/">ci</a></li>
+        
+          <li><a class="article-terms-link" href="/categories/go/">go</a></li>
+        
+      
+    </ul>
+  
+  
+    <ul class="tags">
+      
+        
+          <li><a class="article-terms-link" href="/tags/go/">go</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/github-actions/">github-actions</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/webhooks/">webhooks</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/distributed-systems/">distributed-systems</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/scheduling/">scheduling</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/ephemerd/">ephemerd</a></li>
+        
+      
+    </ul>
+  
+</div>
+
+  </footer>
+</article>
+
+  
+    <article class="post">
+  <header>
+  <div class="title">
+    
+      <h2><a href="/blog/2026/10/go-proxmox-five-years-to-v0-8/">Breaking Changes Without Breaking Trust: Five Years to go-proxmox v0.8</a></h2>
+    
+    
+      <p>What five years of go-proxmox releases looked like when I measured them: a broken tag that can never be deleted, a release that didn&#39;t compile, 285 breaking changes in v0.7.0, and the rule I follow now.</p>
+    
+  </div>
+  <div class="meta">
+    <time datetime="2026-10-04 19:40:00 -0700 PDT">October 4, 2026</time>
+    
+    <p>8-Minute Read</p>
+  </div>
+</header>
+
+  <div class="content">
+    <a href="/blog/2026/10/go-proxmox-five-years-to-v0-8/" class="image" style="--bg-image: url('/img/2026/10/go-proxmox-five-years-to-v0-8-apidiff.svg');">
+    <img class="" src="/img/2026/10/go-proxmox-five-years-to-v0-8-apidiff.svg" alt="Horizontal bar chart of apidiff incompatible and compatible changes for every go-proxmox release from v0.1.0 to v0.8.2">
+  </a>
+    
+    <p><a href="https://github.com/luthermonson/go-proxmox">go-proxmox</a> had its first commit in June 2021 and v0.8.2 went out on
+September 30th. In between: 366 commits, 43 people besides me with a merged PR, and, more to the point of this post,
+downstream projects that I don&rsquo;t control pinning it in their <code>go.mod</code>. IONOS&rsquo;s
+<a href="https://github.com/ionos-cloud/cluster-api-provider-proxmox">Cluster API provider</a> and Sidero&rsquo;s
+<a href="https://github.com/siderolabs/omni-infra-provider-proxmox">Omni Proxmox provider</a> are both on v0.8.1 today. A
+library with users like that gets judged less on its API and more on what happens to their build when they bump the
+version. I&hellip;</p>
+  </div>
+  <footer>
+    <a href="/blog/2026/10/go-proxmox-five-years-to-v0-8/" class="button big">Read More</a>
+    <div class="stats">
+  
+    <ul class="categories">
+      
+        
+          <li><a class="article-terms-link" href="/categories/go/">go</a></li>
+        
+          <li><a class="article-terms-link" href="/categories/homelab/">homelab</a></li>
+        
+      
+    </ul>
+  
+  
+    <ul class="tags">
+      
+        
+          <li><a class="article-terms-link" href="/tags/go/">go</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/go-proxmox/">go-proxmox</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/proxmox/">proxmox</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/semver/">semver</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/open-source/">open-source</a></li>
+        
+      
+    </ul>
+  
+</div>
+
+  </footer>
+</article>
+
+  
+    <article class="post">
+  <header>
+  <div class="title">
+    
+      <h2><a href="/blog/2026/10/windows-sigterm-sparse-files/">Windows Grab-Bag: SIGTERM That Doesn&#39;t Exist and Sparse Files That Break Docker</a></h2>
+    
+    
+      <p>Two Windows-only bugs from ephemerd: Go can&#39;t SIGTERM a child on Windows, so cloudflared processes piled up, and Delivery Optimization&#39;s sparse temp files broke image layer commits.</p>
+    
+  </div>
+  <div class="meta">
+    <time datetime="2026-10-03 14:30:00 -0700 PDT">October 3, 2026</time>
+    
+    <p>7-Minute Read</p>
+  </div>
+</header>
+
+  <div class="content">
+    <a href="/blog/2026/10/windows-sigterm-sparse-files/" class="image" style="--bg-image: url('/img/2026/10/windows-sigterm-sparse-files-connections.svg');">
+    <img class="" src="/img/2026/10/windows-sigterm-sparse-files-connections.svg" alt="Bar chart: 96 Cloudflare edge connections held by orphaned cloudflared processes versus 4 for the live daemon">
+  </a>
+    
+    <p>Two short ones from the Windows node of <a href="/blog/2026/08/ephemerd-one-daemon-every-os/">ephemerd</a> from the last few weeks. Neither is
+complicated once you know what&rsquo;s going on. Both took longer than they should have to find, because the failure showed up a
+long way from the cause.</p>
+  </div>
+  <footer>
+    <a href="/blog/2026/10/windows-sigterm-sparse-files/" class="button big">Read More</a>
+    <div class="stats">
+  
+    <ul class="categories">
+      
+        
+          <li><a class="article-terms-link" href="/categories/windows/">windows</a></li>
+        
+          <li><a class="article-terms-link" href="/categories/ci/">ci</a></li>
+        
+          <li><a class="article-terms-link" href="/categories/go/">go</a></li>
+        
+      
+    </ul>
+  
+  
+    <ul class="tags">
+      
+        
+          <li><a class="article-terms-link" href="/tags/go/">go</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/windows/">windows</a></li>
         
           <li><a class="article-terms-link" href="/tags/cloudflare/">cloudflare</a></li>
         
-          <li><a class="article-terms-link" href="/tags/github/">github</a></li>
+          <li><a class="article-terms-link" href="/tags/containers/">containers</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/docker/">docker</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/ephemerd/">ephemerd</a></li>
+        
+      
+    </ul>
+  
+</div>
+
+  </footer>
+</article>
+
+  
+    <article class="post">
+  <header>
+  <div class="title">
+    
+      <h2><a href="/blog/2026/10/php-jit-use-after-free/">An Upstream PHP JIT Use-After-Free, and Why Our Default Flipped Twice</a></h2>
+    
+    
+      <p>ePHPm turned PHP&#39;s tracing JIT on by default, then off three days later when stock Laravel died after three requests. The bug was upstream; here is the bisect, the root cause and where the fix landed.</p>
+    
+  </div>
+  <div class="meta">
+    <time datetime="2026-10-01 20:10:00 -0700 PDT">October 1, 2026</time>
+    
+    <p>9-Minute Read</p>
+  </div>
+</header>
+
+  <div class="content">
+    <a href="/blog/2026/10/php-jit-use-after-free/" class="image" style="--bg-image: url('/img/2026/10/php-jit-use-after-free-bisect.svg');">
+    <img class="" src="/img/2026/10/php-jit-use-after-free-bisect.svg" alt="Bar chart of requests served before a crash per PHP version: 8.4.14, 8.5.0 and 8.5.4 never crash; 8.4.24 dies at 7, 8.5.5 at 1, 8.5.7 and 8.5.9 at 2">
+  </a>
+    
+    <p>In August, <a href="https://github.com/ephpm/ephpm">ePHPm</a> turned PHP&rsquo;s tracing JIT on by default in single-site serve mode.
+Three days later it went back off, on every platform, and it&rsquo;s still off. The reason turned out to be a
+use-after-free in PHP&rsquo;s tracing JIT that has nothing to do with ePHPm: stock <code>php -S</code> with a stock Laravel skeleton
+dies on it in a couple of requests. The fix is now released upstream, so this seemed like the right time to write up
+how we got there, and what still has to happen before the&hellip;</p>
+  </div>
+  <footer>
+    <a href="/blog/2026/10/php-jit-use-after-free/" class="button big">Read More</a>
+    <div class="stats">
+  
+    <ul class="categories">
+      
+        
+          <li><a class="article-terms-link" href="/categories/php/">php</a></li>
+        
+          <li><a class="article-terms-link" href="/categories/ephpm/">ephpm</a></li>
+        
+          <li><a class="article-terms-link" href="/categories/windows/">windows</a></li>
+        
+      
+    </ul>
+  
+  
+    <ul class="tags">
+      
+        
+          <li><a class="article-terms-link" href="/tags/php/">php</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/opcache/">opcache</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/jit/">jit</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/ephpm/">ephpm</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/windows/">windows</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/debugging/">debugging</a></li>
+        
+      
+    </ul>
+  
+</div>
+
+  </footer>
+</article>
+
+  
+    <article class="post">
+  <header>
+  <div class="title">
+    
+      <h2><a href="/blog/2026/09/agent-shell-allowlist-bypassable/">Your Agent&#39;s Shell Allowlist Is Bypassable</a></h2>
+    
+    
+      <p>A permission gate for AI agents&#39; shell commands judged spellings instead of commands. The classes of bypass I found in shipmates&#39; own gate, and the one idea that fixes most of them.</p>
+    
+  </div>
+  <div class="meta">
+    <time datetime="2026-09-29 20:30:00 -0700 PDT">September 29, 2026</time>
+    
+    <p>9-Minute Read</p>
+  </div>
+</header>
+
+  <div class="content">
+    <a href="/blog/2026/09/agent-shell-allowlist-bypassable/" class="image" style="--bg-image: url('/img/2026/09/agent-shell-allowlist-bypassable-cover.svg');">
+    <img class="" src="/img/2026/09/agent-shell-allowlist-bypassable-cover.svg" alt="A shell command decomposed into the nested command lines the permission gate has to judge">
+  </a>
+    
+    <p>Every <a href="/blog/2026/08/shipmates-persona-based-ai-coding-crews/">shipmates</a> crew member runs shell commands, and before any
+of them runs it goes through a permission gate. The gate uses the same rule syntax as Claude Code settings,
+<code>Bash(git status)</code>, <code>Bash(rm *)</code>, <code>Write(**/.claude/settings.json)</code>, merged from several layers: a fleet-wide deny list
+pushed from Fleet Command, per-persona policy files, project settings, and the Brig, which compiles shipmates&rsquo; fifteen
+&ldquo;Ship&rsquo;s Articles&rdquo; into deny and ask rules. Deny beats ask, ask beats&hellip;</p>
+  </div>
+  <footer>
+    <a href="/blog/2026/09/agent-shell-allowlist-bypassable/" class="button big">Read More</a>
+    <div class="stats">
+  
+    <ul class="categories">
+      
+        
+          <li><a class="article-terms-link" href="/categories/ai-agents/">ai-agents</a></li>
+        
+          <li><a class="article-terms-link" href="/categories/security/">security</a></li>
+        
+          <li><a class="article-terms-link" href="/categories/go/">go</a></li>
+        
+      
+    </ul>
+  
+  
+    <ul class="tags">
+      
+        
+          <li><a class="article-terms-link" href="/tags/go/">go</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/security/">security</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/ai-agents/">ai-agents</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/shell/">shell</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/powershell/">powershell</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/shipmates/">shipmates</a></li>
+        
+      
+    </ul>
+  
+</div>
+
+  </footer>
+</article>
+
+  
+    <article class="post">
+  <header>
+  <div class="title">
+    
+      <h2><a href="/blog/2026/09/process-containment-job-objects-process-groups-cgroups/">Cross-Platform Process Containment: Job Objects vs Process Groups vs cgroups</a></h2>
+    
+    
+      <p>How shipmates bounds and tears down agent process trees on Windows, Linux and macOS, why I deleted 1,206 lines of cgroup code, and the grandchild that escaped the memory cap everywhere except my dev box.</p>
+    
+  </div>
+  <div class="meta">
+    <time datetime="2026-09-26 16:20:00 -0700 PDT">September 26, 2026</time>
+    
+    <p>8-Minute Read</p>
+  </div>
+</header>
+
+  <div class="content">
+    <a href="/blog/2026/09/process-containment-job-objects-process-groups-cgroups/" class="image" style="--bg-image: url('/img/2026/09/process-containment-job-objects-process-groups-cgroups-cover.svg');">
+    <img class="" src="/img/2026/09/process-containment-job-objects-process-groups-cgroups-cover.svg" alt="Agent process tree with the scope of kill and measurement on Windows, Linux and macOS">
+  </a>
+    
+    <p>Every turn a <a href="/blog/2026/08/shipmates-persona-based-ai-coding-crews/">shipmates</a> crew member takes is a subprocess:
+<code>claude</code> or the <code>codex</code> app-server, which in turn spawns shells, <code>go test</code>, <code>npm</code>, whatever the task calls for. Two
+things have to be true about that tree. When a turn ends or gets killed, the <em>whole</em> tree goes, including the
+grandchildren. And if somebody sets a memory or CPU budget, the budget applies to the whole tree, not just the
+process I happened to start.</p>
+  </div>
+  <footer>
+    <a href="/blog/2026/09/process-containment-job-objects-process-groups-cgroups/" class="button big">Read More</a>
+    <div class="stats">
+  
+    <ul class="categories">
+      
+        
+          <li><a class="article-terms-link" href="/categories/go/">go</a></li>
+        
+          <li><a class="article-terms-link" href="/categories/windows/">windows</a></li>
+        
+          <li><a class="article-terms-link" href="/categories/containers/">containers</a></li>
+        
+      
+    </ul>
+  
+  
+    <ul class="tags">
+      
+        
+          <li><a class="article-terms-link" href="/tags/go/">go</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/windows/">windows</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/linux/">linux</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/macos/">macos</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/job-objects/">job-objects</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/cgroups/">cgroups</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/process-groups/">process-groups</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/shipmates/">shipmates</a></li>
+        
+      
+    </ul>
+  
+</div>
+
+  </footer>
+</article>
+
+  
+    <article class="post">
+  <header>
+  <div class="title">
+    
+      <h2><a href="/blog/2026/09/bind-mounts-across-mount-namespaces/">Bind Mounts Across Mount Namespaces: Four PRs and a Container Escape</a></h2>
+    
+    
+      <p>Making GitHub Actions container: jobs work through ephemerd&#39;s Docker API shim took four tries, then a TOCTOU race turned the working version into an escape.</p>
+    
+  </div>
+  <div class="meta">
+    <time datetime="2026-09-24 21:02:00 -0700 PDT">September 24, 2026</time>
+    
+    <p>8-Minute Read</p>
+  </div>
+</header>
+
+  <div class="content">
+    <a href="/blog/2026/09/bind-mounts-across-mount-namespaces/" class="image" style="--bg-image: url('/img/2026/09/bind-mounts-across-mount-namespaces-toctou.svg');">
+    <img class="" src="/img/2026/09/bind-mounts-across-mount-namespaces-toctou.svg" alt="Sequence diagram of the bind mount TOCTOU race and the openat2 plus staging fix">
+  </a>
+    
+    <p>GitHub Actions has a <code>container:</code> key that runs a job&rsquo;s steps inside an image of your choosing. It&rsquo;s popular because it
+gives you a reproducible toolchain without building a custom runner image. On a self-hosted runner it works by having the
+runner drive Docker, and on <a href="/blog/2026/08/ephemerd-one-daemon-every-os/">ephemerd</a> &ldquo;Docker&rdquo; is a shim that speaks the
+Docker API and creates containers in containerd. Getting bind mounts right through that shim took four PRs in a week. A
+couple of months later the version that&hellip;</p>
+  </div>
+  <footer>
+    <a href="/blog/2026/09/bind-mounts-across-mount-namespaces/" class="button big">Read More</a>
+    <div class="stats">
+  
+    <ul class="categories">
+      
+        
+          <li><a class="article-terms-link" href="/categories/containers/">containers</a></li>
+        
+          <li><a class="article-terms-link" href="/categories/ci/">ci</a></li>
+        
+          <li><a class="article-terms-link" href="/categories/security/">security</a></li>
+        
+      
+    </ul>
+  
+  
+    <ul class="tags">
+      
+        
+          <li><a class="article-terms-link" href="/tags/linux/">linux</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/containers/">containers</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/runc/">runc</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/containerd/">containerd</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/mount-namespaces/">mount-namespaces</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/security/">security</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/github-actions/">github-actions</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/ephemerd/">ephemerd</a></li>
+        
+      
+    </ul>
+  
+</div>
+
+  </footer>
+</article>
+
+  
+    <article class="post">
+  <header>
+  <div class="title">
+    
+      <h2><a href="/blog/2026/09/memory-watchdog-for-go-test/">A 1 TB Test: Building a Memory Watchdog for go test</a></h2>
+    
+    
+      <p>A runaway test binary hit about 1 TB of commit charge and took my desktop down. Here&#39;s the PowerShell and POSIX sh wrapper I put around go test, and the bug in it that the Windows box couldn&#39;t show me.</p>
+    
+  </div>
+  <div class="meta">
+    <time datetime="2026-09-22 20:48:00 -0700 PDT">September 22, 2026</time>
+    
+    <p>8-Minute Read</p>
+  </div>
+</header>
+
+  <div class="content">
+    <a href="/blog/2026/09/memory-watchdog-for-go-test/" class="image" style="--bg-image: url('/img/2026/09/memory-watchdog-for-go-test-cover.svg');">
+    <img class="" src="/img/2026/09/memory-watchdog-for-go-test-cover.svg" alt="go test process tree with per-package test binaries watched by the safe-test wrapper">
+  </a>
+    
+    <p>On August 16th a <code>server.test.exe</code> from <a href="/blog/2026/08/shipmates-persona-based-ai-coding-crews/">shipmates</a> climbed to
+roughly <strong>1 TB of commit charge</strong> on my Windows workstation. Windows Terminal, which was hosting several agent sessions
+in tabs, hard-faulted with <code>E_OUTOFMEMORY</code> and every one of those sessions died at the same moment. It wasn&rsquo;t the first
+time either. An earlier one hit about 236 GB through an infinite <code>filepath.Dir</code> loop.</p>
+  </div>
+  <footer>
+    <a href="/blog/2026/09/memory-watchdog-for-go-test/" class="button big">Read More</a>
+    <div class="stats">
+  
+    <ul class="categories">
+      
+        
+          <li><a class="article-terms-link" href="/categories/go/">go</a></li>
+        
+          <li><a class="article-terms-link" href="/categories/windows/">windows</a></li>
+        
+      
+    </ul>
+  
+  
+    <ul class="tags">
+      
+        
+          <li><a class="article-terms-link" href="/tags/go/">go</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/testing/">testing</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/windows/">windows</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/linux/">linux</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/powershell/">powershell</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/shipmates/">shipmates</a></li>
         
       
     </ul>
@@ -404,41 +908,59 @@ looking personal blog with custom DNS with minimal effort at no cost and complet
       </header>
       
       <article class="mini-post">
-          <a href="/blog/2022/02/recreating-proxmox-ve-xtermjs-in-go/" class="image">
-    <img class="" src="/img/2022/02/proxmox-logo.png" alt="Proxmox VE Logo">
+          <a href="/blog/2026/10/ephpm-worker-mode-performance/" class="image" style="--bg-image: url('/img/2026/10/ephpm-worker-mode-performance-cover.svg');">
+    <img class="" src="/img/2026/10/ephpm-worker-mode-performance-cover.svg" alt="Diagram: before, hyper/tokio hands each request to one shared bounded channel whose waiter list all 20 PHP threads contend on; after, a dispatcher hands the job straight into the mailbox of the most recently idle PHP thread and only queues it in a FIFO overflow queue when every thread is busy">
   </a>
         <header>
-          <h2><a href="/blog/2022/02/recreating-proxmox-ve-xtermjs-in-go/">Recreating Proxmox Ve Xtermjs in Go</a></h2>
-          <time class="published" datetime="2022-02-06 21:54:53 -0700 MST">February 6, 2022</time>
+          <h2><a href="/blog/2026/10/ephpm-worker-mode-performance/">Fourth Place in Worker Mode, and Why It Wasn&#39;t PHP</a></h2>
+          <time class="published" datetime="2026-10-16 08:10:00 -0700 PDT">October 16, 2026</time>
         </header>
       </article>
       
       <article class="mini-post">
-          
-        <header>
-          <h2><a href="/blog/2022/01/practical-cue-example/">Practical Cue Example, Produce YAML Config from Go Types</a></h2>
-          <time class="published" datetime="2022-01-31 09:57:26 -0700 MST">January 31, 2022</time>
-        </header>
-      </article>
-      
-      <article class="mini-post">
-          <a href="/blog/2022/01/free-personal-blog-hugo-github-pages/" class="image" style="--bg-image: url('/img/2022/01/github-pages-logo.png');">
-    <img class="" src="/img/2022/01/github-pages-logo.png" alt="Github Pages Logo">
+          <a href="/blog/2026/10/ephpm-websockets-how-to/" class="image" style="--bg-image: url('/img/2026/10/ephpm-websockets-how-to-cover.svg');">
+    <img class="" src="/img/2026/10/ephpm-websockets-how-to-cover.svg" alt="Diagram: browsers hold sockets to ePHPm&#39;s Rust session tasks and registry; each connect, message and disconnect runs websocket.php once on the PHP thread pool, and ordinary HTTP requests push through ephpm_ws_broadcast">
   </a>
         <header>
-          <h2><a href="/blog/2022/01/free-personal-blog-hugo-github-pages/">Free Blog Hosting Using Hugo &#43; Github Pages</a></h2>
-          <time class="published" datetime="2022-01-27 11:51:20 -0700 MST">January 27, 2022</time>
+          <h2><a href="/blog/2026/10/ephpm-websockets-how-to/">WebSockets in ePHPm, From Zero to a Working Chat</a></h2>
+          <time class="published" datetime="2026-10-11 17:30:00 -0700 PDT">October 11, 2026</time>
         </header>
       </article>
       
       <article class="mini-post">
-          
+          <a href="/blog/2026/10/webhooks-out-of-order-scheduler/" class="image" style="--bg-image: url('/img/2026/10/webhooks-out-of-order-scheduler-timeline.svg');">
+    <img class="" src="/img/2026/10/webhooks-out-of-order-scheduler-timeline.svg" alt="Timeline of three same-label jobs where a runner executing a build is destroyed 2.3 seconds before its in_progress webhook arrives">
+  </a>
         <header>
-          <h2><a href="/blog/introduction/">Introduction</a></h2>
-          <time class="published" datetime="2022-01-27 10:11:05 -0700 MST">January 27, 2022</time>
+          <h2><a href="/blog/2026/10/webhooks-out-of-order-scheduler/">Webhooks Arrive Out of Order: How My Scheduler Killed Live Builds</a></h2>
+          <time class="published" datetime="2026-10-07 21:10:00 -0700 PDT">October 7, 2026</time>
         </header>
       </article>
       
+      <article class="mini-post">
+          <a href="/blog/2026/10/go-proxmox-five-years-to-v0-8/" class="image" style="--bg-image: url('/img/2026/10/go-proxmox-five-years-to-v0-8-apidiff.svg');">
+    <img class="" src="/img/2026/10/go-proxmox-five-years-to-v0-8-apidiff.svg" alt="Horizontal bar chart of apidiff incompatible and compatible changes for every go-proxmox release from v0.1.0 to v0.8.2">
+  </a>
+        <header>
+          <h2><a href="/blog/2026/10/go-proxmox-five-years-to-v0-8/">Breaking Changes Without Breaking Trust: Five Years to go-proxmox v0.8</a></h2>
+          <time class="published" datetime="2026-10-04 19:40:00 -0700 PDT">October 4, 2026</time>
+        </header>
+      </article>
+      
+      <article class="mini-post">
+          <a href="/blog/2026/10/windows-sigterm-sparse-files/" class="image" style="--bg-image: url('/img/2026/10/windows-sigterm-sparse-files-connections.svg');">
+    <img class="" src="/img/2026/10/windows-sigterm-sparse-files-connections.svg" alt="Bar chart: 96 Cloudflare edge connections held by orphaned cloudflared processes versus 4 for the live daemon">
+  </a>
+        <header>
+          <h2><a href="/blog/2026/10/windows-sigterm-sparse-files/">Windows Grab-Bag: SIGTERM That Doesn&#39;t Exist and Sparse Files That Break Docker</a></h2>
+          <time class="published" datetime="2026-10-03 14:30:00 -0700 PDT">October 3, 2026</time>
+        </header>
+      </article>
+      
+      
+        <footer>
+          <a href="/blog" class="button">See More</a>
+        </footer>
       
     </section>
   
@@ -448,13 +970,46 @@ looking personal blog with custom DNS with minimal effort at no cost and complet
 
       <section id="categories">
         <header>
-          <h1><a href="/categories">Category</a></h1>
+          <h1><a href="/categories">Categories</a></h1>
         </header>
         <ul>
           
           
           <li>
-              <a href="/categories/programming/">programming<span class="count">2</span></a>
+              <a href="/categories/ephpm/">ephpm<span class="count">33</span></a>
+          
+          <li>
+              <a href="/categories/go/">go<span class="count">30</span></a>
+          
+          <li>
+              <a href="/categories/php/">php<span class="count">23</span></a>
+          
+          <li>
+              <a href="/categories/rust/">rust<span class="count">15</span></a>
+          
+          <li>
+              <a href="/categories/homelab/">homelab<span class="count">14</span></a>
+          
+          <li>
+              <a href="/categories/windows/">windows<span class="count">14</span></a>
+          
+          <li>
+              <a href="/categories/ci/">ci<span class="count">9</span></a>
+          
+          <li>
+              <a href="/categories/databases/">databases<span class="count">9</span></a>
+          
+          <li>
+              <a href="/categories/security/">security<span class="count">9</span></a>
+          
+          <li>
+              <a href="/categories/containers/">containers<span class="count">7</span></a>
+          
+          <li>
+              <a href="/categories/tools/">tools<span class="count">5</span></a>
+          
+          <li>
+              <a href="/categories/ai-agents/">ai-agents<span class="count">4</span></a>
           
           </li>
         </ul>
@@ -527,16 +1082,14 @@ looking personal blog with custom DNS with minimal effort at no cost and complet
       </ul>
   
   <p class="copyright">
-    © 2022 Luther Monson
+    © 2026 Luther Monson
       <br>
-    Theme: <a href='https://github.com/pacollins/hugo-future-imperfect-slim' target='_blank' rel='noopener'>Hugo Future Imperfect Slim</a><br>A <a href='https://html5up.net/future-imperfect' target='_blank' rel='noopener'>HTML5 UP port</a> | Powered by <a href='https://gohugo.io/' title='0.92.0' target='_blank' rel='noopener'>Hugo</a>
+    Theme: <a href='https://github.com/pacollins/hugo-future-imperfect-slim' target='_blank' rel='noopener'>Hugo Future Imperfect Slim</a><br>A <a href='https://html5up.net/future-imperfect' target='_blank' rel='noopener'>HTML5 UP port</a> | Powered by <a href='https://gohugo.io/' title='0.160.1' target='_blank' rel='noopener'>Hugo</a>
   </p>
 </footer>
 <a id="back-to-top" href="#" class="fas fa-arrow-up fa-2x"></a>
 
-      <script src="/js/highlight.js"></script>
-    
-    <script>hljs.highlightAll();</script><script src="/js/bundle.min.affa21bd64e761fba63c1eb954f76e46e43ca96b1ef71c742f058ed973ec6df2.js" integrity="sha256-r/ohvWTnYfumPB65VPduRuQ8qWse9xx0LwWO2XPsbfI="></script>
+      <script src="/js/bundle.min.241b62ebc4792fe8c7a75879e5f710894f226f2b73342e9916b3a3b0526030cc.js" integrity="sha256-JBti68R5L&#43;jHp1h55fcQiU8ibytzNC6ZFrOjsFJgMMw="></script>
     <script src="/js/add-on.js"></script>
     </div>
   </body>

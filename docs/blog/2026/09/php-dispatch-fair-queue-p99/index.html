@@ -1,0 +1,846 @@
+<!doctype html>
+<html lang="en">
+  <head>
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-MSTSKGFWTX"></script>
+<script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+
+    gtag('config', 'G-MSTSKGFWTX');
+</script><meta charset="utf-8">
+<title>P99 From 280 ms to 58 ms by Making the Queue Fair - Luther Monson</title>
+<meta name="description" content="ePHPm had the best throughput in a Laravel runtime comparison and the worst tail of the fast group. The cause was a bounded channel that let new requests cut in line.">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<meta name="twitter:card" content="summary_large_image"><meta name="twitter:site" content="@luthermonson">
+
+<meta property="og:site_name" content="Luther Monson">
+<meta property="og:title" content="P99 From 280 ms to 58 ms by Making the Queue Fair">
+<meta property="og:description" content="ePHPm had the best throughput in a Laravel runtime comparison and the worst tail of the fast group. The cause was a bounded channel that let new requests cut in line.">
+<meta property="og:type" content="article">
+<meta property="og:url" content="https://luth.io/blog/2026/09/php-dispatch-fair-queue-p99/">
+    <meta property="og:image" content="https://luth.io/img/2026/09/php-dispatch-fair-queue-latency.svg">
+    <meta property="og:image:alt" content="Bar chart of P50, P75, P90 and P99 latency for FIFO versus barging admission in ePHPm worker mode">
+
+
+  <link rel="manifest" href="/favicon/site.webmanifest?v=1">
+  <link rel="apple-touch-icon" sizes="180x180" href="/favicon/apple-touch-icon.png?v=1">
+  <link rel="icon" type="image/png" sizes="32x32" href="/favicon/favicon-32x32.png?v=1">
+  <link rel="icon" type="image/png" sizes="16x16" href="/favicon/favicon-16x16.png?v=1">
+  
+    <link rel="mask-icon" href="/favicon/safari-pinned-tab.svg?v=1" color="#ffffff">
+    <link rel="shortcut icon" href="/favicon/favicon.ico?v=1">
+    <meta name="msapplication-config" content="/favicon/browserconfig.xml?v=1">
+  
+  <meta name="msapplication-TileColor" content="#ffffff">
+  <meta name="theme-color" content="#ffffff">
+
+
+  <meta name="generator" content="Hugo 0.160.1">
+  <link rel="alternate" type="application/rss+xml" href="https://luth.io/index.xml" title="Luther Monson">
+  <link rel="stylesheet" href="/css/bundle.min.e1ffed86714fbb7eff75eab221c0c61b8260be0c7d1c08db0fcb7a2bdb6af7c9.css" integrity="sha256-4f/thnFPu37/deqyIcDGG4Jgvgx9HAjbD8t6K9tq98k="><link rel="stylesheet" href="/css/add-on.css">
+        <link rel="stylesheet" href="/css/code.css">
+        <link rel="stylesheet" href="/css/mobile.css">
+</head>
+
+  <body>
+    
+
+<header id="site-header">
+  <nav id="site-nav">
+    <h1 class="nav-title">
+      <a href="/" class="nav">
+        <img class="nav-avatar" src="/img/luther-monson-headshot.jpg" alt="" width="32" height="32">
+        
+          Blog
+        
+      </a>
+    </h1>
+    <menu id="site-nav-menu" class="flyout-menu menu">
+      
+        
+          
+          <a href="/" class="nav link"><i class='fa fa-home'></i> Home</a>
+        
+      
+        
+          
+          <a href="/about" class="nav link"><i class='far fa-id-card'></i> About</a>
+        
+      
+        
+          
+          <a href="/blog" class="nav link"><i class='far fa-newspaper'></i> Blog</a>
+        
+      
+        
+          
+          <a href="/archive" class="nav link"><i class='far fa-calendar-alt'></i> Archive</a>
+        
+      
+        
+          
+          <a href="/categories" class="nav link"><i class='fas fa-sitemap'></i> Categories</a>
+        
+      
+      <a href="#share-menu" class="nav link share-toggle"><i class="fas fa-share-alt">&nbsp;</i>Share</a>
+      <a href="#search-input" class="nav link search-toggle"><i class="fas fa-search">&nbsp;</i>Search</a>
+    </menu>
+    <a href="#search-input" class="nav search-toggle"><i class="fas fa-search fa-2x">&nbsp;</i></a>
+    <a href="#share-menu" class="nav share-toggle"><i class="fas fa-share-alt fa-2x">&nbsp;</i></a>
+    
+    <a href="#site-nav" class="nav nav-toggle"><i class="fas fa-bars fa-2x"></i></a>
+  </nav>
+  <menu id="search" class="menu"><input id="search-input" class="search-input menu"></input><div id="search-results" class="search-results menu"></div></menu>
+  
+  
+    <menu id="share-menu" class="flyout-menu menu">
+      <h1>Share Post</h1>
+      
+
+
+
+
+  
+    
+    <a href="//twitter.com/share?text=P99%20From%20280%20ms%20to%2058%20ms%20by%20Making%20the%20Queue%20Fair&amp;url=https%3a%2f%2fluth.io%2fblog%2f2026%2f09%2fphp-dispatch-fair-queue-p99%2f" target="_blank" rel="noopener" class="nav share-btn twitter">
+        <p>Twitter</p>
+      </a>
+  
+
+  
+      <a href="//www.facebook.com/sharer/sharer.php?u=https%3a%2f%2fluth.io%2fblog%2f2026%2f09%2fphp-dispatch-fair-queue-p99%2f" target="_blank" rel="noopener" class="nav share-btn facebook">
+        <p>Facebook</p>
+        </a>
+  
+
+  
+    <a href="//www.reddit.com/submit?url=https%3a%2f%2fluth.io%2fblog%2f2026%2f09%2fphp-dispatch-fair-queue-p99%2f&amp;title=P99%20From%20280%20ms%20to%2058%20ms%20by%20Making%20the%20Queue%20Fair" target="_blank" rel="noopener" class="nav share-btn reddit">
+          <p>Reddit</p>
+        </a>
+  
+
+  
+        <a href="//www.linkedin.com/shareArticle?url=https%3a%2f%2fluth.io%2fblog%2f2026%2f09%2fphp-dispatch-fair-queue-p99%2f&amp;title=P99%20From%20280%20ms%20to%2058%20ms%20by%20Making%20the%20Queue%20Fair" target="_blank" rel="noopener" class="nav share-btn linkedin">
+            <p>LinkedIn</p>
+          </a>
+  
+
+  
+        <a href="//www.pinterest.com/pin/create/button/?url=https%3a%2f%2fluth.io%2fblog%2f2026%2f09%2fphp-dispatch-fair-queue-p99%2f&amp;description=P99%20From%20280%20ms%20to%2058%20ms%20by%20Making%20the%20Queue%20Fair" target="_blank" rel="noopener" class="nav share-btn pinterest">
+          <p>Pinterest</p>
+        </a>
+  
+
+  
+        <a href="mailto:?subject=Check%20out%20this%20post%20by Luther%20Monson&amp;body=https%3a%2f%2fluth.io%2fblog%2f2026%2f09%2fphp-dispatch-fair-queue-p99%2f" target="_blank" class="nav share-btn email" data-proofer-ignore>
+          <p>Email</p>
+        </a>
+  
+
+
+    </menu>
+  
+</header>
+
+    <div id="wrapper">
+      <section id="site-intro" class="hidden-single-column">
+  <a href="/"><img src="/img/luther-monson-headshot.jpg" class="circle" width="100" alt="Luther Monson, Staff Software Engineer at SUSE" /></a>
+  <header>
+    <h1>Luther Monson</h1>
+  </header>
+  <main>
+    <p>Go by way of PHP &middot; Containers &middot; VMs &middot; Windows &middot; Kubernetes</p>
+  </main>
+  
+    <footer>
+      <ul class="socnet-icons">
+        
+
+        <li><a href="//github.com/luthermonson" target="_blank" rel="noopener" title="GitHub" class="fab fa-github"></a></li>
+
+
+
+
+
+
+
+
+
+
+
+<li><a href="//www.linkedin.com/in/luthermonson" target="_blank" rel="noopener" title="LinkedIn" class="fab fa-linkedin"></a></li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li><a href="//twitter.com/luthermonson" target="_blank" rel="noopener" title="Twitter" class="fab fa-twitter"></a></li>
+
+
+
+
+
+
+
+
+
+
+
+<li><a href="mailto:luther.monson@gmail.com" target="_blank" title="Email" class="far fa-envelope"></a></li>
+
+      </ul>
+    </footer>
+  
+</section>
+
+      <main id="site-main">
+        
+  <article>
+    <div class="post">
+      <header>
+  <div class="title">
+    
+      <h2><a href="/blog/2026/09/php-dispatch-fair-queue-p99/">P99 From 280 ms to 58 ms by Making the Queue Fair</a></h2>
+    
+    
+      <p>ePHPm had the best throughput in a Laravel runtime comparison and the worst tail of the fast group. The cause was a bounded channel that let new requests cut in line.</p>
+    
+  </div>
+  <div class="meta">
+    <time datetime="2026-09-07 19:45:00 -0700 PDT">September 7, 2026</time>
+    
+    <p>9-Minute Read</p>
+  </div>
+</header>
+
+      <div id="socnet-share">
+        
+
+
+
+
+  
+    
+    <a href="//twitter.com/share?text=P99%20From%20280%20ms%20to%2058%20ms%20by%20Making%20the%20Queue%20Fair&amp;url=https%3a%2f%2fluth.io%2fblog%2f2026%2f09%2fphp-dispatch-fair-queue-p99%2f" target="_blank" rel="noopener" class="nav share-btn twitter">
+        <p>Twitter</p>
+      </a>
+  
+
+  
+      <a href="//www.facebook.com/sharer/sharer.php?u=https%3a%2f%2fluth.io%2fblog%2f2026%2f09%2fphp-dispatch-fair-queue-p99%2f" target="_blank" rel="noopener" class="nav share-btn facebook">
+        <p>Facebook</p>
+        </a>
+  
+
+  
+    <a href="//www.reddit.com/submit?url=https%3a%2f%2fluth.io%2fblog%2f2026%2f09%2fphp-dispatch-fair-queue-p99%2f&amp;title=P99%20From%20280%20ms%20to%2058%20ms%20by%20Making%20the%20Queue%20Fair" target="_blank" rel="noopener" class="nav share-btn reddit">
+          <p>Reddit</p>
+        </a>
+  
+
+  
+        <a href="//www.linkedin.com/shareArticle?url=https%3a%2f%2fluth.io%2fblog%2f2026%2f09%2fphp-dispatch-fair-queue-p99%2f&amp;title=P99%20From%20280%20ms%20to%2058%20ms%20by%20Making%20the%20Queue%20Fair" target="_blank" rel="noopener" class="nav share-btn linkedin">
+            <p>LinkedIn</p>
+          </a>
+  
+
+  
+        <a href="//www.pinterest.com/pin/create/button/?url=https%3a%2f%2fluth.io%2fblog%2f2026%2f09%2fphp-dispatch-fair-queue-p99%2f&amp;description=P99%20From%20280%20ms%20to%2058%20ms%20by%20Making%20the%20Queue%20Fair" target="_blank" rel="noopener" class="nav share-btn pinterest">
+          <p>Pinterest</p>
+        </a>
+  
+
+  
+        <a href="mailto:?subject=Check%20out%20this%20post%20by Luther%20Monson&amp;body=https%3a%2f%2fluth.io%2fblog%2f2026%2f09%2fphp-dispatch-fair-queue-p99%2f" target="_blank" class="nav share-btn email" data-proofer-ignore>
+          <p>Email</p>
+        </a>
+  
+
+
+      </div>
+      <div class="content">
+        
+        <p>A third-party Laravel runtime comparison put <a href="https://github.com/ephpm/ephpm">ePHPm</a>&rsquo;s worker mode at the top on
+throughput, about 19% ahead of FrankenPHP on <code>/api/static</code>, and at the bottom of the fast group on tail latency: P99 of
+157 ms against FrankenPHP&rsquo;s 57 ms. Best throughput plus the fattest tail is a shape worth chasing, because fast
+execution can&rsquo;t produce it. Making requests faster lowers the mean <em>and</em> the tail. Only waiting can pull them apart,
+and specifically, unfair waiting.</p>
+<p>This follows the <a href="/blog/2026/09/own-your-php-thread-pool/">thread pool post</a>. Both of ePHPm&rsquo;s pools, the persistent
+worker pool and the new per-request pool, put a bounded queue in front of their threads, and both had the same
+defect.</p>
+<h3 id="what-a-fair-queue-should-look-like">What a fair queue should look like</h3>
+<p>The benchmark was wrk with 100 connections against <code>worker_count = 2</code>. At about 2,230 req/s, Little&rsquo;s law gives the
+mean time in system for an ideal two-server FIFO queue: <code>100 / 2,230 ≈ 45 ms</code>. A closed-loop FIFO system at deep
+saturation is nearly deterministic. Every request waits behind the same ~96 others, so P50, P90 and P99 should all sit
+close to that 45 ms. FrankenPHP&rsquo;s numbers looked exactly like that: P99 at 1.1x its own ideal. ePHPm&rsquo;s P99 was 3.5x.</p>
+<p>Reproducing it on my box with the official v0.8.7 release (PHP 8.4, worker mode, same wrk shape) gave this, three
+rounds:</p>
+<table>
+  <thead>
+      <tr>
+          <th>round</th>
+          <th style="text-align: right">req/s</th>
+          <th style="text-align: right">P50</th>
+          <th style="text-align: right">P75</th>
+          <th style="text-align: right">P90</th>
+          <th style="text-align: right">P99</th>
+      </tr>
+  </thead>
+  <tbody>
+      <tr>
+          <td>1</td>
+          <td style="text-align: right">2,339</td>
+          <td style="text-align: right">47.5 ms</td>
+          <td style="text-align: right">79.6 ms</td>
+          <td style="text-align: right">131.1 ms</td>
+          <td style="text-align: right">275.9 ms</td>
+      </tr>
+      <tr>
+          <td>2</td>
+          <td style="text-align: right">2,331</td>
+          <td style="text-align: right">46.5 ms</td>
+          <td style="text-align: right">80.6 ms</td>
+          <td style="text-align: right">132.9 ms</td>
+          <td style="text-align: right">275.5 ms</td>
+      </tr>
+      <tr>
+          <td>3</td>
+          <td style="text-align: right">2,321</td>
+          <td style="text-align: right">47.0 ms</td>
+          <td style="text-align: right">81.0 ms</td>
+          <td style="text-align: right">134.4 ms</td>
+          <td style="text-align: right">285.1 ms</td>
+      </tr>
+  </tbody>
+</table>
+<p>P50 is right at the ideal. Then P75, P90 and P99 climb in steps of about 43 ms. Those steps turned out to be the whole
+story.</p>
+<h3 id="the-lottery-inside-sendawait">The lottery inside <code>send().await</code></h3>
+<p>The worker pool&rsquo;s dispatch queue was <code>async_channel::bounded(worker_backlog)</code>, and <code>worker_backlog</code> defaults to the
+worker count, so the channel held 2 jobs, 2 more were executing, and the other ~96 requests were parked inside the
+channel&rsquo;s <code>Sender::send().await</code>. In async-channel 2.5 that future is a try, listen, retry loop:</p>
+<ol>
+<li>On first poll it calls <code>try_send</code> <strong>before</strong> queueing behind the senders already parked. A request that just
+arrived can grab a freed slot ahead of waiters that have been parked for hundreds of milliseconds. That&rsquo;s barging.</li>
+<li>On <code>Full</code> it registers a listener at the <strong>back</strong> of the waiter list.</li>
+<li>When a worker pops a job, exactly one waiter is woken. It has to get scheduled by tokio and then retry
+<code>try_send</code>. If a barging sender got there first, the retry fails and the loser goes to the back of the line again,
+behind ~95 others.</li>
+</ol>
+<p>Step 1 is why ePHPm topped the throughput chart: a freed slot never sits idle waiting for a parked task to get
+scheduled. Step 3 is the tail. Each lost race costs one full lap of the waiter queue, and at 2,230 req/s a lap of ~96
+waiters is <code>96 / 2,230 ≈ 43 ms</code>. One lost race lands you at about P75, two at P90, five or six at P99. The defect
+turns scheduling jitter into whole multiples of 43 ms.</p>
+<h3 id="the-tell-tale-requests-that-never-waited">The tell-tale: requests that never waited</h3>
+<p>There&rsquo;s a histogram for exactly the time a request spends inside <code>dispatch().await</code>
+(<code>ephpm_worker_request_wait_seconds</code>). Over a 70,083-request run:</p>
+<table>
+  <thead>
+      <tr>
+          <th>wait</th>
+          <th style="text-align: right">cumulative</th>
+      </tr>
+  </thead>
+  <tbody>
+      <tr>
+          <td>≤ 1 ms</td>
+          <td style="text-align: right"><strong>42.7%</strong></td>
+      </tr>
+      <tr>
+          <td>≤ 25 ms</td>
+          <td style="text-align: right">47.7%</td>
+      </tr>
+      <tr>
+          <td>≤ 50 ms</td>
+          <td style="text-align: right">66.1%</td>
+      </tr>
+      <tr>
+          <td>≤ 100 ms</td>
+          <td style="text-align: right">86.1%</td>
+      </tr>
+      <tr>
+          <td>≤ 250 ms</td>
+          <td style="text-align: right">98.8%</td>
+      </tr>
+      <tr>
+          <td>≤ 500 ms</td>
+          <td style="text-align: right">99.9%</td>
+      </tr>
+  </tbody>
+</table>
+<p>Mean wait was 41.2 ms against 1.6 ms of mean execution, so the wait <em>is</em> the latency. And 42.7% of requests got in
+under a millisecond. In a fair FIFO at this saturation the queue is never empty, so every request should wait about one
+lap, and sub-millisecond waits should be impossible. Those are the barging winners. The 13.9% that waited 2 to 12 laps
+are the same thing seen from the other end.</p>
+<p>The histogram also ruled out the other suspects: no per-worker mailboxes (one shared queue, so no head-of-line
+blocking across workers), no batching sawtooth, and the response is a non-blocking <code>oneshot</code>, so a slow client can&rsquo;t
+hold a worker.</p>
+<h3 id="the-fix-wait-in-a-fair-semaphore-not-in-the-channel">The fix: wait in a fair semaphore, not in the channel</h3>
+<p><code>tokio::sync::Semaphore</code> is documented as fair: permits go to waiters in the order they asked, and a new acquirer
+queues behind existing waiters even when a permit is free right now. Those are exactly the two properties
+<code>send().await</code> lacks. So <a href="https://github.com/ephpm/ephpm/pull/443">ephpm#443</a> moved the waiting out of the channel and
+into a semaphore with one permit per queue slot:</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-rust" data-lang="rust"><span class="line"><span class="cl"><span class="k">pub</span><span class="w"> </span><span class="k">async</span><span class="w"> </span><span class="k">fn</span> <span class="nf">dispatch</span><span class="p">(</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="o">&amp;</span><span class="bp">self</span><span class="p">,</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="n">request</span>: <span class="nc">WorkerRequestOwned</span><span class="p">,</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="p">)</span><span class="w"> </span>-&gt; <span class="nb">Result</span><span class="o">&lt;</span><span class="n">oneshot</span>::<span class="n">Receiver</span><span class="o">&lt;</span><span class="n">WorkerResponse</span><span class="o">&gt;</span><span class="p">,</span><span class="w"> </span><span class="n">DispatchClosed</span><span class="o">&gt;</span><span class="w"> </span><span class="p">{</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="c1">// Wait for a queue slot in strict arrival order. Errors only when
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="c1">// `drain()` closed the semaphore.
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="kd">let</span><span class="w"> </span><span class="nb">Ok</span><span class="p">(</span><span class="n">permit</span><span class="p">)</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">Arc</span>::<span class="n">clone</span><span class="p">(</span><span class="o">&amp;</span><span class="bp">self</span><span class="p">.</span><span class="n">admission</span><span class="p">).</span><span class="n">acquire_owned</span><span class="p">().</span><span class="k">await</span><span class="w"> </span><span class="k">else</span><span class="w"> </span><span class="p">{</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">        </span><span class="k">return</span><span class="w"> </span><span class="nb">Err</span><span class="p">(</span><span class="n">DispatchClosed</span><span class="p">);</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="p">};</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="kd">let</span><span class="w"> </span><span class="p">(</span><span class="n">tx</span><span class="p">,</span><span class="w"> </span><span class="n">rx</span><span class="p">)</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">oneshot</span>::<span class="n">channel</span><span class="p">();</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="kd">let</span><span class="w"> </span><span class="n">job</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">WorkerJob</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">request</span><span class="p">,</span><span class="w"> </span><span class="n">respond_to</span>: <span class="nc">tx</span><span class="p">,</span><span class="w"> </span><span class="n">admission</span>: <span class="nb">Some</span><span class="p">(</span><span class="n">permit</span><span class="p">)</span><span class="w"> </span><span class="p">};</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="c1">// Holding a permit guarantees a free channel slot (capacity == permit
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="c1">// count, and every enqueued job holds one permit until a worker pulls
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="c1">// it), so this `try_send` cannot see `Full`.
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="k">match</span><span class="w"> </span><span class="bp">self</span><span class="p">.</span><span class="n">dispatch_tx</span><span class="p">.</span><span class="n">try_send</span><span class="p">(</span><span class="n">job</span><span class="p">)</span><span class="w"> </span><span class="p">{</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">        </span><span class="c1">// ...
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="p">}</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="p">}</span><span class="w">
+</span></span></span></code></pre></div><p>The worker drops the permit the instant it pulls the job off the channel, the same moment a slot freed up under the
+old scheme, so the refill pipeline and throughput don&rsquo;t change. The freed slot just goes to the longest-waiting request
+instead of the luckiest one. A few details that fell out of it:</p>
+<ul>
+<li><code>drain()</code> closes the semaphore along with the channel, so parked requests still wake up into the 503 path on
+shutdown.</li>
+<li>A request cancelled by the outer timeout while parked leaves no trace, because tokio unlinks the waiter. That also
+fixed a small existing leak where a request cancelled mid-<code>send().await</code> left the queue-depth gauge permanently high.</li>
+<li>The shed path maps over one-to-one: a zero grace window is <code>try_acquire</code>, a non-zero one is
+<code>timeout(grace, acquire)</code>. Shed-mode waiters queue fairly too.</li>
+<li>A unit test, <code>admission_is_strictly_fifo_and_barge_proof</code>, pins the invariant: waiters are admitted in arrival order
+and a newcomer can&rsquo;t steal a freshly freed slot.</li>
+</ul>
+<p>From the PR, same box, parent commit vs fix, four 30-second rounds each:</p>
+<table>
+  <thead>
+      <tr>
+          <th></th>
+          <th style="text-align: right">req/s</th>
+          <th style="text-align: right">P50</th>
+          <th style="text-align: right">P75</th>
+          <th style="text-align: right">P90</th>
+          <th>P99 (per round)</th>
+          <th style="text-align: right">max</th>
+      </tr>
+  </thead>
+  <tbody>
+      <tr>
+          <td>parent (barging)</td>
+          <td style="text-align: right">2,282</td>
+          <td style="text-align: right">49.3 ms</td>
+          <td style="text-align: right">80.2 ms</td>
+          <td style="text-align: right">131 ms</td>
+          <td>259 / 280 / 303 / 267 ms</td>
+          <td style="text-align: right">1.08 s</td>
+      </tr>
+      <tr>
+          <td>fix (FIFO)</td>
+          <td style="text-align: right">2,256</td>
+          <td style="text-align: right">43.9 ms</td>
+          <td style="text-align: right">44.4 ms</td>
+          <td style="text-align: right">44.9 ms</td>
+          <td>46 / 66 / 62 / 62 ms</td>
+          <td style="text-align: right">67 ms</td>
+      </tr>
+  </tbody>
+</table>
+<p>P99 went from about 280 ms to about 58 ms at -1.1% throughput, which is inside the round-to-round spread. P99 landed at
+1.3x the ideal sojourn, the same shape as FrankenPHP&rsquo;s. P50 <em>dropped</em> too, because the median no longer carries lost
+laps. The uncontended path didn&rsquo;t move (<code>-c1</code> P99 1.19 to 1.21 ms). After the fix, 98.5% of waits landed in the 25 to
+50 ms bucket and none above 100 ms.</p>
+<h3 id="but-barging-is-more-work-conserving">&ldquo;But barging is more work-conserving&rdquo;</h3>
+<p>That&rsquo;s the objection, and it&rsquo;s a reasonable instinct: if a slot can be filled by whoever is runnable <em>right now</em>,
+surely you get more done. <a href="https://github.com/ephpm/ephpm/pull/458">ephpm#458</a> added an escape hatch,
+<code>[php] admission = &quot;fifo&quot; | &quot;barge&quot;</code>, and used it to settle the question on the per-request pool, with a rotated A/B on
+the Laravel bench (three rounds, nginx+fpm as an in-session control):</p>
+<table>
+  <thead>
+      <tr>
+          <th>per-request pool, mean of 3</th>
+          <th style="text-align: right">health</th>
+          <th style="text-align: right">static</th>
+          <th style="text-align: right">cpu</th>
+          <th style="text-align: right">db</th>
+      </tr>
+  </thead>
+  <tbody>
+      <tr>
+          <td>req/s fifo / barge</td>
+          <td style="text-align: right">1030.8 / 1030.1</td>
+          <td style="text-align: right">1018.9 / 1019.1</td>
+          <td style="text-align: right">1008.8 / 1007.7</td>
+          <td style="text-align: right">732.4 / 730.9</td>
+      </tr>
+      <tr>
+          <td>P99 ms fifo / barge</td>
+          <td style="text-align: right">105.0 / <strong>354.4</strong></td>
+          <td style="text-align: right">103.0 / <strong>375.0</strong></td>
+          <td style="text-align: right">104.6 / <strong>367.7</strong></td>
+          <td style="text-align: right">152.1 / <strong>425.2</strong></td>
+      </tr>
+  </tbody>
+</table>
+<p>Identical throughput, three times the P99. The reason barging buys nothing: at saturation the queue is never empty, so
+FIFO hands each freed slot to a waiter that&rsquo;s already parked, with no idle window. Both disciplines are equally
+work-conserving. Barging&rsquo;s only theoretical edge is filling a slot during a wakeup gap, which is microseconds against
+a service time measured in milliseconds.</p>
+<h3 id="re-measuring-it-on-a-release-binary">Re-measuring it on a release binary</h3>
+<p>The knob means the A/B no longer needs two builds, so I re-ran the worker-mode comparison on the v0.9.1 release with
+nothing but <code>EPHPM_PHP__ADMISSION</code> changing between runs. The worker is a tiny script that boots once and renders
+about half a millisecond of PHP per request (400 rows, <code>md5</code>, <code>usort</code>, <code>htmlspecialchars</code>), with <code>concurrency = 2</code> and wrk
+at 10 threads, 100 connections, 30 seconds, three rounds alternating arms.</p>
+<p><img src="/img/2026/09/php-dispatch-fair-queue-latency.svg" alt="Bar chart of P50, P75, P90 and P99 for fifo versus barge admission"></p>
+<table>
+  <thead>
+      <tr>
+          <th>mean of 3 rounds</th>
+          <th style="text-align: right">req/s</th>
+          <th style="text-align: right">P50</th>
+          <th style="text-align: right">P75</th>
+          <th style="text-align: right">P90</th>
+          <th style="text-align: right">P99</th>
+      </tr>
+  </thead>
+  <tbody>
+      <tr>
+          <td>fifo (default)</td>
+          <td style="text-align: right">4,917</td>
+          <td style="text-align: right">20.2 ms</td>
+          <td style="text-align: right">20.5 ms</td>
+          <td style="text-align: right">20.8 ms</td>
+          <td style="text-align: right">28.9 ms</td>
+      </tr>
+      <tr>
+          <td>barge</td>
+          <td style="text-align: right">4,907</td>
+          <td style="text-align: right">19.6 ms</td>
+          <td style="text-align: right">29.3 ms</td>
+          <td style="text-align: right">40.8 ms</td>
+          <td style="text-align: right">77.3 ms</td>
+      </tr>
+  </tbody>
+</table>
+<p>Same picture at a different service time. Throughput is a wash (0.2%), the median is a wash, and everything above the
+median spreads out under barging while FIFO stays in a 1 ms band up to P90. Per round, barge&rsquo;s P99 was 77.5, 76.5 and
+77.9 ms; FIFO&rsquo;s was 21.3, 32.5 and 32.9 ms. With one client (<code>-c1</code>) the two are identical: 551 µs and 550 µs at P50,
+768 µs and 771 µs at P99. Fairness only costs or saves anything when there&rsquo;s a queue.</p>
+<h3 id="sidebar-which-process-actually-answered">Sidebar: which process actually answered?</h3>
+<p>Halfway through this investigation the A/B numbers stopped making sense. The fix seemed to work only with Prometheus
+metrics enabled, then only on one port, then on neither. Every one of those phantom correlations had the same cause.
+The A/B binaries were named <code>ephpm-parent</code> and <code>ephpm-fix</code>, and the harness cleaned up with <code>pkill -x ephpm</code>, which
+matches neither. A stale <em>parent</em> server held port 8000 for an hour while freshly started servers died on
+<code>Address already in use</code>, and wrk kept measuring the stale process. Fat tail on 8000, tight tail on 8001, no matter
+which binary the harness thought it was testing.</p>
+<p>The rule I took from it: a benchmark number is only attributable to a server after you check which process served it.
+Look up the listener&rsquo;s PID, read <code>/proc/&lt;pid&gt;/exe</code>, and fail the run on a bind error instead of carrying on. My own
+harness for this post does exactly that before every measured window.</p>
+<h3 id="how-i-measured">How I measured</h3>
+<ul>
+<li>Hardware: AMD Ryzen 9 5950X (16 cores, 32 threads), 62 GiB, WSL2 kernel 6.18.33.2-microsoft-standard-WSL2.</li>
+<li>Binary: the official <code>ephpm-v0.9.1+php8.4.23-linux-x86_64</code> release, checksum verified against <code>SHA256SUMS</code>. Worker
+mode, <code>[php] concurrency = 2</code>, <code>[php.worker] max_requests = 1000000</code> so no worker recycled mid-run. Each server was
+started fresh, its startup log line confirmed the admission policy, and the listening PID&rsquo;s <code>/proc/&lt;pid&gt;/exe</code> was
+checked before every measured window.</li>
+<li>Load: <code>wrk -t10 -c100 -d30s --latency</code>, 3-second warmup per server, three rounds alternating fifo and barge, then
+<code>wrk -t1 -c1 -d10s</code> per arm. Nothing else was benchmarking on the box during the window.</li>
+<li>The PR tables above (#443, #458) are from the PR descriptions and the fairness doc, run on the same machine with a
+Laravel app.</li>
+</ul>
+<h3 id="links">Links</h3>
+<ul>
+<li><a href="https://github.com/ephpm/ephpm/issues/442">ephpm#442</a> - the issue, from the Laravel runtime comparison</li>
+<li><a href="https://github.com/ephpm/ephpm/pull/443">ephpm#443</a> - FIFO-fair dispatch admission</li>
+<li><a href="https://github.com/ephpm/ephpm/pull/458">ephpm#458</a> - the <code>[php] admission</code> knob and the fifo vs barge A/B</li>
+<li><a href="https://github.com/ephpm/ephpm/blob/main/docs/architecture/worker-dispatch-fairness.md"><code>docs/architecture/worker-dispatch-fairness.md</code></a> - the full write-up, including the measurement post-mortem</li>
+<li><a href="https://docs.rs/tokio/latest/tokio/sync/struct.Semaphore.html">tokio <code>Semaphore</code></a> (fairness is in the docs) and <a href="https://docs.rs/async-channel">async-channel</a></li>
+</ul>
+
+      </div>
+      <footer>
+        <div class="stats">
+  
+    <ul class="categories">
+      
+        
+          <li><a class="article-terms-link" href="/categories/ephpm/">ephpm</a></li>
+        
+          <li><a class="article-terms-link" href="/categories/rust/">rust</a></li>
+        
+      
+    </ul>
+  
+  
+    <ul class="tags">
+      
+        
+          <li><a class="article-terms-link" href="/tags/rust/">rust</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/tokio/">tokio</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/php/">php</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/ephpm/">ephpm</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/latency/">latency</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/queueing/">queueing</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/benchmarking/">benchmarking</a></li>
+        
+      
+    </ul>
+  
+</div>
+
+      </footer>
+    </div>
+    
+      
+  
+  <div class='post giscus-wrap'>
+    <script src='https://giscus.app/client.js'
+            data-repo='luthermonson/luth.io'
+            data-repo-id='R_kgDOGvFBXQ'
+            data-category='Announcements'
+            data-category-id='DIC_kwDOGvFBXc4DH_gv'
+            data-mapping='pathname'
+            data-strict='1'
+            data-reactions-enabled='1'
+            data-emit-metadata='0'
+            data-input-position='top'
+            data-theme='light'
+            data-lang='en'
+            data-loading='lazy'
+            crossorigin='anonymous'
+            async>
+    </script>
+  </div>
+  
+
+
+
+    
+  </article>
+  
+    <nav class="post-nav">
+      
+        <a href="/blog/2026/09/php-stack-guard-segfault-containment/" class="post-nav-link older">
+          <span class="post-nav-label">&larr; Older</span>
+          <span class="post-nav-title">We Disabled PHP&#39;s Stack Guard Ourselves: Containing Segfaults in a Single-Process PHP Server</span>
+        </a>
+      
+      
+        <a href="/blog/2026/09/single-binary-wordpress/" class="post-nav-link newer">
+          <span class="post-nav-label">Newer &rarr;</span>
+          <span class="post-nav-title">Zero-Dependency Deployments - Single Binary for WordPress</span>
+        </a>
+      
+    </nav>
+  
+
+      </main>
+      <section id="site-sidebar">
+  
+    <section id="recent-posts">
+      <header>
+        <h1>Recent Posts</h1>
+      </header>
+      
+      <article class="mini-post">
+          <a href="/blog/2026/10/ephpm-worker-mode-performance/" class="image" style="--bg-image: url('/img/2026/10/ephpm-worker-mode-performance-cover.svg');">
+    <img class="" src="/img/2026/10/ephpm-worker-mode-performance-cover.svg" alt="Diagram: before, hyper/tokio hands each request to one shared bounded channel whose waiter list all 20 PHP threads contend on; after, a dispatcher hands the job straight into the mailbox of the most recently idle PHP thread and only queues it in a FIFO overflow queue when every thread is busy">
+  </a>
+        <header>
+          <h2><a href="/blog/2026/10/ephpm-worker-mode-performance/">Fourth Place in Worker Mode, and Why It Wasn&#39;t PHP</a></h2>
+          <time class="published" datetime="2026-10-16 08:10:00 -0700 PDT">October 16, 2026</time>
+        </header>
+      </article>
+      
+      <article class="mini-post">
+          <a href="/blog/2026/10/ephpm-websockets-how-to/" class="image" style="--bg-image: url('/img/2026/10/ephpm-websockets-how-to-cover.svg');">
+    <img class="" src="/img/2026/10/ephpm-websockets-how-to-cover.svg" alt="Diagram: browsers hold sockets to ePHPm&#39;s Rust session tasks and registry; each connect, message and disconnect runs websocket.php once on the PHP thread pool, and ordinary HTTP requests push through ephpm_ws_broadcast">
+  </a>
+        <header>
+          <h2><a href="/blog/2026/10/ephpm-websockets-how-to/">WebSockets in ePHPm, From Zero to a Working Chat</a></h2>
+          <time class="published" datetime="2026-10-11 17:30:00 -0700 PDT">October 11, 2026</time>
+        </header>
+      </article>
+      
+      <article class="mini-post">
+          <a href="/blog/2026/10/webhooks-out-of-order-scheduler/" class="image" style="--bg-image: url('/img/2026/10/webhooks-out-of-order-scheduler-timeline.svg');">
+    <img class="" src="/img/2026/10/webhooks-out-of-order-scheduler-timeline.svg" alt="Timeline of three same-label jobs where a runner executing a build is destroyed 2.3 seconds before its in_progress webhook arrives">
+  </a>
+        <header>
+          <h2><a href="/blog/2026/10/webhooks-out-of-order-scheduler/">Webhooks Arrive Out of Order: How My Scheduler Killed Live Builds</a></h2>
+          <time class="published" datetime="2026-10-07 21:10:00 -0700 PDT">October 7, 2026</time>
+        </header>
+      </article>
+      
+      <article class="mini-post">
+          <a href="/blog/2026/10/go-proxmox-five-years-to-v0-8/" class="image" style="--bg-image: url('/img/2026/10/go-proxmox-five-years-to-v0-8-apidiff.svg');">
+    <img class="" src="/img/2026/10/go-proxmox-five-years-to-v0-8-apidiff.svg" alt="Horizontal bar chart of apidiff incompatible and compatible changes for every go-proxmox release from v0.1.0 to v0.8.2">
+  </a>
+        <header>
+          <h2><a href="/blog/2026/10/go-proxmox-five-years-to-v0-8/">Breaking Changes Without Breaking Trust: Five Years to go-proxmox v0.8</a></h2>
+          <time class="published" datetime="2026-10-04 19:40:00 -0700 PDT">October 4, 2026</time>
+        </header>
+      </article>
+      
+      <article class="mini-post">
+          <a href="/blog/2026/10/windows-sigterm-sparse-files/" class="image" style="--bg-image: url('/img/2026/10/windows-sigterm-sparse-files-connections.svg');">
+    <img class="" src="/img/2026/10/windows-sigterm-sparse-files-connections.svg" alt="Bar chart: 96 Cloudflare edge connections held by orphaned cloudflared processes versus 4 for the live daemon">
+  </a>
+        <header>
+          <h2><a href="/blog/2026/10/windows-sigterm-sparse-files/">Windows Grab-Bag: SIGTERM That Doesn&#39;t Exist and Sparse Files That Break Docker</a></h2>
+          <time class="published" datetime="2026-10-03 14:30:00 -0700 PDT">October 3, 2026</time>
+        </header>
+      </article>
+      
+      
+        <footer>
+          <a href="/blog" class="button">See More</a>
+        </footer>
+      
+    </section>
+  
+
+  
+    
+
+      <section id="categories">
+        <header>
+          <h1><a href="/categories">Categories</a></h1>
+        </header>
+        <ul>
+          
+          
+          <li>
+              <a href="/categories/ephpm/">ephpm<span class="count">33</span></a>
+          
+          <li>
+              <a href="/categories/go/">go<span class="count">30</span></a>
+          
+          <li>
+              <a href="/categories/php/">php<span class="count">23</span></a>
+          
+          <li>
+              <a href="/categories/rust/">rust<span class="count">15</span></a>
+          
+          <li>
+              <a href="/categories/homelab/">homelab<span class="count">14</span></a>
+          
+          <li>
+              <a href="/categories/windows/">windows<span class="count">14</span></a>
+          
+          <li>
+              <a href="/categories/ci/">ci<span class="count">9</span></a>
+          
+          <li>
+              <a href="/categories/databases/">databases<span class="count">9</span></a>
+          
+          <li>
+              <a href="/categories/security/">security<span class="count">9</span></a>
+          
+          <li>
+              <a href="/categories/containers/">containers<span class="count">7</span></a>
+          
+          <li>
+              <a href="/categories/tools/">tools<span class="count">5</span></a>
+          
+          <li>
+              <a href="/categories/ai-agents/">ai-agents<span class="count">4</span></a>
+          
+          </li>
+        </ul>
+      </section>
+    
+  
+
+  
+    <section id="mini-bio">
+      <header>
+        <h1>About</h1>
+      </header>
+      <p>Luther is a 20+ year software veteran specializing in backend APIs and architecting products. Employed at <a href='https://www.suse.com'>SUSE</a> as the Team Lead for the <a href='https://github.com/rancher/windows/issues'>Containers on Windows Team</a> working on <a href='https://rancher.com/'>Rancher</a> + <a href='https://kubernetes.io/'>Kubernetes</a></p>
+      <footer>
+        <a href="/about" class="button">Learn More</a>
+      </footer>
+    </section>
+  
+</section>
+
+      <footer id="site-footer">
+  
+      <ul class="socnet-icons">
+        
+
+        <li><a href="//github.com/luthermonson" target="_blank" rel="noopener" title="GitHub" class="fab fa-github"></a></li>
+
+
+
+
+
+
+
+
+
+
+
+<li><a href="//www.linkedin.com/in/luthermonson" target="_blank" rel="noopener" title="LinkedIn" class="fab fa-linkedin"></a></li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li><a href="//twitter.com/luthermonson" target="_blank" rel="noopener" title="Twitter" class="fab fa-twitter"></a></li>
+
+
+
+
+
+
+
+
+
+
+
+<li><a href="mailto:luther.monson@gmail.com" target="_blank" title="Email" class="far fa-envelope"></a></li>
+
+      </ul>
+  
+  <p class="copyright">
+    © 2026 Luther Monson
+      <br>
+    Theme: <a href='https://github.com/pacollins/hugo-future-imperfect-slim' target='_blank' rel='noopener'>Hugo Future Imperfect Slim</a><br>A <a href='https://html5up.net/future-imperfect' target='_blank' rel='noopener'>HTML5 UP port</a> | Powered by <a href='https://gohugo.io/' title='0.160.1' target='_blank' rel='noopener'>Hugo</a>
+  </p>
+</footer>
+<a id="back-to-top" href="#" class="fas fa-arrow-up fa-2x"></a>
+
+      <script src="/js/bundle.min.241b62ebc4792fe8c7a75879e5f710894f226f2b73342e9916b3a3b0526030cc.js" integrity="sha256-JBti68R5L&#43;jHp1h55fcQiU8ibytzNC6ZFrOjsFJgMMw="></script>
+    <script src="/js/add-on.js"></script>
+    </div>
+  </body>
+</html>

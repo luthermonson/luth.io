@@ -1,0 +1,43 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 380" font-family="system-ui, -apple-system, Segoe UI, sans-serif">
+  <rect width="800" height="380" fill="#ffffff"/>
+  <text x="400" y="34" text-anchor="middle" font-size="20" font-weight="600" fill="#222">safe-test: watch the *.test children, not go</text>
+
+  <!-- watchdog -->
+  <rect x="40" y="70" width="190" height="56" rx="6" fill="#7d5ba6"/>
+  <text x="135" y="94" text-anchor="middle" font-size="14" fill="#fff" font-weight="600">safe-test.ps1 / .sh</text>
+  <text x="135" y="113" text-anchor="middle" font-size="12" fill="#fff">poll every 0.5 s</text>
+
+  <!-- go -->
+  <rect x="330" y="70" width="140" height="56" rx="6" fill="#6b6b6b"/>
+  <text x="400" y="94" text-anchor="middle" font-size="14" fill="#fff" font-weight="600">go test ./...</text>
+  <text x="400" y="113" text-anchor="middle" font-size="12" fill="#fff">stays small</text>
+  <line x1="230" y1="98" x2="330" y2="98" stroke="#7d5ba6" stroke-width="2"/>
+  <text x="280" y="90" text-anchor="middle" font-size="11" fill="#7d5ba6">starts</text>
+
+  <!-- children -->
+  <line x1="400" y1="126" x2="150" y2="200" stroke="#999"/>
+  <line x1="400" y1="126" x2="400" y2="200" stroke="#999"/>
+  <line x1="400" y1="126" x2="650" y2="200" stroke="#999"/>
+
+  <rect x="60" y="200" width="180" height="50" rx="6" fill="#2b6cb0"/>
+  <text x="150" y="222" text-anchor="middle" font-size="13" fill="#fff">fleet.test</text>
+  <text x="150" y="240" text-anchor="middle" font-size="12" fill="#fff">~100 MB</text>
+
+  <rect x="310" y="200" width="180" height="50" rx="6" fill="#2b6cb0"/>
+  <text x="400" y="222" text-anchor="middle" font-size="13" fill="#fff">permissions.test</text>
+  <text x="400" y="240" text-anchor="middle" font-size="12" fill="#fff">~100 MB</text>
+
+  <rect x="560" y="200" width="180" height="50" rx="6" fill="#c0392b"/>
+  <text x="650" y="222" text-anchor="middle" font-size="13" fill="#fff">server.test</text>
+  <text x="650" y="240" text-anchor="middle" font-size="12" fill="#fff">~1 TB commit charge</text>
+
+  <!-- sampling lines -->
+  <path d="M135 126 C 135 170, 140 180, 150 200" fill="none" stroke="#7d5ba6" stroke-dasharray="5 4"/>
+  <path d="M190 126 C 280 170, 360 180, 390 200" fill="none" stroke="#7d5ba6" stroke-dasharray="5 4"/>
+  <path d="M225 120 C 450 160, 600 170, 640 200" fill="none" stroke="#7d5ba6" stroke-dasharray="5 4"/>
+
+  <text x="650" y="285" text-anchor="middle" font-size="13" fill="#c0392b">over the cap: kill it and the go tree, exit 1</text>
+
+  <text x="200" y="320" font-size="13" fill="#444">Windows: PagedMemorySize64 (commit charge)</text>
+  <text x="200" y="342" font-size="13" fill="#444">Linux/macOS: RSS, matched on argv[0] (comm truncates to 15 chars)</text>
+</svg>

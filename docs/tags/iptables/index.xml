@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>Iptables on Luther Monson</title>
+    <link>https://luth.io/tags/iptables/</link>
+    <description>Recent content in Iptables on Luther Monson</description>
+    <generator>Hugo</generator>
+    <language>en</language>
+    <lastBuildDate>Wed, 26 Aug 2026 20:30:00 -0700</lastBuildDate>
+    <atom:link href="https://luth.io/tags/iptables/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>My iptables Rule Matched 0 Packets in 9.8 GB</title>
+      <link>https://luth.io/blog/2026/08/iptables-rule-zero-packets/</link>
+      <pubDate>Wed, 26 Aug 2026 20:30:00 -0700</pubDate>
+      <guid>https://luth.io/blog/2026/08/iptables-rule-zero-packets/</guid>
+      <description>&lt;p&gt;After a week of Windows firewall rules that &lt;a href=&#34;https://luth.io/blog/2026/08/windows-container-egress-firewall/&#34;&gt;listed fine and enforced nothing&lt;/a&gt;,&#xA;I went back to the Linux side of &lt;a href=&#34;https://github.com/ephpm/ephemerd&#34;&gt;ephemerd&lt;/a&gt; feeling pretty good about it. iptables is&#xA;the boring, well-understood one. Then I looked at the packet counters on a live node and found a rule that had never&#xA;matched a packet in its life, on a node that had pushed 9.8 GB through the same chain.&lt;/p&gt;&#xA;&lt;h3 id=&#34;the-rules-i-thought-i-had&#34;&gt;The rules I thought I had&lt;/h3&gt;&#xA;&lt;p&gt;Job containers sit on a CNI bridge, &lt;code&gt;10.88.0.0/16&lt;/code&gt;, with the host on &lt;code&gt;10.88.0.1&lt;/code&gt;. ephemerd puts its egress policy in its&#xA;own chain, &lt;code&gt;EPHEMERD-FORWARD&lt;/code&gt;, jumped to from &lt;code&gt;FORWARD&lt;/code&gt; for anything to or from the container subnet. From a live node:&lt;/p&gt;</description>
+    </item>
+  </channel>
+</rss>

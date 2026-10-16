@@ -1,0 +1,56 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 600" width="1200" height="600" font-family="system-ui, -apple-system, Segoe UI, Roboto, sans-serif">
+  <rect width="1200" height="600" fill="#ffffff"/>
+  <text x="600" y="46" text-anchor="middle" font-size="26" font-weight="600" fill="#222">Every piece of ePHPm, and the "because" behind it</text>
+  <text x="600" y="76" text-anchor="middle" font-size="16" fill="#6b6b6b">built / borrowed / upstreamed / deliberately not built (as of v0.1.0)</text>
+
+  <g stroke="#6b6b6b" stroke-width="1.5">
+    <line x1="600" y1="320" x2="250" y2="170"/>
+    <line x1="600" y1="320" x2="600" y2="170"/>
+    <line x1="600" y1="320" x2="950" y2="170"/>
+    <line x1="600" y1="320" x2="250" y2="470"/>
+    <line x1="600" y1="320" x2="600" y2="480"/>
+    <line x1="600" y1="320" x2="950" y2="470"/>
+  </g>
+
+  <rect x="490" y="285" width="220" height="70" rx="12" fill="#222"/>
+  <text x="600" y="316" text-anchor="middle" font-size="20" font-weight="600" fill="#fff">ephpm</text>
+  <text x="600" y="340" text-anchor="middle" font-size="14" fill="#ddd">one binary, one process</text>
+
+  <g font-size="14">
+    <rect x="80" y="110" width="340" height="110" rx="10" fill="#fff" stroke="#3a9a5b" stroke-width="2"/>
+    <text x="100" y="138" font-weight="600" font-size="16" fill="#3a9a5b">BUILT: Rust + C wrapper</text>
+    <text x="100" y="162" fill="#333">because PHP calls back into the host</text>
+    <text x="100" y="182" fill="#333">constantly, and that direction should</text>
+    <text x="100" y="202" fill="#333">be a plain function call</text>
+
+    <rect x="430" y="110" width="340" height="110" rx="10" fill="#fff" stroke="#3a9a5b" stroke-width="2"/>
+    <text x="450" y="138" font-weight="600" font-size="16" fill="#3a9a5b">BUILT: KV store (DashMap + RESP)</text>
+    <text x="450" y="162" fill="#333">because Redis isn't a library and</text>
+    <text x="450" y="182" fill="#333">Dragonfly's BSL excludes in-memory</text>
+    <text x="450" y="202" fill="#333">data store products</text>
+
+    <rect x="780" y="110" width="340" height="110" rx="10" fill="#fff" stroke="#2b6cb0" stroke-width="2"/>
+    <text x="800" y="138" font-weight="600" font-size="16" fill="#2b6cb0">BORROWED: chitchat for gossip</text>
+    <text x="800" y="162" fill="#333">because membership is a solved</text>
+    <text x="800" y="182" fill="#333">problem and etcd/Consul would be</text>
+    <text x="800" y="202" fill="#333">a second thing to run</text>
+
+    <rect x="80" y="420" width="340" height="110" rx="10" fill="#fff" stroke="#e07a1f" stroke-width="2"/>
+    <text x="100" y="448" font-weight="600" font-size="16" fill="#b35f12">UPSTREAMED: static-php-cli fixes</text>
+    <text x="100" y="472" fill="#333">because everyone building static PHP</text>
+    <text x="100" y="492" fill="#333">hits the same Windows/macOS bugs,</text>
+    <text x="100" y="512" fill="#333">and a fork is forever</text>
+
+    <rect x="430" y="430" width="340" height="110" rx="10" fill="#fff" stroke="#3a9a5b" stroke-width="2"/>
+    <text x="450" y="458" font-weight="600" font-size="16" fill="#3a9a5b">BUILT: litewire (MySQL wire → SQLite)</text>
+    <text x="450" y="482" fill="#333">because a lot of deployments don't</text>
+    <text x="450" y="502" fill="#333">need a MySQL server, but their</text>
+    <text x="450" y="522" fill="#333">code only speaks pdo_mysql</text>
+
+    <rect x="780" y="420" width="340" height="110" rx="10" fill="#fff" stroke="#c0392b" stroke-width="2" stroke-dasharray="7 5"/>
+    <text x="800" y="448" font-weight="600" font-size="16" fill="#c0392b">NOT BUILT (yet)</text>
+    <text x="800" y="472" fill="#333">admin UI, OpenTelemetry, KV</text>
+    <text x="800" y="492" fill="#333">persistence, RESP lists/sets,</text>
+    <text x="800" y="512" fill="#333">auto-EXPLAIN: no real need yet</text>
+  </g>
+</svg>

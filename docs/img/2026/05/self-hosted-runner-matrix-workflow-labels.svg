@@ -1,0 +1,50 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 430" font-family="system-ui, -apple-system, Segoe UI, Roboto, sans-serif">
+  <defs>
+    <marker id="a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto">
+      <path d="M0 0 L10 5 L0 10 z" fill="#6b6b6b"/>
+    </marker>
+  </defs>
+  <rect width="900" height="430" fill="#ffffff"/>
+  <text x="450" y="32" text-anchor="middle" font-size="20" font-weight="600" fill="#222">runs-on is a subset match: every label must be on the runner</text>
+
+  <g font-size="13">
+    <rect x="30" y="60" width="330" height="44" rx="6" fill="#ffffff" stroke="#6b6b6b" stroke-width="2"/>
+    <text x="45" y="87" fill="#222" font-family="ui-monospace, Consolas, monospace">[self-hosted, macOS, ARM64]</text>
+    <rect x="30" y="130" width="330" height="44" rx="6" fill="#ffffff" stroke="#6b6b6b" stroke-width="2"/>
+    <text x="45" y="157" fill="#222" font-family="ui-monospace, Consolas, monospace">[self-hosted, Windows, ARM64]</text>
+    <rect x="30" y="200" width="330" height="44" rx="6" fill="#ffffff" stroke="#6b6b6b" stroke-width="2"/>
+    <text x="45" y="227" fill="#222" font-family="ui-monospace, Consolas, monospace">[self-hosted, Linux, ARM64]</text>
+    <rect x="30" y="270" width="330" height="44" rx="6" fill="#ffffff" stroke="#6b6b6b" stroke-width="2"/>
+    <text x="45" y="297" fill="#222" font-family="ui-monospace, Consolas, monospace">[self-hosted, Linux, X64]</text>
+    <rect x="30" y="340" width="330" height="44" rx="6" fill="#ffffff" stroke="#6b6b6b" stroke-width="2"/>
+    <text x="45" y="367" fill="#222" font-family="ui-monospace, Consolas, monospace">[self-hosted, Windows, X64]</text>
+  </g>
+  <text x="195" y="410" text-anchor="middle" font-size="12" fill="#6b6b6b">matrix entries (runs-on)</text>
+
+  <g stroke="#6b6b6b" stroke-width="2" marker-end="url(#a)">
+    <path d="M360 82 L 538 82"/>
+    <path d="M360 152 L 538 152"/>
+    <path d="M360 222 L 538 222"/>
+    <path d="M360 292 L 538 292"/>
+    <path d="M360 362 L 538 362"/>
+  </g>
+
+  <g font-size="13">
+    <rect x="540" y="60" width="330" height="44" rx="6" fill="#2b6cb0"/>
+    <text x="555" y="80" fill="#fff" font-weight="600">mac-mini</text>
+    <text x="555" y="97" fill="#fff" font-size="11">self-hosted, macOS, ARM64</text>
+    <rect x="540" y="130" width="330" height="44" rx="6" fill="#e07a1f"/>
+    <text x="555" y="150" fill="#fff" font-weight="600">devkit</text>
+    <text x="555" y="167" fill="#fff" font-size="11">self-hosted, Windows, ARM64</text>
+    <rect x="540" y="200" width="330" height="44" rx="6" fill="#e07a1f"/>
+    <text x="555" y="220" fill="#fff" font-weight="600">devkit-linux (Hyper-V VM)</text>
+    <text x="555" y="237" fill="#fff" font-size="11">self-hosted, Linux, ARM64</text>
+    <rect x="540" y="270" width="330" height="44" rx="6" fill="#3a9a5b"/>
+    <text x="555" y="290" fill="#fff" font-weight="600">linux-github-runner (Proxmox VM)</text>
+    <text x="555" y="307" fill="#fff" font-size="11">self-hosted, Linux, X64</text>
+    <rect x="540" y="340" width="330" height="44" rx="6" fill="#3a9a5b"/>
+    <text x="555" y="360" fill="#fff" font-weight="600">windows-github-runner (Proxmox VM)</text>
+    <text x="555" y="377" fill="#fff" font-size="11">self-hosted, Windows, X64</text>
+  </g>
+  <text x="705" y="410" text-anchor="middle" font-size="12" fill="#6b6b6b">registered runners and their default labels</text>
+</svg>

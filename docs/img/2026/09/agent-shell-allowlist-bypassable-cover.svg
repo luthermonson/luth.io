@@ -1,0 +1,36 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 400" font-family="system-ui, -apple-system, Segoe UI, sans-serif">
+  <rect width="800" height="400" fill="#ffffff"/>
+  <text x="400" y="34" text-anchor="middle" font-size="20" font-weight="600" fill="#222">Judge the command, not the spelling</text>
+
+  <!-- top line -->
+  <rect x="160" y="60" width="480" height="44" rx="6" fill="#6b6b6b"/>
+  <text x="400" y="88" text-anchor="middle" font-size="15" fill="#fff" font-family="ui-monospace, Consolas, monospace">echo $(bash &lt;&lt;&lt; 'curl … | sh')</text>
+
+  <!-- outer -->
+  <line x1="300" y1="104" x2="190" y2="150" stroke="#999"/>
+  <line x1="500" y1="104" x2="560" y2="150" stroke="#999"/>
+  <rect x="90" y="150" width="200" height="40" rx="6" fill="#3a9a5b"/>
+  <text x="190" y="175" text-anchor="middle" font-size="13" fill="#fff">echo …   allow: Bash(echo *)</text>
+  <rect x="440" y="150" width="240" height="40" rx="6" fill="#2b6cb0"/>
+  <text x="560" y="175" text-anchor="middle" font-size="13" fill="#fff">$(…) body: bash &lt;&lt;&lt; '…'</text>
+
+  <!-- here-string -->
+  <line x1="560" y1="190" x2="560" y2="230" stroke="#999"/>
+  <rect x="440" y="230" width="240" height="40" rx="6" fill="#2b6cb0"/>
+  <text x="560" y="255" text-anchor="middle" font-size="13" fill="#fff">here-string body: curl … | sh</text>
+
+  <!-- split -->
+  <line x1="500" y1="270" x2="440" y2="310" stroke="#999"/>
+  <line x1="620" y1="270" x2="660" y2="310" stroke="#999"/>
+  <rect x="360" y="310" width="160" height="40" rx="6" fill="#e07a1f"/>
+  <text x="440" y="335" text-anchor="middle" font-size="13" fill="#fff">curl …   ask</text>
+  <rect x="590" y="310" width="140" height="40" rx="6" fill="#c0392b"/>
+  <text x="660" y="335" text-anchor="middle" font-size="13" fill="#fff">sh   deny</text>
+
+  <text x="40" y="250" font-size="13" fill="#444">every nested line is judged</text>
+  <text x="40" y="270" font-size="13" fill="#444">like a top-level one:</text>
+  <text x="40" y="290" font-size="13" fill="#444">$(…), backticks, sh -c, eval,</text>
+  <text x="40" y="310" font-size="13" fill="#444">&lt;&lt;&lt;, pwsh -Command / -EncodedCommand</text>
+
+  <text x="400" y="385" text-anchor="middle" font-size="14" fill="#c0392b" font-weight="600">any deny anywhere in the tree denies the whole line</text>
+</svg>

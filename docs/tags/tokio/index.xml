@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>Tokio on Luther Monson</title>
+    <link>https://luth.io/tags/tokio/</link>
+    <description>Recent content in Tokio on Luther Monson</description>
+    <generator>Hugo</generator>
+    <language>en</language>
+    <lastBuildDate>Mon, 07 Sep 2026 19:45:00 -0700</lastBuildDate>
+    <atom:link href="https://luth.io/tags/tokio/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>P99 From 280 ms to 58 ms by Making the Queue Fair</title>
+      <link>https://luth.io/blog/2026/09/php-dispatch-fair-queue-p99/</link>
+      <pubDate>Mon, 07 Sep 2026 19:45:00 -0700</pubDate>
+      <guid>https://luth.io/blog/2026/09/php-dispatch-fair-queue-p99/</guid>
+      <description>&lt;p&gt;A third-party Laravel runtime comparison put &lt;a href=&#34;https://github.com/ephpm/ephpm&#34;&gt;ePHPm&lt;/a&gt;&amp;rsquo;s worker mode at the top on&#xA;throughput, about 19% ahead of FrankenPHP on &lt;code&gt;/api/static&lt;/code&gt;, and at the bottom of the fast group on tail latency: P99 of&#xA;157 ms against FrankenPHP&amp;rsquo;s 57 ms. Best throughput plus the fattest tail is a shape worth chasing, because fast&#xA;execution can&amp;rsquo;t produce it. Making requests faster lowers the mean &lt;em&gt;and&lt;/em&gt; the tail. Only waiting can pull them apart,&#xA;and specifically, unfair waiting.&lt;/p&gt;</description>
+    </item>
+    <item>
+      <title>Stop Running PHP on tokio&#39;s spawn_blocking - Own Your Thread Pool</title>
+      <link>https://luth.io/blog/2026/09/own-your-php-thread-pool/</link>
+      <pubDate>Fri, 04 Sep 2026 20:30:00 -0700</pubDate>
+      <guid>https://luth.io/blog/2026/09/own-your-php-thread-pool/</guid>
+      <description>&lt;p&gt;For most of its life, &lt;a href=&#34;https://github.com/ephpm/ephpm&#34;&gt;ePHPm&lt;/a&gt; ran every PHP request on tokio&amp;rsquo;s &lt;code&gt;spawn_blocking&lt;/code&gt;&#xA;pool. It works. It passes tests, it serves benchmarks fine, and it&amp;rsquo;s the first thing anybody reaches for when they&#xA;need to call blocking code from async Rust. It&amp;rsquo;s also quietly wrong for a language runtime, in ways that only show up&#xA;under overload or after a crash. Over the last three weeks it got replaced with a pool of OS threads that ePHPm owns,&#xA;first behind a config flag, then as the default, and as of v0.9.0 the &lt;code&gt;spawn_blocking&lt;/code&gt; engine is gone.&lt;/p&gt;</description>
+    </item>
+    <item>
+      <title>PHP Signal Safety - The Init Ordering Bug Nobody Warns You About</title>
+      <link>https://luth.io/blog/2026/04/php-signal-safety-init-ordering/</link>
+      <pubDate>Sun, 12 Apr 2026 20:15:00 -0700</pubDate>
+      <guid>https://luth.io/blog/2026/04/php-signal-safety-init-ordering/</guid>
+      <description>&lt;p&gt;Last week I wrote about &lt;a href=&#34;https://luth.io/blog/2026/04/why-rust-for-php-embedding/&#34;&gt;why ePHPm embeds PHP from Rust&lt;/a&gt; and promised the&#xA;signal bug its own post. Here it is. It&amp;rsquo;s the kind of bug where the fix is about ten lines and the explanation is the&#xA;whole post, because nothing in PHP&amp;rsquo;s embed documentation (there&amp;rsquo;s barely any) tells you that initializing PHP has&#xA;process-wide side effects that assume PHP is the only thing in the process.&lt;/p&gt;&#xA;&lt;h3 id=&#34;the-setup&#34;&gt;The setup&lt;/h3&gt;&#xA;&lt;p&gt;The first working version of &lt;code&gt;ephpm serve&lt;/code&gt; looked like every async Rust program: &lt;code&gt;#[tokio::main]&lt;/code&gt;-style, build the&#xA;runtime, then inside it load config, initialize PHP, start the HTTP server. PHP requests run on &lt;code&gt;spawn_blocking&lt;/code&gt;&#xA;threads. Simplified:&lt;/p&gt;</description>
+    </item>
+  </channel>
+</rss>

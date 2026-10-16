@@ -1,0 +1,718 @@
+<!doctype html>
+<html lang="en">
+  <head>
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-MSTSKGFWTX"></script>
+<script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+
+    gtag('config', 'G-MSTSKGFWTX');
+</script><meta charset="utf-8">
+<title>Building k9s for Linode With Bubble Tea - Luther Monson</title>
+<meta name="description" content="A k9s-style terminal app for managing Linode: search for any resource, browse it, and jump straight into k9s, a database shell or SSH.">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<meta name="twitter:card" content="summary_large_image"><meta name="twitter:site" content="@luthermonson">
+
+<meta property="og:site_name" content="Luther Monson">
+<meta property="og:title" content="Building k9s for Linode With Bubble Tea">
+<meta property="og:description" content="A k9s-style terminal app for managing Linode: search for any resource, browse it, and jump straight into k9s, a database shell or SSH.">
+<meta property="og:type" content="article">
+<meta property="og:url" content="https://luth.io/blog/2026/09/linode-tui/">
+    <meta property="og:image" content="https://luth.io/img/2026/09/linode-tui-linodes.svg">
+    <meta property="og:image:alt" content="linode-tui showing the Linodes view with the command bar open and tab completion suggesting lke">
+
+
+  <link rel="manifest" href="/favicon/site.webmanifest?v=1">
+  <link rel="apple-touch-icon" sizes="180x180" href="/favicon/apple-touch-icon.png?v=1">
+  <link rel="icon" type="image/png" sizes="32x32" href="/favicon/favicon-32x32.png?v=1">
+  <link rel="icon" type="image/png" sizes="16x16" href="/favicon/favicon-16x16.png?v=1">
+  
+    <link rel="mask-icon" href="/favicon/safari-pinned-tab.svg?v=1" color="#ffffff">
+    <link rel="shortcut icon" href="/favicon/favicon.ico?v=1">
+    <meta name="msapplication-config" content="/favicon/browserconfig.xml?v=1">
+  
+  <meta name="msapplication-TileColor" content="#ffffff">
+  <meta name="theme-color" content="#ffffff">
+
+
+  <meta name="generator" content="Hugo 0.160.1">
+  <link rel="alternate" type="application/rss+xml" href="https://luth.io/index.xml" title="Luther Monson">
+  <link rel="stylesheet" href="/css/bundle.min.e1ffed86714fbb7eff75eab221c0c61b8260be0c7d1c08db0fcb7a2bdb6af7c9.css" integrity="sha256-4f/thnFPu37/deqyIcDGG4Jgvgx9HAjbD8t6K9tq98k="><link rel="stylesheet" href="/css/add-on.css">
+        <link rel="stylesheet" href="/css/code.css">
+        <link rel="stylesheet" href="/css/mobile.css">
+</head>
+
+  <body>
+    
+
+<header id="site-header">
+  <nav id="site-nav">
+    <h1 class="nav-title">
+      <a href="/" class="nav">
+        <img class="nav-avatar" src="/img/luther-monson-headshot.jpg" alt="" width="32" height="32">
+        
+          Blog
+        
+      </a>
+    </h1>
+    <menu id="site-nav-menu" class="flyout-menu menu">
+      
+        
+          
+          <a href="/" class="nav link"><i class='fa fa-home'></i> Home</a>
+        
+      
+        
+          
+          <a href="/about" class="nav link"><i class='far fa-id-card'></i> About</a>
+        
+      
+        
+          
+          <a href="/blog" class="nav link"><i class='far fa-newspaper'></i> Blog</a>
+        
+      
+        
+          
+          <a href="/archive" class="nav link"><i class='far fa-calendar-alt'></i> Archive</a>
+        
+      
+        
+          
+          <a href="/categories" class="nav link"><i class='fas fa-sitemap'></i> Categories</a>
+        
+      
+      <a href="#share-menu" class="nav link share-toggle"><i class="fas fa-share-alt">&nbsp;</i>Share</a>
+      <a href="#search-input" class="nav link search-toggle"><i class="fas fa-search">&nbsp;</i>Search</a>
+    </menu>
+    <a href="#search-input" class="nav search-toggle"><i class="fas fa-search fa-2x">&nbsp;</i></a>
+    <a href="#share-menu" class="nav share-toggle"><i class="fas fa-share-alt fa-2x">&nbsp;</i></a>
+    
+    <a href="#site-nav" class="nav nav-toggle"><i class="fas fa-bars fa-2x"></i></a>
+  </nav>
+  <menu id="search" class="menu"><input id="search-input" class="search-input menu"></input><div id="search-results" class="search-results menu"></div></menu>
+  
+  
+    <menu id="share-menu" class="flyout-menu menu">
+      <h1>Share Post</h1>
+      
+
+
+
+
+  
+    
+    <a href="//twitter.com/share?text=Building%20k9s%20for%20Linode%20With%20Bubble%20Tea&amp;url=https%3a%2f%2fluth.io%2fblog%2f2026%2f09%2flinode-tui%2f" target="_blank" rel="noopener" class="nav share-btn twitter">
+        <p>Twitter</p>
+      </a>
+  
+
+  
+      <a href="//www.facebook.com/sharer/sharer.php?u=https%3a%2f%2fluth.io%2fblog%2f2026%2f09%2flinode-tui%2f" target="_blank" rel="noopener" class="nav share-btn facebook">
+        <p>Facebook</p>
+        </a>
+  
+
+  
+    <a href="//www.reddit.com/submit?url=https%3a%2f%2fluth.io%2fblog%2f2026%2f09%2flinode-tui%2f&amp;title=Building%20k9s%20for%20Linode%20With%20Bubble%20Tea" target="_blank" rel="noopener" class="nav share-btn reddit">
+          <p>Reddit</p>
+        </a>
+  
+
+  
+        <a href="//www.linkedin.com/shareArticle?url=https%3a%2f%2fluth.io%2fblog%2f2026%2f09%2flinode-tui%2f&amp;title=Building%20k9s%20for%20Linode%20With%20Bubble%20Tea" target="_blank" rel="noopener" class="nav share-btn linkedin">
+            <p>LinkedIn</p>
+          </a>
+  
+
+  
+        <a href="//www.pinterest.com/pin/create/button/?url=https%3a%2f%2fluth.io%2fblog%2f2026%2f09%2flinode-tui%2f&amp;description=Building%20k9s%20for%20Linode%20With%20Bubble%20Tea" target="_blank" rel="noopener" class="nav share-btn pinterest">
+          <p>Pinterest</p>
+        </a>
+  
+
+  
+        <a href="mailto:?subject=Check%20out%20this%20post%20by Luther%20Monson&amp;body=https%3a%2f%2fluth.io%2fblog%2f2026%2f09%2flinode-tui%2f" target="_blank" class="nav share-btn email" data-proofer-ignore>
+          <p>Email</p>
+        </a>
+  
+
+
+    </menu>
+  
+</header>
+
+    <div id="wrapper">
+      <section id="site-intro" class="hidden-single-column">
+  <a href="/"><img src="/img/luther-monson-headshot.jpg" class="circle" width="100" alt="Luther Monson, Staff Software Engineer at SUSE" /></a>
+  <header>
+    <h1>Luther Monson</h1>
+  </header>
+  <main>
+    <p>Go by way of PHP &middot; Containers &middot; VMs &middot; Windows &middot; Kubernetes</p>
+  </main>
+  
+    <footer>
+      <ul class="socnet-icons">
+        
+
+        <li><a href="//github.com/luthermonson" target="_blank" rel="noopener" title="GitHub" class="fab fa-github"></a></li>
+
+
+
+
+
+
+
+
+
+
+
+<li><a href="//www.linkedin.com/in/luthermonson" target="_blank" rel="noopener" title="LinkedIn" class="fab fa-linkedin"></a></li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li><a href="//twitter.com/luthermonson" target="_blank" rel="noopener" title="Twitter" class="fab fa-twitter"></a></li>
+
+
+
+
+
+
+
+
+
+
+
+<li><a href="mailto:luther.monson@gmail.com" target="_blank" title="Email" class="far fa-envelope"></a></li>
+
+      </ul>
+    </footer>
+  
+</section>
+
+      <main id="site-main">
+        
+  <article>
+    <div class="post">
+      <header>
+  <div class="title">
+    
+      <h2><a href="/blog/2026/09/linode-tui/">Building k9s for Linode With Bubble Tea</a></h2>
+    
+    
+      <p>A k9s-style terminal app for managing Linode: search for any resource, browse it, and jump straight into k9s, a database shell or SSH.</p>
+    
+  </div>
+  <div class="meta">
+    <time datetime="2026-09-09 21:22:00 -0700 PDT">September 9, 2026</time>
+    
+    <p>8-Minute Read</p>
+  </div>
+</header>
+
+      <div id="socnet-share">
+        
+
+
+
+
+  
+    
+    <a href="//twitter.com/share?text=Building%20k9s%20for%20Linode%20With%20Bubble%20Tea&amp;url=https%3a%2f%2fluth.io%2fblog%2f2026%2f09%2flinode-tui%2f" target="_blank" rel="noopener" class="nav share-btn twitter">
+        <p>Twitter</p>
+      </a>
+  
+
+  
+      <a href="//www.facebook.com/sharer/sharer.php?u=https%3a%2f%2fluth.io%2fblog%2f2026%2f09%2flinode-tui%2f" target="_blank" rel="noopener" class="nav share-btn facebook">
+        <p>Facebook</p>
+        </a>
+  
+
+  
+    <a href="//www.reddit.com/submit?url=https%3a%2f%2fluth.io%2fblog%2f2026%2f09%2flinode-tui%2f&amp;title=Building%20k9s%20for%20Linode%20With%20Bubble%20Tea" target="_blank" rel="noopener" class="nav share-btn reddit">
+          <p>Reddit</p>
+        </a>
+  
+
+  
+        <a href="//www.linkedin.com/shareArticle?url=https%3a%2f%2fluth.io%2fblog%2f2026%2f09%2flinode-tui%2f&amp;title=Building%20k9s%20for%20Linode%20With%20Bubble%20Tea" target="_blank" rel="noopener" class="nav share-btn linkedin">
+            <p>LinkedIn</p>
+          </a>
+  
+
+  
+        <a href="//www.pinterest.com/pin/create/button/?url=https%3a%2f%2fluth.io%2fblog%2f2026%2f09%2flinode-tui%2f&amp;description=Building%20k9s%20for%20Linode%20With%20Bubble%20Tea" target="_blank" rel="noopener" class="nav share-btn pinterest">
+          <p>Pinterest</p>
+        </a>
+  
+
+  
+        <a href="mailto:?subject=Check%20out%20this%20post%20by Luther%20Monson&amp;body=https%3a%2f%2fluth.io%2fblog%2f2026%2f09%2flinode-tui%2f" target="_blank" class="nav share-btn email" data-proofer-ignore>
+          <p>Email</p>
+        </a>
+  
+
+
+      </div>
+      <div class="content">
+        
+        <p>A lot of my day is spent in <a href="https://k9scli.io/">k9s</a>, and when I need something from the Linode side of the house (a node that won&rsquo;t
+boot, a volume nobody cleaned up, the kubeconfig for a cluster I just made) I&rsquo;m back in a browser tab or typing <code>linode-cli</code> incantations.
+I wanted the k9s workflow for the Linode API itself: <code>:</code> to jump to a resource type, <code>/</code> to filter, single-key actions on the selected row,
+and Enter to go deeper. That turned into <a href="https://github.com/luthermonson/linode-tui">linode-tui</a>, a Go TUI built on
+<a href="https://github.com/charmbracelet/bubbletea">Bubble Tea</a>, <a href="https://github.com/linode/linodego">linodego</a> and urfave/cli v3.</p>
+<p>It started as a private repo in May, got restructured for open source in June (flattened <code>internal/</code>, slimmed the CLI down, moved to
+linodego v2), and went public with v0.1.0 at the end of August. Everything here is as of <a href="https://github.com/luthermonson/linode-tui/releases/tag/v0.2.1">v0.2.1</a>.</p>
+<p><img src="/img/2026/09/linode-tui-linodes.svg" alt="linode-tui Linodes view with the command bar open"></p>
+<h3 id="one-list-view-thirteen-resources">One list view, thirteen resources</h3>
+<p>There are 13 resource views: Linodes, Volumes, NodeBalancers, Firewalls, Images, Domains, LKE clusters, VPCs, Placement Groups,
+StackScripts, Object Storage, databases and Events. Writing 13 Bubble Tea models by hand would have been a lot of copy and paste, so
+there&rsquo;s one generic <code>listView[T]</code> and every resource is a set of options handed to it. This is most of the Linodes view:</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-go" data-lang="go"><span class="line"><span class="cl"><span class="kd">func</span><span class="w"> </span><span class="nf">init</span><span class="p">()</span><span class="w"> </span><span class="p">{</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">	</span><span class="nf">Register</span><span class="p">(</span><span class="s">&#34;instances&#34;</span><span class="p">,</span><span class="w"> </span><span class="p">[]</span><span class="kt">string</span><span class="p">{</span><span class="s">&#34;linodes&#34;</span><span class="p">,</span><span class="w"> </span><span class="s">&#34;inst&#34;</span><span class="p">,</span><span class="w"> </span><span class="s">&#34;li&#34;</span><span class="p">},</span><span class="w"> </span><span class="nx">newInstances</span><span class="p">)</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="p">}</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="kd">func</span><span class="w"> </span><span class="nf">newInstances</span><span class="p">(</span><span class="nx">d</span><span class="w"> </span><span class="nx">Deps</span><span class="p">)</span><span class="w"> </span><span class="nx">View</span><span class="w"> </span><span class="p">{</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">	</span><span class="k">return</span><span class="w"> </span><span class="nf">newListView</span><span class="p">(</span><span class="nx">listOpts</span><span class="p">[</span><span class="nx">linodego</span><span class="p">.</span><span class="nx">Instance</span><span class="p">]{</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">		</span><span class="nx">Deps</span><span class="p">:</span><span class="w">  </span><span class="nx">d</span><span class="p">,</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">		</span><span class="nx">Title</span><span class="p">:</span><span class="w"> </span><span class="s">&#34;Linodes&#34;</span><span class="p">,</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">		</span><span class="nx">Columns</span><span class="p">:</span><span class="w"> </span><span class="p">[]</span><span class="nx">Col</span><span class="p">{</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">			</span><span class="p">{</span><span class="nx">Title</span><span class="p">:</span><span class="w"> </span><span class="s">&#34;ID&#34;</span><span class="p">,</span><span class="w"> </span><span class="nx">Width</span><span class="p">:</span><span class="w"> </span><span class="mi">10</span><span class="p">,</span><span class="w"> </span><span class="nx">MinWidth</span><span class="p">:</span><span class="w"> </span><span class="mi">6</span><span class="p">,</span><span class="w"> </span><span class="nx">Priority</span><span class="p">:</span><span class="w"> </span><span class="nx">PriPinned</span><span class="p">},</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">			</span><span class="p">{</span><span class="nx">Title</span><span class="p">:</span><span class="w"> </span><span class="s">&#34;LABEL&#34;</span><span class="p">,</span><span class="w"> </span><span class="nx">Width</span><span class="p">:</span><span class="w"> </span><span class="mi">28</span><span class="p">,</span><span class="w"> </span><span class="nx">MinWidth</span><span class="p">:</span><span class="w"> </span><span class="mi">12</span><span class="p">,</span><span class="w"> </span><span class="nx">Priority</span><span class="p">:</span><span class="w"> </span><span class="nx">PriPinned</span><span class="p">,</span><span class="w"> </span><span class="nx">Flex</span><span class="p">:</span><span class="w"> </span><span class="kc">true</span><span class="p">},</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">			</span><span class="p">{</span><span class="nx">Title</span><span class="p">:</span><span class="w"> </span><span class="s">&#34;REGION&#34;</span><span class="p">,</span><span class="w"> </span><span class="nx">Width</span><span class="p">:</span><span class="w"> </span><span class="mi">14</span><span class="p">,</span><span class="w"> </span><span class="nx">MinWidth</span><span class="p">:</span><span class="w"> </span><span class="mi">8</span><span class="p">,</span><span class="w"> </span><span class="nx">Priority</span><span class="p">:</span><span class="w"> </span><span class="nx">PriMed</span><span class="p">},</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">			</span><span class="p">{</span><span class="nx">Title</span><span class="p">:</span><span class="w"> </span><span class="s">&#34;TYPE&#34;</span><span class="p">,</span><span class="w"> </span><span class="nx">Width</span><span class="p">:</span><span class="w"> </span><span class="mi">18</span><span class="p">,</span><span class="w"> </span><span class="nx">MinWidth</span><span class="p">:</span><span class="w"> </span><span class="mi">10</span><span class="p">,</span><span class="w"> </span><span class="nx">Priority</span><span class="p">:</span><span class="w"> </span><span class="nx">PriMed</span><span class="p">},</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">			</span><span class="p">{</span><span class="nx">Title</span><span class="p">:</span><span class="w"> </span><span class="s">&#34;STATUS&#34;</span><span class="p">,</span><span class="w"> </span><span class="nx">Width</span><span class="p">:</span><span class="w"> </span><span class="mi">12</span><span class="p">,</span><span class="w"> </span><span class="nx">MinWidth</span><span class="p">:</span><span class="w"> </span><span class="mi">8</span><span class="p">,</span><span class="w"> </span><span class="nx">Priority</span><span class="p">:</span><span class="w"> </span><span class="nx">PriHigh</span><span class="p">},</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">			</span><span class="p">{</span><span class="nx">Title</span><span class="p">:</span><span class="w"> </span><span class="s">&#34;IPv4&#34;</span><span class="p">,</span><span class="w"> </span><span class="nx">Width</span><span class="p">:</span><span class="w"> </span><span class="mi">16</span><span class="p">,</span><span class="w"> </span><span class="nx">MinWidth</span><span class="p">:</span><span class="w"> </span><span class="mi">12</span><span class="p">,</span><span class="w"> </span><span class="nx">Priority</span><span class="p">:</span><span class="w"> </span><span class="nx">PriLow</span><span class="p">},</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">			</span><span class="p">{</span><span class="nx">Title</span><span class="p">:</span><span class="w"> </span><span class="s">&#34;TAGS&#34;</span><span class="p">,</span><span class="w"> </span><span class="nx">Width</span><span class="p">:</span><span class="w"> </span><span class="mi">24</span><span class="p">,</span><span class="w"> </span><span class="nx">MinWidth</span><span class="p">:</span><span class="w"> </span><span class="mi">8</span><span class="p">,</span><span class="w"> </span><span class="nx">Priority</span><span class="p">:</span><span class="w"> </span><span class="nx">PriLowest</span><span class="p">},</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">		</span><span class="p">},</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">		</span><span class="nx">Lister</span><span class="p">:</span><span class="w"> </span><span class="kd">func</span><span class="p">(</span><span class="nx">ctx</span><span class="w"> </span><span class="nx">context</span><span class="p">.</span><span class="nx">Context</span><span class="p">,</span><span class="w"> </span><span class="nx">c</span><span class="w"> </span><span class="o">*</span><span class="nx">linode</span><span class="p">.</span><span class="nx">Client</span><span class="p">)</span><span class="w"> </span><span class="p">([]</span><span class="nx">linodego</span><span class="p">.</span><span class="nx">Instance</span><span class="p">,</span><span class="w"> </span><span class="kt">error</span><span class="p">)</span><span class="w"> </span><span class="p">{</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">			</span><span class="k">return</span><span class="w"> </span><span class="nx">c</span><span class="p">.</span><span class="nf">Raw</span><span class="p">().</span><span class="nf">ListInstances</span><span class="p">(</span><span class="nx">ctx</span><span class="p">,</span><span class="w"> </span><span class="kc">nil</span><span class="p">)</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">		</span><span class="p">},</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">		</span><span class="c1">// Rower, Matcher, Sort, Actions, KeyHandlers ...</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">	</span><span class="p">})</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="p">}</span><span class="w">
+</span></span></span></code></pre></div><p>The list view owns polling, filtering, selection, bookmarks, the confirm modal and the status line. A view supplies a lister, a function
+that turns one item into a table row, a matcher for <code>/</code>, and its actions. Reboot, for example, is just a key, a label, a prompt, and a
+<code>Run</code> that calls linodego:</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-go" data-lang="go"><span class="line"><span class="cl"><span class="p">{</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">	</span><span class="nx">Key</span><span class="p">:</span><span class="w">    </span><span class="s">&#34;R&#34;</span><span class="p">,</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">	</span><span class="nx">Label</span><span class="p">:</span><span class="w">  </span><span class="s">&#34;reboot&#34;</span><span class="p">,</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">	</span><span class="nx">Prompt</span><span class="p">:</span><span class="w"> </span><span class="kd">func</span><span class="p">(</span><span class="nx">it</span><span class="w"> </span><span class="nx">linodego</span><span class="p">.</span><span class="nx">Instance</span><span class="p">)</span><span class="w"> </span><span class="kt">string</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="k">return</span><span class="w"> </span><span class="nx">fmt</span><span class="p">.</span><span class="nf">Sprintf</span><span class="p">(</span><span class="s">&#34;Reboot %s (id %d)?&#34;</span><span class="p">,</span><span class="w"> </span><span class="nx">it</span><span class="p">.</span><span class="nx">Label</span><span class="p">,</span><span class="w"> </span><span class="nx">it</span><span class="p">.</span><span class="nx">ID</span><span class="p">)</span><span class="w"> </span><span class="p">},</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">	</span><span class="nx">Run</span><span class="p">:</span><span class="w"> </span><span class="kd">func</span><span class="p">(</span><span class="nx">ctx</span><span class="w"> </span><span class="nx">context</span><span class="p">.</span><span class="nx">Context</span><span class="p">,</span><span class="w"> </span><span class="nx">c</span><span class="w"> </span><span class="o">*</span><span class="nx">linode</span><span class="p">.</span><span class="nx">Client</span><span class="p">,</span><span class="w"> </span><span class="nx">it</span><span class="w"> </span><span class="nx">linodego</span><span class="p">.</span><span class="nx">Instance</span><span class="p">)</span><span class="w"> </span><span class="kt">error</span><span class="w"> </span><span class="p">{</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">		</span><span class="k">return</span><span class="w"> </span><span class="nx">c</span><span class="p">.</span><span class="nf">Raw</span><span class="p">().</span><span class="nf">RebootInstance</span><span class="p">(</span><span class="nx">ctx</span><span class="p">,</span><span class="w"> </span><span class="nx">it</span><span class="p">.</span><span class="nx">ID</span><span class="p">,</span><span class="w"> </span><span class="nx">linodego</span><span class="p">.</span><span class="nx">InstanceRebootOptions</span><span class="p">{})</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">	</span><span class="p">},</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="p">},</span><span class="w">
+</span></span></span></code></pre></div><p><code>Register</code> puts the view in a registry with its aliases, and the command bar resolves against that: exact names and aliases win, then
+prefix matches. That&rsquo;s why <code>:lk</code> in the screenshot above offers <code>lke</code> on Tab. Drill-in views that only make sense with a parent (a
+NodeBalancer&rsquo;s configs, a Domain&rsquo;s records) register with <code>RegisterChild</code> so they never show up as top-level verbs.</p>
+<h3 id="drill-ins-hand-the-terminal-to-the-real-tool">Drill-ins: hand the terminal to the real tool</h3>
+<p>I didn&rsquo;t want to rebuild k9s inside linode-tui. When you&rsquo;re on an LKE cluster and press <code>c</code>, it fetches the kubeconfig from the API,
+writes it to a 0600 temp file, and runs k9s against it. For DBaaS it builds a connection URL and runs
+<a href="https://github.com/jorgerojas26/lazysql">lazysql</a>. On a Linode, <code>c</code> is <code>ssh root@&lt;ip&gt;</code> and <code>C</code> is <a href="https://techdocs.akamai.com/cloud-computing/docs/access-your-system-console-using-lish">lish</a>
+through Linode&rsquo;s bastion, which works even when the box has no public IP.</p>
+<p><img src="/img/2026/09/linode-tui-lke.svg" alt="linode-tui LKE clusters view"></p>
+<p>Bubble Tea has exactly the primitive for this. <code>tea.ExecProcess</code> releases the terminal, runs the child process attached to it, and
+resumes the TUI when the child exits:</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-go" data-lang="go"><span class="line"><span class="cl"><span class="k">case</span><span class="w"> </span><span class="nx">config</span><span class="p">.</span><span class="nx">ModeTUI</span><span class="p">,</span><span class="w"> </span><span class="s">&#34;&#34;</span><span class="p">:</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">	</span><span class="nx">c</span><span class="w"> </span><span class="o">:=</span><span class="w"> </span><span class="nx">exec</span><span class="p">.</span><span class="nf">CommandContext</span><span class="p">(</span><span class="nx">ctx</span><span class="p">,</span><span class="w"> </span><span class="nx">bin</span><span class="p">,</span><span class="w"> </span><span class="nx">args</span><span class="o">...</span><span class="p">)</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">	</span><span class="nx">c</span><span class="p">.</span><span class="nx">Stdin</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="nx">os</span><span class="p">.</span><span class="nx">Stdin</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">	</span><span class="nx">c</span><span class="p">.</span><span class="nx">Stdout</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="nx">os</span><span class="p">.</span><span class="nx">Stdout</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">	</span><span class="nx">c</span><span class="p">.</span><span class="nx">Stderr</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="nx">os</span><span class="p">.</span><span class="nx">Stderr</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">	</span><span class="nf">prepare</span><span class="p">(</span><span class="nx">c</span><span class="p">)</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">	</span><span class="k">return</span><span class="w"> </span><span class="nx">tea</span><span class="p">.</span><span class="nf">ExecProcess</span><span class="p">(</span><span class="nx">c</span><span class="p">,</span><span class="w"> </span><span class="kd">func</span><span class="p">(</span><span class="nx">err</span><span class="w"> </span><span class="kt">error</span><span class="p">)</span><span class="w"> </span><span class="nx">tea</span><span class="p">.</span><span class="nx">Msg</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="k">return</span><span class="w"> </span><span class="nx">ExitMsg</span><span class="p">{</span><span class="nx">Kind</span><span class="p">:</span><span class="w"> </span><span class="nx">kind</span><span class="p">,</span><span class="w"> </span><span class="nx">Err</span><span class="p">:</span><span class="w"> </span><span class="nx">err</span><span class="p">}</span><span class="w"> </span><span class="p">}),</span><span class="w"> </span><span class="kc">nil</span><span class="w">
+</span></span></span></code></pre></div><p>Every tool is configurable (<code>tools.kubernetes.exec</code>, <code>tools.mysql.exec</code> and so on), so you can point it at Lens or MySQL Workbench with
+<code>mode: gui</code> and it launches detached instead. If k9s or lazysql isn&rsquo;t installed, linode-tui offers to download a pinned release, verify its
+checksum, and put it in an install dir you pick on first run.</p>
+<p>The kubeconfig temp file was also the subject of the first bug report from somebody other than me (<a href="https://github.com/luthermonson/linode-tui/issues/2">#2</a>): <code>c</code> from the
+LKE list worked, but <code>c</code> from the cluster&rsquo;s detail page launched k9s and immediately died with <code>Watcher failed for contexts -- stat ...</code>.
+The detail view was cleaning up the kubeconfig like this:</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-go" data-lang="go"><span class="line"><span class="cl"><span class="k">return</span><span class="w"> </span><span class="nx">tea</span><span class="p">.</span><span class="nf">Sequence</span><span class="p">(</span><span class="nx">exec</span><span class="p">,</span><span class="w"> </span><span class="kd">func</span><span class="p">()</span><span class="w"> </span><span class="nx">tea</span><span class="p">.</span><span class="nx">Msg</span><span class="w"> </span><span class="p">{</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="nx">cleanup</span><span class="w"> </span><span class="o">!=</span><span class="w"> </span><span class="kc">nil</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nf">cleanup</span><span class="p">()</span><span class="w"> </span><span class="p">}</span><span class="w">   </span><span class="c1">// runs immediately</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="nx">lkeDetailDrillDoneMsg</span><span class="p">{}</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="p">})</span><span class="w">
+</span></span></span></code></pre></div><p><code>tea.Sequence</code> runs the commands in order, but <code>ExecProcess</code>&rsquo;s command isn&rsquo;t blocking: it just returns a message asking
+the program to run the process. So the cleanup closure ran as soon as that message was handed back, and the file was gone
+before k9s had even started. The list view didn&rsquo;t have the bug because its closure only returned a done message and ran the cleanup when that message came back through <code>Update</code>, which happens after k9s exits.
+<a href="https://github.com/luthermonson/linode-tui/pull/3">#3</a> moved the detail view to the same pattern, and
+<a href="https://github.com/luthermonson/linode-tui/pull/16">#16</a> collapsed both paths into one shared function so it can&rsquo;t drift again:</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-go" data-lang="go"><span class="line"><span class="cl"><span class="kd">func</span><span class="w"> </span><span class="nf">RunDrillIn</span><span class="p">(</span><span class="nx">deps</span><span class="w"> </span><span class="nx">Deps</span><span class="p">,</span><span class="w"> </span><span class="nx">msg</span><span class="w"> </span><span class="nx">DrillInMsg</span><span class="p">,</span><span class="w"> </span><span class="nx">done</span><span class="w"> </span><span class="kd">func</span><span class="p">(</span><span class="nx">cleanup</span><span class="w"> </span><span class="kd">func</span><span class="p">())</span><span class="w"> </span><span class="nx">tea</span><span class="p">.</span><span class="nx">Msg</span><span class="p">)</span><span class="w"> </span><span class="p">(</span><span class="nx">tea</span><span class="p">.</span><span class="nx">Cmd</span><span class="p">,</span><span class="w"> </span><span class="kt">error</span><span class="p">)</span><span class="w"> </span><span class="p">{</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">	</span><span class="nx">runner</span><span class="w"> </span><span class="o">:=</span><span class="w"> </span><span class="nx">tools</span><span class="p">.</span><span class="nf">New</span><span class="p">(</span><span class="nx">deps</span><span class="p">.</span><span class="nx">Cfg</span><span class="p">)</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">	</span><span class="nx">exec</span><span class="p">,</span><span class="w"> </span><span class="nx">err</span><span class="w"> </span><span class="o">:=</span><span class="w"> </span><span class="nx">runner</span><span class="p">.</span><span class="nf">RunWithEnv</span><span class="p">(</span><span class="nx">context</span><span class="p">.</span><span class="nf">Background</span><span class="p">(),</span><span class="w"> </span><span class="nx">msg</span><span class="p">.</span><span class="nx">Tool</span><span class="p">,</span><span class="w"> </span><span class="nx">msg</span><span class="p">.</span><span class="nx">Vars</span><span class="p">,</span><span class="w"> </span><span class="nx">msg</span><span class="p">.</span><span class="nx">Env</span><span class="p">)</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">	</span><span class="k">if</span><span class="w"> </span><span class="nx">err</span><span class="w"> </span><span class="o">!=</span><span class="w"> </span><span class="kc">nil</span><span class="w"> </span><span class="p">{</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">		</span><span class="k">if</span><span class="w"> </span><span class="nx">missing</span><span class="p">,</span><span class="w"> </span><span class="nx">ok</span><span class="w"> </span><span class="o">:=</span><span class="w"> </span><span class="nx">tools</span><span class="p">.</span><span class="nf">IsToolMissing</span><span class="p">(</span><span class="nx">err</span><span class="p">);</span><span class="w"> </span><span class="nx">ok</span><span class="w"> </span><span class="p">{</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">			</span><span class="k">return</span><span class="w"> </span><span class="kd">func</span><span class="p">()</span><span class="w"> </span><span class="nx">tea</span><span class="p">.</span><span class="nx">Msg</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="k">return</span><span class="w"> </span><span class="nx">InstallNeededMsg</span><span class="p">{</span><span class="nx">Kind</span><span class="p">:</span><span class="w"> </span><span class="nx">missing</span><span class="p">.</span><span class="nx">Kind</span><span class="p">,</span><span class="w"> </span><span class="nx">Drill</span><span class="p">:</span><span class="w"> </span><span class="nx">msg</span><span class="p">}</span><span class="w"> </span><span class="p">},</span><span class="w"> </span><span class="kc">nil</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">		</span><span class="p">}</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">		</span><span class="k">if</span><span class="w"> </span><span class="nx">msg</span><span class="p">.</span><span class="nx">Cleanup</span><span class="w"> </span><span class="o">!=</span><span class="w"> </span><span class="kc">nil</span><span class="w"> </span><span class="p">{</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">			</span><span class="nx">msg</span><span class="p">.</span><span class="nf">Cleanup</span><span class="p">()</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">		</span><span class="p">}</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">		</span><span class="k">return</span><span class="w"> </span><span class="kc">nil</span><span class="p">,</span><span class="w"> </span><span class="nx">err</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">	</span><span class="p">}</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">	</span><span class="nx">cleanup</span><span class="w"> </span><span class="o">:=</span><span class="w"> </span><span class="nx">msg</span><span class="p">.</span><span class="nx">Cleanup</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">	</span><span class="k">return</span><span class="w"> </span><span class="nx">tea</span><span class="p">.</span><span class="nf">Sequence</span><span class="p">(</span><span class="nx">exec</span><span class="p">,</span><span class="w"> </span><span class="kd">func</span><span class="p">()</span><span class="w"> </span><span class="nx">tea</span><span class="p">.</span><span class="nx">Msg</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="k">return</span><span class="w"> </span><span class="nf">done</span><span class="p">(</span><span class="nx">cleanup</span><span class="p">)</span><span class="w"> </span><span class="p">}),</span><span class="w"> </span><span class="kc">nil</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="p">}</span><span class="w">
+</span></span></span></code></pre></div><p>If you write Bubble Tea apps that shell out, that one is worth remembering.</p>
+<h3 id="hardening-for-release">Hardening for release</h3>
+<p>A tool that holds API tokens and has a <code>:clear-account</code> command that deletes everything in an account deserves a hard look before
+other people run it. Most of what went into v0.2.0 was that pass, done as a handful of large PRs.</p>
+<p><strong>Config persistence (<a href="https://github.com/luthermonson/linode-tui/pull/12">#12</a>)</strong>. The worst one: a <code>--token</code> flag or <code>LINODE_TOKEN</code> got
+stored in memory as a synthetic <code>__cli__</code> account, and the first incidental <code>Save()</code> (starring a row, installing a tool) wrote your
+environment token into <code>config.yaml</code> in plain text. Save now marshals a scrubbed copy. It also stopped truncating the file in place,
+because a crash between truncate and write lost every account:</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-go" data-lang="go"><span class="line"><span class="cl"><span class="c1">// Write-then-rename: os.WriteFile truncates in place, so a crash (or a</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="c1">// full disk) between truncate and write left every account and token</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="c1">// gone. Rename is atomic on POSIX and on Windows (MoveFileEx).</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="nx">tmp</span><span class="w"> </span><span class="o">:=</span><span class="w"> </span><span class="nx">c</span><span class="p">.</span><span class="nx">path</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="s">&#34;.tmp&#34;</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="k">if</span><span class="w"> </span><span class="nx">err</span><span class="w"> </span><span class="o">:=</span><span class="w"> </span><span class="nx">os</span><span class="p">.</span><span class="nf">WriteFile</span><span class="p">(</span><span class="nx">tmp</span><span class="p">,</span><span class="w"> </span><span class="nx">data</span><span class="p">,</span><span class="w"> </span><span class="mi">0</span><span class="nx">o600</span><span class="p">);</span><span class="w"> </span><span class="nx">err</span><span class="w"> </span><span class="o">!=</span><span class="w"> </span><span class="kc">nil</span><span class="w"> </span><span class="p">{</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">	</span><span class="k">return</span><span class="w"> </span><span class="nx">err</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="p">}</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="k">if</span><span class="w"> </span><span class="nx">err</span><span class="w"> </span><span class="o">:=</span><span class="w"> </span><span class="nx">os</span><span class="p">.</span><span class="nf">Rename</span><span class="p">(</span><span class="nx">tmp</span><span class="p">,</span><span class="w"> </span><span class="nx">c</span><span class="p">.</span><span class="nx">path</span><span class="p">);</span><span class="w"> </span><span class="nx">err</span><span class="w"> </span><span class="o">!=</span><span class="w"> </span><span class="kc">nil</span><span class="w"> </span><span class="p">{</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">	</span><span class="nx">_</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="nx">os</span><span class="p">.</span><span class="nf">Remove</span><span class="p">(</span><span class="nx">tmp</span><span class="p">)</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">	</span><span class="k">return</span><span class="w"> </span><span class="nx">err</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="p">}</span><span class="w">
+</span></span></span></code></pre></div><p>Saves are behind a mutex (background tool installs save from goroutines), the config dir went from 0755 to 0700, and <code>refresh: 1ms</code>
+gets clamped to 1s instead of becoming a self-inflicted 429 generator. The same PR fixed <code>:clear-account</code>, which only guarded on the
+<em>name</em> of the local account. <code>accounts: {dev: {token: &lt;prod token&gt;}}</code> is one bad paste away, so it now resolves <code>/profile</code> and refuses
+to delete anything if the token belongs to a different user than the one you confirmed. It also deletes LKE clusters before instances
+now. Otherwise the node pools recreate the workers you just deleted.</p>
+<p><strong>App state (<a href="https://github.com/luthermonson/linode-tui/pull/13">#13</a>)</strong>. Opening a modal swallowed the list&rsquo;s tick message, which
+quietly ended that pane&rsquo;s refresh loop for the rest of the session. Switching accounts rebuilt only the focused pane, so split panes kept
+polling the old account with the old token. A bare <code>:export</code> panicked on <code>args[1:]</code> of an empty slice. A new test now dispatches every
+command-bar verb and alias and fails if any of them comes back as <code>unknown command</code>. That test is what found the <code>:export</code> panic.</p>
+<p><strong>Responsive columns (<a href="https://github.com/luthermonson/linode-tui/pull/16">#16</a>)</strong>. The Linodes table wants about 140 cells. On a narrower
+terminal the bubbles table wrapped every row into garbage. Columns now carry a width, a minimum and a priority. The list drops the
+lowest-priority column until the minimums fit, then spends the leftover space growing the survivors and the <code>Flex</code> column. ID and LABEL
+are pinned and never dropped, and the status line tells you <code>»3 cols hidden — widen terminal</code>.</p>
+<p><strong>The yaml tag (<a href="https://github.com/luthermonson/linode-tui/pull/23">#23</a>)</strong>. #13 made <code>audit_retention_days: 0</code> mean &ldquo;keep forever&rdquo;,
+like the docs always said. Then the review caught that the field still had <code>omitempty</code>, so an explicit <code>0</code> got dropped on save, and the next
+load re-seeded the 90-day default. Users who opted out of pruning would have been opted back in by any unrelated save. The fix was deleting
+<code>,omitempty</code> and adding a Save→Load round-trip test. <code>omitempty</code> on an int where zero means something is a bug that&rsquo;s easy to write.</p>
+<h3 id="tokens">Tokens</h3>
+<p>The config doesn&rsquo;t have to hold a token. A literal <code>token:</code> works but isn&rsquo;t recommended. Accounts can point at a 1Password reference and linode-tui shells out to <code>op</code> to resolve it:</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-yaml" data-lang="yaml"><span class="line"><span class="cl"><span class="nt">default_account</span><span class="p">:</span><span class="w"> </span><span class="l">dev</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="nt">accounts</span><span class="p">:</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">  </span><span class="nt">dev</span><span class="p">:</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="nt">op_ref</span><span class="p">:</span><span class="w"> </span><span class="s2">&#34;op://Private/linode-dev/token&#34;</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">  </span><span class="nt">e2e</span><span class="p">:</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="nt">op_ref</span><span class="p">:</span><span class="w"> </span><span class="s2">&#34;op://Private/linode-test/token&#34;</span><span class="w">
+</span></span></span></code></pre></div><p><code>:account e2e</code> switches live. There&rsquo;s also an audit log of every mutating action (<code>~/.cache/linode-tui/audit.log</code>), which is what powers
+<code>:undo</code> and the <code>ctrl+y</code> replay.</p>
+<h3 id="how-the-screenshots-were-made">How the screenshots were made</h3>
+<p>I didn&rsquo;t want a real account in a blog post, so the screenshots run against a fake API. linodego honors <code>LINODE_URL</code>, so I wrote a
+small Go server that returns canned JSON for <code>/v4/profile</code>, <code>/v4/linode/instances</code> and <code>/v4/lke/clusters</code> (IPs from the documentation
+ranges) and ran linode-tui v0.2.1 in a 118x16 tmux pane with <code>LINODE_URL=http://127.0.0.1:18080</code>, a dummy token, and an empty <code>HOME</code>.
+The server log shows the polling doing what it should, a list refetch every 2 seconds:</p>
+<pre tabindex="0"><code>GET /v4/linode/instances
+GET /v4/profile
+GET /v4/linode/instances
+GET /v4/linode/instances
+GET /v4/linode/instances
+GET /v4/lke/clusters
+GET /v4/lke/clusters
+</code></pre><p>The images are <code>tmux capture-pane -e</code> output converted to SVG with the colors exactly as tmux reported them.</p>
+<h3 id="install">Install</h3>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl">go install github.com/luthermonson/linode-tui/cmd/linode-tui@latest
+</span></span><span class="line"><span class="cl"><span class="nb">export</span> <span class="nv">LINODE_TOKEN</span><span class="o">=</span>...
+</span></span><span class="line"><span class="cl">linode-tui
+</span></span></code></pre></div><p>Or grab a binary from the releases page (GoReleaser builds Linux and macOS on amd64 and arm64, and Windows on amd64). If you already live in
+<code>linode-cli</code>, the README has a five-line shell function that routes <code>linode tui</code> to this and everything else to the real CLI.
+A Homebrew tap is next on the list.</p>
+<h3 id="links">Links</h3>
+<ul>
+<li><a href="https://github.com/luthermonson/linode-tui">linode-tui</a></li>
+<li><a href="https://github.com/luthermonson/linode-tui/blob/main/docs/USAGE.md">docs/USAGE.md</a></li>
+<li><a href="https://k9scli.io/">k9s</a></li>
+<li><a href="https://github.com/charmbracelet/bubbletea">Bubble Tea</a></li>
+<li><a href="https://github.com/linode/linodego">linodego</a></li>
+<li><a href="https://github.com/jorgerojas26/lazysql">lazysql</a></li>
+</ul>
+
+      </div>
+      <footer>
+        <div class="stats">
+  
+    <ul class="categories">
+      
+        
+          <li><a class="article-terms-link" href="/categories/go/">go</a></li>
+        
+          <li><a class="article-terms-link" href="/categories/tools/">tools</a></li>
+        
+      
+    </ul>
+  
+  
+    <ul class="tags">
+      
+        
+          <li><a class="article-terms-link" href="/tags/go/">go</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/bubbletea/">bubbletea</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/tui/">tui</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/linode/">linode</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/kubernetes/">kubernetes</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/k9s/">k9s</a></li>
+        
+      
+    </ul>
+  
+</div>
+
+      </footer>
+    </div>
+    
+      
+  
+  <div class='post giscus-wrap'>
+    <script src='https://giscus.app/client.js'
+            data-repo='luthermonson/luth.io'
+            data-repo-id='R_kgDOGvFBXQ'
+            data-category='Announcements'
+            data-category-id='DIC_kwDOGvFBXc4DH_gv'
+            data-mapping='pathname'
+            data-strict='1'
+            data-reactions-enabled='1'
+            data-emit-metadata='0'
+            data-input-position='top'
+            data-theme='light'
+            data-lang='en'
+            data-loading='lazy'
+            crossorigin='anonymous'
+            async>
+    </script>
+  </div>
+  
+
+
+
+    
+  </article>
+  
+    <nav class="post-nav">
+      
+        <a href="/blog/2026/09/single-binary-wordpress/" class="post-nav-link older">
+          <span class="post-nav-label">&larr; Older</span>
+          <span class="post-nav-title">Zero-Dependency Deployments - Single Binary for WordPress</span>
+        </a>
+      
+      
+        <a href="/blog/2026/09/ephpm-php-cli-conformance/" class="post-nav-link newer">
+          <span class="post-nav-label">Newer &rarr;</span>
+          <span class="post-nav-title">Making ephpm php Byte-for-Byte Indistinguishable From php-cli</span>
+        </a>
+      
+    </nav>
+  
+
+      </main>
+      <section id="site-sidebar">
+  
+    <section id="recent-posts">
+      <header>
+        <h1>Recent Posts</h1>
+      </header>
+      
+      <article class="mini-post">
+          <a href="/blog/2026/10/ephpm-worker-mode-performance/" class="image" style="--bg-image: url('/img/2026/10/ephpm-worker-mode-performance-cover.svg');">
+    <img class="" src="/img/2026/10/ephpm-worker-mode-performance-cover.svg" alt="Diagram: before, hyper/tokio hands each request to one shared bounded channel whose waiter list all 20 PHP threads contend on; after, a dispatcher hands the job straight into the mailbox of the most recently idle PHP thread and only queues it in a FIFO overflow queue when every thread is busy">
+  </a>
+        <header>
+          <h2><a href="/blog/2026/10/ephpm-worker-mode-performance/">Fourth Place in Worker Mode, and Why It Wasn&#39;t PHP</a></h2>
+          <time class="published" datetime="2026-10-16 08:10:00 -0700 PDT">October 16, 2026</time>
+        </header>
+      </article>
+      
+      <article class="mini-post">
+          <a href="/blog/2026/10/ephpm-websockets-how-to/" class="image" style="--bg-image: url('/img/2026/10/ephpm-websockets-how-to-cover.svg');">
+    <img class="" src="/img/2026/10/ephpm-websockets-how-to-cover.svg" alt="Diagram: browsers hold sockets to ePHPm&#39;s Rust session tasks and registry; each connect, message and disconnect runs websocket.php once on the PHP thread pool, and ordinary HTTP requests push through ephpm_ws_broadcast">
+  </a>
+        <header>
+          <h2><a href="/blog/2026/10/ephpm-websockets-how-to/">WebSockets in ePHPm, From Zero to a Working Chat</a></h2>
+          <time class="published" datetime="2026-10-11 17:30:00 -0700 PDT">October 11, 2026</time>
+        </header>
+      </article>
+      
+      <article class="mini-post">
+          <a href="/blog/2026/10/webhooks-out-of-order-scheduler/" class="image" style="--bg-image: url('/img/2026/10/webhooks-out-of-order-scheduler-timeline.svg');">
+    <img class="" src="/img/2026/10/webhooks-out-of-order-scheduler-timeline.svg" alt="Timeline of three same-label jobs where a runner executing a build is destroyed 2.3 seconds before its in_progress webhook arrives">
+  </a>
+        <header>
+          <h2><a href="/blog/2026/10/webhooks-out-of-order-scheduler/">Webhooks Arrive Out of Order: How My Scheduler Killed Live Builds</a></h2>
+          <time class="published" datetime="2026-10-07 21:10:00 -0700 PDT">October 7, 2026</time>
+        </header>
+      </article>
+      
+      <article class="mini-post">
+          <a href="/blog/2026/10/go-proxmox-five-years-to-v0-8/" class="image" style="--bg-image: url('/img/2026/10/go-proxmox-five-years-to-v0-8-apidiff.svg');">
+    <img class="" src="/img/2026/10/go-proxmox-five-years-to-v0-8-apidiff.svg" alt="Horizontal bar chart of apidiff incompatible and compatible changes for every go-proxmox release from v0.1.0 to v0.8.2">
+  </a>
+        <header>
+          <h2><a href="/blog/2026/10/go-proxmox-five-years-to-v0-8/">Breaking Changes Without Breaking Trust: Five Years to go-proxmox v0.8</a></h2>
+          <time class="published" datetime="2026-10-04 19:40:00 -0700 PDT">October 4, 2026</time>
+        </header>
+      </article>
+      
+      <article class="mini-post">
+          <a href="/blog/2026/10/windows-sigterm-sparse-files/" class="image" style="--bg-image: url('/img/2026/10/windows-sigterm-sparse-files-connections.svg');">
+    <img class="" src="/img/2026/10/windows-sigterm-sparse-files-connections.svg" alt="Bar chart: 96 Cloudflare edge connections held by orphaned cloudflared processes versus 4 for the live daemon">
+  </a>
+        <header>
+          <h2><a href="/blog/2026/10/windows-sigterm-sparse-files/">Windows Grab-Bag: SIGTERM That Doesn&#39;t Exist and Sparse Files That Break Docker</a></h2>
+          <time class="published" datetime="2026-10-03 14:30:00 -0700 PDT">October 3, 2026</time>
+        </header>
+      </article>
+      
+      
+        <footer>
+          <a href="/blog" class="button">See More</a>
+        </footer>
+      
+    </section>
+  
+
+  
+    
+
+      <section id="categories">
+        <header>
+          <h1><a href="/categories">Categories</a></h1>
+        </header>
+        <ul>
+          
+          
+          <li>
+              <a href="/categories/ephpm/">ephpm<span class="count">33</span></a>
+          
+          <li>
+              <a href="/categories/go/">go<span class="count">30</span></a>
+          
+          <li>
+              <a href="/categories/php/">php<span class="count">23</span></a>
+          
+          <li>
+              <a href="/categories/rust/">rust<span class="count">15</span></a>
+          
+          <li>
+              <a href="/categories/homelab/">homelab<span class="count">14</span></a>
+          
+          <li>
+              <a href="/categories/windows/">windows<span class="count">14</span></a>
+          
+          <li>
+              <a href="/categories/ci/">ci<span class="count">9</span></a>
+          
+          <li>
+              <a href="/categories/databases/">databases<span class="count">9</span></a>
+          
+          <li>
+              <a href="/categories/security/">security<span class="count">9</span></a>
+          
+          <li>
+              <a href="/categories/containers/">containers<span class="count">7</span></a>
+          
+          <li>
+              <a href="/categories/tools/">tools<span class="count">5</span></a>
+          
+          <li>
+              <a href="/categories/ai-agents/">ai-agents<span class="count">4</span></a>
+          
+          </li>
+        </ul>
+      </section>
+    
+  
+
+  
+    <section id="mini-bio">
+      <header>
+        <h1>About</h1>
+      </header>
+      <p>Luther is a 20+ year software veteran specializing in backend APIs and architecting products. Employed at <a href='https://www.suse.com'>SUSE</a> as the Team Lead for the <a href='https://github.com/rancher/windows/issues'>Containers on Windows Team</a> working on <a href='https://rancher.com/'>Rancher</a> + <a href='https://kubernetes.io/'>Kubernetes</a></p>
+      <footer>
+        <a href="/about" class="button">Learn More</a>
+      </footer>
+    </section>
+  
+</section>
+
+      <footer id="site-footer">
+  
+      <ul class="socnet-icons">
+        
+
+        <li><a href="//github.com/luthermonson" target="_blank" rel="noopener" title="GitHub" class="fab fa-github"></a></li>
+
+
+
+
+
+
+
+
+
+
+
+<li><a href="//www.linkedin.com/in/luthermonson" target="_blank" rel="noopener" title="LinkedIn" class="fab fa-linkedin"></a></li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li><a href="//twitter.com/luthermonson" target="_blank" rel="noopener" title="Twitter" class="fab fa-twitter"></a></li>
+
+
+
+
+
+
+
+
+
+
+
+<li><a href="mailto:luther.monson@gmail.com" target="_blank" title="Email" class="far fa-envelope"></a></li>
+
+      </ul>
+  
+  <p class="copyright">
+    © 2026 Luther Monson
+      <br>
+    Theme: <a href='https://github.com/pacollins/hugo-future-imperfect-slim' target='_blank' rel='noopener'>Hugo Future Imperfect Slim</a><br>A <a href='https://html5up.net/future-imperfect' target='_blank' rel='noopener'>HTML5 UP port</a> | Powered by <a href='https://gohugo.io/' title='0.160.1' target='_blank' rel='noopener'>Hugo</a>
+  </p>
+</footer>
+<a id="back-to-top" href="#" class="fas fa-arrow-up fa-2x"></a>
+
+      <script src="/js/bundle.min.241b62ebc4792fe8c7a75879e5f710894f226f2b73342e9916b3a3b0526030cc.js" integrity="sha256-JBti68R5L&#43;jHp1h55fcQiU8ibytzNC6ZFrOjsFJgMMw="></script>
+    <script src="/js/add-on.js"></script>
+    </div>
+  </body>
+</html>

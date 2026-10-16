@@ -1,0 +1,741 @@
+<!doctype html>
+<html lang="en">
+  <head>
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-MSTSKGFWTX"></script>
+<script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+
+    gtag('config', 'G-MSTSKGFWTX');
+</script><meta charset="utf-8">
+<title>Your Zero Value Just Turned Off My TLS Verification: omitempty, Go Defaults and Proxmox - Luther Monson</title>
+<meta name="description" content="A plain Go field can&#39;t tell unset from false. In go-proxmox the fix for one omitempty bug created the opposite bug, until an audit against the Proxmox schema found 75 fields and v0.7.0 moved them to pointers.">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<meta name="twitter:card" content="summary_large_image"><meta name="twitter:site" content="@luthermonson">
+
+<meta property="og:site_name" content="Luther Monson">
+<meta property="og:title" content="Your Zero Value Just Turned Off My TLS Verification: omitempty, Go Defaults and Proxmox">
+<meta property="og:description" content="A plain Go field can&#39;t tell unset from false. In go-proxmox the fix for one omitempty bug created the opposite bug, until an audit against the Proxmox schema found 75 fields and v0.7.0 moved them to pointers.">
+<meta property="og:type" content="article">
+<meta property="og:url" content="https://luth.io/blog/2026/06/omitempty-zero-values-proxmox-defaults/">
+    <meta property="og:image" content="https://luth.io/img/2026/06/omitempty-zero-values-proxmox-defaults-table.svg">
+    <meta property="og:image:alt" content="Table showing how verify-certificates was sent by go-proxmox before #210, between v0.2.3 and v0.6.x, and in v0.7.0">
+
+
+  <link rel="manifest" href="/favicon/site.webmanifest?v=1">
+  <link rel="apple-touch-icon" sizes="180x180" href="/favicon/apple-touch-icon.png?v=1">
+  <link rel="icon" type="image/png" sizes="32x32" href="/favicon/favicon-32x32.png?v=1">
+  <link rel="icon" type="image/png" sizes="16x16" href="/favicon/favicon-16x16.png?v=1">
+  
+    <link rel="mask-icon" href="/favicon/safari-pinned-tab.svg?v=1" color="#ffffff">
+    <link rel="shortcut icon" href="/favicon/favicon.ico?v=1">
+    <meta name="msapplication-config" content="/favicon/browserconfig.xml?v=1">
+  
+  <meta name="msapplication-TileColor" content="#ffffff">
+  <meta name="theme-color" content="#ffffff">
+
+
+  <meta name="generator" content="Hugo 0.160.1">
+  <link rel="alternate" type="application/rss+xml" href="https://luth.io/index.xml" title="Luther Monson">
+  <link rel="stylesheet" href="/css/bundle.min.e1ffed86714fbb7eff75eab221c0c61b8260be0c7d1c08db0fcb7a2bdb6af7c9.css" integrity="sha256-4f/thnFPu37/deqyIcDGG4Jgvgx9HAjbD8t6K9tq98k="><link rel="stylesheet" href="/css/add-on.css">
+        <link rel="stylesheet" href="/css/code.css">
+        <link rel="stylesheet" href="/css/mobile.css">
+</head>
+
+  <body>
+    
+
+<header id="site-header">
+  <nav id="site-nav">
+    <h1 class="nav-title">
+      <a href="/" class="nav">
+        <img class="nav-avatar" src="/img/luther-monson-headshot.jpg" alt="" width="32" height="32">
+        
+          Blog
+        
+      </a>
+    </h1>
+    <menu id="site-nav-menu" class="flyout-menu menu">
+      
+        
+          
+          <a href="/" class="nav link"><i class='fa fa-home'></i> Home</a>
+        
+      
+        
+          
+          <a href="/about" class="nav link"><i class='far fa-id-card'></i> About</a>
+        
+      
+        
+          
+          <a href="/blog" class="nav link"><i class='far fa-newspaper'></i> Blog</a>
+        
+      
+        
+          
+          <a href="/archive" class="nav link"><i class='far fa-calendar-alt'></i> Archive</a>
+        
+      
+        
+          
+          <a href="/categories" class="nav link"><i class='fas fa-sitemap'></i> Categories</a>
+        
+      
+      <a href="#share-menu" class="nav link share-toggle"><i class="fas fa-share-alt">&nbsp;</i>Share</a>
+      <a href="#search-input" class="nav link search-toggle"><i class="fas fa-search">&nbsp;</i>Search</a>
+    </menu>
+    <a href="#search-input" class="nav search-toggle"><i class="fas fa-search fa-2x">&nbsp;</i></a>
+    <a href="#share-menu" class="nav share-toggle"><i class="fas fa-share-alt fa-2x">&nbsp;</i></a>
+    
+    <a href="#site-nav" class="nav nav-toggle"><i class="fas fa-bars fa-2x"></i></a>
+  </nav>
+  <menu id="search" class="menu"><input id="search-input" class="search-input menu"></input><div id="search-results" class="search-results menu"></div></menu>
+  
+  
+    <menu id="share-menu" class="flyout-menu menu">
+      <h1>Share Post</h1>
+      
+
+
+
+
+  
+    
+    <a href="//twitter.com/share?text=Your%20Zero%20Value%20Just%20Turned%20Off%20My%20TLS%20Verification%3a%20omitempty%2c%20Go%20Defaults%20and%20Proxmox&amp;url=https%3a%2f%2fluth.io%2fblog%2f2026%2f06%2fomitempty-zero-values-proxmox-defaults%2f" target="_blank" rel="noopener" class="nav share-btn twitter">
+        <p>Twitter</p>
+      </a>
+  
+
+  
+      <a href="//www.facebook.com/sharer/sharer.php?u=https%3a%2f%2fluth.io%2fblog%2f2026%2f06%2fomitempty-zero-values-proxmox-defaults%2f" target="_blank" rel="noopener" class="nav share-btn facebook">
+        <p>Facebook</p>
+        </a>
+  
+
+  
+    <a href="//www.reddit.com/submit?url=https%3a%2f%2fluth.io%2fblog%2f2026%2f06%2fomitempty-zero-values-proxmox-defaults%2f&amp;title=Your%20Zero%20Value%20Just%20Turned%20Off%20My%20TLS%20Verification%3a%20omitempty%2c%20Go%20Defaults%20and%20Proxmox" target="_blank" rel="noopener" class="nav share-btn reddit">
+          <p>Reddit</p>
+        </a>
+  
+
+  
+        <a href="//www.linkedin.com/shareArticle?url=https%3a%2f%2fluth.io%2fblog%2f2026%2f06%2fomitempty-zero-values-proxmox-defaults%2f&amp;title=Your%20Zero%20Value%20Just%20Turned%20Off%20My%20TLS%20Verification%3a%20omitempty%2c%20Go%20Defaults%20and%20Proxmox" target="_blank" rel="noopener" class="nav share-btn linkedin">
+            <p>LinkedIn</p>
+          </a>
+  
+
+  
+        <a href="//www.pinterest.com/pin/create/button/?url=https%3a%2f%2fluth.io%2fblog%2f2026%2f06%2fomitempty-zero-values-proxmox-defaults%2f&amp;description=Your%20Zero%20Value%20Just%20Turned%20Off%20My%20TLS%20Verification%3a%20omitempty%2c%20Go%20Defaults%20and%20Proxmox" target="_blank" rel="noopener" class="nav share-btn pinterest">
+          <p>Pinterest</p>
+        </a>
+  
+
+  
+        <a href="mailto:?subject=Check%20out%20this%20post%20by Luther%20Monson&amp;body=https%3a%2f%2fluth.io%2fblog%2f2026%2f06%2fomitempty-zero-values-proxmox-defaults%2f" target="_blank" class="nav share-btn email" data-proofer-ignore>
+          <p>Email</p>
+        </a>
+  
+
+
+    </menu>
+  
+</header>
+
+    <div id="wrapper">
+      <section id="site-intro" class="hidden-single-column">
+  <a href="/"><img src="/img/luther-monson-headshot.jpg" class="circle" width="100" alt="Luther Monson, Staff Software Engineer at SUSE" /></a>
+  <header>
+    <h1>Luther Monson</h1>
+  </header>
+  <main>
+    <p>Go by way of PHP &middot; Containers &middot; VMs &middot; Windows &middot; Kubernetes</p>
+  </main>
+  
+    <footer>
+      <ul class="socnet-icons">
+        
+
+        <li><a href="//github.com/luthermonson" target="_blank" rel="noopener" title="GitHub" class="fab fa-github"></a></li>
+
+
+
+
+
+
+
+
+
+
+
+<li><a href="//www.linkedin.com/in/luthermonson" target="_blank" rel="noopener" title="LinkedIn" class="fab fa-linkedin"></a></li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li><a href="//twitter.com/luthermonson" target="_blank" rel="noopener" title="Twitter" class="fab fa-twitter"></a></li>
+
+
+
+
+
+
+
+
+
+
+
+<li><a href="mailto:luther.monson@gmail.com" target="_blank" title="Email" class="far fa-envelope"></a></li>
+
+      </ul>
+    </footer>
+  
+</section>
+
+      <main id="site-main">
+        
+  <article>
+    <div class="post">
+      <header>
+  <div class="title">
+    
+      <h2><a href="/blog/2026/06/omitempty-zero-values-proxmox-defaults/">Your Zero Value Just Turned Off My TLS Verification: omitempty, Go Defaults and Proxmox</a></h2>
+    
+    
+      <p>A plain Go field can&#39;t tell unset from false. In go-proxmox the fix for one omitempty bug created the opposite bug, until an audit against the Proxmox schema found 75 fields and v0.7.0 moved them to pointers.</p>
+    
+  </div>
+  <div class="meta">
+    <time datetime="2026-06-13 19:52:00 -0700 PDT">June 13, 2026</time>
+    
+    <p>7-Minute Read</p>
+  </div>
+</header>
+
+      <div id="socnet-share">
+        
+
+
+
+
+  
+    
+    <a href="//twitter.com/share?text=Your%20Zero%20Value%20Just%20Turned%20Off%20My%20TLS%20Verification%3a%20omitempty%2c%20Go%20Defaults%20and%20Proxmox&amp;url=https%3a%2f%2fluth.io%2fblog%2f2026%2f06%2fomitempty-zero-values-proxmox-defaults%2f" target="_blank" rel="noopener" class="nav share-btn twitter">
+        <p>Twitter</p>
+      </a>
+  
+
+  
+      <a href="//www.facebook.com/sharer/sharer.php?u=https%3a%2f%2fluth.io%2fblog%2f2026%2f06%2fomitempty-zero-values-proxmox-defaults%2f" target="_blank" rel="noopener" class="nav share-btn facebook">
+        <p>Facebook</p>
+        </a>
+  
+
+  
+    <a href="//www.reddit.com/submit?url=https%3a%2f%2fluth.io%2fblog%2f2026%2f06%2fomitempty-zero-values-proxmox-defaults%2f&amp;title=Your%20Zero%20Value%20Just%20Turned%20Off%20My%20TLS%20Verification%3a%20omitempty%2c%20Go%20Defaults%20and%20Proxmox" target="_blank" rel="noopener" class="nav share-btn reddit">
+          <p>Reddit</p>
+        </a>
+  
+
+  
+        <a href="//www.linkedin.com/shareArticle?url=https%3a%2f%2fluth.io%2fblog%2f2026%2f06%2fomitempty-zero-values-proxmox-defaults%2f&amp;title=Your%20Zero%20Value%20Just%20Turned%20Off%20My%20TLS%20Verification%3a%20omitempty%2c%20Go%20Defaults%20and%20Proxmox" target="_blank" rel="noopener" class="nav share-btn linkedin">
+            <p>LinkedIn</p>
+          </a>
+  
+
+  
+        <a href="//www.pinterest.com/pin/create/button/?url=https%3a%2f%2fluth.io%2fblog%2f2026%2f06%2fomitempty-zero-values-proxmox-defaults%2f&amp;description=Your%20Zero%20Value%20Just%20Turned%20Off%20My%20TLS%20Verification%3a%20omitempty%2c%20Go%20Defaults%20and%20Proxmox" target="_blank" rel="noopener" class="nav share-btn pinterest">
+          <p>Pinterest</p>
+        </a>
+  
+
+  
+        <a href="mailto:?subject=Check%20out%20this%20post%20by Luther%20Monson&amp;body=https%3a%2f%2fluth.io%2fblog%2f2026%2f06%2fomitempty-zero-values-proxmox-defaults%2f" target="_blank" class="nav share-btn email" data-proofer-ignore>
+          <p>Email</p>
+        </a>
+  
+
+
+      </div>
+      <div class="content">
+        
+        <p>Every Go developer knows <code>omitempty</code> drops zero values. What takes longer to sink in is that a plain <code>bool</code> only has two
+states and a caller filling in an options struct means one of three: &ldquo;set it true&rdquo;, &ldquo;set it false&rdquo;, and &ldquo;I didn&rsquo;t touch
+this, do whatever the server does by default&rdquo;. With <code>omitempty</code> you lose &ldquo;false&rdquo;. Without it you lose &ldquo;didn&rsquo;t touch it&rdquo;.
+In <a href="https://github.com/luthermonson/go-proxmox">go-proxmox</a> we managed to ship both bugs, in that order, and the second one
+quietly turned off TLS certificate verification for anyone downloading ISOs through the API.</p>
+<p><img src="/img/2026/06/omitempty-zero-values-proxmox-defaults-table.svg" alt="Three versions of one field"></p>
+<h3 id="bug-one-you-cant-say-no">Bug one: you can&rsquo;t say no</h3>
+<p><a href="https://github.com/luthermonson/go-proxmox/issues/209">#209</a> from @kernel-sanders was a clean report. Create an API
+token with <code>Privsep: false</code> because you want it to carry the user&rsquo;s permissions, and Proxmox creates a token <em>with</em>
+privilege separation:</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-go" data-lang="go"><span class="line"><span class="cl"><span class="kd">type</span><span class="w"> </span><span class="nx">Token</span><span class="w"> </span><span class="kd">struct</span><span class="w"> </span><span class="p">{</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">	</span><span class="nx">TokenID</span><span class="w"> </span><span class="kt">string</span><span class="w">    </span><span class="s">`json:&#34;tokenid,omitempty&#34;`</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">	</span><span class="nx">Comment</span><span class="w"> </span><span class="kt">string</span><span class="w">    </span><span class="s">`json:&#34;comment,omitempty&#34;`</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">	</span><span class="nx">Expire</span><span class="w">  </span><span class="kt">int</span><span class="w">       </span><span class="s">`json:&#34;expire,omitempty&#34;`</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">	</span><span class="nx">Privsep</span><span class="w"> </span><span class="nx">IntOrBool</span><span class="w"> </span><span class="s">`json:&#34;privsep,omitempty&#34;`</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="p">}</span><span class="w">
+</span></span></span></code></pre></div><p><code>false</code> is the zero value, <code>omitempty</code> drops it, Proxmox never sees the field and applies its default, which is <code>1</code>.
+Same story for disabling a user, creating an ACL that doesn&rsquo;t propagate, and a handful of others. The issue listed them
+all.</p>
+<h3 id="bug-two-the-fix">Bug two: the fix</h3>
+<p><a href="https://github.com/luthermonson/go-proxmox/pull/210">#210</a>, also from @kernel-sanders, took option one from the issue, remove <code>omitempty</code> from the
+affected booleans, and I merged it in August 2025. It went out in v0.2.3:</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-diff" data-lang="diff"><span class="line"><span class="cl"> type StorageDownloadURLOptions struct {
+</span></span><span class="line"><span class="cl"> 	...
+</span></span><span class="line"><span class="cl"><span class="gd">-	VerifyCertificates IntOrBool `json:&#34;verify-certificates,omitempty&#34;`
+</span></span></span><span class="line"><span class="cl"><span class="gi">+	VerifyCertificates IntOrBool `json:&#34;verify-certificates&#34;`
+</span></span></span><span class="line"><span class="cl"> }
+</span></span><span class="line"><span class="cl"> ...
+</span></span><span class="line"><span class="cl"> type VirtualMachineBackupOptions struct {
+</span></span><span class="line"><span class="cl"> 	...
+</span></span><span class="line"><span class="cl"><span class="gd">-	Remove             bool                                   `json:&#34;remove,omitempty&#34;`
+</span></span></span><span class="line"><span class="cl"><span class="gi">+	Remove             bool                                   `json:&#34;remove&#34;`
+</span></span></span><span class="line"><span class="cl"> 	...
+</span></span><span class="line"><span class="cl"><span class="gd">-	StdExcludes        bool                                   `json:&#34;stdexcludes,omitempty&#34;`
+</span></span></span><span class="line"><span class="cl"><span class="gi">+	StdExcludes        bool                                   `json:&#34;stdexcludes&#34;`
+</span></span></span></code></pre></div><p>Now <code>false</code> can be sent. It&rsquo;s also sent when you didn&rsquo;t set anything, and every one of those fields defaults to <code>1</code> in
+Proxmox. Here&rsquo;s what actually goes over the wire, from a small program using the same type and tags:</p>
+<pre tabindex="0"><code>pre-#210 Token{Privsep: false}                   {&#34;tokenid&#34;:&#34;ci&#34;}
+v0.2.3 StorageDownloadURLOptions{} (unset)       {&#34;url&#34;:&#34;https://example.com/x.iso&#34;,&#34;verify-certificates&#34;:0}
+v0.7.0 StorageDownloadURLOptions{} (unset)       {&#34;url&#34;:&#34;https://example.com/x.iso&#34;}
+v0.7.0 VerifyCertificates: Ptr(false)            {&#34;url&#34;:&#34;https://example.com/x.iso&#34;,&#34;verify-certificates&#34;:0}
+</code></pre><p>So from v0.2.3 until v0.7.0, <code>node.StorageDownloadURL</code> with a struct that didn&rsquo;t mention <code>VerifyCertificates</code> told
+Proxmox to download the file without checking the server&rsquo;s certificate. Every <code>node.Vzdump</code> with default options sent
+<code>remove: false</code> and <code>stdexcludes: false</code>, which Proxmox reads as 0, so backups stopped pruning old archives per the retention policy and started including
+<code>/tmp</code> and log files. Nobody filed an issue for either one, which is the scary part. These don&rsquo;t fail, they just do the
+wrong thing.</p>
+<p>(One more trap while I&rsquo;m here: <code>IntOrBool</code>&rsquo;s <code>MarshalJSON</code> has a pointer receiver. Marshal a struct holding one <em>by value</em>
+and the method isn&rsquo;t in the method set, so you get <code>&quot;verify-certificates&quot;:false</code> instead of <code>0</code>. The client always marshals
+through a pointer so it doesn&rsquo;t bite there, but it surprised me when I wrote the test program.)</p>
+<h3 id="the-general-case">The general case</h3>
+<p>The underlying issue was already open. <a href="https://github.com/luthermonson/go-proxmox/issues/199">#199</a> from @xortim, June
+2025: <code>ContainerConfig.Console</code> is an <code>IntOrBool</code> with <code>omitempty</code>, Proxmox defaults it to <code>1</code>, and the more general
+problem is any field where Go&rsquo;s zero value differs from Proxmox&rsquo;s default. And
+<a href="https://github.com/luthermonson/go-proxmox/issues/178">#178</a> pointed out that <code>VirtualMachineConfig.OnBoot</code> is an <code>int</code>
+when the schema says boolean. Two classes of bug, both of the form &ldquo;the Go type doesn&rsquo;t match what the schema says&rdquo;, and
+both had been getting fixed one report at a time.</p>
+<p>So instead of waiting for reports I wrote an audit (<a href="https://github.com/luthermonson/go-proxmox/pull/266">#266</a>). It
+loads the Proxmox API schema, walks <code>types.go</code> with <code>go/parser</code>, and for each config or options struct joins every field&rsquo;s
+JSON tag against the parameters of the endpoint that struct is sent to, preferring the create (<code>POST</code>) endpoint because
+that&rsquo;s where Proxmox documents defaults. Indexed parameters like <code>net[n]</code> get matched to <code>net0</code> and friends. For each
+match it compares the Go zero value to the schema default and the Go type to the schema type, and writes a table:</p>
+<table>
+  <thead>
+      <tr>
+          <th>Field</th>
+          <th>json tag</th>
+          <th>Go type</th>
+          <th>PVE type</th>
+          <th>Go zero</th>
+          <th>PVE default</th>
+          <th>Recommended fix</th>
+      </tr>
+  </thead>
+  <tbody>
+      <tr>
+          <td><code>Console</code></td>
+          <td><code>console</code></td>
+          <td><code>IntOrBool</code></td>
+          <td><code>boolean</code></td>
+          <td><code>0</code></td>
+          <td><code>1</code></td>
+          <td><code>*IntOrBool</code></td>
+      </tr>
+      <tr>
+          <td><code>Memory</code></td>
+          <td><code>memory</code></td>
+          <td><code>int</code></td>
+          <td><code>integer</code></td>
+          <td><code>0</code></td>
+          <td><code>512</code></td>
+          <td><code>*int</code></td>
+      </tr>
+      <tr>
+          <td><code>KVM</code></td>
+          <td><code>kvm</code></td>
+          <td><code>int</code></td>
+          <td><code>boolean</code></td>
+          <td><code>0</code></td>
+          <td><code>1</code></td>
+          <td><code>*IntOrBool</code></td>
+      </tr>
+      <tr>
+          <td><code>VerifyCertificates</code></td>
+          <td><code>verify-certificates</code></td>
+          <td><code>IntOrBool</code></td>
+          <td><code>boolean</code></td>
+          <td><code>0</code></td>
+          <td><code>1</code></td>
+          <td><code>*IntOrBool</code></td>
+      </tr>
+      <tr>
+          <td><code>Remove</code></td>
+          <td><code>remove</code></td>
+          <td><code>bool</code></td>
+          <td><code>boolean</code></td>
+          <td><code>false</code></td>
+          <td><code>1</code></td>
+          <td><code>*IntOrBool</code></td>
+      </tr>
+  </tbody>
+</table>
+<p>It flagged <strong>75 fields</strong>: 38 where the default differs on a non-boolean (needs <code>*T</code>), 9 where the default differs and the
+schema says boolean (<code>*IntOrBool</code>), and 28 that are only the wrong type (<code>IntOrBool</code>, no pointer needed because <code>0</code> is
+the default anyway). That PR only added the tool, the report and a <code>FIXME</code> on each field, so the breaking change could
+land as one migration instead of a trickle.</p>
+<p>One finding is worth being precise about. The audit&rsquo;s note on <code>FirewallNodeOption.Enable</code> said an unset value would
+silently disable the node firewall. With that field still a <code>bool</code> with <code>omitempty</code> on a <code>PUT</code>, unset is omitted and
+the firewall stays as it is, so it couldn&rsquo;t actually disable it. What it couldn&rsquo;t do was let you turn the firewall <em>off</em>,
+which is bug one again. Both are fixed by the same change, but a tool&rsquo;s description of the failure is a hypothesis until
+you&rsquo;ve traced the code path.</p>
+<h3 id="the-fix-pointers-and-a-helper-so-pointers-arent-miserable">The fix: pointers, and a helper so pointers aren&rsquo;t miserable</h3>
+<p>v0.7.0 changed about 30 fields from <code>T</code> to <code>*T</code> and about 25 from <code>bool</code>/<code>int</code> to <code>IntOrBool</code>. <code>nil</code> means &ldquo;let Proxmox
+decide&rdquo;, non-nil means &ldquo;send this&rdquo;. The cost is that you can&rsquo;t write <code>Cores: 4</code> in a struct literal anymore, so there&rsquo;s a
+one-line generic helper:</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-go" data-lang="go"><span class="line"><span class="cl"><span class="c1">// Ptr returns a pointer to v. It exists so callers can construct optional</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="c1">// fields on config/options structs inline without a temporary local variable.</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="kd">func</span><span class="w"> </span><span class="nx">Ptr</span><span class="p">[</span><span class="nx">T</span><span class="w"> </span><span class="kt">any</span><span class="p">](</span><span class="nx">v</span><span class="w"> </span><span class="nx">T</span><span class="p">)</span><span class="w"> </span><span class="o">*</span><span class="nx">T</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="k">return</span><span class="w"> </span><span class="o">&amp;</span><span class="nx">v</span><span class="w"> </span><span class="p">}</span><span class="w">
+</span></span></span></code></pre></div><div class="highlight"><pre tabindex="0" class="chroma"><code class="language-go" data-lang="go"><span class="line"><span class="cl"><span class="nx">cfg</span><span class="w"> </span><span class="o">:=</span><span class="w"> </span><span class="o">&amp;</span><span class="nx">proxmox</span><span class="p">.</span><span class="nx">VirtualMachineConfig</span><span class="p">{</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">	</span><span class="nx">Memory</span><span class="p">:</span><span class="w">   </span><span class="nx">proxmox</span><span class="p">.</span><span class="nf">Ptr</span><span class="p">(</span><span class="nx">proxmox</span><span class="p">.</span><span class="nf">StringOrInt</span><span class="p">(</span><span class="mi">4096</span><span class="p">)),</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">	</span><span class="nx">Cores</span><span class="p">:</span><span class="w">    </span><span class="nx">proxmox</span><span class="p">.</span><span class="nf">Ptr</span><span class="p">(</span><span class="mi">4</span><span class="p">),</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">	</span><span class="nx">OSType</span><span class="p">:</span><span class="w">   </span><span class="nx">proxmox</span><span class="p">.</span><span class="nf">Ptr</span><span class="p">(</span><span class="s">&#34;l26&#34;</span><span class="p">),</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">	</span><span class="nx">CPUUnits</span><span class="p">:</span><span class="w"> </span><span class="nx">proxmox</span><span class="p">.</span><span class="nf">Ptr</span><span class="p">(</span><span class="mi">1024</span><span class="p">),</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="p">}</span><span class="w">
+</span></span></span></code></pre></div><p>And the regression tests check both directions, because only checking one is how we got here. Unset must be absent,
+explicit false or zero must be present:</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-go" data-lang="go"><span class="line"><span class="cl"><span class="kd">func</span><span class="w"> </span><span class="nf">TestContainerConfig_DefaultsOmittedWhenUnset</span><span class="p">(</span><span class="nx">t</span><span class="w"> </span><span class="o">*</span><span class="nx">testing</span><span class="p">.</span><span class="nx">T</span><span class="p">)</span><span class="w"> </span><span class="p">{</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">	</span><span class="c1">// Bare struct — none of the pointer-typed fields should appear.</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">	</span><span class="nx">m</span><span class="w"> </span><span class="o">:=</span><span class="w"> </span><span class="nf">marshalToMap</span><span class="p">(</span><span class="nx">t</span><span class="p">,</span><span class="w"> </span><span class="nx">ContainerConfig</span><span class="p">{})</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">	</span><span class="k">for</span><span class="w"> </span><span class="nx">_</span><span class="p">,</span><span class="w"> </span><span class="nx">k</span><span class="w"> </span><span class="o">:=</span><span class="w"> </span><span class="k">range</span><span class="w"> </span><span class="p">[]</span><span class="kt">string</span><span class="p">{</span><span class="s">&#34;arch&#34;</span><span class="p">,</span><span class="w"> </span><span class="s">&#34;cmode&#34;</span><span class="p">,</span><span class="w"> </span><span class="s">&#34;console&#34;</span><span class="p">,</span><span class="w"> </span><span class="s">&#34;cpuunits&#34;</span><span class="p">,</span><span class="w"> </span><span class="s">&#34;memory&#34;</span><span class="p">,</span><span class="w"> </span><span class="s">&#34;swap&#34;</span><span class="p">,</span><span class="w"> </span><span class="s">&#34;tty&#34;</span><span class="p">}</span><span class="w"> </span><span class="p">{</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">		</span><span class="nx">_</span><span class="p">,</span><span class="w"> </span><span class="nx">present</span><span class="w"> </span><span class="o">:=</span><span class="w"> </span><span class="nx">m</span><span class="p">[</span><span class="nx">k</span><span class="p">]</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">		</span><span class="nx">assert</span><span class="p">.</span><span class="nf">Falsef</span><span class="p">(</span><span class="nx">t</span><span class="p">,</span><span class="w"> </span><span class="nx">present</span><span class="p">,</span><span class="w"> </span><span class="s">&#34;%q should be omitted when unset so PVE applies its default&#34;</span><span class="p">,</span><span class="w"> </span><span class="nx">k</span><span class="p">)</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">	</span><span class="p">}</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="p">}</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="kd">func</span><span class="w"> </span><span class="nf">TestContainerConfig_ExplicitValuesAppearOnTheWire</span><span class="p">(</span><span class="nx">t</span><span class="w"> </span><span class="o">*</span><span class="nx">testing</span><span class="p">.</span><span class="nx">T</span><span class="p">)</span><span class="w"> </span><span class="p">{</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">	</span><span class="nx">cfg</span><span class="w"> </span><span class="o">:=</span><span class="w"> </span><span class="nx">ContainerConfig</span><span class="p">{</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">		</span><span class="nx">Arch</span><span class="p">:</span><span class="w">     </span><span class="nf">Ptr</span><span class="p">(</span><span class="s">&#34;amd64&#34;</span><span class="p">),</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">		</span><span class="nx">CMode</span><span class="p">:</span><span class="w">    </span><span class="nf">Ptr</span><span class="p">(</span><span class="s">&#34;tty&#34;</span><span class="p">),</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">		</span><span class="nx">Console</span><span class="p">:</span><span class="w">  </span><span class="nf">Ptr</span><span class="p">(</span><span class="nf">IntOrBool</span><span class="p">(</span><span class="kc">false</span><span class="p">)),</span><span class="w"> </span><span class="c1">// explicit disable — must reach PVE as 0, not be silently swallowed</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">		</span><span class="nx">CPUUnits</span><span class="p">:</span><span class="w"> </span><span class="nf">Ptr</span><span class="p">(</span><span class="mi">1024</span><span class="p">),</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">		</span><span class="nx">Memory</span><span class="p">:</span><span class="w">   </span><span class="nf">Ptr</span><span class="p">(</span><span class="mi">512</span><span class="p">),</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">		</span><span class="nx">Swap</span><span class="p">:</span><span class="w">     </span><span class="nf">Ptr</span><span class="p">(</span><span class="mi">0</span><span class="p">),</span><span class="w"> </span><span class="c1">// explicit no-swap — must reach PVE as 0, not be omitted</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">		</span><span class="nx">TTY</span><span class="p">:</span><span class="w">      </span><span class="nf">Ptr</span><span class="p">(</span><span class="mi">2</span><span class="p">),</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">	</span><span class="p">}</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">	</span><span class="nx">m</span><span class="w"> </span><span class="o">:=</span><span class="w"> </span><span class="nf">marshalToMap</span><span class="p">(</span><span class="nx">t</span><span class="p">,</span><span class="w"> </span><span class="nx">cfg</span><span class="p">)</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">	</span><span class="nx">assert</span><span class="p">.</span><span class="nf">Equal</span><span class="p">(</span><span class="nx">t</span><span class="p">,</span><span class="w"> </span><span class="nb">float64</span><span class="p">(</span><span class="mi">0</span><span class="p">),</span><span class="w"> </span><span class="nx">m</span><span class="p">[</span><span class="s">&#34;console&#34;</span><span class="p">])</span><span class="w"> </span><span class="c1">// IntOrBool false marshals to 0</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">	</span><span class="nx">assert</span><span class="p">.</span><span class="nf">Equal</span><span class="p">(</span><span class="nx">t</span><span class="p">,</span><span class="w"> </span><span class="nb">float64</span><span class="p">(</span><span class="mi">0</span><span class="p">),</span><span class="w"> </span><span class="nx">m</span><span class="p">[</span><span class="s">&#34;swap&#34;</span><span class="p">])</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">	</span><span class="c1">// ...</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="p">}</span><span class="w">
+</span></span></span></code></pre></div><p><code>Swap</code> is a nice example of why &ldquo;just use <code>omitempty</code>&rdquo; doesn&rsquo;t work even for integers: the Proxmox default is 512, and
+<code>0</code> is a perfectly reasonable value meaning &ldquo;no swap&rdquo; that you need to be able to send.</p>
+<h3 id="making-it-stick">Making it stick</h3>
+<p>A one-time sweep doesn&rsquo;t help if the next endpoint wrapper reintroduces it, and in v0.7 a lot of new wrappers were being
+written. So the rule went into <code>AGENTS.md</code> (<a href="https://github.com/luthermonson/go-proxmox/pull/271">#271</a>) as a decision
+procedure: look up the field&rsquo;s default in the API viewer, use a pointer if it differs from Go&rsquo;s zero, leave it unboxed if
+it matches, and add a test that marshals the struct with the field unset. The one-line version is the question at the
+end of that section: <em>if the user never touches this field, will an unintended value reach Proxmox?</em></p>
+<p>There was one more lesson. The sweep that converted the fields stripped the <code>FIXME</code> comments and left nothing in their
+place, so six months from now someone would see <code>CPUUnits *int</code> and &ldquo;simplify&rdquo; it back. <a href="https://github.com/luthermonson/go-proxmox/pull/268">#268</a>
+put a comment on every pointerized field saying which default it protects:</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-go" data-lang="go"><span class="line"><span class="cl"><span class="c1">// Remove — PVE default 1 (remove old backups per retention policy).</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="c1">// Schema is boolean; unset on the wire keeps pruning enabled. See #178 + #199.</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="nx">Remove</span><span class="w"> </span><span class="o">*</span><span class="nx">IntOrBool</span><span class="w"> </span><span class="s">`json:&#34;remove,omitempty&#34;`</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="nx">Script</span><span class="w"> </span><span class="kt">string</span><span class="w">     </span><span class="s">`json:&#34;script,omitempty&#34;`</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="c1">// StdExcludes — PVE default 1 (skip /tmp, /var/log, etc.). Unset on</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="c1">// the wire keeps those default exclusions. See #178 + #199.</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="nx">StdExcludes</span><span class="w"> </span><span class="o">*</span><span class="nx">IntOrBool</span><span class="w"> </span><span class="s">`json:&#34;stdexcludes,omitempty&#34;`</span><span class="w">
+</span></span></span></code></pre></div><p>If you&rsquo;re on v0.2.3 through v0.6.x and you call <code>StorageDownloadURL</code> or <code>Vzdump</code>, set those fields explicitly or upgrade.
+The full list of changed fields is in <a href="https://github.com/luthermonson/go-proxmox/blob/main/migration/v0.7.0.md">migration/v0.7.0.md</a>.</p>
+<h3 id="links">Links</h3>
+<ul>
+<li><a href="https://github.com/luthermonson/go-proxmox/issues/209">#209</a>, <a href="https://github.com/luthermonson/go-proxmox/pull/210">#210</a>, <a href="https://github.com/luthermonson/go-proxmox/issues/199">#199</a>, <a href="https://github.com/luthermonson/go-proxmox/issues/178">#178</a></li>
+<li><a href="https://github.com/luthermonson/go-proxmox/pull/266">#266 the audit</a>, <a href="https://github.com/luthermonson/go-proxmox/pull/268">#268 rationale comments</a>, <a href="https://github.com/luthermonson/go-proxmox/pull/271">#271 AGENTS.md rule</a>, <a href="https://github.com/luthermonson/go-proxmox/pull/274">#274 cluster wrappers with the pointer rule</a></li>
+<li><a href="https://github.com/luthermonson/go-proxmox/blob/main/defaults_omit_test.go">defaults_omit_test.go</a></li>
+<li><a href="https://github.com/golang/go/issues/13284">golang/go#13284, the long-running omitempty discussion</a></li>
+</ul>
+
+      </div>
+      <footer>
+        <div class="stats">
+  
+    <ul class="categories">
+      
+        
+          <li><a class="article-terms-link" href="/categories/go/">go</a></li>
+        
+          <li><a class="article-terms-link" href="/categories/homelab/">homelab</a></li>
+        
+      
+    </ul>
+  
+  
+    <ul class="tags">
+      
+        
+          <li><a class="article-terms-link" href="/tags/proxmox/">proxmox</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/go/">go</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/go-proxmox/">go-proxmox</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/json/">json</a></li>
+        
+      
+    </ul>
+  
+</div>
+
+      </footer>
+    </div>
+    
+      
+  
+  <div class='post giscus-wrap'>
+    <script src='https://giscus.app/client.js'
+            data-repo='luthermonson/luth.io'
+            data-repo-id='R_kgDOGvFBXQ'
+            data-category='Announcements'
+            data-category-id='DIC_kwDOGvFBXc4DH_gv'
+            data-mapping='pathname'
+            data-strict='1'
+            data-reactions-enabled='1'
+            data-emit-metadata='0'
+            data-input-position='top'
+            data-theme='light'
+            data-lang='en'
+            data-loading='lazy'
+            crossorigin='anonymous'
+            async>
+    </script>
+  </div>
+  
+
+
+
+    
+  </article>
+  
+    <nav class="post-nav">
+      
+        <a href="/blog/2026/06/go-proxmox-endpoint-coverage/" class="post-nav-link older">
+          <span class="post-nav-label">&larr; Older</span>
+          <span class="post-nav-title">From 52% to 100%: Measuring a Go Client Against the Proxmox API Schema</span>
+        </a>
+      
+      
+        <a href="/blog/2026/06/escaping-wsl-hcs-linux-vm/" class="post-nav-link newer">
+          <span class="post-nav-label">Newer &rarr;</span>
+          <span class="post-nav-title">Escaping WSL: Booting My Own Linux VM Through Hyper-V&#39;s HCS API</span>
+        </a>
+      
+    </nav>
+  
+
+      </main>
+      <section id="site-sidebar">
+  
+    <section id="recent-posts">
+      <header>
+        <h1>Recent Posts</h1>
+      </header>
+      
+      <article class="mini-post">
+          <a href="/blog/2026/10/ephpm-worker-mode-performance/" class="image" style="--bg-image: url('/img/2026/10/ephpm-worker-mode-performance-cover.svg');">
+    <img class="" src="/img/2026/10/ephpm-worker-mode-performance-cover.svg" alt="Diagram: before, hyper/tokio hands each request to one shared bounded channel whose waiter list all 20 PHP threads contend on; after, a dispatcher hands the job straight into the mailbox of the most recently idle PHP thread and only queues it in a FIFO overflow queue when every thread is busy">
+  </a>
+        <header>
+          <h2><a href="/blog/2026/10/ephpm-worker-mode-performance/">Fourth Place in Worker Mode, and Why It Wasn&#39;t PHP</a></h2>
+          <time class="published" datetime="2026-10-16 08:10:00 -0700 PDT">October 16, 2026</time>
+        </header>
+      </article>
+      
+      <article class="mini-post">
+          <a href="/blog/2026/10/ephpm-websockets-how-to/" class="image" style="--bg-image: url('/img/2026/10/ephpm-websockets-how-to-cover.svg');">
+    <img class="" src="/img/2026/10/ephpm-websockets-how-to-cover.svg" alt="Diagram: browsers hold sockets to ePHPm&#39;s Rust session tasks and registry; each connect, message and disconnect runs websocket.php once on the PHP thread pool, and ordinary HTTP requests push through ephpm_ws_broadcast">
+  </a>
+        <header>
+          <h2><a href="/blog/2026/10/ephpm-websockets-how-to/">WebSockets in ePHPm, From Zero to a Working Chat</a></h2>
+          <time class="published" datetime="2026-10-11 17:30:00 -0700 PDT">October 11, 2026</time>
+        </header>
+      </article>
+      
+      <article class="mini-post">
+          <a href="/blog/2026/10/webhooks-out-of-order-scheduler/" class="image" style="--bg-image: url('/img/2026/10/webhooks-out-of-order-scheduler-timeline.svg');">
+    <img class="" src="/img/2026/10/webhooks-out-of-order-scheduler-timeline.svg" alt="Timeline of three same-label jobs where a runner executing a build is destroyed 2.3 seconds before its in_progress webhook arrives">
+  </a>
+        <header>
+          <h2><a href="/blog/2026/10/webhooks-out-of-order-scheduler/">Webhooks Arrive Out of Order: How My Scheduler Killed Live Builds</a></h2>
+          <time class="published" datetime="2026-10-07 21:10:00 -0700 PDT">October 7, 2026</time>
+        </header>
+      </article>
+      
+      <article class="mini-post">
+          <a href="/blog/2026/10/go-proxmox-five-years-to-v0-8/" class="image" style="--bg-image: url('/img/2026/10/go-proxmox-five-years-to-v0-8-apidiff.svg');">
+    <img class="" src="/img/2026/10/go-proxmox-five-years-to-v0-8-apidiff.svg" alt="Horizontal bar chart of apidiff incompatible and compatible changes for every go-proxmox release from v0.1.0 to v0.8.2">
+  </a>
+        <header>
+          <h2><a href="/blog/2026/10/go-proxmox-five-years-to-v0-8/">Breaking Changes Without Breaking Trust: Five Years to go-proxmox v0.8</a></h2>
+          <time class="published" datetime="2026-10-04 19:40:00 -0700 PDT">October 4, 2026</time>
+        </header>
+      </article>
+      
+      <article class="mini-post">
+          <a href="/blog/2026/10/windows-sigterm-sparse-files/" class="image" style="--bg-image: url('/img/2026/10/windows-sigterm-sparse-files-connections.svg');">
+    <img class="" src="/img/2026/10/windows-sigterm-sparse-files-connections.svg" alt="Bar chart: 96 Cloudflare edge connections held by orphaned cloudflared processes versus 4 for the live daemon">
+  </a>
+        <header>
+          <h2><a href="/blog/2026/10/windows-sigterm-sparse-files/">Windows Grab-Bag: SIGTERM That Doesn&#39;t Exist and Sparse Files That Break Docker</a></h2>
+          <time class="published" datetime="2026-10-03 14:30:00 -0700 PDT">October 3, 2026</time>
+        </header>
+      </article>
+      
+      
+        <footer>
+          <a href="/blog" class="button">See More</a>
+        </footer>
+      
+    </section>
+  
+
+  
+    
+
+      <section id="categories">
+        <header>
+          <h1><a href="/categories">Categories</a></h1>
+        </header>
+        <ul>
+          
+          
+          <li>
+              <a href="/categories/ephpm/">ephpm<span class="count">33</span></a>
+          
+          <li>
+              <a href="/categories/go/">go<span class="count">30</span></a>
+          
+          <li>
+              <a href="/categories/php/">php<span class="count">23</span></a>
+          
+          <li>
+              <a href="/categories/rust/">rust<span class="count">15</span></a>
+          
+          <li>
+              <a href="/categories/homelab/">homelab<span class="count">14</span></a>
+          
+          <li>
+              <a href="/categories/windows/">windows<span class="count">14</span></a>
+          
+          <li>
+              <a href="/categories/ci/">ci<span class="count">9</span></a>
+          
+          <li>
+              <a href="/categories/databases/">databases<span class="count">9</span></a>
+          
+          <li>
+              <a href="/categories/security/">security<span class="count">9</span></a>
+          
+          <li>
+              <a href="/categories/containers/">containers<span class="count">7</span></a>
+          
+          <li>
+              <a href="/categories/tools/">tools<span class="count">5</span></a>
+          
+          <li>
+              <a href="/categories/ai-agents/">ai-agents<span class="count">4</span></a>
+          
+          </li>
+        </ul>
+      </section>
+    
+  
+
+  
+    <section id="mini-bio">
+      <header>
+        <h1>About</h1>
+      </header>
+      <p>Luther is a 20+ year software veteran specializing in backend APIs and architecting products. Employed at <a href='https://www.suse.com'>SUSE</a> as the Team Lead for the <a href='https://github.com/rancher/windows/issues'>Containers on Windows Team</a> working on <a href='https://rancher.com/'>Rancher</a> + <a href='https://kubernetes.io/'>Kubernetes</a></p>
+      <footer>
+        <a href="/about" class="button">Learn More</a>
+      </footer>
+    </section>
+  
+</section>
+
+      <footer id="site-footer">
+  
+      <ul class="socnet-icons">
+        
+
+        <li><a href="//github.com/luthermonson" target="_blank" rel="noopener" title="GitHub" class="fab fa-github"></a></li>
+
+
+
+
+
+
+
+
+
+
+
+<li><a href="//www.linkedin.com/in/luthermonson" target="_blank" rel="noopener" title="LinkedIn" class="fab fa-linkedin"></a></li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li><a href="//twitter.com/luthermonson" target="_blank" rel="noopener" title="Twitter" class="fab fa-twitter"></a></li>
+
+
+
+
+
+
+
+
+
+
+
+<li><a href="mailto:luther.monson@gmail.com" target="_blank" title="Email" class="far fa-envelope"></a></li>
+
+      </ul>
+  
+  <p class="copyright">
+    © 2026 Luther Monson
+      <br>
+    Theme: <a href='https://github.com/pacollins/hugo-future-imperfect-slim' target='_blank' rel='noopener'>Hugo Future Imperfect Slim</a><br>A <a href='https://html5up.net/future-imperfect' target='_blank' rel='noopener'>HTML5 UP port</a> | Powered by <a href='https://gohugo.io/' title='0.160.1' target='_blank' rel='noopener'>Hugo</a>
+  </p>
+</footer>
+<a id="back-to-top" href="#" class="fas fa-arrow-up fa-2x"></a>
+
+      <script src="/js/bundle.min.241b62ebc4792fe8c7a75879e5f710894f226f2b73342e9916b3a3b0526030cc.js" integrity="sha256-JBti68R5L&#43;jHp1h55fcQiU8ibytzNC6ZFrOjsFJgMMw="></script>
+    <script src="/js/add-on.js"></script>
+    </div>
+  </body>
+</html>

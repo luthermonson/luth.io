@@ -1,0 +1,22 @@
+{{ define "main" }}
+  <section class="post archive">
+    <header>
+      <h1>{{ .Title }}</h1>
+    </header>
+    {{ $posts := where (where .Site.RegularPages "Section" "blog") "Params.draft" "!=" true }}
+    {{ range $posts.GroupByDate "2006" }}
+      <h2 class="archive-year">{{ .Key }}</h2>
+      {{ range .Pages.GroupByDate "January" }}
+        <h3 class="archive-month">{{ .Key }}</h3>
+        <ul>
+          {{ range .Pages }}
+            <li>
+              <time datetime="{{ .Date.Format "2006-01-02" }}">{{ .Date.Format "Jan 2" }}</time>
+              <a href="{{ .RelPermalink }}">{{ .Title }}</a>
+            </li>
+          {{ end }}
+        </ul>
+      {{ end }}
+    {{ end }}
+  </section>
+{{ end }}

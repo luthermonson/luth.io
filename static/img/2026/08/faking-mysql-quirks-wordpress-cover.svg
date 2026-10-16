@@ -1,0 +1,46 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 620" width="1200" height="620" font-family="system-ui, -apple-system, Segoe UI, Roboto, sans-serif">
+  <rect width="1200" height="620" fill="#ffffff"/>
+  <text x="600" y="46" text-anchor="middle" font-size="26" font-weight="600" fill="#222">What WordPress expects MySQL to do</text>
+  <text x="600" y="76" text-anchor="middle" font-size="16" fill="#6b6b6b">what litewire answered before and after the August 2026 fixes</text>
+
+  <g font-size="15">
+    <text x="60" y="122" font-weight="600" fill="#6b6b6b">WordPress sends</text>
+    <text x="520" y="122" font-weight="600" fill="#c0392b">before</text>
+    <text x="860" y="122" font-weight="600" fill="#3a9a5b">after</text>
+    <line x1="50" y1="134" x2="1150" y2="134" stroke="#6b6b6b" stroke-width="1"/>
+
+    <text x="60" y="172" fill="#222" font-family="ui-monospace, Consolas, monospace" font-size="14">SELECT FOUND_ROWS()</text>
+    <text x="520" y="172" fill="#c0392b">always 0</text>
+    <text x="860" y="172" fill="#3a9a5b">un-LIMITed total, per session</text>
+
+    <text x="60" y="222" fill="#222" font-family="ui-monospace, Consolas, monospace" font-size="14">INSERT duplicate option_name</text>
+    <text x="520" y="222" fill="#c0392b">1062 + SQLite's text</text>
+    <text x="860" y="222" fill="#3a9a5b">1062 "Duplicate entry ... for key"</text>
+
+    <text x="60" y="272" fill="#222" font-family="ui-monospace, Consolas, monospace" font-size="14">SELECT ... FROM missing_table</text>
+    <text x="520" y="272" fill="#c0392b">1105 unknown error</text>
+    <text x="860" y="272" fill="#3a9a5b">1146 / 42S02</text>
+
+    <text x="60" y="322" fill="#222" font-family="ui-monospace, Consolas, monospace" font-size="14">SELECT VERSION()</text>
+    <text x="520" y="322" fill="#c0392b">error: coalesce() arity</text>
+    <text x="860" y="322" fill="#3a9a5b">8.0.36-litewire (all 3 paths)</text>
+
+    <text x="60" y="372" fill="#222" font-family="ui-monospace, Consolas, monospace" font-size="14">COM_RESET_CONNECTION</text>
+    <text x="520" y="372" fill="#c0392b">OK, but nothing reset</text>
+    <text x="860" y="372" fill="#3a9a5b">OK + rollback, prepared stmts dropped</text>
+
+    <text x="60" y="422" fill="#222" font-family="ui-monospace, Consolas, monospace" font-size="14">option_name REGEXP '^rss_...'</text>
+    <text x="520" y="422" fill="#c0392b">no such function</text>
+    <text x="860" y="422" fill="#3a9a5b">regexp() registered</text>
+
+    <text x="60" y="472" fill="#222" font-family="ui-monospace, Consolas, monospace" font-size="14">YEAR(post_date) = 2024</text>
+    <text x="520" y="472" fill="#c0392b">no such function</text>
+    <text x="860" y="472" fill="#3a9a5b">CAST(strftime('%Y',..) AS INTEGER)</text>
+
+    <text x="60" y="522" fill="#222" font-family="ui-monospace, Consolas, monospace" font-size="14">LIKE '50\%'</text>
+    <text x="520" y="522" fill="#c0392b">backslash literal, % live</text>
+    <text x="860" y="522" fill="#3a9a5b">ESCAPE '\' appended</text>
+    <line x1="50" y1="545" x2="1150" y2="545" stroke="#6b6b6b" stroke-width="1"/>
+  </g>
+  <text x="600" y="588" text-anchor="middle" font-size="15" fill="#6b6b6b">litewire #25 #26 #28 #29 #30 #31</text>
+</svg>

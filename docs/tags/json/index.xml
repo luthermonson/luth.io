@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>Json on Luther Monson</title>
+    <link>https://luth.io/tags/json/</link>
+    <description>Recent content in Json on Luther Monson</description>
+    <generator>Hugo</generator>
+    <language>en</language>
+    <lastBuildDate>Tue, 23 Jun 2026 20:31:00 -0700</lastBuildDate>
+    <atom:link href="https://luth.io/tags/json/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>Proxmox JSON, Part 2: null PIDs, 1.12589990684262e&#43;15 and net10</title>
+      <link>https://luth.io/blog/2026/06/proxmox-numbers-null-scientific-notation-net10/</link>
+      <pubDate>Tue, 23 Jun 2026 20:31:00 -0700</pubDate>
+      <guid>https://luth.io/blog/2026/06/proxmox-numbers-null-scientific-notation-net10/</guid>
+      <description>&lt;p&gt;In 2023 I wrote about &lt;a href=&#34;https://luth.io/blog/2023/11/proxmox-doesnt-know-what-type-a-number-is/&#34;&gt;why go-proxmox has &lt;code&gt;StringOrInt&lt;/code&gt; and friends&lt;/a&gt;:&#xA;Proxmox sends the same number quoted in one place and bare in another, so the client has types that accept both. That&#xA;post ended on a pretty confident note. Since then three more shapes of &amp;ldquo;the JSON is valid and Go still won&amp;rsquo;t take it&amp;rdquo;&#xA;have come in, and one of them is a bug I&amp;rsquo;d already fixed once and then reintroduced myself.&lt;/p&gt;</description>
+    </item>
+    <item>
+      <title>Your Zero Value Just Turned Off My TLS Verification: omitempty, Go Defaults and Proxmox</title>
+      <link>https://luth.io/blog/2026/06/omitempty-zero-values-proxmox-defaults/</link>
+      <pubDate>Sat, 13 Jun 2026 19:52:00 -0700</pubDate>
+      <guid>https://luth.io/blog/2026/06/omitempty-zero-values-proxmox-defaults/</guid>
+      <description>&lt;p&gt;Every Go developer knows &lt;code&gt;omitempty&lt;/code&gt; drops zero values. What takes longer to sink in is that a plain &lt;code&gt;bool&lt;/code&gt; only has two&#xA;states and a caller filling in an options struct means one of three: &amp;ldquo;set it true&amp;rdquo;, &amp;ldquo;set it false&amp;rdquo;, and &amp;ldquo;I didn&amp;rsquo;t touch&#xA;this, do whatever the server does by default&amp;rdquo;. With &lt;code&gt;omitempty&lt;/code&gt; you lose &amp;ldquo;false&amp;rdquo;. Without it you lose &amp;ldquo;didn&amp;rsquo;t touch it&amp;rdquo;.&#xA;In &lt;a href=&#34;https://github.com/luthermonson/go-proxmox&#34;&gt;go-proxmox&lt;/a&gt; we managed to ship both bugs, in that order, and the second one&#xA;quietly turned off TLS certificate verification for anyone downloading ISOs through the API.&lt;/p&gt;</description>
+    </item>
+    <item>
+      <title>Proxmox Doesn&#39;t Know What Type a Number Is</title>
+      <link>https://luth.io/blog/2023/11/proxmox-doesnt-know-what-type-a-number-is/</link>
+      <pubDate>Sat, 25 Nov 2023 20:05:00 -0700</pubDate>
+      <guid>https://luth.io/blog/2023/11/proxmox-doesnt-know-what-type-a-number-is/</guid>
+      <description>&lt;p&gt;Every couple of months somebody opens an issue on &lt;a href=&#34;https://github.com/luthermonson/go-proxmox&#34;&gt;go-proxmox&lt;/a&gt; with a title&#xA;that starts with &lt;code&gt;json: cannot unmarshal string into Go struct field&lt;/code&gt;. The most recent one was fixed last week, and it&amp;rsquo;s the same&#xA;root cause every time: the Proxmox VE API is backed by Perl, Perl doesn&amp;rsquo;t really care whether a scalar is a number or a&#xA;string, and the JSON encoder on the other end writes whatever the scalar happens to be at the time. So a field that is&#xA;documented as an integer comes back as &lt;code&gt;2048&lt;/code&gt; from one endpoint and &lt;code&gt;&amp;quot;2048&amp;quot;&lt;/code&gt; from another, and sometimes from the same&#xA;endpoint depending on how the value got into the config.&lt;/p&gt;</description>
+    </item>
+  </channel>
+</rss>

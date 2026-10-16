@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>Tar on Luther Monson</title>
+    <link>https://luth.io/tags/tar/</link>
+    <description>Recent content in Tar on Luther Monson</description>
+    <generator>Hugo</generator>
+    <language>en</language>
+    <lastBuildDate>Sat, 18 Jul 2026 16:10:00 -0700</lastBuildDate>
+    <atom:link href="https://luth.io/tags/tar/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>Fixing Windows Archive Extraction in SPC</title>
+      <link>https://luth.io/blog/2026/07/spc-windows-archive-extraction/</link>
+      <pubDate>Sat, 18 Jul 2026 16:10:00 -0700</pubDate>
+      <guid>https://luth.io/blog/2026/07/spc-windows-archive-extraction/</guid>
+      <description>&lt;p&gt;One of the first things that broke when I started building PHP on Windows with&#xA;&lt;a href=&#34;https://github.com/crazywhalecc/static-php-cli&#34;&gt;static-php-cli&lt;/a&gt; (SPC) wasn&amp;rsquo;t PHP at all. It was unpacking the source&#xA;tarballs. libxml2, xz, a couple of others would die partway through extraction with:&lt;/p&gt;&#xA;&lt;pre tabindex=&#34;0&#34;&gt;&lt;code&gt;ERROR: The pipe has been ended.&#xA;&lt;/code&gt;&lt;/pre&gt;&lt;p&gt;Over the last few months I&amp;rsquo;ve &amp;ldquo;fixed&amp;rdquo; this two different ways, and the maintainers fixed it a third. It&amp;rsquo;s a small piece&#xA;of code but it&amp;rsquo;s a good example of how much Linux assumption hides in a single shell pipeline, so here&amp;rsquo;s the whole thing.&lt;/p&gt;</description>
+    </item>
+  </channel>
+</rss>

@@ -1,0 +1,784 @@
+<!doctype html>
+<html lang="en">
+  <head>
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-MSTSKGFWTX"></script>
+<script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+
+    gtag('config', 'G-MSTSKGFWTX');
+</script><meta charset="utf-8">
+<title>PHP Signal Safety - The Init Ordering Bug Nobody Warns You About - Luther Monson</title>
+<meta name="description" content="Embedding PHP in a multithreaded server means PHP&#39;s timeout signals can land on any thread. How ePHPm got that under control.">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<meta name="twitter:card" content="summary_large_image"><meta name="twitter:site" content="@luthermonson">
+
+<meta property="og:site_name" content="Luther Monson">
+<meta property="og:title" content="PHP Signal Safety - The Init Ordering Bug Nobody Warns You About">
+<meta property="og:description" content="Embedding PHP in a multithreaded server means PHP&#39;s timeout signals can land on any thread. How ePHPm got that under control.">
+<meta property="og:type" content="article">
+<meta property="og:url" content="https://luth.io/blog/2026/04/php-signal-safety-init-ordering/">
+    <meta property="og:image" content="https://luth.io/img/2026/04/php-signal-safety-init-ordering-cover.svg">
+    <meta property="og:image:alt" content="Thread timeline: the main thread installs PHP&#39;s signal handlers during php_embed_init, a PHP thread later arms ITIMER_PROF, and SIGPROF is delivered to a tokio worker that has no PHP state">
+
+
+  <link rel="manifest" href="/favicon/site.webmanifest?v=1">
+  <link rel="apple-touch-icon" sizes="180x180" href="/favicon/apple-touch-icon.png?v=1">
+  <link rel="icon" type="image/png" sizes="32x32" href="/favicon/favicon-32x32.png?v=1">
+  <link rel="icon" type="image/png" sizes="16x16" href="/favicon/favicon-16x16.png?v=1">
+  
+    <link rel="mask-icon" href="/favicon/safari-pinned-tab.svg?v=1" color="#ffffff">
+    <link rel="shortcut icon" href="/favicon/favicon.ico?v=1">
+    <meta name="msapplication-config" content="/favicon/browserconfig.xml?v=1">
+  
+  <meta name="msapplication-TileColor" content="#ffffff">
+  <meta name="theme-color" content="#ffffff">
+
+
+  <meta name="generator" content="Hugo 0.160.1">
+  <link rel="alternate" type="application/rss+xml" href="https://luth.io/index.xml" title="Luther Monson">
+  <link rel="stylesheet" href="/css/bundle.min.e1ffed86714fbb7eff75eab221c0c61b8260be0c7d1c08db0fcb7a2bdb6af7c9.css" integrity="sha256-4f/thnFPu37/deqyIcDGG4Jgvgx9HAjbD8t6K9tq98k="><link rel="stylesheet" href="/css/add-on.css">
+        <link rel="stylesheet" href="/css/code.css">
+        <link rel="stylesheet" href="/css/mobile.css">
+</head>
+
+  <body>
+    
+
+<header id="site-header">
+  <nav id="site-nav">
+    <h1 class="nav-title">
+      <a href="/" class="nav">
+        <img class="nav-avatar" src="/img/luther-monson-headshot.jpg" alt="" width="32" height="32">
+        
+          Blog
+        
+      </a>
+    </h1>
+    <menu id="site-nav-menu" class="flyout-menu menu">
+      
+        
+          
+          <a href="/" class="nav link"><i class='fa fa-home'></i> Home</a>
+        
+      
+        
+          
+          <a href="/about" class="nav link"><i class='far fa-id-card'></i> About</a>
+        
+      
+        
+          
+          <a href="/blog" class="nav link"><i class='far fa-newspaper'></i> Blog</a>
+        
+      
+        
+          
+          <a href="/archive" class="nav link"><i class='far fa-calendar-alt'></i> Archive</a>
+        
+      
+        
+          
+          <a href="/categories" class="nav link"><i class='fas fa-sitemap'></i> Categories</a>
+        
+      
+      <a href="#share-menu" class="nav link share-toggle"><i class="fas fa-share-alt">&nbsp;</i>Share</a>
+      <a href="#search-input" class="nav link search-toggle"><i class="fas fa-search">&nbsp;</i>Search</a>
+    </menu>
+    <a href="#search-input" class="nav search-toggle"><i class="fas fa-search fa-2x">&nbsp;</i></a>
+    <a href="#share-menu" class="nav share-toggle"><i class="fas fa-share-alt fa-2x">&nbsp;</i></a>
+    
+    <a href="#site-nav" class="nav nav-toggle"><i class="fas fa-bars fa-2x"></i></a>
+  </nav>
+  <menu id="search" class="menu"><input id="search-input" class="search-input menu"></input><div id="search-results" class="search-results menu"></div></menu>
+  
+  
+    <menu id="share-menu" class="flyout-menu menu">
+      <h1>Share Post</h1>
+      
+
+
+
+
+  
+    
+    <a href="//twitter.com/share?text=PHP%20Signal%20Safety%20-%20The%20Init%20Ordering%20Bug%20Nobody%20Warns%20You%20About&amp;url=https%3a%2f%2fluth.io%2fblog%2f2026%2f04%2fphp-signal-safety-init-ordering%2f" target="_blank" rel="noopener" class="nav share-btn twitter">
+        <p>Twitter</p>
+      </a>
+  
+
+  
+      <a href="//www.facebook.com/sharer/sharer.php?u=https%3a%2f%2fluth.io%2fblog%2f2026%2f04%2fphp-signal-safety-init-ordering%2f" target="_blank" rel="noopener" class="nav share-btn facebook">
+        <p>Facebook</p>
+        </a>
+  
+
+  
+    <a href="//www.reddit.com/submit?url=https%3a%2f%2fluth.io%2fblog%2f2026%2f04%2fphp-signal-safety-init-ordering%2f&amp;title=PHP%20Signal%20Safety%20-%20The%20Init%20Ordering%20Bug%20Nobody%20Warns%20You%20About" target="_blank" rel="noopener" class="nav share-btn reddit">
+          <p>Reddit</p>
+        </a>
+  
+
+  
+        <a href="//www.linkedin.com/shareArticle?url=https%3a%2f%2fluth.io%2fblog%2f2026%2f04%2fphp-signal-safety-init-ordering%2f&amp;title=PHP%20Signal%20Safety%20-%20The%20Init%20Ordering%20Bug%20Nobody%20Warns%20You%20About" target="_blank" rel="noopener" class="nav share-btn linkedin">
+            <p>LinkedIn</p>
+          </a>
+  
+
+  
+        <a href="//www.pinterest.com/pin/create/button/?url=https%3a%2f%2fluth.io%2fblog%2f2026%2f04%2fphp-signal-safety-init-ordering%2f&amp;description=PHP%20Signal%20Safety%20-%20The%20Init%20Ordering%20Bug%20Nobody%20Warns%20You%20About" target="_blank" rel="noopener" class="nav share-btn pinterest">
+          <p>Pinterest</p>
+        </a>
+  
+
+  
+        <a href="mailto:?subject=Check%20out%20this%20post%20by Luther%20Monson&amp;body=https%3a%2f%2fluth.io%2fblog%2f2026%2f04%2fphp-signal-safety-init-ordering%2f" target="_blank" class="nav share-btn email" data-proofer-ignore>
+          <p>Email</p>
+        </a>
+  
+
+
+    </menu>
+  
+</header>
+
+    <div id="wrapper">
+      <section id="site-intro" class="hidden-single-column">
+  <a href="/"><img src="/img/luther-monson-headshot.jpg" class="circle" width="100" alt="Luther Monson, Staff Software Engineer at SUSE" /></a>
+  <header>
+    <h1>Luther Monson</h1>
+  </header>
+  <main>
+    <p>Go by way of PHP &middot; Containers &middot; VMs &middot; Windows &middot; Kubernetes</p>
+  </main>
+  
+    <footer>
+      <ul class="socnet-icons">
+        
+
+        <li><a href="//github.com/luthermonson" target="_blank" rel="noopener" title="GitHub" class="fab fa-github"></a></li>
+
+
+
+
+
+
+
+
+
+
+
+<li><a href="//www.linkedin.com/in/luthermonson" target="_blank" rel="noopener" title="LinkedIn" class="fab fa-linkedin"></a></li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li><a href="//twitter.com/luthermonson" target="_blank" rel="noopener" title="Twitter" class="fab fa-twitter"></a></li>
+
+
+
+
+
+
+
+
+
+
+
+<li><a href="mailto:luther.monson@gmail.com" target="_blank" title="Email" class="far fa-envelope"></a></li>
+
+      </ul>
+    </footer>
+  
+</section>
+
+      <main id="site-main">
+        
+  <article>
+    <div class="post">
+      <header>
+  <div class="title">
+    
+      <h2><a href="/blog/2026/04/php-signal-safety-init-ordering/">PHP Signal Safety - The Init Ordering Bug Nobody Warns You About</a></h2>
+    
+    
+      <p>Embedding PHP in a multithreaded server means PHP&#39;s timeout signals can land on any thread. How ePHPm got that under control.</p>
+    
+  </div>
+  <div class="meta">
+    <time datetime="2026-04-12 20:15:00 -0700 PDT">April 12, 2026</time>
+    
+    <p>11-Minute Read</p>
+  </div>
+</header>
+
+      <div id="socnet-share">
+        
+
+
+
+
+  
+    
+    <a href="//twitter.com/share?text=PHP%20Signal%20Safety%20-%20The%20Init%20Ordering%20Bug%20Nobody%20Warns%20You%20About&amp;url=https%3a%2f%2fluth.io%2fblog%2f2026%2f04%2fphp-signal-safety-init-ordering%2f" target="_blank" rel="noopener" class="nav share-btn twitter">
+        <p>Twitter</p>
+      </a>
+  
+
+  
+      <a href="//www.facebook.com/sharer/sharer.php?u=https%3a%2f%2fluth.io%2fblog%2f2026%2f04%2fphp-signal-safety-init-ordering%2f" target="_blank" rel="noopener" class="nav share-btn facebook">
+        <p>Facebook</p>
+        </a>
+  
+
+  
+    <a href="//www.reddit.com/submit?url=https%3a%2f%2fluth.io%2fblog%2f2026%2f04%2fphp-signal-safety-init-ordering%2f&amp;title=PHP%20Signal%20Safety%20-%20The%20Init%20Ordering%20Bug%20Nobody%20Warns%20You%20About" target="_blank" rel="noopener" class="nav share-btn reddit">
+          <p>Reddit</p>
+        </a>
+  
+
+  
+        <a href="//www.linkedin.com/shareArticle?url=https%3a%2f%2fluth.io%2fblog%2f2026%2f04%2fphp-signal-safety-init-ordering%2f&amp;title=PHP%20Signal%20Safety%20-%20The%20Init%20Ordering%20Bug%20Nobody%20Warns%20You%20About" target="_blank" rel="noopener" class="nav share-btn linkedin">
+            <p>LinkedIn</p>
+          </a>
+  
+
+  
+        <a href="//www.pinterest.com/pin/create/button/?url=https%3a%2f%2fluth.io%2fblog%2f2026%2f04%2fphp-signal-safety-init-ordering%2f&amp;description=PHP%20Signal%20Safety%20-%20The%20Init%20Ordering%20Bug%20Nobody%20Warns%20You%20About" target="_blank" rel="noopener" class="nav share-btn pinterest">
+          <p>Pinterest</p>
+        </a>
+  
+
+  
+        <a href="mailto:?subject=Check%20out%20this%20post%20by Luther%20Monson&amp;body=https%3a%2f%2fluth.io%2fblog%2f2026%2f04%2fphp-signal-safety-init-ordering%2f" target="_blank" class="nav share-btn email" data-proofer-ignore>
+          <p>Email</p>
+        </a>
+  
+
+
+      </div>
+      <div class="content">
+        
+        <p>Last week I wrote about <a href="/blog/2026/04/why-rust-for-php-embedding/">why ePHPm embeds PHP from Rust</a> and promised the
+signal bug its own post. Here it is. It&rsquo;s the kind of bug where the fix is about ten lines and the explanation is the
+whole post, because nothing in PHP&rsquo;s embed documentation (there&rsquo;s barely any) tells you that initializing PHP has
+process-wide side effects that assume PHP is the only thing in the process.</p>
+<h3 id="the-setup">The setup</h3>
+<p>The first working version of <code>ephpm serve</code> looked like every async Rust program: <code>#[tokio::main]</code>-style, build the
+runtime, then inside it load config, initialize PHP, start the HTTP server. PHP requests run on <code>spawn_blocking</code>
+threads. Simplified:</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-rust" data-lang="rust"><span class="line"><span class="cl"><span class="k">async</span><span class="w"> </span><span class="k">fn</span> <span class="nf">run_serve</span><span class="p">(</span><span class="n">command</span>: <span class="nb">Option</span><span class="o">&lt;</span><span class="n">Commands</span><span class="o">&gt;</span><span class="p">)</span><span class="w"> </span>-&gt; <span class="nc">anyhow</span>::<span class="nb">Result</span><span class="o">&lt;</span><span class="n">ExitCode</span><span class="o">&gt;</span><span class="w"> </span><span class="p">{</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="kd">let</span><span class="w"> </span><span class="n">config</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">load_serve_config</span><span class="p">(</span><span class="n">command</span><span class="p">)</span><span class="o">?</span><span class="p">;</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="c1">// tokio&#39;s worker threads already exist at this point
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="n">ephpm_php</span>::<span class="n">PhpRuntime</span>::<span class="n">init</span><span class="p">().</span><span class="n">context</span><span class="p">(</span><span class="s">&#34;failed to initialize PHP runtime&#34;</span><span class="p">)</span><span class="o">?</span><span class="p">;</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="n">ephpm_server</span>::<span class="n">serve</span><span class="p">(</span><span class="n">config</span><span class="p">).</span><span class="k">await</span><span class="o">?</span><span class="p">;</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="c1">// ...
+</span></span></span><span class="line"><span class="cl"><span class="p">}</span><span class="w">
+</span></span></span></code></pre></div><p>It served pages. It also took a <code>SIGSEGV</code> inside a signal handler, on a thread that had never executed a line of PHP.
+The stack under the handler was tokio&rsquo;s, not mine and not Zend&rsquo;s, which is a confusing thing to stare at. I blamed
+PHP&rsquo;s <code>SIGPROF</code> timer and built the fix around that theory. Going back through php-src to write this up,
+the theory was too simple: init doesn&rsquo;t arm that timer at all. The hazard is real, but it&rsquo;s narrower than I thought,
+and knowing which builds it applies to is the useful part.</p>
+<h3 id="what-php_embed_init-does-that-you-didnt-ask-for">What php_embed_init() does that you didn&rsquo;t ask for</h3>
+<p><code>php_embed_init()</code> does module startup and then starts a request. Module startup sets the <code>LC_CTYPE</code> locale. Request
+startup activates PHP&rsquo;s <code>zend_signal</code> layer, which installs deferred handlers for <code>SIGPROF</code>, <code>SIGHUP</code>, <code>SIGINT</code>,
+<code>SIGQUIT</code>, <code>SIGTERM</code>, <code>SIGUSR1</code> and <code>SIGUSR2</code>, and then calls <code>zend_set_timeout()</code> to enforce <code>max_execution_time</code>.
+The embed SAPI hard-codes <code>max_execution_time=0</code> (it overrides whatever php.ini says), so at init that call only
+installs the timeout handler. The timer gets armed later, by the first <code>set_time_limit()</code> or
+<code>ini_set('max_execution_time', ...)</code> with a non-zero value, from whatever thread is running that script. On Linux
+builds without per-thread execution timers, the arming path is, trimmed down, this:</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-c" data-lang="c"><span class="line"><span class="cl"><span class="cm">/* Zend/zend_execute_API.c, the setitimer branch of zend_set_timeout_ex() */</span>
+</span></span><span class="line"><span class="cl"><span class="k">if</span> <span class="p">(</span><span class="n">seconds</span><span class="p">)</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">    <span class="n">t_r</span><span class="p">.</span><span class="n">it_value</span><span class="p">.</span><span class="n">tv_sec</span> <span class="o">=</span> <span class="n">seconds</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">    <span class="n">t_r</span><span class="p">.</span><span class="n">it_value</span><span class="p">.</span><span class="n">tv_usec</span> <span class="o">=</span> <span class="n">t_r</span><span class="p">.</span><span class="n">it_interval</span><span class="p">.</span><span class="n">tv_sec</span> <span class="o">=</span> <span class="n">t_r</span><span class="p">.</span><span class="n">it_interval</span><span class="p">.</span><span class="n">tv_usec</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">    <span class="nf">setitimer</span><span class="p">(</span><span class="n">ITIMER_PROF</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">t_r</span><span class="p">,</span> <span class="nb">NULL</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl"><span class="p">}</span>
+</span></span><span class="line"><span class="cl"><span class="n">signo</span> <span class="o">=</span> <span class="n">SIGPROF</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="k">if</span> <span class="p">(</span><span class="n">reset_signals</span><span class="p">)</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">    <span class="nf">zend_signal</span><span class="p">(</span><span class="n">signo</span><span class="p">,</span> <span class="n">zend_timeout_handler</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl"><span class="p">}</span>
+</span></span></code></pre></div><p>Two process-wide things are in play:</p>
+<ol>
+<li><strong>Process-wide signal handlers</strong>, installed at init: <code>SIGPROF</code> plus the <code>zend_signal</code> list above. Signal
+dispositions belong to the process, not to the thread that set them.</li>
+<li><strong>A process-wide CPU timer</strong>, once anything sets a non-zero limit. <code>ITIMER_PROF</code> counts CPU time consumed by the
+<em>whole process</em>, every thread, user and system. With a 30-second limit, it fires after 30 seconds of CPU across all
+threads.</li>
+</ol>
+<p>That second point also means the bug is load-dependent, which is what makes it slippery. An idle server burns almost no
+CPU, so the timer barely moves. A busy one with 32 threads chewing through requests can burn 30 CPU-seconds in about a
+second of wall time.</p>
+<h3 id="which-thread-gets-the-signal">Which thread gets the signal</h3>
+<p>A process-directed signal on Linux is delivered to <em>one</em> thread that doesn&rsquo;t have it blocked, and the kernel picks. It
+is not &ldquo;the thread that called <code>setitimer</code>.&rdquo; PHP was written for a world where the process has one thread (CLI,
+php-fpm, mod_php prefork) or where every thread is a PHP thread (ZTS under a threaded Apache MPM), so that distinction
+never mattered to it.</p>
+<p>You can watch the kernel make that choice with a page of C. <code>main()</code> plays the PHP thread: it installs a
+<code>SIGPROF</code> handler and arms <code>ITIMER_PROF</code> (10ms, repeating, so we get plenty of samples). Then it starts eight threads
+that burn CPU, like busy tokio workers, and goes to sleep. The handler increments a counter for whatever thread it
+happens to run on:</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-c" data-lang="c"><span class="line"><span class="cl"><span class="k">static</span> <span class="n">atomic_int</span> <span class="n">hits</span><span class="p">[</span><span class="n">WORKERS</span> <span class="o">+</span> <span class="mi">1</span><span class="p">];</span>       <span class="c1">// [0] = main thread
+</span></span></span><span class="line"><span class="cl"><span class="k">static</span> <span class="n">__thread</span> <span class="kt">int</span> <span class="n">my_slot</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>           <span class="c1">// thread-local, like PHP&#39;s TSRM globals
+</span></span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="k">static</span> <span class="kt">void</span> <span class="nf">on_sigprof</span><span class="p">(</span><span class="kt">int</span> <span class="n">sig</span><span class="p">)</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">    <span class="nf">atomic_fetch_add</span><span class="p">(</span><span class="o">&amp;</span><span class="n">hits</span><span class="p">[</span><span class="n">my_slot</span><span class="p">],</span> <span class="mi">1</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl"><span class="p">}</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="kt">int</span> <span class="nf">main</span><span class="p">(</span><span class="kt">void</span><span class="p">)</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">    <span class="k">struct</span> <span class="n">sigaction</span> <span class="n">sa</span> <span class="o">=</span> <span class="p">{</span><span class="mi">0</span><span class="p">};</span>
+</span></span><span class="line"><span class="cl">    <span class="n">sa</span><span class="p">.</span><span class="n">sa_handler</span> <span class="o">=</span> <span class="n">on_sigprof</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">    <span class="nf">sigaction</span><span class="p">(</span><span class="n">SIGPROF</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">sa</span><span class="p">,</span> <span class="nb">NULL</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">    <span class="k">struct</span> <span class="n">itimerval</span> <span class="n">t</span> <span class="o">=</span> <span class="p">{{</span><span class="mi">0</span><span class="p">,</span> <span class="mi">10000</span><span class="p">},</span> <span class="p">{</span><span class="mi">0</span><span class="p">,</span> <span class="mi">10000</span><span class="p">}};</span>
+</span></span><span class="line"><span class="cl">    <span class="nf">setitimer</span><span class="p">(</span><span class="n">ITIMER_PROF</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">t</span><span class="p">,</span> <span class="nb">NULL</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">    <span class="k">for</span> <span class="p">(</span><span class="kt">long</span> <span class="n">i</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="n">i</span> <span class="o">&lt;</span> <span class="n">WORKERS</span><span class="p">;</span> <span class="n">i</span><span class="o">++</span><span class="p">)</span> <span class="nf">pthread_create</span><span class="p">(</span><span class="o">&amp;</span><span class="n">th</span><span class="p">[</span><span class="n">i</span><span class="p">],</span> <span class="nb">NULL</span><span class="p">,</span> <span class="n">worker</span><span class="p">,</span> <span class="p">(</span><span class="kt">void</span> <span class="o">*</span><span class="p">)(</span><span class="n">i</span> <span class="o">+</span> <span class="mi">1</span><span class="p">));</span>
+</span></span><span class="line"><span class="cl">    <span class="nf">sleep</span><span class="p">(</span><span class="mi">3</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">    <span class="cm">/* ... stop, join, print the histogram ... */</span>
+</span></span><span class="line"><span class="cl"><span class="p">}</span>
+</span></span></code></pre></div><pre tabindex="0"><code>$ ./sigprof
+thread       SIGPROF
+main              0
+worker-1         95
+worker-2        135
+worker-3        120
+worker-4        118
+worker-5        103
+worker-6        109
+worker-7         98
+worker-8         75
+total           853
+</code></pre><p>The thread that installed the handler and armed the timer got none of them, in this run and in a second one (the split
+across workers moved around, main stayed at 0). It was asleep, like a PHP thread waiting on a database, and all 853
+deliveries landed on threads that had nothing to do with the timer. In this toy the handler only touches a thread-local
+<code>int</code>, so it&rsquo;s harmless. PHP&rsquo;s handler isn&rsquo;t.</p>
+<h3 id="what-that-does-to-php">What that does to PHP</h3>
+<p>PHP&rsquo;s timeout handler isn&rsquo;t a counter bump. It reaches into engine state: the executor globals, the flags that tell the
+VM to stop at the next opcode. What happens when it runs on the wrong thread depends on how PHP was built.</p>
+<p>On the NTS build I started with, the globals are real globals, so a handler running on a tokio worker sets the flags
+just fine and the PHP thread dies with &ldquo;Maximum execution time exceeded&rdquo; at its next opcode. The problem is the clock.
+Under php-fpm a worker blocked on a database query burns no CPU, so <code>ITIMER_PROF</code> stands still while it waits. In ePHPm
+the other 31 threads keep burning CPU, so a script with a 30-second limit can be killed after a second of wall time
+for CPU it never used. It gets worse: NTS PHP re-arms the same timer for <code>hard_timeout</code> (2 seconds by default), and if
+it fires again while the PHP thread is still stuck somewhere that doesn&rsquo;t check the flag, the handler calls
+<code>_exit(124)</code>. On a busy box two process CPU-seconds go by in well under a tenth of a second, and that <code>_exit</code> takes the
+whole server down, not one request.</p>
+<p>Since last week ePHPm runs ZTS PHP, where the question is whether the handler can find its globals at all. Every
+&ldquo;global&rdquo; lives in a per-thread slot handed out by TSRM. A thread gets a slot when it registers with <code>ts_resource(0)</code>,
+which ePHPm does on the first PHP request a blocking thread runs, and a tokio worker that only accepts sockets never
+registers. PHP 8.2 and earlier went looking for that slot anyway. PHP 8.3 added a <code>tsrm_is_managed_thread()</code> check to
+both handlers: the deferred signal handler forwards to the original disposition, and the timeout handler prints
+&ldquo;zend_timeout_handler() called in a thread not managed by PHP&rdquo; to stderr and returns. So on a current ZTS build the
+symptom is a timeout that silently never happens, not a crash.</p>
+<p>And on Linux, PHP 8.3+ turns on per-thread execution timers for ZTS builds by default
+(<code>--enable-zend-max-execution-timers</code>): a POSIX timer per thread, aimed at that thread with <code>SIGRTMIN</code>, so the kernel
+isn&rsquo;t picking a thread at all. The ZTS libphp I switched to last week has them; static-php-cli passes the flag
+explicitly as well. So the <code>SIGPROF</code> problem is real for NTS builds, for ZTS builds older than 8.3 or built without
+those timers, and for platforms that don&rsquo;t have them. It is not a problem for the build ePHPm runs today, which matters
+for the second half of the fix.</p>
+<h3 id="the-fix-part-one-do-the-global-stuff-while-youre-alone">The fix, part one: do the global stuff while you&rsquo;re alone</h3>
+<p>The first rule I took from this: anything that touches process-global state (signal dispositions, timers, <code>atexit</code>,
+locale) has to happen before there&rsquo;s a second thread. So PHP init moved out of the async world entirely. <code>main</code> is
+synchronous again, and the tokio runtime is built only after PHP is up:</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-rust" data-lang="rust"><span class="line"><span class="cl"><span class="sd">/// PHP must be initialized BEFORE the tokio runtime is created. PHP&#39;s
+</span></span></span><span class="line"><span class="cl"><span class="sd">/// `php_embed_init()` starts a SIGPROF timer for `max_execution_time`.
+</span></span></span><span class="line"><span class="cl"><span class="sd">/// If tokio worker threads exist when the signal fires, it gets delivered
+</span></span></span><span class="line"><span class="cl"><span class="sd">/// to a non-PHP thread whose signal handler dereferences NULL → SIGSEGV.
+</span></span></span><span class="line"><span class="cl"><span class="sd">///
+</span></span></span><span class="line"><span class="cl"><span class="sd">/// The sequence is:
+</span></span></span><span class="line"><span class="cl"><span class="sd">/// 1. Load config + init tracing (no threads)
+</span></span></span><span class="line"><span class="cl"><span class="sd">/// 2. Init PHP + disable SIGPROF timer (still single-threaded)
+</span></span></span><span class="line"><span class="cl"><span class="sd">/// 3. Create tokio runtime (spawns worker threads — now safe)
+</span></span></span><span class="line"><span class="cl"><span class="sd">/// 4. Run HTTP server
+</span></span></span><span class="line"><span class="cl"><span class="k">fn</span> <span class="nf">run_serve_sync</span><span class="p">(</span><span class="n">command</span>: <span class="nb">Option</span><span class="o">&lt;</span><span class="n">Commands</span><span class="o">&gt;</span><span class="p">)</span><span class="w"> </span>-&gt; <span class="nc">anyhow</span>::<span class="nb">Result</span><span class="o">&lt;</span><span class="n">ExitCode</span><span class="o">&gt;</span><span class="w"> </span><span class="p">{</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="kd">let</span><span class="w"> </span><span class="n">config</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">load_serve_config</span><span class="p">(</span><span class="n">command</span><span class="p">)</span><span class="o">?</span><span class="p">;</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="n">ephpm_php</span>::<span class="n">PhpRuntime</span>::<span class="n">init</span><span class="p">().</span><span class="n">context</span><span class="p">(</span><span class="s">&#34;failed to initialize PHP runtime&#34;</span><span class="p">)</span><span class="o">?</span><span class="p">;</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="n">ephpm_php</span>::<span class="n">PhpRuntime</span>::<span class="n">finalize_for_http</span><span class="p">()</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">        </span><span class="p">.</span><span class="n">context</span><span class="p">(</span><span class="s">&#34;failed to finalize PHP runtime for HTTP&#34;</span><span class="p">)</span><span class="o">?</span><span class="p">;</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="c1">// Now safe to create the multi-threaded tokio runtime
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="kd">let</span><span class="w"> </span><span class="n">rt</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">tokio</span>::<span class="n">runtime</span>::<span class="n">Runtime</span>::<span class="n">new</span><span class="p">().</span><span class="n">context</span><span class="p">(</span><span class="s">&#34;failed to create tokio runtime&#34;</span><span class="p">)</span><span class="o">?</span><span class="p">;</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="n">rt</span><span class="p">.</span><span class="n">block_on</span><span class="p">(</span><span class="k">async</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">ephpm_server</span>::<span class="n">serve</span><span class="p">(</span><span class="n">config</span><span class="p">).</span><span class="k">await</span><span class="w"> </span><span class="p">})</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="p">}</span><span class="w">
+</span></span></span></code></pre></div><p>The comment overstates it. With <code>max_execution_time</code> at 0, init installs the handler and leaves the timer alone; I&rsquo;d
+lumped init together with the first script that sets a limit. The ordering rule it enforces is still right: signal
+dispositions, the locale and the rest of PHP&rsquo;s process state get set up while nothing else is running.
+(<code>finalize_for_http()</code> actually just closes out the embed&rsquo;s initial request; the timer is dealt with by the linker
+trick below.)</p>
+<p>That fixes init. It isn&rsquo;t enough on its own, because init isn&rsquo;t the only time PHP touches the timer, so the same change
+also took the timer away from PHP entirely.</p>
+<h3 id="the-fix-part-two-take-the-timer-away-from-php">The fix, part two: take the timer away from PHP</h3>
+<p>Every <code>php_request_startup()</code> calls <code>zend_set_timeout()</code> again, and a script&rsquo;s <code>set_time_limit()</code> does too, so on a
+<code>SIGPROF</code> build the timer can be re-armed from a worker thread long after <code>main</code> was alone.</p>
+<p>ePHPm links <code>libphp.a</code> statically, which means the linker gets a say. GNU ld&rsquo;s <code>--wrap=symbol</code> rewrites every
+undefined reference to <code>symbol</code> into <code>__wrap_symbol</code>, so if the binary provides <code>__wrap_zend_set_timeout</code>, PHP&rsquo;s own
+calls go there instead. That has to go in the <em>binary</em> crate&rsquo;s <code>build.rs</code>, because <code>rustc-link-arg</code> from a library crate
+doesn&rsquo;t reach the final link (trimmed):</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-rust" data-lang="rust"><span class="line"><span class="cl"><span class="c1">// crates/ephpm/build.rs
+</span></span></span><span class="line"><span class="cl"><span class="k">if</span><span class="w"> </span><span class="n">env</span>::<span class="n">var_os</span><span class="p">(</span><span class="s">&#34;PHP_SDK_PATH&#34;</span><span class="p">).</span><span class="n">is_some</span><span class="p">()</span><span class="w"> </span><span class="p">{</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="k">for</span><span class="w"> </span><span class="n">func</span><span class="w"> </span><span class="k">in</span><span class="w"> </span><span class="o">&amp;</span><span class="p">[</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">        </span><span class="s">&#34;zend_signal_startup&#34;</span><span class="p">,</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">        </span><span class="s">&#34;zend_signal_init&#34;</span><span class="p">,</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">        </span><span class="s">&#34;zend_signal_deactivate&#34;</span><span class="p">,</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">        </span><span class="s">&#34;zend_signal_activate&#34;</span><span class="p">,</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">        </span><span class="s">&#34;zend_signal_handler_unblock&#34;</span><span class="p">,</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">        </span><span class="c1">// zend_set_timeout directly calls sigaction(SIGPROF) +
+</span></span></span><span class="line"><span class="cl"><span class="w">        </span><span class="c1">// setitimer(ITIMER_PROF), bypassing the zend_signal system.
+</span></span></span><span class="line"><span class="cl"><span class="w">        </span><span class="s">&#34;zend_set_timeout&#34;</span><span class="p">,</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">        </span><span class="s">&#34;zend_unset_timeout&#34;</span><span class="p">,</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="p">]</span><span class="w"> </span><span class="p">{</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">        </span><span class="fm">println!</span><span class="p">(</span><span class="s">&#34;cargo::rustc-link-arg=-Wl,--wrap=</span><span class="si">{func}</span><span class="s">&#34;</span><span class="p">);</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="p">}</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="p">}</span><span class="w">
+</span></span></span></code></pre></div><p>And the C wrapper provides the replacements, which do nothing (trimmed, comments shortened):</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-c" data-lang="c"><span class="line"><span class="cl"><span class="kt">void</span> <span class="nf">__wrap_zend_signal_startup</span><span class="p">(</span><span class="kt">void</span><span class="p">)</span>        <span class="p">{</span> <span class="cm">/* skip process-wide handler install */</span> <span class="p">}</span>
+</span></span><span class="line"><span class="cl"><span class="kt">void</span> <span class="nf">__wrap_zend_signal_init</span><span class="p">(</span><span class="kt">void</span><span class="p">)</span>           <span class="p">{</span> <span class="cm">/* skip per-request setup + SIGPROF unblock */</span> <span class="p">}</span>
+</span></span><span class="line"><span class="cl"><span class="kt">void</span> <span class="nf">__wrap_zend_signal_deactivate</span><span class="p">(</span><span class="kt">void</span><span class="p">)</span>     <span class="p">{</span> <span class="p">}</span>
+</span></span><span class="line"><span class="cl"><span class="kt">void</span> <span class="nf">__wrap_zend_signal_activate</span><span class="p">(</span><span class="kt">void</span><span class="p">)</span>       <span class="p">{</span> <span class="p">}</span>
+</span></span><span class="line"><span class="cl"><span class="kt">void</span> <span class="nf">__wrap_zend_signal_handler_unblock</span><span class="p">(</span><span class="kt">void</span><span class="p">){</span> <span class="p">}</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="kt">void</span> <span class="nf">__wrap_zend_set_timeout</span><span class="p">(</span><span class="kt">long</span> <span class="n">seconds</span><span class="p">,</span> <span class="kt">int</span> <span class="n">reset_signals</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl"><span class="p">{</span>
+</span></span><span class="line"><span class="cl">    <span class="p">(</span><span class="kt">void</span><span class="p">)</span><span class="n">seconds</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">    <span class="p">(</span><span class="kt">void</span><span class="p">)</span><span class="n">reset_signals</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">    <span class="cm">/* no-op: ePHPm manages request timeouts at the HTTP server level */</span>
+</span></span><span class="line"><span class="cl"><span class="p">}</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="kt">void</span> <span class="nf">__wrap_zend_unset_timeout</span><span class="p">(</span><span class="kt">void</span><span class="p">)</span> <span class="p">{</span> <span class="p">}</span>
+</span></span></code></pre></div><p>The original definitions are still in the archive under their own names; <code>__real_zend_set_timeout</code> is how you&rsquo;d reach
+one if you wanted to, and nothing does.</p>
+<h3 id="what-that-costs">What that costs</h3>
+<p>Being honest about the trade, because it&rsquo;s not free:</p>
+<ul>
+<li><strong><code>max_execution_time</code> is not enforced by PHP anymore.</strong> A runaway script is bounded by ePHPm&rsquo;s HTTP request timeout
+instead, which returns a 504 to the client. The PHP thread itself keeps running until the script finishes. That&rsquo;s
+worse than php-fpm. PHP 8.3+ can use per-thread execution timers instead (<code>--enable-zend-max-execution-timers</code>,
+POSIX timers aimed at the owning thread via <code>SIGRTMIN</code>), and it turns them on by default for ZTS builds on Linux, so
+the ZTS libphp I switched to last week already has them. The wrap above still covers the NTS build, but on the ZTS
+build it is now throwing away a timer that was already thread-safe; letting PHP keep it is the real fix and it&rsquo;s on
+the list.</li>
+<li><strong><code>pcntl_signal()</code> doesn&rsquo;t do anything useful.</strong> I&rsquo;m fine with this for a web server. FrankenPHP has had to work
+around the same problem (it blocks the pcntl-style signals on all of Go&rsquo;s threads and only lets its CLI mode see
+them).</li>
+<li><strong><code>--wrap</code> is a GNU ld feature.</strong> macOS&rsquo;s linker doesn&rsquo;t have it, so the macOS build will need a different answer.</li>
+</ul>
+<h3 id="why-nobody-warns-you">Why nobody warns you</h3>
+<p>The embed SAPI has very few serious users. Most of PHP&rsquo;s process-level assumptions are documented implicitly by
+php-fpm&rsquo;s architecture: one process, one request at a time, so a process-directed signal can only ever land on the PHP
+thread. The moment you put PHP in a process that has its own threads, those assumptions don&rsquo;t hold, and nothing in
+the API tells you which functions carry process-wide side effects. You find out from a crash, or from a timeout that
+makes no sense.</p>
+<p>The broader lesson, which I&rsquo;ve now written on a sticky note: when you embed a C runtime in your process, you inherit
+all of its global side effects. Signal handlers, timers, <code>atexit</code> hooks, <code>setlocale</code>, environment reads, thread-locals
+it expects someone to initialize. The runtime doesn&rsquo;t know it&rsquo;s not alone anymore. Do its global init while your process
+is still single-threaded, then go through what it does per-request and decide which of those global effects you&rsquo;re
+willing to let it keep.</p>
+<h3 id="how-i-ran-the-repro">How I ran the repro</h3>
+<p>Ubuntu under WSL2 on a Ryzen 9 5950X, gcc 15.2, <code>gcc -O2 -pthread -o sigprof sigprof.c &amp;&amp; ./sigprof</code>. The full file is
+55 lines including the printing; the excerpt above is the part that matters. Exact counts will differ from run to
+run and machine to machine. The point is the distribution, not the numbers.</p>
+<h3 id="links">Links</h3>
+<ul>
+<li><a href="https://github.com/ephpm/ephpm">ePHPm</a></li>
+<li><a href="https://man7.org/linux/man-pages/man7/signal.7.html"><code>signal(7)</code></a>, see &ldquo;Signal disposition&rdquo; and the note that a
+process-directed signal may be delivered to any one of the threads that does not have it blocked</li>
+<li><a href="https://man7.org/linux/man-pages/man2/setitimer.2.html"><code>setitimer(2)</code></a> for <code>ITIMER_PROF</code></li>
+<li>GNU ld <a href="https://sourceware.org/binutils/docs/ld/Options.html"><code>--wrap</code></a></li>
+<li><a href="https://github.com/php/php-src/tree/master/sapi/embed">PHP embed SAPI</a></li>
+</ul>
+
+      </div>
+      <footer>
+        <div class="stats">
+  
+    <ul class="categories">
+      
+        
+          <li><a class="article-terms-link" href="/categories/ephpm/">ephpm</a></li>
+        
+          <li><a class="article-terms-link" href="/categories/php/">php</a></li>
+        
+          <li><a class="article-terms-link" href="/categories/rust/">rust</a></li>
+        
+      
+    </ul>
+  
+  
+    <ul class="tags">
+      
+        
+          <li><a class="article-terms-link" href="/tags/ephpm/">ephpm</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/php/">php</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/rust/">rust</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/signals/">signals</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/linux/">linux</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/tokio/">tokio</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/debugging/">debugging</a></li>
+        
+      
+    </ul>
+  
+</div>
+
+      </footer>
+    </div>
+    
+      
+  
+  <div class='post giscus-wrap'>
+    <script src='https://giscus.app/client.js'
+            data-repo='luthermonson/luth.io'
+            data-repo-id='R_kgDOGvFBXQ'
+            data-category='Announcements'
+            data-category-id='DIC_kwDOGvFBXc4DH_gv'
+            data-mapping='pathname'
+            data-strict='1'
+            data-reactions-enabled='1'
+            data-emit-metadata='0'
+            data-input-position='top'
+            data-theme='light'
+            data-lang='en'
+            data-loading='lazy'
+            crossorigin='anonymous'
+            async>
+    </script>
+  </div>
+  
+
+
+
+    
+  </article>
+  
+    <nav class="post-nav">
+      
+        <a href="/blog/2026/04/why-rust-for-php-embedding/" class="post-nav-link older">
+          <span class="post-nav-label">&larr; Older</span>
+          <span class="post-nav-title">Why Rust for PHP Embedding (Not Go)</span>
+        </a>
+      
+      
+        <a href="/blog/2026/05/go-diskfs-rock-ridge-joliet-windows/" class="post-nav-link newer">
+          <span class="post-nav-label">Newer &rarr;</span>
+          <span class="post-nav-title">go-diskfs: Getting Rock Ridge Working for Joliet on Windows</span>
+        </a>
+      
+    </nav>
+  
+
+      </main>
+      <section id="site-sidebar">
+  
+    <section id="recent-posts">
+      <header>
+        <h1>Recent Posts</h1>
+      </header>
+      
+      <article class="mini-post">
+          <a href="/blog/2026/10/ephpm-worker-mode-performance/" class="image" style="--bg-image: url('/img/2026/10/ephpm-worker-mode-performance-cover.svg');">
+    <img class="" src="/img/2026/10/ephpm-worker-mode-performance-cover.svg" alt="Diagram: before, hyper/tokio hands each request to one shared bounded channel whose waiter list all 20 PHP threads contend on; after, a dispatcher hands the job straight into the mailbox of the most recently idle PHP thread and only queues it in a FIFO overflow queue when every thread is busy">
+  </a>
+        <header>
+          <h2><a href="/blog/2026/10/ephpm-worker-mode-performance/">Fourth Place in Worker Mode, and Why It Wasn&#39;t PHP</a></h2>
+          <time class="published" datetime="2026-10-16 08:10:00 -0700 PDT">October 16, 2026</time>
+        </header>
+      </article>
+      
+      <article class="mini-post">
+          <a href="/blog/2026/10/ephpm-websockets-how-to/" class="image" style="--bg-image: url('/img/2026/10/ephpm-websockets-how-to-cover.svg');">
+    <img class="" src="/img/2026/10/ephpm-websockets-how-to-cover.svg" alt="Diagram: browsers hold sockets to ePHPm&#39;s Rust session tasks and registry; each connect, message and disconnect runs websocket.php once on the PHP thread pool, and ordinary HTTP requests push through ephpm_ws_broadcast">
+  </a>
+        <header>
+          <h2><a href="/blog/2026/10/ephpm-websockets-how-to/">WebSockets in ePHPm, From Zero to a Working Chat</a></h2>
+          <time class="published" datetime="2026-10-11 17:30:00 -0700 PDT">October 11, 2026</time>
+        </header>
+      </article>
+      
+      <article class="mini-post">
+          <a href="/blog/2026/10/webhooks-out-of-order-scheduler/" class="image" style="--bg-image: url('/img/2026/10/webhooks-out-of-order-scheduler-timeline.svg');">
+    <img class="" src="/img/2026/10/webhooks-out-of-order-scheduler-timeline.svg" alt="Timeline of three same-label jobs where a runner executing a build is destroyed 2.3 seconds before its in_progress webhook arrives">
+  </a>
+        <header>
+          <h2><a href="/blog/2026/10/webhooks-out-of-order-scheduler/">Webhooks Arrive Out of Order: How My Scheduler Killed Live Builds</a></h2>
+          <time class="published" datetime="2026-10-07 21:10:00 -0700 PDT">October 7, 2026</time>
+        </header>
+      </article>
+      
+      <article class="mini-post">
+          <a href="/blog/2026/10/go-proxmox-five-years-to-v0-8/" class="image" style="--bg-image: url('/img/2026/10/go-proxmox-five-years-to-v0-8-apidiff.svg');">
+    <img class="" src="/img/2026/10/go-proxmox-five-years-to-v0-8-apidiff.svg" alt="Horizontal bar chart of apidiff incompatible and compatible changes for every go-proxmox release from v0.1.0 to v0.8.2">
+  </a>
+        <header>
+          <h2><a href="/blog/2026/10/go-proxmox-five-years-to-v0-8/">Breaking Changes Without Breaking Trust: Five Years to go-proxmox v0.8</a></h2>
+          <time class="published" datetime="2026-10-04 19:40:00 -0700 PDT">October 4, 2026</time>
+        </header>
+      </article>
+      
+      <article class="mini-post">
+          <a href="/blog/2026/10/windows-sigterm-sparse-files/" class="image" style="--bg-image: url('/img/2026/10/windows-sigterm-sparse-files-connections.svg');">
+    <img class="" src="/img/2026/10/windows-sigterm-sparse-files-connections.svg" alt="Bar chart: 96 Cloudflare edge connections held by orphaned cloudflared processes versus 4 for the live daemon">
+  </a>
+        <header>
+          <h2><a href="/blog/2026/10/windows-sigterm-sparse-files/">Windows Grab-Bag: SIGTERM That Doesn&#39;t Exist and Sparse Files That Break Docker</a></h2>
+          <time class="published" datetime="2026-10-03 14:30:00 -0700 PDT">October 3, 2026</time>
+        </header>
+      </article>
+      
+      
+        <footer>
+          <a href="/blog" class="button">See More</a>
+        </footer>
+      
+    </section>
+  
+
+  
+    
+
+      <section id="categories">
+        <header>
+          <h1><a href="/categories">Categories</a></h1>
+        </header>
+        <ul>
+          
+          
+          <li>
+              <a href="/categories/ephpm/">ephpm<span class="count">33</span></a>
+          
+          <li>
+              <a href="/categories/go/">go<span class="count">30</span></a>
+          
+          <li>
+              <a href="/categories/php/">php<span class="count">23</span></a>
+          
+          <li>
+              <a href="/categories/rust/">rust<span class="count">15</span></a>
+          
+          <li>
+              <a href="/categories/homelab/">homelab<span class="count">14</span></a>
+          
+          <li>
+              <a href="/categories/windows/">windows<span class="count">14</span></a>
+          
+          <li>
+              <a href="/categories/ci/">ci<span class="count">9</span></a>
+          
+          <li>
+              <a href="/categories/databases/">databases<span class="count">9</span></a>
+          
+          <li>
+              <a href="/categories/security/">security<span class="count">9</span></a>
+          
+          <li>
+              <a href="/categories/containers/">containers<span class="count">7</span></a>
+          
+          <li>
+              <a href="/categories/tools/">tools<span class="count">5</span></a>
+          
+          <li>
+              <a href="/categories/ai-agents/">ai-agents<span class="count">4</span></a>
+          
+          </li>
+        </ul>
+      </section>
+    
+  
+
+  
+    <section id="mini-bio">
+      <header>
+        <h1>About</h1>
+      </header>
+      <p>Luther is a 20+ year software veteran specializing in backend APIs and architecting products. Employed at <a href='https://www.suse.com'>SUSE</a> as the Team Lead for the <a href='https://github.com/rancher/windows/issues'>Containers on Windows Team</a> working on <a href='https://rancher.com/'>Rancher</a> + <a href='https://kubernetes.io/'>Kubernetes</a></p>
+      <footer>
+        <a href="/about" class="button">Learn More</a>
+      </footer>
+    </section>
+  
+</section>
+
+      <footer id="site-footer">
+  
+      <ul class="socnet-icons">
+        
+
+        <li><a href="//github.com/luthermonson" target="_blank" rel="noopener" title="GitHub" class="fab fa-github"></a></li>
+
+
+
+
+
+
+
+
+
+
+
+<li><a href="//www.linkedin.com/in/luthermonson" target="_blank" rel="noopener" title="LinkedIn" class="fab fa-linkedin"></a></li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li><a href="//twitter.com/luthermonson" target="_blank" rel="noopener" title="Twitter" class="fab fa-twitter"></a></li>
+
+
+
+
+
+
+
+
+
+
+
+<li><a href="mailto:luther.monson@gmail.com" target="_blank" title="Email" class="far fa-envelope"></a></li>
+
+      </ul>
+  
+  <p class="copyright">
+    © 2026 Luther Monson
+      <br>
+    Theme: <a href='https://github.com/pacollins/hugo-future-imperfect-slim' target='_blank' rel='noopener'>Hugo Future Imperfect Slim</a><br>A <a href='https://html5up.net/future-imperfect' target='_blank' rel='noopener'>HTML5 UP port</a> | Powered by <a href='https://gohugo.io/' title='0.160.1' target='_blank' rel='noopener'>Hugo</a>
+  </p>
+</footer>
+<a id="back-to-top" href="#" class="fas fa-arrow-up fa-2x"></a>
+
+      <script src="/js/bundle.min.241b62ebc4792fe8c7a75879e5f710894f226f2b73342e9916b3a3b0526030cc.js" integrity="sha256-JBti68R5L&#43;jHp1h55fcQiU8ibytzNC6ZFrOjsFJgMMw="></script>
+    <script src="/js/add-on.js"></script>
+    </div>
+  </body>
+</html>

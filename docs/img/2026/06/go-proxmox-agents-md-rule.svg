@@ -1,0 +1,33 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 320" font-family="system-ui, -apple-system, Segoe UI, Roboto, sans-serif">
+  <defs>
+    <marker id="a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#444"/>
+    </marker>
+  </defs>
+  <rect width="960" height="320" fill="#ffffff"/>
+  <text x="480" y="32" text-anchor="middle" font-size="20" font-weight="600" fill="#222">The AGENTS.md rule from #312: read the upstream path</text>
+
+  <rect x="330" y="56" width="300" height="50" rx="8" fill="#f7f7f7" stroke="#6b6b6b"/>
+  <text x="480" y="86" text-anchor="middle" font-size="14" fill="#222">does the path have a /{id}/ segment?</text>
+
+  <line x1="400" y1="106" x2="240" y2="150" stroke="#444" stroke-width="1.5" marker-end="url(#a)"/>
+  <line x1="560" y1="106" x2="720" y2="150" stroke="#444" stroke-width="1.5" marker-end="url(#a)"/>
+  <text x="300" y="126" font-size="13" fill="#c0392b">no</text>
+  <text x="650" y="126" font-size="13" fill="#3a9a5b">yes</text>
+
+  <rect x="30" y="152" width="420" height="120" rx="8" fill="#eef4fb" stroke="#2b6cb0"/>
+  <text x="240" y="178" text-anchor="middle" font-size="14" font-weight="600" fill="#222">method on the parent</text>
+  <text x="50" y="204" font-size="12" fill="#6b6b6b" font-family="ui-monospace, Menlo, Consolas, monospace">/nodes/{node}/apt/update</text>
+  <text x="50" y="224" font-size="12" fill="#222" font-family="ui-monospace, Menlo, Consolas, monospace">node.APTUpdate(ctx, notify, quiet)</text>
+  <text x="50" y="250" font-size="12" fill="#6b6b6b" font-family="ui-monospace, Menlo, Consolas, monospace">/nodes/{node}/dns</text>
+  <text x="50" y="268" font-size="12" fill="#222" font-family="ui-monospace, Menlo, Consolas, monospace">node.DNS(ctx)</text>
+
+  <rect x="510" y="152" width="420" height="120" rx="8" fill="#eaf5ee" stroke="#3a9a5b"/>
+  <text x="720" y="178" text-anchor="middle" font-size="14" font-weight="600" fill="#222">getter returns a handle</text>
+  <text x="530" y="204" font-size="12" fill="#6b6b6b" font-family="ui-monospace, Menlo, Consolas, monospace">/nodes/{node}/ceph/osd/{osdid}/scrub</text>
+  <text x="530" y="224" font-size="12" fill="#222" font-family="ui-monospace, Menlo, Consolas, monospace">node.CephOSD(id).Scrub(ctx, deep)</text>
+  <text x="530" y="250" font-size="12" fill="#c0392b" font-family="ui-monospace, Menlo, Consolas, monospace">not node.CephOSDScrub(ctx, id, deep)</text>
+  <text x="530" y="268" font-size="12" fill="#6b6b6b">getter makes no API call; create/list stay on the parent</text>
+
+  <text x="480" y="302" text-anchor="middle" font-size="12" fill="#6b6b6b">written down after five refactors (#307 to #311) of code that agents wrote the other way</text>
+</svg>

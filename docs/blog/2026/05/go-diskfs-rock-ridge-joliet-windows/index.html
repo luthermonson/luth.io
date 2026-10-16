@@ -1,0 +1,761 @@
+<!doctype html>
+<html lang="en">
+  <head>
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-MSTSKGFWTX"></script>
+<script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+
+    gtag('config', 'G-MSTSKGFWTX');
+</script><meta charset="utf-8">
+<title>go-diskfs: Getting Rock Ridge Working for Joliet on Windows - Luther Monson</title>
+<meta name="description" content="Fixing Rock Ridge, adding Joliet, and then finding out what Windows actually wanted, all so a Go-built cloud-init ISO works for cloudbase-init.">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<meta name="twitter:card" content="summary_large_image"><meta name="twitter:site" content="@luthermonson">
+
+<meta property="og:site_name" content="Luther Monson">
+<meta property="og:title" content="go-diskfs: Getting Rock Ridge Working for Joliet on Windows">
+<meta property="og:description" content="Fixing Rock Ridge, adding Joliet, and then finding out what Windows actually wanted, all so a Go-built cloud-init ISO works for cloudbase-init.">
+<meta property="og:type" content="article">
+<meta property="og:url" content="https://luth.io/blog/2026/05/go-diskfs-rock-ridge-joliet-windows/">
+    <meta property="og:image" content="https://luth.io/img/2026/05/go-diskfs-rock-ridge-joliet-windows-layout.svg">
+    <meta property="og:image:alt" content="Sector map of a cidata ISO built by go-diskfs with a Rock Ridge primary tree and a Joliet supplementary tree sharing the same file extents">
+
+
+  <link rel="manifest" href="/favicon/site.webmanifest?v=1">
+  <link rel="apple-touch-icon" sizes="180x180" href="/favicon/apple-touch-icon.png?v=1">
+  <link rel="icon" type="image/png" sizes="32x32" href="/favicon/favicon-32x32.png?v=1">
+  <link rel="icon" type="image/png" sizes="16x16" href="/favicon/favicon-16x16.png?v=1">
+  
+    <link rel="mask-icon" href="/favicon/safari-pinned-tab.svg?v=1" color="#ffffff">
+    <link rel="shortcut icon" href="/favicon/favicon.ico?v=1">
+    <meta name="msapplication-config" content="/favicon/browserconfig.xml?v=1">
+  
+  <meta name="msapplication-TileColor" content="#ffffff">
+  <meta name="theme-color" content="#ffffff">
+
+
+  <meta name="generator" content="Hugo 0.160.1">
+  <link rel="alternate" type="application/rss+xml" href="https://luth.io/index.xml" title="Luther Monson">
+  <link rel="stylesheet" href="/css/bundle.min.e1ffed86714fbb7eff75eab221c0c61b8260be0c7d1c08db0fcb7a2bdb6af7c9.css" integrity="sha256-4f/thnFPu37/deqyIcDGG4Jgvgx9HAjbD8t6K9tq98k="><link rel="stylesheet" href="/css/add-on.css">
+        <link rel="stylesheet" href="/css/code.css">
+        <link rel="stylesheet" href="/css/mobile.css">
+</head>
+
+  <body>
+    
+
+<header id="site-header">
+  <nav id="site-nav">
+    <h1 class="nav-title">
+      <a href="/" class="nav">
+        <img class="nav-avatar" src="/img/luther-monson-headshot.jpg" alt="" width="32" height="32">
+        
+          Blog
+        
+      </a>
+    </h1>
+    <menu id="site-nav-menu" class="flyout-menu menu">
+      
+        
+          
+          <a href="/" class="nav link"><i class='fa fa-home'></i> Home</a>
+        
+      
+        
+          
+          <a href="/about" class="nav link"><i class='far fa-id-card'></i> About</a>
+        
+      
+        
+          
+          <a href="/blog" class="nav link"><i class='far fa-newspaper'></i> Blog</a>
+        
+      
+        
+          
+          <a href="/archive" class="nav link"><i class='far fa-calendar-alt'></i> Archive</a>
+        
+      
+        
+          
+          <a href="/categories" class="nav link"><i class='fas fa-sitemap'></i> Categories</a>
+        
+      
+      <a href="#share-menu" class="nav link share-toggle"><i class="fas fa-share-alt">&nbsp;</i>Share</a>
+      <a href="#search-input" class="nav link search-toggle"><i class="fas fa-search">&nbsp;</i>Search</a>
+    </menu>
+    <a href="#search-input" class="nav search-toggle"><i class="fas fa-search fa-2x">&nbsp;</i></a>
+    <a href="#share-menu" class="nav share-toggle"><i class="fas fa-share-alt fa-2x">&nbsp;</i></a>
+    
+    <a href="#site-nav" class="nav nav-toggle"><i class="fas fa-bars fa-2x"></i></a>
+  </nav>
+  <menu id="search" class="menu"><input id="search-input" class="search-input menu"></input><div id="search-results" class="search-results menu"></div></menu>
+  
+  
+    <menu id="share-menu" class="flyout-menu menu">
+      <h1>Share Post</h1>
+      
+
+
+
+
+  
+    
+    <a href="//twitter.com/share?text=go-diskfs%3a%20Getting%20Rock%20Ridge%20Working%20for%20Joliet%20on%20Windows&amp;url=https%3a%2f%2fluth.io%2fblog%2f2026%2f05%2fgo-diskfs-rock-ridge-joliet-windows%2f" target="_blank" rel="noopener" class="nav share-btn twitter">
+        <p>Twitter</p>
+      </a>
+  
+
+  
+      <a href="//www.facebook.com/sharer/sharer.php?u=https%3a%2f%2fluth.io%2fblog%2f2026%2f05%2fgo-diskfs-rock-ridge-joliet-windows%2f" target="_blank" rel="noopener" class="nav share-btn facebook">
+        <p>Facebook</p>
+        </a>
+  
+
+  
+    <a href="//www.reddit.com/submit?url=https%3a%2f%2fluth.io%2fblog%2f2026%2f05%2fgo-diskfs-rock-ridge-joliet-windows%2f&amp;title=go-diskfs%3a%20Getting%20Rock%20Ridge%20Working%20for%20Joliet%20on%20Windows" target="_blank" rel="noopener" class="nav share-btn reddit">
+          <p>Reddit</p>
+        </a>
+  
+
+  
+        <a href="//www.linkedin.com/shareArticle?url=https%3a%2f%2fluth.io%2fblog%2f2026%2f05%2fgo-diskfs-rock-ridge-joliet-windows%2f&amp;title=go-diskfs%3a%20Getting%20Rock%20Ridge%20Working%20for%20Joliet%20on%20Windows" target="_blank" rel="noopener" class="nav share-btn linkedin">
+            <p>LinkedIn</p>
+          </a>
+  
+
+  
+        <a href="//www.pinterest.com/pin/create/button/?url=https%3a%2f%2fluth.io%2fblog%2f2026%2f05%2fgo-diskfs-rock-ridge-joliet-windows%2f&amp;description=go-diskfs%3a%20Getting%20Rock%20Ridge%20Working%20for%20Joliet%20on%20Windows" target="_blank" rel="noopener" class="nav share-btn pinterest">
+          <p>Pinterest</p>
+        </a>
+  
+
+  
+        <a href="mailto:?subject=Check%20out%20this%20post%20by Luther%20Monson&amp;body=https%3a%2f%2fluth.io%2fblog%2f2026%2f05%2fgo-diskfs-rock-ridge-joliet-windows%2f" target="_blank" class="nav share-btn email" data-proofer-ignore>
+          <p>Email</p>
+        </a>
+  
+
+
+    </menu>
+  
+</header>
+
+    <div id="wrapper">
+      <section id="site-intro" class="hidden-single-column">
+  <a href="/"><img src="/img/luther-monson-headshot.jpg" class="circle" width="100" alt="Luther Monson, Staff Software Engineer at SUSE" /></a>
+  <header>
+    <h1>Luther Monson</h1>
+  </header>
+  <main>
+    <p>Go by way of PHP &middot; Containers &middot; VMs &middot; Windows &middot; Kubernetes</p>
+  </main>
+  
+    <footer>
+      <ul class="socnet-icons">
+        
+
+        <li><a href="//github.com/luthermonson" target="_blank" rel="noopener" title="GitHub" class="fab fa-github"></a></li>
+
+
+
+
+
+
+
+
+
+
+
+<li><a href="//www.linkedin.com/in/luthermonson" target="_blank" rel="noopener" title="LinkedIn" class="fab fa-linkedin"></a></li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li><a href="//twitter.com/luthermonson" target="_blank" rel="noopener" title="Twitter" class="fab fa-twitter"></a></li>
+
+
+
+
+
+
+
+
+
+
+
+<li><a href="mailto:luther.monson@gmail.com" target="_blank" title="Email" class="far fa-envelope"></a></li>
+
+      </ul>
+    </footer>
+  
+</section>
+
+      <main id="site-main">
+        
+  <article>
+    <div class="post">
+      <header>
+  <div class="title">
+    
+      <h2><a href="/blog/2026/05/go-diskfs-rock-ridge-joliet-windows/">go-diskfs: Getting Rock Ridge Working for Joliet on Windows</a></h2>
+    
+    
+      <p>Fixing Rock Ridge, adding Joliet, and then finding out what Windows actually wanted, all so a Go-built cloud-init ISO works for cloudbase-init.</p>
+    
+  </div>
+  <div class="meta">
+    <time datetime="2026-05-17 20:40:00 -0700 PDT">May 17, 2026</time>
+    
+    <p>10-Minute Read</p>
+  </div>
+</header>
+
+      <div id="socnet-share">
+        
+
+
+
+
+  
+    
+    <a href="//twitter.com/share?text=go-diskfs%3a%20Getting%20Rock%20Ridge%20Working%20for%20Joliet%20on%20Windows&amp;url=https%3a%2f%2fluth.io%2fblog%2f2026%2f05%2fgo-diskfs-rock-ridge-joliet-windows%2f" target="_blank" rel="noopener" class="nav share-btn twitter">
+        <p>Twitter</p>
+      </a>
+  
+
+  
+      <a href="//www.facebook.com/sharer/sharer.php?u=https%3a%2f%2fluth.io%2fblog%2f2026%2f05%2fgo-diskfs-rock-ridge-joliet-windows%2f" target="_blank" rel="noopener" class="nav share-btn facebook">
+        <p>Facebook</p>
+        </a>
+  
+
+  
+    <a href="//www.reddit.com/submit?url=https%3a%2f%2fluth.io%2fblog%2f2026%2f05%2fgo-diskfs-rock-ridge-joliet-windows%2f&amp;title=go-diskfs%3a%20Getting%20Rock%20Ridge%20Working%20for%20Joliet%20on%20Windows" target="_blank" rel="noopener" class="nav share-btn reddit">
+          <p>Reddit</p>
+        </a>
+  
+
+  
+        <a href="//www.linkedin.com/shareArticle?url=https%3a%2f%2fluth.io%2fblog%2f2026%2f05%2fgo-diskfs-rock-ridge-joliet-windows%2f&amp;title=go-diskfs%3a%20Getting%20Rock%20Ridge%20Working%20for%20Joliet%20on%20Windows" target="_blank" rel="noopener" class="nav share-btn linkedin">
+            <p>LinkedIn</p>
+          </a>
+  
+
+  
+        <a href="//www.pinterest.com/pin/create/button/?url=https%3a%2f%2fluth.io%2fblog%2f2026%2f05%2fgo-diskfs-rock-ridge-joliet-windows%2f&amp;description=go-diskfs%3a%20Getting%20Rock%20Ridge%20Working%20for%20Joliet%20on%20Windows" target="_blank" rel="noopener" class="nav share-btn pinterest">
+          <p>Pinterest</p>
+        </a>
+  
+
+  
+        <a href="mailto:?subject=Check%20out%20this%20post%20by Luther%20Monson&amp;body=https%3a%2f%2fluth.io%2fblog%2f2026%2f05%2fgo-diskfs-rock-ridge-joliet-windows%2f" target="_blank" class="nav share-btn email" data-proofer-ignore>
+          <p>Email</p>
+        </a>
+  
+
+
+      </div>
+      <div class="content">
+        
+        <p><a href="https://github.com/luthermonson/go-proxmox">go-proxmox</a> has had a <code>CloudInit()</code> helper since 2023. It builds a small
+nocloud ISO in Go, uploads it to Proxmox and mounts it on the VM as a CD-ROM. It&rsquo;s always worked fine for Linux guests. It
+has never worked for Windows guests running <a href="https://cloudbase.it/cloudbase-init/">cloudbase-init</a>, and the reason is a
+filesystem extension from 1995 called Joliet.</p>
+<p>Getting it fixed took three PRs to <a href="https://github.com/diskfs/go-diskfs">go-diskfs</a> over about seven weeks, plus a bug report
+from a user who actually ran it on Windows, which turned out to be the most important part.</p>
+<h3 id="why-windows-cant-read-the-iso">Why Windows can&rsquo;t read the ISO</h3>
+<p>Plain ISO 9660 is very strict about names. At interchange level 1 a file name is up to 8 characters of uppercase
+letters, digits and underscore, a dot, a 3 character extension and a <code>;1</code> version suffix. Here are the three nocloud files
+as go-diskfs writes them into the primary directory tree:</p>
+<pre tabindex="0"><code>META_DAT.;1
+NETWORK_.;1
+USER_DAT.;1
+</code></pre><p>Nobody actually reads those names. There are two extensions that layer real filenames on top, and which one an OS uses
+decides what it sees:</p>
+<ul>
+<li><strong>Rock Ridge</strong> is for Unix. It hides POSIX metadata inside each directory record&rsquo;s System Use area using the SUSP
+framework: <code>PX</code> for mode/uid/gid/links, <code>NM</code> for the real name, <code>SL</code> for symlink targets, <code>TF</code> for timestamps, <code>CL</code>/<code>PL</code>/<code>RE</code>
+for relocating directories nested deeper than ISO 9660&rsquo;s 8-level limit, and an <code>ER</code> entry announcing the extension.
+Linux reads it, so Linux sees <code>meta-data</code>.</li>
+<li><strong>Joliet</strong> is Microsoft&rsquo;s. It doesn&rsquo;t touch the primary tree at all. It adds a Supplementary Volume Descriptor, or SVD
+(sector 17 here, right behind the PVD), flagged with an escape sequence (<code>%/@</code>, <code>%/C</code> or <code>%/E</code> for UCS-2 levels 1 to 3), pointing at a
+<em>second</em> directory tree whose names are UCS-2 big-endian, up to 64 characters.</li>
+</ul>
+<p>Windows&rsquo; CD-ROM filesystem doesn&rsquo;t do Rock Ridge. Without a Joliet tree it sees <code>META_DAT.;1</code>, and cloudbase-init, which is
+looking for <code>meta-data</code>, finds nothing. Here&rsquo;s the layout of the ISO that works, with both trees, read out of a real one:</p>
+<p><img src="/img/2026/05/go-diskfs-rock-ridge-joliet-windows-layout.svg" alt="Sector map of a go-diskfs cidata ISO with Rock Ridge and Joliet"></p>
+<h3 id="there-is-no-go-library-for-this">There is no Go library for this</h3>
+<p>I went looking before writing anything. As of March:</p>
+<ul>
+<li><a href="https://github.com/kdomanski/iso9660">kdomanski/iso9660</a>: its README says it plainly, &ldquo;Joliet extension is <strong>NOT</strong>
+supported&rdquo;, with Rock Ridge reading still experimental.</li>
+<li><a href="https://github.com/hooklift/iso9660">hooklift/iso9660</a>: a reader only, last touched in 2019.</li>
+<li><a href="https://github.com/bgrewell/iso-kit">bgrewell/iso-kit</a>: new (January 2025), a couple of stars, says it does Joliet but calls itself early
+development.</li>
+<li><a href="https://github.com/diskfs/go-diskfs">go-diskfs</a>: the serious one, and what go-proxmox already used. It could write
+Rock Ridge, and &ldquo;Joliet extensions to iso9660&rdquo; was sitting in the plans section of the README, with
+<a href="https://github.com/diskfs/go-diskfs/issues/73">issue #73</a> asking for it open since 2020.</li>
+</ul>
+<p>So, go-diskfs. The two extensions are independent on disk (the maintainer pointed that out in review, and he&rsquo;s right), but Rock Ridge was already in the tree and half-working. Before bolting a second directory tree onto the
+finalize code, I wanted the first one to be correct.</p>
+<h3 id="step-1-rock-ridge-up-to-spec-353">Step 1: Rock Ridge up to spec (#353)</h3>
+<p><a href="https://github.com/diskfs/go-diskfs/pull/353">PR #353</a>, merged April 10th. Most of the fixes were small and each one is a
+good example of the spec being specific about something the code had been loose about:</p>
+<ul>
+<li>
+<p><strong>Modes were hardcoded.</strong> <code>Mode()</code> returned <code>0o755</code> for everything regardless of the <code>PX</code> entry. Now it reads the <code>PX</code>
+mode and only falls back to fixed values for non-Rock Ridge images:</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-go" data-lang="go"><span class="line"><span class="cl"><span class="kd">func</span><span class="w"> </span><span class="p">(</span><span class="nx">de</span><span class="w"> </span><span class="o">*</span><span class="nx">directoryEntry</span><span class="p">)</span><span class="w"> </span><span class="nf">Mode</span><span class="p">()</span><span class="w"> </span><span class="nx">os</span><span class="p">.</span><span class="nx">FileMode</span><span class="w"> </span><span class="p">{</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="k">for</span><span class="w"> </span><span class="nx">_</span><span class="p">,</span><span class="w"> </span><span class="nx">ext</span><span class="w"> </span><span class="o">:=</span><span class="w"> </span><span class="k">range</span><span class="w"> </span><span class="nx">de</span><span class="p">.</span><span class="nx">extensions</span><span class="w"> </span><span class="p">{</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">        </span><span class="k">if</span><span class="w"> </span><span class="nx">px</span><span class="p">,</span><span class="w"> </span><span class="nx">ok</span><span class="w"> </span><span class="o">:=</span><span class="w"> </span><span class="nx">ext</span><span class="p">.(</span><span class="nx">rockRidgePosixAttributes</span><span class="p">);</span><span class="w"> </span><span class="nx">ok</span><span class="w"> </span><span class="p">{</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">            </span><span class="k">return</span><span class="w"> </span><span class="nx">px</span><span class="p">.</span><span class="nx">mode</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">        </span><span class="p">}</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="p">}</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="c1">// Fallback for non-Rock Ridge</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="nx">de</span><span class="p">.</span><span class="nx">isSubdirectory</span><span class="w"> </span><span class="p">{</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">        </span><span class="k">return</span><span class="w"> </span><span class="nx">os</span><span class="p">.</span><span class="nx">ModeDir</span><span class="w"> </span><span class="p">|</span><span class="w"> </span><span class="mi">0</span><span class="nx">o755</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="p">}</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="c1">// ... symlink fallback</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="mi">0</span><span class="nx">o755</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="p">}</span><span class="w">
+</span></span></span></code></pre></div></li>
+<li>
+<p><strong>No way to get at the metadata.</strong> <code>Sys()</code> now returns a <code>*RockRidgeInfo</code> with UID, GID, link count, mode and symlink
+target, which is the standard Go way to expose filesystem-specific detail through <code>fs.FileInfo</code>:</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-go" data-lang="go"><span class="line"><span class="cl"><span class="kd">type</span><span class="w"> </span><span class="nx">RockRidgeInfo</span><span class="w"> </span><span class="kd">struct</span><span class="w"> </span><span class="p">{</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="nx">UID</span><span class="w">     </span><span class="kt">uint32</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="nx">GID</span><span class="w">     </span><span class="kt">uint32</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="nx">Nlink</span><span class="w">   </span><span class="kt">uint32</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="nx">Mode</span><span class="w">    </span><span class="nx">os</span><span class="p">.</span><span class="nx">FileMode</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="nx">Symlink</span><span class="w"> </span><span class="kt">string</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="p">}</span><span class="w">
+</span></span></span></code></pre></div></li>
+<li>
+<p><strong><code>RE</code> was 8 bytes.</strong> The Relocated Directory entry is just a marker: 2 bytes of signature, a length byte and a version
+byte, so its length is 4. The code allocated 8 and zero-filled the rest. Harmless to most readers, still wrong.</p>
+</li>
+<li>
+<p><strong>Relocated directories were looked up too late.</strong> When a tree is deeper than 8 levels, the deep directory is moved
+and a <code>CL</code> (child link) entry points at its new home. The reader checked path depth before resolving the <code>CL</code>, so relocated
+directories didn&rsquo;t resolve at every level. The lookup moved ahead of the depth check.</p>
+</li>
+<li>
+<p><strong>Symlinks were treated as files during finalize.</strong> A symlink&rsquo;s target lives inline in the <code>SL</code> entry; it has no data
+extent. But finalize put symlinks in the list of files to copy, so <code>os.Open()</code> would follow the link and either fail on a
+dangling one or copy the target&rsquo;s bytes. They&rsquo;re now excluded from data allocation while still getting directory entries.</p>
+</li>
+<li>
+<p><strong>Relative symlinks came out absolute.</strong> The <code>SL</code> parser glued components together with a leading separator, so
+a relative <code>target.txt</code> came back as <code>/target.txt</code>. The fix only adds a separator once something is already in the path, and review asked for that
+repeated check to be pulled into a helper:</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-go" data-lang="go"><span class="line"><span class="cl"><span class="nx">appendComponent</span><span class="w"> </span><span class="o">:=</span><span class="w"> </span><span class="kd">func</span><span class="p">(</span><span class="nx">component</span><span class="w"> </span><span class="kt">string</span><span class="p">)</span><span class="w"> </span><span class="p">{</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="nx">name</span><span class="w"> </span><span class="o">!=</span><span class="w"> </span><span class="s">&#34;&#34;</span><span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span><span class="nx">name</span><span class="w"> </span><span class="o">!=</span><span class="w"> </span><span class="s">&#34;/&#34;</span><span class="w"> </span><span class="p">{</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">        </span><span class="nx">name</span><span class="w"> </span><span class="o">+=</span><span class="w"> </span><span class="s">&#34;/&#34;</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="p">}</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="nx">name</span><span class="w"> </span><span class="o">+=</span><span class="w"> </span><span class="nx">component</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="p">}</span><span class="w">
+</span></span></span></code></pre></div></li>
+</ul>
+<p>The more interesting part was testing. I wanted to check go-diskfs against a reference implementation instead of against
+itself, and the reference for Rock Ridge is <a href="https://www.gnu.org/software/xorriso/">xorriso</a>. The PR as first written added
+Docker-based tests in both directions (build with go-diskfs and check with <code>isoinfo</code>, build with xorriso and read with
+go-diskfs) plus
+a byte-level comparison of the <code>PX</code> and <code>NM</code> entries each one writes. Getting xorriso into the test image hit a fun Alpine
+problem: <code>cdrkit</code> (which provides <code>isoinfo</code>) and <code>xorriso</code> both provide <code>mkisofs</code> and refuse to install together. My
+workaround involved shuffling binaries around and editing <code>/etc/apk/world</code>, which got a well-deserved &ldquo;why the whole
+rigamarole&rdquo; in review. The maintainer dropped cdrkit from the image entirely and I rewrote the test to read back with
+go-diskfs instead of <code>isoinfo</code>. Much simpler.</p>
+<p>Reading the metadata back looks like this:</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-go" data-lang="go"><span class="line"><span class="cl"><span class="nx">entries</span><span class="p">,</span><span class="w"> </span><span class="nx">err</span><span class="w"> </span><span class="o">:=</span><span class="w"> </span><span class="nx">fs</span><span class="p">.</span><span class="nf">ReadDir</span><span class="p">(</span><span class="s">&#34;.&#34;</span><span class="p">)</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="k">if</span><span class="w"> </span><span class="nx">err</span><span class="w"> </span><span class="o">!=</span><span class="w"> </span><span class="kc">nil</span><span class="w"> </span><span class="p">{</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="nx">log</span><span class="p">.</span><span class="nf">Fatal</span><span class="p">(</span><span class="nx">err</span><span class="p">)</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="p">}</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="k">for</span><span class="w"> </span><span class="nx">_</span><span class="p">,</span><span class="w"> </span><span class="nx">e</span><span class="w"> </span><span class="o">:=</span><span class="w"> </span><span class="k">range</span><span class="w"> </span><span class="nx">entries</span><span class="w"> </span><span class="p">{</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="nx">fi</span><span class="p">,</span><span class="w"> </span><span class="nx">_</span><span class="w"> </span><span class="o">:=</span><span class="w"> </span><span class="nx">e</span><span class="p">.</span><span class="nf">Info</span><span class="p">()</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="nx">rr</span><span class="p">,</span><span class="w"> </span><span class="nx">_</span><span class="w"> </span><span class="o">:=</span><span class="w"> </span><span class="nx">fi</span><span class="p">.</span><span class="nf">Sys</span><span class="p">().(</span><span class="o">*</span><span class="nx">iso9660</span><span class="p">.</span><span class="nx">RockRidgeInfo</span><span class="p">)</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="nx">fmt</span><span class="p">.</span><span class="nf">Printf</span><span class="p">(</span><span class="s">&#34;%-16s %v size=%d rr=%+v\n&#34;</span><span class="p">,</span><span class="w"> </span><span class="nx">fi</span><span class="p">.</span><span class="nf">Name</span><span class="p">(),</span><span class="w"> </span><span class="nx">fi</span><span class="p">.</span><span class="nf">Mode</span><span class="p">(),</span><span class="w"> </span><span class="nx">fi</span><span class="p">.</span><span class="nf">Size</span><span class="p">(),</span><span class="w"> </span><span class="nx">rr</span><span class="p">)</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="p">}</span><span class="w">
+</span></span></span></code></pre></div><pre tabindex="0"><code>meta-data        -rw-rw-rw- size=49 rr=&amp;{UID:0 GID:0 Nlink:0 Mode:-rw-rw-rw- Symlink:}
+network-config   -rw-rw-rw- size=46 rr=&amp;{UID:0 GID:0 Nlink:0 Mode:-rw-rw-rw- Symlink:}
+user-data        -rw-rw-rw- size=37 rr=&amp;{UID:0 GID:0 Nlink:0 Mode:-rw-rw-rw- Symlink:}
+</code></pre><p>(That ISO was written on Windows, hence <code>0666</code>, and go-diskfs&rsquo;s Windows stat shim returns zero for link count, UID and GID,
+which is on my list.)</p>
+<h3 id="step-2-joliet-372">Step 2: Joliet (#372)</h3>
+<p><a href="https://github.com/diskfs/go-diskfs/pull/372">PR #372</a> went up the day #353 merged and landed April 16th, closing #73 after
+more than five years. On the write side it&rsquo;s a single flag:</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-go" data-lang="go"><span class="line"><span class="cl"><span class="nx">err</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="nx">fs</span><span class="p">.</span><span class="nf">Finalize</span><span class="p">(</span><span class="nx">iso9660</span><span class="p">.</span><span class="nx">FinalizeOptions</span><span class="p">{</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="nx">RockRidge</span><span class="p">:</span><span class="w">        </span><span class="kc">true</span><span class="p">,</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="nx">Joliet</span><span class="p">:</span><span class="w">           </span><span class="kc">true</span><span class="p">,</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="nx">VolumeIdentifier</span><span class="p">:</span><span class="w"> </span><span class="s">&#34;cidata&#34;</span><span class="p">,</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="p">})</span><span class="w">
+</span></span></span></code></pre></div><p>Under that flag, finalize builds a parallel directory tree with UCS-2 names, generates Joliet L and M path tables, and writes
+an SVD with the UCS-2 level 3 escape sequence. Both trees point at the same file extents, so the data is only on disk once. On
+the read side go-diskfs detects a Joliet SVD by its escape sequence and transparently reads the Joliet tree when Rock Ridge
+isn&rsquo;t active.</p>
+<p>Two review questions are worth repeating because they&rsquo;re the kind of thing the spec makes easy to get wrong. First, Rock
+Ridge and Joliet aren&rsquo;t mutually exclusive, and a comment in my code claiming &ldquo;Joliet entries never have SUSP&rdquo; read like they
+were. The flag is per directory entry: entries in the Joliet tree carry no SUSP, entries in the primary tree carry the full
+Rock Ridge set. Second, with both El Torito and Joliet enabled, does the root directory location get bumped twice? Yes,
+because the boot record and the SVD are each their own volume descriptor sector, and that deserved a comment.</p>
+<p>go-proxmox switched <code>makeCloudInitISO()</code> over to <code>Joliet: true</code> and shipped it in
+<a href="https://github.com/luthermonson/go-proxmox/releases/tag/v0.5.0">v0.5.0</a> on May 7th, pinned to go-diskfs v1.9.2.</p>
+<h3 id="step-3-what-windows-actually-wanted-391">Step 3: what Windows actually wanted (#391)</h3>
+<p>A day later <a href="https://github.com/luthermonson/go-proxmox/issues/258">go-proxmox#258</a> came in from
+<a href="https://github.com/rgl">rgl</a>, titled &ldquo;0.5.0 creates an invalid iso file&rdquo;. On Ubuntu, <code>blkid</code> showed this as the label:</p>
+<pre tabindex="0"><code>/dev/sr0: BLOCK_SIZE=&#34;2048&#34; UUID=&#34;2026-05-08-21-11-46-82&#34; LABEL=&#34;M-fM-^MM-)M-fM-^QM-!M-gM-^QM-!&#34; TYPE=&#34;iso9660&#34;
+</code></pre><p>That&rsquo;s <code>cat -v</code> escaping for 9 bytes of UTF-8, and if you decode them you get three CJK characters: 捩摡瑡. Which is what you
+get when you take the six ASCII bytes of <code>cidata</code>, <code>63 69 64 61 74 61</code>, and read them as UCS-2 big-endian: <code>0x6369</code>,
+<code>0x6461</code>, <code>0x7461</code>.</p>
+<pre tabindex="0"><code>$ printf &#39;cidata&#39; | iconv -f UCS-2BE -t UTF-8 | cat -v
+M-fM-^MM-)M-fM-^QM-!M-gM-^QM-!
+</code></pre><p>The Joliet SVD&rsquo;s volume identifier is a UCS-2 field like everything else in that descriptor, and go-diskfs was copying the
+ASCII string straight in. Linux preferred the Joliet label, got garbage, and cloud-init&rsquo;s nocloud datasource never found a
+volume called <code>cidata</code>. So the Joliet work had broken <em>Linux</em> guests too, which is the opposite of the plan.</p>
+<p>Fixing the label got Linux back, and on Windows the label now showed correctly and <code>dir D:\</code> listed the files. But reading
+one failed with <code>Cannot find path 'D:\meta-data' because it does not exist</code>, while an xorriso-built ISO
+worked. The second bug was in the Joliet path table. Every directory gets a path table record, and the root&rsquo;s identifier
+is a single byte. I&rsquo;d written <code>0x01</code>. ECMA-119 says the
+root&rsquo;s path table identifier is a single <code>0x00</code> byte, in the Joliet tables as much as the primary ones. My best read is that Windows resolves paths through the path table, so it could enumerate the root through its directory
+record but couldn&rsquo;t resolve a file path through the bad table entry.</p>
+<p><a href="https://github.com/diskfs/go-diskfs/pull/391">PR #391</a> fixes both. The identifier encoding is gated on the escape sequence,
+since review pointed out that not every SVD is a Joliet SVD:</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-go" data-lang="go"><span class="line"><span class="cl"><span class="kd">func</span><span class="w"> </span><span class="p">(</span><span class="nx">v</span><span class="w"> </span><span class="o">*</span><span class="nx">supplementaryVolumeDescriptor</span><span class="p">)</span><span class="w"> </span><span class="nf">toBytes</span><span class="p">()</span><span class="w"> </span><span class="p">[]</span><span class="kt">byte</span><span class="w"> </span><span class="p">{</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="nx">b</span><span class="w"> </span><span class="o">:=</span><span class="w"> </span><span class="nf">volumeDescriptorFirstBytes</span><span class="p">(</span><span class="nx">volumeDescriptorSupplementary</span><span class="p">)</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="nx">b</span><span class="p">[</span><span class="mi">7</span><span class="p">]</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="nx">v</span><span class="p">.</span><span class="nx">volumeFlags</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="nf">isJolietSVD</span><span class="p">(</span><span class="nx">v</span><span class="p">)</span><span class="w"> </span><span class="p">{</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">        </span><span class="nb">copy</span><span class="p">(</span><span class="nx">b</span><span class="p">[</span><span class="mi">8</span><span class="p">:</span><span class="mi">40</span><span class="p">],</span><span class="w"> </span><span class="nf">ucs2StringToBytes</span><span class="p">(</span><span class="nx">v</span><span class="p">.</span><span class="nx">systemIdentifier</span><span class="p">))</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">        </span><span class="nb">copy</span><span class="p">(</span><span class="nx">b</span><span class="p">[</span><span class="mi">40</span><span class="p">:</span><span class="mi">72</span><span class="p">],</span><span class="w"> </span><span class="nf">ucs2StringToBytes</span><span class="p">(</span><span class="nx">v</span><span class="p">.</span><span class="nx">volumeIdentifier</span><span class="p">))</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="p">}</span><span class="w"> </span><span class="k">else</span><span class="w"> </span><span class="p">{</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">        </span><span class="nb">copy</span><span class="p">(</span><span class="nx">b</span><span class="p">[</span><span class="mi">8</span><span class="p">:</span><span class="mi">40</span><span class="p">],</span><span class="w"> </span><span class="nx">v</span><span class="p">.</span><span class="nx">systemIdentifier</span><span class="p">)</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">        </span><span class="nb">copy</span><span class="p">(</span><span class="nx">b</span><span class="p">[</span><span class="mi">40</span><span class="p">:</span><span class="mi">72</span><span class="p">],</span><span class="w"> </span><span class="nx">v</span><span class="p">.</span><span class="nx">volumeIdentifier</span><span class="p">)</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="p">}</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="c1">// ...</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="p">}</span><span class="w">
+</span></span></span></code></pre></div><p>and the path table root becomes <code>&quot;\x00&quot;</code>. rgl confirmed it worked against a Windows guest running cloudbase-init, the maintainer
+tagged go-diskfs v1.9.3 on May 14th, and go-proxmox v0.5.1 pinned it the same day.</p>
+<h3 id="why-the-tests-didnt-catch-it">Why the tests didn&rsquo;t catch it</h3>
+<p>I had round-trip tests and xorriso tests, and neither caught a wrong label. The round-trip tests couldn&rsquo;t: the reader and writer
+had the same bug in opposite directions. <code>parseSupplementaryVolumeDescriptor()</code> read the identifier as raw bytes and
+<code>toBytes()</code> wrote raw bytes, so a go-diskfs ISO read back by go-diskfs said <code>cidata</code> every time. A round trip through your own
+code proves your reader and writer agree with each other. It says nothing about whether either one agrees with the spec.</p>
+<p>The thing that caught it was someone booting a real VM. I&rsquo;d add tests that assert specific bytes against the spec (the
+SVD identifier is UCS-2, the root path table entry is <code>00</code>) instead of only asserting that what goes in comes back out.</p>
+<h3 id="how-i-tested">How I tested</h3>
+<p>To check this for the post I built the same three-file ISO (<code>RockRidge: true, Joliet: true, VolumeIdentifier: &quot;cidata&quot;</code>) with
+go-diskfs v1.9.2 and v1.9.3 and compared them on Windows 11 (build 26200) with <code>Mount-DiskImage</code>:</p>
+<pre tabindex="0"><code>v1.9.2  SVD volume id bytes: 63 69 64 61 74 61 00 00 ...
+        Joliet L path table root: 01 00 1a 00 00 00 01 00 01 00
+        Get-Volume label: 捩摡瑡   dir D:\ lists 3 files   Get-Content D:\meta-data -&gt; Cannot find path
+
+v1.9.3  SVD volume id bytes: 00 63 00 69 00 64 00 61 00 74 00 61 ...
+        Joliet L path table root: 01 00 1a 00 00 00 01 00 00 00
+        Get-Volume label: cidata   Get-Content D:\meta-data -&gt; instance-id: vm-100 ...
+</code></pre><p>Same symptoms rgl saw in the VM. One extra thing turned up: the raw files are 57,354 bytes while the primary volume
+descriptor claims 29 sectors (59,392 bytes), and <code>Mount-DiskImage</code> refused both as &ldquo;corrupted and unreadable&rdquo; until I padded
+them to 29 full sectors. Proxmox and QEMU don&rsquo;t care, but it&rsquo;s another thing for the list.</p>
+<h3 id="links">Links</h3>
+<ul>
+<li><a href="https://github.com/diskfs/go-diskfs/pull/353">diskfs/go-diskfs#353</a> - Rock Ridge support</li>
+<li><a href="https://github.com/diskfs/go-diskfs/pull/372">diskfs/go-diskfs#372</a> - Joliet support</li>
+<li><a href="https://github.com/diskfs/go-diskfs/pull/391">diskfs/go-diskfs#391</a> - Joliet SVD UCS-2 volume identifier and path table root</li>
+<li><a href="https://github.com/luthermonson/go-proxmox/issues/258">luthermonson/go-proxmox#258</a> - &ldquo;0.5.0 creates an invalid iso file&rdquo;</li>
+<li><a href="https://github.com/rgl/proxmox-clone-vm-example">rgl/proxmox-clone-vm-example</a> - rgl&rsquo;s Windows + cloudbase-init example</li>
+<li><a href="https://ecma-international.org/publications-and-standards/standards/ecma-119/">ECMA-119</a> - the ISO 9660 standard</li>
+<li><a href="http://web.archive.org/web/20071017082049/http://www.nextcomputers.org/NeXTfiles/Projects/CD-ROM/Rock_Ridge_Interchange_Protocol.pdf">Rock Ridge Interchange Protocol (IEEE P1282)</a></li>
+<li><a href="https://pismotec.com/cfs/jolspec.html">Joliet Specification</a></li>
+</ul>
+
+      </div>
+      <footer>
+        <div class="stats">
+  
+    <ul class="categories">
+      
+        
+          <li><a class="article-terms-link" href="/categories/go/">go</a></li>
+        
+          <li><a class="article-terms-link" href="/categories/windows/">windows</a></li>
+        
+      
+    </ul>
+  
+  
+    <ul class="tags">
+      
+        
+          <li><a class="article-terms-link" href="/tags/go/">go</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/iso9660/">iso9660</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/rock-ridge/">rock-ridge</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/joliet/">joliet</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/go-diskfs/">go-diskfs</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/cloud-init/">cloud-init</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/windows/">windows</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/open-source/">open-source</a></li>
+        
+      
+    </ul>
+  
+</div>
+
+      </footer>
+    </div>
+    
+      
+  
+  <div class='post giscus-wrap'>
+    <script src='https://giscus.app/client.js'
+            data-repo='luthermonson/luth.io'
+            data-repo-id='R_kgDOGvFBXQ'
+            data-category='Announcements'
+            data-category-id='DIC_kwDOGvFBXc4DH_gv'
+            data-mapping='pathname'
+            data-strict='1'
+            data-reactions-enabled='1'
+            data-emit-metadata='0'
+            data-input-position='top'
+            data-theme='light'
+            data-lang='en'
+            data-loading='lazy'
+            crossorigin='anonymous'
+            async>
+    </script>
+  </div>
+  
+
+
+
+    
+  </article>
+  
+    <nav class="post-nav">
+      
+        <a href="/blog/2026/04/php-signal-safety-init-ordering/" class="post-nav-link older">
+          <span class="post-nav-label">&larr; Older</span>
+          <span class="post-nav-title">PHP Signal Safety - The Init Ordering Bug Nobody Warns You About</span>
+        </a>
+      
+      
+        <a href="/blog/2026/05/staying-logged-in-to-proxmox/" class="post-nav-link newer">
+          <span class="post-nav-label">Newer &rarr;</span>
+          <span class="post-nav-title">Staying Logged In to Proxmox: Ticket Renewal, Expiry and Where API Tokens Stop</span>
+        </a>
+      
+    </nav>
+  
+
+      </main>
+      <section id="site-sidebar">
+  
+    <section id="recent-posts">
+      <header>
+        <h1>Recent Posts</h1>
+      </header>
+      
+      <article class="mini-post">
+          <a href="/blog/2026/10/ephpm-worker-mode-performance/" class="image" style="--bg-image: url('/img/2026/10/ephpm-worker-mode-performance-cover.svg');">
+    <img class="" src="/img/2026/10/ephpm-worker-mode-performance-cover.svg" alt="Diagram: before, hyper/tokio hands each request to one shared bounded channel whose waiter list all 20 PHP threads contend on; after, a dispatcher hands the job straight into the mailbox of the most recently idle PHP thread and only queues it in a FIFO overflow queue when every thread is busy">
+  </a>
+        <header>
+          <h2><a href="/blog/2026/10/ephpm-worker-mode-performance/">Fourth Place in Worker Mode, and Why It Wasn&#39;t PHP</a></h2>
+          <time class="published" datetime="2026-10-16 08:10:00 -0700 PDT">October 16, 2026</time>
+        </header>
+      </article>
+      
+      <article class="mini-post">
+          <a href="/blog/2026/10/ephpm-websockets-how-to/" class="image" style="--bg-image: url('/img/2026/10/ephpm-websockets-how-to-cover.svg');">
+    <img class="" src="/img/2026/10/ephpm-websockets-how-to-cover.svg" alt="Diagram: browsers hold sockets to ePHPm&#39;s Rust session tasks and registry; each connect, message and disconnect runs websocket.php once on the PHP thread pool, and ordinary HTTP requests push through ephpm_ws_broadcast">
+  </a>
+        <header>
+          <h2><a href="/blog/2026/10/ephpm-websockets-how-to/">WebSockets in ePHPm, From Zero to a Working Chat</a></h2>
+          <time class="published" datetime="2026-10-11 17:30:00 -0700 PDT">October 11, 2026</time>
+        </header>
+      </article>
+      
+      <article class="mini-post">
+          <a href="/blog/2026/10/webhooks-out-of-order-scheduler/" class="image" style="--bg-image: url('/img/2026/10/webhooks-out-of-order-scheduler-timeline.svg');">
+    <img class="" src="/img/2026/10/webhooks-out-of-order-scheduler-timeline.svg" alt="Timeline of three same-label jobs where a runner executing a build is destroyed 2.3 seconds before its in_progress webhook arrives">
+  </a>
+        <header>
+          <h2><a href="/blog/2026/10/webhooks-out-of-order-scheduler/">Webhooks Arrive Out of Order: How My Scheduler Killed Live Builds</a></h2>
+          <time class="published" datetime="2026-10-07 21:10:00 -0700 PDT">October 7, 2026</time>
+        </header>
+      </article>
+      
+      <article class="mini-post">
+          <a href="/blog/2026/10/go-proxmox-five-years-to-v0-8/" class="image" style="--bg-image: url('/img/2026/10/go-proxmox-five-years-to-v0-8-apidiff.svg');">
+    <img class="" src="/img/2026/10/go-proxmox-five-years-to-v0-8-apidiff.svg" alt="Horizontal bar chart of apidiff incompatible and compatible changes for every go-proxmox release from v0.1.0 to v0.8.2">
+  </a>
+        <header>
+          <h2><a href="/blog/2026/10/go-proxmox-five-years-to-v0-8/">Breaking Changes Without Breaking Trust: Five Years to go-proxmox v0.8</a></h2>
+          <time class="published" datetime="2026-10-04 19:40:00 -0700 PDT">October 4, 2026</time>
+        </header>
+      </article>
+      
+      <article class="mini-post">
+          <a href="/blog/2026/10/windows-sigterm-sparse-files/" class="image" style="--bg-image: url('/img/2026/10/windows-sigterm-sparse-files-connections.svg');">
+    <img class="" src="/img/2026/10/windows-sigterm-sparse-files-connections.svg" alt="Bar chart: 96 Cloudflare edge connections held by orphaned cloudflared processes versus 4 for the live daemon">
+  </a>
+        <header>
+          <h2><a href="/blog/2026/10/windows-sigterm-sparse-files/">Windows Grab-Bag: SIGTERM That Doesn&#39;t Exist and Sparse Files That Break Docker</a></h2>
+          <time class="published" datetime="2026-10-03 14:30:00 -0700 PDT">October 3, 2026</time>
+        </header>
+      </article>
+      
+      
+        <footer>
+          <a href="/blog" class="button">See More</a>
+        </footer>
+      
+    </section>
+  
+
+  
+    
+
+      <section id="categories">
+        <header>
+          <h1><a href="/categories">Categories</a></h1>
+        </header>
+        <ul>
+          
+          
+          <li>
+              <a href="/categories/ephpm/">ephpm<span class="count">33</span></a>
+          
+          <li>
+              <a href="/categories/go/">go<span class="count">30</span></a>
+          
+          <li>
+              <a href="/categories/php/">php<span class="count">23</span></a>
+          
+          <li>
+              <a href="/categories/rust/">rust<span class="count">15</span></a>
+          
+          <li>
+              <a href="/categories/homelab/">homelab<span class="count">14</span></a>
+          
+          <li>
+              <a href="/categories/windows/">windows<span class="count">14</span></a>
+          
+          <li>
+              <a href="/categories/ci/">ci<span class="count">9</span></a>
+          
+          <li>
+              <a href="/categories/databases/">databases<span class="count">9</span></a>
+          
+          <li>
+              <a href="/categories/security/">security<span class="count">9</span></a>
+          
+          <li>
+              <a href="/categories/containers/">containers<span class="count">7</span></a>
+          
+          <li>
+              <a href="/categories/tools/">tools<span class="count">5</span></a>
+          
+          <li>
+              <a href="/categories/ai-agents/">ai-agents<span class="count">4</span></a>
+          
+          </li>
+        </ul>
+      </section>
+    
+  
+
+  
+    <section id="mini-bio">
+      <header>
+        <h1>About</h1>
+      </header>
+      <p>Luther is a 20+ year software veteran specializing in backend APIs and architecting products. Employed at <a href='https://www.suse.com'>SUSE</a> as the Team Lead for the <a href='https://github.com/rancher/windows/issues'>Containers on Windows Team</a> working on <a href='https://rancher.com/'>Rancher</a> + <a href='https://kubernetes.io/'>Kubernetes</a></p>
+      <footer>
+        <a href="/about" class="button">Learn More</a>
+      </footer>
+    </section>
+  
+</section>
+
+      <footer id="site-footer">
+  
+      <ul class="socnet-icons">
+        
+
+        <li><a href="//github.com/luthermonson" target="_blank" rel="noopener" title="GitHub" class="fab fa-github"></a></li>
+
+
+
+
+
+
+
+
+
+
+
+<li><a href="//www.linkedin.com/in/luthermonson" target="_blank" rel="noopener" title="LinkedIn" class="fab fa-linkedin"></a></li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li><a href="//twitter.com/luthermonson" target="_blank" rel="noopener" title="Twitter" class="fab fa-twitter"></a></li>
+
+
+
+
+
+
+
+
+
+
+
+<li><a href="mailto:luther.monson@gmail.com" target="_blank" title="Email" class="far fa-envelope"></a></li>
+
+      </ul>
+  
+  <p class="copyright">
+    © 2026 Luther Monson
+      <br>
+    Theme: <a href='https://github.com/pacollins/hugo-future-imperfect-slim' target='_blank' rel='noopener'>Hugo Future Imperfect Slim</a><br>A <a href='https://html5up.net/future-imperfect' target='_blank' rel='noopener'>HTML5 UP port</a> | Powered by <a href='https://gohugo.io/' title='0.160.1' target='_blank' rel='noopener'>Hugo</a>
+  </p>
+</footer>
+<a id="back-to-top" href="#" class="fas fa-arrow-up fa-2x"></a>
+
+      <script src="/js/bundle.min.241b62ebc4792fe8c7a75879e5f710894f226f2b73342e9916b3a3b0526030cc.js" integrity="sha256-JBti68R5L&#43;jHp1h55fcQiU8ibytzNC6ZFrOjsFJgMMw="></script>
+    <script src="/js/add-on.js"></script>
+    </div>
+  </body>
+</html>

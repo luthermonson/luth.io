@@ -1,0 +1,49 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 360" font-family="system-ui, -apple-system, Segoe UI, Roboto, sans-serif">
+  <defs>
+    <marker id="a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#444"/>
+    </marker>
+  </defs>
+  <rect width="960" height="360" fill="#ffffff"/>
+  <text x="480" y="32" text-anchor="middle" font-size="20" font-weight="600" fill="#222">mage record:pve9 (PR #269, work in progress)</text>
+
+  <rect x="20" y="70" width="190" height="96" rx="8" fill="#eef4fb" stroke="#2b6cb0"/>
+  <text x="115" y="98" text-anchor="middle" font-size="14" font-weight="600" fill="#222">outer PVE host</text>
+  <text x="115" y="120" text-anchor="middle" font-size="12" fill="#6b6b6b">driven by go-proxmox</text>
+  <text x="115" y="140" text-anchor="middle" font-size="12" fill="#6b6b6b">download ISO, create VM</text>
+  <text x="115" y="156" text-anchor="middle" font-size="12" fill="#6b6b6b">cpu=host</text>
+
+  <rect x="260" y="70" width="210" height="96" rx="8" fill="#eef4fb" stroke="#2b6cb0"/>
+  <text x="365" y="98" text-anchor="middle" font-size="14" font-weight="600" fill="#222">nested PVE 8 / 9</text>
+  <text x="365" y="120" text-anchor="middle" font-size="12" fill="#6b6b6b">automated install (answer.toml)</text>
+  <text x="365" y="140" text-anchor="middle" font-size="12" fill="#6b6b6b">first-boot seed: user, token,</text>
+  <text x="365" y="156" text-anchor="middle" font-size="12" fill="#6b6b6b">fixed VMIDs, net10+ configs</text>
+
+  <rect x="520" y="70" width="190" height="96" rx="8" fill="#fdf1e6" stroke="#e07a1f"/>
+  <text x="615" y="98" text-anchor="middle" font-size="14" font-weight="600" fill="#222">go test (record)</text>
+  <text x="615" y="120" text-anchor="middle" font-size="12" fill="#6b6b6b">go-vcr ModeRecordOnce</text>
+  <text x="615" y="140" text-anchor="middle" font-size="12" fill="#6b6b6b">real requests,</text>
+  <text x="615" y="156" text-anchor="middle" font-size="12" fill="#6b6b6b">real responses</text>
+
+  <rect x="760" y="70" width="180" height="96" rx="8" fill="#eaf5ee" stroke="#3a9a5b"/>
+  <text x="850" y="98" text-anchor="middle" font-size="14" font-weight="600" fill="#222">BeforeSaveHook</text>
+  <text x="850" y="120" text-anchor="middle" font-size="12" fill="#6b6b6b">strip auth headers</text>
+  <text x="850" y="140" text-anchor="middle" font-size="12" fill="#6b6b6b">host to pve.example.test</text>
+  <text x="850" y="156" text-anchor="middle" font-size="12" fill="#6b6b6b">IPs, MACs, keys, tickets</text>
+
+  <line x1="210" y1="118" x2="256" y2="118" stroke="#444" stroke-width="1.5" marker-end="url(#a)"/>
+  <line x1="470" y1="118" x2="516" y2="118" stroke="#444" stroke-width="1.5" marker-end="url(#a)"/>
+  <line x1="710" y1="118" x2="756" y2="118" stroke="#444" stroke-width="1.5" marker-end="url(#a)"/>
+
+  <rect x="620" y="220" width="320" height="70" rx="8" fill="#f7f7f7" stroke="#6b6b6b"/>
+  <text x="780" y="248" text-anchor="middle" font-size="13" fill="#222" font-family="ui-monospace, Menlo, Consolas, monospace">tests/recorder/testdata/pve9/*.yaml</text>
+  <text x="780" y="270" text-anchor="middle" font-size="12" fill="#6b6b6b">checked in, diffable</text>
+  <line x1="850" y1="166" x2="820" y2="216" stroke="#444" stroke-width="1.5" marker-end="url(#a)"/>
+
+  <rect x="20" y="220" width="420" height="70" rx="8" fill="#f7f7f7" stroke="#6b6b6b"/>
+  <text x="230" y="248" text-anchor="middle" font-size="13" fill="#222">CI: PROXMOX_URL unset, ModeReplayOnly</text>
+  <text x="230" y="270" text-anchor="middle" font-size="12" fill="#6b6b6b">no network, a missing interaction is a test failure</text>
+  <line x1="616" y1="255" x2="444" y2="255" stroke="#444" stroke-width="1.5" marker-end="url(#a)"/>
+
+  <text x="480" y="330" text-anchor="middle" font-size="12" fill="#6b6b6b">the nested VM is destroyed on every exit path, including a failed install</text>
+</svg>

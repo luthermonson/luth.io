@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>Benchmarks on Luther Monson</title>
+    <link>https://luth.io/tags/benchmarks/</link>
+    <description>Recent content in Benchmarks on Luther Monson</description>
+    <generator>Hugo</generator>
+    <language>en</language>
+    <lastBuildDate>Wed, 19 Aug 2026 20:37:00 -0700</lastBuildDate>
+    <atom:link href="https://luth.io/tags/benchmarks/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>Clustered SQLite in ePHPm, Part 2: Adding Turso</title>
+      <link>https://luth.io/blog/2026/08/clustered-sqlite-adding-turso/</link>
+      <pubDate>Wed, 19 Aug 2026 20:37:00 -0700</pubDate>
+      <guid>https://luth.io/blog/2026/08/clustered-sqlite-adding-turso/</guid>
+      <description>&lt;p&gt;&lt;a href=&#34;https://luth.io/blog/2026/08/clustered-sqlite-sqld-sidecar/&#34;&gt;Part 1&lt;/a&gt; ended with ePHPm running two SQLite engines: rusqlite in-process&#xA;for a single node, and an embedded sqld child process for a cluster. The sidecar fell off a cliff past four concurrent&#xA;writers and the best fix I could ship was a semaphore set to 1. This post is about replacing both engines with one, and&#xA;about how I decided that engine was ready.&lt;/p&gt;&#xA;&lt;ul&gt;&#xA;&lt;li&gt;&lt;a href=&#34;https://luth.io/blog/2026/08/clustered-sqlite-sqld-sidecar/&#34;&gt;Part 1: Replication by sidecar with sqld&lt;/a&gt;&lt;/li&gt;&#xA;&lt;li&gt;Part 2: Adding Turso (this post)&lt;/li&gt;&#xA;&lt;li&gt;&lt;a href=&#34;https://luth.io/blog/2026/09/clustered-sqlite-cdc-cluster-channel/&#34;&gt;Part 3: CDC over the cluster channel&lt;/a&gt;&lt;/li&gt;&#xA;&lt;/ul&gt;&#xA;&lt;h3 id=&#34;the-thesis&#34;&gt;The thesis&lt;/h3&gt;&#xA;&lt;p&gt;&lt;a href=&#34;https://github.com/tursodatabase/turso&#34;&gt;Turso Database&lt;/a&gt; is a rewrite of SQLite in Rust, MIT licensed, file-format&#xA;compatible, with MVCC for concurrent writers and change data capture built into the engine. Read that list again from the&#xA;perspective of Part 1. An in-process engine means no child process and no Hrana hop. MVCC means writers don&amp;rsquo;t queue up&#xA;behind one lock. Built-in CDC means the engine itself can tell me what changed, so ePHPm&amp;rsquo;s existing cluster layer can ship&#xA;it. One engine for both modes, and clustered SQLite with zero child processes.&lt;/p&gt;</description>
+    </item>
+  </channel>
+</rss>

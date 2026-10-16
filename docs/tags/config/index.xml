@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>Config on Luther Monson</title>
+    <link>https://luth.io/tags/config/</link>
+    <description>Recent content in Config on Luther Monson</description>
+    <generator>Hugo</generator>
+    <language>en</language>
+    <lastBuildDate>Wed, 16 Sep 2026 19:35:00 -0700</lastBuildDate>
+    <atom:link href="https://luth.io/tags/config/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>The Bugs Were Our Own Linker Wraps: Making a PHP Timeout Actually Time Out</title>
+      <link>https://luth.io/blog/2026/09/php-timeout-linker-wraps/</link>
+      <pubDate>Wed, 16 Sep 2026 19:35:00 -0700</pubDate>
+      <guid>https://luth.io/blog/2026/09/php-timeout-linker-wraps/</guid>
+      <description>&lt;p&gt;In &lt;a href=&#34;https://luth.io/blog/2026/09/php-stack-guard-segfault-containment/&#34;&gt;the stack guard post&lt;/a&gt; the villain was a &lt;code&gt;-Wl,--wrap&lt;/code&gt; linker&#xA;flag that turned off PHP&amp;rsquo;s C-stack overflow guard. It wasn&amp;rsquo;t the only one. Until August, &lt;code&gt;max_execution_time&lt;/code&gt; did&#xA;nothing in &lt;a href=&#34;https://github.com/ephpm/ephpm&#34;&gt;ePHPm&lt;/a&gt; on Linux, for the same reason: we had wrapped the function that&#xA;arms it to a no-op. A runaway script ran until the HTTP layer&amp;rsquo;s request timeout gave up on it and sent a 504, and the&#xA;PHP thread kept burning CPU after that.&lt;/p&gt;</description>
+    </item>
+  </channel>
+</rss>

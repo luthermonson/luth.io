@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>Ephemerd on Luther Monson</title>
+    <link>https://luth.io/tags/ephemerd/</link>
+    <description>Recent content in Ephemerd on Luther Monson</description>
+    <generator>Hugo</generator>
+    <language>en</language>
+    <lastBuildDate>Wed, 07 Oct 2026 21:10:00 -0700</lastBuildDate>
+    <atom:link href="https://luth.io/tags/ephemerd/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>Webhooks Arrive Out of Order: How My Scheduler Killed Live Builds</title>
+      <link>https://luth.io/blog/2026/10/webhooks-out-of-order-scheduler/</link>
+      <pubDate>Wed, 07 Oct 2026 21:10:00 -0700</pubDate>
+      <guid>https://luth.io/blog/2026/10/webhooks-out-of-order-scheduler/</guid>
+      <description>&lt;p&gt;The scheduler in &lt;a href=&#34;https://luth.io/blog/2026/08/ephemerd-one-daemon-every-os/&#34;&gt;ephemerd&lt;/a&gt; is event-driven. GitHub sends a &lt;code&gt;workflow_job&lt;/code&gt;&#xA;webhook when a job is queued, when it starts and when it completes, and ephemerd creates and destroys runners to match.&#xA;For a while that worked well enough that I stopped thinking about it. Then a &lt;code&gt;docker-build&lt;/code&gt; job failed with &amp;ldquo;The&#xA;self-hosted runner lost communication with the server&amp;rdquo;, and when I pulled the node&amp;rsquo;s journal, ephemerd had destroyed that&#xA;runner itself, on purpose, while it was running the build.&lt;/p&gt;</description>
+    </item>
+    <item>
+      <title>Windows Grab-Bag: SIGTERM That Doesn&#39;t Exist and Sparse Files That Break Docker</title>
+      <link>https://luth.io/blog/2026/10/windows-sigterm-sparse-files/</link>
+      <pubDate>Sat, 03 Oct 2026 14:30:00 -0700</pubDate>
+      <guid>https://luth.io/blog/2026/10/windows-sigterm-sparse-files/</guid>
+      <description>&lt;p&gt;Two short ones from the Windows node of &lt;a href=&#34;https://luth.io/blog/2026/08/ephemerd-one-daemon-every-os/&#34;&gt;ephemerd&lt;/a&gt; from the last few weeks. Neither is&#xA;complicated once you know what&amp;rsquo;s going on. Both took longer than they should have to find, because the failure showed up a&#xA;long way from the cause.&lt;/p&gt;&#xA;&lt;h3 id=&#34;part-1-there-is-no-sigterm-on-windows&#34;&gt;Part 1: there is no SIGTERM on Windows&lt;/h3&gt;&#xA;&lt;p&gt;ephemerd can run a Cloudflare tunnel so GitHub webhooks reach a node behind NAT. It does that by running &lt;code&gt;cloudflared&lt;/code&gt; as a&#xA;managed subprocess. On Linux the child is tied to ephemerd&amp;rsquo;s lifetime by the kernel with &lt;code&gt;Pdeathsig&lt;/code&gt;:&lt;/p&gt;</description>
+    </item>
+    <item>
+      <title>Bind Mounts Across Mount Namespaces: Four PRs and a Container Escape</title>
+      <link>https://luth.io/blog/2026/09/bind-mounts-across-mount-namespaces/</link>
+      <pubDate>Thu, 24 Sep 2026 21:02:00 -0700</pubDate>
+      <guid>https://luth.io/blog/2026/09/bind-mounts-across-mount-namespaces/</guid>
+      <description>&lt;p&gt;GitHub Actions has a &lt;code&gt;container:&lt;/code&gt; key that runs a job&amp;rsquo;s steps inside an image of your choosing. It&amp;rsquo;s popular because it&#xA;gives you a reproducible toolchain without building a custom runner image. On a self-hosted runner it works by having the&#xA;runner drive Docker, and on &lt;a href=&#34;https://luth.io/blog/2026/08/ephemerd-one-daemon-every-os/&#34;&gt;ephemerd&lt;/a&gt; &amp;ldquo;Docker&amp;rdquo; is a shim that speaks the&#xA;Docker API and creates containers in containerd. Getting bind mounts right through that shim took four PRs in a week. A&#xA;couple of months later the version that worked turned out to be an escape.&lt;/p&gt;</description>
+    </item>
+    <item>
+      <title>Kata Containers for CI: Boot Cost Isn&#39;t the Problem, File I/O Is</title>
+      <link>https://luth.io/blog/2026/09/kata-containers-for-ci/</link>
+      <pubDate>Thu, 03 Sep 2026 21:35:00 -0700</pubDate>
+      <guid>https://luth.io/blog/2026/09/kata-containers-for-ci/</guid>
+      <description>&lt;p&gt;Of the three platforms &lt;a href=&#34;https://luth.io/blog/2026/08/ephemerd-one-daemon-every-os/&#34;&gt;ephemerd&lt;/a&gt; runs jobs on, Linux has the weakest&#xA;isolation. Windows jobs get a Hyper-V isolated container with its own kernel, macOS jobs get a whole VM, and a Linux job is&#xA;an ordinary runc container sharing the host kernel. A kernel escape from a Linux job is a host compromise.&#xA;&lt;a href=&#34;https://katacontainers.io/&#34;&gt;Kata Containers&lt;/a&gt; fixes that by putting each container in a lightweight VM with its own kernel,&#xA;and it plugs into containerd as just another runtime handler. So I added it in&#xA;&lt;a href=&#34;https://github.com/ephpm/ephemerd/pull/155&#34;&gt;#155&lt;/a&gt;, measured it, and left it off by default. This post is why.&lt;/p&gt;</description>
+    </item>
+    <item>
+      <title>My iptables Rule Matched 0 Packets in 9.8 GB</title>
+      <link>https://luth.io/blog/2026/08/iptables-rule-zero-packets/</link>
+      <pubDate>Wed, 26 Aug 2026 20:30:00 -0700</pubDate>
+      <guid>https://luth.io/blog/2026/08/iptables-rule-zero-packets/</guid>
+      <description>&lt;p&gt;After a week of Windows firewall rules that &lt;a href=&#34;https://luth.io/blog/2026/08/windows-container-egress-firewall/&#34;&gt;listed fine and enforced nothing&lt;/a&gt;,&#xA;I went back to the Linux side of &lt;a href=&#34;https://github.com/ephpm/ephemerd&#34;&gt;ephemerd&lt;/a&gt; feeling pretty good about it. iptables is&#xA;the boring, well-understood one. Then I looked at the packet counters on a live node and found a rule that had never&#xA;matched a packet in its life, on a node that had pushed 9.8 GB through the same chain.&lt;/p&gt;&#xA;&lt;h3 id=&#34;the-rules-i-thought-i-had&#34;&gt;The rules I thought I had&lt;/h3&gt;&#xA;&lt;p&gt;Job containers sit on a CNI bridge, &lt;code&gt;10.88.0.0/16&lt;/code&gt;, with the host on &lt;code&gt;10.88.0.1&lt;/code&gt;. ephemerd puts its egress policy in its&#xA;own chain, &lt;code&gt;EPHEMERD-FORWARD&lt;/code&gt;, jumped to from &lt;code&gt;FORWARD&lt;/code&gt; for anything to or from the container subnet. From a live node:&lt;/p&gt;</description>
+    </item>
+    <item>
+      <title>Five Ways to Not Firewall a Windows Container (and the One That Works)</title>
+      <link>https://luth.io/blog/2026/08/windows-container-egress-firewall/</link>
+      <pubDate>Sat, 22 Aug 2026 19:40:00 -0700</pubDate>
+      <guid>https://luth.io/blog/2026/08/windows-container-egress-firewall/</guid>
+      <description>&lt;p&gt;&lt;a href=&#34;https://luth.io/blog/2026/08/ephemerd-one-daemon-every-os/&#34;&gt;ephemerd&lt;/a&gt; runs CI jobs from pull requests, and one of the rules is that a job&#xA;can reach the internet but not my LAN. On Linux that&amp;rsquo;s a few iptables rules in the &lt;code&gt;FORWARD&lt;/code&gt; path and I didn&amp;rsquo;t think about it&#xA;much. On Windows I spent about a week finding out how many ways there are to write a firewall rule that Windows accepts,&#xA;lists, and then never applies.&lt;/p&gt;&#xA;&lt;p&gt;The setup: Windows Server 2025 (build 26100), job containers running with Hyper-V isolation, on the default HNS NAT network&#xA;that every Windows container tutorial uses (&lt;code&gt;10.88.0.0/16&lt;/code&gt; in ephemerd&amp;rsquo;s case, gateway &lt;code&gt;10.88.0.1&lt;/code&gt;). The target is the same&#xA;as Linux: block &lt;code&gt;10.0.0.0/8&lt;/code&gt;, &lt;code&gt;172.16.0.0/12&lt;/code&gt;, &lt;code&gt;192.168.0.0/16&lt;/code&gt; and &lt;code&gt;169.254.0.0/16&lt;/code&gt;, allow everything else.&lt;/p&gt;</description>
+    </item>
+    <item>
+      <title>ephemerd: One Daemon, a Fresh Runner Per Job, Every OS</title>
+      <link>https://luth.io/blog/2026/08/ephemerd-one-daemon-every-os/</link>
+      <pubDate>Tue, 18 Aug 2026 21:05:00 -0700</pubDate>
+      <guid>https://luth.io/blog/2026/08/ephemerd-one-daemon-every-os/</guid>
+      <description>&lt;p&gt;I have CI that needs Linux amd64, Linux arm64, Windows and macOS, and GitHub-hosted runners for all four get expensive fast,&#xA;especially the arm64 and Mac minutes. Self-hosted runners fix the bill and create a different problem. A stock&#xA;&lt;code&gt;actions/runner&lt;/code&gt; on a box you own runs whatever the workflow says, keeps whatever the last job left behind, and is one fork&#xA;PR away from somebody running code on your LAN.&lt;/p&gt;</description>
+    </item>
+    <item>
+      <title>Escaping WSL: Booting My Own Linux VM Through Hyper-V&#39;s HCS API</title>
+      <link>https://luth.io/blog/2026/06/escaping-wsl-hcs-linux-vm/</link>
+      <pubDate>Sun, 14 Jun 2026 20:12:00 -0700</pubDate>
+      <guid>https://luth.io/blog/2026/06/escaping-wsl-hcs-linux-vm/</guid>
+      <description>&lt;p&gt;I&amp;rsquo;ve been building &lt;a href=&#34;https://github.com/ephpm/ephemerd&#34;&gt;ephemerd&lt;/a&gt;, a daemon that runs self-hosted GitHub Actions runners&#xA;with a fresh environment per job. On a Windows host, Windows jobs run in Hyper-V isolated containers, but Linux jobs still&#xA;need a Linux kernel from somewhere. The obvious answer on Windows in 2026 is WSL2, and that&amp;rsquo;s what I used first. It worked&#xA;great from my terminal and fell over the moment ephemerd became a real Windows service.&lt;/p&gt;</description>
+    </item>
+  </channel>
+</rss>

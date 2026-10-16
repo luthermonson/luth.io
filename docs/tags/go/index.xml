@@ -1,29 +1,236 @@
 <?xml version="1.0" encoding="utf-8" standalone="yes"?>
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
   <channel>
-    <title>go on Luther Monson</title>
+    <title>Go on Luther Monson</title>
     <link>https://luth.io/tags/go/</link>
-    <description>Recent content in go on Luther Monson</description>
-    <generator>Hugo -- gohugo.io</generator>
+    <description>Recent content in Go on Luther Monson</description>
+    <generator>Hugo</generator>
     <language>en</language>
-    <lastBuildDate>Sun, 06 Feb 2022 21:54:53 -0700</lastBuildDate><atom:link href="https://luth.io/tags/go/index.xml" rel="self" type="application/rss+xml" />
+    <lastBuildDate>Wed, 07 Oct 2026 21:10:00 -0700</lastBuildDate>
+    <atom:link href="https://luth.io/tags/go/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>Webhooks Arrive Out of Order: How My Scheduler Killed Live Builds</title>
+      <link>https://luth.io/blog/2026/10/webhooks-out-of-order-scheduler/</link>
+      <pubDate>Wed, 07 Oct 2026 21:10:00 -0700</pubDate>
+      <guid>https://luth.io/blog/2026/10/webhooks-out-of-order-scheduler/</guid>
+      <description>&lt;p&gt;The scheduler in &lt;a href=&#34;https://luth.io/blog/2026/08/ephemerd-one-daemon-every-os/&#34;&gt;ephemerd&lt;/a&gt; is event-driven. GitHub sends a &lt;code&gt;workflow_job&lt;/code&gt;&#xA;webhook when a job is queued, when it starts and when it completes, and ephemerd creates and destroys runners to match.&#xA;For a while that worked well enough that I stopped thinking about it. Then a &lt;code&gt;docker-build&lt;/code&gt; job failed with &amp;ldquo;The&#xA;self-hosted runner lost communication with the server&amp;rdquo;, and when I pulled the node&amp;rsquo;s journal, ephemerd had destroyed that&#xA;runner itself, on purpose, while it was running the build.&lt;/p&gt;</description>
+    </item>
+    <item>
+      <title>Breaking Changes Without Breaking Trust: Five Years to go-proxmox v0.8</title>
+      <link>https://luth.io/blog/2026/10/go-proxmox-five-years-to-v0-8/</link>
+      <pubDate>Sun, 04 Oct 2026 19:40:00 -0700</pubDate>
+      <guid>https://luth.io/blog/2026/10/go-proxmox-five-years-to-v0-8/</guid>
+      <description>&lt;p&gt;&lt;a href=&#34;https://github.com/luthermonson/go-proxmox&#34;&gt;go-proxmox&lt;/a&gt; had its first commit in June 2021 and v0.8.2 went out on&#xA;September 30th. In between: 366 commits, 43 people besides me with a merged PR, and, more to the point of this post,&#xA;downstream projects that I don&amp;rsquo;t control pinning it in their &lt;code&gt;go.mod&lt;/code&gt;. IONOS&amp;rsquo;s&#xA;&lt;a href=&#34;https://github.com/ionos-cloud/cluster-api-provider-proxmox&#34;&gt;Cluster API provider&lt;/a&gt; and Sidero&amp;rsquo;s&#xA;&lt;a href=&#34;https://github.com/siderolabs/omni-infra-provider-proxmox&#34;&gt;Omni Proxmox provider&lt;/a&gt; are both on v0.8.1 today. A&#xA;library with users like that gets judged less on its API and more on what happens to their build when they bump the&#xA;version. I didn&amp;rsquo;t always get that right, so here is the history, measured.&lt;/p&gt;</description>
+    </item>
+    <item>
+      <title>Windows Grab-Bag: SIGTERM That Doesn&#39;t Exist and Sparse Files That Break Docker</title>
+      <link>https://luth.io/blog/2026/10/windows-sigterm-sparse-files/</link>
+      <pubDate>Sat, 03 Oct 2026 14:30:00 -0700</pubDate>
+      <guid>https://luth.io/blog/2026/10/windows-sigterm-sparse-files/</guid>
+      <description>&lt;p&gt;Two short ones from the Windows node of &lt;a href=&#34;https://luth.io/blog/2026/08/ephemerd-one-daemon-every-os/&#34;&gt;ephemerd&lt;/a&gt; from the last few weeks. Neither is&#xA;complicated once you know what&amp;rsquo;s going on. Both took longer than they should have to find, because the failure showed up a&#xA;long way from the cause.&lt;/p&gt;&#xA;&lt;h3 id=&#34;part-1-there-is-no-sigterm-on-windows&#34;&gt;Part 1: there is no SIGTERM on Windows&lt;/h3&gt;&#xA;&lt;p&gt;ephemerd can run a Cloudflare tunnel so GitHub webhooks reach a node behind NAT. It does that by running &lt;code&gt;cloudflared&lt;/code&gt; as a&#xA;managed subprocess. On Linux the child is tied to ephemerd&amp;rsquo;s lifetime by the kernel with &lt;code&gt;Pdeathsig&lt;/code&gt;:&lt;/p&gt;</description>
+    </item>
+    <item>
+      <title>Your Agent&#39;s Shell Allowlist Is Bypassable</title>
+      <link>https://luth.io/blog/2026/09/agent-shell-allowlist-bypassable/</link>
+      <pubDate>Tue, 29 Sep 2026 20:30:00 -0700</pubDate>
+      <guid>https://luth.io/blog/2026/09/agent-shell-allowlist-bypassable/</guid>
+      <description>&lt;p&gt;Every &lt;a href=&#34;https://luth.io/blog/2026/08/shipmates-persona-based-ai-coding-crews/&#34;&gt;shipmates&lt;/a&gt; crew member runs shell commands, and before any&#xA;of them runs it goes through a permission gate. The gate uses the same rule syntax as Claude Code settings,&#xA;&lt;code&gt;Bash(git status)&lt;/code&gt;, &lt;code&gt;Bash(rm *)&lt;/code&gt;, &lt;code&gt;Write(**/.claude/settings.json)&lt;/code&gt;, merged from several layers: a fleet-wide deny list&#xA;pushed from Fleet Command, per-persona policy files, project settings, and the Brig, which compiles shipmates&amp;rsquo; fifteen&#xA;&amp;ldquo;Ship&amp;rsquo;s Articles&amp;rdquo; into deny and ask rules. Deny beats ask, ask beats allow.&lt;/p&gt;</description>
+    </item>
+    <item>
+      <title>Cross-Platform Process Containment: Job Objects vs Process Groups vs cgroups</title>
+      <link>https://luth.io/blog/2026/09/process-containment-job-objects-process-groups-cgroups/</link>
+      <pubDate>Sat, 26 Sep 2026 16:20:00 -0700</pubDate>
+      <guid>https://luth.io/blog/2026/09/process-containment-job-objects-process-groups-cgroups/</guid>
+      <description>&lt;p&gt;Every turn a &lt;a href=&#34;https://luth.io/blog/2026/08/shipmates-persona-based-ai-coding-crews/&#34;&gt;shipmates&lt;/a&gt; crew member takes is a subprocess:&#xA;&lt;code&gt;claude&lt;/code&gt; or the &lt;code&gt;codex&lt;/code&gt; app-server, which in turn spawns shells, &lt;code&gt;go test&lt;/code&gt;, &lt;code&gt;npm&lt;/code&gt;, whatever the task calls for. Two&#xA;things have to be true about that tree. When a turn ends or gets killed, the &lt;em&gt;whole&lt;/em&gt; tree goes, including the&#xA;grandchildren. And if somebody sets a memory or CPU budget, the budget applies to the whole tree, not just the&#xA;process I happened to start.&lt;/p&gt;</description>
+    </item>
+    <item>
+      <title>A 1 TB Test: Building a Memory Watchdog for go test</title>
+      <link>https://luth.io/blog/2026/09/memory-watchdog-for-go-test/</link>
+      <pubDate>Tue, 22 Sep 2026 20:48:00 -0700</pubDate>
+      <guid>https://luth.io/blog/2026/09/memory-watchdog-for-go-test/</guid>
+      <description>&lt;p&gt;On August 16th a &lt;code&gt;server.test.exe&lt;/code&gt; from &lt;a href=&#34;https://luth.io/blog/2026/08/shipmates-persona-based-ai-coding-crews/&#34;&gt;shipmates&lt;/a&gt; climbed to&#xA;roughly &lt;strong&gt;1 TB of commit charge&lt;/strong&gt; on my Windows workstation. Windows Terminal, which was hosting several agent sessions&#xA;in tabs, hard-faulted with &lt;code&gt;E_OUTOFMEMORY&lt;/code&gt; and every one of those sessions died at the same moment. It wasn&amp;rsquo;t the first&#xA;time either. An earlier one hit about 236 GB through an infinite &lt;code&gt;filepath.Dir&lt;/code&gt; loop.&lt;/p&gt;&#xA;&lt;p&gt;The machine has 128 GB of RAM. Commit charge doesn&amp;rsquo;t care, it&amp;rsquo;s backed by the page file, and Windows will happily let a&#xA;process reserve-and-commit until the commit limit is gone. Then everything else on the desktop starts failing&#xA;allocations too.&lt;/p&gt;</description>
+    </item>
+    <item>
+      <title>os/exec&#39;s StdoutPipe Footgun: How cmd.Wait() Ate My Last Frame (Twice)</title>
+      <link>https://luth.io/blog/2026/09/os-exec-stdoutpipe-wait-footgun/</link>
+      <pubDate>Thu, 17 Sep 2026 20:12:00 -0700</pubDate>
+      <guid>https://luth.io/blog/2026/09/os-exec-stdoutpipe-wait-footgun/</guid>
+      <description>&lt;p&gt;&lt;a href=&#34;https://luth.io/blog/2026/08/shipmates-persona-based-ai-coding-crews/&#34;&gt;shipmates&lt;/a&gt; spends most of its life spawning &lt;code&gt;claude&lt;/code&gt; (and &lt;code&gt;codex&lt;/code&gt;)&#xA;processes and reading newline-delimited JSON off their stdout. The last frame of a turn is the important one, a&#xA;&lt;code&gt;result&lt;/code&gt; frame with the cost, the model and the final text. Stderr matters too, because that&amp;rsquo;s where Claude Code&#xA;tells you &lt;code&gt;Invalid API key · Please run /login&lt;/code&gt;. For a while I was throwing both away under load, and the cause is&#xA;documented right there in the &lt;code&gt;os/exec&lt;/code&gt; godoc. I fixed it in one package and then found the exact same bug again&#xA;a month later in another.&lt;/p&gt;</description>
+    </item>
+    <item>
+      <title>shipmates Short Ones: 8 Minutes Extracting Go, and Three Voice-Loop Bugs</title>
+      <link>https://luth.io/blog/2026/09/shipmates-short-ones-setup-go-and-voice/</link>
+      <pubDate>Sat, 12 Sep 2026 14:35:00 -0700</pubDate>
+      <guid>https://luth.io/blog/2026/09/shipmates-short-ones-setup-go-and-voice/</guid>
+      <description>&lt;p&gt;A few &lt;a href=&#34;https://luth.io/blog/2026/08/shipmates-persona-based-ai-coding-crews/&#34;&gt;shipmates&lt;/a&gt; bugs that don&amp;rsquo;t need a whole post each but&#xA;were too good to leave in commit messages.&lt;/p&gt;&#xA;&lt;h3 id=&#34;setup-go-spends-8-minutes-extracting-go-on-windows-ci&#34;&gt;setup-go spends 8 minutes extracting Go on Windows CI&lt;/h3&gt;&#xA;&lt;p&gt;shipmates CI runs on my own &lt;a href=&#34;https://luth.io/blog/2026/08/ephemerd-one-daemon-every-os/&#34;&gt;ephemerd&lt;/a&gt; runners, and on Windows those jobs&#xA;run inside a Hyper-V utility VM. The windows-x64 leg kept timing out in &lt;code&gt;actions/setup-go&lt;/code&gt;. Here&amp;rsquo;s the log from&#xA;&lt;a href=&#34;https://github.com/luthermonson/shipmates/pull/48&#34;&gt;PR #48&lt;/a&gt;:&lt;/p&gt;&#xA;&lt;pre tabindex=&#34;0&#34;&gt;&lt;code&gt;20:58:46  Setup go version spec 1.26.6&#xA;20:58:46  Attempting to download 1.26.6...     &amp;lt;- tool-cache MISS&#xA;20:58:48  Acquiring 1.26.6 from ...zip&#xA;20:58:53  Extracting Go...&#xA;21:06:46  ERROR: The action &amp;#39;Run actions/setup-go@v5&amp;#39; has timed out after 8 minutes&#xA;&lt;/code&gt;&lt;/pre&gt;&lt;p&gt;Seven seconds from the start of the step to &lt;code&gt;Extracting Go...&lt;/code&gt;, then almost eight minutes extracting until the step&#xA;timeout killed it.&lt;/p&gt;</description>
+    </item>
+    <item>
+      <title>Building k9s for Linode With Bubble Tea</title>
+      <link>https://luth.io/blog/2026/09/linode-tui/</link>
+      <pubDate>Wed, 09 Sep 2026 21:22:00 -0700</pubDate>
+      <guid>https://luth.io/blog/2026/09/linode-tui/</guid>
+      <description>&lt;p&gt;A lot of my day is spent in &lt;a href=&#34;https://k9scli.io/&#34;&gt;k9s&lt;/a&gt;, and when I need something from the Linode side of the house (a node that won&amp;rsquo;t&#xA;boot, a volume nobody cleaned up, the kubeconfig for a cluster I just made) I&amp;rsquo;m back in a browser tab or typing &lt;code&gt;linode-cli&lt;/code&gt; incantations.&#xA;I wanted the k9s workflow for the Linode API itself: &lt;code&gt;:&lt;/code&gt; to jump to a resource type, &lt;code&gt;/&lt;/code&gt; to filter, single-key actions on the selected row,&#xA;and Enter to go deeper. That turned into &lt;a href=&#34;https://github.com/luthermonson/linode-tui&#34;&gt;linode-tui&lt;/a&gt;, a Go TUI built on&#xA;&lt;a href=&#34;https://github.com/charmbracelet/bubbletea&#34;&gt;Bubble Tea&lt;/a&gt;, &lt;a href=&#34;https://github.com/linode/linodego&#34;&gt;linodego&lt;/a&gt; and urfave/cli v3.&lt;/p&gt;</description>
+    </item>
+    <item>
+      <title>Finding a Data Race in rancher/remotedialer, Then Pinning Only Two-Thirds of the Fix</title>
+      <link>https://luth.io/blog/2026/09/remotedialer-data-race-two-thirds-fix/</link>
+      <pubDate>Tue, 01 Sep 2026 21:05:00 -0700</pubDate>
+      <guid>https://luth.io/blog/2026/09/remotedialer-data-race-two-thirds-fix/</guid>
+      <description>&lt;p&gt;&lt;a href=&#34;https://luth.io/blog/2026/08/shipmates-persona-based-ai-coding-crews/&#34;&gt;shipmates&lt;/a&gt; ships connect to Fleet Command over outbound&#xA;websocket tunnels so nothing on the ship side has to be exposed to the internet. I didn&amp;rsquo;t write that tunnel layer,&#xA;I used &lt;a href=&#34;https://github.com/rancher/remotedialer&#34;&gt;rancher/remotedialer&lt;/a&gt;, the same library Rancher uses to reach&#xA;downstream cluster agents. I spent years around that code at Rancher, so it was the obvious pick. What I didn&amp;rsquo;t&#xA;expect was for my CI&amp;rsquo;s race job to find two data races in it in the first week.&lt;/p&gt;</description>
+    </item>
+    <item>
+      <title>What an Overloaded PHP Server Actually Returns</title>
+      <link>https://luth.io/blog/2026/08/what-an-overloaded-php-server-actually-returns/</link>
+      <pubDate>Mon, 24 Aug 2026 19:40:00 -0700</pubDate>
+      <guid>https://luth.io/blog/2026/08/what-an-overloaded-php-server-actually-returns/</guid>
+      <description>&lt;p&gt;Ask most people what their PHP server does when it&amp;rsquo;s overloaded and you&amp;rsquo;ll hear &amp;ldquo;it returns 503s.&amp;rdquo; Ask them how they&#xA;know and it usually comes down to a config setting they read about. I was in that camp for &lt;a href=&#34;https://github.com/ephpm/ephpm&#34;&gt;ePHPm&lt;/a&gt;.&#xA;We had a &lt;code&gt;[server.limits] max_connections&lt;/code&gt; knob, the docs said it returned 503 at the cap, and every benchmark we had&#xA;ever run reported zero errors under heavy load. Then I wrote a load generator that could actually produce overload,&#xA;and the honest answer was that an overloaded ePHPm returned nothing at all.&lt;/p&gt;</description>
+    </item>
+    <item>
+      <title>shipmates: Persona-Based AI Coding Crews That Remember</title>
+      <link>https://luth.io/blog/2026/08/shipmates-persona-based-ai-coding-crews/</link>
+      <pubDate>Fri, 21 Aug 2026 21:18:00 -0700</pubDate>
+      <guid>https://luth.io/blog/2026/08/shipmates-persona-based-ai-coding-crews/</guid>
+      <description>&lt;p&gt;Since June most of my evenings have gone into &lt;a href=&#34;https://github.com/luthermonson/shipmates&#34;&gt;shipmates&lt;/a&gt;, a Go CLI and daemon&#xA;for running crews of AI coding agents. I tagged &lt;a href=&#34;https://github.com/luthermonson/shipmates/releases/tag/v0.5.0&#34;&gt;v0.5.0&lt;/a&gt;&#xA;on August 17th, two months and about 240 commits after the first architecture doc, so it&amp;rsquo;s a good time to write down what&#xA;it is and why it exists.&lt;/p&gt;&#xA;&lt;h3 id=&#34;the-problem&#34;&gt;The problem&lt;/h3&gt;&#xA;&lt;p&gt;I run a lot of agent sessions. On a normal night this workstation has four or five projects going at once, each with a&#xA;few Claude Code sessions doing different jobs: one reviewing, one writing tests, one chasing a bug. Two things kept&#xA;annoying me.&lt;/p&gt;</description>
+    </item>
+    <item>
+      <title>ephemerd: One Daemon, a Fresh Runner Per Job, Every OS</title>
+      <link>https://luth.io/blog/2026/08/ephemerd-one-daemon-every-os/</link>
+      <pubDate>Tue, 18 Aug 2026 21:05:00 -0700</pubDate>
+      <guid>https://luth.io/blog/2026/08/ephemerd-one-daemon-every-os/</guid>
+      <description>&lt;p&gt;I have CI that needs Linux amd64, Linux arm64, Windows and macOS, and GitHub-hosted runners for all four get expensive fast,&#xA;especially the arm64 and Mac minutes. Self-hosted runners fix the bill and create a different problem. A stock&#xA;&lt;code&gt;actions/runner&lt;/code&gt; on a box you own runs whatever the workflow says, keeps whatever the last job left behind, and is one fork&#xA;PR away from somebody running code on your LAN.&lt;/p&gt;</description>
+    </item>
+    <item>
+      <title>Atomic File Replacement on NTFS Is Not rename &#43; fsync</title>
+      <link>https://luth.io/blog/2026/08/ntfs-atomic-file-replacement-not-rename-fsync/</link>
+      <pubDate>Thu, 06 Aug 2026 21:27:00 -0700</pubDate>
+      <guid>https://luth.io/blog/2026/08/ntfs-atomic-file-replacement-not-rename-fsync/</guid>
+      <description>&lt;p&gt;&lt;a href=&#34;https://github.com/luthermonson/shipmates&#34;&gt;shipmates&lt;/a&gt; writes a lot of small state files that other&#xA;processes read: voyage plans and state, tracker files. Each of them has to be replaced atomically (a reader sees&#xA;the old file or the new one, never half of each) and durably (when the function returns success, a power cut doesn&amp;rsquo;t&#xA;take it back). Every Unix programmer knows the recipe for that. It doesn&amp;rsquo;t work on Windows, and the reasons are more&#xA;interesting than &amp;ldquo;Windows is different&amp;rdquo;.&lt;/p&gt;</description>
+    </item>
+    <item>
+      <title>Five Ways to URL-Encode an SSH Key (and Why Proxmox Rejects Them)</title>
+      <link>https://luth.io/blog/2026/07/five-ways-to-url-encode-an-ssh-key/</link>
+      <pubDate>Tue, 28 Jul 2026 20:12:00 -0700</pubDate>
+      <guid>https://luth.io/blog/2026/07/five-ways-to-url-encode-an-ssh-key/</guid>
+      <description>&lt;p&gt;&lt;a href=&#34;https://github.com/luthermonson/go-proxmox/issues/144&#34;&gt;Issue #144&lt;/a&gt; on go-proxmox was opened in April 2024 with the title&#xA;&amp;ldquo;Weird sshkeys SSH public key validation error&amp;rdquo; and it is one of my less proud threads. Thirteen comments of people,&#xA;including me, trying to get a public key into a cloud-init VM through the API, and the working answer took more than a&#xA;year to show up. The fix that finally landed in May is one line. Here&amp;rsquo;s why it took so long.&lt;/p&gt;</description>
+    </item>
+    <item>
+      <title>Two Small go-proxmox Fixes: A Watch Channel That Never Closed, and WithRetry</title>
+      <link>https://luth.io/blog/2026/07/go-proxmox-watch-close-withretry/</link>
+      <pubDate>Sat, 11 Jul 2026 17:26:00 -0700</pubDate>
+      <guid>https://luth.io/blog/2026/07/go-proxmox-watch-close-withretry/</guid>
+      <description>&lt;p&gt;Two changes from the v0.5 to v0.7 stretch of &lt;a href=&#34;https://github.com/luthermonson/go-proxmox&#34;&gt;go-proxmox&lt;/a&gt; that are too small&#xA;for a post each but are worth knowing about if you write long-running tooling against Proxmox. One is a bug in code I&#xA;wrote about in 2022, the other is a feature that replaces a retry loop everybody was writing for themselves.&lt;/p&gt;&#xA;&lt;h3 id=&#34;the-channel-that-only-closed-when-things-went-well&#34;&gt;The channel that only closed when things went well&lt;/h3&gt;&#xA;&lt;p&gt;In 2022 I wrote up &lt;a href=&#34;https://luth.io/blog/2022/03/proxmox-tasks-upid-wait-go/&#34;&gt;how tasks and &lt;code&gt;Watch&lt;/code&gt; work&lt;/a&gt;: &lt;code&gt;Watch&lt;/code&gt; returns a channel of&#xA;log lines and a goroutine tails the task log until the task stops, then closes the channel so you can &lt;code&gt;range&lt;/code&gt; over it.&#xA;Here is the tail loop from that post:&lt;/p&gt;</description>
+    </item>
+    <item>
+      <title>Maintaining an Open-Source Library With AI Agents: AGENTS.md and the Rule They Kept Breaking</title>
+      <link>https://luth.io/blog/2026/06/go-proxmox-agents-md/</link>
+      <pubDate>Sat, 27 Jun 2026 18:47:00 -0700</pubDate>
+      <guid>https://luth.io/blog/2026/06/go-proxmox-agents-md/</guid>
+      <description>&lt;p&gt;On May 9th I merged &lt;a href=&#34;https://github.com/luthermonson/go-proxmox/pull/264&#34;&gt;#264&lt;/a&gt;, which added an &lt;code&gt;AGENTS.md&lt;/code&gt; to&#xA;&lt;a href=&#34;https://github.com/luthermonson/go-proxmox&#34;&gt;go-proxmox&lt;/a&gt; and a stub &lt;code&gt;CLAUDE.md&lt;/code&gt; that just points at it. Over the&#xA;next six weeks, through the v0.8.0 migration guide on June 15th, &lt;code&gt;main&lt;/code&gt; took 77 commits, +31,794 / -1,144 lines, went from&#xA;84 to 186 &lt;code&gt;.go&lt;/code&gt; files, and endpoint coverage went from 30% to &lt;a href=&#34;https://luth.io/blog/2026/06/go-proxmox-endpoint-coverage/&#34;&gt;100% of the Proxmox API&lt;/a&gt;.&#xA;Most of that code was typed by coding agents, a lot of it by several at once. This is what that looked like from the&#xA;maintainer&amp;rsquo;s chair, mostly the parts that went wrong, because that&amp;rsquo;s where &lt;code&gt;AGENTS.md&lt;/code&gt; got its content.&lt;/p&gt;</description>
+    </item>
+    <item>
+      <title>Proxmox JSON, Part 2: null PIDs, 1.12589990684262e&#43;15 and net10</title>
+      <link>https://luth.io/blog/2026/06/proxmox-numbers-null-scientific-notation-net10/</link>
+      <pubDate>Tue, 23 Jun 2026 20:31:00 -0700</pubDate>
+      <guid>https://luth.io/blog/2026/06/proxmox-numbers-null-scientific-notation-net10/</guid>
+      <description>&lt;p&gt;In 2023 I wrote about &lt;a href=&#34;https://luth.io/blog/2023/11/proxmox-doesnt-know-what-type-a-number-is/&#34;&gt;why go-proxmox has &lt;code&gt;StringOrInt&lt;/code&gt; and friends&lt;/a&gt;:&#xA;Proxmox sends the same number quoted in one place and bare in another, so the client has types that accept both. That&#xA;post ended on a pretty confident note. Since then three more shapes of &amp;ldquo;the JSON is valid and Go still won&amp;rsquo;t take it&amp;rdquo;&#xA;have come in, and one of them is a bug I&amp;rsquo;d already fixed once and then reintroduced myself.&lt;/p&gt;</description>
+    </item>
+    <item>
+      <title>Stop Ctrl-C-ing Your tail -f | grep</title>
+      <link>https://luth.io/blog/2026/06/tail-gunner/</link>
+      <pubDate>Sat, 20 Jun 2026 20:31:00 -0700</pubDate>
+      <guid>https://luth.io/blog/2026/06/tail-gunner/</guid>
+      <description>&lt;p&gt;Here&amp;rsquo;s a loop I end up in all the time: &lt;code&gt;tail -f app.log&lt;/code&gt;, something scrolls by that looks wrong, Ctrl-C, &lt;code&gt;tail -f app.log | grep ERROR&lt;/code&gt;,&#xA;wait for it to happen again, decide I also want to drop the health checks, Ctrl-C, &lt;code&gt;| grep -v healthz&lt;/code&gt;, wait again. Every filter tweak&#xA;throws away the stream and every line that already went past. I got tired of it and wrote &lt;a href=&#34;https://github.com/luthermonson/tail-gunner&#34;&gt;tail-gunner&lt;/a&gt;,&#xA;a &lt;code&gt;tail&lt;/code&gt; replacement that you can promote into a filtering TUI with one keystroke and drop back out of without the stream ever stopping.&lt;/p&gt;</description>
+    </item>
+    <item>
+      <title>Escaping WSL: Booting My Own Linux VM Through Hyper-V&#39;s HCS API</title>
+      <link>https://luth.io/blog/2026/06/escaping-wsl-hcs-linux-vm/</link>
+      <pubDate>Sun, 14 Jun 2026 20:12:00 -0700</pubDate>
+      <guid>https://luth.io/blog/2026/06/escaping-wsl-hcs-linux-vm/</guid>
+      <description>&lt;p&gt;I&amp;rsquo;ve been building &lt;a href=&#34;https://github.com/ephpm/ephemerd&#34;&gt;ephemerd&lt;/a&gt;, a daemon that runs self-hosted GitHub Actions runners&#xA;with a fresh environment per job. On a Windows host, Windows jobs run in Hyper-V isolated containers, but Linux jobs still&#xA;need a Linux kernel from somewhere. The obvious answer on Windows in 2026 is WSL2, and that&amp;rsquo;s what I used first. It worked&#xA;great from my terminal and fell over the moment ephemerd became a real Windows service.&lt;/p&gt;</description>
+    </item>
+    <item>
+      <title>Your Zero Value Just Turned Off My TLS Verification: omitempty, Go Defaults and Proxmox</title>
+      <link>https://luth.io/blog/2026/06/omitempty-zero-values-proxmox-defaults/</link>
+      <pubDate>Sat, 13 Jun 2026 19:52:00 -0700</pubDate>
+      <guid>https://luth.io/blog/2026/06/omitempty-zero-values-proxmox-defaults/</guid>
+      <description>&lt;p&gt;Every Go developer knows &lt;code&gt;omitempty&lt;/code&gt; drops zero values. What takes longer to sink in is that a plain &lt;code&gt;bool&lt;/code&gt; only has two&#xA;states and a caller filling in an options struct means one of three: &amp;ldquo;set it true&amp;rdquo;, &amp;ldquo;set it false&amp;rdquo;, and &amp;ldquo;I didn&amp;rsquo;t touch&#xA;this, do whatever the server does by default&amp;rdquo;. With &lt;code&gt;omitempty&lt;/code&gt; you lose &amp;ldquo;false&amp;rdquo;. Without it you lose &amp;ldquo;didn&amp;rsquo;t touch it&amp;rdquo;.&#xA;In &lt;a href=&#34;https://github.com/luthermonson/go-proxmox&#34;&gt;go-proxmox&lt;/a&gt; we managed to ship both bugs, in that order, and the second one&#xA;quietly turned off TLS certificate verification for anyone downloading ISOs through the API.&lt;/p&gt;</description>
+    </item>
+    <item>
+      <title>From 52% to 100%: Measuring a Go Client Against the Proxmox API Schema</title>
+      <link>https://luth.io/blog/2026/06/go-proxmox-endpoint-coverage/</link>
+      <pubDate>Sun, 07 Jun 2026 21:36:00 -0700</pubDate>
+      <guid>https://luth.io/blog/2026/06/go-proxmox-endpoint-coverage/</guid>
+      <description>&lt;p&gt;For five years the honest answer to &amp;ldquo;how much of the Proxmox API does go-proxmox cover?&amp;rdquo; was &amp;ldquo;a lot of it? the parts&#xA;people asked for?&amp;rdquo;. Issues would come in for endpoints that didn&amp;rsquo;t exist in the client and I&amp;rsquo;d have no idea how many more&#xA;were missing. At the end of May I finally built the thing that answers the question, and three days after the first run the&#xA;answer was 100%. The more interesting part is how many times the measuring stick was wrong on the way there.&lt;/p&gt;</description>
+    </item>
+    <item>
+      <title>Cloud-Init ISOs in Pure Go with go-proxmox</title>
+      <link>https://luth.io/blog/2026/06/cloud-init-isos-pure-go-proxmox/</link>
+      <pubDate>Sat, 06 Jun 2026 15:20:00 -0700</pubDate>
+      <guid>https://luth.io/blog/2026/06/cloud-init-isos-pure-go-proxmox/</guid>
+      <description>&lt;p&gt;Proxmox&amp;rsquo;s built-in cloud-init support is fine for the basics: a user, an SSH key, an IP config. It falls apart the second you&#xA;want your own &lt;code&gt;user-data&lt;/code&gt;, &lt;code&gt;vendor-data&lt;/code&gt; or a real &lt;code&gt;network-config&lt;/code&gt;, because the GUI and the &lt;code&gt;ci*&lt;/code&gt; options only expose a&#xA;handful of fields, and the escape hatch (&lt;code&gt;cicustom&lt;/code&gt; pointing at snippet files) means getting files onto the Proxmox host&amp;rsquo;s&#xA;filesystem first. The usual alternative is building a nocloud ISO yourself with &lt;code&gt;genisoimage&lt;/code&gt; or &lt;code&gt;mkisofs&lt;/code&gt;, which means a&#xA;system dependency on whatever machine runs your automation, a different package name on every OS, and a subprocess to babysit.&lt;/p&gt;</description>
+    </item>
+    <item>
+      <title>Staying Logged In to Proxmox: Ticket Renewal, Expiry and Where API Tokens Stop</title>
+      <link>https://luth.io/blog/2026/05/staying-logged-in-to-proxmox/</link>
+      <pubDate>Sun, 31 May 2026 20:24:00 -0700</pubDate>
+      <guid>https://luth.io/blog/2026/05/staying-logged-in-to-proxmox/</guid>
+      <description>&lt;p&gt;Back in 2023 I wrote up &lt;a href=&#34;https://luth.io/blog/2023/08/proxmox-api-auth-tickets-tokens-go/&#34;&gt;how go-proxmox logs in&lt;/a&gt; and ended it with a&#xA;shrug: once a session existed the client never logged in again, so a ticket-based client died at the two hour mark and&#xA;my advice was &amp;ldquo;use an API token for anything long running&amp;rdquo;. It took until this month to actually fix that properly, and&#xA;it took three PRs from two of us to get there. Here&amp;rsquo;s the whole arc, plus the one place where an API token&#xA;isn&amp;rsquo;t an option at all.&lt;/p&gt;</description>
+    </item>
+    <item>
+      <title>go-diskfs: Getting Rock Ridge Working for Joliet on Windows</title>
+      <link>https://luth.io/blog/2026/05/go-diskfs-rock-ridge-joliet-windows/</link>
+      <pubDate>Sun, 17 May 2026 20:40:00 -0700</pubDate>
+      <guid>https://luth.io/blog/2026/05/go-diskfs-rock-ridge-joliet-windows/</guid>
+      <description>&lt;p&gt;&lt;a href=&#34;https://github.com/luthermonson/go-proxmox&#34;&gt;go-proxmox&lt;/a&gt; has had a &lt;code&gt;CloudInit()&lt;/code&gt; helper since 2023. It builds a small&#xA;nocloud ISO in Go, uploads it to Proxmox and mounts it on the VM as a CD-ROM. It&amp;rsquo;s always worked fine for Linux guests. It&#xA;has never worked for Windows guests running &lt;a href=&#34;https://cloudbase.it/cloudbase-init/&#34;&gt;cloudbase-init&lt;/a&gt;, and the reason is a&#xA;filesystem extension from 1995 called Joliet.&lt;/p&gt;&#xA;&lt;p&gt;Getting it fixed took three PRs to &lt;a href=&#34;https://github.com/diskfs/go-diskfs&#34;&gt;go-diskfs&lt;/a&gt; over about seven weeks, plus a bug report&#xA;from a user who actually ran it on Windows, which turned out to be the most important part.&lt;/p&gt;</description>
+    </item>
+    <item>
+      <title>Why Rust for PHP Embedding (Not Go)</title>
+      <link>https://luth.io/blog/2026/04/why-rust-for-php-embedding/</link>
+      <pubDate>Sun, 05 Apr 2026 19:40:00 -0700</pubDate>
+      <guid>https://luth.io/blog/2026/04/why-rust-for-php-embedding/</guid>
+      <description>&lt;p&gt;Go is my primary language and has been for a long time, so when I started building &lt;a href=&#34;https://github.com/ephpm/ephpm&#34;&gt;ePHPm&lt;/a&gt;&#xA;a few weeks ago the obvious move was to write it in Go. ePHPm is a PHP application server: one binary that embeds the&#xA;real PHP interpreter (&lt;code&gt;libphp&lt;/code&gt;, the Zend engine) and puts an HTTP server, TLS, a KV cache and a database proxy around it,&#xA;so a PHP app doesn&amp;rsquo;t need nginx + php-fpm + Redis to run. &lt;a href=&#34;https://frankenphp.dev/&#34;&gt;FrankenPHP&lt;/a&gt; already proved the&#xA;&amp;ldquo;PHP inside a Go web server&amp;rdquo; idea works, and it works well. I wrote it in Rust anyway. This post is the reasoning, the&#xA;part of the design that Rust made easier and the part it didn&amp;rsquo;t, and some numbers I should have measured before I wrote&#xA;the design doc instead of after.&lt;/p&gt;</description>
+    </item>
+    <item>
+      <title>Maintaining a Go Tool That Edits /etc/hosts on Every OS</title>
+      <link>https://luth.io/blog/2024/02/goodhosts/</link>
+      <pubDate>Sat, 03 Feb 2024 19:22:00 -0700</pubDate>
+      <guid>https://luth.io/blog/2024/02/goodhosts/</guid>
+      <description>&lt;p&gt;Editing the hosts file sounds like the most boring problem in software. Read a text file, add a line, write it back. Then you find out&#xA;your binary is being shelled out to from a Ruby Vagrant plugin on a Windows laptop with UAC prompts, your library is being called in a&#xA;loop by &lt;a href=&#34;https://github.com/ddev/ddev&#34;&gt;ddev&lt;/a&gt;, and every hosts file you parse was hand-edited by somebody at some point.&#xA;I&amp;rsquo;ve been maintaining &lt;a href=&#34;https://github.com/goodhosts&#34;&gt;goodhosts&lt;/a&gt; for a few years now, and since I just spent a chunk of the fall and the&#xA;holidays on it, here&amp;rsquo;s what that looks like.&lt;/p&gt;</description>
+    </item>
+    <item>
+      <title>Proxmox Doesn&#39;t Know What Type a Number Is</title>
+      <link>https://luth.io/blog/2023/11/proxmox-doesnt-know-what-type-a-number-is/</link>
+      <pubDate>Sat, 25 Nov 2023 20:05:00 -0700</pubDate>
+      <guid>https://luth.io/blog/2023/11/proxmox-doesnt-know-what-type-a-number-is/</guid>
+      <description>&lt;p&gt;Every couple of months somebody opens an issue on &lt;a href=&#34;https://github.com/luthermonson/go-proxmox&#34;&gt;go-proxmox&lt;/a&gt; with a title&#xA;that starts with &lt;code&gt;json: cannot unmarshal string into Go struct field&lt;/code&gt;. The most recent one was fixed last week, and it&amp;rsquo;s the same&#xA;root cause every time: the Proxmox VE API is backed by Perl, Perl doesn&amp;rsquo;t really care whether a scalar is a number or a&#xA;string, and the JSON encoder on the other end writes whatever the scalar happens to be at the time. So a field that is&#xA;documented as an integer comes back as &lt;code&gt;2048&lt;/code&gt; from one endpoint and &lt;code&gt;&amp;quot;2048&amp;quot;&lt;/code&gt; from another, and sometimes from the same&#xA;endpoint depending on how the value got into the config.&lt;/p&gt;</description>
+    </item>
+    <item>
+      <title>Logging In to Proxmox From Go: Tickets, CSRF Tokens and API Tokens</title>
+      <link>https://luth.io/blog/2023/08/proxmox-api-auth-tickets-tokens-go/</link>
+      <pubDate>Sun, 27 Aug 2023 19:18:00 -0700</pubDate>
+      <guid>https://luth.io/blog/2023/08/proxmox-api-auth-tickets-tokens-go/</guid>
+      <description>&lt;p&gt;I just spent a week of evenings on the access side of &lt;a href=&#34;https://github.com/luthermonson/go-proxmox&#34;&gt;go-proxmox&lt;/a&gt;: realms,&#xA;groups, users and roles all landed, and before any of that I reworked how a client gets its credentials in&#xA;the first place. Proxmox gives you two different ways to authenticate and they behave differently enough that it&amp;rsquo;s worth&#xA;writing down how each one works on the wire and what the client does with it.&lt;/p&gt;&#xA;&lt;p&gt;&lt;img src=&#34;https://luth.io/img/2023/08/proxmox-api-auth-tickets-tokens-go-flow.svg&#34; alt=&#34;Ticket and API token flows&#34;&gt;&lt;/p&gt;</description>
+    </item>
+    <item>
+      <title>Waiting on Proxmox: UPIDs, Tasks and WaitFor in Go</title>
+      <link>https://luth.io/blog/2022/03/proxmox-tasks-upid-wait-go/</link>
+      <pubDate>Sun, 20 Mar 2022 16:42:00 -0700</pubDate>
+      <guid>https://luth.io/blog/2022/03/proxmox-tasks-upid-wait-go/</guid>
+      <description>&lt;p&gt;If you start automating &lt;a href=&#34;https://www.proxmox.com/en/&#34;&gt;Proxmox VE&lt;/a&gt; through the API, the first thing that trips you up is&#xA;that almost nothing you ask it to do is finished when the HTTP call returns. Start a VM, clone a template, download an&#xA;ISO to storage, delete a disk&amp;hellip; the response is a single string that looks like a typo and the actual work is happening&#xA;in a worker process on the node. If your next call depends on that work being done you have to go find out when it&amp;rsquo;s done.&lt;/p&gt;</description>
+    </item>
     <item>
       <title>Recreating Proxmox Ve Xtermjs in Go</title>
       <link>https://luth.io/blog/2022/02/recreating-proxmox-ve-xtermjs-in-go/</link>
       <pubDate>Sun, 06 Feb 2022 21:54:53 -0700</pubDate>
-      
       <guid>https://luth.io/blog/2022/02/recreating-proxmox-ve-xtermjs-in-go/</guid>
-      <description>Part of a hobby of mine is running a home lab and using on Proxmox VE to do the virtualization. Since I work in the space I&amp;rsquo;m slowly trying to build tooling around Proxmox that will let me use the home lab full time for work. Usually my work involves building Kubernetes management tooling, you can imagine waiting for public cloud APIs all day can take away hours of your day at cost to your employer for both your time and the compute resources.</description>
+      <description>&lt;p&gt;Part of a hobby of mine is running a home lab and using on &lt;a href=&#34;https://www.proxmox.com/en/&#34;&gt;Proxmox VE&lt;/a&gt; to do the virtualization.&#xA;Since I work in the space I&amp;rsquo;m slowly trying to build tooling around Proxmox that will let me use the home lab full time for work.&#xA;Usually my work involves building Kubernetes management tooling, you can imagine waiting for public cloud APIs all day&#xA;can take away hours of your day at cost to your employer for both your time and the compute resources.&lt;/p&gt;</description>
     </item>
-    
     <item>
       <title>Practical Cue Example, Produce YAML Config from Go Types</title>
       <link>https://luth.io/blog/2022/01/practical-cue-example/</link>
       <pubDate>Mon, 31 Jan 2022 09:57:26 -0700</pubDate>
-      
       <guid>https://luth.io/blog/2022/01/practical-cue-example/</guid>
-      <description>I recently had to spend some time to learn Cue and felt the examples/tutorials were a bit lacking and the paradigm shift to the entire language sort of messed with my head and some things Cue does were a bit foreign to me. To get started, note that the two places I spent all of my time to get this information came from their main docs and a community Cuetorials site.</description>
+      <description>&lt;p&gt;I recently had to spend some time to learn &lt;a href=&#34;https://cuelang.org/&#34;&gt;Cue&lt;/a&gt; and felt the examples/tutorials were a bit lacking&#xA;and the paradigm shift to the entire language sort of messed with my head and some things Cue does were a bit foreign to me.&#xA;To get started, note that the two places I spent all of my time to get this information came from their main &lt;a href=&#34;https://cuelang.org/docs/&#34;&gt;docs&lt;/a&gt;&#xA;and a community &lt;a href=&#34;https://cuetorials.com/&#34;&gt;Cuetorials&lt;/a&gt; site. This will be a tutorial on how you can use Cue to generate&#xA;two different YAML documents using Cue all starting with Go types to generate Cue files.&lt;/p&gt;</description>
     </item>
-    
   </channel>
 </rss>

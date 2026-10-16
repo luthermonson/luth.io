@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>AI Agents on Luther Monson</title>
+    <link>https://luth.io/categories/ai-agents/</link>
+    <description>Recent content in AI Agents on Luther Monson</description>
+    <generator>Hugo</generator>
+    <language>en</language>
+    <lastBuildDate>Tue, 29 Sep 2026 20:30:00 -0700</lastBuildDate>
+    <atom:link href="https://luth.io/categories/ai-agents/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>Your Agent&#39;s Shell Allowlist Is Bypassable</title>
+      <link>https://luth.io/blog/2026/09/agent-shell-allowlist-bypassable/</link>
+      <pubDate>Tue, 29 Sep 2026 20:30:00 -0700</pubDate>
+      <guid>https://luth.io/blog/2026/09/agent-shell-allowlist-bypassable/</guid>
+      <description>&lt;p&gt;Every &lt;a href=&#34;https://luth.io/blog/2026/08/shipmates-persona-based-ai-coding-crews/&#34;&gt;shipmates&lt;/a&gt; crew member runs shell commands, and before any&#xA;of them runs it goes through a permission gate. The gate uses the same rule syntax as Claude Code settings,&#xA;&lt;code&gt;Bash(git status)&lt;/code&gt;, &lt;code&gt;Bash(rm *)&lt;/code&gt;, &lt;code&gt;Write(**/.claude/settings.json)&lt;/code&gt;, merged from several layers: a fleet-wide deny list&#xA;pushed from Fleet Command, per-persona policy files, project settings, and the Brig, which compiles shipmates&amp;rsquo; fifteen&#xA;&amp;ldquo;Ship&amp;rsquo;s Articles&amp;rdquo; into deny and ask rules. Deny beats ask, ask beats allow.&lt;/p&gt;</description>
+    </item>
+    <item>
+      <title>shipmates Short Ones: 8 Minutes Extracting Go, and Three Voice-Loop Bugs</title>
+      <link>https://luth.io/blog/2026/09/shipmates-short-ones-setup-go-and-voice/</link>
+      <pubDate>Sat, 12 Sep 2026 14:35:00 -0700</pubDate>
+      <guid>https://luth.io/blog/2026/09/shipmates-short-ones-setup-go-and-voice/</guid>
+      <description>&lt;p&gt;A few &lt;a href=&#34;https://luth.io/blog/2026/08/shipmates-persona-based-ai-coding-crews/&#34;&gt;shipmates&lt;/a&gt; bugs that don&amp;rsquo;t need a whole post each but&#xA;were too good to leave in commit messages.&lt;/p&gt;&#xA;&lt;h3 id=&#34;setup-go-spends-8-minutes-extracting-go-on-windows-ci&#34;&gt;setup-go spends 8 minutes extracting Go on Windows CI&lt;/h3&gt;&#xA;&lt;p&gt;shipmates CI runs on my own &lt;a href=&#34;https://luth.io/blog/2026/08/ephemerd-one-daemon-every-os/&#34;&gt;ephemerd&lt;/a&gt; runners, and on Windows those jobs&#xA;run inside a Hyper-V utility VM. The windows-x64 leg kept timing out in &lt;code&gt;actions/setup-go&lt;/code&gt;. Here&amp;rsquo;s the log from&#xA;&lt;a href=&#34;https://github.com/luthermonson/shipmates/pull/48&#34;&gt;PR #48&lt;/a&gt;:&lt;/p&gt;&#xA;&lt;pre tabindex=&#34;0&#34;&gt;&lt;code&gt;20:58:46  Setup go version spec 1.26.6&#xA;20:58:46  Attempting to download 1.26.6...     &amp;lt;- tool-cache MISS&#xA;20:58:48  Acquiring 1.26.6 from ...zip&#xA;20:58:53  Extracting Go...&#xA;21:06:46  ERROR: The action &amp;#39;Run actions/setup-go@v5&amp;#39; has timed out after 8 minutes&#xA;&lt;/code&gt;&lt;/pre&gt;&lt;p&gt;Seven seconds from the start of the step to &lt;code&gt;Extracting Go...&lt;/code&gt;, then almost eight minutes extracting until the step&#xA;timeout killed it.&lt;/p&gt;</description>
+    </item>
+    <item>
+      <title>shipmates: Persona-Based AI Coding Crews That Remember</title>
+      <link>https://luth.io/blog/2026/08/shipmates-persona-based-ai-coding-crews/</link>
+      <pubDate>Fri, 21 Aug 2026 21:18:00 -0700</pubDate>
+      <guid>https://luth.io/blog/2026/08/shipmates-persona-based-ai-coding-crews/</guid>
+      <description>&lt;p&gt;Since June most of my evenings have gone into &lt;a href=&#34;https://github.com/luthermonson/shipmates&#34;&gt;shipmates&lt;/a&gt;, a Go CLI and daemon&#xA;for running crews of AI coding agents. I tagged &lt;a href=&#34;https://github.com/luthermonson/shipmates/releases/tag/v0.5.0&#34;&gt;v0.5.0&lt;/a&gt;&#xA;on August 17th, two months and about 240 commits after the first architecture doc, so it&amp;rsquo;s a good time to write down what&#xA;it is and why it exists.&lt;/p&gt;&#xA;&lt;h3 id=&#34;the-problem&#34;&gt;The problem&lt;/h3&gt;&#xA;&lt;p&gt;I run a lot of agent sessions. On a normal night this workstation has four or five projects going at once, each with a&#xA;few Claude Code sessions doing different jobs: one reviewing, one writing tests, one chasing a bug. Two things kept&#xA;annoying me.&lt;/p&gt;</description>
+    </item>
+    <item>
+      <title>Maintaining an Open-Source Library With AI Agents: AGENTS.md and the Rule They Kept Breaking</title>
+      <link>https://luth.io/blog/2026/06/go-proxmox-agents-md/</link>
+      <pubDate>Sat, 27 Jun 2026 18:47:00 -0700</pubDate>
+      <guid>https://luth.io/blog/2026/06/go-proxmox-agents-md/</guid>
+      <description>&lt;p&gt;On May 9th I merged &lt;a href=&#34;https://github.com/luthermonson/go-proxmox/pull/264&#34;&gt;#264&lt;/a&gt;, which added an &lt;code&gt;AGENTS.md&lt;/code&gt; to&#xA;&lt;a href=&#34;https://github.com/luthermonson/go-proxmox&#34;&gt;go-proxmox&lt;/a&gt; and a stub &lt;code&gt;CLAUDE.md&lt;/code&gt; that just points at it. Over the&#xA;next six weeks, through the v0.8.0 migration guide on June 15th, &lt;code&gt;main&lt;/code&gt; took 77 commits, +31,794 / -1,144 lines, went from&#xA;84 to 186 &lt;code&gt;.go&lt;/code&gt; files, and endpoint coverage went from 30% to &lt;a href=&#34;https://luth.io/blog/2026/06/go-proxmox-endpoint-coverage/&#34;&gt;100% of the Proxmox API&lt;/a&gt;.&#xA;Most of that code was typed by coding agents, a lot of it by several at once. This is what that looked like from the&#xA;maintainer&amp;rsquo;s chair, mostly the parts that went wrong, because that&amp;rsquo;s where &lt;code&gt;AGENTS.md&lt;/code&gt; got its content.&lt;/p&gt;</description>
+    </item>
+  </channel>
+</rss>

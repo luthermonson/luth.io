@@ -1,0 +1,31 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 400" font-family="system-ui, -apple-system, Segoe UI, sans-serif">
+  <rect width="800" height="400" fill="#ffffff"/>
+  <text x="400" y="34" text-anchor="middle" font-size="20" font-weight="600" fill="#222">Scope of the kill vs scope of the measurement</text>
+
+  <!-- Windows panel -->
+  <text x="200" y="72" text-anchor="middle" font-size="16" font-weight="600" fill="#2b6cb0">Windows: Job Object</text>
+  <rect x="50" y="88" width="300" height="200" rx="10" fill="#2b6cb0" fill-opacity="0.08" stroke="#2b6cb0" stroke-width="2"/>
+  <rect x="140" y="110" width="120" height="40" rx="6" fill="#2b6cb0"/>
+  <text x="200" y="135" text-anchor="middle" font-size="13" fill="#fff">agent (root)</text>
+  <line x1="200" y1="150" x2="200" y2="180" stroke="#666"/>
+  <rect x="140" y="180" width="120" height="40" rx="6" fill="#e07a1f"/>
+  <text x="200" y="205" text-anchor="middle" font-size="13" fill="#fff">tool (hog)</text>
+  <text x="200" y="250" text-anchor="middle" font-size="12" fill="#2b6cb0">kill: whole job</text>
+  <text x="200" y="268" text-anchor="middle" font-size="12" fill="#2b6cb0">memory: kernel, whole job</text>
+
+  <!-- Unix panel -->
+  <text x="600" y="72" text-anchor="middle" font-size="16" font-weight="600" fill="#3a9a5b">Linux / macOS: process group</text>
+  <rect x="450" y="88" width="300" height="200" rx="10" fill="#3a9a5b" fill-opacity="0.08" stroke="#3a9a5b" stroke-width="2"/>
+  <rect x="540" y="110" width="120" height="40" rx="6" fill="#3a9a5b"/>
+  <text x="600" y="135" text-anchor="middle" font-size="13" fill="#fff">agent (pgid leader)</text>
+  <line x1="600" y1="150" x2="600" y2="180" stroke="#666"/>
+  <rect x="540" y="180" width="120" height="40" rx="6" fill="#e07a1f"/>
+  <text x="600" y="205" text-anchor="middle" font-size="13" fill="#fff">tool (hog)</text>
+  <rect x="530" y="102" width="140" height="56" rx="8" fill="none" stroke="#c0392b" stroke-width="2" stroke-dasharray="6 4"/>
+  <text x="600" y="250" text-anchor="middle" font-size="12" fill="#3a9a5b">kill: kill(-pgid)</text>
+  <text x="600" y="268" text-anchor="middle" font-size="12" fill="#c0392b">memory before the fix: root pid only</text>
+
+  <text x="400" y="325" text-anchor="middle" font-size="14" fill="#222">root pid RSS 2.7 MiB, process group RSS 519.2 MiB</text>
+  <text x="400" y="350" text-anchor="middle" font-size="13" fill="#444">Fix: sum RSS and CPU over the process group (/proc on Linux, ps -Ao pgid=,rss= on macOS)</text>
+  <text x="400" y="375" text-anchor="middle" font-size="12" fill="#6b6b6b">cgroup mode: removed, and asking for it is now a hard error</text>
+</svg>

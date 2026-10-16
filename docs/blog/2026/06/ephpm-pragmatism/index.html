@@ -1,0 +1,649 @@
+<!doctype html>
+<html lang="en">
+  <head>
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-MSTSKGFWTX"></script>
+<script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+
+    gtag('config', 'G-MSTSKGFWTX');
+</script><meta charset="utf-8">
+<title>The Pragmatism of ePHPm - Every Decision Has a &#34;Because&#34; Behind It - Luther Monson</title>
+<meta name="description" content="ePHPm hit v0.1.0 this week. It isn&#39;t a rewrite-it-in-Rust project. Here&#39;s what I built, what I borrowed, what I sent upstream, and what I deliberately haven&#39;t built.">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<meta name="twitter:card" content="summary_large_image"><meta name="twitter:site" content="@luthermonson">
+
+<meta property="og:site_name" content="Luther Monson">
+<meta property="og:title" content="The Pragmatism of ePHPm - Every Decision Has a &#34;Because&#34; Behind It">
+<meta property="og:description" content="ePHPm hit v0.1.0 this week. It isn&#39;t a rewrite-it-in-Rust project. Here&#39;s what I built, what I borrowed, what I sent upstream, and what I deliberately haven&#39;t built.">
+<meta property="og:type" content="article">
+<meta property="og:url" content="https://luth.io/blog/2026/06/ephpm-pragmatism/">
+    <meta property="og:image" content="https://luth.io/img/2026/06/ephpm-pragmatism-cover.svg">
+    <meta property="og:image:alt" content="ePHPm in the center with six boxes: Rust and C wrapper, KV store, chitchat gossip, static-php-cli upstream fixes, litewire, and a dashed box of features not built yet">
+
+
+  <link rel="manifest" href="/favicon/site.webmanifest?v=1">
+  <link rel="apple-touch-icon" sizes="180x180" href="/favicon/apple-touch-icon.png?v=1">
+  <link rel="icon" type="image/png" sizes="32x32" href="/favicon/favicon-32x32.png?v=1">
+  <link rel="icon" type="image/png" sizes="16x16" href="/favicon/favicon-16x16.png?v=1">
+  
+    <link rel="mask-icon" href="/favicon/safari-pinned-tab.svg?v=1" color="#ffffff">
+    <link rel="shortcut icon" href="/favicon/favicon.ico?v=1">
+    <meta name="msapplication-config" content="/favicon/browserconfig.xml?v=1">
+  
+  <meta name="msapplication-TileColor" content="#ffffff">
+  <meta name="theme-color" content="#ffffff">
+
+
+  <meta name="generator" content="Hugo 0.160.1">
+  <link rel="alternate" type="application/rss+xml" href="https://luth.io/index.xml" title="Luther Monson">
+  <link rel="stylesheet" href="/css/bundle.min.e1ffed86714fbb7eff75eab221c0c61b8260be0c7d1c08db0fcb7a2bdb6af7c9.css" integrity="sha256-4f/thnFPu37/deqyIcDGG4Jgvgx9HAjbD8t6K9tq98k="><link rel="stylesheet" href="/css/add-on.css">
+        <link rel="stylesheet" href="/css/code.css">
+        <link rel="stylesheet" href="/css/mobile.css">
+</head>
+
+  <body>
+    
+
+<header id="site-header">
+  <nav id="site-nav">
+    <h1 class="nav-title">
+      <a href="/" class="nav">
+        <img class="nav-avatar" src="/img/luther-monson-headshot.jpg" alt="" width="32" height="32">
+        
+          Blog
+        
+      </a>
+    </h1>
+    <menu id="site-nav-menu" class="flyout-menu menu">
+      
+        
+          
+          <a href="/" class="nav link"><i class='fa fa-home'></i> Home</a>
+        
+      
+        
+          
+          <a href="/about" class="nav link"><i class='far fa-id-card'></i> About</a>
+        
+      
+        
+          
+          <a href="/blog" class="nav link"><i class='far fa-newspaper'></i> Blog</a>
+        
+      
+        
+          
+          <a href="/archive" class="nav link"><i class='far fa-calendar-alt'></i> Archive</a>
+        
+      
+        
+          
+          <a href="/categories" class="nav link"><i class='fas fa-sitemap'></i> Categories</a>
+        
+      
+      <a href="#share-menu" class="nav link share-toggle"><i class="fas fa-share-alt">&nbsp;</i>Share</a>
+      <a href="#search-input" class="nav link search-toggle"><i class="fas fa-search">&nbsp;</i>Search</a>
+    </menu>
+    <a href="#search-input" class="nav search-toggle"><i class="fas fa-search fa-2x">&nbsp;</i></a>
+    <a href="#share-menu" class="nav share-toggle"><i class="fas fa-share-alt fa-2x">&nbsp;</i></a>
+    
+    <a href="#site-nav" class="nav nav-toggle"><i class="fas fa-bars fa-2x"></i></a>
+  </nav>
+  <menu id="search" class="menu"><input id="search-input" class="search-input menu"></input><div id="search-results" class="search-results menu"></div></menu>
+  
+  
+    <menu id="share-menu" class="flyout-menu menu">
+      <h1>Share Post</h1>
+      
+
+
+
+
+  
+    
+    <a href="//twitter.com/share?text=The%20Pragmatism%20of%20ePHPm%20-%20Every%20Decision%20Has%20a%20%22Because%22%20Behind%20It&amp;url=https%3a%2f%2fluth.io%2fblog%2f2026%2f06%2fephpm-pragmatism%2f" target="_blank" rel="noopener" class="nav share-btn twitter">
+        <p>Twitter</p>
+      </a>
+  
+
+  
+      <a href="//www.facebook.com/sharer/sharer.php?u=https%3a%2f%2fluth.io%2fblog%2f2026%2f06%2fephpm-pragmatism%2f" target="_blank" rel="noopener" class="nav share-btn facebook">
+        <p>Facebook</p>
+        </a>
+  
+
+  
+    <a href="//www.reddit.com/submit?url=https%3a%2f%2fluth.io%2fblog%2f2026%2f06%2fephpm-pragmatism%2f&amp;title=The%20Pragmatism%20of%20ePHPm%20-%20Every%20Decision%20Has%20a%20%22Because%22%20Behind%20It" target="_blank" rel="noopener" class="nav share-btn reddit">
+          <p>Reddit</p>
+        </a>
+  
+
+  
+        <a href="//www.linkedin.com/shareArticle?url=https%3a%2f%2fluth.io%2fblog%2f2026%2f06%2fephpm-pragmatism%2f&amp;title=The%20Pragmatism%20of%20ePHPm%20-%20Every%20Decision%20Has%20a%20%22Because%22%20Behind%20It" target="_blank" rel="noopener" class="nav share-btn linkedin">
+            <p>LinkedIn</p>
+          </a>
+  
+
+  
+        <a href="//www.pinterest.com/pin/create/button/?url=https%3a%2f%2fluth.io%2fblog%2f2026%2f06%2fephpm-pragmatism%2f&amp;description=The%20Pragmatism%20of%20ePHPm%20-%20Every%20Decision%20Has%20a%20%22Because%22%20Behind%20It" target="_blank" rel="noopener" class="nav share-btn pinterest">
+          <p>Pinterest</p>
+        </a>
+  
+
+  
+        <a href="mailto:?subject=Check%20out%20this%20post%20by Luther%20Monson&amp;body=https%3a%2f%2fluth.io%2fblog%2f2026%2f06%2fephpm-pragmatism%2f" target="_blank" class="nav share-btn email" data-proofer-ignore>
+          <p>Email</p>
+        </a>
+  
+
+
+    </menu>
+  
+</header>
+
+    <div id="wrapper">
+      <section id="site-intro" class="hidden-single-column">
+  <a href="/"><img src="/img/luther-monson-headshot.jpg" class="circle" width="100" alt="Luther Monson, Staff Software Engineer at SUSE" /></a>
+  <header>
+    <h1>Luther Monson</h1>
+  </header>
+  <main>
+    <p>Go by way of PHP &middot; Containers &middot; VMs &middot; Windows &middot; Kubernetes</p>
+  </main>
+  
+    <footer>
+      <ul class="socnet-icons">
+        
+
+        <li><a href="//github.com/luthermonson" target="_blank" rel="noopener" title="GitHub" class="fab fa-github"></a></li>
+
+
+
+
+
+
+
+
+
+
+
+<li><a href="//www.linkedin.com/in/luthermonson" target="_blank" rel="noopener" title="LinkedIn" class="fab fa-linkedin"></a></li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li><a href="//twitter.com/luthermonson" target="_blank" rel="noopener" title="Twitter" class="fab fa-twitter"></a></li>
+
+
+
+
+
+
+
+
+
+
+
+<li><a href="mailto:luther.monson@gmail.com" target="_blank" title="Email" class="far fa-envelope"></a></li>
+
+      </ul>
+    </footer>
+  
+</section>
+
+      <main id="site-main">
+        
+  <article>
+    <div class="post">
+      <header>
+  <div class="title">
+    
+      <h2><a href="/blog/2026/06/ephpm-pragmatism/">The Pragmatism of ePHPm - Every Decision Has a &#34;Because&#34; Behind It</a></h2>
+    
+    
+      <p>ePHPm hit v0.1.0 this week. It isn&#39;t a rewrite-it-in-Rust project. Here&#39;s what I built, what I borrowed, what I sent upstream, and what I deliberately haven&#39;t built.</p>
+    
+  </div>
+  <div class="meta">
+    <time datetime="2026-06-21 19:05:00 -0700 PDT">June 21, 2026</time>
+    
+    <p>7-Minute Read</p>
+  </div>
+</header>
+
+      <div id="socnet-share">
+        
+
+
+
+
+  
+    
+    <a href="//twitter.com/share?text=The%20Pragmatism%20of%20ePHPm%20-%20Every%20Decision%20Has%20a%20%22Because%22%20Behind%20It&amp;url=https%3a%2f%2fluth.io%2fblog%2f2026%2f06%2fephpm-pragmatism%2f" target="_blank" rel="noopener" class="nav share-btn twitter">
+        <p>Twitter</p>
+      </a>
+  
+
+  
+      <a href="//www.facebook.com/sharer/sharer.php?u=https%3a%2f%2fluth.io%2fblog%2f2026%2f06%2fephpm-pragmatism%2f" target="_blank" rel="noopener" class="nav share-btn facebook">
+        <p>Facebook</p>
+        </a>
+  
+
+  
+    <a href="//www.reddit.com/submit?url=https%3a%2f%2fluth.io%2fblog%2f2026%2f06%2fephpm-pragmatism%2f&amp;title=The%20Pragmatism%20of%20ePHPm%20-%20Every%20Decision%20Has%20a%20%22Because%22%20Behind%20It" target="_blank" rel="noopener" class="nav share-btn reddit">
+          <p>Reddit</p>
+        </a>
+  
+
+  
+        <a href="//www.linkedin.com/shareArticle?url=https%3a%2f%2fluth.io%2fblog%2f2026%2f06%2fephpm-pragmatism%2f&amp;title=The%20Pragmatism%20of%20ePHPm%20-%20Every%20Decision%20Has%20a%20%22Because%22%20Behind%20It" target="_blank" rel="noopener" class="nav share-btn linkedin">
+            <p>LinkedIn</p>
+          </a>
+  
+
+  
+        <a href="//www.pinterest.com/pin/create/button/?url=https%3a%2f%2fluth.io%2fblog%2f2026%2f06%2fephpm-pragmatism%2f&amp;description=The%20Pragmatism%20of%20ePHPm%20-%20Every%20Decision%20Has%20a%20%22Because%22%20Behind%20It" target="_blank" rel="noopener" class="nav share-btn pinterest">
+          <p>Pinterest</p>
+        </a>
+  
+
+  
+        <a href="mailto:?subject=Check%20out%20this%20post%20by Luther%20Monson&amp;body=https%3a%2f%2fluth.io%2fblog%2f2026%2f06%2fephpm-pragmatism%2f" target="_blank" class="nav share-btn email" data-proofer-ignore>
+          <p>Email</p>
+        </a>
+  
+
+
+      </div>
+      <div class="content">
+        
+        <p><a href="https://github.com/ephpm/ephpm">ePHPm</a> tagged <a href="https://github.com/ephpm/ephpm/releases/tag/v0.1.0">v0.1.0</a> this
+week, three months after the first commit. Before the feature list grows any further I want to write down how
+decisions get made on it, mostly for myself, because the easiest way to ruin a project like this is to let it turn into
+a checklist of things other projects have.</p>
+<p>The pitch is simple: one binary that runs a PHP app with fewer moving parts than nginx + php-fpm + Redis + MySQL. Every
+feature has to trace back to that. If I can&rsquo;t finish the sentence &ldquo;this exists because&hellip;&rdquo; with a real problem from
+running PHP in production, it doesn&rsquo;t go in.</p>
+<h3 id="rust-because-i-measured-cgo">Rust, because I measured cgo</h3>
+<p>This isn&rsquo;t a &ldquo;rewrite it in Rust&rdquo; project. I write Go for a living and I&rsquo;d have been faster in Go. I picked Rust because
+PHP calls <em>back into</em> its host constantly (every <code>echo</code>, every header, every cache read once the KV functions exist),
+and I wanted that direction to be a plain function call. When I <a href="/blog/2026/04/why-rust-for-php-embedding/">actually measured it</a>
+the cgo tax turned out to be a lot smaller than my own design doc claimed (about 24ns per call on Go 1.26, not 200), and
+I said so. The decision survived the correction because the reasons were never only that one number: one runtime in the
+process, no GC next to Zend, and no second project to upstream into before I can change how a request is dispatched.</p>
+<p>The part I didn&rsquo;t get to pick is the C wrapper. PHP&rsquo;s error handling is <code>setjmp</code>/<code>longjmp</code>, and that has to live in C
+regardless of what language is on the other side. So the answer to &ldquo;is it Rust?&rdquo; is &ldquo;it&rsquo;s Rust plus about 1,900 lines of
+C that I&rsquo;d rather not have.&rdquo;</p>
+<h3 id="a-kv-store-because-there-was-nothing-to-embed">A KV store, because there was nothing to embed</h3>
+<p>I did not want to write a KV store. Building databases isn&rsquo;t the fun part of this for me. But a PHP app server without a
+cache just means the user runs Redis next to it, and then the single binary pitch is gone.</p>
+<p>So I went looking for something to embed:</p>
+<ul>
+<li><strong>Redis</strong> isn&rsquo;t a library. It&rsquo;s a server that wants to own a process and its event loop. There&rsquo;s no <code>libredis.a</code>.
+(Its licensing also changed in 2024, which made me even less interested in building a product on top of it.)</li>
+<li><strong>Dragonfly</strong> is also a standalone server, and its BSL 1.1 license explicitly excludes use in an &ldquo;in-memory data store
+product or service.&rdquo; A PHP server with a built-in clustered cache is close enough to that line that I&rsquo;m not going near it.</li>
+<li><strong>KeyDB, Garnet, Valkey</strong>: different licenses, same shape. Servers, not libraries. Dragonfly&rsquo;s shared-nothing model
+(each thread owns a slice of the keyspace) is also the opposite of what ePHPm needs, where any PHP thread has to be
+able to read any key.</li>
+</ul>
+<p>What PHP apps actually use Redis for is caching, sessions and counters. Strings, a few hashes, TTLs. That&rsquo;s a
+<code>DashMap</code>, a RESP2 parser so existing clients work, lazy expiry plus a sweeper, and an eviction policy. A few thousand
+lines of Rust instead of a second daemon. It&rsquo;s not Redis and it doesn&rsquo;t pretend to be: no lists, no sets, no pub/sub, no
+persistence. If you need a queue, run a real Redis.</p>
+<h3 id="gossip-because-etcd-would-be-a-second-thing-to-run">Gossip, because etcd would be a second thing to run</h3>
+<p>Multi-node is where it&rsquo;d be easiest to reach for etcd or Consul. Both are excellent and both are another cluster you
+have to operate, which defeats the point. I also didn&rsquo;t write a membership protocol, because that&rsquo;s a solved problem.
+Quickwit&rsquo;s <a href="https://github.com/quickwit-oss/chitchat">chitchat</a> crate does scuttlebutt gossip with a phi-accrual failure
+detector, it&rsquo;s a library, it&rsquo;s MIT licensed, and it runs on tokio, which ePHPm already has. Nodes find each other from a
+seed list and that&rsquo;s the entire control plane.</p>
+<p>That&rsquo;s the general rule for what gets borrowed: if a well-maintained crate does the job and fits the runtime and the
+license, use it. hyper, rustls, tokio and chitchat are all in that bucket.</p>
+<h3 id="sqlite-behind-a-mysql-socket-because-the-code-only-speaks-pdo_mysql">SQLite behind a MySQL socket, because the code only speaks pdo_mysql</h3>
+<p>A lot of the sites I&rsquo;d want to run on this don&rsquo;t need a MySQL server. A brochure WordPress, an internal Laravel tool,
+something on an edge box. They do need MySQL <em>as far as their code knows</em>, because that&rsquo;s what <code>pdo_mysql</code> and
+<code>mysqli</code> talk to. <a href="https://github.com/ephpm/litewire">litewire</a> speaks the MySQL wire protocol on one side and SQLite on
+the other, so the app&rsquo;s config says <code>DB_HOST=127.0.0.1</code> and nothing else changes. It exists because the alternative is
+asking people to port their database layer, and they won&rsquo;t. It&rsquo;s not there because SQLite is fashionable, and it&rsquo;s
+optional: point the proxy at a real MySQL and it pools connections instead.</p>
+<h3 id="upstream-because-a-fork-is-forever">Upstream, because a fork is forever</h3>
+<p>ePHPm needs a static <code>libphp</code> for every OS and architecture it ships on, and
+<a href="https://github.com/crazywhalecc/static-php-cli">static-php-cli</a> is the project that builds those. When it broke for me,
+the fix went upstream rather than into a private fork: test fixes for Windows path separators, a <code>vswhere</code> fix for
+Windows static builds, dropping <code>-fno-plt</code> from macOS static CFLAGS, a GNU mirror change, a log filter so GitHub tokens
+don&rsquo;t end up in CI logs, a mongodb build fix. Two more Windows build fixes are still open, and the Windows embed SAPI work itself moved to php-src, where it&rsquo;s still under review. Everyone building
+static PHP hits the same bugs, and every patch I carry privately is a patch I have to rebase forever.</p>
+<p>The other half of that is not rebuilding PHP on every CI run. Compiling PHP and its libraries from source on each build
+was the slowest thing in the pipeline, so the builds moved into a separate repo, <a href="https://github.com/ephpm/php-sdk">ephpm/php-sdk</a>,
+that publishes prebuilt SDKs per OS/arch/PHP version. ePHPm&rsquo;s build downloads one and links against it.</p>
+<p>So the three-way split I keep coming back to:</p>
+<ul>
+<li><strong>Contribute upstream</strong> when the thing is shared infrastructure that others are already maintaining (SPC).</li>
+<li><strong>Use what exists</strong> when a library does the job as-is (chitchat, hyper, rustls).</li>
+<li><strong>Build my own</strong> only when nothing can be embedded or the license won&rsquo;t allow it (the KV store, the C wrapper).</li>
+</ul>
+<h3 id="what-isnt-built">What isn&rsquo;t built</h3>
+<p>The list of things that don&rsquo;t exist matters as much as the list of things that do. As of v0.1.0:</p>
+<ul>
+<li><strong>No admin UI.</strong> Early docs listed an embedded dashboard as an advantage over FrankenPHP and RoadRunner. In May I
+pulled those rows out of the comparison pages, because claiming something you haven&rsquo;t shipped as a feature is how
+docs turn into marketing. It&rsquo;s on the roadmap. It&rsquo;ll get built when there&rsquo;s something worth looking at that
+Prometheus and Grafana don&rsquo;t already show.</li>
+<li><strong>No OpenTelemetry.</strong> Prometheus metrics exist because I use them. Tracing will come when I need a trace to debug
+something real.</li>
+<li><strong>No KV persistence, no lists or sets.</strong> It&rsquo;s a cache.</li>
+<li><strong>Some knobs are parsed and not implemented</strong>, and the config reference says so in bold: <code>auto_explain</code>, the
+<code>lag-aware</code> read/write split strategy, <code>max_replica_lag</code>, and the Unix socket for the Redis-compatible KV listener. Read/write splitting itself is
+the one feature I&rsquo;ll admit went in early on a hunch rather than a need, and the half-built strategy options next to it
+are what that looks like. I&rsquo;d rather label those honestly than either delete the parsing or pretend they work.</li>
+</ul>
+<p>That&rsquo;s the contrast I&rsquo;m trying to avoid: projects that chase a competitor&rsquo;s feature matrix, or build the thing that
+makes a good conference demo. The feature matrix in ePHPm&rsquo;s docs is there to be honest about status, not to win rows.</p>
+<h3 id="real-apps-not-hello-world">Real apps, not hello world</h3>
+<p>The proving ground is my home lab and real applications: WordPress, Laravel, the stuff people actually deploy,
+installed and clicked through on boxes I can break, on top of the e2e suite that covers the server itself. Synthetic &ldquo;hello world&rdquo; benchmarks are good for exactly one thing,
+which is measuring dispatch overhead. Every interesting bug I&rsquo;ve hit so far (the <a href="/blog/2026/04/php-signal-safety-init-ordering/">SIGPROF crash</a>
+is the best example) showed up in a real app or under real load, never in a 200-byte PHP file.</p>
+<h3 id="whats-next">What&rsquo;s next</h3>
+<p>The next stretch is about correctness under real apps rather than new boxes on the diagram: request isolation,
+WordPress end to end, and making the KV store fast enough that nobody misses Redis. If something new shows up, it&rsquo;ll come
+with its &ldquo;because.&rdquo;</p>
+<h3 id="links">Links</h3>
+<ul>
+<li><a href="https://github.com/ephpm/ephpm">ePHPm</a> and the <a href="https://github.com/ephpm/ephpm/releases/tag/v0.1.0">v0.1.0 release</a></li>
+<li><a href="https://github.com/ephpm/litewire">litewire</a></li>
+<li><a href="https://github.com/ephpm/php-sdk">ephpm/php-sdk</a></li>
+<li><a href="https://github.com/quickwit-oss/chitchat">chitchat</a></li>
+<li><a href="https://github.com/crazywhalecc/static-php-cli">static-php-cli</a>, e.g. <a href="https://github.com/crazywhalecc/static-php-cli/pull/1149">#1149</a> and <a href="https://github.com/crazywhalecc/static-php-cli/pull/1150">#1150</a></li>
+<li><a href="https://github.com/dragonflydb/dragonfly/blob/main/LICENSE.md">Dragonfly&rsquo;s license</a></li>
+</ul>
+
+      </div>
+      <footer>
+        <div class="stats">
+  
+    <ul class="categories">
+      
+        
+          <li><a class="article-terms-link" href="/categories/ephpm/">ephpm</a></li>
+        
+          <li><a class="article-terms-link" href="/categories/php/">php</a></li>
+        
+          <li><a class="article-terms-link" href="/categories/rust/">rust</a></li>
+        
+      
+    </ul>
+  
+  
+    <ul class="tags">
+      
+        
+          <li><a class="article-terms-link" href="/tags/ephpm/">ephpm</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/php/">php</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/rust/">rust</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/open-source/">open source</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/architecture/">architecture</a></li>
+        
+      
+    </ul>
+  
+</div>
+
+      </footer>
+    </div>
+    
+      
+  
+  <div class='post giscus-wrap'>
+    <script src='https://giscus.app/client.js'
+            data-repo='luthermonson/luth.io'
+            data-repo-id='R_kgDOGvFBXQ'
+            data-category='Announcements'
+            data-category-id='DIC_kwDOGvFBXc4DH_gv'
+            data-mapping='pathname'
+            data-strict='1'
+            data-reactions-enabled='1'
+            data-emit-metadata='0'
+            data-input-position='top'
+            data-theme='light'
+            data-lang='en'
+            data-loading='lazy'
+            crossorigin='anonymous'
+            async>
+    </script>
+  </div>
+  
+
+
+
+    
+  </article>
+  
+    <nav class="post-nav">
+      
+        <a href="/blog/2026/06/tail-gunner/" class="post-nav-link older">
+          <span class="post-nav-label">&larr; Older</span>
+          <span class="post-nav-title">Stop Ctrl-C-ing Your tail -f | grep</span>
+        </a>
+      
+      
+        <a href="/blog/2026/06/proxmox-numbers-null-scientific-notation-net10/" class="post-nav-link newer">
+          <span class="post-nav-label">Newer &rarr;</span>
+          <span class="post-nav-title">Proxmox JSON, Part 2: null PIDs, 1.12589990684262e&#43;15 and net10</span>
+        </a>
+      
+    </nav>
+  
+
+      </main>
+      <section id="site-sidebar">
+  
+    <section id="recent-posts">
+      <header>
+        <h1>Recent Posts</h1>
+      </header>
+      
+      <article class="mini-post">
+          <a href="/blog/2026/10/ephpm-worker-mode-performance/" class="image" style="--bg-image: url('/img/2026/10/ephpm-worker-mode-performance-cover.svg');">
+    <img class="" src="/img/2026/10/ephpm-worker-mode-performance-cover.svg" alt="Diagram: before, hyper/tokio hands each request to one shared bounded channel whose waiter list all 20 PHP threads contend on; after, a dispatcher hands the job straight into the mailbox of the most recently idle PHP thread and only queues it in a FIFO overflow queue when every thread is busy">
+  </a>
+        <header>
+          <h2><a href="/blog/2026/10/ephpm-worker-mode-performance/">Fourth Place in Worker Mode, and Why It Wasn&#39;t PHP</a></h2>
+          <time class="published" datetime="2026-10-16 08:10:00 -0700 PDT">October 16, 2026</time>
+        </header>
+      </article>
+      
+      <article class="mini-post">
+          <a href="/blog/2026/10/ephpm-websockets-how-to/" class="image" style="--bg-image: url('/img/2026/10/ephpm-websockets-how-to-cover.svg');">
+    <img class="" src="/img/2026/10/ephpm-websockets-how-to-cover.svg" alt="Diagram: browsers hold sockets to ePHPm&#39;s Rust session tasks and registry; each connect, message and disconnect runs websocket.php once on the PHP thread pool, and ordinary HTTP requests push through ephpm_ws_broadcast">
+  </a>
+        <header>
+          <h2><a href="/blog/2026/10/ephpm-websockets-how-to/">WebSockets in ePHPm, From Zero to a Working Chat</a></h2>
+          <time class="published" datetime="2026-10-11 17:30:00 -0700 PDT">October 11, 2026</time>
+        </header>
+      </article>
+      
+      <article class="mini-post">
+          <a href="/blog/2026/10/webhooks-out-of-order-scheduler/" class="image" style="--bg-image: url('/img/2026/10/webhooks-out-of-order-scheduler-timeline.svg');">
+    <img class="" src="/img/2026/10/webhooks-out-of-order-scheduler-timeline.svg" alt="Timeline of three same-label jobs where a runner executing a build is destroyed 2.3 seconds before its in_progress webhook arrives">
+  </a>
+        <header>
+          <h2><a href="/blog/2026/10/webhooks-out-of-order-scheduler/">Webhooks Arrive Out of Order: How My Scheduler Killed Live Builds</a></h2>
+          <time class="published" datetime="2026-10-07 21:10:00 -0700 PDT">October 7, 2026</time>
+        </header>
+      </article>
+      
+      <article class="mini-post">
+          <a href="/blog/2026/10/go-proxmox-five-years-to-v0-8/" class="image" style="--bg-image: url('/img/2026/10/go-proxmox-five-years-to-v0-8-apidiff.svg');">
+    <img class="" src="/img/2026/10/go-proxmox-five-years-to-v0-8-apidiff.svg" alt="Horizontal bar chart of apidiff incompatible and compatible changes for every go-proxmox release from v0.1.0 to v0.8.2">
+  </a>
+        <header>
+          <h2><a href="/blog/2026/10/go-proxmox-five-years-to-v0-8/">Breaking Changes Without Breaking Trust: Five Years to go-proxmox v0.8</a></h2>
+          <time class="published" datetime="2026-10-04 19:40:00 -0700 PDT">October 4, 2026</time>
+        </header>
+      </article>
+      
+      <article class="mini-post">
+          <a href="/blog/2026/10/windows-sigterm-sparse-files/" class="image" style="--bg-image: url('/img/2026/10/windows-sigterm-sparse-files-connections.svg');">
+    <img class="" src="/img/2026/10/windows-sigterm-sparse-files-connections.svg" alt="Bar chart: 96 Cloudflare edge connections held by orphaned cloudflared processes versus 4 for the live daemon">
+  </a>
+        <header>
+          <h2><a href="/blog/2026/10/windows-sigterm-sparse-files/">Windows Grab-Bag: SIGTERM That Doesn&#39;t Exist and Sparse Files That Break Docker</a></h2>
+          <time class="published" datetime="2026-10-03 14:30:00 -0700 PDT">October 3, 2026</time>
+        </header>
+      </article>
+      
+      
+        <footer>
+          <a href="/blog" class="button">See More</a>
+        </footer>
+      
+    </section>
+  
+
+  
+    
+
+      <section id="categories">
+        <header>
+          <h1><a href="/categories">Categories</a></h1>
+        </header>
+        <ul>
+          
+          
+          <li>
+              <a href="/categories/ephpm/">ephpm<span class="count">33</span></a>
+          
+          <li>
+              <a href="/categories/go/">go<span class="count">30</span></a>
+          
+          <li>
+              <a href="/categories/php/">php<span class="count">23</span></a>
+          
+          <li>
+              <a href="/categories/rust/">rust<span class="count">15</span></a>
+          
+          <li>
+              <a href="/categories/homelab/">homelab<span class="count">14</span></a>
+          
+          <li>
+              <a href="/categories/windows/">windows<span class="count">14</span></a>
+          
+          <li>
+              <a href="/categories/ci/">ci<span class="count">9</span></a>
+          
+          <li>
+              <a href="/categories/databases/">databases<span class="count">9</span></a>
+          
+          <li>
+              <a href="/categories/security/">security<span class="count">9</span></a>
+          
+          <li>
+              <a href="/categories/containers/">containers<span class="count">7</span></a>
+          
+          <li>
+              <a href="/categories/tools/">tools<span class="count">5</span></a>
+          
+          <li>
+              <a href="/categories/ai-agents/">ai-agents<span class="count">4</span></a>
+          
+          </li>
+        </ul>
+      </section>
+    
+  
+
+  
+    <section id="mini-bio">
+      <header>
+        <h1>About</h1>
+      </header>
+      <p>Luther is a 20+ year software veteran specializing in backend APIs and architecting products. Employed at <a href='https://www.suse.com'>SUSE</a> as the Team Lead for the <a href='https://github.com/rancher/windows/issues'>Containers on Windows Team</a> working on <a href='https://rancher.com/'>Rancher</a> + <a href='https://kubernetes.io/'>Kubernetes</a></p>
+      <footer>
+        <a href="/about" class="button">Learn More</a>
+      </footer>
+    </section>
+  
+</section>
+
+      <footer id="site-footer">
+  
+      <ul class="socnet-icons">
+        
+
+        <li><a href="//github.com/luthermonson" target="_blank" rel="noopener" title="GitHub" class="fab fa-github"></a></li>
+
+
+
+
+
+
+
+
+
+
+
+<li><a href="//www.linkedin.com/in/luthermonson" target="_blank" rel="noopener" title="LinkedIn" class="fab fa-linkedin"></a></li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li><a href="//twitter.com/luthermonson" target="_blank" rel="noopener" title="Twitter" class="fab fa-twitter"></a></li>
+
+
+
+
+
+
+
+
+
+
+
+<li><a href="mailto:luther.monson@gmail.com" target="_blank" title="Email" class="far fa-envelope"></a></li>
+
+      </ul>
+  
+  <p class="copyright">
+    © 2026 Luther Monson
+      <br>
+    Theme: <a href='https://github.com/pacollins/hugo-future-imperfect-slim' target='_blank' rel='noopener'>Hugo Future Imperfect Slim</a><br>A <a href='https://html5up.net/future-imperfect' target='_blank' rel='noopener'>HTML5 UP port</a> | Powered by <a href='https://gohugo.io/' title='0.160.1' target='_blank' rel='noopener'>Hugo</a>
+  </p>
+</footer>
+<a id="back-to-top" href="#" class="fas fa-arrow-up fa-2x"></a>
+
+      <script src="/js/bundle.min.241b62ebc4792fe8c7a75879e5f710894f226f2b73342e9916b3a3b0526030cc.js" integrity="sha256-JBti68R5L&#43;jHp1h55fcQiU8ibytzNC6ZFrOjsFJgMMw="></script>
+    <script src="/js/add-on.js"></script>
+    </div>
+  </body>
+</html>

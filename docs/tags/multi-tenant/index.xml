@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>Multi-Tenant on Luther Monson</title>
+    <link>https://luth.io/tags/multi-tenant/</link>
+    <description>Recent content in Multi-Tenant on Luther Monson</description>
+    <generator>Hugo</generator>
+    <language>en</language>
+    <lastBuildDate>Sun, 13 Sep 2026 16:20:00 -0700</lastBuildDate>
+    <atom:link href="https://luth.io/tags/multi-tenant/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>Every Way a Tenant Escaped: A Cross-Tenant Breakout Field Guide</title>
+      <link>https://luth.io/blog/2026/09/cross-tenant-breakout-field-guide/</link>
+      <pubDate>Sun, 13 Sep 2026 16:20:00 -0700</pubDate>
+      <guid>https://luth.io/blog/2026/09/cross-tenant-breakout-field-guide/</guid>
+      <description>&lt;p&gt;&lt;a href=&#34;https://github.com/ephpm/ephpm&#34;&gt;ePHPm&lt;/a&gt; can serve a directory full of sites out of one process. Point &lt;code&gt;sites_dir&lt;/code&gt; at&#xA;a folder, every subdirectory is a virtual host, and the Host header decides which one you get. That&amp;rsquo;s how the PR preview&#xA;environment runs: every pull request gets a subdomain, and the code behind it is whatever somebody pushed. One process&#xA;holding many tenants means every per-tenant boundary is something ePHPm enforces itself, in-process. There&amp;rsquo;s no&#xA;container wall between site A and site B unless you add one.&lt;/p&gt;</description>
+    </item>
+    <item>
+      <title>We Disabled PHP&#39;s Stack Guard Ourselves: Containing Segfaults in a Single-Process PHP Server</title>
+      <link>https://luth.io/blog/2026/09/php-stack-guard-segfault-containment/</link>
+      <pubDate>Sun, 06 Sep 2026 15:05:00 -0700</pubDate>
+      <guid>https://luth.io/blog/2026/09/php-stack-guard-segfault-containment/</guid>
+      <description>&lt;p&gt;php-fpm has a property nobody thinks about until they leave it: when a worker segfaults, you lose one request. The&#xA;master forks a new child and life goes on. &lt;a href=&#34;https://github.com/ephpm/ephpm&#34;&gt;ePHPm&lt;/a&gt; runs every tenant&amp;rsquo;s PHP as threads&#xA;inside one process. That&amp;rsquo;s where the memory and latency wins come from, and it also means one tenant&amp;rsquo;s segfault&#xA;takes down every other tenant on the box.&lt;/p&gt;&#xA;&lt;p&gt;This is the story of closing that gap, in four steps over about two weeks. The last step turned out to be a bug we&amp;rsquo;d&#xA;put there ourselves. It&amp;rsquo;s also the payoff for the thread pool work in&#xA;&lt;a href=&#34;https://luth.io/blog/2026/09/own-your-php-thread-pool/&#34;&gt;the previous post&lt;/a&gt;: everything below that actually shipped depends on&#xA;ePHPm owning its own PHP threads.&lt;/p&gt;</description>
+    </item>
+    <item>
+      <title>Per-Tenant Network Policy in One Process: ePHPm&#39;s eBPF Thread Tags</title>
+      <link>https://luth.io/blog/2026/08/ephpm-ebpf-per-vhost-network-policy/</link>
+      <pubDate>Fri, 28 Aug 2026 20:40:00 -0700</pubDate>
+      <guid>https://luth.io/blog/2026/08/ephpm-ebpf-per-vhost-network-policy/</guid>
+      <description>&lt;p&gt;In multi-tenant mode &lt;a href=&#34;https://github.com/ephpm/ephpm&#34;&gt;ePHPm&lt;/a&gt; serves every site in &lt;code&gt;sites_dir&lt;/code&gt; from one process. Every&#xA;tenant&amp;rsquo;s PHP runs as the same OS user, on the same pool of ZTS threads, and a thread that just served &lt;code&gt;blog.example&lt;/code&gt;&#xA;will serve &lt;code&gt;shop.example&lt;/code&gt; a few milliseconds later. That&amp;rsquo;s the density win. It also means the kernel has no idea&#xA;which tenant is behind a given &lt;code&gt;connect()&lt;/code&gt;. As far as Linux is concerned it&amp;rsquo;s all &lt;code&gt;ephpm-web&lt;/code&gt;.&lt;/p&gt;&#xA;&lt;p&gt;Most of the isolation work in ePHPm happens above the kernel: &lt;code&gt;open_basedir&lt;/code&gt;, the function denylist, per-site&#xA;databases and KV keyspaces. Network is the one place where that isn&amp;rsquo;t enough. This week we brought eBPF in to give&#xA;the kernel a per-tenant identity. It went from a roadmap doc on Wednesday morning to merged that evening&#xA;(&lt;a href=&#34;https://github.com/ephpm/ephpm/pull/413&#34;&gt;#413&lt;/a&gt;, aimed at v0.8.1). v0.8.1 never got a release because its Linux&#xA;legs failed to link. v0.8.2 shipped with the BPF object silently stubbed out, and v0.8.3 was the first release that&#xA;actually carried it. This post covers what it enforces, what it costs, what broke on the way out the door, and what&#xA;it doesn&amp;rsquo;t do.&lt;/p&gt;</description>
+    </item>
+  </channel>
+</rss>

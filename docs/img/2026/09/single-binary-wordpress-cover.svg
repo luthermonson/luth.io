@@ -1,0 +1,43 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 600" width="1200" height="600" font-family="system-ui, -apple-system, Segoe UI, Roboto, sans-serif">
+  <rect width="1200" height="600" fill="#ffffff"/>
+  <text x="600" y="44" text-anchor="middle" font-size="26" font-weight="600" fill="#222">WordPress: four services, or one process</text>
+
+  <!-- left: classic -->
+  <text x="300" y="96" text-anchor="middle" font-size="18" font-weight="600" fill="#6b6b6b">the usual LEMP + Redis stack</text>
+  <g font-size="16">
+    <rect x="80" y="120" width="440" height="70" rx="10" fill="#fff" stroke="#6b6b6b" stroke-width="2"/>
+    <text x="300" y="152" text-anchor="middle" fill="#222" font-weight="600">nginx</text>
+    <text x="300" y="174" text-anchor="middle" fill="#6b6b6b" font-size="14">TLS, static files, fastcgi_pass</text>
+    <rect x="80" y="205" width="440" height="70" rx="10" fill="#fff" stroke="#6b6b6b" stroke-width="2"/>
+    <text x="300" y="237" text-anchor="middle" fill="#222" font-weight="600">php-fpm</text>
+    <text x="300" y="259" text-anchor="middle" fill="#6b6b6b" font-size="14">process pool, pm.* tuning, its own php.ini</text>
+    <rect x="80" y="290" width="440" height="70" rx="10" fill="#fff" stroke="#6b6b6b" stroke-width="2"/>
+    <text x="300" y="322" text-anchor="middle" fill="#222" font-weight="600">Redis</text>
+    <text x="300" y="344" text-anchor="middle" fill="#6b6b6b" font-size="14">object cache, sessions, a plugin to wire it up</text>
+    <rect x="80" y="375" width="440" height="70" rx="10" fill="#fff" stroke="#6b6b6b" stroke-width="2"/>
+    <text x="300" y="407" text-anchor="middle" fill="#222" font-weight="600">MySQL</text>
+    <text x="300" y="429" text-anchor="middle" fill="#6b6b6b" font-size="14">a server, users, backups, upgrades</text>
+    <text x="300" y="480" text-anchor="middle" fill="#6b6b6b" font-size="15">4 processes, 4 configs, 3 sockets between them</text>
+  </g>
+
+  <!-- arrow -->
+  <path d="M560,290 L630,290" stroke="#333" stroke-width="3" fill="none"/>
+  <path d="M630,280 L648,290 L630,300 z" fill="#333"/>
+
+  <!-- right: ephpm -->
+  <text x="900" y="96" text-anchor="middle" font-size="18" font-weight="600" fill="#2b6cb0">one ephpm process</text>
+  <rect x="680" y="120" width="440" height="325" rx="14" fill="#2b6cb0" opacity="0.08" stroke="#2b6cb0" stroke-width="2"/>
+  <g font-size="15">
+    <rect x="705" y="140" width="390" height="56" rx="8" fill="#fff" stroke="#2b6cb0"/>
+    <text x="900" y="174" text-anchor="middle" fill="#222">HTTP/1.1 + HTTP/2, TLS/ACME, static files (hyper)</text>
+    <rect x="705" y="208" width="390" height="56" rx="8" fill="#fff" stroke="#7d5ba6"/>
+    <text x="900" y="242" text-anchor="middle" fill="#222">PHP 8.5 embedded (libphp, ZTS, OPcache)</text>
+    <rect x="705" y="276" width="390" height="56" rx="8" fill="#fff" stroke="#3a9a5b"/>
+    <text x="900" y="310" text-anchor="middle" fill="#222">KV store: object cache via ephpm_kv_*</text>
+    <rect x="705" y="344" width="390" height="56" rx="8" fill="#fff" stroke="#e07a1f"/>
+    <text x="900" y="378" text-anchor="middle" fill="#222">SQLite file (or a pooled MySQL proxy)</text>
+    <text x="900" y="428" text-anchor="middle" fill="#2b6cb0" font-size="14">one binary, one config, needs only glibc 2.28+ and libgcc_s</text>
+  </g>
+
+  <text x="600" y="540" text-anchor="middle" font-size="16" fill="#333">The container image is distroless/cc + the binary + the WordPress files. Nothing else.</text>
+</svg>

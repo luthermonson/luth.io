@@ -1,0 +1,874 @@
+<!doctype html>
+<html lang="en">
+  <head>
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-MSTSKGFWTX"></script>
+<script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+
+    gtag('config', 'G-MSTSKGFWTX');
+</script><meta charset="utf-8">
+<title>Per-Tenant Network Policy in One Process: ePHPm&#39;s eBPF Thread Tags - Luther Monson</title>
+<meta name="description" content="Every site on an ePHPm server runs inside the same process, so a normal firewall can&#39;t tell them apart. A small eBPF program tags each thread with its site and keeps sites from reaching each other&#39;s local ports, at under a microsecond per connection.">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<meta name="twitter:card" content="summary_large_image"><meta name="twitter:site" content="@luthermonson">
+
+<meta property="og:site_name" content="Luther Monson">
+<meta property="og:title" content="Per-Tenant Network Policy in One Process: ePHPm&#39;s eBPF Thread Tags">
+<meta property="og:description" content="Every site on an ePHPm server runs inside the same process, so a normal firewall can&#39;t tell them apart. A small eBPF program tags each thread with its site and keeps sites from reaching each other&#39;s local ports, at under a microsecond per connection.">
+<meta property="og:type" content="article">
+<meta property="og:url" content="https://luth.io/blog/2026/08/ephpm-ebpf-per-vhost-network-policy/">
+    <meta property="og:image" content="https://luth.io/img/2026/08/ephpm-ebpf-per-vhost-network-flow.svg">
+    <meta property="og:image:alt" content="Flow from a PHP pool thread writing its vhost tag into a BPF map, through the bind and connect cgroup hooks, to allow, rewrite or EPERM">
+
+
+  <link rel="manifest" href="/favicon/site.webmanifest?v=1">
+  <link rel="apple-touch-icon" sizes="180x180" href="/favicon/apple-touch-icon.png?v=1">
+  <link rel="icon" type="image/png" sizes="32x32" href="/favicon/favicon-32x32.png?v=1">
+  <link rel="icon" type="image/png" sizes="16x16" href="/favicon/favicon-16x16.png?v=1">
+  
+    <link rel="mask-icon" href="/favicon/safari-pinned-tab.svg?v=1" color="#ffffff">
+    <link rel="shortcut icon" href="/favicon/favicon.ico?v=1">
+    <meta name="msapplication-config" content="/favicon/browserconfig.xml?v=1">
+  
+  <meta name="msapplication-TileColor" content="#ffffff">
+  <meta name="theme-color" content="#ffffff">
+
+
+  <meta name="generator" content="Hugo 0.160.1">
+  <link rel="alternate" type="application/rss+xml" href="https://luth.io/index.xml" title="Luther Monson">
+  <link rel="stylesheet" href="/css/bundle.min.e1ffed86714fbb7eff75eab221c0c61b8260be0c7d1c08db0fcb7a2bdb6af7c9.css" integrity="sha256-4f/thnFPu37/deqyIcDGG4Jgvgx9HAjbD8t6K9tq98k="><link rel="stylesheet" href="/css/add-on.css">
+        <link rel="stylesheet" href="/css/code.css">
+        <link rel="stylesheet" href="/css/mobile.css">
+</head>
+
+  <body>
+    
+
+<header id="site-header">
+  <nav id="site-nav">
+    <h1 class="nav-title">
+      <a href="/" class="nav">
+        <img class="nav-avatar" src="/img/luther-monson-headshot.jpg" alt="" width="32" height="32">
+        
+          Blog
+        
+      </a>
+    </h1>
+    <menu id="site-nav-menu" class="flyout-menu menu">
+      
+        
+          
+          <a href="/" class="nav link"><i class='fa fa-home'></i> Home</a>
+        
+      
+        
+          
+          <a href="/about" class="nav link"><i class='far fa-id-card'></i> About</a>
+        
+      
+        
+          
+          <a href="/blog" class="nav link"><i class='far fa-newspaper'></i> Blog</a>
+        
+      
+        
+          
+          <a href="/archive" class="nav link"><i class='far fa-calendar-alt'></i> Archive</a>
+        
+      
+        
+          
+          <a href="/categories" class="nav link"><i class='fas fa-sitemap'></i> Categories</a>
+        
+      
+      <a href="#share-menu" class="nav link share-toggle"><i class="fas fa-share-alt">&nbsp;</i>Share</a>
+      <a href="#search-input" class="nav link search-toggle"><i class="fas fa-search">&nbsp;</i>Search</a>
+    </menu>
+    <a href="#search-input" class="nav search-toggle"><i class="fas fa-search fa-2x">&nbsp;</i></a>
+    <a href="#share-menu" class="nav share-toggle"><i class="fas fa-share-alt fa-2x">&nbsp;</i></a>
+    
+    <a href="#site-nav" class="nav nav-toggle"><i class="fas fa-bars fa-2x"></i></a>
+  </nav>
+  <menu id="search" class="menu"><input id="search-input" class="search-input menu"></input><div id="search-results" class="search-results menu"></div></menu>
+  
+  
+    <menu id="share-menu" class="flyout-menu menu">
+      <h1>Share Post</h1>
+      
+
+
+
+
+  
+    
+    <a href="//twitter.com/share?text=Per-Tenant%20Network%20Policy%20in%20One%20Process%3a%20ePHPm%27s%20eBPF%20Thread%20Tags&amp;url=https%3a%2f%2fluth.io%2fblog%2f2026%2f08%2fephpm-ebpf-per-vhost-network-policy%2f" target="_blank" rel="noopener" class="nav share-btn twitter">
+        <p>Twitter</p>
+      </a>
+  
+
+  
+      <a href="//www.facebook.com/sharer/sharer.php?u=https%3a%2f%2fluth.io%2fblog%2f2026%2f08%2fephpm-ebpf-per-vhost-network-policy%2f" target="_blank" rel="noopener" class="nav share-btn facebook">
+        <p>Facebook</p>
+        </a>
+  
+
+  
+    <a href="//www.reddit.com/submit?url=https%3a%2f%2fluth.io%2fblog%2f2026%2f08%2fephpm-ebpf-per-vhost-network-policy%2f&amp;title=Per-Tenant%20Network%20Policy%20in%20One%20Process%3a%20ePHPm%27s%20eBPF%20Thread%20Tags" target="_blank" rel="noopener" class="nav share-btn reddit">
+          <p>Reddit</p>
+        </a>
+  
+
+  
+        <a href="//www.linkedin.com/shareArticle?url=https%3a%2f%2fluth.io%2fblog%2f2026%2f08%2fephpm-ebpf-per-vhost-network-policy%2f&amp;title=Per-Tenant%20Network%20Policy%20in%20One%20Process%3a%20ePHPm%27s%20eBPF%20Thread%20Tags" target="_blank" rel="noopener" class="nav share-btn linkedin">
+            <p>LinkedIn</p>
+          </a>
+  
+
+  
+        <a href="//www.pinterest.com/pin/create/button/?url=https%3a%2f%2fluth.io%2fblog%2f2026%2f08%2fephpm-ebpf-per-vhost-network-policy%2f&amp;description=Per-Tenant%20Network%20Policy%20in%20One%20Process%3a%20ePHPm%27s%20eBPF%20Thread%20Tags" target="_blank" rel="noopener" class="nav share-btn pinterest">
+          <p>Pinterest</p>
+        </a>
+  
+
+  
+        <a href="mailto:?subject=Check%20out%20this%20post%20by Luther%20Monson&amp;body=https%3a%2f%2fluth.io%2fblog%2f2026%2f08%2fephpm-ebpf-per-vhost-network-policy%2f" target="_blank" class="nav share-btn email" data-proofer-ignore>
+          <p>Email</p>
+        </a>
+  
+
+
+    </menu>
+  
+</header>
+
+    <div id="wrapper">
+      <section id="site-intro" class="hidden-single-column">
+  <a href="/"><img src="/img/luther-monson-headshot.jpg" class="circle" width="100" alt="Luther Monson, Staff Software Engineer at SUSE" /></a>
+  <header>
+    <h1>Luther Monson</h1>
+  </header>
+  <main>
+    <p>Go by way of PHP &middot; Containers &middot; VMs &middot; Windows &middot; Kubernetes</p>
+  </main>
+  
+    <footer>
+      <ul class="socnet-icons">
+        
+
+        <li><a href="//github.com/luthermonson" target="_blank" rel="noopener" title="GitHub" class="fab fa-github"></a></li>
+
+
+
+
+
+
+
+
+
+
+
+<li><a href="//www.linkedin.com/in/luthermonson" target="_blank" rel="noopener" title="LinkedIn" class="fab fa-linkedin"></a></li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li><a href="//twitter.com/luthermonson" target="_blank" rel="noopener" title="Twitter" class="fab fa-twitter"></a></li>
+
+
+
+
+
+
+
+
+
+
+
+<li><a href="mailto:luther.monson@gmail.com" target="_blank" title="Email" class="far fa-envelope"></a></li>
+
+      </ul>
+    </footer>
+  
+</section>
+
+      <main id="site-main">
+        
+  <article>
+    <div class="post">
+      <header>
+  <div class="title">
+    
+      <h2><a href="/blog/2026/08/ephpm-ebpf-per-vhost-network-policy/">Per-Tenant Network Policy in One Process: ePHPm&#39;s eBPF Thread Tags</a></h2>
+    
+    
+      <p>Every site on an ePHPm server runs inside the same process, so a normal firewall can&#39;t tell them apart. A small eBPF program tags each thread with its site and keeps sites from reaching each other&#39;s local ports, at under a microsecond per connection.</p>
+    
+  </div>
+  <div class="meta">
+    <time datetime="2026-08-28 20:40:00 -0700 PDT">August 28, 2026</time>
+    
+    <p>17-Minute Read</p>
+  </div>
+</header>
+
+      <div id="socnet-share">
+        
+
+
+
+
+  
+    
+    <a href="//twitter.com/share?text=Per-Tenant%20Network%20Policy%20in%20One%20Process%3a%20ePHPm%27s%20eBPF%20Thread%20Tags&amp;url=https%3a%2f%2fluth.io%2fblog%2f2026%2f08%2fephpm-ebpf-per-vhost-network-policy%2f" target="_blank" rel="noopener" class="nav share-btn twitter">
+        <p>Twitter</p>
+      </a>
+  
+
+  
+      <a href="//www.facebook.com/sharer/sharer.php?u=https%3a%2f%2fluth.io%2fblog%2f2026%2f08%2fephpm-ebpf-per-vhost-network-policy%2f" target="_blank" rel="noopener" class="nav share-btn facebook">
+        <p>Facebook</p>
+        </a>
+  
+
+  
+    <a href="//www.reddit.com/submit?url=https%3a%2f%2fluth.io%2fblog%2f2026%2f08%2fephpm-ebpf-per-vhost-network-policy%2f&amp;title=Per-Tenant%20Network%20Policy%20in%20One%20Process%3a%20ePHPm%27s%20eBPF%20Thread%20Tags" target="_blank" rel="noopener" class="nav share-btn reddit">
+          <p>Reddit</p>
+        </a>
+  
+
+  
+        <a href="//www.linkedin.com/shareArticle?url=https%3a%2f%2fluth.io%2fblog%2f2026%2f08%2fephpm-ebpf-per-vhost-network-policy%2f&amp;title=Per-Tenant%20Network%20Policy%20in%20One%20Process%3a%20ePHPm%27s%20eBPF%20Thread%20Tags" target="_blank" rel="noopener" class="nav share-btn linkedin">
+            <p>LinkedIn</p>
+          </a>
+  
+
+  
+        <a href="//www.pinterest.com/pin/create/button/?url=https%3a%2f%2fluth.io%2fblog%2f2026%2f08%2fephpm-ebpf-per-vhost-network-policy%2f&amp;description=Per-Tenant%20Network%20Policy%20in%20One%20Process%3a%20ePHPm%27s%20eBPF%20Thread%20Tags" target="_blank" rel="noopener" class="nav share-btn pinterest">
+          <p>Pinterest</p>
+        </a>
+  
+
+  
+        <a href="mailto:?subject=Check%20out%20this%20post%20by Luther%20Monson&amp;body=https%3a%2f%2fluth.io%2fblog%2f2026%2f08%2fephpm-ebpf-per-vhost-network-policy%2f" target="_blank" class="nav share-btn email" data-proofer-ignore>
+          <p>Email</p>
+        </a>
+  
+
+
+      </div>
+      <div class="content">
+        
+        <p>In multi-tenant mode <a href="https://github.com/ephpm/ephpm">ePHPm</a> serves every site in <code>sites_dir</code> from one process. Every
+tenant&rsquo;s PHP runs as the same OS user, on the same pool of ZTS threads, and a thread that just served <code>blog.example</code>
+will serve <code>shop.example</code> a few milliseconds later. That&rsquo;s the density win. It also means the kernel has no idea
+which tenant is behind a given <code>connect()</code>. As far as Linux is concerned it&rsquo;s all <code>ephpm-web</code>.</p>
+<p>Most of the isolation work in ePHPm happens above the kernel: <code>open_basedir</code>, the function denylist, per-site
+databases and KV keyspaces. Network is the one place where that isn&rsquo;t enough. This week we brought eBPF in to give
+the kernel a per-tenant identity. It went from a roadmap doc on Wednesday morning to merged that evening
+(<a href="https://github.com/ephpm/ephpm/pull/413">#413</a>, aimed at v0.8.1). v0.8.1 never got a release because its Linux
+legs failed to link. v0.8.2 shipped with the BPF object silently stubbed out, and v0.8.3 was the first release that
+actually carried it. This post covers what it enforces, what it costs, what broke on the way out the door, and what
+it doesn&rsquo;t do.</p>
+<p><img src="/img/2026/08/ephpm-ebpf-per-vhost-network-flow.svg" alt="How a request’s vhost reaches the connect hook"></p>
+<h3 id="why-uid-rules-cant-see-tenants">Why uid rules can&rsquo;t see tenants</h3>
+<p>The hardened preview host already had an nftables table scoped to <code>meta skuid ephpm-web</code>: loopback sealed, cloud
+metadata and RFC1918 dropped, DNS pinned. That&rsquo;s a good floor, and it treats every tenant the same, because a uid
+match is all it has to go on. Two things fall out of that:</p>
+<ul>
+<li><strong>No sidecars.</strong> If tenant A wants to run something on <code>127.0.0.1:8080</code> for its own PHP to talk to, you either seal
+loopback for everyone (A can&rsquo;t reach its own sidecar) or open it for everyone (B can reach A&rsquo;s sidecar too).</li>
+<li><strong>No per-tenant ports.</strong> Two tenants that both hardcode <code>127.0.0.1:8080</code> collide on bind.</li>
+</ul>
+<p>Network namespaces are the textbook answer, but they&rsquo;re built for one process per context. For ePHPm that means a
+<code>setns()</code> per request plus <code>CAP_SYS_ADMIN</code>, and a veth, route, NAT and DNS setup per tenant. That doesn&rsquo;t fit a
+model where a 1 GB node is supposed to hold <a href="/blog/2026/08/what-does-one-more-wordpress-site-cost/">a lot of sites</a>.
+What we needed was a way to attach an identity to a <em>thread</em> for the duration of one request and have the kernel
+read it at <code>bind()</code>/<code>connect()</code> time.</p>
+<h3 id="a-tag-per-thread">A tag per thread</h3>
+<p>The whole design hangs off one BPF hash map, <code>tag</code>, keyed by thread ID with a numeric vhost ID as the value. Before a
+request&rsquo;s PHP runs, the router writes <code>tag[tid] = vhost</code>, and it deletes the entry when the request is done. From
+<code>crates/ephpm-server/src/tenant_ebpf.rs</code>:</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-rust" data-lang="rust"><span class="line"><span class="cl"><span class="k">pub</span><span class="w"> </span><span class="k">fn</span> <span class="nf">tag_current_thread</span><span class="p">(</span><span class="bp">self</span>: <span class="kp">&amp;</span><span class="nc">Arc</span><span class="o">&lt;</span><span class="bp">Self</span><span class="o">&gt;</span><span class="p">,</span><span class="w"> </span><span class="n">site_key</span>: <span class="kp">&amp;</span><span class="kt">str</span><span class="p">)</span><span class="w"> </span>-&gt; <span class="nc">TagGuard</span><span class="w"> </span><span class="p">{</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="kd">let</span><span class="w"> </span><span class="n">vhost</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="bp">self</span><span class="p">.</span><span class="n">site_ids</span><span class="p">.</span><span class="n">id_for</span><span class="p">(</span><span class="n">site_key</span><span class="p">);</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="kd">let</span><span class="w"> </span><span class="n">tid</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">current_tid</span><span class="p">();</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="kd">let</span><span class="w"> </span><span class="nb">Ok</span><span class="p">(</span><span class="k">mut</span><span class="w"> </span><span class="n">tag</span><span class="p">)</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="bp">self</span><span class="p">.</span><span class="n">tag</span><span class="p">.</span><span class="n">lock</span><span class="p">()</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">        </span><span class="o">&amp;&amp;</span><span class="w"> </span><span class="kd">let</span><span class="w"> </span><span class="nb">Err</span><span class="p">(</span><span class="n">e</span><span class="p">)</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">tag</span><span class="p">.</span><span class="n">insert</span><span class="p">(</span><span class="n">tid</span><span class="p">,</span><span class="w"> </span><span class="n">vhost</span><span class="p">,</span><span class="w"> </span><span class="mi">0</span><span class="p">)</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="p">{</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">        </span><span class="n">tracing</span>::<span class="fm">warn!</span><span class="p">(</span><span class="n">tid</span><span class="p">,</span><span class="w"> </span><span class="n">vhost</span><span class="p">,</span><span class="w"> </span><span class="n">error</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="o">%</span><span class="n">e</span><span class="p">,</span><span class="w"> </span><span class="s">&#34;tenant_ebpf: failed to write tag&#34;</span><span class="p">);</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="p">}</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="n">TagGuard</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">owner</span>: <span class="nc">Arc</span>::<span class="n">clone</span><span class="p">(</span><span class="bp">self</span><span class="p">),</span><span class="w"> </span><span class="n">tid</span><span class="w"> </span><span class="p">}</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="p">}</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="k">impl</span><span class="w"> </span><span class="nb">Drop</span><span class="w"> </span><span class="k">for</span><span class="w"> </span><span class="n">TagGuard</span><span class="w"> </span><span class="p">{</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="k">fn</span> <span class="nf">drop</span><span class="p">(</span><span class="o">&amp;</span><span class="k">mut</span><span class="w"> </span><span class="bp">self</span><span class="p">)</span><span class="w"> </span><span class="p">{</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">        </span><span class="k">if</span><span class="w"> </span><span class="kd">let</span><span class="w"> </span><span class="nb">Ok</span><span class="p">(</span><span class="k">mut</span><span class="w"> </span><span class="n">tag</span><span class="p">)</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="bp">self</span><span class="p">.</span><span class="n">owner</span><span class="p">.</span><span class="n">tag</span><span class="p">.</span><span class="n">lock</span><span class="p">()</span><span class="w"> </span><span class="p">{</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">            </span><span class="kd">let</span><span class="w"> </span><span class="n">_</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">tag</span><span class="p">.</span><span class="n">remove</span><span class="p">(</span><span class="o">&amp;</span><span class="bp">self</span><span class="p">.</span><span class="n">tid</span><span class="p">);</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">        </span><span class="p">}</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="p">}</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="p">}</span><span class="w">
+</span></span></span></code></pre></div><p>The router creates the guard at the top of <code>run_php</code>, the per-request closure both fpm engines run, so it&rsquo;s dropped
+on the same pool thread when that closure returns:</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-rust" data-lang="rust"><span class="line"><span class="cl"><span class="c1">// crates/ephpm-server/src/router.rs
+</span></span></span><span class="line"><span class="cl"><span class="kd">let</span><span class="w"> </span><span class="n">run_php</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">move</span><span class="w"> </span><span class="o">||</span><span class="w"> </span>-&gt; <span class="nb">Result</span><span class="o">&lt;</span><span class="n">ephpm_php</span>::<span class="n">response</span>::<span class="n">PhpResponse</span><span class="p">,</span><span class="w"> </span><span class="n">ephpm_php</span>::<span class="n">PhpError</span><span class="o">&gt;</span><span class="w"> </span><span class="p">{</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="kd">let</span><span class="w"> </span><span class="n">_ebpf_tag_guard</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">ebpf_tag</span><span class="p">.</span><span class="n">as_ref</span><span class="p">().</span><span class="n">map</span><span class="p">(</span><span class="o">|</span><span class="p">(</span><span class="n">e</span><span class="p">,</span><span class="w"> </span><span class="n">key</span><span class="p">)</span><span class="o">|</span><span class="w"> </span><span class="n">e</span><span class="p">.</span><span class="n">tag_current_thread</span><span class="p">(</span><span class="n">key</span><span class="p">));</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="c1">// ... per-site KV, DB, open_basedir, then PhpRuntime::execute ...
+</span></span></span></code></pre></div><p>The one invariant that matters here is that a stale tag must never survive onto the next request. If it did, tenant B
+would inherit tenant A&rsquo;s network identity on a reused thread, which is the exact cross-tenant leak this is supposed
+to prevent. The <code>Drop</code> is a <code>bpf_map_delete_elem</code> syscall, not a PHP call, so it doesn&rsquo;t cross PHP&rsquo;s
+<code>setjmp</code>/<code>longjmp</code> boundary, and <code>PhpRuntime::execute</code> catches its own bailout and returns a <code>Result</code>, so the closure
+always unwinds normally. The shed, 503 and hung-thread paths return before <code>run_php</code> runs at all, so they never write
+a tag in the first place.</p>
+<p>A failed tag write logs and lets the request run untagged. Keep that in mind for the limits section.</p>
+<h3 id="which-thread-is-this-really">Which thread is this, really?</h3>
+<p>On the kernel side the obvious helper is <code>bpf_get_current_pid_tgid()</code>, whose low 32 bits are the TID. The catch,
+which turned up in the proof of concept before any of this was merged, is that it returns the <em>global</em> TID. If ePHPm
+runs inside a PID namespace (a container, Kubernetes, or WSL2) the <code>gettid()</code> ePHPm sees is a different number, the
+lookup misses, and every thread looks untagged. So the loader writes the <code>{dev, ino}</code> of <code>/proc/self/ns/pid</code> into a
+one-slot <code>nscfg</code> map at startup, and the programs resolve the TID in that namespace:</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-c" data-lang="c"><span class="line"><span class="cl"><span class="c1">// crates/ephpm-server/bpf/vhostnet.bpf.c
+</span></span></span><span class="line"><span class="cl"><span class="k">static</span> <span class="n">__always_inline</span> <span class="n">__u32</span> <span class="nf">resolve_tid</span><span class="p">(</span><span class="kt">void</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl"><span class="p">{</span>
+</span></span><span class="line"><span class="cl">    <span class="n">__u32</span> <span class="n">zero</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">    <span class="k">struct</span> <span class="kt">nscfg_t</span> <span class="o">*</span><span class="n">c</span> <span class="o">=</span> <span class="nf">bpf_map_lookup_elem</span><span class="p">(</span><span class="o">&amp;</span><span class="n">nscfg</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">zero</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">    <span class="k">if</span> <span class="p">(</span><span class="n">c</span> <span class="o">&amp;&amp;</span> <span class="n">c</span><span class="o">-&gt;</span><span class="n">dev</span><span class="p">)</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">        <span class="k">struct</span> <span class="n">bpf_pidns_info</span> <span class="n">ns</span> <span class="o">=</span> <span class="p">{};</span>
+</span></span><span class="line"><span class="cl">        <span class="k">if</span> <span class="p">(</span><span class="nf">bpf_get_ns_current_pid_tgid</span><span class="p">(</span><span class="n">c</span><span class="o">-&gt;</span><span class="n">dev</span><span class="p">,</span> <span class="n">c</span><span class="o">-&gt;</span><span class="n">ino</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">ns</span><span class="p">,</span> <span class="k">sizeof</span><span class="p">(</span><span class="n">ns</span><span class="p">))</span> <span class="o">==</span> <span class="mi">0</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">            <span class="k">return</span> <span class="n">ns</span><span class="p">.</span><span class="n">pid</span><span class="p">;</span> <span class="c1">// .pid == TID in that namespace
+</span></span></span><span class="line"><span class="cl">    <span class="p">}</span>
+</span></span><span class="line"><span class="cl">    <span class="k">return</span> <span class="p">(</span><span class="n">__u32</span><span class="p">)</span><span class="nf">bpf_get_current_pid_tgid</span><span class="p">();</span> <span class="c1">// global TID (low 32 bits)
+</span></span></span><span class="line"><span class="cl"><span class="p">}</span>
+</span></span></code></pre></div><p>I got to re-learn this one personally while benchmarking for this post. I loaded the object with <code>bpftool</code> instead of
+ePHPm&rsquo;s loader and forgot to fill <code>nscfg</code>. Inside WSL2 the tagged bind came back on the port I asked for, and a
+tagged connect to a port nobody owned got <code>Connection refused</code> from the network stack instead of <code>EPERM</code> from the
+hook. The hooks were attached and doing nothing. Filling <code>nscfg</code> the way the loader does fixed it immediately:</p>
+<pre tabindex="0"><code>## nscfg left empty
+tagged -&gt; unowned 127.0.0.1:3307    r=-1 errno=Connection refused
+tagged bind 127.0.0.1:8080 -&gt; real port 8080
+
+## nscfg = {dev, ino} of /proc/self/ns/pid
+tagged -&gt; unowned 127.0.0.1:3307    r=-1 errno=Operation not permitted
+tagged bind 127.0.0.1:8080 -&gt; real port 20000
+</code></pre><p>That&rsquo;s the failure mode in a nutshell: a mismatch doesn&rsquo;t error out, it looks like a working box with no policy.</p>
+<h3 id="what-connect4-decides">What connect4 decides</h3>
+<p>Four programs attach to ePHPm&rsquo;s own cgroup: <code>cgroup/bind4</code>, <code>bind6</code>, <code>connect4</code> and <code>connect6</code>. They only touch the
+UAPI fields of <code>struct bpf_sock_addr</code> (<code>user_ip4</code>, <code>user_ip6</code>, <code>user_port</code>), so there&rsquo;s no CO-RE relocation and no
+<code>vmlinux.h</code>. <code>connect4</code> calls it loopback when the destination is <code>127.0.0.1</code> and <code>connect6</code> when it&rsquo;s <code>::1</code>, then
+both hand off to the same function, which is short enough to show whole:</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-c" data-lang="c"><span class="line"><span class="cl"><span class="k">static</span> <span class="n">__always_inline</span> <span class="kt">int</span> <span class="nf">do_connect</span><span class="p">(</span><span class="k">struct</span> <span class="n">bpf_sock_addr</span> <span class="o">*</span><span class="n">ctx</span><span class="p">,</span> <span class="kt">int</span> <span class="n">is_loopback</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl"><span class="p">{</span>
+</span></span><span class="line"><span class="cl">    <span class="n">__u32</span> <span class="o">*</span><span class="n">vhostp</span> <span class="o">=</span> <span class="nf">current_vhost</span><span class="p">();</span>
+</span></span><span class="line"><span class="cl">    <span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="n">vhostp</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">        <span class="k">return</span> <span class="mi">1</span><span class="p">;</span> <span class="c1">// untagged: connect unchanged
+</span></span></span><span class="line"><span class="cl">    <span class="n">__u32</span> <span class="n">vhost</span> <span class="o">=</span> <span class="o">*</span><span class="n">vhostp</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">    <span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="n">is_loopback</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">        <span class="k">return</span> <span class="mi">1</span><span class="p">;</span> <span class="c1">// non-loopback egress handled by the per-vhost allowlist layer
+</span></span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">    <span class="n">__u32</span> <span class="n">dport</span> <span class="o">=</span> <span class="nf">bpf_ntohs</span><span class="p">(</span><span class="n">ctx</span><span class="o">-&gt;</span><span class="n">user_port</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">    <span class="c1">// 1) Virtual port for this vhost -&gt; rewrite to its private real port.
+</span></span></span><span class="line"><span class="cl">    <span class="n">__u64</span> <span class="n">key</span> <span class="o">=</span> <span class="p">((</span><span class="n">__u64</span><span class="p">)</span><span class="n">vhost</span> <span class="o">&lt;&lt;</span> <span class="mi">32</span><span class="p">)</span> <span class="o">|</span> <span class="n">dport</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">    <span class="n">__u32</span> <span class="o">*</span><span class="n">rport</span> <span class="o">=</span> <span class="nf">bpf_map_lookup_elem</span><span class="p">(</span><span class="o">&amp;</span><span class="n">assigned</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">key</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">    <span class="k">if</span> <span class="p">(</span><span class="n">rport</span><span class="p">)</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">        <span class="n">ctx</span><span class="o">-&gt;</span><span class="n">user_port</span> <span class="o">=</span> <span class="nf">bpf_htons</span><span class="p">((</span><span class="n">__u16</span><span class="p">)</span><span class="o">*</span><span class="n">rport</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">        <span class="k">return</span> <span class="mi">1</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">    <span class="p">}</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">    <span class="c1">// 2) Shared ePHPm infra port (MySQL wire, KV RESP) -&gt; always allow.
+</span></span></span><span class="line"><span class="cl">    <span class="k">if</span> <span class="p">(</span><span class="nf">bpf_map_lookup_elem</span><span class="p">(</span><span class="o">&amp;</span><span class="n">infra_ports</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">dport</span><span class="p">))</span>
+</span></span><span class="line"><span class="cl">        <span class="k">return</span> <span class="mi">1</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">    <span class="c1">// 3) Direct connect to a real port -&gt; authorize by ownership.
+</span></span></span><span class="line"><span class="cl">    <span class="k">struct</span> <span class="kt">owner_t</span> <span class="o">*</span><span class="n">o</span> <span class="o">=</span> <span class="nf">bpf_map_lookup_elem</span><span class="p">(</span><span class="o">&amp;</span><span class="n">port_owner</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">dport</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">    <span class="k">if</span> <span class="p">(</span><span class="n">o</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">        <span class="k">return</span> <span class="p">(</span><span class="n">o</span><span class="o">-&gt;</span><span class="n">vhost</span> <span class="o">==</span> <span class="n">vhost</span><span class="p">)</span> <span class="o">?</span> <span class="mi">1</span> <span class="o">:</span> <span class="mi">0</span><span class="p">;</span> <span class="c1">// own sidecar allow; cross-vhost DENY
+</span></span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">    <span class="c1">// 4) Unowned loopback port: DENY for managed vhosts. This is the loopback
+</span></span></span><span class="line"><span class="cl">    <span class="c1">//    floor that REPLACES the static nft loopback-drop for tagged traffic.
+</span></span></span><span class="line"><span class="cl">    <span class="k">return</span> <span class="mi">0</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl"><span class="p">}</span>
+</span></span></code></pre></div><p>Returning <code>0</code> from a cgroup sockaddr program fails the syscall with <code>EPERM</code>. Step 4 is the important one. It&rsquo;s the
+loopback floor, and it means a tagged tenant can&rsquo;t reach a loopback port it doesn&rsquo;t own and isn&rsquo;t infra, which
+includes ePHPm&rsquo;s own HTTP listener and whatever else the box runs on localhost.</p>
+<p>Read that comment on the non-loopback branch carefully, though. It says public egress is &ldquo;handled by the per-vhost
+allowlist layer&rdquo;. There is no per-vhost allowlist layer. The roadmap&rsquo;s phase 1 described one, but what shipped passes
+every non-loopback connect straight through to whatever the operator&rsquo;s nftables table does, and that table is
+per-uid. So the eBPF policy is a per-tenant <em>loopback</em> policy. More on that below.</p>
+<p>The tag is also only written in fpm mode with <code>sites_dir</code> set. <code>validate()</code> rejects <code>ebpf_policy = true</code> off Linux,
+without <code>sites_dir</code>, and in worker mode. Worker mode&rsquo;s persistent loop would need per-event tagging inside the PSR-7
+envelope, and that isn&rsquo;t built.</p>
+<h3 id="every-tenant-gets-its-own-8080">Every tenant gets its own :8080</h3>
+<p>The bind side is what makes sidecars usable. When a tagged thread binds, <code>bind4</code> pops a free port from a pool ePHPm
+owns, rewrites the bind to it and records who owns it. The app asked for <code>127.0.0.1:8080</code>, the socket really lands
+on <code>:20000</code>, and when the same tenant later connects to <code>:8080</code>, step 1 above rewrites the destination to <code>:20000</code>.
+Another tenant binding <code>:8080</code> gets <code>:20001</code>. Neither app knows anything happened.</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-c" data-lang="c"><span class="line"><span class="cl"><span class="c1">// Idempotent rebind: same (vhost, vport) reuses its real port.
+</span></span></span><span class="line"><span class="cl"><span class="n">__u32</span> <span class="o">*</span><span class="n">ex</span> <span class="o">=</span> <span class="nf">bpf_map_lookup_elem</span><span class="p">(</span><span class="o">&amp;</span><span class="n">assigned</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">key</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl"><span class="k">if</span> <span class="p">(</span><span class="n">ex</span><span class="p">)</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">    <span class="n">ctx</span><span class="o">-&gt;</span><span class="n">user_port</span> <span class="o">=</span> <span class="nf">bpf_htons</span><span class="p">((</span><span class="n">__u16</span><span class="p">)</span><span class="o">*</span><span class="n">ex</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">    <span class="k">return</span> <span class="mi">1</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl"><span class="p">}</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="c1">// Per-vhost quota (anti port-bomb), enforced in-kernel on the tag.
+</span></span></span><span class="line"><span class="cl"><span class="n">__u32</span> <span class="o">*</span><span class="n">cntp</span> <span class="o">=</span> <span class="nf">bpf_map_lookup_elem</span><span class="p">(</span><span class="o">&amp;</span><span class="n">sidecar_count</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">vhost</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl"><span class="n">__u32</span> <span class="n">cnt</span> <span class="o">=</span> <span class="n">cntp</span> <span class="o">?</span> <span class="o">*</span><span class="nl">cntp</span> <span class="p">:</span> <span class="mi">0</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl"><span class="k">if</span> <span class="p">(</span><span class="n">cnt</span> <span class="o">&gt;=</span> <span class="nf">quota_max</span><span class="p">())</span>
+</span></span><span class="line"><span class="cl">    <span class="k">return</span> <span class="mi">0</span><span class="p">;</span> <span class="c1">// DENY: this vhost is at its sidecar cap
+</span></span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="n">__u32</span> <span class="n">rport</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl"><span class="k">if</span> <span class="p">(</span><span class="nf">bpf_map_pop_elem</span><span class="p">(</span><span class="o">&amp;</span><span class="n">port_pool</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">rport</span><span class="p">)</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">    <span class="k">return</span> <span class="mi">0</span><span class="p">;</span> <span class="c1">// DENY: pool exhausted (box-wide sidecar cap reached)
+</span></span></span></code></pre></div><p>The pool is a <code>BPF_MAP_TYPE_QUEUE</code> that the loader fills from <code>sidecar_port_range</code> (default <code>20000-32767</code>) at
+startup, so allocating is an O(1) pop with no scan. Before filling it, the loader reads
+<code>net.ipv4.ip_local_port_range</code> and refuses to start if the ranges overlap. Otherwise an outbound connect could get an
+ephemeral source port that ePHPm also wants to hand out as a sidecar port.</p>
+<p>The part that didn&rsquo;t make it is giving ports back. Returning a port to the pool when a listener closes needs either
+a <code>cgroup/sock_release</code> program that reads the socket&rsquo;s source port (the verifier rejects that read on 6.18) or a
+<code>BPF_MAP_TYPE_SK_STORAGE</code> map to hang ownership on the socket (aya 0.13 can&rsquo;t load that map type). So ports and
+per-vhost counts come back only when the process exits. The <code>assigned</code> map keeps a rebind of the <em>same</em> virtual port
+idempotent, so a sidecar that restarts on <code>:8080</code> doesn&rsquo;t burn a second slot, but a tenant that cycles through many
+different ports will hit its <code>max_sidecar_ports_per_vhost</code> cap (default 8) until ePHPm restarts. The code comments
+and the guide say that&rsquo;s coming in v0.8.2. v0.8.5 is out and it still isn&rsquo;t there, because neither blocker has moved.</p>
+<h3 id="watching-it-work">Watching it work</h3>
+<p>There&rsquo;s no automated test in the repo yet that loads these programs. They need root and a writable cgroup v2
+hierarchy, and nothing in CI has either. So I compiled the v0.8.5 <code>vhostnet.bpf.c</code> with <code>build.rs</code>&rsquo;s flags, attached
+it to a scratch cgroup with <code>bpftool</code>, and ran a small C program as three tenants. Alice and Bob each bind
+<code>127.0.0.1:8080</code> from a tagged thread, and the main thread then re-tags itself as one tenant or the other and
+connects:</p>
+<pre tabindex="0"><code>alice bind 127.0.0.1:8080 -&gt; real port 20000
+bob   bind 127.0.0.1:8080 -&gt; real port 20001
+bob      -&gt; 127.0.0.1:8080  (own virtual port)     connected, read &#34;hello from bob&#34;
+bob      -&gt; 127.0.0.1:20001 (own real port)        connected, read &#34;hello from bob&#34;
+bob      -&gt; 127.0.0.1:20000 (alice&#39;s real port)    Operation not permitted
+bob      -&gt; 127.0.0.1:3306  (infra port)           connected, read &#34;hello from infra&#34;
+bob      -&gt; 127.0.0.1:9999  (unowned port)         Operation not permitted
+alice    -&gt; 127.0.0.1:8080  (own virtual port)     connected, read &#34;hello from alice&#34;
+alice    -&gt; 127.0.0.1:20001 (bob&#39;s real port)      Operation not permitted
+untagged -&gt; 127.0.0.1:20000 (alice&#39;s real port)    connected, read &#34;hello from alice&#34;
+carol    bind 127.0.0.1:9001 -&gt; real port 20002
+carol    bind 127.0.0.1:9008 -&gt; real port 20009
+carol    bind 127.0.0.1:9009 -&gt; Operation not permitted
+</code></pre><p>Both tenants hardcoded <code>:8080</code> and each one reached its own listener. A cross-tenant connect to the other&rsquo;s real port
+is a kernel <code>EPERM</code>, not a <code>Connection refused</code>. Carol&rsquo;s ninth distinct port hits the quota of 8. The untagged line
+is the one to remember for later: a thread with no tag isn&rsquo;t a tenant, so the policy doesn&rsquo;t apply to it.</p>
+<p>The other half of verifying this is cleanup. The loader attaches with fd-based <code>bpf_link</code>s and pins nothing to bpffs.
+A graceful shutdown drops the <code>aya::Ebpf</code> and the kernel detaches. A <code>kill -9</code> closes the fds and the kernel
+refcounts everything to zero on its own. The loader commit (<a href="https://github.com/ephpm/ephpm/commit/0cb5ec7"><code>0cb5ec7</code></a>)
+records <code>bpftool</code> showing 0 programs, 0 maps and 0 cgroup attachments after a <code>kill -9</code>. I didn&rsquo;t repeat that with
+aya myself, since my harness used <code>bpftool</code> to load. A cold restart never has stale BPF state to reconcile.</p>
+<h3 id="what-it-costs">What it costs</h3>
+<p>The hook runs once per <code>bind()</code> or <code>connect()</code>, not per packet, and it&rsquo;s a handful of hash lookups. The other cost
+is the two map syscalls per PHP request. I measured both with the same harness (test setup below):</p>
+<p><img src="/img/2026/08/ephpm-ebpf-per-vhost-network-overhead.svg" alt="Added connect() latency and per-request tag cost"></p>
+<p>A loopback TCP <code>connect()</code> took about 35.4 µs at p50 with nothing attached. With the four programs attached it took
+0.7 to 0.9 µs longer, about 2 to 2.5%, and the tagged paths (lookup plus rewrite or infra allow) cost a little more
+than the untagged one. The p99 sat at 53 to 59 µs in every configuration and didn&rsquo;t separate from the noise. The
+tag write plus delete that every request pays came out at 1.64 µs p50, about 800 ns per <code>bpf()</code> syscall. That&rsquo;s
+several times the roadmap&rsquo;s &ldquo;tens to low-hundreds of nanoseconds&rdquo; estimate, but next to running a PHP request it&rsquo;s
+still noise.</p>
+<h3 id="shipping-it-was-the-hard-part">Shipping it was the hard part</h3>
+<p>The kernel code was the quick part. Getting a C BPF object into a Rust binary that builds on four CI shapes took
+five follow-up commits over Wednesday and Thursday, with v0.8.2 through v0.8.4 cut along the way.</p>
+<p><strong>clang isn&rsquo;t always there.</strong> The BPF program is C, compiled by <code>build.rs</code> with <code>clang -target bpf</code> and embedded with
+<code>aya::include_bytes_aligned!</code>. (Plain <code>include_bytes!</code> puts the blob at 1-byte alignment and aya&rsquo;s ELF parser fails
+with &ldquo;error parsing ELF data&rdquo;.) The reasoning was that clang is already a build dependency for bindgen. It isn&rsquo;t:
+stub-mode CI installs <code>libclang-dev</code> for bindgen but not the <code>clang</code> binary, and the first version of <code>build.rs</code>
+panicked and broke every job that compiled <code>ephpm-server</code>. Now <code>build.rs</code> never panics:</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-rust" data-lang="rust"><span class="line"><span class="cl"><span class="c1">// crates/ephpm-server/build.rs
+</span></span></span><span class="line"><span class="cl"><span class="k">if</span><span class="w"> </span><span class="o">!</span><span class="fm">matches!</span><span class="p">(</span><span class="o">&amp;</span><span class="n">run</span><span class="p">,</span><span class="w"> </span><span class="nb">Ok</span><span class="p">(</span><span class="n">status</span><span class="p">)</span><span class="w"> </span><span class="k">if</span><span class="w"> </span><span class="n">status</span><span class="p">.</span><span class="n">success</span><span class="p">())</span><span class="w"> </span><span class="p">{</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="n">std</span>::<span class="n">fs</span>::<span class="n">write</span><span class="p">(</span><span class="o">&amp;</span><span class="n">out</span><span class="p">,</span><span class="w"> </span><span class="p">[])</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">        </span><span class="p">.</span><span class="n">expect</span><span class="p">(</span><span class="s">&#34;write placeholder eBPF object so include_bytes_aligned! compiles&#34;</span><span class="p">);</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="c1">// ... loud cargo:warning naming why ebpf_policy is unavailable ...
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="k">return</span><span class="p">;</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="p">}</span><span class="w">
+</span></span></span></code></pre></div><p>An empty object fails closed at load time, the feature is off by default, and the release is smoke-tested to make
+sure the real object shipped. (The module doc comment at the top of <code>build.rs</code> still says it fails the build when
+clang is missing. It doesn&rsquo;t.)</p>
+<p><strong><code>gettid()</code> isn&rsquo;t in old glibc.</strong> The release links against an older glibc to keep the binary&rsquo;s floor low, and the
+glibc <code>gettid()</code> wrapper only exists from 2.30. The v0.8.1 release legs failed with <code>undefined symbol: gettid</code> while
+CI on newer runners was green. The fix is the raw syscall, which has always existed:</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-rust" data-lang="rust"><span class="line"><span class="cl"><span class="kd">let</span><span class="w"> </span><span class="n">tid</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">unsafe</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">libc</span>::<span class="n">syscall</span><span class="p">(</span><span class="n">libc</span>::<span class="n">SYS_gettid</span><span class="p">)</span><span class="w"> </span><span class="p">};</span><span class="w">
+</span></span></span></code></pre></div><p><strong>AlmaLinux 8 has no libbpf headers.</strong> Even with clang installed on the release legs, v0.8.2 shipped with the eBPF
+object <em>stubbed</em>. The release builds in an almalinux8 image, <code>libbpf-devel</code> isn&rsquo;t packaged there,
+<code>bpf/bpf_helpers.h</code> wasn&rsquo;t found, and the never-panic path dutifully wrote the empty placeholder. The fix was to
+vendor the five program-side libbpf headers under <code>bpf/include</code> and pass <code>-I bpf/include</code>. That&rsquo;s the downside of a
+build that degrades: it degrades quietly, which is why the release smoke test exists.</p>
+<p><strong><code>LimitMEMLOCK=infinity</code> in the unit.</strong> The loader calls <code>setrlimit(RLIMIT_MEMLOCK, infinity)</code> itself, but the
+hardened unit sets <code>NoNewPrivileges</code> and doesn&rsquo;t grant <code>CAP_SYS_RESOURCE</code>, so the raise is refused. Per
+<a href="https://github.com/ephpm/ephpm/commit/bd2dd03"><code>bd2dd03</code></a>, map creation then failed with <code>Operation not permitted</code>
+even with <code>CAP_BPF</code> and <code>CAP_NET_ADMIN</code> present, an error that sends you looking at the capabilities, which are fine.
+I didn&rsquo;t reproduce that one. The loader&rsquo;s own comment says the rlimit only matters before 5.11, when BPF memory moved
+to cgroup accounting, so I&rsquo;d treat the setting as cheap insurance and keep it. The drop-in:</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-ini" data-lang="ini"><span class="line"><span class="cl"><span class="c1"># /etc/systemd/system/ephpm.service.d/ebpf.conf</span>
+</span></span><span class="line"><span class="cl"><span class="k">[Service]</span>
+</span></span><span class="line"><span class="cl"><span class="na">AmbientCapabilities</span><span class="o">=</span><span class="s">CAP_NET_BIND_SERVICE CAP_BPF CAP_NET_ADMIN</span>
+</span></span><span class="line"><span class="cl"><span class="na">CapabilityBoundingSet</span><span class="o">=</span><span class="s">CAP_NET_BIND_SERVICE CAP_BPF CAP_NET_ADMIN</span>
+</span></span><span class="line"><span class="cl"><span class="na">LimitMEMLOCK</span><span class="o">=</span><span class="s">infinity</span>
+</span></span></code></pre></div><p><strong>The firewall has to step aside.</strong> The cgroup connect hook runs before the packet ever reaches nftables. If your
+nft table still drops loopback for the ePHPm uid, the hook authorizes a sidecar connect and nft kills it one step
+later, and the app just sees a refused connection. With <code>ebpf_policy</code> on, the loopback drop has to come out of the
+nft table so <code>connect4</code> is the only thing deciding loopback, while the metadata, LAN and DNS rules stay put. ePHPm
+can&rsquo;t see your firewall, so all it can do is name the handoff in the startup error when the load fails. (The guide
+says it also logs a warning on a successful start. I couldn&rsquo;t find one in the code.)</p>
+<p>Related: <a href="https://github.com/ephpm/ephpm/commit/6df4cdc"><code>6df4cdc</code></a> landed alongside the loader. With egress enforced
+below PHP, blocking <code>fsockopen</code> while <code>curl</code> and <code>stream_socket_client</code> reach the same places is just friction, so
+<code>network_egress_externally_managed = true</code> drops it from the denylist. <code>pfsockopen</code> stays blocked. That one is about
+persistent sockets outliving a request on a shared thread, which the network layer does nothing about.</p>
+<h3 id="what-this-doesnt-do">What this doesn&rsquo;t do</h3>
+<ul>
+<li><strong>Public egress isn&rsquo;t per tenant.</strong> The eBPF layer governs loopback and sidecar ownership. Every non-loopback
+connect passes through to the operator&rsquo;s nft table, which ePHPm doesn&rsquo;t ship and which is per-uid. With the
+hardened table in place a hostile tenant still reaches public addresses.</li>
+<li><strong>It covers <code>bind()</code> and <code>connect()</code>, nothing else.</strong> Unix domain sockets aren&rsquo;t covered by these hooks, and
+neither is anything that doesn&rsquo;t go through a cgroup sockaddr bind or connect.</li>
+<li><strong>Untagged means unrestricted.</strong> Threads with no tag pass through by design: ePHPm&rsquo;s own async runtime, and any
+request for a Host that matched no vhost. A failed tag write also leaves the request untagged. The loader&rsquo;s comment
+says that fails closed. From the code it looks to me like an untagged request is let through, not denied.</li>
+<li><strong>Only request threads are tagged.</strong> A process started from PHP has its own TIDs and none of them are in the map.
+The config doc for <code>cgroup_path</code> says the policy covers &ldquo;any sidecars it spawns&rdquo;. The hooks fire for that process
+because it&rsquo;s in the cgroup, but they treat it as untagged.</li>
+<li><strong>Linux only, with privileges.</strong> Kernel 5.10 or newer with <code>CONFIG_CGROUP_BPF</code>, cgroup v2, <code>CAP_BPF</code> +
+<code>CAP_NET_ADMIN</code>, and the memlock limit above. That&rsquo;s two more capabilities than the hardened unit had, and that&rsquo;s
+the trade. On Windows and macOS, setting <code>ebpf_policy = true</code> is a config error.</li>
+<li><strong>Ports leak until restart</strong>, as covered above.</li>
+<li><strong>No test loads it.</strong> Nothing in the test suite attaches the BPF programs. The e2e hardening suite covers the
+function denylist and cross-tenant <code>ATTACH</code> (the litewire side of that is in the
+<a href="/blog/2026/08/hardening-rust-database-proxy/">database proxy hardening post</a>), not eBPF. Getting a privileged
+runner that can exercise it is on the list.</li>
+<li><strong>It&rsquo;s still one process.</strong> A tenant that crashes the process takes everyone down. This is a confidentiality
+boundary, not an availability one.</li>
+</ul>
+<p>It&rsquo;s off by default, labeled experimental, and fails closed at startup: if the programs can&rsquo;t load or attach, or the
+port range overlaps the ephemeral range, ePHPm refuses to start rather than run without the policy. Next up is a
+privileged test that runs the real loader, then close-time port reclaim, which is waiting on either a loader that can
+do <code>SK_STORAGE</code> or another close signal the verifier will accept.</p>
+<h3 id="test-setup">Test setup</h3>
+<ul>
+<li>WSL2 on Windows 11, kernel 6.18, cgroup v2, BTF present.</li>
+<li>ePHPm <a href="https://github.com/ephpm/ephpm/releases/tag/v0.8.5">v0.8.5</a>
+(<a href="https://github.com/ephpm/ephpm/commit/d7b1898"><code>d7b1898</code></a>). I compiled its <code>vhostnet.bpf.c</code> with the clang flags
+from its <code>build.rs</code> (<code>-O2 -g -Wall -Werror -target bpf -I bpf/include</code>), then <code>llvm-strip -g</code>.</li>
+<li>I loaded it with <code>bpftool prog loadall</code>, attached the four programs to a scratch cgroup, filled <code>port_pool</code> with
+101 ports, set the quota to 8, added <code>3306</code> to <code>infra_ports</code> and wrote <code>nscfg</code> the way the loader does. Same kernel
+object, different loader.</li>
+<li>The harness is a C program running in that cgroup. It times only the <code>connect()</code> syscall to a loopback listener
+(with <code>SO_LINGER</code> 0 so closes don&rsquo;t pile up <code>TIME_WAIT</code>), 20,000 connects per case, five rounds with programs
+attached and five without. The tag cost is a <code>BPF_MAP_UPDATE_ELEM</code> plus <code>BPF_MAP_DELETE_ELEM</code> on the <code>tag</code> map,
+20,000 times per round. The chart shows the mean of the per-round p50s.</li>
+<li>All of this is loopback on one machine inside a VM, so treat the absolute numbers as this box&rsquo;s numbers. The deltas
+are the useful part. I didn&rsquo;t measure end-to-end request throughput through a PHP-linked ePHPm with the policy
+on.</li>
+</ul>
+<h3 id="links">Links</h3>
+<ul>
+<li>Design: <a href="https://github.com/ephpm/ephpm/blob/v0.8.5/site/content/roadmap/ebpf-per-vhost-network.md">roadmap doc</a>,
+<a href="https://github.com/ephpm/ephpm/pull/412">#412</a>, <a href="https://github.com/ephpm/ephpm/commit/4df45eb"><code>4df45eb</code></a></li>
+<li>Feature PR: <a href="https://github.com/ephpm/ephpm/pull/413">#413</a></li>
+<li>Config and loader: <a href="https://github.com/ephpm/ephpm/commit/56ea958"><code>56ea958</code></a>,
+<a href="https://github.com/ephpm/ephpm/commit/0cb5ec7"><code>0cb5ec7</code></a></li>
+<li><code>fsockopen</code> lifted when egress is managed below PHP: <a href="https://github.com/ephpm/ephpm/commit/6df4cdc"><code>6df4cdc</code></a></li>
+<li>Build and release fixes: <a href="https://github.com/ephpm/ephpm/commit/557d96c"><code>557d96c</code></a> and
+<a href="https://github.com/ephpm/ephpm/commit/dda1e1d"><code>dda1e1d</code></a> (clang, <code>build.rs</code> never panics),
+<a href="https://github.com/ephpm/ephpm/commit/e9ff5fe"><code>e9ff5fe</code></a> (<code>SYS_gettid</code>),
+<a href="https://github.com/ephpm/ephpm/commit/84efd26"><code>84efd26</code></a> (vendored libbpf headers),
+<a href="https://github.com/ephpm/ephpm/commit/bd2dd03"><code>bd2dd03</code></a> (<code>LimitMEMLOCK=infinity</code>)</li>
+<li>Source at v0.8.5: <a href="https://github.com/ephpm/ephpm/blob/v0.8.5/crates/ephpm-server/bpf/vhostnet.bpf.c"><code>vhostnet.bpf.c</code></a>,
+<a href="https://github.com/ephpm/ephpm/blob/v0.8.5/crates/ephpm-server/src/tenant_ebpf.rs"><code>tenant_ebpf.rs</code></a>,
+<a href="https://github.com/ephpm/ephpm/blob/v0.8.5/crates/ephpm-server/build.rs"><code>build.rs</code></a></li>
+<li>Guides at v0.8.5: <a href="https://github.com/ephpm/ephpm/blob/v0.8.5/site/content/guides/ebpf-per-vhost-network.md">per-vhost network policy (eBPF)</a>,
+<a href="https://github.com/ephpm/ephpm/blob/v0.8.5/site/content/guides/multi-tenant-hardening.md">multi-tenant hardening</a></li>
+<li>Related on luth.io: <a href="/blog/2026/08/what-does-one-more-wordpress-site-cost/">what one more WordPress site costs</a>,
+<a href="/blog/2026/08/hardening-rust-database-proxy/">hardening a Rust database proxy</a></li>
+<li><a href="https://aya-rs.dev/">aya</a></li>
+</ul>
+
+      </div>
+      <footer>
+        <div class="stats">
+  
+    <ul class="categories">
+      
+        
+          <li><a class="article-terms-link" href="/categories/security/">security</a></li>
+        
+          <li><a class="article-terms-link" href="/categories/ephpm/">ephpm</a></li>
+        
+          <li><a class="article-terms-link" href="/categories/containers/">containers</a></li>
+        
+      
+    </ul>
+  
+  
+    <ul class="tags">
+      
+        
+          <li><a class="article-terms-link" href="/tags/rust/">rust</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/ephpm/">ephpm</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/ebpf/">ebpf</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/linux/">linux</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/multi-tenant/">multi-tenant</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/cgroups/">cgroups</a></li>
+        
+      
+    </ul>
+  
+</div>
+
+      </footer>
+    </div>
+    
+      
+  
+  <div class='post giscus-wrap'>
+    <script src='https://giscus.app/client.js'
+            data-repo='luthermonson/luth.io'
+            data-repo-id='R_kgDOGvFBXQ'
+            data-category='Announcements'
+            data-category-id='DIC_kwDOGvFBXc4DH_gv'
+            data-mapping='pathname'
+            data-strict='1'
+            data-reactions-enabled='1'
+            data-emit-metadata='0'
+            data-input-position='top'
+            data-theme='light'
+            data-lang='en'
+            data-loading='lazy'
+            crossorigin='anonymous'
+            async>
+    </script>
+  </div>
+  
+
+
+
+    
+  </article>
+  
+    <nav class="post-nav">
+      
+        <a href="/blog/2026/08/hardening-rust-database-proxy/" class="post-nav-link older">
+          <span class="post-nav-label">&larr; Older</span>
+          <span class="post-nav-title">Security and Performance Hardening of a Rust Database Proxy</span>
+        </a>
+      
+      
+        <a href="/blog/2026/08/opcache-on-windows-two-silent-failures/" class="post-nav-link newer">
+          <span class="post-nav-label">Newer &rarr;</span>
+          <span class="post-nav-title">OPcache on Windows: Two Silent Failures</span>
+        </a>
+      
+    </nav>
+  
+
+      </main>
+      <section id="site-sidebar">
+  
+    <section id="recent-posts">
+      <header>
+        <h1>Recent Posts</h1>
+      </header>
+      
+      <article class="mini-post">
+          <a href="/blog/2026/10/ephpm-worker-mode-performance/" class="image" style="--bg-image: url('/img/2026/10/ephpm-worker-mode-performance-cover.svg');">
+    <img class="" src="/img/2026/10/ephpm-worker-mode-performance-cover.svg" alt="Diagram: before, hyper/tokio hands each request to one shared bounded channel whose waiter list all 20 PHP threads contend on; after, a dispatcher hands the job straight into the mailbox of the most recently idle PHP thread and only queues it in a FIFO overflow queue when every thread is busy">
+  </a>
+        <header>
+          <h2><a href="/blog/2026/10/ephpm-worker-mode-performance/">Fourth Place in Worker Mode, and Why It Wasn&#39;t PHP</a></h2>
+          <time class="published" datetime="2026-10-16 08:10:00 -0700 PDT">October 16, 2026</time>
+        </header>
+      </article>
+      
+      <article class="mini-post">
+          <a href="/blog/2026/10/ephpm-websockets-how-to/" class="image" style="--bg-image: url('/img/2026/10/ephpm-websockets-how-to-cover.svg');">
+    <img class="" src="/img/2026/10/ephpm-websockets-how-to-cover.svg" alt="Diagram: browsers hold sockets to ePHPm&#39;s Rust session tasks and registry; each connect, message and disconnect runs websocket.php once on the PHP thread pool, and ordinary HTTP requests push through ephpm_ws_broadcast">
+  </a>
+        <header>
+          <h2><a href="/blog/2026/10/ephpm-websockets-how-to/">WebSockets in ePHPm, From Zero to a Working Chat</a></h2>
+          <time class="published" datetime="2026-10-11 17:30:00 -0700 PDT">October 11, 2026</time>
+        </header>
+      </article>
+      
+      <article class="mini-post">
+          <a href="/blog/2026/10/webhooks-out-of-order-scheduler/" class="image" style="--bg-image: url('/img/2026/10/webhooks-out-of-order-scheduler-timeline.svg');">
+    <img class="" src="/img/2026/10/webhooks-out-of-order-scheduler-timeline.svg" alt="Timeline of three same-label jobs where a runner executing a build is destroyed 2.3 seconds before its in_progress webhook arrives">
+  </a>
+        <header>
+          <h2><a href="/blog/2026/10/webhooks-out-of-order-scheduler/">Webhooks Arrive Out of Order: How My Scheduler Killed Live Builds</a></h2>
+          <time class="published" datetime="2026-10-07 21:10:00 -0700 PDT">October 7, 2026</time>
+        </header>
+      </article>
+      
+      <article class="mini-post">
+          <a href="/blog/2026/10/go-proxmox-five-years-to-v0-8/" class="image" style="--bg-image: url('/img/2026/10/go-proxmox-five-years-to-v0-8-apidiff.svg');">
+    <img class="" src="/img/2026/10/go-proxmox-five-years-to-v0-8-apidiff.svg" alt="Horizontal bar chart of apidiff incompatible and compatible changes for every go-proxmox release from v0.1.0 to v0.8.2">
+  </a>
+        <header>
+          <h2><a href="/blog/2026/10/go-proxmox-five-years-to-v0-8/">Breaking Changes Without Breaking Trust: Five Years to go-proxmox v0.8</a></h2>
+          <time class="published" datetime="2026-10-04 19:40:00 -0700 PDT">October 4, 2026</time>
+        </header>
+      </article>
+      
+      <article class="mini-post">
+          <a href="/blog/2026/10/windows-sigterm-sparse-files/" class="image" style="--bg-image: url('/img/2026/10/windows-sigterm-sparse-files-connections.svg');">
+    <img class="" src="/img/2026/10/windows-sigterm-sparse-files-connections.svg" alt="Bar chart: 96 Cloudflare edge connections held by orphaned cloudflared processes versus 4 for the live daemon">
+  </a>
+        <header>
+          <h2><a href="/blog/2026/10/windows-sigterm-sparse-files/">Windows Grab-Bag: SIGTERM That Doesn&#39;t Exist and Sparse Files That Break Docker</a></h2>
+          <time class="published" datetime="2026-10-03 14:30:00 -0700 PDT">October 3, 2026</time>
+        </header>
+      </article>
+      
+      
+        <footer>
+          <a href="/blog" class="button">See More</a>
+        </footer>
+      
+    </section>
+  
+
+  
+    
+
+      <section id="categories">
+        <header>
+          <h1><a href="/categories">Categories</a></h1>
+        </header>
+        <ul>
+          
+          
+          <li>
+              <a href="/categories/ephpm/">ephpm<span class="count">33</span></a>
+          
+          <li>
+              <a href="/categories/go/">go<span class="count">30</span></a>
+          
+          <li>
+              <a href="/categories/php/">php<span class="count">23</span></a>
+          
+          <li>
+              <a href="/categories/rust/">rust<span class="count">15</span></a>
+          
+          <li>
+              <a href="/categories/homelab/">homelab<span class="count">14</span></a>
+          
+          <li>
+              <a href="/categories/windows/">windows<span class="count">14</span></a>
+          
+          <li>
+              <a href="/categories/ci/">ci<span class="count">9</span></a>
+          
+          <li>
+              <a href="/categories/databases/">databases<span class="count">9</span></a>
+          
+          <li>
+              <a href="/categories/security/">security<span class="count">9</span></a>
+          
+          <li>
+              <a href="/categories/containers/">containers<span class="count">7</span></a>
+          
+          <li>
+              <a href="/categories/tools/">tools<span class="count">5</span></a>
+          
+          <li>
+              <a href="/categories/ai-agents/">ai-agents<span class="count">4</span></a>
+          
+          </li>
+        </ul>
+      </section>
+    
+  
+
+  
+    <section id="mini-bio">
+      <header>
+        <h1>About</h1>
+      </header>
+      <p>Luther is a 20+ year software veteran specializing in backend APIs and architecting products. Employed at <a href='https://www.suse.com'>SUSE</a> as the Team Lead for the <a href='https://github.com/rancher/windows/issues'>Containers on Windows Team</a> working on <a href='https://rancher.com/'>Rancher</a> + <a href='https://kubernetes.io/'>Kubernetes</a></p>
+      <footer>
+        <a href="/about" class="button">Learn More</a>
+      </footer>
+    </section>
+  
+</section>
+
+      <footer id="site-footer">
+  
+      <ul class="socnet-icons">
+        
+
+        <li><a href="//github.com/luthermonson" target="_blank" rel="noopener" title="GitHub" class="fab fa-github"></a></li>
+
+
+
+
+
+
+
+
+
+
+
+<li><a href="//www.linkedin.com/in/luthermonson" target="_blank" rel="noopener" title="LinkedIn" class="fab fa-linkedin"></a></li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li><a href="//twitter.com/luthermonson" target="_blank" rel="noopener" title="Twitter" class="fab fa-twitter"></a></li>
+
+
+
+
+
+
+
+
+
+
+
+<li><a href="mailto:luther.monson@gmail.com" target="_blank" title="Email" class="far fa-envelope"></a></li>
+
+      </ul>
+  
+  <p class="copyright">
+    © 2026 Luther Monson
+      <br>
+    Theme: <a href='https://github.com/pacollins/hugo-future-imperfect-slim' target='_blank' rel='noopener'>Hugo Future Imperfect Slim</a><br>A <a href='https://html5up.net/future-imperfect' target='_blank' rel='noopener'>HTML5 UP port</a> | Powered by <a href='https://gohugo.io/' title='0.160.1' target='_blank' rel='noopener'>Hugo</a>
+  </p>
+</footer>
+<a id="back-to-top" href="#" class="fas fa-arrow-up fa-2x"></a>
+
+      <script src="/js/bundle.min.241b62ebc4792fe8c7a75879e5f710894f226f2b73342e9916b3a3b0526030cc.js" integrity="sha256-JBti68R5L&#43;jHp1h55fcQiU8ibytzNC6ZFrOjsFJgMMw="></script>
+    <script src="/js/add-on.js"></script>
+    </div>
+  </body>
+</html>

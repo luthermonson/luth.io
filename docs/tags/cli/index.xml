@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>Cli on Luther Monson</title>
+    <link>https://luth.io/tags/cli/</link>
+    <description>Recent content in Cli on Luther Monson</description>
+    <generator>Hugo</generator>
+    <language>en</language>
+    <lastBuildDate>Thu, 10 Sep 2026 20:25:00 -0700</lastBuildDate>
+    <atom:link href="https://luth.io/tags/cli/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>Making ephpm php Byte-for-Byte Indistinguishable From php-cli</title>
+      <link>https://luth.io/blog/2026/09/ephpm-php-cli-conformance/</link>
+      <pubDate>Thu, 10 Sep 2026 20:25:00 -0700</pubDate>
+      <guid>https://luth.io/blog/2026/09/ephpm-php-cli-conformance/</guid>
+      <description>&lt;p&gt;&lt;a href=&#34;https://github.com/ephpm/ephpm&#34;&gt;ePHPm&lt;/a&gt; embeds PHP into a single Rust binary, and the obvious follow-up question from&#xA;anybody deploying it is &amp;ldquo;do I still need a &lt;code&gt;php&lt;/code&gt; on the box?&amp;rdquo; Composer, WP-CLI, artisan, PHPUnit and every build&#xA;script in the world call &lt;code&gt;php&lt;/code&gt;. If &lt;code&gt;ephpm php&lt;/code&gt; can stand in for it then the answer is no, and the single binary actually&#xA;means a single binary. &amp;ldquo;Mostly works&amp;rdquo; isn&amp;rsquo;t good enough for that though. These tools parse PHP&amp;rsquo;s output, check its exit&#xA;codes and re-invoke it. So the goal was simple to state: &lt;code&gt;ephpm php&lt;/code&gt; should be indistinguishable from php-cli.&lt;/p&gt;</description>
+    </item>
+    <item>
+      <title>Stop Ctrl-C-ing Your tail -f | grep</title>
+      <link>https://luth.io/blog/2026/06/tail-gunner/</link>
+      <pubDate>Sat, 20 Jun 2026 20:31:00 -0700</pubDate>
+      <guid>https://luth.io/blog/2026/06/tail-gunner/</guid>
+      <description>&lt;p&gt;Here&amp;rsquo;s a loop I end up in all the time: &lt;code&gt;tail -f app.log&lt;/code&gt;, something scrolls by that looks wrong, Ctrl-C, &lt;code&gt;tail -f app.log | grep ERROR&lt;/code&gt;,&#xA;wait for it to happen again, decide I also want to drop the health checks, Ctrl-C, &lt;code&gt;| grep -v healthz&lt;/code&gt;, wait again. Every filter tweak&#xA;throws away the stream and every line that already went past. I got tired of it and wrote &lt;a href=&#34;https://github.com/luthermonson/tail-gunner&#34;&gt;tail-gunner&lt;/a&gt;,&#xA;a &lt;code&gt;tail&lt;/code&gt; replacement that you can promote into a filtering TUI with one keystroke and drop back out of without the stream ever stopping.&lt;/p&gt;</description>
+    </item>
+  </channel>
+</rss>

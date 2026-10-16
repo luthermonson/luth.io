@@ -1,0 +1,710 @@
+<!doctype html>
+<html lang="en">
+  <head>
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-MSTSKGFWTX"></script>
+<script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+
+    gtag('config', 'G-MSTSKGFWTX');
+</script><meta charset="utf-8">
+<title>Fixing Windows Archive Extraction in SPC - Luther Monson</title>
+<meta name="description" content="&#34;The pipe has been ended&#34; wasn&#39;t a pipe problem. It was the wrong tar program and Windows symlinks, and fixing one line of static-php-cli took three tries.">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<meta name="twitter:card" content="summary_large_image"><meta name="twitter:site" content="@luthermonson">
+
+<meta property="og:site_name" content="Luther Monson">
+<meta property="og:title" content="Fixing Windows Archive Extraction in SPC">
+<meta property="og:description" content="&#34;The pipe has been ended&#34; wasn&#39;t a pipe problem. It was the wrong tar program and Windows symlinks, and fixing one line of static-php-cli took three tries.">
+<meta property="og:type" content="article">
+<meta property="og:url" content="https://luth.io/blog/2026/07/spc-windows-archive-extraction/">
+    <meta property="og:image" content="https://luth.io/img/2026/07/spc-windows-archive-extraction-pipe.svg">
+    <meta property="og:image:alt" content="Diagram: 7za decompressing into a pipe read by MinGW tar, which exits on a C:\ path and leaves 7za reporting The pipe has been ended">
+
+
+  <link rel="manifest" href="/favicon/site.webmanifest?v=1">
+  <link rel="apple-touch-icon" sizes="180x180" href="/favicon/apple-touch-icon.png?v=1">
+  <link rel="icon" type="image/png" sizes="32x32" href="/favicon/favicon-32x32.png?v=1">
+  <link rel="icon" type="image/png" sizes="16x16" href="/favicon/favicon-16x16.png?v=1">
+  
+    <link rel="mask-icon" href="/favicon/safari-pinned-tab.svg?v=1" color="#ffffff">
+    <link rel="shortcut icon" href="/favicon/favicon.ico?v=1">
+    <meta name="msapplication-config" content="/favicon/browserconfig.xml?v=1">
+  
+  <meta name="msapplication-TileColor" content="#ffffff">
+  <meta name="theme-color" content="#ffffff">
+
+
+  <meta name="generator" content="Hugo 0.160.1">
+  <link rel="alternate" type="application/rss+xml" href="https://luth.io/index.xml" title="Luther Monson">
+  <link rel="stylesheet" href="/css/bundle.min.e1ffed86714fbb7eff75eab221c0c61b8260be0c7d1c08db0fcb7a2bdb6af7c9.css" integrity="sha256-4f/thnFPu37/deqyIcDGG4Jgvgx9HAjbD8t6K9tq98k="><link rel="stylesheet" href="/css/add-on.css">
+        <link rel="stylesheet" href="/css/code.css">
+        <link rel="stylesheet" href="/css/mobile.css">
+</head>
+
+  <body>
+    
+
+<header id="site-header">
+  <nav id="site-nav">
+    <h1 class="nav-title">
+      <a href="/" class="nav">
+        <img class="nav-avatar" src="/img/luther-monson-headshot.jpg" alt="" width="32" height="32">
+        
+          Blog
+        
+      </a>
+    </h1>
+    <menu id="site-nav-menu" class="flyout-menu menu">
+      
+        
+          
+          <a href="/" class="nav link"><i class='fa fa-home'></i> Home</a>
+        
+      
+        
+          
+          <a href="/about" class="nav link"><i class='far fa-id-card'></i> About</a>
+        
+      
+        
+          
+          <a href="/blog" class="nav link"><i class='far fa-newspaper'></i> Blog</a>
+        
+      
+        
+          
+          <a href="/archive" class="nav link"><i class='far fa-calendar-alt'></i> Archive</a>
+        
+      
+        
+          
+          <a href="/categories" class="nav link"><i class='fas fa-sitemap'></i> Categories</a>
+        
+      
+      <a href="#share-menu" class="nav link share-toggle"><i class="fas fa-share-alt">&nbsp;</i>Share</a>
+      <a href="#search-input" class="nav link search-toggle"><i class="fas fa-search">&nbsp;</i>Search</a>
+    </menu>
+    <a href="#search-input" class="nav search-toggle"><i class="fas fa-search fa-2x">&nbsp;</i></a>
+    <a href="#share-menu" class="nav share-toggle"><i class="fas fa-share-alt fa-2x">&nbsp;</i></a>
+    
+    <a href="#site-nav" class="nav nav-toggle"><i class="fas fa-bars fa-2x"></i></a>
+  </nav>
+  <menu id="search" class="menu"><input id="search-input" class="search-input menu"></input><div id="search-results" class="search-results menu"></div></menu>
+  
+  
+    <menu id="share-menu" class="flyout-menu menu">
+      <h1>Share Post</h1>
+      
+
+
+
+
+  
+    
+    <a href="//twitter.com/share?text=Fixing%20Windows%20Archive%20Extraction%20in%20SPC&amp;url=https%3a%2f%2fluth.io%2fblog%2f2026%2f07%2fspc-windows-archive-extraction%2f" target="_blank" rel="noopener" class="nav share-btn twitter">
+        <p>Twitter</p>
+      </a>
+  
+
+  
+      <a href="//www.facebook.com/sharer/sharer.php?u=https%3a%2f%2fluth.io%2fblog%2f2026%2f07%2fspc-windows-archive-extraction%2f" target="_blank" rel="noopener" class="nav share-btn facebook">
+        <p>Facebook</p>
+        </a>
+  
+
+  
+    <a href="//www.reddit.com/submit?url=https%3a%2f%2fluth.io%2fblog%2f2026%2f07%2fspc-windows-archive-extraction%2f&amp;title=Fixing%20Windows%20Archive%20Extraction%20in%20SPC" target="_blank" rel="noopener" class="nav share-btn reddit">
+          <p>Reddit</p>
+        </a>
+  
+
+  
+        <a href="//www.linkedin.com/shareArticle?url=https%3a%2f%2fluth.io%2fblog%2f2026%2f07%2fspc-windows-archive-extraction%2f&amp;title=Fixing%20Windows%20Archive%20Extraction%20in%20SPC" target="_blank" rel="noopener" class="nav share-btn linkedin">
+            <p>LinkedIn</p>
+          </a>
+  
+
+  
+        <a href="//www.pinterest.com/pin/create/button/?url=https%3a%2f%2fluth.io%2fblog%2f2026%2f07%2fspc-windows-archive-extraction%2f&amp;description=Fixing%20Windows%20Archive%20Extraction%20in%20SPC" target="_blank" rel="noopener" class="nav share-btn pinterest">
+          <p>Pinterest</p>
+        </a>
+  
+
+  
+        <a href="mailto:?subject=Check%20out%20this%20post%20by Luther%20Monson&amp;body=https%3a%2f%2fluth.io%2fblog%2f2026%2f07%2fspc-windows-archive-extraction%2f" target="_blank" class="nav share-btn email" data-proofer-ignore>
+          <p>Email</p>
+        </a>
+  
+
+
+    </menu>
+  
+</header>
+
+    <div id="wrapper">
+      <section id="site-intro" class="hidden-single-column">
+  <a href="/"><img src="/img/luther-monson-headshot.jpg" class="circle" width="100" alt="Luther Monson, Staff Software Engineer at SUSE" /></a>
+  <header>
+    <h1>Luther Monson</h1>
+  </header>
+  <main>
+    <p>Go by way of PHP &middot; Containers &middot; VMs &middot; Windows &middot; Kubernetes</p>
+  </main>
+  
+    <footer>
+      <ul class="socnet-icons">
+        
+
+        <li><a href="//github.com/luthermonson" target="_blank" rel="noopener" title="GitHub" class="fab fa-github"></a></li>
+
+
+
+
+
+
+
+
+
+
+
+<li><a href="//www.linkedin.com/in/luthermonson" target="_blank" rel="noopener" title="LinkedIn" class="fab fa-linkedin"></a></li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li><a href="//twitter.com/luthermonson" target="_blank" rel="noopener" title="Twitter" class="fab fa-twitter"></a></li>
+
+
+
+
+
+
+
+
+
+
+
+<li><a href="mailto:luther.monson@gmail.com" target="_blank" title="Email" class="far fa-envelope"></a></li>
+
+      </ul>
+    </footer>
+  
+</section>
+
+      <main id="site-main">
+        
+  <article>
+    <div class="post">
+      <header>
+  <div class="title">
+    
+      <h2><a href="/blog/2026/07/spc-windows-archive-extraction/">Fixing Windows Archive Extraction in SPC</a></h2>
+    
+    
+      <p>&#34;The pipe has been ended&#34; wasn&#39;t a pipe problem. It was the wrong tar program and Windows symlinks, and fixing one line of static-php-cli took three tries.</p>
+    
+  </div>
+  <div class="meta">
+    <time datetime="2026-07-18 16:10:00 -0700 PDT">July 18, 2026</time>
+    
+    <p>7-Minute Read</p>
+  </div>
+</header>
+
+      <div id="socnet-share">
+        
+
+
+
+
+  
+    
+    <a href="//twitter.com/share?text=Fixing%20Windows%20Archive%20Extraction%20in%20SPC&amp;url=https%3a%2f%2fluth.io%2fblog%2f2026%2f07%2fspc-windows-archive-extraction%2f" target="_blank" rel="noopener" class="nav share-btn twitter">
+        <p>Twitter</p>
+      </a>
+  
+
+  
+      <a href="//www.facebook.com/sharer/sharer.php?u=https%3a%2f%2fluth.io%2fblog%2f2026%2f07%2fspc-windows-archive-extraction%2f" target="_blank" rel="noopener" class="nav share-btn facebook">
+        <p>Facebook</p>
+        </a>
+  
+
+  
+    <a href="//www.reddit.com/submit?url=https%3a%2f%2fluth.io%2fblog%2f2026%2f07%2fspc-windows-archive-extraction%2f&amp;title=Fixing%20Windows%20Archive%20Extraction%20in%20SPC" target="_blank" rel="noopener" class="nav share-btn reddit">
+          <p>Reddit</p>
+        </a>
+  
+
+  
+        <a href="//www.linkedin.com/shareArticle?url=https%3a%2f%2fluth.io%2fblog%2f2026%2f07%2fspc-windows-archive-extraction%2f&amp;title=Fixing%20Windows%20Archive%20Extraction%20in%20SPC" target="_blank" rel="noopener" class="nav share-btn linkedin">
+            <p>LinkedIn</p>
+          </a>
+  
+
+  
+        <a href="//www.pinterest.com/pin/create/button/?url=https%3a%2f%2fluth.io%2fblog%2f2026%2f07%2fspc-windows-archive-extraction%2f&amp;description=Fixing%20Windows%20Archive%20Extraction%20in%20SPC" target="_blank" rel="noopener" class="nav share-btn pinterest">
+          <p>Pinterest</p>
+        </a>
+  
+
+  
+        <a href="mailto:?subject=Check%20out%20this%20post%20by Luther%20Monson&amp;body=https%3a%2f%2fluth.io%2fblog%2f2026%2f07%2fspc-windows-archive-extraction%2f" target="_blank" class="nav share-btn email" data-proofer-ignore>
+          <p>Email</p>
+        </a>
+  
+
+
+      </div>
+      <div class="content">
+        
+        <p>One of the first things that broke when I started building PHP on Windows with
+<a href="https://github.com/crazywhalecc/static-php-cli">static-php-cli</a> (SPC) wasn&rsquo;t PHP at all. It was unpacking the source
+tarballs. libxml2, xz, a couple of others would die partway through extraction with:</p>
+<pre tabindex="0"><code>ERROR: The pipe has been ended.
+</code></pre><p>Over the last few months I&rsquo;ve &ldquo;fixed&rdquo; this two different ways, and the maintainers fixed it a third. It&rsquo;s a small piece
+of code but it&rsquo;s a good example of how much Linux assumption hides in a single shell pipeline, so here&rsquo;s the whole thing.</p>
+<h3 id="the-pipeline">The pipeline</h3>
+<p><img src="/img/2026/07/spc-windows-archive-extraction-pipe.svg" alt="7za piping into MinGW tar, which exits on a Windows path"></p>
+<p>SPC v2 extracted archives on Windows with one line. Here&rsquo;s the block from <code>FileSystem::extractArchive()</code>, including
+the maintainer&rsquo;s comments, which tell you how much fun this code has been for everyone:</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-php" data-lang="php"><span class="line"><span class="cl"><span class="p">}</span> <span class="k">elseif</span> <span class="p">(</span><span class="nx">PHP_OS_FAMILY</span> <span class="o">===</span> <span class="s1">&#39;Windows&#39;</span><span class="p">)</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">    <span class="c1">// use php-sdk-binary-tools/bin/7za.exe
+</span></span></span><span class="line"><span class="cl">    <span class="nv">$_7z</span> <span class="o">=</span> <span class="nx">self</span><span class="o">::</span><span class="na">convertPath</span><span class="p">(</span><span class="nx">getenv</span><span class="p">(</span><span class="s1">&#39;PHP_SDK_PATH&#39;</span><span class="p">)</span> <span class="o">.</span> <span class="s1">&#39;/bin/7za.exe&#39;</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">    <span class="c1">// Windows notes: I hate windows tar.......
+</span></span></span><span class="line"><span class="cl">    <span class="c1">// When extracting .tar.gz like libxml2, it shows a symlink error and returns code[1].
+</span></span></span><span class="line"><span class="cl">    <span class="c1">// ...
+</span></span></span><span class="line"><span class="cl">    <span class="c1">// And MinGW tar.exe cannot work on temporarily storage ??? (GitHub Actions hosted runner)
+</span></span></span><span class="line"><span class="cl">    <span class="c1">// Yeah, I will be an MS HATER !
+</span></span></span><span class="line"><span class="cl">    <span class="nx">match</span> <span class="p">(</span><span class="nx">self</span><span class="o">::</span><span class="na">extname</span><span class="p">(</span><span class="nv">$filename</span><span class="p">))</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">        <span class="s1">&#39;tar&#39;</span> <span class="o">=&gt;</span> <span class="nx">f_passthru</span><span class="p">(</span><span class="s2">&#34;tar -xf </span><span class="si">{</span><span class="nv">$filename</span><span class="si">}</span><span class="s2"> -C </span><span class="si">{</span><span class="nv">$target</span><span class="si">}</span><span class="s2"> --strip-components 1&#34;</span><span class="p">),</span>
+</span></span><span class="line"><span class="cl">        <span class="s1">&#39;xz&#39;</span><span class="p">,</span> <span class="s1">&#39;txz&#39;</span><span class="p">,</span> <span class="s1">&#39;gz&#39;</span><span class="p">,</span> <span class="s1">&#39;tgz&#39;</span><span class="p">,</span> <span class="s1">&#39;bz2&#39;</span> <span class="o">=&gt;</span> <span class="nx">cmd</span><span class="p">()</span><span class="o">-&gt;</span><span class="na">execWithResult</span><span class="p">(</span>
+</span></span><span class="line"><span class="cl">            <span class="s2">&#34;</span><span class="se">\&#34;</span><span class="si">{</span><span class="nv">$_7z</span><span class="si">}</span><span class="se">\&#34;</span><span class="s2"> x -so </span><span class="si">{</span><span class="nv">$filename</span><span class="si">}</span><span class="s2"> | tar -f - -x -C </span><span class="se">\&#34;</span><span class="si">{</span><span class="nv">$target</span><span class="si">}</span><span class="se">\&#34;</span><span class="s2"> --strip-components 1&#34;</span><span class="p">),</span>
+</span></span><span class="line"><span class="cl">        <span class="s1">&#39;zip&#39;</span> <span class="o">=&gt;</span> <span class="nx">self</span><span class="o">::</span><span class="na">unzipWithStrip</span><span class="p">(</span><span class="nv">$filename</span><span class="p">,</span> <span class="nv">$target</span><span class="p">),</span>
+</span></span><span class="line"><span class="cl">        <span class="k">default</span> <span class="o">=&gt;</span> <span class="k">throw</span> <span class="k">new</span> <span class="nx">FileSystemException</span><span class="p">(</span><span class="s2">&#34;unknown archive format: </span><span class="si">{</span><span class="nv">$filename</span><span class="si">}</span><span class="s2">&#34;</span><span class="p">),</span>
+</span></span><span class="line"><span class="cl">    <span class="p">};</span>
+</span></span><span class="line"><span class="cl"><span class="p">}</span>
+</span></span></code></pre></div><p>7za decompresses the <code>.xz</code>/<code>.gz</code>/<code>.bz2</code> layer to stdout (<code>-so</code>), and <code>tar</code> reads the inner tarball from stdin and handles
+<code>--strip-components 1</code>, which flattens the <code>libxml2-2.x.y/</code> top-level directory into the target directory. On Linux this is the most boring
+command in the world.</p>
+<h3 id="first-fix-stop-piping">First fix: stop piping</h3>
+<p>I was building on a Windows runner that also has Git for Windows installed, and my first read of the error was the obvious
+one: Windows pipes between processes are flaky with big streams, so don&rsquo;t stream. Decompress to disk, then extract from disk.
+That went into my SPC PR <a href="https://github.com/crazywhalecc/static-php-cli/pull/1079">#1079</a> in April:</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-php" data-lang="php"><span class="line"><span class="cl"><span class="s1">&#39;xz&#39;</span><span class="p">,</span> <span class="s1">&#39;txz&#39;</span><span class="p">,</span> <span class="s1">&#39;gz&#39;</span><span class="p">,</span> <span class="s1">&#39;tgz&#39;</span><span class="p">,</span> <span class="s1">&#39;bz2&#39;</span> <span class="o">=&gt;</span> <span class="p">(</span><span class="k">function</span> <span class="p">()</span> <span class="k">use</span> <span class="p">(</span><span class="nv">$_7z</span><span class="p">,</span> <span class="nv">$filename</span><span class="p">,</span> <span class="nv">$target</span><span class="p">)</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">    <span class="nv">$dir</span> <span class="o">=</span> <span class="nx">dirname</span><span class="p">(</span><span class="nv">$filename</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">    <span class="nx">cmd</span><span class="p">()</span><span class="o">-&gt;</span><span class="na">execWithResult</span><span class="p">(</span><span class="s2">&#34;</span><span class="se">\&#34;</span><span class="si">{</span><span class="nv">$_7z</span><span class="si">}</span><span class="se">\&#34;</span><span class="s2"> x </span><span class="se">\&#34;</span><span class="si">{</span><span class="nv">$filename</span><span class="si">}</span><span class="se">\&#34;</span><span class="s2"> -o</span><span class="se">\&#34;</span><span class="si">{</span><span class="nv">$dir</span><span class="si">}</span><span class="se">\&#34;</span><span class="s2"> -y&#34;</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">    <span class="nv">$tarFile</span> <span class="o">=</span> <span class="nx">preg_replace</span><span class="p">(</span><span class="s1">&#39;/\.(xz|txz|gz|tgz|bz2)$/i&#39;</span><span class="p">,</span> <span class="s1">&#39;&#39;</span><span class="p">,</span> <span class="nv">$filename</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">    <span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="nx">file_exists</span><span class="p">(</span><span class="nv">$tarFile</span><span class="p">))</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">        <span class="nv">$tarFile</span> <span class="o">.=</span> <span class="s1">&#39;.tar&#39;</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">    <span class="p">}</span>
+</span></span><span class="line"><span class="cl">    <span class="nv">$winTar</span> <span class="o">=</span> <span class="nx">getenv</span><span class="p">(</span><span class="s1">&#39;SystemRoot&#39;</span><span class="p">)</span> <span class="o">.</span> <span class="s1">&#39;\System32\tar.exe&#39;</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">    <span class="nx">f_passthru</span><span class="p">(</span><span class="s2">&#34;</span><span class="se">\&#34;</span><span class="si">{</span><span class="nv">$winTar</span><span class="si">}</span><span class="se">\&#34;</span><span class="s2"> -xf </span><span class="se">\&#34;</span><span class="si">{</span><span class="nv">$tarFile</span><span class="si">}</span><span class="se">\&#34;</span><span class="s2"> -C </span><span class="se">\&#34;</span><span class="si">{</span><span class="nv">$target</span><span class="si">}</span><span class="se">\&#34;</span><span class="s2"> --strip-components 1&#34;</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">    <span class="o">@</span><span class="nx">unlink</span><span class="p">(</span><span class="nv">$tarFile</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl"><span class="p">})(),</span>
+</span></span></code></pre></div><p>Two steps: 7za writes <code>foo.tar</code> next to the archive, then <code>C:\Windows\System32\tar.exe</code> extracts it and the
+intermediate file gets deleted. It worked. But look at the second-to-last line, because that&rsquo;s the actual fix, and the pipe
+story I told myself was wrong.</p>
+<h3 id="what-was-really-happening">What was really happening</h3>
+<p>Notice that the original command says <code>tar</code>, not a path. On a stock Windows box that resolves to
+<code>C:\Windows\System32\tar.exe</code>, which is bsdtar from libarchive and handles Windows paths fine. On a box with Git for Windows
+(or MSYS2) on the <code>PATH</code> ahead of System32, <code>tar</code> resolves to <code>C:\Program Files\Git\usr\bin\tar.exe</code> instead. That&rsquo;s GNU tar
+built for MSYS, and GNU tar has opinions about colons.</p>
+<p>I reproduced it again for this post with a <code>.tar.xz</code> that unpacks to about 67 MB, piping 7za into each tar:</p>
+<pre tabindex="0"><code>&gt; 7za x -so big.tar.xz | &#34;C:\Program Files\Git\usr\bin\tar.exe&#34; -f - -x -C &#34;C:\...\out2&#34; --strip-components 1
+/usr/bin/tar: C\:\\Users\\...\\out2: Cannot open: No such file or directory
+/usr/bin/tar: Error is not recoverable: exiting now
+ERROR: The pipe has been ended.
+
+&gt; 7za x -so big.tar.xz | C:\Windows\System32\tar.exe -f - -x -C &#34;C:\...\out2&#34; --strip-components 1
+(exit 0, files extracted)
+</code></pre><p>GNU tar can&rsquo;t use the <code>C:\...</code> target directory and exits immediately. 7za is still writing decompressed bytes into the pipe,
+the reader is gone, and 7za reports the write failure as <code>The pipe has been ended</code>. The error everyone sees is printed by
+the <em>writer</em>, about the <em>reader</em> dying. Nothing is wrong with the pipe.</p>
+<p>Same tar, non-piped, gets a different and even stranger error, because <code>-f C:\foo.tar</code> is GNU tar&rsquo;s syntax for &ldquo;a tape on
+the remote host named <code>C</code>&rdquo;:</p>
+<pre tabindex="0"><code>&gt; &#34;C:\Program Files\Git\usr\bin\tar.exe&#34; -xf C:\...\pkg.tar -C C:\...\out --strip-components 1
+/usr/bin/tar: Cannot connect to C: resolve failed
+</code></pre><p>So my two-step fix worked for the boring reason that it hardcoded <code>System32\tar.exe</code>. The decompress-to-disk part only added
+an extra copy of every tarball on disk. Lesson learned: when a pipeline fails, check that each side of it is the binary
+you think it is before blaming the pipe.</p>
+<h3 id="second-fix-v3-and-the-symlink-problem">Second fix: v3 and the symlink problem</h3>
+<p>That PR didn&rsquo;t merge. SPC was in the middle of a ground-up v3 rewrite, and v3&rsquo;s shell layer already pinned the binary:</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-php" data-lang="php"><span class="line"><span class="cl"><span class="nv">$tar</span> <span class="o">=</span> <span class="nx">SystemTarget</span><span class="o">::</span><span class="na">isUnix</span><span class="p">()</span> <span class="o">?</span> <span class="s1">&#39;tar&#39;</span> <span class="o">:</span> <span class="s1">&#39;&#34;C:\Windows\system32\tar.exe&#34;&#39;</span><span class="p">;</span>
+</span></span></code></pre></div><p>So in v3 the PATH problem was gone, and the pipe was fine. What was left was the other thing in the maintainer&rsquo;s comment:
+<strong>symlinks</strong>. Some upstream tarballs ship symbolic links (zstd ships <code>tests/cli-tests/bin/unzstd -&gt; zstd</code>, for example).
+Windows only lets a process create symlinks with admin rights or Developer Mode turned on, and bsdtar fails each one
+with <code>Can't create '...': Invalid argument</code> and exits non-zero. On a CI runner without those rights, the extraction fails
+and leaves a half-written source tree behind.</p>
+<p>My answer in May was <a href="https://github.com/crazywhalecc/static-php-cli/pull/1175">#1175</a>: drop <code>tar.exe</code> entirely and let 7za
+do both layers, since 7za doesn&rsquo;t fail the extraction on symlinks the way bsdtar does. 7za has no <code>--strip-components</code>, so
+that moved into PHP (lightly trimmed, with the logging taken out and comments added):</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-php" data-lang="php"><span class="line"><span class="cl"><span class="k">private</span> <span class="k">function</span> <span class="nf">extract7zWithStripComponents</span><span class="p">(</span><span class="nx">string</span> <span class="nv">$archive_path</span><span class="p">,</span> <span class="nx">string</span> <span class="nv">$target_path</span><span class="p">,</span> <span class="nx">string</span> <span class="nv">$_7z</span><span class="p">,</span> <span class="nx">int</span> <span class="nv">$strip</span> <span class="o">=</span> <span class="mi">1</span><span class="p">)</span><span class="o">:</span> <span class="nx">void</span>
+</span></span><span class="line"><span class="cl"><span class="p">{</span>
+</span></span><span class="line"><span class="cl">    <span class="nv">$temp_dir</span> <span class="o">=</span> <span class="nx">sys_get_temp_dir</span><span class="p">()</span> <span class="o">.</span> <span class="nx">DIRECTORY_SEPARATOR</span> <span class="o">.</span> <span class="s1">&#39;spc_&#39;</span> <span class="o">.</span> <span class="nx">bin2hex</span><span class="p">(</span><span class="nx">random_bytes</span><span class="p">(</span><span class="mi">8</span><span class="p">));</span>
+</span></span><span class="line"><span class="cl">    <span class="nx">FileSystem</span><span class="o">::</span><span class="na">createDir</span><span class="p">(</span><span class="nv">$temp_dir</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">    <span class="nv">$archive_arg</span> <span class="o">=</span> <span class="nx">escapeshellarg</span><span class="p">(</span><span class="nx">FileSystem</span><span class="o">::</span><span class="na">convertPath</span><span class="p">(</span><span class="nv">$archive_path</span><span class="p">));</span>
+</span></span><span class="line"><span class="cl">    <span class="nv">$temp_arg</span> <span class="o">=</span> <span class="nx">escapeshellarg</span><span class="p">(</span><span class="nv">$temp_dir</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">    <span class="c1">// pass 1: .tar.xz -&gt; .tar
+</span></span></span><span class="line"><span class="cl">    <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">passthru</span><span class="p">(</span><span class="s2">&#34;</span><span class="si">{</span><span class="nv">$_7z</span><span class="si">}</span><span class="s2"> x </span><span class="si">{</span><span class="nv">$archive_arg</span><span class="si">}</span><span class="s2"> -o</span><span class="si">{</span><span class="nv">$temp_arg</span><span class="si">}</span><span class="s2"> -y&#34;</span><span class="p">,</span> <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">console_putput</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">    <span class="c1">// pass 2: .tar -&gt; files
+</span></span></span><span class="line"><span class="cl">    <span class="nv">$inner_tar</span> <span class="o">=</span> <span class="nx">glob</span><span class="p">(</span><span class="nv">$temp_dir</span> <span class="o">.</span> <span class="nx">DIRECTORY_SEPARATOR</span> <span class="o">.</span> <span class="s1">&#39;*.tar&#39;</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">    <span class="k">if</span> <span class="p">(</span><span class="nv">$inner_tar</span> <span class="o">!==</span> <span class="p">[])</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">        <span class="nv">$tar_arg</span> <span class="o">=</span> <span class="nx">escapeshellarg</span><span class="p">(</span><span class="nv">$inner_tar</span><span class="p">[</span><span class="mi">0</span><span class="p">]);</span>
+</span></span><span class="line"><span class="cl">        <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">passthru</span><span class="p">(</span><span class="s2">&#34;</span><span class="si">{</span><span class="nv">$_7z</span><span class="si">}</span><span class="s2"> x </span><span class="si">{</span><span class="nv">$tar_arg</span><span class="si">}</span><span class="s2"> -o</span><span class="si">{</span><span class="nv">$temp_arg</span><span class="si">}</span><span class="s2"> -y&#34;</span><span class="p">,</span> <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">console_putput</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">        <span class="o">@</span><span class="nx">unlink</span><span class="p">(</span><span class="nv">$inner_tar</span><span class="p">[</span><span class="mi">0</span><span class="p">]);</span>
+</span></span><span class="line"><span class="cl">    <span class="p">}</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">    <span class="c1">// emulate --strip-components 1: a single top-level dir gets its contents copied up
+</span></span></span><span class="line"><span class="cl">    <span class="k">if</span> <span class="p">(</span><span class="nv">$strip</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">)</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">        <span class="nv">$entries</span> <span class="o">=</span> <span class="nx">array_diff</span><span class="p">(</span><span class="nx">scandir</span><span class="p">(</span><span class="nv">$temp_dir</span><span class="p">),</span> <span class="p">[</span><span class="s1">&#39;.&#39;</span><span class="p">,</span> <span class="s1">&#39;..&#39;</span><span class="p">]);</span>
+</span></span><span class="line"><span class="cl">        <span class="k">if</span> <span class="p">(</span><span class="nx">count</span><span class="p">(</span><span class="nv">$entries</span><span class="p">)</span> <span class="o">===</span> <span class="mi">1</span><span class="p">)</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">            <span class="nv">$inner</span> <span class="o">=</span> <span class="nv">$temp_dir</span> <span class="o">.</span> <span class="nx">DIRECTORY_SEPARATOR</span> <span class="o">.</span> <span class="nx">reset</span><span class="p">(</span><span class="nv">$entries</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">            <span class="k">if</span> <span class="p">(</span><span class="nx">is_dir</span><span class="p">(</span><span class="nv">$inner</span><span class="p">))</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">                <span class="nx">FileSystem</span><span class="o">::</span><span class="na">copyDir</span><span class="p">(</span><span class="nv">$inner</span><span class="p">,</span> <span class="nv">$target_path</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">                <span class="nx">FileSystem</span><span class="o">::</span><span class="na">removeDir</span><span class="p">(</span><span class="nv">$temp_dir</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">                <span class="k">return</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">            <span class="p">}</span>
+</span></span><span class="line"><span class="cl">        <span class="p">}</span>
+</span></span><span class="line"><span class="cl">    <span class="p">}</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">    <span class="nx">FileSystem</span><span class="o">::</span><span class="na">copyDir</span><span class="p">(</span><span class="nv">$temp_dir</span><span class="p">,</span> <span class="nv">$target_path</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">    <span class="nx">FileSystem</span><span class="o">::</span><span class="na">removeDir</span><span class="p">(</span><span class="nv">$temp_dir</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl"><span class="p">}</span>
+</span></span></code></pre></div><p>It worked in my fork and that&rsquo;s what my Windows builds ran on for the next couple of months.</p>
+<h3 id="what-upstream-did-instead">What upstream did instead</h3>
+<p>The review feedback was fair. crazywhalecc pointed out that a full 7za path was a reasonable direction but that
+<code>FileSystem::copyDir</code> is slow, and my version copies every extracted source tree a second time to fake
+<code>--strip-components</code>. It also only approximates it: if an archive has more than one top-level entry, nothing gets stripped.</p>
+<p>Then two things landed in v3. In June, PHP&rsquo;s old <code>php-sdk-binary-tools</code> were replaced with MSYS2 plus a standalone
+<code>7za-win</code> tool package (<a href="https://github.com/crazywhalecc/static-php-cli/pull/1193">#1193</a>). And the shell layer grew
+<code>passthruTolerateSymlinks()</code>: keep the 7za-into-<code>System32\tar.exe</code> pipe, capture tar&rsquo;s output, and if the <em>only</em> errors are
+symlinks Windows refused to create, log a warning and keep going. Anything else still throws.</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-php" data-lang="php"><span class="line"><span class="cl"><span class="k">private</span> <span class="k">function</span> <span class="nf">passthruTolerateSymlinks</span><span class="p">(</span><span class="nx">string</span> <span class="nv">$cmd</span><span class="p">)</span><span class="o">:</span> <span class="nx">void</span>
+</span></span><span class="line"><span class="cl"><span class="p">{</span>
+</span></span><span class="line"><span class="cl">    <span class="c1">// Symlink creation only fails on a Windows host; elsewhere extraction handles symlinks fine.
+</span></span></span><span class="line"><span class="cl">    <span class="k">if</span> <span class="p">(</span><span class="nx">PHP_OS_FAMILY</span> <span class="o">!==</span> <span class="s1">&#39;Windows&#39;</span><span class="p">)</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">        <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">passthru</span><span class="p">(</span><span class="nv">$cmd</span><span class="p">,</span> <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">console_putput</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">        <span class="k">return</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">    <span class="p">}</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">    <span class="nv">$result</span> <span class="o">=</span> <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">passthru</span><span class="p">(</span><span class="nv">$cmd</span><span class="p">,</span> <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">console_putput</span><span class="p">,</span> <span class="nx">capture_output</span><span class="o">:</span> <span class="k">true</span><span class="p">,</span> <span class="nx">throw_on_error</span><span class="o">:</span> <span class="k">false</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">    <span class="k">if</span> <span class="p">(</span><span class="nv">$result</span><span class="p">[</span><span class="s1">&#39;code&#39;</span><span class="p">]</span> <span class="o">===</span> <span class="mi">0</span><span class="p">)</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">        <span class="k">return</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">    <span class="p">}</span>
+</span></span><span class="line"><span class="cl">    <span class="k">if</span> <span class="p">(</span><span class="nv">$this</span><span class="o">-&gt;</span><span class="na">isSymlinkOnlyExtractFailure</span><span class="p">(</span><span class="nv">$result</span><span class="p">[</span><span class="s1">&#39;output&#39;</span><span class="p">]))</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">        <span class="nx">logger</span><span class="p">()</span><span class="o">-&gt;</span><span class="na">warning</span><span class="p">(</span><span class="s1">&#39;Some symbolic links could not be created during extraction and were skipped ...&#39;</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">        <span class="k">return</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">    <span class="p">}</span>
+</span></span><span class="line"><span class="cl">    <span class="k">throw</span> <span class="k">new</span> <span class="nx">ExecutionException</span><span class="p">(</span><span class="cm">/* ... */</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl"><span class="p">}</span>
+</span></span></code></pre></div><p>That keeps the single streaming pass and real <code>--strip-components</code>, and it only forgives the one failure mode we know is
+harmless. #1175 was closed as superseded on July 13th, which is the right call. Their version is better than mine.</p>
+<h3 id="takeaways">Takeaways</h3>
+<ul>
+<li><strong>Pin the binary.</strong> <code>tar</code> in a command string means &ldquo;whatever is first on the <code>PATH</code>&rdquo;, and on Windows developer machines
+and CI runners that&rsquo;s frequently GNU tar from Git or MSYS2, which reads <code>C:</code> as a hostname.</li>
+<li><strong>&ldquo;The pipe has been ended&rdquo; means the other side died.</strong> Go look at what the reader printed before it exited.</li>
+<li><strong>Tolerate narrowly.</strong> Skipping symlinks wholesale (7za) and failing on them wholesale (tar) are both wrong. Matching the
+specific error and letting everything else fail is the version that survives.</li>
+</ul>
+<h3 id="links">Links</h3>
+<ul>
+<li><a href="https://github.com/crazywhalecc/static-php-cli/pull/1079">crazywhalecc/static-php-cli#1079</a> - the v2 PR with the two-step extraction</li>
+<li><a href="https://github.com/crazywhalecc/static-php-cli/pull/1175">crazywhalecc/static-php-cli#1175</a> - the v3 7za-only PR</li>
+<li><a href="https://github.com/crazywhalecc/static-php-cli/pull/1193">crazywhalecc/static-php-cli#1193</a> - MSYS2 + 7za-win replacing php-sdk-binary-tools</li>
+<li><a href="https://github.com/libarchive/libarchive">libarchive (bsdtar)</a>, which is what ships as <code>C:\Windows\System32\tar.exe</code></li>
+<li><a href="https://learn.microsoft.com/en-us/windows/security/threat-protection/security-policy-settings/create-symbolic-links">Create symbolic links</a> - the Windows privilege behind the symlink failures</li>
+</ul>
+
+      </div>
+      <footer>
+        <div class="stats">
+  
+    <ul class="categories">
+      
+        
+          <li><a class="article-terms-link" href="/categories/php/">php</a></li>
+        
+          <li><a class="article-terms-link" href="/categories/windows/">windows</a></li>
+        
+      
+    </ul>
+  
+  
+    <ul class="tags">
+      
+        
+          <li><a class="article-terms-link" href="/tags/php/">php</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/windows/">windows</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/static-php-cli/">static-php-cli</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/tar/">tar</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/7zip/">7zip</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/open-source/">open-source</a></li>
+        
+      
+    </ul>
+  
+</div>
+
+      </footer>
+    </div>
+    
+      
+  
+  <div class='post giscus-wrap'>
+    <script src='https://giscus.app/client.js'
+            data-repo='luthermonson/luth.io'
+            data-repo-id='R_kgDOGvFBXQ'
+            data-category='Announcements'
+            data-category-id='DIC_kwDOGvFBXc4DH_gv'
+            data-mapping='pathname'
+            data-strict='1'
+            data-reactions-enabled='1'
+            data-emit-metadata='0'
+            data-input-position='top'
+            data-theme='light'
+            data-lang='en'
+            data-loading='lazy'
+            crossorigin='anonymous'
+            async>
+    </script>
+  </div>
+  
+
+
+
+    
+  </article>
+  
+    <nav class="post-nav">
+      
+        <a href="/blog/2026/07/go-proxmox-watch-close-withretry/" class="post-nav-link older">
+          <span class="post-nav-label">&larr; Older</span>
+          <span class="post-nav-title">Two Small go-proxmox Fixes: A Watch Channel That Never Closed, and WithRetry</span>
+        </a>
+      
+      
+        <a href="/blog/2026/07/sqlite-production-database-protocol-translation/" class="post-nav-link newer">
+          <span class="post-nav-label">Newer &rarr;</span>
+          <span class="post-nav-title">SQLite as a Production Database via Protocol Translation</span>
+        </a>
+      
+    </nav>
+  
+
+      </main>
+      <section id="site-sidebar">
+  
+    <section id="recent-posts">
+      <header>
+        <h1>Recent Posts</h1>
+      </header>
+      
+      <article class="mini-post">
+          <a href="/blog/2026/10/ephpm-worker-mode-performance/" class="image" style="--bg-image: url('/img/2026/10/ephpm-worker-mode-performance-cover.svg');">
+    <img class="" src="/img/2026/10/ephpm-worker-mode-performance-cover.svg" alt="Diagram: before, hyper/tokio hands each request to one shared bounded channel whose waiter list all 20 PHP threads contend on; after, a dispatcher hands the job straight into the mailbox of the most recently idle PHP thread and only queues it in a FIFO overflow queue when every thread is busy">
+  </a>
+        <header>
+          <h2><a href="/blog/2026/10/ephpm-worker-mode-performance/">Fourth Place in Worker Mode, and Why It Wasn&#39;t PHP</a></h2>
+          <time class="published" datetime="2026-10-16 08:10:00 -0700 PDT">October 16, 2026</time>
+        </header>
+      </article>
+      
+      <article class="mini-post">
+          <a href="/blog/2026/10/ephpm-websockets-how-to/" class="image" style="--bg-image: url('/img/2026/10/ephpm-websockets-how-to-cover.svg');">
+    <img class="" src="/img/2026/10/ephpm-websockets-how-to-cover.svg" alt="Diagram: browsers hold sockets to ePHPm&#39;s Rust session tasks and registry; each connect, message and disconnect runs websocket.php once on the PHP thread pool, and ordinary HTTP requests push through ephpm_ws_broadcast">
+  </a>
+        <header>
+          <h2><a href="/blog/2026/10/ephpm-websockets-how-to/">WebSockets in ePHPm, From Zero to a Working Chat</a></h2>
+          <time class="published" datetime="2026-10-11 17:30:00 -0700 PDT">October 11, 2026</time>
+        </header>
+      </article>
+      
+      <article class="mini-post">
+          <a href="/blog/2026/10/webhooks-out-of-order-scheduler/" class="image" style="--bg-image: url('/img/2026/10/webhooks-out-of-order-scheduler-timeline.svg');">
+    <img class="" src="/img/2026/10/webhooks-out-of-order-scheduler-timeline.svg" alt="Timeline of three same-label jobs where a runner executing a build is destroyed 2.3 seconds before its in_progress webhook arrives">
+  </a>
+        <header>
+          <h2><a href="/blog/2026/10/webhooks-out-of-order-scheduler/">Webhooks Arrive Out of Order: How My Scheduler Killed Live Builds</a></h2>
+          <time class="published" datetime="2026-10-07 21:10:00 -0700 PDT">October 7, 2026</time>
+        </header>
+      </article>
+      
+      <article class="mini-post">
+          <a href="/blog/2026/10/go-proxmox-five-years-to-v0-8/" class="image" style="--bg-image: url('/img/2026/10/go-proxmox-five-years-to-v0-8-apidiff.svg');">
+    <img class="" src="/img/2026/10/go-proxmox-five-years-to-v0-8-apidiff.svg" alt="Horizontal bar chart of apidiff incompatible and compatible changes for every go-proxmox release from v0.1.0 to v0.8.2">
+  </a>
+        <header>
+          <h2><a href="/blog/2026/10/go-proxmox-five-years-to-v0-8/">Breaking Changes Without Breaking Trust: Five Years to go-proxmox v0.8</a></h2>
+          <time class="published" datetime="2026-10-04 19:40:00 -0700 PDT">October 4, 2026</time>
+        </header>
+      </article>
+      
+      <article class="mini-post">
+          <a href="/blog/2026/10/windows-sigterm-sparse-files/" class="image" style="--bg-image: url('/img/2026/10/windows-sigterm-sparse-files-connections.svg');">
+    <img class="" src="/img/2026/10/windows-sigterm-sparse-files-connections.svg" alt="Bar chart: 96 Cloudflare edge connections held by orphaned cloudflared processes versus 4 for the live daemon">
+  </a>
+        <header>
+          <h2><a href="/blog/2026/10/windows-sigterm-sparse-files/">Windows Grab-Bag: SIGTERM That Doesn&#39;t Exist and Sparse Files That Break Docker</a></h2>
+          <time class="published" datetime="2026-10-03 14:30:00 -0700 PDT">October 3, 2026</time>
+        </header>
+      </article>
+      
+      
+        <footer>
+          <a href="/blog" class="button">See More</a>
+        </footer>
+      
+    </section>
+  
+
+  
+    
+
+      <section id="categories">
+        <header>
+          <h1><a href="/categories">Categories</a></h1>
+        </header>
+        <ul>
+          
+          
+          <li>
+              <a href="/categories/ephpm/">ephpm<span class="count">33</span></a>
+          
+          <li>
+              <a href="/categories/go/">go<span class="count">30</span></a>
+          
+          <li>
+              <a href="/categories/php/">php<span class="count">23</span></a>
+          
+          <li>
+              <a href="/categories/rust/">rust<span class="count">15</span></a>
+          
+          <li>
+              <a href="/categories/homelab/">homelab<span class="count">14</span></a>
+          
+          <li>
+              <a href="/categories/windows/">windows<span class="count">14</span></a>
+          
+          <li>
+              <a href="/categories/ci/">ci<span class="count">9</span></a>
+          
+          <li>
+              <a href="/categories/databases/">databases<span class="count">9</span></a>
+          
+          <li>
+              <a href="/categories/security/">security<span class="count">9</span></a>
+          
+          <li>
+              <a href="/categories/containers/">containers<span class="count">7</span></a>
+          
+          <li>
+              <a href="/categories/tools/">tools<span class="count">5</span></a>
+          
+          <li>
+              <a href="/categories/ai-agents/">ai-agents<span class="count">4</span></a>
+          
+          </li>
+        </ul>
+      </section>
+    
+  
+
+  
+    <section id="mini-bio">
+      <header>
+        <h1>About</h1>
+      </header>
+      <p>Luther is a 20+ year software veteran specializing in backend APIs and architecting products. Employed at <a href='https://www.suse.com'>SUSE</a> as the Team Lead for the <a href='https://github.com/rancher/windows/issues'>Containers on Windows Team</a> working on <a href='https://rancher.com/'>Rancher</a> + <a href='https://kubernetes.io/'>Kubernetes</a></p>
+      <footer>
+        <a href="/about" class="button">Learn More</a>
+      </footer>
+    </section>
+  
+</section>
+
+      <footer id="site-footer">
+  
+      <ul class="socnet-icons">
+        
+
+        <li><a href="//github.com/luthermonson" target="_blank" rel="noopener" title="GitHub" class="fab fa-github"></a></li>
+
+
+
+
+
+
+
+
+
+
+
+<li><a href="//www.linkedin.com/in/luthermonson" target="_blank" rel="noopener" title="LinkedIn" class="fab fa-linkedin"></a></li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li><a href="//twitter.com/luthermonson" target="_blank" rel="noopener" title="Twitter" class="fab fa-twitter"></a></li>
+
+
+
+
+
+
+
+
+
+
+
+<li><a href="mailto:luther.monson@gmail.com" target="_blank" title="Email" class="far fa-envelope"></a></li>
+
+      </ul>
+  
+  <p class="copyright">
+    © 2026 Luther Monson
+      <br>
+    Theme: <a href='https://github.com/pacollins/hugo-future-imperfect-slim' target='_blank' rel='noopener'>Hugo Future Imperfect Slim</a><br>A <a href='https://html5up.net/future-imperfect' target='_blank' rel='noopener'>HTML5 UP port</a> | Powered by <a href='https://gohugo.io/' title='0.160.1' target='_blank' rel='noopener'>Hugo</a>
+  </p>
+</footer>
+<a id="back-to-top" href="#" class="fas fa-arrow-up fa-2x"></a>
+
+      <script src="/js/bundle.min.241b62ebc4792fe8c7a75879e5f710894f226f2b73342e9916b3a3b0526030cc.js" integrity="sha256-JBti68R5L&#43;jHp1h55fcQiU8ibytzNC6ZFrOjsFJgMMw="></script>
+    <script src="/js/add-on.js"></script>
+    </div>
+  </body>
+</html>

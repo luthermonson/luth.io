@@ -1,0 +1,759 @@
+<!doctype html>
+<html lang="en">
+  <head>
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-MSTSKGFWTX"></script>
+<script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+
+    gtag('config', 'G-MSTSKGFWTX');
+</script><meta charset="utf-8">
+<title>What an Overloaded PHP Server Actually Returns - Luther Monson</title>
+<meta name="description" content="Closed-loop benchmarks can&#39;t show you overload. An open-loop load generator with an error taxonomy showed ePHPm returned nothing at all, and then verified the fix.">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<meta name="twitter:card" content="summary_large_image"><meta name="twitter:site" content="@luthermonson">
+
+<meta property="og:site_name" content="Luther Monson">
+<meta property="og:title" content="What an Overloaded PHP Server Actually Returns">
+<meta property="og:description" content="Closed-loop benchmarks can&#39;t show you overload. An open-loop load generator with an error taxonomy showed ePHPm returned nothing at all, and then verified the fix.">
+<meta property="og:type" content="article">
+<meta property="og:url" content="https://luth.io/blog/2026/08/what-an-overloaded-php-server-actually-returns/">
+    <meta property="og:image" content="https://luth.io/img/2026/08/what-an-overloaded-php-server-actually-returns-outcomes.svg">
+    <meta property="og:image:alt" content="Bar chart of what 48,001 arrivals at 800 req/s got back: before the fixes almost everything was a client timeout, after them every arrival got a 200 or a fast 503">
+
+
+  <link rel="manifest" href="/favicon/site.webmanifest?v=1">
+  <link rel="apple-touch-icon" sizes="180x180" href="/favicon/apple-touch-icon.png?v=1">
+  <link rel="icon" type="image/png" sizes="32x32" href="/favicon/favicon-32x32.png?v=1">
+  <link rel="icon" type="image/png" sizes="16x16" href="/favicon/favicon-16x16.png?v=1">
+  
+    <link rel="mask-icon" href="/favicon/safari-pinned-tab.svg?v=1" color="#ffffff">
+    <link rel="shortcut icon" href="/favicon/favicon.ico?v=1">
+    <meta name="msapplication-config" content="/favicon/browserconfig.xml?v=1">
+  
+  <meta name="msapplication-TileColor" content="#ffffff">
+  <meta name="theme-color" content="#ffffff">
+
+
+  <meta name="generator" content="Hugo 0.160.1">
+  <link rel="alternate" type="application/rss+xml" href="https://luth.io/index.xml" title="Luther Monson">
+  <link rel="stylesheet" href="/css/bundle.min.e1ffed86714fbb7eff75eab221c0c61b8260be0c7d1c08db0fcb7a2bdb6af7c9.css" integrity="sha256-4f/thnFPu37/deqyIcDGG4Jgvgx9HAjbD8t6K9tq98k="><link rel="stylesheet" href="/css/add-on.css">
+        <link rel="stylesheet" href="/css/code.css">
+        <link rel="stylesheet" href="/css/mobile.css">
+</head>
+
+  <body>
+    
+
+<header id="site-header">
+  <nav id="site-nav">
+    <h1 class="nav-title">
+      <a href="/" class="nav">
+        <img class="nav-avatar" src="/img/luther-monson-headshot.jpg" alt="" width="32" height="32">
+        
+          Blog
+        
+      </a>
+    </h1>
+    <menu id="site-nav-menu" class="flyout-menu menu">
+      
+        
+          
+          <a href="/" class="nav link"><i class='fa fa-home'></i> Home</a>
+        
+      
+        
+          
+          <a href="/about" class="nav link"><i class='far fa-id-card'></i> About</a>
+        
+      
+        
+          
+          <a href="/blog" class="nav link"><i class='far fa-newspaper'></i> Blog</a>
+        
+      
+        
+          
+          <a href="/archive" class="nav link"><i class='far fa-calendar-alt'></i> Archive</a>
+        
+      
+        
+          
+          <a href="/categories" class="nav link"><i class='fas fa-sitemap'></i> Categories</a>
+        
+      
+      <a href="#share-menu" class="nav link share-toggle"><i class="fas fa-share-alt">&nbsp;</i>Share</a>
+      <a href="#search-input" class="nav link search-toggle"><i class="fas fa-search">&nbsp;</i>Search</a>
+    </menu>
+    <a href="#search-input" class="nav search-toggle"><i class="fas fa-search fa-2x">&nbsp;</i></a>
+    <a href="#share-menu" class="nav share-toggle"><i class="fas fa-share-alt fa-2x">&nbsp;</i></a>
+    
+    <a href="#site-nav" class="nav nav-toggle"><i class="fas fa-bars fa-2x"></i></a>
+  </nav>
+  <menu id="search" class="menu"><input id="search-input" class="search-input menu"></input><div id="search-results" class="search-results menu"></div></menu>
+  
+  
+    <menu id="share-menu" class="flyout-menu menu">
+      <h1>Share Post</h1>
+      
+
+
+
+
+  
+    
+    <a href="//twitter.com/share?text=What%20an%20Overloaded%20PHP%20Server%20Actually%20Returns&amp;url=https%3a%2f%2fluth.io%2fblog%2f2026%2f08%2fwhat-an-overloaded-php-server-actually-returns%2f" target="_blank" rel="noopener" class="nav share-btn twitter">
+        <p>Twitter</p>
+      </a>
+  
+
+  
+      <a href="//www.facebook.com/sharer/sharer.php?u=https%3a%2f%2fluth.io%2fblog%2f2026%2f08%2fwhat-an-overloaded-php-server-actually-returns%2f" target="_blank" rel="noopener" class="nav share-btn facebook">
+        <p>Facebook</p>
+        </a>
+  
+
+  
+    <a href="//www.reddit.com/submit?url=https%3a%2f%2fluth.io%2fblog%2f2026%2f08%2fwhat-an-overloaded-php-server-actually-returns%2f&amp;title=What%20an%20Overloaded%20PHP%20Server%20Actually%20Returns" target="_blank" rel="noopener" class="nav share-btn reddit">
+          <p>Reddit</p>
+        </a>
+  
+
+  
+        <a href="//www.linkedin.com/shareArticle?url=https%3a%2f%2fluth.io%2fblog%2f2026%2f08%2fwhat-an-overloaded-php-server-actually-returns%2f&amp;title=What%20an%20Overloaded%20PHP%20Server%20Actually%20Returns" target="_blank" rel="noopener" class="nav share-btn linkedin">
+            <p>LinkedIn</p>
+          </a>
+  
+
+  
+        <a href="//www.pinterest.com/pin/create/button/?url=https%3a%2f%2fluth.io%2fblog%2f2026%2f08%2fwhat-an-overloaded-php-server-actually-returns%2f&amp;description=What%20an%20Overloaded%20PHP%20Server%20Actually%20Returns" target="_blank" rel="noopener" class="nav share-btn pinterest">
+          <p>Pinterest</p>
+        </a>
+  
+
+  
+        <a href="mailto:?subject=Check%20out%20this%20post%20by Luther%20Monson&amp;body=https%3a%2f%2fluth.io%2fblog%2f2026%2f08%2fwhat-an-overloaded-php-server-actually-returns%2f" target="_blank" class="nav share-btn email" data-proofer-ignore>
+          <p>Email</p>
+        </a>
+  
+
+
+    </menu>
+  
+</header>
+
+    <div id="wrapper">
+      <section id="site-intro" class="hidden-single-column">
+  <a href="/"><img src="/img/luther-monson-headshot.jpg" class="circle" width="100" alt="Luther Monson, Staff Software Engineer at SUSE" /></a>
+  <header>
+    <h1>Luther Monson</h1>
+  </header>
+  <main>
+    <p>Go by way of PHP &middot; Containers &middot; VMs &middot; Windows &middot; Kubernetes</p>
+  </main>
+  
+    <footer>
+      <ul class="socnet-icons">
+        
+
+        <li><a href="//github.com/luthermonson" target="_blank" rel="noopener" title="GitHub" class="fab fa-github"></a></li>
+
+
+
+
+
+
+
+
+
+
+
+<li><a href="//www.linkedin.com/in/luthermonson" target="_blank" rel="noopener" title="LinkedIn" class="fab fa-linkedin"></a></li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li><a href="//twitter.com/luthermonson" target="_blank" rel="noopener" title="Twitter" class="fab fa-twitter"></a></li>
+
+
+
+
+
+
+
+
+
+
+
+<li><a href="mailto:luther.monson@gmail.com" target="_blank" title="Email" class="far fa-envelope"></a></li>
+
+      </ul>
+    </footer>
+  
+</section>
+
+      <main id="site-main">
+        
+  <article>
+    <div class="post">
+      <header>
+  <div class="title">
+    
+      <h2><a href="/blog/2026/08/what-an-overloaded-php-server-actually-returns/">What an Overloaded PHP Server Actually Returns</a></h2>
+    
+    
+      <p>Closed-loop benchmarks can&#39;t show you overload. An open-loop load generator with an error taxonomy showed ePHPm returned nothing at all, and then verified the fix.</p>
+    
+  </div>
+  <div class="meta">
+    <time datetime="2026-08-24 19:40:00 -0700 PDT">August 24, 2026</time>
+    
+    <p>11-Minute Read</p>
+  </div>
+</header>
+
+      <div id="socnet-share">
+        
+
+
+
+
+  
+    
+    <a href="//twitter.com/share?text=What%20an%20Overloaded%20PHP%20Server%20Actually%20Returns&amp;url=https%3a%2f%2fluth.io%2fblog%2f2026%2f08%2fwhat-an-overloaded-php-server-actually-returns%2f" target="_blank" rel="noopener" class="nav share-btn twitter">
+        <p>Twitter</p>
+      </a>
+  
+
+  
+      <a href="//www.facebook.com/sharer/sharer.php?u=https%3a%2f%2fluth.io%2fblog%2f2026%2f08%2fwhat-an-overloaded-php-server-actually-returns%2f" target="_blank" rel="noopener" class="nav share-btn facebook">
+        <p>Facebook</p>
+        </a>
+  
+
+  
+    <a href="//www.reddit.com/submit?url=https%3a%2f%2fluth.io%2fblog%2f2026%2f08%2fwhat-an-overloaded-php-server-actually-returns%2f&amp;title=What%20an%20Overloaded%20PHP%20Server%20Actually%20Returns" target="_blank" rel="noopener" class="nav share-btn reddit">
+          <p>Reddit</p>
+        </a>
+  
+
+  
+        <a href="//www.linkedin.com/shareArticle?url=https%3a%2f%2fluth.io%2fblog%2f2026%2f08%2fwhat-an-overloaded-php-server-actually-returns%2f&amp;title=What%20an%20Overloaded%20PHP%20Server%20Actually%20Returns" target="_blank" rel="noopener" class="nav share-btn linkedin">
+            <p>LinkedIn</p>
+          </a>
+  
+
+  
+        <a href="//www.pinterest.com/pin/create/button/?url=https%3a%2f%2fluth.io%2fblog%2f2026%2f08%2fwhat-an-overloaded-php-server-actually-returns%2f&amp;description=What%20an%20Overloaded%20PHP%20Server%20Actually%20Returns" target="_blank" rel="noopener" class="nav share-btn pinterest">
+          <p>Pinterest</p>
+        </a>
+  
+
+  
+        <a href="mailto:?subject=Check%20out%20this%20post%20by Luther%20Monson&amp;body=https%3a%2f%2fluth.io%2fblog%2f2026%2f08%2fwhat-an-overloaded-php-server-actually-returns%2f" target="_blank" class="nav share-btn email" data-proofer-ignore>
+          <p>Email</p>
+        </a>
+  
+
+
+      </div>
+      <div class="content">
+        
+        <p>Ask most people what their PHP server does when it&rsquo;s overloaded and you&rsquo;ll hear &ldquo;it returns 503s.&rdquo; Ask them how they
+know and it usually comes down to a config setting they read about. I was in that camp for <a href="https://github.com/ephpm/ephpm">ePHPm</a>.
+We had a <code>[server.limits] max_connections</code> knob, the docs said it returned 503 at the cap, and every benchmark we had
+ever run reported zero errors under heavy load. Then I wrote a load generator that could actually produce overload,
+and the honest answer was that an overloaded ePHPm returned nothing at all.</p>
+<p>This post is about the measuring more than the fixes: why the benchmark you probably have can&rsquo;t see overload, what a
+load generator has to do differently, and how to classify what comes back. The data comes from
+<a href="https://github.com/ephpm/multitenant-scalebench">multitenant-scalebench</a> (<code>report/SHEDDING.md</code>) and the
+re-run that verified the fixes in <a href="https://github.com/ephpm/lab">ephpm/lab</a> (<code>docs/shed-verify-v070.md</code>).</p>
+<h3 id="closed-loop-benchmarks-cant-overload-anything">Closed-loop benchmarks can&rsquo;t overload anything</h3>
+<p>Almost every HTTP benchmark tool you&rsquo;ve used (<code>wrk</code>, <code>hey</code>, <code>oha</code>, k6 with a fixed VU count, my own loadgen up to
+that week) is <strong>closed-loop</strong>. You pick a concurrency, say 128 workers, and each worker sends a request, waits for
+the response, then sends the next one. There are never more than 128 requests in flight.</p>
+<p>That sounds reasonable until you think about what happens when the server slows down. The workers slow down with it.
+The server is never asked to do more than it&rsquo;s already doing, so backpressure shows up as latency and nothing else.
+I had run 128 and 512 workers against ePHPm and both engines came back with 0 errors. That result was true, and
+it also told me nothing about overload.</p>
+<p>Real traffic doesn&rsquo;t wait for you. Users, crawlers and the retry loop in someone else&rsquo;s service arrive at whatever
+rate they arrive at, whether or not you&rsquo;ve answered the last request. That&rsquo;s an <strong>open-loop</strong> arrival process, and
+it&rsquo;s the only way to find out what your server does when it&rsquo;s handed more work than it can finish.</p>
+<h3 id="an-open-loop-mode-for-the-load-generator">An open-loop mode for the load generator</h3>
+<p>The loadgen in multitenant-scalebench is plain Go with no dependencies. I added an open-loop mode
+(<a href="https://github.com/ephpm/multitenant-scalebench/commit/b9ccdd1"><code>b9ccdd1</code></a>) behind three flags: <code>-rate</code> for
+arrivals per second, <code>-arrival const|poisson</code> for the inter-arrival process, and <code>-timeout</code> for the per-request client
+timeout. The core of it is a scheduler that fires every request at its scheduled instant on its own goroutine,
+regardless of how many are still outstanding:</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-go" data-lang="go"><span class="line"><span class="cl"><span class="nx">next</span><span class="w"> </span><span class="o">:=</span><span class="w"> </span><span class="nx">start</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="nx">i</span><span class="w"> </span><span class="o">:=</span><span class="w"> </span><span class="mi">0</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="k">for</span><span class="w"> </span><span class="p">{</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">	</span><span class="k">if</span><span class="w"> </span><span class="nx">cfg</span><span class="p">.</span><span class="nx">arrival</span><span class="w"> </span><span class="o">==</span><span class="w"> </span><span class="s">&#34;poisson&#34;</span><span class="w"> </span><span class="p">{</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">		</span><span class="nx">next</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="nx">next</span><span class="p">.</span><span class="nf">Add</span><span class="p">(</span><span class="nx">time</span><span class="p">.</span><span class="nf">Duration</span><span class="p">(</span><span class="nx">rng</span><span class="p">.</span><span class="nf">ExpFloat64</span><span class="p">()</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="nx">interval</span><span class="p">))</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">	</span><span class="p">}</span><span class="w"> </span><span class="k">else</span><span class="w"> </span><span class="p">{</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">		</span><span class="nx">i</span><span class="o">++</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">		</span><span class="nx">next</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="nx">start</span><span class="p">.</span><span class="nf">Add</span><span class="p">(</span><span class="nx">time</span><span class="p">.</span><span class="nf">Duration</span><span class="p">(</span><span class="nb">float64</span><span class="p">(</span><span class="nx">i</span><span class="p">)</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="nx">interval</span><span class="p">))</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">	</span><span class="p">}</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">	</span><span class="k">if</span><span class="w"> </span><span class="nx">next</span><span class="p">.</span><span class="nf">After</span><span class="p">(</span><span class="nx">end</span><span class="p">)</span><span class="w"> </span><span class="p">{</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">		</span><span class="k">break</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">	</span><span class="p">}</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">	</span><span class="k">if</span><span class="w"> </span><span class="nx">d</span><span class="w"> </span><span class="o">:=</span><span class="w"> </span><span class="nx">time</span><span class="p">.</span><span class="nf">Until</span><span class="p">(</span><span class="nx">next</span><span class="p">);</span><span class="w"> </span><span class="nx">d</span><span class="w"> </span><span class="p">&gt;</span><span class="w"> </span><span class="mi">0</span><span class="w"> </span><span class="p">{</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">		</span><span class="nx">time</span><span class="p">.</span><span class="nf">Sleep</span><span class="p">(</span><span class="nx">d</span><span class="p">)</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">	</span><span class="p">}</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">	</span><span class="k">if</span><span class="w"> </span><span class="nx">lag</span><span class="w"> </span><span class="o">:=</span><span class="w"> </span><span class="nx">time</span><span class="p">.</span><span class="nf">Since</span><span class="p">(</span><span class="nx">next</span><span class="p">).</span><span class="nf">Nanoseconds</span><span class="p">();</span><span class="w"> </span><span class="nx">lag</span><span class="w"> </span><span class="p">&gt;</span><span class="w"> </span><span class="nx">schedLagMaxNs</span><span class="p">.</span><span class="nf">Load</span><span class="p">()</span><span class="w"> </span><span class="p">{</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">		</span><span class="nx">schedLagMaxNs</span><span class="p">.</span><span class="nf">Store</span><span class="p">(</span><span class="nx">lag</span><span class="p">)</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">	</span><span class="p">}</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">	</span><span class="nx">measured</span><span class="w"> </span><span class="o">:=</span><span class="w"> </span><span class="p">!</span><span class="nx">next</span><span class="p">.</span><span class="nf">Before</span><span class="p">(</span><span class="nx">measStart</span><span class="p">)</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">	</span><span class="c1">// ... pick a Host and path, then:</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">	</span><span class="nx">wg</span><span class="p">.</span><span class="nf">Add</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">	</span><span class="k">go</span><span class="w"> </span><span class="kd">func</span><span class="p">(</span><span class="nx">measured</span><span class="w"> </span><span class="kt">bool</span><span class="p">,</span><span class="w"> </span><span class="nx">host</span><span class="p">,</span><span class="w"> </span><span class="nx">path</span><span class="w"> </span><span class="kt">string</span><span class="p">)</span><span class="w"> </span><span class="p">{</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">		</span><span class="k">defer</span><span class="w"> </span><span class="nx">wg</span><span class="p">.</span><span class="nf">Done</span><span class="p">()</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">		</span><span class="nx">cur</span><span class="w"> </span><span class="o">:=</span><span class="w"> </span><span class="nx">inFlight</span><span class="p">.</span><span class="nf">Add</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">		</span><span class="k">defer</span><span class="w"> </span><span class="nx">inFlight</span><span class="p">.</span><span class="nf">Add</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">		</span><span class="c1">// track in-flight high-water mark, do the request, record a sample</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">	</span><span class="p">}(</span><span class="nx">measured</span><span class="p">,</span><span class="w"> </span><span class="nx">host</span><span class="p">,</span><span class="w"> </span><span class="nx">path</span><span class="p">)</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="p">}</span><span class="w">
+</span></span></span></code></pre></div><p>Two details matter more than they look. First, the schedule is computed from <code>start</code>, not from the previous send,
+so a slow <code>time.Sleep</code> doesn&rsquo;t quietly lower the rate. Second, the generator records its own worst scheduling lag. An
+open-loop test is only open-loop if the generator keeps its schedule; if it falls behind, you&rsquo;re back to measuring
+the generator. In every run in this post the max lag stayed under 90 ms, and on the runs where the server stopped
+answering, the in-flight ceiling climbed to <code>rate x timeout</code> (about 4,000 at 400/s, 8,000 at 800/s). That&rsquo;s how you
+know the arrival process really was independent of the server: the generator kept firing into a server that wasn&rsquo;t
+answering.</p>
+<p>The HTTP transport also has to be sized for it. A closed-loop run needs <code>2 x workers</code> idle connections; an open-loop
+flood can legitimately hold thousands in flight, so the open-loop mode raises <code>MaxIdleConnsPerHost</code> to 8192.</p>
+<h3 id="an-error-taxonomy-not-an-error-count">An error taxonomy, not an error count</h3>
+<p>The closed-loop report had one <code>errors</code> number. Under overload that number hides everything interesting, because
+the things that go wrong are different things. The open-loop report splits the status code distribution (200, 429,
+503, &hellip;) from a transport-error taxonomy for requests that never got a status at all:</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-go" data-lang="go"><span class="line"><span class="cl"><span class="kd">func</span><span class="w"> </span><span class="nf">classify</span><span class="p">(</span><span class="nx">err</span><span class="w"> </span><span class="kt">error</span><span class="p">)</span><span class="w"> </span><span class="kt">string</span><span class="w"> </span><span class="p">{</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">	</span><span class="kd">var</span><span class="w"> </span><span class="nx">ne</span><span class="w"> </span><span class="nx">net</span><span class="p">.</span><span class="nx">Error</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">	</span><span class="k">if</span><span class="w"> </span><span class="nx">errors</span><span class="p">.</span><span class="nf">As</span><span class="p">(</span><span class="nx">err</span><span class="p">,</span><span class="w"> </span><span class="o">&amp;</span><span class="nx">ne</span><span class="p">)</span><span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span><span class="nx">ne</span><span class="p">.</span><span class="nf">Timeout</span><span class="p">()</span><span class="w"> </span><span class="p">{</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">		</span><span class="k">return</span><span class="w"> </span><span class="s">&#34;timeout&#34;</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">	</span><span class="p">}</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">	</span><span class="k">if</span><span class="w"> </span><span class="nx">errors</span><span class="p">.</span><span class="nf">Is</span><span class="p">(</span><span class="nx">err</span><span class="p">,</span><span class="w"> </span><span class="nx">context</span><span class="p">.</span><span class="nx">DeadlineExceeded</span><span class="p">)</span><span class="w"> </span><span class="p">{</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">		</span><span class="k">return</span><span class="w"> </span><span class="s">&#34;timeout&#34;</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">	</span><span class="p">}</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">	</span><span class="nx">s</span><span class="w"> </span><span class="o">:=</span><span class="w"> </span><span class="nx">err</span><span class="p">.</span><span class="nf">Error</span><span class="p">()</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">	</span><span class="k">switch</span><span class="w"> </span><span class="p">{</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">	</span><span class="k">case</span><span class="w"> </span><span class="nx">strings</span><span class="p">.</span><span class="nf">Contains</span><span class="p">(</span><span class="nx">s</span><span class="p">,</span><span class="w"> </span><span class="s">&#34;Client.Timeout&#34;</span><span class="p">):</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">		</span><span class="k">return</span><span class="w"> </span><span class="s">&#34;timeout&#34;</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">	</span><span class="k">case</span><span class="w"> </span><span class="nx">strings</span><span class="p">.</span><span class="nf">Contains</span><span class="p">(</span><span class="nx">s</span><span class="p">,</span><span class="w"> </span><span class="s">&#34;connection refused&#34;</span><span class="p">):</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">		</span><span class="k">return</span><span class="w"> </span><span class="s">&#34;conn_refused&#34;</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">	</span><span class="k">case</span><span class="w"> </span><span class="nx">strings</span><span class="p">.</span><span class="nf">Contains</span><span class="p">(</span><span class="nx">s</span><span class="p">,</span><span class="w"> </span><span class="s">&#34;connection reset&#34;</span><span class="p">):</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">		</span><span class="k">return</span><span class="w"> </span><span class="s">&#34;conn_reset&#34;</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">	</span><span class="k">case</span><span class="w"> </span><span class="nx">strings</span><span class="p">.</span><span class="nf">Contains</span><span class="p">(</span><span class="nx">s</span><span class="p">,</span><span class="w"> </span><span class="s">&#34;EOF&#34;</span><span class="p">):</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">		</span><span class="k">return</span><span class="w"> </span><span class="s">&#34;eof&#34;</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">	</span><span class="k">default</span><span class="p">:</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">		</span><span class="k">return</span><span class="w"> </span><span class="s">&#34;conn_error&#34;</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">	</span><span class="p">}</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="p">}</span><span class="w">
+</span></span></span></code></pre></div><p>Each bucket means something different operationally. A <code>503</code> is the server choosing to say no. A <code>timeout</code> is the
+server saying nothing. <code>conn_refused</code> in the middle of a run usually means the process is gone. <code>conn_reset</code> and
+<code>eof</code> mean something died mid-response. &ldquo;We had 4% errors&rdquo; can mean any of those, and only one of them is healthy.</p>
+<p>The other rules: latency percentiles are computed over <strong>2xx successes only</strong> (a p50 that includes 10 s timeouts is
+a number about your client config, not your server), and the report includes a per-second series of 2xx completions.
+That series turned out to be the most useful thing in the report, because it shows the shape over time:
+stabilizing, or a death spiral.</p>
+<h3 id="the-first-run-nothing-sheds">The first run: nothing sheds</h3>
+<p>The workload was real WordPress with the <a href="https://github.com/ephpm/db-wordpress">ephpm/db-wordpress</a> drop-in on
+per-site Turso databases, 10 sites, on a 32-core WSL2 box. Closed-loop capacity for that workload on that binary
+was about 262-276 RPS, so I flooded fresh instances at 400/s (about 1.5x capacity) and 800/s (about 3x) for 60
+seconds, with a 10 s client timeout. The matrix was both FPM engines (<code>spawn_blocking</code>, the default, and the new
+<code>pool</code> engine from <a href="https://github.com/ephpm/ephpm/pull/296">#296</a>) with and without <code>max_connections = 256</code>. After
+each flood: a 30 s idle cooldown and a light probe against the same instance to see whether it recovered.</p>
+<p>The headline from <a href="https://github.com/ephpm/multitenant-scalebench/blob/main/report/SHEDDING.md">SHEDDING.md</a>:</p>
+<ul>
+<li><strong>With default settings, nothing sheds.</strong> Zero 503, zero 429, zero 5xx of any kind. Every arrival ended as either
+a 200 or a client timeout. At 800/s on <code>spawn_blocking</code>, that was 48,001 arrivals and 48,001 timeouts.</li>
+<li><strong><code>max_connections = 256</code> fired on 0.5-9.9% of arrivals and protected nothing.</strong> Most excess arrivals never got
+far enough to be rejected: the accept loop couldn&rsquo;t keep up, the listen backlog filled, and dials hung until the
+client gave up. And for the ones it did reject, reading the code showed the rejected connection was <strong>still
+dispatched to hyper and served</strong>. The limiter returned <code>None</code> on rejection, which was indistinguishable from &ldquo;no
+limiter configured.&rdquo; The 503 was a courtesy note.</li>
+<li><strong><code>spawn_blocking</code> wedged and never came back.</strong> RSS climbed to 5.4-6.2 GB and stayed there after the flood
+ended, and the recovery probe got zero responses in all four configs. The pool engine stayed flat at 0.56-0.75 GB
+and recovered within 30 s, fully with the connection limit set and partially without it (one pool instance never
+got probed, because of the next bullet).</li>
+<li><strong>3 of 10 flooded instances died</strong> of the same SIGABRT: a thread-local destructor in the DB bridge panicking
+during thread teardown. Once mid-flood, once during the idle cooldown after a flood it had survived, once at
+SIGTERM.</li>
+</ul>
+<p>The wedge has a simple mechanism once you see it. <code>spawn_blocking</code> closures go into tokio&rsquo;s blocking queue, which is
+unbounded and can&rsquo;t be cancelled. When a client times out and disconnects, its PHP request is still sitting in that
+FIFO. Tens of thousands of abandoned requests, each worth 100-500 ms of PHP, queue ahead of any new request, and
+at about 260 RPS of capacity that&rsquo;s minutes to hours of work for clients that already left. The pool engine&rsquo;s hyper
+task waits for a slot in a bounded channel instead, and when the client disconnects hyper drops the task and the
+queued-but-unstarted request goes with it.</p>
+<p>None of this showed up in the closed-loop runs. Same binary, same box, same workload.</p>
+<h3 id="the-fixes-and-measuring-them-the-same-way">The fixes, and measuring them the same way</h3>
+<p>That report turned into issues and PRs within a day:</p>
+<ul>
+<li><a href="https://github.com/ephpm/ephpm/issues/299">#299</a>, serve-after-503, closed by <a href="https://github.com/ephpm/ephpm/pull/298">#298</a>
+along with a <code>[server] preview = true</code> preset that fills in safe limits for small preview boxes</li>
+<li><a href="https://github.com/ephpm/ephpm/issues/300">#300</a>, the SIGABRT, and <a href="https://github.com/ephpm/ephpm/issues/301">#301</a>,
+request-level shedding, both fixed in <a href="https://github.com/ephpm/ephpm/pull/305">#305</a></li>
+</ul>
+<p>The shedding change adds an explicit overload policy:</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-toml" data-lang="toml"><span class="line"><span class="cl"><span class="p">[</span><span class="nx">php</span><span class="p">]</span>
+</span></span><span class="line"><span class="cl"><span class="nx">fpm_engine</span> <span class="p">=</span> <span class="s2">&#34;pool&#34;</span>
+</span></span><span class="line"><span class="cl"><span class="nx">overload_policy</span> <span class="p">=</span> <span class="s2">&#34;shed&#34;</span>   <span class="c"># &#34;wait&#34; is the default and the old behavior</span>
+</span></span><span class="line"><span class="cl"><span class="nx">shed_after_ms</span> <span class="p">=</span> <span class="mi">0</span>          <span class="c"># grace window before a queued request is shed</span>
+</span></span></code></pre></div><p>Shedding needs a queue to reject from, and that&rsquo;s engine specific. With the pool engine, a request that can&rsquo;t get
+into the bounded backlog gets a 503 with <code>Retry-After</code> and no PHP has run. With <code>spawn_blocking</code> the only safe shed
+point is the <code>[php] workers</code> semaphore, because once a closure reaches tokio&rsquo;s blocking queue it can&rsquo;t be withdrawn.
+So <code>spawn_blocking</code> with <code>workers = 0</code> (the default) can&rsquo;t shed at all, and startup logs a warning instead of
+pretending the setting did something. Shed 503s are counted in <code>ephpm_php_shed_total{engine}</code>.</p>
+<p>The SIGABRT write-up in #305 is worth reading on its own. The DB session lived in a <code>thread_local!</code>, the Turso engine
+registered its own buffer cache thread-local <em>after</em> ours during the first query, TLS destructors run in reverse
+registration order, so the engine&rsquo;s cache was gone by the time our destructor dropped a session that touched it.
+<code>try_with</code> on our side couldn&rsquo;t help because the panicking access was the engine&rsquo;s. The fix is to never run that
+drop on a dying thread: park the session in a process-wide list and drain it at the end of the next request.</p>
+<p>Then the important part: re-run the exact same flood against a binary with the fixes (<code>main</code> at <code>180d0ac</code>, the
+code that became v0.7.0), and gate each lane on its startup log so a misapplied env var can&rsquo;t produce a fake result.
+Closed-loop capacity on that binary was 339.7 RPS, so 400/s was about 1.2x and 800/s about 2.4x.</p>
+<p><img src="/img/2026/08/what-an-overloaded-php-server-actually-returns-outcomes.svg" alt="What 48,001 arrivals at 800 req/s got back"></p>
+<p><em>Data: <code>b9f56db</code> columns from <a href="https://github.com/ephpm/multitenant-scalebench/blob/main/report/SHEDDING.md">SHEDDING.md</a>,
+<code>180d0ac</code> columns from <a href="https://github.com/ephpm/lab/blob/main/docs/shed-verify-v070.md">shed-verify-v070.md</a>. Single
+run per point. &ldquo;sb&rdquo; is <code>spawn_blocking</code>; the sb shed lane runs with <code>workers = 32</code> and <code>shed_after_ms = 200</code>.</em></p>
+<p>On the shed lanes every one of the 48,001 arrivals got an answer: a 200 or a 503, and zero client timeouts. The 503s
+were fast, too. I measured them directly with timed side probes mid-flood at 600/s against a pool+shed instance: the
+shed ones came back in p50 1.7 ms, max 9.8 ms. The successes stayed sane at p50 190 ms, p99 237 ms, against p99s of
+9.2-10 s on the <code>wait</code> lanes (which is just the client timeout showing through). In-flight requests on the pool shed
+lane never went above 76, against 7,780 on the pool <code>wait</code> lane at the same rate.</p>
+<p>The per-second series shows why shedding is the right shape and not just a nicer error code:</p>
+<p><img src="/img/2026/08/what-an-overloaded-php-server-actually-returns-persec.svg" alt="2xx completions per second under an 800 req/s flood"></p>
+<p><em>Per-second 2xx completions from the shed-verify raw JSON (binary <code>180d0ac</code>, wp-real, 10 sites, 800 req/s).</em></p>
+<p>The pool shed lanes deliver about 344 2xx/s for the whole minute (the <code>spawn_blocking</code> shed lanes 320-336), which is the
+closed-loop capacity of the box. Overload
+no longer costs you the requests you could have served. The default <code>wait</code> lanes do what you&rsquo;d guess from the
+mechanism: a burst while the queue is still young, then the queue fills with requests whose clients will time out
+before they&rsquo;re served, and goodput falls to a trickle (pool) or to zero (<code>spawn_blocking</code>). That <code>spawn_blocking</code>
+instance was still wedged 30 s later at 6.2 GB. At 400/s it now recovers, which the original never did, but the
+default can still wedge under a deep flood. The remedy is configuration (<code>pool</code>, or <code>workers</code> plus <code>shed</code>), and the
+preview preset applies it.</p>
+<p>Across all 10 flood points, plus cooldowns and SIGTERM shutdowns, zero processes died.</p>
+<h3 id="what-id-tell-you-to-check-on-your-own-server">What I&rsquo;d tell you to check on your own server</h3>
+<ul>
+<li><strong>Run one open-loop test before you believe any overload claim.</strong> It doesn&rsquo;t need to be fancy. Constant-rate
+arrivals, a client timeout, and a breakdown of what came back. If you only have <code>wrk</code>, you don&rsquo;t know.</li>
+<li><strong>Classify the failures.</strong> A timeout and a 503 are not the same &ldquo;error.&rdquo; One means the server is still in control.</li>
+<li><strong>Percentiles over successes only</strong>, and look at the per-second series, not just the aggregate.</li>
+<li><strong>Check the generator kept its schedule.</strong> Record scheduling lag and max in-flight. If in-flight is far below
+<code>rate x timeout</code>, the generator throttled itself and you&rsquo;re looking at a closed-loop test with extra steps.</li>
+<li><strong>Fresh instance per point.</strong> Back-to-back points inherit tens of thousands of TIME_WAIT sockets from the previous
+one. Two reruns in the original session differed from their matrix twins by up to 8x on delivered goodput, which
+is why both reports call their numbers shape, not SLA.</li>
+</ul>
+<p>And the meta point: our docs said <code>max_connections</code> returned 503s, and that was technically true. It just didn&rsquo;t
+protect anything. A claim like &ldquo;we shed load&rdquo; is something to measure, and the test that measures it isn&rsquo;t the one
+you already have.</p>
+<h3 id="how-i-measured">How I measured</h3>
+<ul>
+<li>Host: AMD Ryzen 9 5950X (32 threads), WSL2 on Windows 11, 62 GiB. The original run predates the harness cwd fix
+described in <a href="/blog/2026/08/benchmark-4x-wrong-wsl-drvfs-cwd/">the WSL post</a> (its server ran with a DrvFs working
+directory); the re-run was on native ext4. SHEDDING.md&rsquo;s erratum argues, and I agree, that the shed/no-shed, wedge
+and crash findings don&rsquo;t depend on it, but its absolute delivered-RPS numbers read a little low.</li>
+<li>Workload: real WordPress core plus the db-wordpress drop-in, 10 sites, per-site Turso DBs, <code>max_open_dbs = 4096</code>.</li>
+<li>Load: <code>loadgen -rate {400,800} -arrival const -timeout 10</code>, 5 s warmup, 60 s measured, then 30 s cooldown and a
+closed-loop probe (c=4, 10 s).</li>
+<li>Binaries: <code>b9f56db</code> (before) and <code>180d0ac</code> (after), both <code>cargo xtask release 8.5</code> from source.</li>
+<li>Harness: <code>scripts/run_overload.sh</code> in both repos; raw JSON for the original run is under
+<code>results/wp-real-openloop/</code> in multitenant-scalebench.</li>
+</ul>
+<h3 id="links">Links</h3>
+<ul>
+<li><a href="https://github.com/ephpm/multitenant-scalebench">ephpm/multitenant-scalebench</a>: <code>loadgen/main.go</code>, <code>report/SHEDDING.md</code>
+(commit <a href="https://github.com/ephpm/multitenant-scalebench/commit/de3494a"><code>de3494a</code></a>)</li>
+<li><a href="https://github.com/ephpm/lab/blob/main/docs/shed-verify-v070.md">ephpm/lab <code>docs/shed-verify-v070.md</code></a>, where the harness lives now under <code>scale/</code></li>
+<li>ePHPm PRs: <a href="https://github.com/ephpm/ephpm/pull/296">#296</a> (pool engine), <a href="https://github.com/ephpm/ephpm/pull/298">#298</a> (preview preset, serve-after-503),
+<a href="https://github.com/ephpm/ephpm/pull/305">#305</a> (TLS-destructor SIGABRT, load shedding)</li>
+</ul>
+
+      </div>
+      <footer>
+        <div class="stats">
+  
+    <ul class="categories">
+      
+        
+          <li><a class="article-terms-link" href="/categories/ephpm/">ephpm</a></li>
+        
+          <li><a class="article-terms-link" href="/categories/php/">php</a></li>
+        
+      
+    </ul>
+  
+  
+    <ul class="tags">
+      
+        
+          <li><a class="article-terms-link" href="/tags/ephpm/">ephpm</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/php/">php</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/benchmarking/">benchmarking</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/load-testing/">load-testing</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/go/">go</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/rust/">rust</a></li>
+        
+      
+    </ul>
+  
+</div>
+
+      </footer>
+    </div>
+    
+      
+  
+  <div class='post giscus-wrap'>
+    <script src='https://giscus.app/client.js'
+            data-repo='luthermonson/luth.io'
+            data-repo-id='R_kgDOGvFBXQ'
+            data-category='Announcements'
+            data-category-id='DIC_kwDOGvFBXc4DH_gv'
+            data-mapping='pathname'
+            data-strict='1'
+            data-reactions-enabled='1'
+            data-emit-metadata='0'
+            data-input-position='top'
+            data-theme='light'
+            data-lang='en'
+            data-loading='lazy'
+            crossorigin='anonymous'
+            async>
+    </script>
+  </div>
+  
+
+
+
+    
+  </article>
+  
+    <nav class="post-nav">
+      
+        <a href="/blog/2026/08/windows-container-egress-firewall/" class="post-nav-link older">
+          <span class="post-nav-label">&larr; Older</span>
+          <span class="post-nav-title">Five Ways to Not Firewall a Windows Container (and the One That Works)</span>
+        </a>
+      
+      
+        <a href="/blog/2026/08/what-does-one-more-wordpress-site-cost/" class="post-nav-link newer">
+          <span class="post-nav-label">Newer &rarr;</span>
+          <span class="post-nav-title">What Does One More WordPress Site Cost?</span>
+        </a>
+      
+    </nav>
+  
+
+      </main>
+      <section id="site-sidebar">
+  
+    <section id="recent-posts">
+      <header>
+        <h1>Recent Posts</h1>
+      </header>
+      
+      <article class="mini-post">
+          <a href="/blog/2026/10/ephpm-worker-mode-performance/" class="image" style="--bg-image: url('/img/2026/10/ephpm-worker-mode-performance-cover.svg');">
+    <img class="" src="/img/2026/10/ephpm-worker-mode-performance-cover.svg" alt="Diagram: before, hyper/tokio hands each request to one shared bounded channel whose waiter list all 20 PHP threads contend on; after, a dispatcher hands the job straight into the mailbox of the most recently idle PHP thread and only queues it in a FIFO overflow queue when every thread is busy">
+  </a>
+        <header>
+          <h2><a href="/blog/2026/10/ephpm-worker-mode-performance/">Fourth Place in Worker Mode, and Why It Wasn&#39;t PHP</a></h2>
+          <time class="published" datetime="2026-10-16 08:10:00 -0700 PDT">October 16, 2026</time>
+        </header>
+      </article>
+      
+      <article class="mini-post">
+          <a href="/blog/2026/10/ephpm-websockets-how-to/" class="image" style="--bg-image: url('/img/2026/10/ephpm-websockets-how-to-cover.svg');">
+    <img class="" src="/img/2026/10/ephpm-websockets-how-to-cover.svg" alt="Diagram: browsers hold sockets to ePHPm&#39;s Rust session tasks and registry; each connect, message and disconnect runs websocket.php once on the PHP thread pool, and ordinary HTTP requests push through ephpm_ws_broadcast">
+  </a>
+        <header>
+          <h2><a href="/blog/2026/10/ephpm-websockets-how-to/">WebSockets in ePHPm, From Zero to a Working Chat</a></h2>
+          <time class="published" datetime="2026-10-11 17:30:00 -0700 PDT">October 11, 2026</time>
+        </header>
+      </article>
+      
+      <article class="mini-post">
+          <a href="/blog/2026/10/webhooks-out-of-order-scheduler/" class="image" style="--bg-image: url('/img/2026/10/webhooks-out-of-order-scheduler-timeline.svg');">
+    <img class="" src="/img/2026/10/webhooks-out-of-order-scheduler-timeline.svg" alt="Timeline of three same-label jobs where a runner executing a build is destroyed 2.3 seconds before its in_progress webhook arrives">
+  </a>
+        <header>
+          <h2><a href="/blog/2026/10/webhooks-out-of-order-scheduler/">Webhooks Arrive Out of Order: How My Scheduler Killed Live Builds</a></h2>
+          <time class="published" datetime="2026-10-07 21:10:00 -0700 PDT">October 7, 2026</time>
+        </header>
+      </article>
+      
+      <article class="mini-post">
+          <a href="/blog/2026/10/go-proxmox-five-years-to-v0-8/" class="image" style="--bg-image: url('/img/2026/10/go-proxmox-five-years-to-v0-8-apidiff.svg');">
+    <img class="" src="/img/2026/10/go-proxmox-five-years-to-v0-8-apidiff.svg" alt="Horizontal bar chart of apidiff incompatible and compatible changes for every go-proxmox release from v0.1.0 to v0.8.2">
+  </a>
+        <header>
+          <h2><a href="/blog/2026/10/go-proxmox-five-years-to-v0-8/">Breaking Changes Without Breaking Trust: Five Years to go-proxmox v0.8</a></h2>
+          <time class="published" datetime="2026-10-04 19:40:00 -0700 PDT">October 4, 2026</time>
+        </header>
+      </article>
+      
+      <article class="mini-post">
+          <a href="/blog/2026/10/windows-sigterm-sparse-files/" class="image" style="--bg-image: url('/img/2026/10/windows-sigterm-sparse-files-connections.svg');">
+    <img class="" src="/img/2026/10/windows-sigterm-sparse-files-connections.svg" alt="Bar chart: 96 Cloudflare edge connections held by orphaned cloudflared processes versus 4 for the live daemon">
+  </a>
+        <header>
+          <h2><a href="/blog/2026/10/windows-sigterm-sparse-files/">Windows Grab-Bag: SIGTERM That Doesn&#39;t Exist and Sparse Files That Break Docker</a></h2>
+          <time class="published" datetime="2026-10-03 14:30:00 -0700 PDT">October 3, 2026</time>
+        </header>
+      </article>
+      
+      
+        <footer>
+          <a href="/blog" class="button">See More</a>
+        </footer>
+      
+    </section>
+  
+
+  
+    
+
+      <section id="categories">
+        <header>
+          <h1><a href="/categories">Categories</a></h1>
+        </header>
+        <ul>
+          
+          
+          <li>
+              <a href="/categories/ephpm/">ephpm<span class="count">33</span></a>
+          
+          <li>
+              <a href="/categories/go/">go<span class="count">30</span></a>
+          
+          <li>
+              <a href="/categories/php/">php<span class="count">23</span></a>
+          
+          <li>
+              <a href="/categories/rust/">rust<span class="count">15</span></a>
+          
+          <li>
+              <a href="/categories/homelab/">homelab<span class="count">14</span></a>
+          
+          <li>
+              <a href="/categories/windows/">windows<span class="count">14</span></a>
+          
+          <li>
+              <a href="/categories/ci/">ci<span class="count">9</span></a>
+          
+          <li>
+              <a href="/categories/databases/">databases<span class="count">9</span></a>
+          
+          <li>
+              <a href="/categories/security/">security<span class="count">9</span></a>
+          
+          <li>
+              <a href="/categories/containers/">containers<span class="count">7</span></a>
+          
+          <li>
+              <a href="/categories/tools/">tools<span class="count">5</span></a>
+          
+          <li>
+              <a href="/categories/ai-agents/">ai-agents<span class="count">4</span></a>
+          
+          </li>
+        </ul>
+      </section>
+    
+  
+
+  
+    <section id="mini-bio">
+      <header>
+        <h1>About</h1>
+      </header>
+      <p>Luther is a 20+ year software veteran specializing in backend APIs and architecting products. Employed at <a href='https://www.suse.com'>SUSE</a> as the Team Lead for the <a href='https://github.com/rancher/windows/issues'>Containers on Windows Team</a> working on <a href='https://rancher.com/'>Rancher</a> + <a href='https://kubernetes.io/'>Kubernetes</a></p>
+      <footer>
+        <a href="/about" class="button">Learn More</a>
+      </footer>
+    </section>
+  
+</section>
+
+      <footer id="site-footer">
+  
+      <ul class="socnet-icons">
+        
+
+        <li><a href="//github.com/luthermonson" target="_blank" rel="noopener" title="GitHub" class="fab fa-github"></a></li>
+
+
+
+
+
+
+
+
+
+
+
+<li><a href="//www.linkedin.com/in/luthermonson" target="_blank" rel="noopener" title="LinkedIn" class="fab fa-linkedin"></a></li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li><a href="//twitter.com/luthermonson" target="_blank" rel="noopener" title="Twitter" class="fab fa-twitter"></a></li>
+
+
+
+
+
+
+
+
+
+
+
+<li><a href="mailto:luther.monson@gmail.com" target="_blank" title="Email" class="far fa-envelope"></a></li>
+
+      </ul>
+  
+  <p class="copyright">
+    © 2026 Luther Monson
+      <br>
+    Theme: <a href='https://github.com/pacollins/hugo-future-imperfect-slim' target='_blank' rel='noopener'>Hugo Future Imperfect Slim</a><br>A <a href='https://html5up.net/future-imperfect' target='_blank' rel='noopener'>HTML5 UP port</a> | Powered by <a href='https://gohugo.io/' title='0.160.1' target='_blank' rel='noopener'>Hugo</a>
+  </p>
+</footer>
+<a id="back-to-top" href="#" class="fas fa-arrow-up fa-2x"></a>
+
+      <script src="/js/bundle.min.241b62ebc4792fe8c7a75879e5f710894f226f2b73342e9916b3a3b0526030cc.js" integrity="sha256-JBti68R5L&#43;jHp1h55fcQiU8ibytzNC6ZFrOjsFJgMMw="></script>
+    <script src="/js/add-on.js"></script>
+    </div>
+  </body>
+</html>

@@ -1,0 +1,57 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 600" width="1200" height="600" font-family="system-ui, -apple-system, Segoe UI, Roboto, sans-serif">
+  <defs>
+    <marker id="b" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#e07a1f"/>
+    </marker>
+  </defs>
+  <rect width="1200" height="600" fill="#ffffff"/>
+  <text x="600" y="44" text-anchor="middle" font-size="26" font-weight="600" fill="#222">ePHPm's two-tier clustered KV</text>
+  <text x="600" y="70" text-anchor="middle" font-size="16" fill="#6b6b6b">small values ride gossip to every node; large values live on hash(key) % alive_nodes plus the next replica</text>
+
+  <!-- nodes -->
+  <g font-size="15">
+    <rect x="90" y="150" width="260" height="190" rx="12" fill="#2b6cb0" opacity="0.10" stroke="#2b6cb0" stroke-width="2"/>
+    <text x="220" y="180" text-anchor="middle" font-size="18" font-weight="600" fill="#2b6cb0">node-1</text>
+    <text x="220" y="206" text-anchor="middle" fill="#333">PHP + KV store</text>
+    <rect x="115" y="222" width="210" height="44" rx="6" fill="#3a9a5b" opacity="0.18" stroke="#3a9a5b"/>
+    <text x="220" y="250" text-anchor="middle" fill="#222">session:a1 (300 B)</text>
+    <rect x="115" y="276" width="210" height="44" rx="6" fill="#e07a1f" opacity="0.18" stroke="#e07a1f"/>
+    <text x="220" y="304" text-anchor="middle" fill="#222">page:home (40 KB, owner)</text>
+
+    <rect x="470" y="150" width="260" height="190" rx="12" fill="#2b6cb0" opacity="0.10" stroke="#2b6cb0" stroke-width="2"/>
+    <text x="600" y="180" text-anchor="middle" font-size="18" font-weight="600" fill="#2b6cb0">node-2</text>
+    <text x="600" y="206" text-anchor="middle" fill="#333">PHP + KV store</text>
+    <rect x="495" y="222" width="210" height="44" rx="6" fill="#3a9a5b" opacity="0.18" stroke="#3a9a5b"/>
+    <text x="600" y="250" text-anchor="middle" fill="#222">session:a1 (300 B)</text>
+    <rect x="495" y="276" width="210" height="44" rx="6" fill="#e07a1f" opacity="0.18" stroke="#e07a1f"/>
+    <text x="600" y="304" text-anchor="middle" fill="#222">page:home (replica)</text>
+
+    <rect x="850" y="150" width="260" height="190" rx="12" fill="#2b6cb0" opacity="0.10" stroke="#2b6cb0" stroke-width="2"/>
+    <text x="980" y="180" text-anchor="middle" font-size="18" font-weight="600" fill="#2b6cb0">node-3</text>
+    <text x="980" y="206" text-anchor="middle" fill="#333">PHP + KV store</text>
+    <rect x="875" y="222" width="210" height="44" rx="6" fill="#3a9a5b" opacity="0.18" stroke="#3a9a5b"/>
+    <text x="980" y="250" text-anchor="middle" fill="#222">session:a1 (300 B)</text>
+    <rect x="875" y="276" width="210" height="44" rx="6" fill="#6b6b6b" opacity="0.10" stroke="#6b6b6b" stroke-dasharray="5 4"/>
+    <text x="980" y="304" text-anchor="middle" fill="#6b6b6b">page:home: not held here</text>
+  </g>
+
+  <!-- gossip mesh -->
+  <g stroke="#3a9a5b" stroke-width="2.5" fill="none" stroke-dasharray="2 6" stroke-linecap="round">
+    <path d="M350,170 L470,170"/>
+    <path d="M730,170 L850,170"/>
+    <path d="M220,150 C220,125 980,125 980,150"/>
+  </g>
+  <text x="600" y="104" text-anchor="middle" font-size="14" fill="#3a9a5b" font-weight="600">gossip (chitchat, UDP :7946, ChaCha20-Poly1305): membership + values ≤ 512 B on every node</text>
+
+  <!-- data plane -->
+  <g stroke="#e07a1f" stroke-width="2.5" fill="none">
+    <path d="M325,298 L491,298" marker-end="url(#b)"/>
+
+  </g>
+  <text x="408" y="290" text-anchor="middle" font-size="13" fill="#b35f12">replicate</text>
+  <text x="600" y="380" text-anchor="middle" font-size="14" fill="#b35f12" font-weight="600">TCP data plane (:7947, sealed frames): large writes go to the owner, then the next replica</text>
+
+  <rect x="140" y="470" width="920" height="90" rx="10" fill="#fff" stroke="#6b6b6b"/>
+  <text x="600" y="500" text-anchor="middle" font-size="15" fill="#333">No coordinator, no consensus: writes are last-writer-wins on the gossip tier and write-time replication on the data plane.</text>
+  <text x="600" y="526" text-anchor="middle" font-size="15" fill="#333">That's a cache's consistency model, not a database's, and that's the job it's doing.</text>
+</svg>

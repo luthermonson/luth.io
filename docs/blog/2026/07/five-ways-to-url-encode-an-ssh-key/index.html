@@ -1,0 +1,662 @@
+<!doctype html>
+<html lang="en">
+  <head>
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-MSTSKGFWTX"></script>
+<script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+
+    gtag('config', 'G-MSTSKGFWTX');
+</script><meta charset="utf-8">
+<title>Five Ways to URL-Encode an SSH Key (and Why Proxmox Rejects Them) - Luther Monson</title>
+<meta name="description" content="Proxmox&#39;s sshkeys parameter wants Python-style percent encoding that no single Go function produces. A two-year-old issue, a one-line fix, and a related double-encoding bug in guest file writes.">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<meta name="twitter:card" content="summary_large_image"><meta name="twitter:site" content="@luthermonson">
+
+<meta property="og:site_name" content="Luther Monson">
+<meta property="og:title" content="Five Ways to URL-Encode an SSH Key (and Why Proxmox Rejects Them)">
+<meta property="og:description" content="Proxmox&#39;s sshkeys parameter wants Python-style percent encoding that no single Go function produces. A two-year-old issue, a one-line fix, and a related double-encoding bug in guest file writes.">
+<meta property="og:type" content="article">
+<meta property="og:url" content="https://luth.io/blog/2026/07/five-ways-to-url-encode-an-ssh-key/">
+    <meta property="og:image" content="https://luth.io/img/2026/07/five-ways-to-url-encode-an-ssh-key-results.svg">
+    <meta property="og:image:alt" content="Table of seven ways to encode an SSH public key and whether each passes Proxmox&#39;s urlencoded validator">
+
+
+  <link rel="manifest" href="/favicon/site.webmanifest?v=1">
+  <link rel="apple-touch-icon" sizes="180x180" href="/favicon/apple-touch-icon.png?v=1">
+  <link rel="icon" type="image/png" sizes="32x32" href="/favicon/favicon-32x32.png?v=1">
+  <link rel="icon" type="image/png" sizes="16x16" href="/favicon/favicon-16x16.png?v=1">
+  
+    <link rel="mask-icon" href="/favicon/safari-pinned-tab.svg?v=1" color="#ffffff">
+    <link rel="shortcut icon" href="/favicon/favicon.ico?v=1">
+    <meta name="msapplication-config" content="/favicon/browserconfig.xml?v=1">
+  
+  <meta name="msapplication-TileColor" content="#ffffff">
+  <meta name="theme-color" content="#ffffff">
+
+
+  <meta name="generator" content="Hugo 0.160.1">
+  <link rel="alternate" type="application/rss+xml" href="https://luth.io/index.xml" title="Luther Monson">
+  <link rel="stylesheet" href="/css/bundle.min.e1ffed86714fbb7eff75eab221c0c61b8260be0c7d1c08db0fcb7a2bdb6af7c9.css" integrity="sha256-4f/thnFPu37/deqyIcDGG4Jgvgx9HAjbD8t6K9tq98k="><link rel="stylesheet" href="/css/add-on.css">
+        <link rel="stylesheet" href="/css/code.css">
+        <link rel="stylesheet" href="/css/mobile.css">
+</head>
+
+  <body>
+    
+
+<header id="site-header">
+  <nav id="site-nav">
+    <h1 class="nav-title">
+      <a href="/" class="nav">
+        <img class="nav-avatar" src="/img/luther-monson-headshot.jpg" alt="" width="32" height="32">
+        
+          Blog
+        
+      </a>
+    </h1>
+    <menu id="site-nav-menu" class="flyout-menu menu">
+      
+        
+          
+          <a href="/" class="nav link"><i class='fa fa-home'></i> Home</a>
+        
+      
+        
+          
+          <a href="/about" class="nav link"><i class='far fa-id-card'></i> About</a>
+        
+      
+        
+          
+          <a href="/blog" class="nav link"><i class='far fa-newspaper'></i> Blog</a>
+        
+      
+        
+          
+          <a href="/archive" class="nav link"><i class='far fa-calendar-alt'></i> Archive</a>
+        
+      
+        
+          
+          <a href="/categories" class="nav link"><i class='fas fa-sitemap'></i> Categories</a>
+        
+      
+      <a href="#share-menu" class="nav link share-toggle"><i class="fas fa-share-alt">&nbsp;</i>Share</a>
+      <a href="#search-input" class="nav link search-toggle"><i class="fas fa-search">&nbsp;</i>Search</a>
+    </menu>
+    <a href="#search-input" class="nav search-toggle"><i class="fas fa-search fa-2x">&nbsp;</i></a>
+    <a href="#share-menu" class="nav share-toggle"><i class="fas fa-share-alt fa-2x">&nbsp;</i></a>
+    
+    <a href="#site-nav" class="nav nav-toggle"><i class="fas fa-bars fa-2x"></i></a>
+  </nav>
+  <menu id="search" class="menu"><input id="search-input" class="search-input menu"></input><div id="search-results" class="search-results menu"></div></menu>
+  
+  
+    <menu id="share-menu" class="flyout-menu menu">
+      <h1>Share Post</h1>
+      
+
+
+
+
+  
+    
+    <a href="//twitter.com/share?text=Five%20Ways%20to%20URL-Encode%20an%20SSH%20Key%20%28and%20Why%20Proxmox%20Rejects%20Them%29&amp;url=https%3a%2f%2fluth.io%2fblog%2f2026%2f07%2ffive-ways-to-url-encode-an-ssh-key%2f" target="_blank" rel="noopener" class="nav share-btn twitter">
+        <p>Twitter</p>
+      </a>
+  
+
+  
+      <a href="//www.facebook.com/sharer/sharer.php?u=https%3a%2f%2fluth.io%2fblog%2f2026%2f07%2ffive-ways-to-url-encode-an-ssh-key%2f" target="_blank" rel="noopener" class="nav share-btn facebook">
+        <p>Facebook</p>
+        </a>
+  
+
+  
+    <a href="//www.reddit.com/submit?url=https%3a%2f%2fluth.io%2fblog%2f2026%2f07%2ffive-ways-to-url-encode-an-ssh-key%2f&amp;title=Five%20Ways%20to%20URL-Encode%20an%20SSH%20Key%20%28and%20Why%20Proxmox%20Rejects%20Them%29" target="_blank" rel="noopener" class="nav share-btn reddit">
+          <p>Reddit</p>
+        </a>
+  
+
+  
+        <a href="//www.linkedin.com/shareArticle?url=https%3a%2f%2fluth.io%2fblog%2f2026%2f07%2ffive-ways-to-url-encode-an-ssh-key%2f&amp;title=Five%20Ways%20to%20URL-Encode%20an%20SSH%20Key%20%28and%20Why%20Proxmox%20Rejects%20Them%29" target="_blank" rel="noopener" class="nav share-btn linkedin">
+            <p>LinkedIn</p>
+          </a>
+  
+
+  
+        <a href="//www.pinterest.com/pin/create/button/?url=https%3a%2f%2fluth.io%2fblog%2f2026%2f07%2ffive-ways-to-url-encode-an-ssh-key%2f&amp;description=Five%20Ways%20to%20URL-Encode%20an%20SSH%20Key%20%28and%20Why%20Proxmox%20Rejects%20Them%29" target="_blank" rel="noopener" class="nav share-btn pinterest">
+          <p>Pinterest</p>
+        </a>
+  
+
+  
+        <a href="mailto:?subject=Check%20out%20this%20post%20by Luther%20Monson&amp;body=https%3a%2f%2fluth.io%2fblog%2f2026%2f07%2ffive-ways-to-url-encode-an-ssh-key%2f" target="_blank" class="nav share-btn email" data-proofer-ignore>
+          <p>Email</p>
+        </a>
+  
+
+
+    </menu>
+  
+</header>
+
+    <div id="wrapper">
+      <section id="site-intro" class="hidden-single-column">
+  <a href="/"><img src="/img/luther-monson-headshot.jpg" class="circle" width="100" alt="Luther Monson, Staff Software Engineer at SUSE" /></a>
+  <header>
+    <h1>Luther Monson</h1>
+  </header>
+  <main>
+    <p>Go by way of PHP &middot; Containers &middot; VMs &middot; Windows &middot; Kubernetes</p>
+  </main>
+  
+    <footer>
+      <ul class="socnet-icons">
+        
+
+        <li><a href="//github.com/luthermonson" target="_blank" rel="noopener" title="GitHub" class="fab fa-github"></a></li>
+
+
+
+
+
+
+
+
+
+
+
+<li><a href="//www.linkedin.com/in/luthermonson" target="_blank" rel="noopener" title="LinkedIn" class="fab fa-linkedin"></a></li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li><a href="//twitter.com/luthermonson" target="_blank" rel="noopener" title="Twitter" class="fab fa-twitter"></a></li>
+
+
+
+
+
+
+
+
+
+
+
+<li><a href="mailto:luther.monson@gmail.com" target="_blank" title="Email" class="far fa-envelope"></a></li>
+
+      </ul>
+    </footer>
+  
+</section>
+
+      <main id="site-main">
+        
+  <article>
+    <div class="post">
+      <header>
+  <div class="title">
+    
+      <h2><a href="/blog/2026/07/five-ways-to-url-encode-an-ssh-key/">Five Ways to URL-Encode an SSH Key (and Why Proxmox Rejects Them)</a></h2>
+    
+    
+      <p>Proxmox&#39;s sshkeys parameter wants Python-style percent encoding that no single Go function produces. A two-year-old issue, a one-line fix, and a related double-encoding bug in guest file writes.</p>
+    
+  </div>
+  <div class="meta">
+    <time datetime="2026-07-28 20:12:00 -0700 PDT">July 28, 2026</time>
+    
+    <p>6-Minute Read</p>
+  </div>
+</header>
+
+      <div id="socnet-share">
+        
+
+
+
+
+  
+    
+    <a href="//twitter.com/share?text=Five%20Ways%20to%20URL-Encode%20an%20SSH%20Key%20%28and%20Why%20Proxmox%20Rejects%20Them%29&amp;url=https%3a%2f%2fluth.io%2fblog%2f2026%2f07%2ffive-ways-to-url-encode-an-ssh-key%2f" target="_blank" rel="noopener" class="nav share-btn twitter">
+        <p>Twitter</p>
+      </a>
+  
+
+  
+      <a href="//www.facebook.com/sharer/sharer.php?u=https%3a%2f%2fluth.io%2fblog%2f2026%2f07%2ffive-ways-to-url-encode-an-ssh-key%2f" target="_blank" rel="noopener" class="nav share-btn facebook">
+        <p>Facebook</p>
+        </a>
+  
+
+  
+    <a href="//www.reddit.com/submit?url=https%3a%2f%2fluth.io%2fblog%2f2026%2f07%2ffive-ways-to-url-encode-an-ssh-key%2f&amp;title=Five%20Ways%20to%20URL-Encode%20an%20SSH%20Key%20%28and%20Why%20Proxmox%20Rejects%20Them%29" target="_blank" rel="noopener" class="nav share-btn reddit">
+          <p>Reddit</p>
+        </a>
+  
+
+  
+        <a href="//www.linkedin.com/shareArticle?url=https%3a%2f%2fluth.io%2fblog%2f2026%2f07%2ffive-ways-to-url-encode-an-ssh-key%2f&amp;title=Five%20Ways%20to%20URL-Encode%20an%20SSH%20Key%20%28and%20Why%20Proxmox%20Rejects%20Them%29" target="_blank" rel="noopener" class="nav share-btn linkedin">
+            <p>LinkedIn</p>
+          </a>
+  
+
+  
+        <a href="//www.pinterest.com/pin/create/button/?url=https%3a%2f%2fluth.io%2fblog%2f2026%2f07%2ffive-ways-to-url-encode-an-ssh-key%2f&amp;description=Five%20Ways%20to%20URL-Encode%20an%20SSH%20Key%20%28and%20Why%20Proxmox%20Rejects%20Them%29" target="_blank" rel="noopener" class="nav share-btn pinterest">
+          <p>Pinterest</p>
+        </a>
+  
+
+  
+        <a href="mailto:?subject=Check%20out%20this%20post%20by Luther%20Monson&amp;body=https%3a%2f%2fluth.io%2fblog%2f2026%2f07%2ffive-ways-to-url-encode-an-ssh-key%2f" target="_blank" class="nav share-btn email" data-proofer-ignore>
+          <p>Email</p>
+        </a>
+  
+
+
+      </div>
+      <div class="content">
+        
+        <p><a href="https://github.com/luthermonson/go-proxmox/issues/144">Issue #144</a> on go-proxmox was opened in April 2024 with the title
+&ldquo;Weird sshkeys SSH public key validation error&rdquo; and it is one of my less proud threads. Thirteen comments of people,
+including me, trying to get a public key into a cloud-init VM through the API, and the working answer took more than a
+year to show up. The fix that finally landed in May is one line. Here&rsquo;s why it took so long.</p>
+<h3 id="what-the-api-wants">What the API wants</h3>
+<p>Setting <code>sshkeys</code> on a VM is how you get a key into cloud-init&rsquo;s <code>authorized_keys</code>. With <code>qm</code> on the node you can point it
+at a file (<code>--sshkeys ~/.ssh/id_rsa.pub</code>), which is where the thread started: the reporter passed a path through the API
+and got <code>500 SSH public key validation error</code>, because over the API you have to send the key text itself. That part is
+fair. The confusing part is the next error, once you send the key:</p>
+<pre tabindex="0"><code>400 Parameter verification failed. - {&#34;sshkeys&#34;:&#34;invalid format - invalid urlencoded string: ssh-rsa%20AAAAB ...
+</code></pre><p>The schema declares the parameter with <code>format =&gt; 'urlencoded'</code>, and the format check lives in
+<a href="https://git.proxmox.com/?p=pve-common.git;a=blob;f=src/PVE/JSONSchema.pm">pve-common&rsquo;s JSONSchema.pm</a>:</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-perl" data-lang="perl"><span class="line"><span class="cl"><span class="k">sub</span> <span class="nf">pve_verify_urlencoded</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">    <span class="k">my</span> <span class="p">(</span><span class="nv">$text</span><span class="p">,</span> <span class="nv">$noerr</span><span class="p">)</span> <span class="o">=</span> <span class="nv">@_</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">    <span class="k">if</span> <span class="p">(</span><span class="nv">$text</span> <span class="o">!~</span> <span class="sr">/^[-%a-zA-Z0-9_.!~*&#39;()]*\z/</span><span class="p">)</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">        <span class="k">return</span> <span class="nb">undef</span> <span class="k">if</span> <span class="nv">$noerr</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">        <span class="nb">die</span> <span class="s">&#34;invalid urlencoded string: $text\n&#34;</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">    <span class="p">}</span>
+</span></span><span class="line"><span class="cl">    <span class="k">return</span> <span class="nv">$text</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl"><span class="p">}</span>
+</span></span></code></pre></div><p>That&rsquo;s the entire allowed character set: letters, digits, <code>- _ . ! ~ * ' ( )</code> and <code>%</code>. Everything else has to be
+percent-encoded, including <code>+</code>, <code>/</code>, <code>=</code>, <code>@</code> and space, which are exactly the characters that show up in an OpenSSH
+public key (base64 body, <code>user@host</code> comment, spaces between the fields). Multiple keys are separated by newlines, so
+<code>%0A</code> too.</p>
+<h3 id="trying-them-all">Trying them all</h3>
+<p>The thread worked through <code>url.PathEscape</code>, <code>url.QueryEscape</code> and three flavors of base64. My own contribution was
+&ldquo;try <code>url.QueryEscape</code>&rdquo;, which the reporter had already said didn&rsquo;t work. A couple of hours later I linked the regex above,
+which was the right thing to look at, and then nobody, me included, followed it through. So here it is followed
+through. This program generates a throwaway ed25519 key whose base64 contains both <code>+</code> and <code>/</code>, runs each candidate
+through the same regex, and checks whether URI-unescaping the result gives the original key back (which is what Proxmox
+does with it before handing it to cloud-init):</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-go" data-lang="go"><span class="line"><span class="cl"><span class="kd">var</span><span class="w"> </span><span class="nx">pveURLEncoded</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="nx">regexp</span><span class="p">.</span><span class="nf">MustCompile</span><span class="p">(</span><span class="s">`^[-%a-zA-Z0-9_.!~*&#39;()]*$`</span><span class="p">)</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="nx">cands</span><span class="w"> </span><span class="o">:=</span><span class="w"> </span><span class="p">[]</span><span class="kd">struct</span><span class="p">{</span><span class="w"> </span><span class="nx">name</span><span class="p">,</span><span class="w"> </span><span class="nx">val</span><span class="w"> </span><span class="kt">string</span><span class="w"> </span><span class="p">}{</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">	</span><span class="p">{</span><span class="s">&#34;raw&#34;</span><span class="p">,</span><span class="w"> </span><span class="nx">key</span><span class="p">},</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">	</span><span class="p">{</span><span class="s">&#34;url.PathEscape&#34;</span><span class="p">,</span><span class="w"> </span><span class="nx">url</span><span class="p">.</span><span class="nf">PathEscape</span><span class="p">(</span><span class="nx">key</span><span class="p">)},</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">	</span><span class="p">{</span><span class="s">&#34;url.QueryEscape&#34;</span><span class="p">,</span><span class="w"> </span><span class="nx">url</span><span class="p">.</span><span class="nf">QueryEscape</span><span class="p">(</span><span class="nx">key</span><span class="p">)},</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">	</span><span class="p">{</span><span class="s">&#34;base64.StdEncoding&#34;</span><span class="p">,</span><span class="w"> </span><span class="nx">base64</span><span class="p">.</span><span class="nx">StdEncoding</span><span class="p">.</span><span class="nf">EncodeToString</span><span class="p">([]</span><span class="nb">byte</span><span class="p">(</span><span class="nx">key</span><span class="p">))},</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">	</span><span class="p">{</span><span class="s">&#34;base64.URLEncoding&#34;</span><span class="p">,</span><span class="w"> </span><span class="nx">base64</span><span class="p">.</span><span class="nx">URLEncoding</span><span class="p">.</span><span class="nf">EncodeToString</span><span class="p">([]</span><span class="nb">byte</span><span class="p">(</span><span class="nx">key</span><span class="p">))},</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">	</span><span class="p">{</span><span class="s">&#34;base64.RawURLEncoding&#34;</span><span class="p">,</span><span class="w"> </span><span class="nx">base64</span><span class="p">.</span><span class="nx">RawURLEncoding</span><span class="p">.</span><span class="nf">EncodeToString</span><span class="p">([]</span><span class="nb">byte</span><span class="p">(</span><span class="nx">key</span><span class="p">))},</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">	</span><span class="p">{</span><span class="s">&#34;EncodeSSHKeys&#34;</span><span class="p">,</span><span class="w"> </span><span class="nx">strings</span><span class="p">.</span><span class="nf">ReplaceAll</span><span class="p">(</span><span class="nx">url</span><span class="p">.</span><span class="nf">QueryEscape</span><span class="p">(</span><span class="nx">key</span><span class="p">),</span><span class="w"> </span><span class="s">&#34;+&#34;</span><span class="p">,</span><span class="w"> </span><span class="s">&#34;%20&#34;</span><span class="p">)},</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="p">}</span><span class="w">
+</span></span></span></code></pre></div><pre tabindex="0"><code>key: ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIJvjKHeVkHgJQH4UQ5/xmNW/x9zm+bx0PLNpFG9hC0gB luther@example
+raw                    validator=false roundtrip=true  rejected=&#34; /+@&#34; ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIJvjKHeVkHgJ...
+url.PathEscape         validator=false roundtrip=true  rejected=&#34;+@&#34;   ssh-ed25519%20AAAAC3NzaC1lZDI1NTE5AAAAIJvjKHeVkH...
+url.QueryEscape        validator=false roundtrip=false rejected=&#34;+&#34;    ssh-ed25519+AAAAC3NzaC1lZDI1NTE5AAAAIJvjKHeVkHgJ...
+base64.StdEncoding     validator=false roundtrip=false rejected=&#34;=&#34;    c3NoLWVkMjU1MTkgQUFBQUMzTnphQzFsWkRJMU5URTVBQUFB...
+base64.URLEncoding     validator=false roundtrip=false rejected=&#34;=&#34;    c3NoLWVkMjU1MTkgQUFBQUMzTnphQzFsWkRJMU5URTVBQUFB...
+base64.RawURLEncoding  validator=true  roundtrip=false rejected=&#34;&#34;     c3NoLWVkMjU1MTkgQUFBQUMzTnphQzFsWkRJMU5URTVBQUFB...
+EncodeSSHKeys          validator=true  roundtrip=true  rejected=&#34;&#34;     ssh-ed25519%20AAAAC3NzaC1lZDI1NTE5AAAAIJvjKHeVkH...
+</code></pre><p><img src="/img/2026/07/five-ways-to-url-encode-an-ssh-key-results.svg" alt="Results"></p>
+<p>Going through the failures:</p>
+<ul>
+<li><strong><code>PathEscape</code></strong> is for a single path segment, so it encodes the space and the <code>/</code> but leaves <code>+</code> and <code>@</code> alone
+because they&rsquo;re legal in a path. Proxmox doesn&rsquo;t want them.</li>
+<li><strong><code>QueryEscape</code></strong> does HTML form encoding, where a space is <code>+</code>. The validator rejects <code>+</code> outright, and even if it
+didn&rsquo;t, a URI unescape that isn&rsquo;t form-aware turns it back into a literal <code>+</code> and you&rsquo;d get a corrupted key.</li>
+<li><strong>Standard and URL-safe base64</strong> end in <code>=</code> padding here, which fails the regex. It doesn&rsquo;t matter much, because&hellip;</li>
+<li><strong><code>RawURLEncoding</code></strong> sails through the validator, and it&rsquo;s the worst one of the bunch. The alphabet is entirely legal
+characters, so the format check passes and Proxmox stores the base64 <em>text</em> as the key. Then the key check, or
+cloud-init, gets a string that isn&rsquo;t an OpenSSH key.</li>
+</ul>
+<p>What actually works is RFC 3986 percent encoding with nothing marked safe, which is what Python&rsquo;s
+<code>urllib.parse.quote(key, safe='')</code> does and what a Proxmox staff member recommended on the forum years ago. Go doesn&rsquo;t
+have that as a single function, but <code>QueryEscape</code> is one substitution away from it: it percent-encodes everything
+except unreserved characters, and the only thing it does differently is spaces as <code>+</code>.</p>
+<h3 id="the-fix">The fix</h3>
+<p><a href="https://github.com/luthermonson/go-proxmox/issues/144">@abbaszai posted a working Go version</a> in August 2025, with some
+extra trimming and decoding logic around the core idea. <a href="https://github.com/luthermonson/go-proxmox/pull/273">#273</a>
+reduced it to the core and put it in the library next to <code>MakeTag</code>:</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-go" data-lang="go"><span class="line"><span class="cl"><span class="c1">// EncodeSSHKeys returns the given SSH public keys encoded the way Proxmox&#39;s</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="c1">// sshkeys parameter requires. Multiple keys are joined with newlines (PVE&#39;s</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="c1">// documented separator) before encoding.</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="kd">func</span><span class="w"> </span><span class="nf">EncodeSSHKeys</span><span class="p">(</span><span class="nx">keys</span><span class="w"> </span><span class="o">...</span><span class="kt">string</span><span class="p">)</span><span class="w"> </span><span class="kt">string</span><span class="w"> </span><span class="p">{</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">	</span><span class="k">return</span><span class="w"> </span><span class="nx">strings</span><span class="p">.</span><span class="nf">ReplaceAll</span><span class="p">(</span><span class="nx">url</span><span class="p">.</span><span class="nf">QueryEscape</span><span class="p">(</span><span class="nx">strings</span><span class="p">.</span><span class="nf">Join</span><span class="p">(</span><span class="nx">keys</span><span class="p">,</span><span class="w"> </span><span class="s">&#34;\n&#34;</span><span class="p">)),</span><span class="w"> </span><span class="s">&#34;+&#34;</span><span class="p">,</span><span class="w"> </span><span class="s">&#34;%20&#34;</span><span class="p">)</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="p">}</span><span class="w">
+</span></span></span></code></pre></div><div class="highlight"><pre tabindex="0" class="chroma"><code class="language-go" data-lang="go"><span class="line"><span class="cl"><span class="nx">opts</span><span class="w"> </span><span class="o">:=</span><span class="w"> </span><span class="p">[]</span><span class="nx">proxmox</span><span class="p">.</span><span class="nx">VirtualMachineOption</span><span class="p">{</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">	</span><span class="p">{</span><span class="nx">Name</span><span class="p">:</span><span class="w"> </span><span class="s">&#34;sshkeys&#34;</span><span class="p">,</span><span class="w"> </span><span class="nx">Value</span><span class="p">:</span><span class="w"> </span><span class="nx">proxmox</span><span class="p">.</span><span class="nf">EncodeSSHKeys</span><span class="p">(</span><span class="nx">pubKey1</span><span class="p">,</span><span class="w"> </span><span class="nx">pubKey2</span><span class="p">)},</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="p">}</span><span class="w">
+</span></span></span></code></pre></div><p>The <code>+</code> to <code>%20</code> swap is safe because <code>QueryEscape</code> already turned every literal <code>+</code> in the input into <code>%2B</code>, so the only
+<code>+</code> characters left in its output are spaces. The test table includes a key with a literal <code>+</code> to prove that.</p>
+<p>It would be easy to do this automatically inside the VM config call, and I deliberately didn&rsquo;t. Everyone who hit #144
+has a workaround in their code that already encodes the key one way or another, and auto-encoding would encode their
+already-encoded value a second time. <code>%20</code> becomes <code>%2520</code>, the validator is perfectly happy with that, and the key that
+lands in the guest is garbage with no error anywhere. An opt-in helper and a doc comment on the <code>SSHKeys</code> field is the
+version that can&rsquo;t silently break anyone.</p>
+<h3 id="the-same-mistake-in-the-other-direction">The same mistake, in the other direction</h3>
+<p>Encoding flags bit again this month. The QEMU guest agent wrapper has <code>AgentFileWrite</code>, for writing a file into a running
+VM. The guest agent wants base64 content, and the Proxmox endpoint has an <code>encode</code> parameter that the API docs describe
+like this:</p>
+<blockquote>
+<p>If set, the content will be encoded as base64 (required by QEMU). Otherwise the content needs to be encoded beforehand - defaults to true.</p>
+</blockquote>
+<p>The original wrapper base64-encoded the content itself and <em>also</em> sent <code>encode: 1</code>, with a confident comment saying
+that <code>encode=1</code> &ldquo;tells PVE the content is already base64&rdquo;. It means the opposite. Proxmox encoded it again, the guest
+agent decoded it once, and every file written through that method landed in the guest as base64 text. Someone writing a
+TOML config and a PEM file into a guest found it when the service inside crash-looped on
+<code>expected value but found '='</code>. <a href="https://github.com/luthermonson/go-proxmox/pull/343">#343</a> keeps the client-side
+encoding (binary safe) and sends <code>encode: 0</code>:</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-go" data-lang="go"><span class="line"><span class="cl"><span class="nx">body</span><span class="w"> </span><span class="o">:=</span><span class="w"> </span><span class="kd">map</span><span class="p">[</span><span class="kt">string</span><span class="p">]</span><span class="kd">interface</span><span class="p">{}{</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">	</span><span class="s">&#34;file&#34;</span><span class="p">:</span><span class="w">    </span><span class="nx">file</span><span class="p">,</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">	</span><span class="s">&#34;content&#34;</span><span class="p">:</span><span class="w"> </span><span class="nx">base64</span><span class="p">.</span><span class="nx">StdEncoding</span><span class="p">.</span><span class="nf">EncodeToString</span><span class="p">(</span><span class="nx">content</span><span class="p">),</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">	</span><span class="s">&#34;encode&#34;</span><span class="p">:</span><span class="w">  </span><span class="mi">0</span><span class="p">,</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="p">}</span><span class="w">
+</span></span></span></code></pre></div><p>Both bugs are the same lesson. When two layers each might encode something, decide which one does it and write the
+decision down where the next person will see it, and when there&rsquo;s a flag for it, read the description of the flag on the
+side that receives it rather than guessing from the name.</p>
+<h3 id="links">Links</h3>
+<ul>
+<li><a href="https://github.com/luthermonson/go-proxmox/issues/144">#144 the original thread</a> and <a href="https://github.com/luthermonson/go-proxmox/pull/273">#273 EncodeSSHKeys</a></li>
+<li><a href="https://github.com/luthermonson/go-proxmox/pull/343">#343 AgentFileWrite double encoding</a></li>
+<li><a href="https://git.proxmox.com/?p=pve-common.git;a=blob;f=src/PVE/JSONSchema.pm">pve-common JSONSchema.pm</a></li>
+<li><a href="https://forum.proxmox.com/threads/how-to-use-pvesh-set-vms-sshkeys.52570/#post-243381">Proxmox forum, using pvesh to set sshkeys</a></li>
+<li><a href="https://docs.python.org/3/library/urllib.parse.html#urllib.parse.quote">Python urllib.parse.quote</a></li>
+</ul>
+
+      </div>
+      <footer>
+        <div class="stats">
+  
+    <ul class="categories">
+      
+        
+          <li><a class="article-terms-link" href="/categories/go/">go</a></li>
+        
+          <li><a class="article-terms-link" href="/categories/homelab/">homelab</a></li>
+        
+      
+    </ul>
+  
+  
+    <ul class="tags">
+      
+        
+          <li><a class="article-terms-link" href="/tags/proxmox/">proxmox</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/go/">go</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/go-proxmox/">go-proxmox</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/cloud-init/">cloud-init</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/encoding/">encoding</a></li>
+        
+      
+    </ul>
+  
+</div>
+
+      </footer>
+    </div>
+    
+      
+  
+  <div class='post giscus-wrap'>
+    <script src='https://giscus.app/client.js'
+            data-repo='luthermonson/luth.io'
+            data-repo-id='R_kgDOGvFBXQ'
+            data-category='Announcements'
+            data-category-id='DIC_kwDOGvFBXc4DH_gv'
+            data-mapping='pathname'
+            data-strict='1'
+            data-reactions-enabled='1'
+            data-emit-metadata='0'
+            data-input-position='top'
+            data-theme='light'
+            data-lang='en'
+            data-loading='lazy'
+            crossorigin='anonymous'
+            async>
+    </script>
+  </div>
+  
+
+
+
+    
+  </article>
+  
+    <nav class="post-nav">
+      
+        <a href="/blog/2026/07/sqlite-production-database-protocol-translation/" class="post-nav-link older">
+          <span class="post-nav-label">&larr; Older</span>
+          <span class="post-nav-title">SQLite as a Production Database via Protocol Translation</span>
+        </a>
+      
+      
+        <a href="/blog/2026/07/building-a-custom-php-sapi/" class="post-nav-link newer">
+          <span class="post-nav-label">Newer &rarr;</span>
+          <span class="post-nav-title">Building a Custom SAPI - How PHP Actually Talks to the Outside World</span>
+        </a>
+      
+    </nav>
+  
+
+      </main>
+      <section id="site-sidebar">
+  
+    <section id="recent-posts">
+      <header>
+        <h1>Recent Posts</h1>
+      </header>
+      
+      <article class="mini-post">
+          <a href="/blog/2026/10/ephpm-worker-mode-performance/" class="image" style="--bg-image: url('/img/2026/10/ephpm-worker-mode-performance-cover.svg');">
+    <img class="" src="/img/2026/10/ephpm-worker-mode-performance-cover.svg" alt="Diagram: before, hyper/tokio hands each request to one shared bounded channel whose waiter list all 20 PHP threads contend on; after, a dispatcher hands the job straight into the mailbox of the most recently idle PHP thread and only queues it in a FIFO overflow queue when every thread is busy">
+  </a>
+        <header>
+          <h2><a href="/blog/2026/10/ephpm-worker-mode-performance/">Fourth Place in Worker Mode, and Why It Wasn&#39;t PHP</a></h2>
+          <time class="published" datetime="2026-10-16 08:10:00 -0700 PDT">October 16, 2026</time>
+        </header>
+      </article>
+      
+      <article class="mini-post">
+          <a href="/blog/2026/10/ephpm-websockets-how-to/" class="image" style="--bg-image: url('/img/2026/10/ephpm-websockets-how-to-cover.svg');">
+    <img class="" src="/img/2026/10/ephpm-websockets-how-to-cover.svg" alt="Diagram: browsers hold sockets to ePHPm&#39;s Rust session tasks and registry; each connect, message and disconnect runs websocket.php once on the PHP thread pool, and ordinary HTTP requests push through ephpm_ws_broadcast">
+  </a>
+        <header>
+          <h2><a href="/blog/2026/10/ephpm-websockets-how-to/">WebSockets in ePHPm, From Zero to a Working Chat</a></h2>
+          <time class="published" datetime="2026-10-11 17:30:00 -0700 PDT">October 11, 2026</time>
+        </header>
+      </article>
+      
+      <article class="mini-post">
+          <a href="/blog/2026/10/webhooks-out-of-order-scheduler/" class="image" style="--bg-image: url('/img/2026/10/webhooks-out-of-order-scheduler-timeline.svg');">
+    <img class="" src="/img/2026/10/webhooks-out-of-order-scheduler-timeline.svg" alt="Timeline of three same-label jobs where a runner executing a build is destroyed 2.3 seconds before its in_progress webhook arrives">
+  </a>
+        <header>
+          <h2><a href="/blog/2026/10/webhooks-out-of-order-scheduler/">Webhooks Arrive Out of Order: How My Scheduler Killed Live Builds</a></h2>
+          <time class="published" datetime="2026-10-07 21:10:00 -0700 PDT">October 7, 2026</time>
+        </header>
+      </article>
+      
+      <article class="mini-post">
+          <a href="/blog/2026/10/go-proxmox-five-years-to-v0-8/" class="image" style="--bg-image: url('/img/2026/10/go-proxmox-five-years-to-v0-8-apidiff.svg');">
+    <img class="" src="/img/2026/10/go-proxmox-five-years-to-v0-8-apidiff.svg" alt="Horizontal bar chart of apidiff incompatible and compatible changes for every go-proxmox release from v0.1.0 to v0.8.2">
+  </a>
+        <header>
+          <h2><a href="/blog/2026/10/go-proxmox-five-years-to-v0-8/">Breaking Changes Without Breaking Trust: Five Years to go-proxmox v0.8</a></h2>
+          <time class="published" datetime="2026-10-04 19:40:00 -0700 PDT">October 4, 2026</time>
+        </header>
+      </article>
+      
+      <article class="mini-post">
+          <a href="/blog/2026/10/windows-sigterm-sparse-files/" class="image" style="--bg-image: url('/img/2026/10/windows-sigterm-sparse-files-connections.svg');">
+    <img class="" src="/img/2026/10/windows-sigterm-sparse-files-connections.svg" alt="Bar chart: 96 Cloudflare edge connections held by orphaned cloudflared processes versus 4 for the live daemon">
+  </a>
+        <header>
+          <h2><a href="/blog/2026/10/windows-sigterm-sparse-files/">Windows Grab-Bag: SIGTERM That Doesn&#39;t Exist and Sparse Files That Break Docker</a></h2>
+          <time class="published" datetime="2026-10-03 14:30:00 -0700 PDT">October 3, 2026</time>
+        </header>
+      </article>
+      
+      
+        <footer>
+          <a href="/blog" class="button">See More</a>
+        </footer>
+      
+    </section>
+  
+
+  
+    
+
+      <section id="categories">
+        <header>
+          <h1><a href="/categories">Categories</a></h1>
+        </header>
+        <ul>
+          
+          
+          <li>
+              <a href="/categories/ephpm/">ephpm<span class="count">33</span></a>
+          
+          <li>
+              <a href="/categories/go/">go<span class="count">30</span></a>
+          
+          <li>
+              <a href="/categories/php/">php<span class="count">23</span></a>
+          
+          <li>
+              <a href="/categories/rust/">rust<span class="count">15</span></a>
+          
+          <li>
+              <a href="/categories/homelab/">homelab<span class="count">14</span></a>
+          
+          <li>
+              <a href="/categories/windows/">windows<span class="count">14</span></a>
+          
+          <li>
+              <a href="/categories/ci/">ci<span class="count">9</span></a>
+          
+          <li>
+              <a href="/categories/databases/">databases<span class="count">9</span></a>
+          
+          <li>
+              <a href="/categories/security/">security<span class="count">9</span></a>
+          
+          <li>
+              <a href="/categories/containers/">containers<span class="count">7</span></a>
+          
+          <li>
+              <a href="/categories/tools/">tools<span class="count">5</span></a>
+          
+          <li>
+              <a href="/categories/ai-agents/">ai-agents<span class="count">4</span></a>
+          
+          </li>
+        </ul>
+      </section>
+    
+  
+
+  
+    <section id="mini-bio">
+      <header>
+        <h1>About</h1>
+      </header>
+      <p>Luther is a 20+ year software veteran specializing in backend APIs and architecting products. Employed at <a href='https://www.suse.com'>SUSE</a> as the Team Lead for the <a href='https://github.com/rancher/windows/issues'>Containers on Windows Team</a> working on <a href='https://rancher.com/'>Rancher</a> + <a href='https://kubernetes.io/'>Kubernetes</a></p>
+      <footer>
+        <a href="/about" class="button">Learn More</a>
+      </footer>
+    </section>
+  
+</section>
+
+      <footer id="site-footer">
+  
+      <ul class="socnet-icons">
+        
+
+        <li><a href="//github.com/luthermonson" target="_blank" rel="noopener" title="GitHub" class="fab fa-github"></a></li>
+
+
+
+
+
+
+
+
+
+
+
+<li><a href="//www.linkedin.com/in/luthermonson" target="_blank" rel="noopener" title="LinkedIn" class="fab fa-linkedin"></a></li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li><a href="//twitter.com/luthermonson" target="_blank" rel="noopener" title="Twitter" class="fab fa-twitter"></a></li>
+
+
+
+
+
+
+
+
+
+
+
+<li><a href="mailto:luther.monson@gmail.com" target="_blank" title="Email" class="far fa-envelope"></a></li>
+
+      </ul>
+  
+  <p class="copyright">
+    © 2026 Luther Monson
+      <br>
+    Theme: <a href='https://github.com/pacollins/hugo-future-imperfect-slim' target='_blank' rel='noopener'>Hugo Future Imperfect Slim</a><br>A <a href='https://html5up.net/future-imperfect' target='_blank' rel='noopener'>HTML5 UP port</a> | Powered by <a href='https://gohugo.io/' title='0.160.1' target='_blank' rel='noopener'>Hugo</a>
+  </p>
+</footer>
+<a id="back-to-top" href="#" class="fas fa-arrow-up fa-2x"></a>
+
+      <script src="/js/bundle.min.241b62ebc4792fe8c7a75879e5f710894f226f2b73342e9916b3a3b0526030cc.js" integrity="sha256-JBti68R5L&#43;jHp1h55fcQiU8ibytzNC6ZFrOjsFJgMMw="></script>
+    <script src="/js/add-on.js"></script>
+    </div>
+  </body>
+</html>

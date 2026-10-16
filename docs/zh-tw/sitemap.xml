@@ -35,7 +35,7 @@
                 />
     <xhtml:link
                 rel="alternate"
-                hreflang="zh-cn"
+                hreflang="zh-CN"
                 href="https://luth.io/zh-cn/categories/"
                 />
     <xhtml:link
@@ -50,7 +50,7 @@
                 />
     <xhtml:link
                 rel="alternate"
-                hreflang="zh-tw"
+                hreflang="zh-TW"
                 href="https://luth.io/zh-tw/categories/"
                 />
   </url><url>
@@ -87,7 +87,7 @@
                 />
     <xhtml:link
                 rel="alternate"
-                hreflang="zh-cn"
+                hreflang="zh-CN"
                 href="https://luth.io/zh-cn/"
                 />
     <xhtml:link
@@ -102,7 +102,7 @@
                 />
     <xhtml:link
                 rel="alternate"
-                hreflang="zh-tw"
+                hreflang="zh-TW"
                 href="https://luth.io/zh-tw/"
                 />
   </url><url>
@@ -139,7 +139,7 @@
                 />
     <xhtml:link
                 rel="alternate"
-                hreflang="zh-cn"
+                hreflang="zh-CN"
                 href="https://luth.io/zh-cn/tags/"
                 />
     <xhtml:link
@@ -154,7 +154,7 @@
                 />
     <xhtml:link
                 rel="alternate"
-                hreflang="zh-tw"
+                hreflang="zh-TW"
                 href="https://luth.io/zh-tw/tags/"
                 />
   </url>

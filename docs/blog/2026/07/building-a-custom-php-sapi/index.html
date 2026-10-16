@@ -1,0 +1,811 @@
+<!doctype html>
+<html lang="en">
+  <head>
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-MSTSKGFWTX"></script>
+<script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+
+    gtag('config', 'G-MSTSKGFWTX');
+</script><meta charset="utf-8">
+<title>Building a Custom SAPI - How PHP Actually Talks to the Outside World - Luther Monson</title>
+<meta name="description" content="php-fpm, mod_php and the PHP command line all plug into PHP the same way. Here&#39;s how ePHPm does it, and the shortcut that broke WordPress.">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<meta name="twitter:card" content="summary_large_image"><meta name="twitter:site" content="@luthermonson">
+
+<meta property="og:site_name" content="Luther Monson">
+<meta property="og:title" content="Building a Custom SAPI - How PHP Actually Talks to the Outside World">
+<meta property="og:description" content="php-fpm, mod_php and the PHP command line all plug into PHP the same way. Here&#39;s how ePHPm does it, and the shortcut that broke WordPress.">
+<meta property="og:type" content="article">
+<meta property="og:url" content="https://luth.io/blog/2026/07/building-a-custom-php-sapi/">
+    <meta property="og:image" content="https://luth.io/img/2026/08/building-a-custom-php-sapi-cover.svg">
+    <meta property="og:image:alt" content="Table mapping PHP operations like echo, header(), $_POST, $_COOKIE and $_SERVER to SAPI callbacks and to the Rust side of ePHPm">
+
+
+  <link rel="manifest" href="/favicon/site.webmanifest?v=1">
+  <link rel="apple-touch-icon" sizes="180x180" href="/favicon/apple-touch-icon.png?v=1">
+  <link rel="icon" type="image/png" sizes="32x32" href="/favicon/favicon-32x32.png?v=1">
+  <link rel="icon" type="image/png" sizes="16x16" href="/favicon/favicon-16x16.png?v=1">
+  
+    <link rel="mask-icon" href="/favicon/safari-pinned-tab.svg?v=1" color="#ffffff">
+    <link rel="shortcut icon" href="/favicon/favicon.ico?v=1">
+    <meta name="msapplication-config" content="/favicon/browserconfig.xml?v=1">
+  
+  <meta name="msapplication-TileColor" content="#ffffff">
+  <meta name="theme-color" content="#ffffff">
+
+
+  <meta name="generator" content="Hugo 0.160.1">
+  <link rel="alternate" type="application/rss+xml" href="https://luth.io/index.xml" title="Luther Monson">
+  <link rel="stylesheet" href="/css/bundle.min.e1ffed86714fbb7eff75eab221c0c61b8260be0c7d1c08db0fcb7a2bdb6af7c9.css" integrity="sha256-4f/thnFPu37/deqyIcDGG4Jgvgx9HAjbD8t6K9tq98k="><link rel="stylesheet" href="/css/add-on.css">
+        <link rel="stylesheet" href="/css/code.css">
+        <link rel="stylesheet" href="/css/mobile.css">
+</head>
+
+  <body>
+    
+
+<header id="site-header">
+  <nav id="site-nav">
+    <h1 class="nav-title">
+      <a href="/" class="nav">
+        <img class="nav-avatar" src="/img/luther-monson-headshot.jpg" alt="" width="32" height="32">
+        
+          Blog
+        
+      </a>
+    </h1>
+    <menu id="site-nav-menu" class="flyout-menu menu">
+      
+        
+          
+          <a href="/" class="nav link"><i class='fa fa-home'></i> Home</a>
+        
+      
+        
+          
+          <a href="/about" class="nav link"><i class='far fa-id-card'></i> About</a>
+        
+      
+        
+          
+          <a href="/blog" class="nav link"><i class='far fa-newspaper'></i> Blog</a>
+        
+      
+        
+          
+          <a href="/archive" class="nav link"><i class='far fa-calendar-alt'></i> Archive</a>
+        
+      
+        
+          
+          <a href="/categories" class="nav link"><i class='fas fa-sitemap'></i> Categories</a>
+        
+      
+      <a href="#share-menu" class="nav link share-toggle"><i class="fas fa-share-alt">&nbsp;</i>Share</a>
+      <a href="#search-input" class="nav link search-toggle"><i class="fas fa-search">&nbsp;</i>Search</a>
+    </menu>
+    <a href="#search-input" class="nav search-toggle"><i class="fas fa-search fa-2x">&nbsp;</i></a>
+    <a href="#share-menu" class="nav share-toggle"><i class="fas fa-share-alt fa-2x">&nbsp;</i></a>
+    
+    <a href="#site-nav" class="nav nav-toggle"><i class="fas fa-bars fa-2x"></i></a>
+  </nav>
+  <menu id="search" class="menu"><input id="search-input" class="search-input menu"></input><div id="search-results" class="search-results menu"></div></menu>
+  
+  
+    <menu id="share-menu" class="flyout-menu menu">
+      <h1>Share Post</h1>
+      
+
+
+
+
+  
+    
+    <a href="//twitter.com/share?text=Building%20a%20Custom%20SAPI%20-%20How%20PHP%20Actually%20Talks%20to%20the%20Outside%20World&amp;url=https%3a%2f%2fluth.io%2fblog%2f2026%2f07%2fbuilding-a-custom-php-sapi%2f" target="_blank" rel="noopener" class="nav share-btn twitter">
+        <p>Twitter</p>
+      </a>
+  
+
+  
+      <a href="//www.facebook.com/sharer/sharer.php?u=https%3a%2f%2fluth.io%2fblog%2f2026%2f07%2fbuilding-a-custom-php-sapi%2f" target="_blank" rel="noopener" class="nav share-btn facebook">
+        <p>Facebook</p>
+        </a>
+  
+
+  
+    <a href="//www.reddit.com/submit?url=https%3a%2f%2fluth.io%2fblog%2f2026%2f07%2fbuilding-a-custom-php-sapi%2f&amp;title=Building%20a%20Custom%20SAPI%20-%20How%20PHP%20Actually%20Talks%20to%20the%20Outside%20World" target="_blank" rel="noopener" class="nav share-btn reddit">
+          <p>Reddit</p>
+        </a>
+  
+
+  
+        <a href="//www.linkedin.com/shareArticle?url=https%3a%2f%2fluth.io%2fblog%2f2026%2f07%2fbuilding-a-custom-php-sapi%2f&amp;title=Building%20a%20Custom%20SAPI%20-%20How%20PHP%20Actually%20Talks%20to%20the%20Outside%20World" target="_blank" rel="noopener" class="nav share-btn linkedin">
+            <p>LinkedIn</p>
+          </a>
+  
+
+  
+        <a href="//www.pinterest.com/pin/create/button/?url=https%3a%2f%2fluth.io%2fblog%2f2026%2f07%2fbuilding-a-custom-php-sapi%2f&amp;description=Building%20a%20Custom%20SAPI%20-%20How%20PHP%20Actually%20Talks%20to%20the%20Outside%20World" target="_blank" rel="noopener" class="nav share-btn pinterest">
+          <p>Pinterest</p>
+        </a>
+  
+
+  
+        <a href="mailto:?subject=Check%20out%20this%20post%20by Luther%20Monson&amp;body=https%3a%2f%2fluth.io%2fblog%2f2026%2f07%2fbuilding-a-custom-php-sapi%2f" target="_blank" class="nav share-btn email" data-proofer-ignore>
+          <p>Email</p>
+        </a>
+  
+
+
+    </menu>
+  
+</header>
+
+    <div id="wrapper">
+      <section id="site-intro" class="hidden-single-column">
+  <a href="/"><img src="/img/luther-monson-headshot.jpg" class="circle" width="100" alt="Luther Monson, Staff Software Engineer at SUSE" /></a>
+  <header>
+    <h1>Luther Monson</h1>
+  </header>
+  <main>
+    <p>Go by way of PHP &middot; Containers &middot; VMs &middot; Windows &middot; Kubernetes</p>
+  </main>
+  
+    <footer>
+      <ul class="socnet-icons">
+        
+
+        <li><a href="//github.com/luthermonson" target="_blank" rel="noopener" title="GitHub" class="fab fa-github"></a></li>
+
+
+
+
+
+
+
+
+
+
+
+<li><a href="//www.linkedin.com/in/luthermonson" target="_blank" rel="noopener" title="LinkedIn" class="fab fa-linkedin"></a></li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li><a href="//twitter.com/luthermonson" target="_blank" rel="noopener" title="Twitter" class="fab fa-twitter"></a></li>
+
+
+
+
+
+
+
+
+
+
+
+<li><a href="mailto:luther.monson@gmail.com" target="_blank" title="Email" class="far fa-envelope"></a></li>
+
+      </ul>
+    </footer>
+  
+</section>
+
+      <main id="site-main">
+        
+  <article>
+    <div class="post">
+      <header>
+  <div class="title">
+    
+      <h2><a href="/blog/2026/07/building-a-custom-php-sapi/">Building a Custom SAPI - How PHP Actually Talks to the Outside World</a></h2>
+    
+    
+      <p>php-fpm, mod_php and the PHP command line all plug into PHP the same way. Here&#39;s how ePHPm does it, and the shortcut that broke WordPress.</p>
+    
+  </div>
+  <div class="meta">
+    <time datetime="2026-07-30 20:18:00 -0700 PDT">July 30, 2026</time>
+    
+    <p>9-Minute Read</p>
+  </div>
+</header>
+
+      <div id="socnet-share">
+        
+
+
+
+
+  
+    
+    <a href="//twitter.com/share?text=Building%20a%20Custom%20SAPI%20-%20How%20PHP%20Actually%20Talks%20to%20the%20Outside%20World&amp;url=https%3a%2f%2fluth.io%2fblog%2f2026%2f07%2fbuilding-a-custom-php-sapi%2f" target="_blank" rel="noopener" class="nav share-btn twitter">
+        <p>Twitter</p>
+      </a>
+  
+
+  
+      <a href="//www.facebook.com/sharer/sharer.php?u=https%3a%2f%2fluth.io%2fblog%2f2026%2f07%2fbuilding-a-custom-php-sapi%2f" target="_blank" rel="noopener" class="nav share-btn facebook">
+        <p>Facebook</p>
+        </a>
+  
+
+  
+    <a href="//www.reddit.com/submit?url=https%3a%2f%2fluth.io%2fblog%2f2026%2f07%2fbuilding-a-custom-php-sapi%2f&amp;title=Building%20a%20Custom%20SAPI%20-%20How%20PHP%20Actually%20Talks%20to%20the%20Outside%20World" target="_blank" rel="noopener" class="nav share-btn reddit">
+          <p>Reddit</p>
+        </a>
+  
+
+  
+        <a href="//www.linkedin.com/shareArticle?url=https%3a%2f%2fluth.io%2fblog%2f2026%2f07%2fbuilding-a-custom-php-sapi%2f&amp;title=Building%20a%20Custom%20SAPI%20-%20How%20PHP%20Actually%20Talks%20to%20the%20Outside%20World" target="_blank" rel="noopener" class="nav share-btn linkedin">
+            <p>LinkedIn</p>
+          </a>
+  
+
+  
+        <a href="//www.pinterest.com/pin/create/button/?url=https%3a%2f%2fluth.io%2fblog%2f2026%2f07%2fbuilding-a-custom-php-sapi%2f&amp;description=Building%20a%20Custom%20SAPI%20-%20How%20PHP%20Actually%20Talks%20to%20the%20Outside%20World" target="_blank" rel="noopener" class="nav share-btn pinterest">
+          <p>Pinterest</p>
+        </a>
+  
+
+  
+        <a href="mailto:?subject=Check%20out%20this%20post%20by Luther%20Monson&amp;body=https%3a%2f%2fluth.io%2fblog%2f2026%2f07%2fbuilding-a-custom-php-sapi%2f" target="_blank" class="nav share-btn email" data-proofer-ignore>
+          <p>Email</p>
+        </a>
+  
+
+
+      </div>
+      <div class="content">
+        
+        <p>If you&rsquo;ve only ever run PHP behind nginx you&rsquo;ve probably never had to think about how <code>echo</code> reaches a socket. When you
+embed PHP, as <a href="https://github.com/ephpm/ephpm">ePHPm</a> does, it&rsquo;s the first thing you have to answer, and the answer is a
+SAPI. There is very little written about implementing one. Most of what I know came from reading <code>sapi/cli</code>,
+<code>sapi/cgi</code> and <code>sapi/embed</code> in php-src and then finding out which parts I&rsquo;d misread. This is the write-up I wanted back
+in March.</p>
+<h3 id="what-a-sapi-is">What a SAPI is</h3>
+<p>The Server API is PHP&rsquo;s boundary with whatever is hosting it. In C it&rsquo;s <code>sapi_module_struct</code>: a name plus a few dozen
+function pointers that the engine calls whenever it needs something from the outside world. php-fpm is a SAPI, Apache&rsquo;s
+mod_php is a SAPI, the CLI is a SAPI, and so are the built-in dev server and the embed SAPI. They all run the same
+engine. What differs is what these callbacks do:</p>
+<table>
+  <thead>
+      <tr>
+          <th>Callback</th>
+          <th>PHP calls it when&hellip;</th>
+      </tr>
+  </thead>
+  <tbody>
+      <tr>
+          <td><code>ub_write</code></td>
+          <td>anything is output: <code>echo</code>, <code>print</code>, templates, the error page</td>
+      </tr>
+      <tr>
+          <td><code>flush</code></td>
+          <td>output is flushed</td>
+      </tr>
+      <tr>
+          <td><code>send_headers</code></td>
+          <td>the first output byte is about to go out and headers need to be committed</td>
+      </tr>
+      <tr>
+          <td><code>read_post</code></td>
+          <td>it needs request body bytes (<code>$_POST</code>, <code>$_FILES</code>, <code>php://input</code>)</td>
+      </tr>
+      <tr>
+          <td><code>read_cookies</code></td>
+          <td>it wants the raw <code>Cookie</code> header to build <code>$_COOKIE</code></td>
+      </tr>
+      <tr>
+          <td><code>register_server_variables</code></td>
+          <td>it&rsquo;s building <code>$_SERVER</code></td>
+      </tr>
+      <tr>
+          <td><code>log_message</code></td>
+          <td><code>error_log()</code> or the engine logs something</td>
+      </tr>
+  </tbody>
+</table>
+<p>ePHPm starts from the embed SAPI (<code>php_embed_init()</code> gives you a working engine with stdout-oriented defaults) and then
+overwrites the callbacks with its own:</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-c" data-lang="c"><span class="line"><span class="cl"><span class="kt">void</span> <span class="nf">ephpm_install_sapi</span><span class="p">(</span><span class="kt">void</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl"><span class="p">{</span>
+</span></span><span class="line"><span class="cl">    <span class="n">sapi_module</span><span class="p">.</span><span class="n">ub_write</span> <span class="o">=</span> <span class="n">ephpm_sapi_ub_write</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">    <span class="n">sapi_module</span><span class="p">.</span><span class="n">flush</span> <span class="o">=</span> <span class="n">ephpm_sapi_flush</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">    <span class="n">sapi_module</span><span class="p">.</span><span class="n">send_headers</span> <span class="o">=</span> <span class="n">ephpm_sapi_send_headers</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">    <span class="n">sapi_module</span><span class="p">.</span><span class="n">read_post</span> <span class="o">=</span> <span class="n">ephpm_sapi_read_post</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">    <span class="n">sapi_module</span><span class="p">.</span><span class="n">read_cookies</span> <span class="o">=</span> <span class="n">ephpm_sapi_read_cookies</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">    <span class="n">sapi_module</span><span class="p">.</span><span class="n">register_server_variables</span> <span class="o">=</span> <span class="n">ephpm_sapi_register_server_variables</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">    <span class="n">sapi_module</span><span class="p">.</span><span class="n">log_message</span> <span class="o">=</span> <span class="n">ephpm_sapi_log_message</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">    <span class="n">sapi_module</span><span class="p">.</span><span class="n">name</span> <span class="o">=</span> <span class="s">&#34;ephpm&#34;</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">    <span class="n">sapi_module</span><span class="p">.</span><span class="n">pretty_name</span> <span class="o">=</span> <span class="s">&#34;ePHPm Embedded Server&#34;</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl"><span class="p">}</span>
+</span></span></code></pre></div><p><code>sapi_module.name</code> is what <code>php_sapi_name()</code> returns, so frameworks that branch on <code>cli</code> vs everything else see <code>ephpm</code>
+and treat it as a web SAPI. All of this is C, not Rust, for the reason I covered in
+<a href="/blog/2026/04/why-rust-for-php-embedding/">the Rust post</a>: PHP can <code>longjmp</code> out from under any of these callbacks, so
+they never call into Rust while the engine is live. They read and write thread-local C buffers, and Rust copies things
+in before the script runs and out after it finishes.</p>
+<h3 id="output-ub_write">Output: ub_write</h3>
+<p>Output is the simplest one. PHP hands over a pointer and a length and expects to be told how many bytes were taken.
+ePHPm appends to a per-thread buffer that doubles as needed:</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-c" data-lang="c"><span class="line"><span class="cl"><span class="k">static</span> <span class="kt">size_t</span> <span class="nf">ephpm_sapi_ub_write</span><span class="p">(</span><span class="k">const</span> <span class="kt">char</span> <span class="o">*</span><span class="n">str</span><span class="p">,</span> <span class="kt">size_t</span> <span class="n">str_length</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl"><span class="p">{</span>
+</span></span><span class="line"><span class="cl">    <span class="k">if</span> <span class="p">(</span><span class="n">output_len</span> <span class="o">+</span> <span class="n">str_length</span> <span class="o">&gt;</span> <span class="n">output_cap</span><span class="p">)</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">        <span class="kt">size_t</span> <span class="n">new_cap</span> <span class="o">=</span> <span class="p">(</span><span class="n">output_cap</span> <span class="o">==</span> <span class="mi">0</span><span class="p">)</span> <span class="o">?</span> <span class="mi">8192</span> <span class="o">:</span> <span class="n">output_cap</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">        <span class="k">while</span> <span class="p">(</span><span class="n">new_cap</span> <span class="o">&lt;</span> <span class="n">output_len</span> <span class="o">+</span> <span class="n">str_length</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">            <span class="n">new_cap</span> <span class="o">*=</span> <span class="mi">2</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">        <span class="kt">char</span> <span class="o">*</span><span class="n">new_buf</span> <span class="o">=</span> <span class="nf">realloc</span><span class="p">(</span><span class="n">output_buf</span><span class="p">,</span> <span class="n">new_cap</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">        <span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="n">new_buf</span><span class="p">)</span> <span class="k">return</span> <span class="mi">0</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">        <span class="n">output_buf</span> <span class="o">=</span> <span class="n">new_buf</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">        <span class="n">output_cap</span> <span class="o">=</span> <span class="n">new_cap</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">    <span class="p">}</span>
+</span></span><span class="line"><span class="cl">    <span class="nf">memcpy</span><span class="p">(</span><span class="n">output_buf</span> <span class="o">+</span> <span class="n">output_len</span><span class="p">,</span> <span class="n">str</span><span class="p">,</span> <span class="n">str_length</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">    <span class="n">output_len</span> <span class="o">+=</span> <span class="n">str_length</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">    <span class="k">return</span> <span class="n">str_length</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl"><span class="p">}</span>
+</span></span></code></pre></div><p>The buffer is <code>__thread</code> (<code>__declspec(thread)</code> on MSVC, behind a macro), because under ZTS several threads run PHP at
+once. It&rsquo;s never freed between requests, only reset to length zero, so a thread that served one big page keeps that
+capacity around. That&rsquo;s a deliberate trade: no allocation on the hot path in exchange for some memory per thread.</p>
+<p>Returning <code>0</code> from <code>ub_write</code> tells PHP the client went away. If <code>realloc</code> fails, that&rsquo;s the honest answer.</p>
+<h3 id="headers-send_headers-is-almost-a-no-op">Headers: send_headers is almost a no-op</h3>
+<p>This one surprised me. <code>send_headers</code> is called once, right before the first byte of output, so a SAPI like php-fpm
+can write the status line and headers to the FastCGI stream. ePHPm doesn&rsquo;t stream PHP output in this mode, it buffers
+the whole response, so its <code>send_headers</code> just says &ldquo;done&rdquo;:</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-c" data-lang="c"><span class="line"><span class="cl"><span class="k">static</span> <span class="kt">int</span> <span class="nf">ephpm_sapi_send_headers</span><span class="p">(</span><span class="n">sapi_headers_struct</span> <span class="o">*</span><span class="n">sapi_headers</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl"><span class="p">{</span>
+</span></span><span class="line"><span class="cl">    <span class="p">(</span><span class="kt">void</span><span class="p">)</span><span class="n">sapi_headers</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">    <span class="k">return</span> <span class="n">SAPI_HEADER_SENT_SUCCESSFULLY</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl"><span class="p">}</span>
+</span></span></code></pre></div><p>The real header capture happens after the script finishes, by walking <code>SG(sapi_headers).headers</code> (the <code>zend_llist</code>
+that <code>header()</code> appends to) while the request is still alive, and reading <code>SG(sapi_headers).http_response_code</code> for the
+status. One subtlety: if a script never outputs anything, the default <code>Content-Type</code> never makes it into that list,
+because PHP adds it as part of sending headers. So the capture code synthesizes it from <code>SG(sapi_headers).mimetype</code>, or
+<code>default_mimetype</code> + <code>default_charset</code>, when no <code>Content-Type</code> was set.</p>
+<h3 id="input-read_post-and-read_cookies">Input: read_post and read_cookies</h3>
+<p><code>read_post</code> is a cursor over the request body Rust handed in:</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-c" data-lang="c"><span class="line"><span class="cl"><span class="k">static</span> <span class="kt">size_t</span> <span class="nf">ephpm_sapi_read_post</span><span class="p">(</span><span class="kt">char</span> <span class="o">*</span><span class="n">buffer</span><span class="p">,</span> <span class="kt">size_t</span> <span class="n">count_bytes</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl"><span class="p">{</span>
+</span></span><span class="line"><span class="cl">    <span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="n">req_post_data</span> <span class="o">||</span> <span class="n">req_post_data_offset</span> <span class="o">&gt;=</span> <span class="n">req_post_data_len</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">        <span class="k">return</span> <span class="mi">0</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">    <span class="kt">size_t</span> <span class="n">remaining</span> <span class="o">=</span> <span class="n">req_post_data_len</span> <span class="o">-</span> <span class="n">req_post_data_offset</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">    <span class="kt">size_t</span> <span class="n">to_copy</span> <span class="o">=</span> <span class="n">remaining</span> <span class="o">&lt;</span> <span class="n">count_bytes</span> <span class="o">?</span> <span class="nl">remaining</span> <span class="p">:</span> <span class="n">count_bytes</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">    <span class="nf">memcpy</span><span class="p">(</span><span class="n">buffer</span><span class="p">,</span> <span class="n">req_post_data</span> <span class="o">+</span> <span class="n">req_post_data_offset</span><span class="p">,</span> <span class="n">to_copy</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">    <span class="n">req_post_data_offset</span> <span class="o">+=</span> <span class="n">to_copy</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">    <span class="k">return</span> <span class="n">to_copy</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl"><span class="p">}</span>
+</span></span></code></pre></div><p>and <code>read_cookies</code> returns the raw <code>Cookie</code> header and lets PHP parse it.</p>
+<p>Here&rsquo;s one of the things you only learn by reading <code>main/SAPI.c</code>: <code>sapi_activate()</code> only reads and parses the POST body
+into <code>$_POST</code> if <code>SG(server_context)</code> is non-NULL. That pointer is how the CGI and built-in server SAPIs say &ldquo;this is a
+real request&rdquo; as opposed to a CLI run. ePHPm&rsquo;s callbacks don&rsquo;t use it for anything, so it gets a stable non-NULL
+sentinel, and without that line <code>$_POST</code> was quietly empty while <code>php://input</code> still worked. Another: PHP 8.4 exports
+<code>sapi_read_post_data()</code>, but in 8.3 the same function is <code>static</code> inside <code>main/SAPI.c</code>, so there&rsquo;s nothing to call.
+ePHPm supports 8.3, so for <code>PHP_VERSION_ID &lt; 80400</code> the wrapper carries a verbatim copy of 8.4&rsquo;s function.</p>
+<h3 id="_server-from-a-hyper-request">$_SERVER from a hyper request</h3>
+<p><code>register_server_variables</code> walks a list of key/value pairs that Rust built from the hyper request. Here&rsquo;s the original
+version of that builder (it&rsquo;s since been reworked to skip the per-header allocations and map names in a single ASCII
+pass, but the mapping is the same):</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-rust" data-lang="rust"><span class="line"><span class="cl"><span class="kd">let</span><span class="w"> </span><span class="k">mut</span><span class="w"> </span><span class="n">vars</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="fm">vec!</span><span class="p">[</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="p">(</span><span class="s">&#34;REQUEST_METHOD&#34;</span><span class="p">.</span><span class="n">into</span><span class="p">(),</span><span class="w"> </span><span class="bp">self</span><span class="p">.</span><span class="n">method</span><span class="p">.</span><span class="n">clone</span><span class="p">()),</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="p">(</span><span class="s">&#34;REQUEST_URI&#34;</span><span class="p">.</span><span class="n">into</span><span class="p">(),</span><span class="w"> </span><span class="bp">self</span><span class="p">.</span><span class="n">uri</span><span class="p">.</span><span class="n">clone</span><span class="p">()),</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="p">(</span><span class="s">&#34;SCRIPT_FILENAME&#34;</span><span class="p">.</span><span class="n">into</span><span class="p">(),</span><span class="w"> </span><span class="bp">self</span><span class="p">.</span><span class="n">script_filename</span><span class="p">.</span><span class="n">to_string_lossy</span><span class="p">().</span><span class="n">into_owned</span><span class="p">()),</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="p">(</span><span class="s">&#34;SCRIPT_NAME&#34;</span><span class="p">.</span><span class="n">into</span><span class="p">(),</span><span class="w"> </span><span class="n">script_name</span><span class="p">.</span><span class="n">clone</span><span class="p">()),</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="p">(</span><span class="s">&#34;DOCUMENT_ROOT&#34;</span><span class="p">.</span><span class="n">into</span><span class="p">(),</span><span class="w"> </span><span class="bp">self</span><span class="p">.</span><span class="n">document_root</span><span class="p">.</span><span class="n">to_string_lossy</span><span class="p">().</span><span class="n">into_owned</span><span class="p">()),</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="p">(</span><span class="s">&#34;SERVER_NAME&#34;</span><span class="p">.</span><span class="n">into</span><span class="p">(),</span><span class="w"> </span><span class="bp">self</span><span class="p">.</span><span class="n">server_name</span><span class="p">.</span><span class="n">clone</span><span class="p">()),</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="p">(</span><span class="s">&#34;SERVER_PORT&#34;</span><span class="p">.</span><span class="n">into</span><span class="p">(),</span><span class="w"> </span><span class="bp">self</span><span class="p">.</span><span class="n">server_port</span><span class="p">.</span><span class="n">to_string</span><span class="p">()),</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="p">(</span><span class="s">&#34;SERVER_PROTOCOL&#34;</span><span class="p">.</span><span class="n">into</span><span class="p">(),</span><span class="w"> </span><span class="bp">self</span><span class="p">.</span><span class="n">protocol</span><span class="p">.</span><span class="n">clone</span><span class="p">()),</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="p">(</span><span class="s">&#34;GATEWAY_INTERFACE&#34;</span><span class="p">.</span><span class="n">into</span><span class="p">(),</span><span class="w"> </span><span class="s">&#34;CGI/1.1&#34;</span><span class="p">.</span><span class="n">into</span><span class="p">()),</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="p">(</span><span class="s">&#34;QUERY_STRING&#34;</span><span class="p">.</span><span class="n">into</span><span class="p">(),</span><span class="w"> </span><span class="bp">self</span><span class="p">.</span><span class="n">query_string</span><span class="p">.</span><span class="n">clone</span><span class="p">()),</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="p">(</span><span class="s">&#34;PHP_SELF&#34;</span><span class="p">.</span><span class="n">into</span><span class="p">(),</span><span class="w"> </span><span class="n">script_name</span><span class="p">),</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="p">(</span><span class="s">&#34;REMOTE_ADDR&#34;</span><span class="p">.</span><span class="n">into</span><span class="p">(),</span><span class="w"> </span><span class="bp">self</span><span class="p">.</span><span class="n">remote_addr</span><span class="p">.</span><span class="n">ip</span><span class="p">().</span><span class="n">to_string</span><span class="p">()),</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="p">(</span><span class="s">&#34;REMOTE_PORT&#34;</span><span class="p">.</span><span class="n">into</span><span class="p">(),</span><span class="w"> </span><span class="bp">self</span><span class="p">.</span><span class="n">remote_addr</span><span class="p">.</span><span class="n">port</span><span class="p">().</span><span class="n">to_string</span><span class="p">()),</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="p">(</span><span class="s">&#34;REDIRECT_STATUS&#34;</span><span class="p">.</span><span class="n">into</span><span class="p">(),</span><span class="w"> </span><span class="s">&#34;200&#34;</span><span class="p">.</span><span class="n">into</span><span class="p">()),</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="p">];</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="c1">// Map HTTP headers to $_SERVER variables
+</span></span></span><span class="line"><span class="cl"><span class="k">for</span><span class="w"> </span><span class="p">(</span><span class="n">name</span><span class="p">,</span><span class="w"> </span><span class="n">value</span><span class="p">)</span><span class="w"> </span><span class="k">in</span><span class="w"> </span><span class="o">&amp;</span><span class="bp">self</span><span class="p">.</span><span class="n">headers</span><span class="w"> </span><span class="p">{</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="kd">let</span><span class="w"> </span><span class="n">key</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">match</span><span class="w"> </span><span class="n">name</span><span class="p">.</span><span class="n">to_lowercase</span><span class="p">().</span><span class="n">as_str</span><span class="p">()</span><span class="w"> </span><span class="p">{</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">        </span><span class="s">&#34;host&#34;</span><span class="w"> </span><span class="o">=&gt;</span><span class="w"> </span><span class="s">&#34;HTTP_HOST&#34;</span><span class="p">.</span><span class="n">to_string</span><span class="p">(),</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">        </span><span class="s">&#34;cookie&#34;</span><span class="w"> </span><span class="o">=&gt;</span><span class="w"> </span><span class="s">&#34;HTTP_COOKIE&#34;</span><span class="p">.</span><span class="n">to_string</span><span class="p">(),</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">        </span><span class="s">&#34;content-type&#34;</span><span class="w"> </span><span class="o">=&gt;</span><span class="w"> </span><span class="s">&#34;CONTENT_TYPE&#34;</span><span class="p">.</span><span class="n">to_string</span><span class="p">(),</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">        </span><span class="s">&#34;content-length&#34;</span><span class="w"> </span><span class="o">=&gt;</span><span class="w"> </span><span class="s">&#34;CONTENT_LENGTH&#34;</span><span class="p">.</span><span class="n">to_string</span><span class="p">(),</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">        </span><span class="c1">// &#34;Accept-Encoding&#34; -&gt; &#34;HTTP_ACCEPT_ENCODING&#34;
+</span></span></span><span class="line"><span class="cl"><span class="w">        </span><span class="n">_</span><span class="w"> </span><span class="o">=&gt;</span><span class="w"> </span><span class="fm">format!</span><span class="p">(</span><span class="s">&#34;HTTP_</span><span class="si">{}</span><span class="s">&#34;</span><span class="p">,</span><span class="w"> </span><span class="n">name</span><span class="p">.</span><span class="n">to_uppercase</span><span class="p">().</span><span class="n">replace</span><span class="p">(</span><span class="sc">&#39;-&#39;</span><span class="p">,</span><span class="w"> </span><span class="s">&#34;_&#34;</span><span class="p">)),</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="p">};</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="n">vars</span><span class="p">.</span><span class="n">push</span><span class="p">((</span><span class="n">key</span><span class="p">,</span><span class="w"> </span><span class="n">value</span><span class="p">.</span><span class="n">clone</span><span class="p">()));</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="p">}</span><span class="w">
+</span></span></span></code></pre></div><p>That&rsquo;s the CGI/1.1 variable set every PHP framework expects. <code>SCRIPT_NAME</code> is derived from the resolved script path
+relative to the document root, not from the URI, so it stays right after a front-controller rewrite
+(<code>/blog/hello</code> → <code>/index.php</code>). <code>HTTPS=on</code> is added for TLS requests, and <code>REDIRECT_STATUS=200</code> keeps code that was
+written for <code>cgi.force_redirect</code> happy.</p>
+<p>Two sharp edges in that header loop, both worth knowing about if you write your own:</p>
+<ul>
+<li><strong>httpoxy.</strong> A client-sent <code>Proxy:</code> header becomes <code>HTTP_PROXY</code>, which a lot of HTTP client libraries read as &ldquo;use
+this proxy for outbound requests.&rdquo; That&rsquo;s the 2016 <a href="https://httpoxy.org/">httpoxy</a> bug class, and the generic
+<code>HTTP_*</code> mapping walks right into it. As of last week ePHPm strips <code>Proxy</code> (and any configured JWT claims header) at
+request ingest, before middleware runs and before anything crosses into PHP
+(<a href="https://github.com/ephpm/ephpm/pull/200">#200</a>).</li>
+<li><strong>A fixed-size table.</strong> On the C side the server variables live in a <code>__thread</code> array of 128 pairs, and
+<code>ephpm_request_add_server_var()</code> silently drops anything past that. Sixteen-odd CGI variables plus a request with more
+than about a hundred headers will lose the tail. Nobody has hit it, but &ldquo;silently&rdquo; is the word I don&rsquo;t like there.</li>
+</ul>
+<h3 id="the-shortcut-that-broke-wordpress">The shortcut that broke WordPress</h3>
+<p>The interesting part of a SAPI isn&rsquo;t the callbacks, it&rsquo;s the lifecycle around them. A normal SAPI does this for every
+request:</p>
+<pre tabindex="0"><code>php_request_startup()   -&gt; superglobals built, executor fresh
+php_execute_script()
+php_request_shutdown()  -&gt; user functions, classes, constants, globals, statics destroyed
+</code></pre><p>In March, <code>php_request_startup()</code> crashed on tokio&rsquo;s <code>spawn_blocking</code> threads (the signal and stack-probe functions it
+calls were the problem, <a href="/blog/2026/04/php-signal-safety-init-ordering/">same family as the SIGPROF bug</a>). So the first
+version of ePHPm took a shortcut: start one request when the thread is registered with TSRM, and <em>reuse it forever</em>.
+Between HTTP requests it only reset the SAPI request info and rebuilt the superglobals by hand: destroy the
+<code>PG(http_globals)</code> arrays, rebuild <code>$_SERVER</code> through the callback, run <code>treat_data</code> over the query string for <code>$_GET</code>,
+call <code>sapi_handle_post()</code> for <code>$_POST</code>/<code>$_FILES</code>, parse cookies manually, merge <code>$_REQUEST</code>.</p>
+<p>That passed every test I had, because every test was a script that didn&rsquo;t care what the previous request left behind.
+WordPress cares. <a href="https://github.com/bryanspears">Bryan Spears</a> tracked it down at the end of June
+(<a href="https://github.com/ephpm/ephpm/commit/9715d61f893a910b1b0655bb211113a15035d937"><code>9715d61</code></a>): user functions, classes,
+constants, function statics and the global symbol table all survived between requests on the same thread. WordPress&rsquo;s
+<code>wp-blog-header.php</code> checks <code>$wp_did_header</code> (a global) and defines <code>WP_USE_THEMES</code> (a constant), so on the second request
+to a warmed thread it decided it had already bootstrapped and skipped everything. Request #1 on a thread was a full 68KB
+page. Requests #2 and later were 119-byte blank pages containing a &ldquo;constant already defined&rdquo; warning.</p>
+<p>By then the functions that made <code>php_request_startup()</code> crash were already <code>--wrap</code>&rsquo;d to no-ops, so the fix was to do
+what every other SAPI does:</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-c" data-lang="c"><span class="line"><span class="cl"><span class="kt">int</span> <span class="nf">ephpm_execute_request</span><span class="p">(</span><span class="k">const</span> <span class="kt">char</span> <span class="o">*</span><span class="n">filename</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl"><span class="p">{</span>
+</span></span><span class="line"><span class="cl">    <span class="cm">/* Tear down the previous request and start a fresh one. */</span>
+</span></span><span class="line"><span class="cl">    <span class="k">if</span> <span class="p">(</span><span class="n">request_active</span><span class="p">)</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">        <span class="nf">php_request_shutdown</span><span class="p">(</span><span class="nb">NULL</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">        <span class="n">request_active</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">    <span class="p">}</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">    <span class="n">output_len</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">    <span class="n">headers_buf_len</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">    <span class="n">req_post_data_offset</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">    <span class="cm">/* Populate SG(request_info) BEFORE php_request_startup(): PHP builds the
+</span></span></span><span class="line"><span class="cl"><span class="cm">     * superglobals during startup using our callbacks, which read these. */</span>
+</span></span><span class="line"><span class="cl">    <span class="nf">SG</span><span class="p">(</span><span class="n">request_info</span><span class="p">).</span><span class="n">request_method</span> <span class="o">=</span> <span class="p">(</span><span class="kt">char</span> <span class="o">*</span><span class="p">)</span><span class="n">req_method</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">    <span class="nf">SG</span><span class="p">(</span><span class="n">request_info</span><span class="p">).</span><span class="n">request_uri</span> <span class="o">=</span> <span class="p">(</span><span class="kt">char</span> <span class="o">*</span><span class="p">)</span><span class="n">req_uri</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">    <span class="nf">SG</span><span class="p">(</span><span class="n">request_info</span><span class="p">).</span><span class="n">query_string</span> <span class="o">=</span> <span class="p">(</span><span class="kt">char</span> <span class="o">*</span><span class="p">)</span><span class="n">req_query_string</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">    <span class="nf">SG</span><span class="p">(</span><span class="n">request_info</span><span class="p">).</span><span class="n">content_type</span> <span class="o">=</span> <span class="n">req_content_type</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">    <span class="nf">SG</span><span class="p">(</span><span class="n">request_info</span><span class="p">).</span><span class="n">cookie_data</span> <span class="o">=</span> <span class="p">(</span><span class="kt">char</span> <span class="o">*</span><span class="p">)</span><span class="n">req_cookie_data</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">    <span class="nf">SG</span><span class="p">(</span><span class="n">request_info</span><span class="p">).</span><span class="n">content_length</span> <span class="o">=</span> <span class="p">(</span><span class="kt">long</span><span class="p">)</span><span class="n">req_post_data_len</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">    <span class="nf">SG</span><span class="p">(</span><span class="n">request_info</span><span class="p">).</span><span class="n">path_translated</span> <span class="o">=</span> <span class="p">(</span><span class="kt">char</span> <span class="o">*</span><span class="p">)</span><span class="n">req_path_translated</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">    <span class="nf">SG</span><span class="p">(</span><span class="n">server_context</span><span class="p">)</span> <span class="o">=</span> <span class="o">&amp;</span><span class="n">ephpm_server_context_marker</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">    <span class="k">if</span> <span class="p">(</span><span class="nf">php_request_startup</span><span class="p">()</span> <span class="o">!=</span> <span class="n">SUCCESS</span><span class="p">)</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">        <span class="k">return</span> <span class="o">-</span><span class="mi">1</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">    <span class="p">}</span>
+</span></span><span class="line"><span class="cl">    <span class="n">request_active</span> <span class="o">=</span> <span class="mi">1</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">    <span class="cm">/* startup doesn&#39;t reset these on the embed path, so a 201 or 500 from the
+</span></span></span><span class="line"><span class="cl"><span class="cm">     * previous request on this thread would leak into this one */</span>
+</span></span><span class="line"><span class="cl">    <span class="nf">SG</span><span class="p">(</span><span class="n">sapi_headers</span><span class="p">).</span><span class="n">http_response_code</span> <span class="o">=</span> <span class="mi">200</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">    <span class="nf">SG</span><span class="p">(</span><span class="n">headers_sent</span><span class="p">)</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">    <span class="nf">SG</span><span class="p">(</span><span class="n">request_info</span><span class="p">).</span><span class="n">no_headers</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">    <span class="cm">/* ... replay per-request INI (open_basedir etc.), then execute under SETJMP ... */</span>
+</span></span><span class="line"><span class="cl"><span class="p">}</span>
+</span></span></code></pre></div><p>The ordering in there is the lesson. <code>SG(request_info)</code> has to be filled in <em>before</em> <code>php_request_startup()</code>, because
+startup is what builds the superglobals, through the callbacks, from those fields. Once startup owned that job, the old
+hand-rebuild became actively harmful: it destroyed the arrays startup had just created and re-ran <code>treat_data</code> over
+them, which was a use-after-free inside <code>php_default_treat_data</code> under load. The correct amount of superglobal code in
+a SAPI turned out to be none. Set the inputs, let PHP build them.</p>
+<p>The cost: about 5% on a trivial no-op script, per the commit&rsquo;s own measurement, and nothing noticeable on a real page,
+because OPcache&rsquo;s compiled bytecode and the JIT buffer live in shared memory and survive request shutdown. It&rsquo;s the
+classic php-fpm + OPcache model, just with threads instead of processes. WordPress went from one good page per warmed
+thread to 40 out of 40 under concurrency.</p>
+<p>The status code reset in that block is the same kind of bug in miniature: <code>http_response_code(201)</code> on one request
+came back as the status of the next request on that thread, because the embed path doesn&rsquo;t reset it during startup.</p>
+<h3 id="what-id-tell-someone-writing-a-sapi">What I&rsquo;d tell someone writing a SAPI</h3>
+<ul>
+<li>Read <code>sapi/cgi/cgi_main.c</code> and <code>sapi/cli/php_cli_server.c</code> before you read the embed SAPI. Embed is the smallest, but
+it&rsquo;s built for &ldquo;run one script and exit,&rdquo; and the gaps are exactly the parts a server needs.</li>
+<li>Never skip <code>php_request_shutdown()</code>. It is the isolation boundary between requests. If something crashes during
+request startup, fix that instead of reusing a request.</li>
+<li>Set <code>SG(request_info)</code> before startup and let PHP build the superglobals.</li>
+<li>Treat every global in <code>SG()</code>/<code>PG()</code> as suspect between requests and check what startup does and doesn&rsquo;t reset.</li>
+<li>Test with WordPress. It relies on more global state than anything else you&rsquo;re likely to run, and it will find your
+lifecycle bugs immediately.</li>
+</ul>
+<h3 id="links">Links</h3>
+<ul>
+<li><a href="https://github.com/ephpm/ephpm">ePHPm</a>, the SAPI lives in <code>crates/ephpm-php/ephpm_wrapper.c</code></li>
+<li><a href="https://github.com/ephpm/ephpm/commit/9715d61f893a910b1b0655bb211113a15035d937"><code>9715d61</code></a> per-request shutdown/startup</li>
+<li><a href="https://github.com/ephpm/ephpm/pull/200">#200</a> strip <code>Proxy</code> and claims headers at ingest</li>
+<li><a href="https://github.com/php/php-src/blob/master/main/SAPI.h">php-src <code>main/SAPI.h</code></a> for <code>sapi_module_struct</code></li>
+<li><a href="https://github.com/php/php-src/tree/master/sapi">php-src <code>sapi/</code></a> for every SAPI that ships with PHP</li>
+<li><a href="https://httpoxy.org/">httpoxy.org</a></li>
+</ul>
+
+      </div>
+      <footer>
+        <div class="stats">
+  
+    <ul class="categories">
+      
+        
+          <li><a class="article-terms-link" href="/categories/ephpm/">ephpm</a></li>
+        
+          <li><a class="article-terms-link" href="/categories/php/">php</a></li>
+        
+          <li><a class="article-terms-link" href="/categories/rust/">rust</a></li>
+        
+      
+    </ul>
+  
+  
+    <ul class="tags">
+      
+        
+          <li><a class="article-terms-link" href="/tags/ephpm/">ephpm</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/php/">php</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/rust/">rust</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/sapi/">sapi</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/php-internals/">php internals</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/wordpress/">wordpress</a></li>
+        
+      
+    </ul>
+  
+</div>
+
+      </footer>
+    </div>
+    
+      
+  
+  <div class='post giscus-wrap'>
+    <script src='https://giscus.app/client.js'
+            data-repo='luthermonson/luth.io'
+            data-repo-id='R_kgDOGvFBXQ'
+            data-category='Announcements'
+            data-category-id='DIC_kwDOGvFBXc4DH_gv'
+            data-mapping='pathname'
+            data-strict='1'
+            data-reactions-enabled='1'
+            data-emit-metadata='0'
+            data-input-position='top'
+            data-theme='light'
+            data-lang='en'
+            data-loading='lazy'
+            crossorigin='anonymous'
+            async>
+    </script>
+  </div>
+  
+
+
+
+    
+  </article>
+  
+    <nav class="post-nav">
+      
+        <a href="/blog/2026/07/five-ways-to-url-encode-an-ssh-key/" class="post-nav-link older">
+          <span class="post-nav-label">&larr; Older</span>
+          <span class="post-nav-title">Five Ways to URL-Encode an SSH Key (and Why Proxmox Rejects Them)</span>
+        </a>
+      
+      
+        <a href="/blog/2026/08/windows-dynamic-disk-usb-wsl2-usbip/" class="post-nav-link newer">
+          <span class="post-nav-label">Newer &rarr;</span>
+          <span class="post-nav-title">Rescuing a Windows Dynamic Disk Over USB with WSL2 and USB/IP</span>
+        </a>
+      
+    </nav>
+  
+
+      </main>
+      <section id="site-sidebar">
+  
+    <section id="recent-posts">
+      <header>
+        <h1>Recent Posts</h1>
+      </header>
+      
+      <article class="mini-post">
+          <a href="/blog/2026/10/ephpm-worker-mode-performance/" class="image" style="--bg-image: url('/img/2026/10/ephpm-worker-mode-performance-cover.svg');">
+    <img class="" src="/img/2026/10/ephpm-worker-mode-performance-cover.svg" alt="Diagram: before, hyper/tokio hands each request to one shared bounded channel whose waiter list all 20 PHP threads contend on; after, a dispatcher hands the job straight into the mailbox of the most recently idle PHP thread and only queues it in a FIFO overflow queue when every thread is busy">
+  </a>
+        <header>
+          <h2><a href="/blog/2026/10/ephpm-worker-mode-performance/">Fourth Place in Worker Mode, and Why It Wasn&#39;t PHP</a></h2>
+          <time class="published" datetime="2026-10-16 08:10:00 -0700 PDT">October 16, 2026</time>
+        </header>
+      </article>
+      
+      <article class="mini-post">
+          <a href="/blog/2026/10/ephpm-websockets-how-to/" class="image" style="--bg-image: url('/img/2026/10/ephpm-websockets-how-to-cover.svg');">
+    <img class="" src="/img/2026/10/ephpm-websockets-how-to-cover.svg" alt="Diagram: browsers hold sockets to ePHPm&#39;s Rust session tasks and registry; each connect, message and disconnect runs websocket.php once on the PHP thread pool, and ordinary HTTP requests push through ephpm_ws_broadcast">
+  </a>
+        <header>
+          <h2><a href="/blog/2026/10/ephpm-websockets-how-to/">WebSockets in ePHPm, From Zero to a Working Chat</a></h2>
+          <time class="published" datetime="2026-10-11 17:30:00 -0700 PDT">October 11, 2026</time>
+        </header>
+      </article>
+      
+      <article class="mini-post">
+          <a href="/blog/2026/10/webhooks-out-of-order-scheduler/" class="image" style="--bg-image: url('/img/2026/10/webhooks-out-of-order-scheduler-timeline.svg');">
+    <img class="" src="/img/2026/10/webhooks-out-of-order-scheduler-timeline.svg" alt="Timeline of three same-label jobs where a runner executing a build is destroyed 2.3 seconds before its in_progress webhook arrives">
+  </a>
+        <header>
+          <h2><a href="/blog/2026/10/webhooks-out-of-order-scheduler/">Webhooks Arrive Out of Order: How My Scheduler Killed Live Builds</a></h2>
+          <time class="published" datetime="2026-10-07 21:10:00 -0700 PDT">October 7, 2026</time>
+        </header>
+      </article>
+      
+      <article class="mini-post">
+          <a href="/blog/2026/10/go-proxmox-five-years-to-v0-8/" class="image" style="--bg-image: url('/img/2026/10/go-proxmox-five-years-to-v0-8-apidiff.svg');">
+    <img class="" src="/img/2026/10/go-proxmox-five-years-to-v0-8-apidiff.svg" alt="Horizontal bar chart of apidiff incompatible and compatible changes for every go-proxmox release from v0.1.0 to v0.8.2">
+  </a>
+        <header>
+          <h2><a href="/blog/2026/10/go-proxmox-five-years-to-v0-8/">Breaking Changes Without Breaking Trust: Five Years to go-proxmox v0.8</a></h2>
+          <time class="published" datetime="2026-10-04 19:40:00 -0700 PDT">October 4, 2026</time>
+        </header>
+      </article>
+      
+      <article class="mini-post">
+          <a href="/blog/2026/10/windows-sigterm-sparse-files/" class="image" style="--bg-image: url('/img/2026/10/windows-sigterm-sparse-files-connections.svg');">
+    <img class="" src="/img/2026/10/windows-sigterm-sparse-files-connections.svg" alt="Bar chart: 96 Cloudflare edge connections held by orphaned cloudflared processes versus 4 for the live daemon">
+  </a>
+        <header>
+          <h2><a href="/blog/2026/10/windows-sigterm-sparse-files/">Windows Grab-Bag: SIGTERM That Doesn&#39;t Exist and Sparse Files That Break Docker</a></h2>
+          <time class="published" datetime="2026-10-03 14:30:00 -0700 PDT">October 3, 2026</time>
+        </header>
+      </article>
+      
+      
+        <footer>
+          <a href="/blog" class="button">See More</a>
+        </footer>
+      
+    </section>
+  
+
+  
+    
+
+      <section id="categories">
+        <header>
+          <h1><a href="/categories">Categories</a></h1>
+        </header>
+        <ul>
+          
+          
+          <li>
+              <a href="/categories/ephpm/">ephpm<span class="count">33</span></a>
+          
+          <li>
+              <a href="/categories/go/">go<span class="count">30</span></a>
+          
+          <li>
+              <a href="/categories/php/">php<span class="count">23</span></a>
+          
+          <li>
+              <a href="/categories/rust/">rust<span class="count">15</span></a>
+          
+          <li>
+              <a href="/categories/homelab/">homelab<span class="count">14</span></a>
+          
+          <li>
+              <a href="/categories/windows/">windows<span class="count">14</span></a>
+          
+          <li>
+              <a href="/categories/ci/">ci<span class="count">9</span></a>
+          
+          <li>
+              <a href="/categories/databases/">databases<span class="count">9</span></a>
+          
+          <li>
+              <a href="/categories/security/">security<span class="count">9</span></a>
+          
+          <li>
+              <a href="/categories/containers/">containers<span class="count">7</span></a>
+          
+          <li>
+              <a href="/categories/tools/">tools<span class="count">5</span></a>
+          
+          <li>
+              <a href="/categories/ai-agents/">ai-agents<span class="count">4</span></a>
+          
+          </li>
+        </ul>
+      </section>
+    
+  
+
+  
+    <section id="mini-bio">
+      <header>
+        <h1>About</h1>
+      </header>
+      <p>Luther is a 20+ year software veteran specializing in backend APIs and architecting products. Employed at <a href='https://www.suse.com'>SUSE</a> as the Team Lead for the <a href='https://github.com/rancher/windows/issues'>Containers on Windows Team</a> working on <a href='https://rancher.com/'>Rancher</a> + <a href='https://kubernetes.io/'>Kubernetes</a></p>
+      <footer>
+        <a href="/about" class="button">Learn More</a>
+      </footer>
+    </section>
+  
+</section>
+
+      <footer id="site-footer">
+  
+      <ul class="socnet-icons">
+        
+
+        <li><a href="//github.com/luthermonson" target="_blank" rel="noopener" title="GitHub" class="fab fa-github"></a></li>
+
+
+
+
+
+
+
+
+
+
+
+<li><a href="//www.linkedin.com/in/luthermonson" target="_blank" rel="noopener" title="LinkedIn" class="fab fa-linkedin"></a></li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li><a href="//twitter.com/luthermonson" target="_blank" rel="noopener" title="Twitter" class="fab fa-twitter"></a></li>
+
+
+
+
+
+
+
+
+
+
+
+<li><a href="mailto:luther.monson@gmail.com" target="_blank" title="Email" class="far fa-envelope"></a></li>
+
+      </ul>
+  
+  <p class="copyright">
+    © 2026 Luther Monson
+      <br>
+    Theme: <a href='https://github.com/pacollins/hugo-future-imperfect-slim' target='_blank' rel='noopener'>Hugo Future Imperfect Slim</a><br>A <a href='https://html5up.net/future-imperfect' target='_blank' rel='noopener'>HTML5 UP port</a> | Powered by <a href='https://gohugo.io/' title='0.160.1' target='_blank' rel='noopener'>Hugo</a>
+  </p>
+</footer>
+<a id="back-to-top" href="#" class="fas fa-arrow-up fa-2x"></a>
+
+      <script src="/js/bundle.min.241b62ebc4792fe8c7a75879e5f710894f226f2b73342e9916b3a3b0526030cc.js" integrity="sha256-JBti68R5L&#43;jHp1h55fcQiU8ibytzNC6ZFrOjsFJgMMw="></script>
+    <script src="/js/add-on.js"></script>
+    </div>
+  </body>
+</html>

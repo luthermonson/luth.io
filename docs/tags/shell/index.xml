@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>Shell on Luther Monson</title>
+    <link>https://luth.io/tags/shell/</link>
+    <description>Recent content in Shell on Luther Monson</description>
+    <generator>Hugo</generator>
+    <language>en</language>
+    <lastBuildDate>Tue, 29 Sep 2026 20:30:00 -0700</lastBuildDate>
+    <atom:link href="https://luth.io/tags/shell/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>Your Agent&#39;s Shell Allowlist Is Bypassable</title>
+      <link>https://luth.io/blog/2026/09/agent-shell-allowlist-bypassable/</link>
+      <pubDate>Tue, 29 Sep 2026 20:30:00 -0700</pubDate>
+      <guid>https://luth.io/blog/2026/09/agent-shell-allowlist-bypassable/</guid>
+      <description>&lt;p&gt;Every &lt;a href=&#34;https://luth.io/blog/2026/08/shipmates-persona-based-ai-coding-crews/&#34;&gt;shipmates&lt;/a&gt; crew member runs shell commands, and before any&#xA;of them runs it goes through a permission gate. The gate uses the same rule syntax as Claude Code settings,&#xA;&lt;code&gt;Bash(git status)&lt;/code&gt;, &lt;code&gt;Bash(rm *)&lt;/code&gt;, &lt;code&gt;Write(**/.claude/settings.json)&lt;/code&gt;, merged from several layers: a fleet-wide deny list&#xA;pushed from Fleet Command, per-persona policy files, project settings, and the Brig, which compiles shipmates&amp;rsquo; fifteen&#xA;&amp;ldquo;Ship&amp;rsquo;s Articles&amp;rdquo; into deny and ask rules. Deny beats ask, ask beats allow.&lt;/p&gt;</description>
+    </item>
+  </channel>
+</rss>

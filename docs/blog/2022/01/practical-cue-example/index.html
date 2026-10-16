@@ -10,14 +10,14 @@
     gtag('config', 'G-MSTSKGFWTX');
 </script><meta charset="utf-8">
 <title>Practical Cue Example, Produce YAML Config from Go Types - Luther Monson</title>
-<meta name="description" content="Luther Monson&#39;s Blog about Software Engineering mostly using the Go Programming language. Focusing on Containers and Virtualization with an emphasis on Kubernetes distributions and provisioning.">
+<meta name="description" content="A hands-on Cue tutorial: start from Go types, generate Cue definitions, and produce two different YAML config files from them.">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:card" content="summary_large_image"><meta name="twitter:site" content="@luthermonson">
 
 <meta property="og:site_name" content="Luther Monson">
 <meta property="og:title" content="Practical Cue Example, Produce YAML Config from Go Types">
-<meta property="og:description" content="Luther Monson&#39;s Blog about Software Engineering mostly using the Go Programming language. Focusing on Containers and Virtualization with an emphasis on Kubernetes distributions and provisioning.">
+<meta property="og:description" content="A hands-on Cue tutorial: start from Go types, generate Cue definitions, and produce two different YAML config files from them.">
 <meta property="og:type" content="article">
 <meta property="og:url" content="https://luth.io/blog/2022/01/practical-cue-example/">
   <meta property="og:image" content="https://luth.io/img/luther-monson-headshot.jpg">
@@ -37,8 +37,11 @@
   <meta name="theme-color" content="#ffffff">
 
 
-  <meta name="generator" content="Hugo 0.92.0" />
-  <link rel="stylesheet" href="/css/bundle.min.5233f2a4cd515395301b4154f6c1c621695e8cf53faa0935b76ac52fed7f4585.css" integrity="sha256-UjPypM1RU5UwG0FU9sHGIWlejPU/qgk1t2rFL&#43;1/RYU="><link rel="stylesheet" href="/css/add-on.css">
+  <meta name="generator" content="Hugo 0.160.1">
+  <link rel="alternate" type="application/rss+xml" href="https://luth.io/index.xml" title="Luther Monson">
+  <link rel="stylesheet" href="/css/bundle.min.e1ffed86714fbb7eff75eab221c0c61b8260be0c7d1c08db0fcb7a2bdb6af7c9.css" integrity="sha256-4f/thnFPu37/deqyIcDGG4Jgvgx9HAjbD8t6K9tq98k="><link rel="stylesheet" href="/css/add-on.css">
+        <link rel="stylesheet" href="/css/code.css">
+        <link rel="stylesheet" href="/css/mobile.css">
 </head>
 
   <body>
@@ -48,6 +51,7 @@
   <nav id="site-nav">
     <h1 class="nav-title">
       <a href="/" class="nav">
+        <img class="nav-avatar" src="/img/luther-monson-headshot.jpg" alt="" width="32" height="32">
         
           Blog
         
@@ -72,6 +76,11 @@
       
         
           
+          <a href="/archive" class="nav link"><i class='far fa-calendar-alt'></i> Archive</a>
+        
+      
+        
+          
           <a href="/categories" class="nav link"><i class='fas fa-sitemap'></i> Categories</a>
         
       
@@ -80,55 +89,11 @@
     </menu>
     <a href="#search-input" class="nav search-toggle"><i class="fas fa-search fa-2x">&nbsp;</i></a>
     <a href="#share-menu" class="nav share-toggle"><i class="fas fa-share-alt fa-2x">&nbsp;</i></a>
-    <a href="#lang-menu" class="nav lang-toggle" lang="en">en</a>
+    
     <a href="#site-nav" class="nav nav-toggle"><i class="fas fa-bars fa-2x"></i></a>
   </nav>
   <menu id="search" class="menu"><input id="search-input" class="search-input menu"></input><div id="search-results" class="search-results menu"></div></menu>
-  <menu id="lang-menu" class="flyout-menu menu">
-  <a href="#" lang="en" class="nav link active">English (en)</a>
   
-    
-      
-    
-      
-        <a href="/fr" lang="fr" class="nav no-lang link">Français (fr)</a>
-      
-    
-      
-        <a href="/pl" lang="pl" class="nav no-lang link">Polski (pl)</a>
-      
-    
-      
-        <a href="/pt" lang="pt" class="nav no-lang link">Português (pt)</a>
-      
-    
-      
-        <a href="/de" lang="de" class="nav no-lang link">Deutsche (de)</a>
-      
-    
-      
-        <a href="/es" lang="es" class="nav no-lang link">Española (es)</a>
-      
-    
-      
-        <a href="/zh-cn" lang="zh-cn" class="nav no-lang link">中文 (简体) (zh-cn)</a>
-      
-    
-      
-        <a href="/zh-tw" lang="zh-tw" class="nav no-lang link">中文 (正體) (zh-tw)</a>
-      
-    
-      
-        <a href="/ja" lang="ja" class="nav no-lang link">日本語 (ja)</a>
-      
-    
-      
-        <a href="/nl" lang="nl" class="nav no-lang link">Nederlands (nl)</a>
-      
-    
-  
-</menu>
-
   
     <menu id="share-menu" class="flyout-menu menu">
       <h1>Share Post</h1>
@@ -169,7 +134,7 @@
   
 
   
-        <a href="mailto:?subject=Check%20out%20this%20post%20by %7b%20%20%20%20%20%20%20%20map%5b%5d%7d&amp;body=https%3a%2f%2fluth.io%2fblog%2f2022%2f01%2fpractical-cue-example%2f" target="_blank" class="nav share-btn email" data-proofer-ignore>
+        <a href="mailto:?subject=Check%20out%20this%20post%20by Luther%20Monson&amp;body=https%3a%2f%2fluth.io%2fblog%2f2022%2f01%2fpractical-cue-example%2f" target="_blank" class="nav share-btn email" data-proofer-ignore>
           <p>Email</p>
         </a>
   
@@ -180,7 +145,7 @@
 </header>
 
     <div id="wrapper">
-      <section id="site-intro" >
+      <section id="site-intro" class="hidden-single-column">
   <a href="/"><img src="/img/luther-monson-headshot.jpg" class="circle" width="100" alt="Luther Monson, Staff Software Engineer at SUSE" /></a>
   <header>
     <h1>Luther Monson</h1>
@@ -250,9 +215,11 @@
       <h2><a href="/blog/2022/01/practical-cue-example/">Practical Cue Example, Produce YAML Config from Go Types</a></h2>
     
     
+      <p>A hands-on Cue tutorial: start from Go types, generate Cue definitions, and produce two different YAML config files from them.</p>
+    
   </div>
   <div class="meta">
-    <time datetime="2022-01-31 09:57:26 -0700 MST">January 31, 2022</time>
+    <time datetime="2022-01-31 09:57:26 -0700 -0700">January 31, 2022</time>
     
     <p>5-Minute Read</p>
   </div>
@@ -296,7 +263,7 @@
   
 
   
-        <a href="mailto:?subject=Check%20out%20this%20post%20by %7b%20%20%20%20%20%20%20%20map%5b%5d%7d&amp;body=https%3a%2f%2fluth.io%2fblog%2f2022%2f01%2fpractical-cue-example%2f" target="_blank" class="nav share-btn email" data-proofer-ignore>
+        <a href="mailto:?subject=Check%20out%20this%20post%20by Luther%20Monson&amp;body=https%3a%2f%2fluth.io%2fblog%2f2022%2f01%2fpractical-cue-example%2f" target="_blank" class="nav share-btn email" data-proofer-ignore>
           <p>Email</p>
         </a>
   
@@ -304,21 +271,6 @@
 
       </div>
       <div class="content">
-        
-        
-          <nav id="TableOfContents">
-  <ul>
-    <li>
-      <ul>
-        <li><a href="#prerequisites">Prerequisites</a></li>
-        <li><a href="#go-types-to-config-yaml">Go Types to Config YAML</a></li>
-        <li><a href="#setting-up-the-cue-module">Setting Up the Cue Module</a></li>
-        <li><a href="#using-tags-in-cue-for-better-config-files">Using Tags in Cue for Better Config Files</a></li>
-        <li><a href="#conclusion">Conclusion</a></li>
-      </ul>
-    </li>
-  </ul>
-</nav>
         
         <p>I recently had to spend some time to learn <a href="https://cuelang.org/">Cue</a> and felt the examples/tutorials were a bit lacking
 and the paradigm shift to the entire language sort of messed with my head and some things Cue does were a bit foreign to me.
@@ -349,120 +301,120 @@ file via unmarshalling.</p>
 <h3 id="setting-up-the-cue-module">Setting Up the Cue Module</h3>
 <p>To get this project setup you&rsquo;ll probably want to use a sub-directory in your project and intialize it as a cue module and
 place a go file with some types at the root.</p>
-<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash">$ cd config
-$ cue init mod github.com/username/project/config
-</code></pre></div><p>And put your types into the types.go file</p>
-<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-go" data-lang="go"><span style="color:#f92672">package</span> <span style="color:#a6e22e">config</span>
-
-<span style="color:#66d9ef">type</span> <span style="color:#a6e22e">Config</span> <span style="color:#66d9ef">struct</span> {
-	<span style="color:#a6e22e">App</span> <span style="color:#a6e22e">App</span> <span style="color:#e6db74">`json:&#34;app&#34;`</span>
-}
-
-<span style="color:#66d9ef">type</span> <span style="color:#a6e22e">App</span> <span style="color:#66d9ef">struct</span> {
-	<span style="color:#a6e22e">Host</span>    <span style="color:#66d9ef">string</span> <span style="color:#e6db74">`json:&#34;host&#34;`</span>
-	<span style="color:#a6e22e">Port</span>    <span style="color:#66d9ef">int</span>    <span style="color:#e6db74">`json:&#34;port&#34;`</span>
-	<span style="color:#a6e22e">Workers</span> <span style="color:#66d9ef">int</span>    <span style="color:#e6db74">`json:&#34;workers&#34;`</span>
-	<span style="color:#a6e22e">DSN</span>     <span style="color:#66d9ef">string</span> <span style="color:#e6db74">`json:&#34;dsn&#34;`</span>
-}
-</code></pre></div><p>Your directory structure will look like the following:</p>
-<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash">./demo/config$ tree
-.
-├── cue.mod
-│   ├── module.cue
-│   ├── pkg
-│   └── usr
-└── types.go
-</code></pre></div><p>Now generate your Cue files from the go types&hellip;</p>
-<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash">cue get go .
-</code></pre></div><p>Which will create a <code>gen</code> directory with some pathing to a <code>types_go_gen.cue</code> file which contains the following.</p>
-<pre tabindex="0"><code class="language-cue" data-lang="cue">// Code generated by cue get go. DO NOT EDIT.
-
-//cue:generate cue get go github.com/luthermonson/tutorials-2022-01-cue/config
-
-package config
-
-#Config: {
-	app: #App @go(App)
-}
-
-#App: {
-	host:    string @go(Host)
-	port:    int    @go(Port)
-	workers: int    @go(Workers)
-	dsn:     string @go(DSN)
-}
-</code></pre><p>Now let&rsquo;s use this newly generated file in a super basic cue file to generate our sample YAML document.</p>
-<pre tabindex="0"><code class="language-cue" data-lang="cue">package config
-
-import &quot;github.com/luthermonson/tutorials-2022-01-cue/config&quot;
-
-#config: config.#Config &amp; {
-    app: config.#App &amp; {
-        host: &quot;mydomain.com&quot;
-        port: 443
-        workers: 2
-        dsn: &quot;root:test@tcp(mysql.domain.com:3306)/test?charset=utf8&amp;parseTime=True&amp;loc=Local&quot;
-    }
-}
-
-#config
-</code></pre><p>I recommend you put this cue file in a sub-directory like <code>./config/cue</code> so you can do something like this&hellip;</p>
-<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash">$ cd ./config
-$ cue export ./cue --out yaml
-app:
-  host: mydomain.com
-  port: <span style="color:#ae81ff">443</span>
-  workers: <span style="color:#ae81ff">2</span>
-  dsn: root:test@tcp<span style="color:#f92672">(</span>mysql.domain.com:3306<span style="color:#f92672">)</span>/test?charset<span style="color:#f92672">=</span>utf8&amp;parseTime<span style="color:#f92672">=</span>True&amp;loc<span style="color:#f92672">=</span>Local
-</code></pre></div><h3 id="using-tags-in-cue-for-better-config-files">Using Tags in Cue for Better Config Files</h3>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl">$ <span class="nb">cd</span> config
+</span></span><span class="line"><span class="cl">$ cue init mod github.com/username/project/config
+</span></span></code></pre></div><p>And put your types into the types.go file</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-go" data-lang="go"><span class="line"><span class="cl"><span class="kn">package</span><span class="w"> </span><span class="nx">config</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="kd">type</span><span class="w"> </span><span class="nx">Config</span><span class="w"> </span><span class="kd">struct</span><span class="w"> </span><span class="p">{</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">	</span><span class="nx">App</span><span class="w"> </span><span class="nx">App</span><span class="w"> </span><span class="s">`json:&#34;app&#34;`</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="p">}</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="kd">type</span><span class="w"> </span><span class="nx">App</span><span class="w"> </span><span class="kd">struct</span><span class="w"> </span><span class="p">{</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">	</span><span class="nx">Host</span><span class="w">    </span><span class="kt">string</span><span class="w"> </span><span class="s">`json:&#34;host&#34;`</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">	</span><span class="nx">Port</span><span class="w">    </span><span class="kt">int</span><span class="w">    </span><span class="s">`json:&#34;port&#34;`</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">	</span><span class="nx">Workers</span><span class="w"> </span><span class="kt">int</span><span class="w">    </span><span class="s">`json:&#34;workers&#34;`</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">	</span><span class="nx">DSN</span><span class="w">     </span><span class="kt">string</span><span class="w"> </span><span class="s">`json:&#34;dsn&#34;`</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="p">}</span><span class="w">
+</span></span></span></code></pre></div><p>Your directory structure will look like the following:</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl">./demo/config$ tree
+</span></span><span class="line"><span class="cl">.
+</span></span><span class="line"><span class="cl">├── cue.mod
+</span></span><span class="line"><span class="cl">│   ├── module.cue
+</span></span><span class="line"><span class="cl">│   ├── pkg
+</span></span><span class="line"><span class="cl">│   └── usr
+</span></span><span class="line"><span class="cl">└── types.go
+</span></span></code></pre></div><p>Now generate your Cue files from the go types&hellip;</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl">cue get go .
+</span></span></code></pre></div><p>Which will create a <code>gen</code> directory with some pathing to a <code>types_go_gen.cue</code> file which contains the following.</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-cue" data-lang="cue"><span class="line"><span class="cl"><span class="c1">// Code generated by cue get go. DO NOT EDIT.</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="c1">//cue:generate cue get go github.com/luthermonson/tutorials-2022-01-cue/config</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="k">package</span> <span class="n">config</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="n">#Config</span><span class="o">:</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">	<span class="n">app</span><span class="o">:</span> <span class="n">#App</span> <span class="n">@go</span><span class="p">(</span><span class="n">App</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl"><span class="p">}</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="n">#App</span><span class="o">:</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">	<span class="n">host</span><span class="o">:</span>    <span class="kt">string</span> <span class="n">@go</span><span class="p">(</span><span class="n">Host</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">	<span class="n">port</span><span class="o">:</span>    <span class="kt">int</span>    <span class="n">@go</span><span class="p">(</span><span class="n">Port</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">	<span class="n">workers</span><span class="o">:</span> <span class="kt">int</span>    <span class="n">@go</span><span class="p">(</span><span class="n">Workers</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">	<span class="n">dsn</span><span class="o">:</span>     <span class="kt">string</span> <span class="n">@go</span><span class="p">(</span><span class="n">DSN</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl"><span class="p">}</span>
+</span></span></code></pre></div><p>Now let&rsquo;s use this newly generated file in a super basic cue file to generate our sample YAML document.</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-cue" data-lang="cue"><span class="line"><span class="cl"><span class="k">package</span> <span class="n">config</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="k">import</span> <span class="s">&#34;github.com/luthermonson/tutorials-2022-01-cue/config&#34;</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="n">#config</span><span class="o">:</span> <span class="n">config</span><span class="p">.</span><span class="n">#Config</span> <span class="o">&amp;</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">    <span class="n">app</span><span class="o">:</span> <span class="n">config</span><span class="p">.</span><span class="n">#App</span> <span class="o">&amp;</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">        <span class="n">host</span><span class="o">:</span> <span class="s">&#34;mydomain.com&#34;</span>
+</span></span><span class="line"><span class="cl">        <span class="n">port</span><span class="o">:</span> <span class="m">443</span>
+</span></span><span class="line"><span class="cl">        <span class="n">workers</span><span class="o">:</span> <span class="m">2</span>
+</span></span><span class="line"><span class="cl">        <span class="n">dsn</span><span class="o">:</span> <span class="s">&#34;root:test@tcp(mysql.domain.com:3306)/test?charset=utf8&amp;parseTime=True&amp;loc=Local&#34;</span>
+</span></span><span class="line"><span class="cl">    <span class="p">}</span>
+</span></span><span class="line"><span class="cl"><span class="p">}</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="n">#config</span>
+</span></span></code></pre></div><p>I recommend you put this cue file in a sub-directory like <code>./config/cue</code> so you can do something like this&hellip;</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl">$ <span class="nb">cd</span> ./config
+</span></span><span class="line"><span class="cl">$ cue <span class="nb">export</span> ./cue --out yaml
+</span></span><span class="line"><span class="cl">app:
+</span></span><span class="line"><span class="cl">  host: mydomain.com
+</span></span><span class="line"><span class="cl">  port: <span class="m">443</span>
+</span></span><span class="line"><span class="cl">  workers: <span class="m">2</span>
+</span></span><span class="line"><span class="cl">  dsn: root:test@tcp<span class="o">(</span>mysql.domain.com:3306<span class="o">)</span>/test?charset<span class="o">=</span>utf8<span class="p">&amp;</span><span class="nv">parseTime</span><span class="o">=</span>True<span class="p">&amp;</span><span class="nv">loc</span><span class="o">=</span>Local
+</span></span></code></pre></div><h3 id="using-tags-in-cue-for-better-config-files">Using Tags in Cue for Better Config Files</h3>
 <p>Tags are a construct in Cue to let you pass in variables at call time so let&rsquo;s change our Cue file to use tags and consume
 some environment files based on tag to generate two YAML files. Change the main.cue file to set host/workers/dsn as a variable&hellip;</p>
-<pre tabindex="0"><code class="language-cue" data-lang="cue">package config
-
-import &quot;github.com/luthermonson/tutorials-2022-01-cue/config&quot;
-
-#config: config.#Config &amp; {
-    app: config.#App &amp; {
-        host: #host
-        port: 443
-        workers: #workers
-        dsn: #dsn
-    }
-}
-
-#config
-</code></pre><p>add <code>prod.cue</code></p>
-<pre tabindex="0"><code class="language-cue" data-lang="cue">@if(prod)
-package config
-
-#host: &quot;mydomain.com&quot;
-#workers: 16
-#dsn: &quot;root:prod@tcp(mysql-prod.domain.com:3306)/test?charset=utf8&amp;parseTime=True&amp;loc=Local&quot;
-</code></pre><p>add <code>qa.cue</code></p>
-<pre tabindex="0"><code class="language-cue" data-lang="cue">@if(qa)
-package config
-
-#host: &quot;qa.mydomain.com&quot;
-#workers: 1
-#dsn: &quot;root:qa@tcp(mysql-qa.domain.com:3306)/test?charset=utf8&amp;parseTime=True&amp;loc=Local&quot;
-</code></pre><p>Now when you run <code>cue export</code> pass a <code>-t qa</code> or <code>-t prod</code>. The <code>@if()</code> at the top of the file will check if the tags are set
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-cue" data-lang="cue"><span class="line"><span class="cl"><span class="k">package</span> <span class="n">config</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="k">import</span> <span class="s">&#34;github.com/luthermonson/tutorials-2022-01-cue/config&#34;</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="n">#config</span><span class="o">:</span> <span class="n">config</span><span class="p">.</span><span class="n">#Config</span> <span class="o">&amp;</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">    <span class="n">app</span><span class="o">:</span> <span class="n">config</span><span class="p">.</span><span class="n">#App</span> <span class="o">&amp;</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">        <span class="n">host</span><span class="o">:</span> <span class="n">#host</span>
+</span></span><span class="line"><span class="cl">        <span class="n">port</span><span class="o">:</span> <span class="m">443</span>
+</span></span><span class="line"><span class="cl">        <span class="n">workers</span><span class="o">:</span> <span class="n">#workers</span>
+</span></span><span class="line"><span class="cl">        <span class="n">dsn</span><span class="o">:</span> <span class="n">#dsn</span>
+</span></span><span class="line"><span class="cl">    <span class="p">}</span>
+</span></span><span class="line"><span class="cl"><span class="p">}</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="n">#config</span>
+</span></span></code></pre></div><p>add <code>prod.cue</code></p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-cue" data-lang="cue"><span class="line"><span class="cl"><span class="n">@if</span><span class="p">(</span><span class="n">prod</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl"><span class="k">package</span> <span class="n">config</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="n">#host</span><span class="o">:</span> <span class="s">&#34;mydomain.com&#34;</span>
+</span></span><span class="line"><span class="cl"><span class="n">#workers</span><span class="o">:</span> <span class="m">16</span>
+</span></span><span class="line"><span class="cl"><span class="n">#dsn</span><span class="o">:</span> <span class="s">&#34;root:prod@tcp(mysql-prod.domain.com:3306)/test?charset=utf8&amp;parseTime=True&amp;loc=Local&#34;</span>
+</span></span></code></pre></div><p>add <code>qa.cue</code></p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-cue" data-lang="cue"><span class="line"><span class="cl"><span class="n">@if</span><span class="p">(</span><span class="n">qa</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl"><span class="k">package</span> <span class="n">config</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="n">#host</span><span class="o">:</span> <span class="s">&#34;qa.mydomain.com&#34;</span>
+</span></span><span class="line"><span class="cl"><span class="n">#workers</span><span class="o">:</span> <span class="m">1</span>
+</span></span><span class="line"><span class="cl"><span class="n">#dsn</span><span class="o">:</span> <span class="s">&#34;root:qa@tcp(mysql-qa.domain.com:3306)/test?charset=utf8&amp;parseTime=True&amp;loc=Local&#34;</span>
+</span></span></code></pre></div><p>Now when you run <code>cue export</code> pass a <code>-t qa</code> or <code>-t prod</code>. The <code>@if()</code> at the top of the file will check if the tags are set
 and only include those files if the tag was passed. This is a different pattern than say only evaluating certain cue files
 like <code>cue eval main.cue prod.cue</code> and <code>cue eval main.cue qa.cue</code> which is a pattern outlined by this <a href="https://cuetorials.com/patterns/inject/">tutorial</a>.
 I like the benefits of evaluating cue on a directory of files and passing tags at call time instead of having to figure out
 which files within the directory need evaluating.</p>
-<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash">$ cue export ./cue -t prod --out yaml
-app:
-  host: mydomain.com
-  port: <span style="color:#ae81ff">443</span>
-  workers: <span style="color:#ae81ff">16</span>
-  dsn: root:prod@tcp<span style="color:#f92672">(</span>mysql-prod.domain.com:3306<span style="color:#f92672">)</span>/test?charset<span style="color:#f92672">=</span>utf8&amp;parseTime<span style="color:#f92672">=</span>True&amp;loc<span style="color:#f92672">=</span>Local
-$  cue export ./cue -t qa --out yaml
-app:
-  host: qa.mydomain.com
-  port: <span style="color:#ae81ff">443</span>
-  workers: <span style="color:#ae81ff">1</span>
-  dsn: root:qa@tcp<span style="color:#f92672">(</span>mysql-qa.domain.com:3306<span style="color:#f92672">)</span>/test?charset<span style="color:#f92672">=</span>utf8&amp;parseTime<span style="color:#f92672">=</span>True&amp;loc<span style="color:#f92672">=</span>Local
-</code></pre></div><h3 id="conclusion">Conclusion</h3>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl">$ cue <span class="nb">export</span> ./cue -t prod --out yaml
+</span></span><span class="line"><span class="cl">app:
+</span></span><span class="line"><span class="cl">  host: mydomain.com
+</span></span><span class="line"><span class="cl">  port: <span class="m">443</span>
+</span></span><span class="line"><span class="cl">  workers: <span class="m">16</span>
+</span></span><span class="line"><span class="cl">  dsn: root:prod@tcp<span class="o">(</span>mysql-prod.domain.com:3306<span class="o">)</span>/test?charset<span class="o">=</span>utf8<span class="p">&amp;</span><span class="nv">parseTime</span><span class="o">=</span>True<span class="p">&amp;</span><span class="nv">loc</span><span class="o">=</span>Local
+</span></span><span class="line"><span class="cl">$  cue <span class="nb">export</span> ./cue -t qa --out yaml
+</span></span><span class="line"><span class="cl">app:
+</span></span><span class="line"><span class="cl">  host: qa.mydomain.com
+</span></span><span class="line"><span class="cl">  port: <span class="m">443</span>
+</span></span><span class="line"><span class="cl">  workers: <span class="m">1</span>
+</span></span><span class="line"><span class="cl">  dsn: root:qa@tcp<span class="o">(</span>mysql-qa.domain.com:3306<span class="o">)</span>/test?charset<span class="o">=</span>utf8<span class="p">&amp;</span><span class="nv">parseTime</span><span class="o">=</span>True<span class="p">&amp;</span><span class="nv">loc</span><span class="o">=</span>Local
+</span></span></code></pre></div><h3 id="conclusion">Conclusion</h3>
 <p>Please checkout the code for this tutorial on the <a href="https://github.com/luthermonson/tutorials/tree/main/2022/01/cue">github repository</a>.
 This was ultimately a very basic interpretation of the Cue language itself but gives you some ideas for structuring your Cue modules.
 The language is far more feature rich than this tutorial gives it credit and I will likely do followup blog post on the
@@ -475,7 +427,9 @@ language itself after and using it to validate your configuration files before t
     <ul class="categories">
       
         
-          <li><a class="article-terms-link" href="/categories/programming/">programming</a></li>
+          <li><a class="article-terms-link" href="/categories/go/">go</a></li>
+        
+          <li><a class="article-terms-link" href="/categories/tools/">tools</a></li>
         
       
     </ul>
@@ -497,62 +451,47 @@ language itself after and using it to validate your configuration files before t
     </div>
     
       
-  <div class='post'>
-    
-    <div>
-      <h2 id='say-something'>Say Something</h2>
-        <form id='comment-form' class='new-comment' method='POST'>
-          
-          <h3 class='reply-notice hidden'>
-            <span class='reply-name'></span>
-            <a class='reply-close-btn button'><i class='fas fa-times'></i></a>
-          </h3>
-
-          
-          <input type='hidden' name='options[entryId]' value='13b9df93e71822ca87b6ed21a521c0b5'>
-          <input type='hidden' name='fields[replyThread]' value=''>
-          <input type='hidden' name='fields[replyID]' value=''>
-          <input type='hidden' name='fields[replyName]' value=''>
-
-          
-          <input required name='fields[name]' type='text' placeholder='Your Name'>
-          <input name='fields[website]' type='text' placeholder='Your Website'>
-          <input required name='fields[email]' type='email' placeholder='Your Email'>
-          <textarea required name='fields[body]' placeholder='Your Message' rows='10'></textarea>
-
-          
-          
-
-          
-          <div class='submit-notice'>
-            <strong class='submit-notice-text submit-success hidden'>Thanks for your comment! It will be shown on the site once it has been approved.</strong>
-            <strong class='submit-notice-text submit-failed hidden'>Sorry, there was an error with your submission. Please make sure all required fields have been completed and try again.</strong>
-          </div>
-
-          
-          <button type='button' id="comment-form-submit" class='button'>Submit</button>
-          <button type='button' id="comment-form-submitted" class='hidden button' disabled>Submitted</button>
-          <button type='reset' id="comment-form-reset" class='button'>Reset</button>
-        </form>
-    </div>
-
-    
-    <div class='comments-container'>
-      <h2>Comments</h2>
-    </div>
+  
+  <div class='post giscus-wrap'>
+    <script src='https://giscus.app/client.js'
+            data-repo='luthermonson/luth.io'
+            data-repo-id='R_kgDOGvFBXQ'
+            data-category='Announcements'
+            data-category-id='DIC_kwDOGvFBXc4DH_gv'
+            data-mapping='pathname'
+            data-strict='1'
+            data-reactions-enabled='1'
+            data-emit-metadata='0'
+            data-input-position='top'
+            data-theme='light'
+            data-lang='en'
+            data-loading='lazy'
+            crossorigin='anonymous'
+            async>
+    </script>
   </div>
+  
+
 
 
     
   </article>
-  <div class="pagination">
-    
-      <a href="/blog/2022/02/recreating-proxmox-ve-xtermjs-in-go/" class="button left"><span>Recreating Proxmox Ve Xtermjs in Go</span></a>
-    
-    
-      <a href="/blog/2022/01/free-personal-blog-hugo-github-pages/" class="button right"><span>Free Blog Hosting Using Hugo &#43; Github Pages</span></a>
-    
-  </div>
+  
+    <nav class="post-nav">
+      
+        <a href="/blog/2022/01/free-personal-blog-hugo-github-pages/" class="post-nav-link older">
+          <span class="post-nav-label">&larr; Older</span>
+          <span class="post-nav-title">Free Blog Hosting Using Hugo &#43; Github Pages</span>
+        </a>
+      
+      
+        <a href="/blog/2022/02/recreating-proxmox-ve-xtermjs-in-go/" class="post-nav-link newer">
+          <span class="post-nav-label">Newer &rarr;</span>
+          <span class="post-nav-title">Recreating Proxmox Ve Xtermjs in Go</span>
+        </a>
+      
+    </nav>
+  
 
       </main>
       <section id="site-sidebar">
@@ -563,41 +502,59 @@ language itself after and using it to validate your configuration files before t
       </header>
       
       <article class="mini-post">
-          <a href="/blog/2022/02/recreating-proxmox-ve-xtermjs-in-go/" class="image">
-    <img class="" src="/img/2022/02/proxmox-logo.png" alt="Proxmox VE Logo">
+          <a href="/blog/2026/10/ephpm-worker-mode-performance/" class="image" style="--bg-image: url('/img/2026/10/ephpm-worker-mode-performance-cover.svg');">
+    <img class="" src="/img/2026/10/ephpm-worker-mode-performance-cover.svg" alt="Diagram: before, hyper/tokio hands each request to one shared bounded channel whose waiter list all 20 PHP threads contend on; after, a dispatcher hands the job straight into the mailbox of the most recently idle PHP thread and only queues it in a FIFO overflow queue when every thread is busy">
   </a>
         <header>
-          <h2><a href="/blog/2022/02/recreating-proxmox-ve-xtermjs-in-go/">Recreating Proxmox Ve Xtermjs in Go</a></h2>
-          <time class="published" datetime="2022-02-06 21:54:53 -0700 MST">February 6, 2022</time>
+          <h2><a href="/blog/2026/10/ephpm-worker-mode-performance/">Fourth Place in Worker Mode, and Why It Wasn&#39;t PHP</a></h2>
+          <time class="published" datetime="2026-10-16 08:10:00 -0700 PDT">October 16, 2026</time>
         </header>
       </article>
       
       <article class="mini-post">
-          
-        <header>
-          <h2><a href="/blog/2022/01/practical-cue-example/">Practical Cue Example, Produce YAML Config from Go Types</a></h2>
-          <time class="published" datetime="2022-01-31 09:57:26 -0700 MST">January 31, 2022</time>
-        </header>
-      </article>
-      
-      <article class="mini-post">
-          <a href="/blog/2022/01/free-personal-blog-hugo-github-pages/" class="image" style="--bg-image: url('/img/2022/01/github-pages-logo.png');">
-    <img class="" src="/img/2022/01/github-pages-logo.png" alt="Github Pages Logo">
+          <a href="/blog/2026/10/ephpm-websockets-how-to/" class="image" style="--bg-image: url('/img/2026/10/ephpm-websockets-how-to-cover.svg');">
+    <img class="" src="/img/2026/10/ephpm-websockets-how-to-cover.svg" alt="Diagram: browsers hold sockets to ePHPm&#39;s Rust session tasks and registry; each connect, message and disconnect runs websocket.php once on the PHP thread pool, and ordinary HTTP requests push through ephpm_ws_broadcast">
   </a>
         <header>
-          <h2><a href="/blog/2022/01/free-personal-blog-hugo-github-pages/">Free Blog Hosting Using Hugo &#43; Github Pages</a></h2>
-          <time class="published" datetime="2022-01-27 11:51:20 -0700 MST">January 27, 2022</time>
+          <h2><a href="/blog/2026/10/ephpm-websockets-how-to/">WebSockets in ePHPm, From Zero to a Working Chat</a></h2>
+          <time class="published" datetime="2026-10-11 17:30:00 -0700 PDT">October 11, 2026</time>
         </header>
       </article>
       
       <article class="mini-post">
-          
+          <a href="/blog/2026/10/webhooks-out-of-order-scheduler/" class="image" style="--bg-image: url('/img/2026/10/webhooks-out-of-order-scheduler-timeline.svg');">
+    <img class="" src="/img/2026/10/webhooks-out-of-order-scheduler-timeline.svg" alt="Timeline of three same-label jobs where a runner executing a build is destroyed 2.3 seconds before its in_progress webhook arrives">
+  </a>
         <header>
-          <h2><a href="/blog/introduction/">Introduction</a></h2>
-          <time class="published" datetime="2022-01-27 10:11:05 -0700 MST">January 27, 2022</time>
+          <h2><a href="/blog/2026/10/webhooks-out-of-order-scheduler/">Webhooks Arrive Out of Order: How My Scheduler Killed Live Builds</a></h2>
+          <time class="published" datetime="2026-10-07 21:10:00 -0700 PDT">October 7, 2026</time>
         </header>
       </article>
       
+      <article class="mini-post">
+          <a href="/blog/2026/10/go-proxmox-five-years-to-v0-8/" class="image" style="--bg-image: url('/img/2026/10/go-proxmox-five-years-to-v0-8-apidiff.svg');">
+    <img class="" src="/img/2026/10/go-proxmox-five-years-to-v0-8-apidiff.svg" alt="Horizontal bar chart of apidiff incompatible and compatible changes for every go-proxmox release from v0.1.0 to v0.8.2">
+  </a>
+        <header>
+          <h2><a href="/blog/2026/10/go-proxmox-five-years-to-v0-8/">Breaking Changes Without Breaking Trust: Five Years to go-proxmox v0.8</a></h2>
+          <time class="published" datetime="2026-10-04 19:40:00 -0700 PDT">October 4, 2026</time>
+        </header>
+      </article>
+      
+      <article class="mini-post">
+          <a href="/blog/2026/10/windows-sigterm-sparse-files/" class="image" style="--bg-image: url('/img/2026/10/windows-sigterm-sparse-files-connections.svg');">
+    <img class="" src="/img/2026/10/windows-sigterm-sparse-files-connections.svg" alt="Bar chart: 96 Cloudflare edge connections held by orphaned cloudflared processes versus 4 for the live daemon">
+  </a>
+        <header>
+          <h2><a href="/blog/2026/10/windows-sigterm-sparse-files/">Windows Grab-Bag: SIGTERM That Doesn&#39;t Exist and Sparse Files That Break Docker</a></h2>
+          <time class="published" datetime="2026-10-03 14:30:00 -0700 PDT">October 3, 2026</time>
+        </header>
+      </article>
+      
+      
+        <footer>
+          <a href="/blog" class="button">See More</a>
+        </footer>
       
     </section>
   
@@ -607,13 +564,46 @@ language itself after and using it to validate your configuration files before t
 
       <section id="categories">
         <header>
-          <h1><a href="/categories">Category</a></h1>
+          <h1><a href="/categories">Categories</a></h1>
         </header>
         <ul>
           
           
           <li>
-              <a href="/categories/programming/">programming<span class="count">2</span></a>
+              <a href="/categories/ephpm/">ephpm<span class="count">33</span></a>
+          
+          <li>
+              <a href="/categories/go/">go<span class="count">30</span></a>
+          
+          <li>
+              <a href="/categories/php/">php<span class="count">23</span></a>
+          
+          <li>
+              <a href="/categories/rust/">rust<span class="count">15</span></a>
+          
+          <li>
+              <a href="/categories/homelab/">homelab<span class="count">14</span></a>
+          
+          <li>
+              <a href="/categories/windows/">windows<span class="count">14</span></a>
+          
+          <li>
+              <a href="/categories/ci/">ci<span class="count">9</span></a>
+          
+          <li>
+              <a href="/categories/databases/">databases<span class="count">9</span></a>
+          
+          <li>
+              <a href="/categories/security/">security<span class="count">9</span></a>
+          
+          <li>
+              <a href="/categories/containers/">containers<span class="count">7</span></a>
+          
+          <li>
+              <a href="/categories/tools/">tools<span class="count">5</span></a>
+          
+          <li>
+              <a href="/categories/ai-agents/">ai-agents<span class="count">4</span></a>
           
           </li>
         </ul>
@@ -684,16 +674,14 @@ language itself after and using it to validate your configuration files before t
       </ul>
   
   <p class="copyright">
-    © 2022 Luther Monson
+    © 2026 Luther Monson
       <br>
-    Theme: <a href='https://github.com/pacollins/hugo-future-imperfect-slim' target='_blank' rel='noopener'>Hugo Future Imperfect Slim</a><br>A <a href='https://html5up.net/future-imperfect' target='_blank' rel='noopener'>HTML5 UP port</a> | Powered by <a href='https://gohugo.io/' title='0.92.0' target='_blank' rel='noopener'>Hugo</a>
+    Theme: <a href='https://github.com/pacollins/hugo-future-imperfect-slim' target='_blank' rel='noopener'>Hugo Future Imperfect Slim</a><br>A <a href='https://html5up.net/future-imperfect' target='_blank' rel='noopener'>HTML5 UP port</a> | Powered by <a href='https://gohugo.io/' title='0.160.1' target='_blank' rel='noopener'>Hugo</a>
   </p>
 </footer>
 <a id="back-to-top" href="#" class="fas fa-arrow-up fa-2x"></a>
 
-      <script src="/js/highlight.js"></script>
-    
-    <script>hljs.highlightAll();</script><script src="/js/bundle.min.affa21bd64e761fba63c1eb954f76e46e43ca96b1ef71c742f058ed973ec6df2.js" integrity="sha256-r/ohvWTnYfumPB65VPduRuQ8qWse9xx0LwWO2XPsbfI="></script>
+      <script src="/js/bundle.min.241b62ebc4792fe8c7a75879e5f710894f226f2b73342e9916b3a3b0526030cc.js" integrity="sha256-JBti68R5L&#43;jHp1h55fcQiU8ibytzNC6ZFrOjsFJgMMw="></script>
     <script src="/js/add-on.js"></script>
     </div>
   </body>

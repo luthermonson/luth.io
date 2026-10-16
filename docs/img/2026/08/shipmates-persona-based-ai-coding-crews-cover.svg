@@ -1,0 +1,43 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 420" font-family="system-ui, -apple-system, Segoe UI, sans-serif">
+  <rect width="800" height="420" fill="#ffffff"/>
+  <text x="400" y="34" text-anchor="middle" font-size="22" font-weight="600" fill="#222">shipmates</text>
+
+  <rect x="320" y="52" width="160" height="38" rx="6" fill="#6b6b6b"/>
+  <text x="400" y="76" text-anchor="middle" font-size="14" fill="#fff">Admiral (you)</text>
+  <line x1="400" y1="90" x2="400" y2="112" stroke="#999"/>
+  <text x="412" y="106" font-size="11" fill="#6b6b6b">voice / browser / CLI</text>
+
+  <rect x="200" y="112" width="400" height="80" rx="8" fill="#7d5ba6" fill-opacity="0.1" stroke="#7d5ba6" stroke-width="2"/>
+  <text x="400" y="134" text-anchor="middle" font-size="15" font-weight="600" fill="#7d5ba6">Fleet Command</text>
+  <text x="400" y="156" text-anchor="middle" font-size="12" fill="#444">Commodore (AI officer) · web UI · approvals</text>
+  <text x="400" y="176" text-anchor="middle" font-size="12" fill="#444">shared task graph (beads / Dolt on git refs)</text>
+
+  <line x1="240" y1="250" x2="320" y2="192" stroke="#2b6cb0" stroke-width="2"/>
+  <line x1="400" y1="250" x2="400" y2="192" stroke="#2b6cb0" stroke-width="2"/>
+  <line x1="560" y1="250" x2="480" y2="192" stroke="#2b6cb0" stroke-width="2"/>
+  <text x="590" y="225" font-size="11" fill="#2b6cb0">outbound websocket tunnels</text>
+
+  <!-- ships -->
+  <rect x="140" y="250" width="200" height="130" rx="8" fill="#2b6cb0" fill-opacity="0.08" stroke="#2b6cb0"/>
+  <text x="240" y="272" text-anchor="middle" font-size="14" font-weight="600" fill="#2b6cb0">ship: project-one</text>
+  <rect x="180" y="284" width="120" height="28" rx="5" fill="#2b6cb0"/>
+  <text x="240" y="303" text-anchor="middle" font-size="12" fill="#fff">captain</text>
+  <text x="240" y="332" text-anchor="middle" font-size="12" fill="#444">architect · security</text>
+  <text x="240" y="350" text-anchor="middle" font-size="12" fill="#444">backend · tester</text>
+  <text x="240" y="370" text-anchor="middle" font-size="11" fill="#3a9a5b">memory per persona</text>
+
+  <rect x="350" y="250" width="100" height="130" rx="8" fill="#2b6cb0" fill-opacity="0.08" stroke="#2b6cb0"/>
+  <text x="400" y="272" text-anchor="middle" font-size="13" font-weight="600" fill="#2b6cb0">ship</text>
+  <rect x="360" y="284" width="80" height="28" rx="5" fill="#2b6cb0"/>
+  <text x="400" y="303" text-anchor="middle" font-size="12" fill="#fff">captain</text>
+  <text x="400" y="332" text-anchor="middle" font-size="12" fill="#444">mates</text>
+
+  <rect x="460" y="250" width="200" height="130" rx="8" fill="#2b6cb0" fill-opacity="0.08" stroke="#2b6cb0"/>
+  <text x="560" y="272" text-anchor="middle" font-size="14" font-weight="600" fill="#2b6cb0">ship: project-three</text>
+  <rect x="500" y="284" width="120" height="28" rx="5" fill="#2b6cb0"/>
+  <text x="560" y="303" text-anchor="middle" font-size="12" fill="#fff">captain</text>
+  <text x="560" y="332" text-anchor="middle" font-size="12" fill="#444">frontend · security</text>
+  <text x="560" y="370" text-anchor="middle" font-size="11" fill="#c0392b">Brig + containment on every mate</text>
+
+  <text x="400" y="408" text-anchor="middle" font-size="12" fill="#6b6b6b">one ship per project, any number per machine</text>
+</svg>

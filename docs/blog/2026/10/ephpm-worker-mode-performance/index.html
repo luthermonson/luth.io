@@ -1,0 +1,670 @@
+<!doctype html>
+<html lang="en">
+  <head>
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-MSTSKGFWTX"></script>
+<script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+
+    gtag('config', 'G-MSTSKGFWTX');
+</script><meta charset="utf-8">
+<title>Fourth Place in Worker Mode, and Why It Wasn&#39;t PHP - Luther Monson</title>
+<meta name="description" content="ePHPm placed fourth in worker mode on the Yii3 benchmark. The slow part was the Rust layer, not PHP, and three fixes cut most of the gap.">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<meta name="twitter:card" content="summary_large_image"><meta name="twitter:site" content="@luthermonson">
+
+<meta property="og:site_name" content="Luther Monson">
+<meta property="og:title" content="Fourth Place in Worker Mode, and Why It Wasn&#39;t PHP">
+<meta property="og:description" content="ePHPm placed fourth in worker mode on the Yii3 benchmark. The slow part was the Rust layer, not PHP, and three fixes cut most of the gap.">
+<meta property="og:type" content="article">
+<meta property="og:url" content="https://luth.io/blog/2026/10/ephpm-worker-mode-performance/">
+    <meta property="og:image" content="https://luth.io/img/2026/10/ephpm-worker-mode-performance-cover.svg">
+    <meta property="og:image:alt" content="Diagram: before, hyper/tokio hands each request to one shared bounded channel whose waiter list all 20 PHP threads contend on; after, a dispatcher hands the job straight into the mailbox of the most recently idle PHP thread and only queues it in a FIFO overflow queue when every thread is busy">
+
+
+  <link rel="manifest" href="/favicon/site.webmanifest?v=1">
+  <link rel="apple-touch-icon" sizes="180x180" href="/favicon/apple-touch-icon.png?v=1">
+  <link rel="icon" type="image/png" sizes="32x32" href="/favicon/favicon-32x32.png?v=1">
+  <link rel="icon" type="image/png" sizes="16x16" href="/favicon/favicon-16x16.png?v=1">
+  
+    <link rel="mask-icon" href="/favicon/safari-pinned-tab.svg?v=1" color="#ffffff">
+    <link rel="shortcut icon" href="/favicon/favicon.ico?v=1">
+    <meta name="msapplication-config" content="/favicon/browserconfig.xml?v=1">
+  
+  <meta name="msapplication-TileColor" content="#ffffff">
+  <meta name="theme-color" content="#ffffff">
+
+
+  <meta name="generator" content="Hugo 0.160.1">
+  <link rel="alternate" type="application/rss+xml" href="https://luth.io/index.xml" title="Luther Monson">
+  <link rel="stylesheet" href="/css/bundle.min.e1ffed86714fbb7eff75eab221c0c61b8260be0c7d1c08db0fcb7a2bdb6af7c9.css" integrity="sha256-4f/thnFPu37/deqyIcDGG4Jgvgx9HAjbD8t6K9tq98k="><link rel="stylesheet" href="/css/add-on.css">
+        <link rel="stylesheet" href="/css/code.css">
+        <link rel="stylesheet" href="/css/mobile.css">
+</head>
+
+  <body>
+    
+
+<header id="site-header">
+  <nav id="site-nav">
+    <h1 class="nav-title">
+      <a href="/" class="nav">
+        <img class="nav-avatar" src="/img/luther-monson-headshot.jpg" alt="" width="32" height="32">
+        
+          Blog
+        
+      </a>
+    </h1>
+    <menu id="site-nav-menu" class="flyout-menu menu">
+      
+        
+          
+          <a href="/" class="nav link"><i class='fa fa-home'></i> Home</a>
+        
+      
+        
+          
+          <a href="/about" class="nav link"><i class='far fa-id-card'></i> About</a>
+        
+      
+        
+          
+          <a href="/blog" class="nav link"><i class='far fa-newspaper'></i> Blog</a>
+        
+      
+        
+          
+          <a href="/archive" class="nav link"><i class='far fa-calendar-alt'></i> Archive</a>
+        
+      
+        
+          
+          <a href="/categories" class="nav link"><i class='fas fa-sitemap'></i> Categories</a>
+        
+      
+      <a href="#share-menu" class="nav link share-toggle"><i class="fas fa-share-alt">&nbsp;</i>Share</a>
+      <a href="#search-input" class="nav link search-toggle"><i class="fas fa-search">&nbsp;</i>Search</a>
+    </menu>
+    <a href="#search-input" class="nav search-toggle"><i class="fas fa-search fa-2x">&nbsp;</i></a>
+    <a href="#share-menu" class="nav share-toggle"><i class="fas fa-share-alt fa-2x">&nbsp;</i></a>
+    
+    <a href="#site-nav" class="nav nav-toggle"><i class="fas fa-bars fa-2x"></i></a>
+  </nav>
+  <menu id="search" class="menu"><input id="search-input" class="search-input menu"></input><div id="search-results" class="search-results menu"></div></menu>
+  
+  
+    <menu id="share-menu" class="flyout-menu menu">
+      <h1>Share Post</h1>
+      
+
+
+
+
+  
+    
+    <a href="//twitter.com/share?text=Fourth%20Place%20in%20Worker%20Mode%2c%20and%20Why%20It%20Wasn%27t%20PHP&amp;url=https%3a%2f%2fluth.io%2fblog%2f2026%2f10%2fephpm-worker-mode-performance%2f" target="_blank" rel="noopener" class="nav share-btn twitter">
+        <p>Twitter</p>
+      </a>
+  
+
+  
+      <a href="//www.facebook.com/sharer/sharer.php?u=https%3a%2f%2fluth.io%2fblog%2f2026%2f10%2fephpm-worker-mode-performance%2f" target="_blank" rel="noopener" class="nav share-btn facebook">
+        <p>Facebook</p>
+        </a>
+  
+
+  
+    <a href="//www.reddit.com/submit?url=https%3a%2f%2fluth.io%2fblog%2f2026%2f10%2fephpm-worker-mode-performance%2f&amp;title=Fourth%20Place%20in%20Worker%20Mode%2c%20and%20Why%20It%20Wasn%27t%20PHP" target="_blank" rel="noopener" class="nav share-btn reddit">
+          <p>Reddit</p>
+        </a>
+  
+
+  
+        <a href="//www.linkedin.com/shareArticle?url=https%3a%2f%2fluth.io%2fblog%2f2026%2f10%2fephpm-worker-mode-performance%2f&amp;title=Fourth%20Place%20in%20Worker%20Mode%2c%20and%20Why%20It%20Wasn%27t%20PHP" target="_blank" rel="noopener" class="nav share-btn linkedin">
+            <p>LinkedIn</p>
+          </a>
+  
+
+  
+        <a href="//www.pinterest.com/pin/create/button/?url=https%3a%2f%2fluth.io%2fblog%2f2026%2f10%2fephpm-worker-mode-performance%2f&amp;description=Fourth%20Place%20in%20Worker%20Mode%2c%20and%20Why%20It%20Wasn%27t%20PHP" target="_blank" rel="noopener" class="nav share-btn pinterest">
+          <p>Pinterest</p>
+        </a>
+  
+
+  
+        <a href="mailto:?subject=Check%20out%20this%20post%20by Luther%20Monson&amp;body=https%3a%2f%2fluth.io%2fblog%2f2026%2f10%2fephpm-worker-mode-performance%2f" target="_blank" class="nav share-btn email" data-proofer-ignore>
+          <p>Email</p>
+        </a>
+  
+
+
+    </menu>
+  
+</header>
+
+    <div id="wrapper">
+      <section id="site-intro" class="hidden-single-column">
+  <a href="/"><img src="/img/luther-monson-headshot.jpg" class="circle" width="100" alt="Luther Monson, Staff Software Engineer at SUSE" /></a>
+  <header>
+    <h1>Luther Monson</h1>
+  </header>
+  <main>
+    <p>Go by way of PHP &middot; Containers &middot; VMs &middot; Windows &middot; Kubernetes</p>
+  </main>
+  
+    <footer>
+      <ul class="socnet-icons">
+        
+
+        <li><a href="//github.com/luthermonson" target="_blank" rel="noopener" title="GitHub" class="fab fa-github"></a></li>
+
+
+
+
+
+
+
+
+
+
+
+<li><a href="//www.linkedin.com/in/luthermonson" target="_blank" rel="noopener" title="LinkedIn" class="fab fa-linkedin"></a></li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li><a href="//twitter.com/luthermonson" target="_blank" rel="noopener" title="Twitter" class="fab fa-twitter"></a></li>
+
+
+
+
+
+
+
+
+
+
+
+<li><a href="mailto:luther.monson@gmail.com" target="_blank" title="Email" class="far fa-envelope"></a></li>
+
+      </ul>
+    </footer>
+  
+</section>
+
+      <main id="site-main">
+        
+  <article>
+    <div class="post">
+      <header>
+  <div class="title">
+    
+      <h2><a href="/blog/2026/10/ephpm-worker-mode-performance/">Fourth Place in Worker Mode, and Why It Wasn&#39;t PHP</a></h2>
+    
+    
+      <p>ePHPm placed fourth in worker mode on the Yii3 benchmark. The slow part was the Rust layer, not PHP, and three fixes cut most of the gap.</p>
+    
+  </div>
+  <div class="meta">
+    <time datetime="2026-10-16 08:10:00 -0700 PDT">October 16, 2026</time>
+    
+    <p>5-Minute Read</p>
+  </div>
+</header>
+
+      <div id="socnet-share">
+        
+
+
+
+
+  
+    
+    <a href="//twitter.com/share?text=Fourth%20Place%20in%20Worker%20Mode%2c%20and%20Why%20It%20Wasn%27t%20PHP&amp;url=https%3a%2f%2fluth.io%2fblog%2f2026%2f10%2fephpm-worker-mode-performance%2f" target="_blank" rel="noopener" class="nav share-btn twitter">
+        <p>Twitter</p>
+      </a>
+  
+
+  
+      <a href="//www.facebook.com/sharer/sharer.php?u=https%3a%2f%2fluth.io%2fblog%2f2026%2f10%2fephpm-worker-mode-performance%2f" target="_blank" rel="noopener" class="nav share-btn facebook">
+        <p>Facebook</p>
+        </a>
+  
+
+  
+    <a href="//www.reddit.com/submit?url=https%3a%2f%2fluth.io%2fblog%2f2026%2f10%2fephpm-worker-mode-performance%2f&amp;title=Fourth%20Place%20in%20Worker%20Mode%2c%20and%20Why%20It%20Wasn%27t%20PHP" target="_blank" rel="noopener" class="nav share-btn reddit">
+          <p>Reddit</p>
+        </a>
+  
+
+  
+        <a href="//www.linkedin.com/shareArticle?url=https%3a%2f%2fluth.io%2fblog%2f2026%2f10%2fephpm-worker-mode-performance%2f&amp;title=Fourth%20Place%20in%20Worker%20Mode%2c%20and%20Why%20It%20Wasn%27t%20PHP" target="_blank" rel="noopener" class="nav share-btn linkedin">
+            <p>LinkedIn</p>
+          </a>
+  
+
+  
+        <a href="//www.pinterest.com/pin/create/button/?url=https%3a%2f%2fluth.io%2fblog%2f2026%2f10%2fephpm-worker-mode-performance%2f&amp;description=Fourth%20Place%20in%20Worker%20Mode%2c%20and%20Why%20It%20Wasn%27t%20PHP" target="_blank" rel="noopener" class="nav share-btn pinterest">
+          <p>Pinterest</p>
+        </a>
+  
+
+  
+        <a href="mailto:?subject=Check%20out%20this%20post%20by Luther%20Monson&amp;body=https%3a%2f%2fluth.io%2fblog%2f2026%2f10%2fephpm-worker-mode-performance%2f" target="_blank" class="nav share-btn email" data-proofer-ignore>
+          <p>Email</p>
+        </a>
+  
+
+
+      </div>
+      <div class="content">
+        
+        <p>We added <a href="https://github.com/ephpm/ephpm">ePHPm</a> to the
+<a href="https://github.com/Yii3-Benchmarks/app-api">Yii3 runtime benchmark</a>, which runs the same Yii3 API app on a bunch of
+PHP runtimes and compares them (our fork with the ePHPm runner is <a href="https://github.com/ephpm/app-api">ephpm/app-api</a>).
+Most of the results were good. ePHPm came first in classic mode, the PHP-FPM style where every request starts fresh,
+and first on the database endpoint in both modes.</p>
+<p>Worker mode was the surprise. That&rsquo;s the mode where the app boots once and stays in memory, like Octane or
+FrankenPHP&rsquo;s worker mode. We came fourth of ten, at about 50.7k requests a second, behind Workerman (~65k) and
+Swoole (~62k).</p>
+<p>Before chasing it, I checked the numbers were worth trusting. Our ranking of the other runtimes matched the suite
+maintainer&rsquo;s published results closely, and repeat runs were within 1.5% of each other. So the gap was real.</p>
+<p>None of this is released yet. The fixes are merged and will ship in the upcoming v0.12.0 release.</p>
+<h3 id="it-wasnt-php">It wasn&rsquo;t PHP</h3>
+<p>My first guess was PHP itself. It wasn&rsquo;t: per request, ePHPm&rsquo;s PHP threads did almost exactly as much work as
+Workerman&rsquo;s. The difference was that ePHPm&rsquo;s PHP threads spent a lot of time <em>waiting</em>. Under full load they were only
+busy about 70% of the time.</p>
+<p>When PHP is waiting while requests pile up, the problem is in the part of ePHPm that&rsquo;s written in Rust: the HTTP
+server, and the step that hands each request over to a PHP thread. (The
+<a href="/blog/2026/09/own-your-php-thread-pool/">thread pool post</a> explains why ePHPm runs PHP on its own threads.)</p>
+<h3 id="the-fixes">The fixes</h3>
+<p><strong>A batch of small fixes (<a href="https://github.com/ephpm/ephpm/pull/575">#575</a>).</strong> Profiling pointed at a few things
+directly. Simple GET requests were being handled as if they might have an upload attached, which cost an extra
+round trip for nothing. Finding the file for each request checked the disk more times than it needed to. And idle
+PHP threads went to sleep the instant they ran out of work, when the next request was usually a fraction of a
+millisecond away.</p>
+<p>The same runs also turned up a leak. Since PHP 8.4, persistent connections weren&rsquo;t cleaned up when a worker thread was
+replaced, so a long-running server slowly collected open connections to its cache: 979 of them after about
+10 million requests. That&rsquo;s fixed too.</p>
+<p><strong>One queue per PHP thread (<a href="https://github.com/ephpm/ephpm/pull/578">#578</a>).</strong> This is the big one. Every request
+used to go into one shared line that all 20 PHP threads pulled from, and under load they spent real time getting in
+each other&rsquo;s way. Now a request goes straight to a thread that&rsquo;s free. It only waits in line when every thread is
+busy, and then it&rsquo;s still served in order.</p>
+<p><img src="/img/2026/10/ephpm-worker-mode-performance-cover.svg" alt="Before and after: one shared line for all PHP threads vs. handing each request straight to a free thread"></p>
+<p><strong>A different memory allocator (<a href="https://github.com/ephpm/ephpm/pull/577">#577</a>).</strong> Worker mode used around 300 MiB,
+which looked high. Most of it was memory the standard Linux allocator holds on to after worker threads are replaced.
+ePHPm&rsquo;s Rust code already used mimalloc, a faster allocator. Now PHP and its extensions use it too. This is on
+for Linux only; macOS and Windows stay as they were.</p>
+<h3 id="results">Results</h3>
+<p>Same app, same machine, same load for every runtime, averaged over three runs:</p>
+<table>
+  <thead>
+      <tr>
+          <th>Version</th>
+          <th style="text-align: right">Requests/sec</th>
+          <th style="text-align: right">Slowest 1% of requests</th>
+          <th style="text-align: right">Peak memory</th>
+      </tr>
+  </thead>
+  <tbody>
+      <tr>
+          <td>Before</td>
+          <td style="text-align: right">50,855</td>
+          <td style="text-align: right">1,586 ms*</td>
+          <td style="text-align: right">307 MiB</td>
+      </tr>
+      <tr>
+          <td>Small fixes (#575)</td>
+          <td style="text-align: right">56,629</td>
+          <td style="text-align: right">30.5 ms</td>
+          <td style="text-align: right">305 MiB</td>
+      </tr>
+      <tr>
+          <td>+ one queue per thread (#578)</td>
+          <td style="text-align: right">59,064</td>
+          <td style="text-align: right">15.9 ms</td>
+          <td style="text-align: right">308 MiB</td>
+      </tr>
+      <tr>
+          <td>+ #578 and mimalloc (#577)</td>
+          <td style="text-align: right">58,122</td>
+          <td style="text-align: right">14.2 ms</td>
+          <td style="text-align: right">170 MiB</td>
+      </tr>
+      <tr>
+          <td>Swoole</td>
+          <td style="text-align: right">61,580</td>
+          <td style="text-align: right">35.5 ms</td>
+          <td style="text-align: right">838 MiB</td>
+      </tr>
+      <tr>
+          <td>Workerman</td>
+          <td style="text-align: right">64,521</td>
+          <td style="text-align: right">198.7 ms</td>
+          <td style="text-align: right">not measured the same way</td>
+      </tr>
+  </tbody>
+</table>
+<p>* Before the fixes, ePHPm was already past its limit at this load, so requests kept piling up.</p>
+<p>In short:</p>
+<ul>
+<li><strong>About 15% faster</strong> than before, with the slowest requests answered far sooner.</li>
+<li><strong>About 45% less memory</strong>, roughly one fifth of what Swoole uses.</li>
+<li><strong>No errors</strong> from ePHPm at any load we tried, up to 200k requests a second offered. Workerman reached its numbers
+while dropping requests: 9,427 errors in the main test.</li>
+<li><strong>The database endpoint and classic mode</strong> didn&rsquo;t get faster, because other limits apply there, but classic mode
+does use less memory.</li>
+</ul>
+<p>The queue change alone is about 1% faster than queue plus mimalloc. I&rsquo;d rather give that 1% back for half the memory,
+so the plan is to ship both.</p>
+<h3 id="why-workerman-is-still-faster">Why Workerman is still faster</h3>
+<p>Workerman is written in PHP. It reads and handles each request in the same process that runs the app, so nothing is
+handed over between threads.</p>
+<p>That&rsquo;s a different trade-off, not cheating. ePHPm puts a Rust HTTP server in front of PHP, and that&rsquo;s where TLS,
+HTTP/2 and HTTP/3, static files, middleware and clustering live. Passing each request from that server to a PHP
+thread is the price of those features, and this work is about making that price smaller rather than dropping them. At
+a slightly lighter load (60k requests a second), all three were within about 1% of each other.</p>
+<h3 id="whats-next">What&rsquo;s next</h3>
+<p>ePHPm is now 4–7% behind Swoole and 9–12% behind Workerman. PHP threads are busy about 80% of the time, so what&rsquo;s left
+is the cost of each request rather than waiting. Next up: trimming per-request overhead in the HTTP layer, waking
+threads less often, tuning how many PHP threads to run, and rerunning the comparison on PHP 8.5.11 now that
+<a href="https://github.com/ephpm/ephpm/pull/574">#574</a> has landed.</p>
+<h3 id="caveats">Caveats</h3>
+<ul>
+<li><strong>One benchmark machine.</strong> Your absolute numbers will differ. The relative gains are the point.</li>
+<li><strong>PHP versions.</strong> In this run ePHPm used PHP 8.5.7 and the others 8.5.11. The upgrade, #574, has since been merged.</li>
+<li><strong>Not released yet.</strong> #575, #577 and #578 are merged and will ship in the upcoming v0.12.0 release. The current
+v0.11.3 doesn&rsquo;t have them.</li>
+</ul>
+<h3 id="links">Links</h3>
+<ul>
+<li><a href="https://github.com/Yii3-Benchmarks/app-api">Yii3-Benchmarks/app-api</a>, the benchmark suite, and
+<a href="https://github.com/ephpm/app-api">ephpm/app-api</a>, our fork</li>
+<li><a href="https://github.com/ephpm/ephpm/pull/575">#575</a>: the small fixes and the connection leak</li>
+<li><a href="https://github.com/ephpm/ephpm/pull/578">#578</a>: one queue per PHP thread</li>
+<li><a href="https://github.com/ephpm/ephpm/pull/577">#577</a>: mimalloc for the whole process on Linux</li>
+<li><a href="https://github.com/ephpm/ephpm/pull/574">#574</a>: PHP 8.5.11</li>
+</ul>
+
+      </div>
+      <footer>
+        <div class="stats">
+  
+    <ul class="categories">
+      
+        
+          <li><a class="article-terms-link" href="/categories/ephpm/">ephpm</a></li>
+        
+          <li><a class="article-terms-link" href="/categories/php/">php</a></li>
+        
+      
+    </ul>
+  
+  
+    <ul class="tags">
+      
+        
+          <li><a class="article-terms-link" href="/tags/php/">php</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/ephpm/">ephpm</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/rust/">rust</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/performance/">performance</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/benchmarking/">benchmarking</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/mimalloc/">mimalloc</a></li>
+        
+      
+    </ul>
+  
+</div>
+
+      </footer>
+    </div>
+    
+      
+  
+  <div class='post giscus-wrap'>
+    <script src='https://giscus.app/client.js'
+            data-repo='luthermonson/luth.io'
+            data-repo-id='R_kgDOGvFBXQ'
+            data-category='Announcements'
+            data-category-id='DIC_kwDOGvFBXc4DH_gv'
+            data-mapping='pathname'
+            data-strict='1'
+            data-reactions-enabled='1'
+            data-emit-metadata='0'
+            data-input-position='top'
+            data-theme='light'
+            data-lang='en'
+            data-loading='lazy'
+            crossorigin='anonymous'
+            async>
+    </script>
+  </div>
+  
+
+
+
+    
+  </article>
+  
+    <nav class="post-nav">
+      
+        <a href="/blog/2026/10/ephpm-websockets-how-to/" class="post-nav-link older">
+          <span class="post-nav-label">&larr; Older</span>
+          <span class="post-nav-title">WebSockets in ePHPm, From Zero to a Working Chat</span>
+        </a>
+      
+      
+    </nav>
+  
+
+      </main>
+      <section id="site-sidebar">
+  
+    <section id="recent-posts">
+      <header>
+        <h1>Recent Posts</h1>
+      </header>
+      
+      <article class="mini-post">
+          <a href="/blog/2026/10/ephpm-worker-mode-performance/" class="image" style="--bg-image: url('/img/2026/10/ephpm-worker-mode-performance-cover.svg');">
+    <img class="" src="/img/2026/10/ephpm-worker-mode-performance-cover.svg" alt="Diagram: before, hyper/tokio hands each request to one shared bounded channel whose waiter list all 20 PHP threads contend on; after, a dispatcher hands the job straight into the mailbox of the most recently idle PHP thread and only queues it in a FIFO overflow queue when every thread is busy">
+  </a>
+        <header>
+          <h2><a href="/blog/2026/10/ephpm-worker-mode-performance/">Fourth Place in Worker Mode, and Why It Wasn&#39;t PHP</a></h2>
+          <time class="published" datetime="2026-10-16 08:10:00 -0700 PDT">October 16, 2026</time>
+        </header>
+      </article>
+      
+      <article class="mini-post">
+          <a href="/blog/2026/10/ephpm-websockets-how-to/" class="image" style="--bg-image: url('/img/2026/10/ephpm-websockets-how-to-cover.svg');">
+    <img class="" src="/img/2026/10/ephpm-websockets-how-to-cover.svg" alt="Diagram: browsers hold sockets to ePHPm&#39;s Rust session tasks and registry; each connect, message and disconnect runs websocket.php once on the PHP thread pool, and ordinary HTTP requests push through ephpm_ws_broadcast">
+  </a>
+        <header>
+          <h2><a href="/blog/2026/10/ephpm-websockets-how-to/">WebSockets in ePHPm, From Zero to a Working Chat</a></h2>
+          <time class="published" datetime="2026-10-11 17:30:00 -0700 PDT">October 11, 2026</time>
+        </header>
+      </article>
+      
+      <article class="mini-post">
+          <a href="/blog/2026/10/webhooks-out-of-order-scheduler/" class="image" style="--bg-image: url('/img/2026/10/webhooks-out-of-order-scheduler-timeline.svg');">
+    <img class="" src="/img/2026/10/webhooks-out-of-order-scheduler-timeline.svg" alt="Timeline of three same-label jobs where a runner executing a build is destroyed 2.3 seconds before its in_progress webhook arrives">
+  </a>
+        <header>
+          <h2><a href="/blog/2026/10/webhooks-out-of-order-scheduler/">Webhooks Arrive Out of Order: How My Scheduler Killed Live Builds</a></h2>
+          <time class="published" datetime="2026-10-07 21:10:00 -0700 PDT">October 7, 2026</time>
+        </header>
+      </article>
+      
+      <article class="mini-post">
+          <a href="/blog/2026/10/go-proxmox-five-years-to-v0-8/" class="image" style="--bg-image: url('/img/2026/10/go-proxmox-five-years-to-v0-8-apidiff.svg');">
+    <img class="" src="/img/2026/10/go-proxmox-five-years-to-v0-8-apidiff.svg" alt="Horizontal bar chart of apidiff incompatible and compatible changes for every go-proxmox release from v0.1.0 to v0.8.2">
+  </a>
+        <header>
+          <h2><a href="/blog/2026/10/go-proxmox-five-years-to-v0-8/">Breaking Changes Without Breaking Trust: Five Years to go-proxmox v0.8</a></h2>
+          <time class="published" datetime="2026-10-04 19:40:00 -0700 PDT">October 4, 2026</time>
+        </header>
+      </article>
+      
+      <article class="mini-post">
+          <a href="/blog/2026/10/windows-sigterm-sparse-files/" class="image" style="--bg-image: url('/img/2026/10/windows-sigterm-sparse-files-connections.svg');">
+    <img class="" src="/img/2026/10/windows-sigterm-sparse-files-connections.svg" alt="Bar chart: 96 Cloudflare edge connections held by orphaned cloudflared processes versus 4 for the live daemon">
+  </a>
+        <header>
+          <h2><a href="/blog/2026/10/windows-sigterm-sparse-files/">Windows Grab-Bag: SIGTERM That Doesn&#39;t Exist and Sparse Files That Break Docker</a></h2>
+          <time class="published" datetime="2026-10-03 14:30:00 -0700 PDT">October 3, 2026</time>
+        </header>
+      </article>
+      
+      
+        <footer>
+          <a href="/blog" class="button">See More</a>
+        </footer>
+      
+    </section>
+  
+
+  
+    
+
+      <section id="categories">
+        <header>
+          <h1><a href="/categories">Categories</a></h1>
+        </header>
+        <ul>
+          
+          
+          <li>
+              <a href="/categories/ephpm/">ephpm<span class="count">33</span></a>
+          
+          <li>
+              <a href="/categories/go/">go<span class="count">30</span></a>
+          
+          <li>
+              <a href="/categories/php/">php<span class="count">23</span></a>
+          
+          <li>
+              <a href="/categories/rust/">rust<span class="count">15</span></a>
+          
+          <li>
+              <a href="/categories/homelab/">homelab<span class="count">14</span></a>
+          
+          <li>
+              <a href="/categories/windows/">windows<span class="count">14</span></a>
+          
+          <li>
+              <a href="/categories/ci/">ci<span class="count">9</span></a>
+          
+          <li>
+              <a href="/categories/databases/">databases<span class="count">9</span></a>
+          
+          <li>
+              <a href="/categories/security/">security<span class="count">9</span></a>
+          
+          <li>
+              <a href="/categories/containers/">containers<span class="count">7</span></a>
+          
+          <li>
+              <a href="/categories/tools/">tools<span class="count">5</span></a>
+          
+          <li>
+              <a href="/categories/ai-agents/">ai-agents<span class="count">4</span></a>
+          
+          </li>
+        </ul>
+      </section>
+    
+  
+
+  
+    <section id="mini-bio">
+      <header>
+        <h1>About</h1>
+      </header>
+      <p>Luther is a 20+ year software veteran specializing in backend APIs and architecting products. Employed at <a href='https://www.suse.com'>SUSE</a> as the Team Lead for the <a href='https://github.com/rancher/windows/issues'>Containers on Windows Team</a> working on <a href='https://rancher.com/'>Rancher</a> + <a href='https://kubernetes.io/'>Kubernetes</a></p>
+      <footer>
+        <a href="/about" class="button">Learn More</a>
+      </footer>
+    </section>
+  
+</section>
+
+      <footer id="site-footer">
+  
+      <ul class="socnet-icons">
+        
+
+        <li><a href="//github.com/luthermonson" target="_blank" rel="noopener" title="GitHub" class="fab fa-github"></a></li>
+
+
+
+
+
+
+
+
+
+
+
+<li><a href="//www.linkedin.com/in/luthermonson" target="_blank" rel="noopener" title="LinkedIn" class="fab fa-linkedin"></a></li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li><a href="//twitter.com/luthermonson" target="_blank" rel="noopener" title="Twitter" class="fab fa-twitter"></a></li>
+
+
+
+
+
+
+
+
+
+
+
+<li><a href="mailto:luther.monson@gmail.com" target="_blank" title="Email" class="far fa-envelope"></a></li>
+
+      </ul>
+  
+  <p class="copyright">
+    © 2026 Luther Monson
+      <br>
+    Theme: <a href='https://github.com/pacollins/hugo-future-imperfect-slim' target='_blank' rel='noopener'>Hugo Future Imperfect Slim</a><br>A <a href='https://html5up.net/future-imperfect' target='_blank' rel='noopener'>HTML5 UP port</a> | Powered by <a href='https://gohugo.io/' title='0.160.1' target='_blank' rel='noopener'>Hugo</a>
+  </p>
+</footer>
+<a id="back-to-top" href="#" class="fas fa-arrow-up fa-2x"></a>
+
+      <script src="/js/bundle.min.241b62ebc4792fe8c7a75879e5f710894f226f2b73342e9916b3a3b0526030cc.js" integrity="sha256-JBti68R5L&#43;jHp1h55fcQiU8ibytzNC6ZFrOjsFJgMMw="></script>
+    <script src="/js/add-on.js"></script>
+    </div>
+  </body>
+</html>

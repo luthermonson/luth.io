@@ -1,0 +1,746 @@
+<!doctype html>
+<html lang="en">
+  <head>
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-MSTSKGFWTX"></script>
+<script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+
+    gtag('config', 'G-MSTSKGFWTX');
+</script><meta charset="utf-8">
+<title>Faking MySQL&#39;s Quirks Well Enough to Fool WordPress - Luther Monson</title>
+<meta name="description" content="Passing WordPress&#39;s install tests didn&#39;t mean litewire behaved like MySQL. This is the second round of fixes: the small MySQL behaviors that WordPress and Laravel quietly depend on.">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<meta name="twitter:card" content="summary_large_image"><meta name="twitter:site" content="@luthermonson">
+
+<meta property="og:site_name" content="Luther Monson">
+<meta property="og:title" content="Faking MySQL&#39;s Quirks Well Enough to Fool WordPress">
+<meta property="og:description" content="Passing WordPress&#39;s install tests didn&#39;t mean litewire behaved like MySQL. This is the second round of fixes: the small MySQL behaviors that WordPress and Laravel quietly depend on.">
+<meta property="og:type" content="article">
+<meta property="og:url" content="https://luth.io/blog/2026/08/faking-mysql-quirks-wordpress/">
+    <meta property="og:image" content="https://luth.io/img/2026/08/faking-mysql-quirks-wordpress-cover.svg">
+    <meta property="og:image:alt" content="A table of MySQL behaviors WordPress relies on, with what litewire answered before and after the August fixes">
+
+
+  <link rel="manifest" href="/favicon/site.webmanifest?v=1">
+  <link rel="apple-touch-icon" sizes="180x180" href="/favicon/apple-touch-icon.png?v=1">
+  <link rel="icon" type="image/png" sizes="32x32" href="/favicon/favicon-32x32.png?v=1">
+  <link rel="icon" type="image/png" sizes="16x16" href="/favicon/favicon-16x16.png?v=1">
+  
+    <link rel="mask-icon" href="/favicon/safari-pinned-tab.svg?v=1" color="#ffffff">
+    <link rel="shortcut icon" href="/favicon/favicon.ico?v=1">
+    <meta name="msapplication-config" content="/favicon/browserconfig.xml?v=1">
+  
+  <meta name="msapplication-TileColor" content="#ffffff">
+  <meta name="theme-color" content="#ffffff">
+
+
+  <meta name="generator" content="Hugo 0.160.1">
+  <link rel="alternate" type="application/rss+xml" href="https://luth.io/index.xml" title="Luther Monson">
+  <link rel="stylesheet" href="/css/bundle.min.e1ffed86714fbb7eff75eab221c0c61b8260be0c7d1c08db0fcb7a2bdb6af7c9.css" integrity="sha256-4f/thnFPu37/deqyIcDGG4Jgvgx9HAjbD8t6K9tq98k="><link rel="stylesheet" href="/css/add-on.css">
+        <link rel="stylesheet" href="/css/code.css">
+        <link rel="stylesheet" href="/css/mobile.css">
+</head>
+
+  <body>
+    
+
+<header id="site-header">
+  <nav id="site-nav">
+    <h1 class="nav-title">
+      <a href="/" class="nav">
+        <img class="nav-avatar" src="/img/luther-monson-headshot.jpg" alt="" width="32" height="32">
+        
+          Blog
+        
+      </a>
+    </h1>
+    <menu id="site-nav-menu" class="flyout-menu menu">
+      
+        
+          
+          <a href="/" class="nav link"><i class='fa fa-home'></i> Home</a>
+        
+      
+        
+          
+          <a href="/about" class="nav link"><i class='far fa-id-card'></i> About</a>
+        
+      
+        
+          
+          <a href="/blog" class="nav link"><i class='far fa-newspaper'></i> Blog</a>
+        
+      
+        
+          
+          <a href="/archive" class="nav link"><i class='far fa-calendar-alt'></i> Archive</a>
+        
+      
+        
+          
+          <a href="/categories" class="nav link"><i class='fas fa-sitemap'></i> Categories</a>
+        
+      
+      <a href="#share-menu" class="nav link share-toggle"><i class="fas fa-share-alt">&nbsp;</i>Share</a>
+      <a href="#search-input" class="nav link search-toggle"><i class="fas fa-search">&nbsp;</i>Search</a>
+    </menu>
+    <a href="#search-input" class="nav search-toggle"><i class="fas fa-search fa-2x">&nbsp;</i></a>
+    <a href="#share-menu" class="nav share-toggle"><i class="fas fa-share-alt fa-2x">&nbsp;</i></a>
+    
+    <a href="#site-nav" class="nav nav-toggle"><i class="fas fa-bars fa-2x"></i></a>
+  </nav>
+  <menu id="search" class="menu"><input id="search-input" class="search-input menu"></input><div id="search-results" class="search-results menu"></div></menu>
+  
+  
+    <menu id="share-menu" class="flyout-menu menu">
+      <h1>Share Post</h1>
+      
+
+
+
+
+  
+    
+    <a href="//twitter.com/share?text=Faking%20MySQL%27s%20Quirks%20Well%20Enough%20to%20Fool%20WordPress&amp;url=https%3a%2f%2fluth.io%2fblog%2f2026%2f08%2ffaking-mysql-quirks-wordpress%2f" target="_blank" rel="noopener" class="nav share-btn twitter">
+        <p>Twitter</p>
+      </a>
+  
+
+  
+      <a href="//www.facebook.com/sharer/sharer.php?u=https%3a%2f%2fluth.io%2fblog%2f2026%2f08%2ffaking-mysql-quirks-wordpress%2f" target="_blank" rel="noopener" class="nav share-btn facebook">
+        <p>Facebook</p>
+        </a>
+  
+
+  
+    <a href="//www.reddit.com/submit?url=https%3a%2f%2fluth.io%2fblog%2f2026%2f08%2ffaking-mysql-quirks-wordpress%2f&amp;title=Faking%20MySQL%27s%20Quirks%20Well%20Enough%20to%20Fool%20WordPress" target="_blank" rel="noopener" class="nav share-btn reddit">
+          <p>Reddit</p>
+        </a>
+  
+
+  
+        <a href="//www.linkedin.com/shareArticle?url=https%3a%2f%2fluth.io%2fblog%2f2026%2f08%2ffaking-mysql-quirks-wordpress%2f&amp;title=Faking%20MySQL%27s%20Quirks%20Well%20Enough%20to%20Fool%20WordPress" target="_blank" rel="noopener" class="nav share-btn linkedin">
+            <p>LinkedIn</p>
+          </a>
+  
+
+  
+        <a href="//www.pinterest.com/pin/create/button/?url=https%3a%2f%2fluth.io%2fblog%2f2026%2f08%2ffaking-mysql-quirks-wordpress%2f&amp;description=Faking%20MySQL%27s%20Quirks%20Well%20Enough%20to%20Fool%20WordPress" target="_blank" rel="noopener" class="nav share-btn pinterest">
+          <p>Pinterest</p>
+        </a>
+  
+
+  
+        <a href="mailto:?subject=Check%20out%20this%20post%20by Luther%20Monson&amp;body=https%3a%2f%2fluth.io%2fblog%2f2026%2f08%2ffaking-mysql-quirks-wordpress%2f" target="_blank" class="nav share-btn email" data-proofer-ignore>
+          <p>Email</p>
+        </a>
+  
+
+
+    </menu>
+  
+</header>
+
+    <div id="wrapper">
+      <section id="site-intro" class="hidden-single-column">
+  <a href="/"><img src="/img/luther-monson-headshot.jpg" class="circle" width="100" alt="Luther Monson, Staff Software Engineer at SUSE" /></a>
+  <header>
+    <h1>Luther Monson</h1>
+  </header>
+  <main>
+    <p>Go by way of PHP &middot; Containers &middot; VMs &middot; Windows &middot; Kubernetes</p>
+  </main>
+  
+    <footer>
+      <ul class="socnet-icons">
+        
+
+        <li><a href="//github.com/luthermonson" target="_blank" rel="noopener" title="GitHub" class="fab fa-github"></a></li>
+
+
+
+
+
+
+
+
+
+
+
+<li><a href="//www.linkedin.com/in/luthermonson" target="_blank" rel="noopener" title="LinkedIn" class="fab fa-linkedin"></a></li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li><a href="//twitter.com/luthermonson" target="_blank" rel="noopener" title="Twitter" class="fab fa-twitter"></a></li>
+
+
+
+
+
+
+
+
+
+
+
+<li><a href="mailto:luther.monson@gmail.com" target="_blank" title="Email" class="far fa-envelope"></a></li>
+
+      </ul>
+    </footer>
+  
+</section>
+
+      <main id="site-main">
+        
+  <article>
+    <div class="post">
+      <header>
+  <div class="title">
+    
+      <h2><a href="/blog/2026/08/faking-mysql-quirks-wordpress/">Faking MySQL&#39;s Quirks Well Enough to Fool WordPress</a></h2>
+    
+    
+      <p>Passing WordPress&#39;s install tests didn&#39;t mean litewire behaved like MySQL. This is the second round of fixes: the small MySQL behaviors that WordPress and Laravel quietly depend on.</p>
+    
+  </div>
+  <div class="meta">
+    <time datetime="2026-08-16 15:50:00 -0700 PDT">August 16, 2026</time>
+    
+    <p>10-Minute Read</p>
+  </div>
+</header>
+
+      <div id="socnet-share">
+        
+
+
+
+
+  
+    
+    <a href="//twitter.com/share?text=Faking%20MySQL%27s%20Quirks%20Well%20Enough%20to%20Fool%20WordPress&amp;url=https%3a%2f%2fluth.io%2fblog%2f2026%2f08%2ffaking-mysql-quirks-wordpress%2f" target="_blank" rel="noopener" class="nav share-btn twitter">
+        <p>Twitter</p>
+      </a>
+  
+
+  
+      <a href="//www.facebook.com/sharer/sharer.php?u=https%3a%2f%2fluth.io%2fblog%2f2026%2f08%2ffaking-mysql-quirks-wordpress%2f" target="_blank" rel="noopener" class="nav share-btn facebook">
+        <p>Facebook</p>
+        </a>
+  
+
+  
+    <a href="//www.reddit.com/submit?url=https%3a%2f%2fluth.io%2fblog%2f2026%2f08%2ffaking-mysql-quirks-wordpress%2f&amp;title=Faking%20MySQL%27s%20Quirks%20Well%20Enough%20to%20Fool%20WordPress" target="_blank" rel="noopener" class="nav share-btn reddit">
+          <p>Reddit</p>
+        </a>
+  
+
+  
+        <a href="//www.linkedin.com/shareArticle?url=https%3a%2f%2fluth.io%2fblog%2f2026%2f08%2ffaking-mysql-quirks-wordpress%2f&amp;title=Faking%20MySQL%27s%20Quirks%20Well%20Enough%20to%20Fool%20WordPress" target="_blank" rel="noopener" class="nav share-btn linkedin">
+            <p>LinkedIn</p>
+          </a>
+  
+
+  
+        <a href="//www.pinterest.com/pin/create/button/?url=https%3a%2f%2fluth.io%2fblog%2f2026%2f08%2ffaking-mysql-quirks-wordpress%2f&amp;description=Faking%20MySQL%27s%20Quirks%20Well%20Enough%20to%20Fool%20WordPress" target="_blank" rel="noopener" class="nav share-btn pinterest">
+          <p>Pinterest</p>
+        </a>
+  
+
+  
+        <a href="mailto:?subject=Check%20out%20this%20post%20by Luther%20Monson&amp;body=https%3a%2f%2fluth.io%2fblog%2f2026%2f08%2ffaking-mysql-quirks-wordpress%2f" target="_blank" class="nav share-btn email" data-proofer-ignore>
+          <p>Email</p>
+        </a>
+  
+
+
+      </div>
+      <div class="content">
+        
+        <p>Last month I wrote about <a href="/blog/2026/07/sqlite-production-database-protocol-translation/">running SQLite behind a MySQL socket</a>
+with <a href="https://github.com/ephpm/litewire">litewire</a>, and ended on &ldquo;passing an install suite is not the same thing as
+behaving like MySQL&rdquo;. That turned out to be accurate. On August 10th a few things happened at once: I put a real
+WordPress 7.0.3 site through a benchmark on ePHPm, A/B tested the new in-process database bridge against the wire path, and started building
+<a href="https://github.com/ephpm/db-wordpress">ephpm/db-wordpress</a>, a <code>wpdb</code> drop-in that talks to the database in-process
+instead of over a socket. Between them they produced six litewire issues in about three hours. None of them broke
+the install. All of them made WordPress quietly do the wrong thing.</p>
+<p>The common thread is that the client is code I don&rsquo;t control. WordPress, Laravel, Doctrine and PDO all make decisions
+based on what MySQL says back, and some of those decisions are made by matching strings. If litewire answers in the
+wrong shape, the app doesn&rsquo;t crash. It just takes the wrong branch.</p>
+<h3 id="found_rows-was-always-zero">FOUND_ROWS() was always zero</h3>
+<p><code>WP_Query</code> paginates the old way:</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-sql" data-lang="sql"><span class="line"><span class="cl"><span class="k">SELECT</span><span class="w"> </span><span class="n">SQL_CALC_FOUND_ROWS</span><span class="w"> </span><span class="n">wp_posts</span><span class="p">.</span><span class="n">ID</span><span class="w"> </span><span class="k">FROM</span><span class="w"> </span><span class="n">wp_posts</span><span class="w"> </span><span class="k">WHERE</span><span class="w"> </span><span class="p">...</span><span class="w"> </span><span class="k">ORDER</span><span class="w"> </span><span class="k">BY</span><span class="w"> </span><span class="n">wp_posts</span><span class="p">.</span><span class="n">post_date</span><span class="w"> </span><span class="k">DESC</span><span class="w"> </span><span class="k">LIMIT</span><span class="w"> </span><span class="mi">10</span><span class="p">,</span><span class="w"> </span><span class="mi">10</span><span class="p">;</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="k">SELECT</span><span class="w"> </span><span class="n">FOUND_ROWS</span><span class="p">();</span><span class="w">
+</span></span></span></code></pre></div><p>MySQL 8 deprecates the hint, WordPress still uses it unconditionally, and the second statement is how <code>found_posts</code>
+gets set. In July the translator stripped the hint (sqlparser can&rsquo;t parse it) and rewrote <code>FOUND_ROWS()</code> into
+something SQLite would accept, which got the install suite past it. Here&rsquo;s what it did with that second statement:</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-text" data-lang="text"><span class="line"><span class="cl">IN : SELECT FOUND_ROWS()
+</span></span><span class="line"><span class="cl">OUT: SELECT abs(0)
+</span></span></code></pre></div><p>So the benchmark probe ran a calc query that returned 56 rows and got <code>0</code> back from <code>FOUND_ROWS()</code>. That&rsquo;s
+<code>found_posts = 0</code> on every WordPress running on ePHPm: <code>X-WP-Total: 0</code> on every REST list response and broken totals on
+every archive page (<a href="https://github.com/ephpm/litewire/issues/23">litewire#23</a>). The fix that made the install pass was
+the one that hid the bug.</p>
+<p><code>FOUND_ROWS()</code> is per-connection state, so it can&rsquo;t live in the stateless translator. It lives in
+<code>litewire-session</code>&rsquo;s <code>Session</code>, next to <code>in_transaction</code>, which means the wire path and ePHPm&rsquo;s in-process bridge both
+get it. After a statement carrying the hint succeeds, the session runs one extra <code>COUNT(*)</code>. The count statement is
+derived through the AST, not by string surgery: take the fully translated statement, remove <code>LIMIT</code>, <code>ORDER BY</code> and
+<code>FETCH</code>, and wrap it.</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-rust" data-lang="rust"><span class="line"><span class="cl"><span class="kd">let</span><span class="w"> </span><span class="n">stmt</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">crate</span>::<span class="n">rewrite_statement</span><span class="p">(</span><span class="n">statements</span><span class="p">.</span><span class="n">pop</span><span class="p">()</span><span class="o">?</span><span class="p">,</span><span class="w"> </span><span class="n">dialect</span><span class="p">).</span><span class="n">ok</span><span class="p">()</span><span class="o">?</span><span class="p">;</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="kd">let</span><span class="w"> </span><span class="n">Statement</span>::<span class="n">Query</span><span class="p">(</span><span class="k">mut</span><span class="w"> </span><span class="n">query</span><span class="p">)</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">stmt</span><span class="w"> </span><span class="k">else</span><span class="w"> </span><span class="p">{</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="nb">None</span><span class="p">;</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="p">};</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="k">if</span><span class="w"> </span><span class="n">limit_clause_has_placeholder</span><span class="p">(</span><span class="n">query</span><span class="p">.</span><span class="n">limit_clause</span><span class="p">.</span><span class="n">as_ref</span><span class="p">())</span><span class="w"> </span><span class="p">{</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="nb">None</span><span class="p">;</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="p">}</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="n">query</span><span class="p">.</span><span class="n">limit_clause</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nb">None</span><span class="p">;</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="n">query</span><span class="p">.</span><span class="n">order_by</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nb">None</span><span class="p">;</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="n">query</span><span class="p">.</span><span class="n">fetch</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nb">None</span><span class="p">;</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="nb">Some</span><span class="p">(</span><span class="fm">format!</span><span class="p">(</span><span class="s">&#34;SELECT COUNT(*) FROM (</span><span class="si">{query}</span><span class="s">)&#34;</span><span class="p">))</span><span class="w">
+</span></span></span></code></pre></div><p>For the <code>WP_Query</code> statement above, at litewire <code>cb707ab</code>, that produces:</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-sql" data-lang="sql"><span class="line"><span class="cl"><span class="k">SELECT</span><span class="w"> </span><span class="k">COUNT</span><span class="p">(</span><span class="o">*</span><span class="p">)</span><span class="w"> </span><span class="k">FROM</span><span class="w"> </span><span class="p">(</span><span class="k">SELECT</span><span class="w"> </span><span class="n">wp_posts</span><span class="p">.</span><span class="n">ID</span><span class="w"> </span><span class="k">FROM</span><span class="w"> </span><span class="n">wp_posts</span><span class="w"> </span><span class="k">WHERE</span><span class="w"> </span><span class="mi">1</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">1</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">  </span><span class="k">AND</span><span class="w"> </span><span class="n">wp_posts</span><span class="p">.</span><span class="n">post_type</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s1">&#39;post&#39;</span><span class="w"> </span><span class="k">AND</span><span class="w"> </span><span class="n">wp_posts</span><span class="p">.</span><span class="n">post_status</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s1">&#39;publish&#39;</span><span class="p">)</span><span class="w">
+</span></span></span></code></pre></div><p>It&rsquo;s bound with the same parameter list, so <code>WHERE</code> placeholders keep working. A bare <code>SELECT FOUND_ROWS()</code> is then
+answered from session state without touching the backend. Statements without the hint pay one allocation-free ASCII
+scan and zero extra round trips, and there&rsquo;s a counting-backend test that pins that down. Two cases fall back to the
+returned row count instead: the hint inside multi-statement input, and a <code>LIMIT</code> bound as a placeholder, since stripping
+it would desynchronize the positional parameters.</p>
+<p>The end-to-end tests for this immediately found a worse bug. <code>rewrite_limit_clause</code> took the limit clause out of the
+AST to check for MySQL&rsquo;s <code>LIMIT offset, count</code> form, and only put it back if it matched:</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-rust" data-lang="rust"><span class="line"><span class="cl"><span class="k">fn</span> <span class="nf">rewrite_limit_clause</span><span class="p">(</span><span class="n">query</span>: <span class="kp">&amp;</span><span class="nc">mut</span><span class="w"> </span><span class="n">sqlparser</span>::<span class="n">ast</span>::<span class="n">Query</span><span class="p">)</span><span class="w"> </span><span class="p">{</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="kd">let</span><span class="w"> </span><span class="nb">Some</span><span class="p">(</span><span class="n">LimitClause</span>::<span class="n">OffsetCommaLimit</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">offset</span><span class="p">,</span><span class="w"> </span><span class="n">limit</span><span class="w"> </span><span class="p">})</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">query</span><span class="p">.</span><span class="n">limit_clause</span><span class="p">.</span><span class="n">take</span><span class="p">()</span><span class="w"> </span><span class="p">{</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">        </span><span class="n">query</span><span class="p">.</span><span class="n">limit_clause</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nb">Some</span><span class="p">(</span><span class="n">LimitClause</span>::<span class="n">LimitOffset</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="cm">/* LIMIT count OFFSET offset */</span><span class="w"> </span><span class="p">});</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="p">}</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="p">}</span><span class="w">
+</span></span></span></code></pre></div><p>Everything else was dropped on the floor. Running it at the July revision:</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-text" data-lang="text"><span class="line"><span class="cl">SELECT * FROM wp_posts LIMIT 5            =&gt; SELECT * FROM wp_posts
+</span></span><span class="line"><span class="cl">SELECT * FROM wp_posts LIMIT 5 OFFSET 10  =&gt; SELECT * FROM wp_posts
+</span></span><span class="line"><span class="cl">SELECT * FROM wp_posts LIMIT 10, 5        =&gt; SELECT * FROM wp_posts LIMIT 5 OFFSET 10
+</span></span></code></pre></div><p>WordPress mostly emits the comma form, which is how this hid. An existing test even hedged with &ldquo;sqlparser may or may
+not preserve LIMIT&rdquo;. The fix is one <code>other =&gt; query.limit_clause = other</code> arm, and it rode along in
+<a href="https://github.com/ephpm/litewire/pull/26">litewire#26</a> because <code>FOUND_ROWS()</code> is meaningless if <code>LIMIT</code> doesn&rsquo;t apply.</p>
+<h3 id="error-codes-are-an-api">Error codes are an API</h3>
+<p>SQLite&rsquo;s <code>no such table: wp_foo</code> fell through to MySQL&rsquo;s catch-all, 1105 / <code>HY000</code>. That carries no information, and
+frameworks branch on the real code: Doctrine raises <code>TableNotFoundException</code> off 1146, and MySQL clients expect
+<code>42S02</code> to come with it. Mapping it was a substring match, and it also catches the Turso engine&rsquo;s wording, which
+prefixes the same text with <code>Parse error: </code>.</p>
+<p>Duplicate keys were already 1062 / <code>23000</code>, but with SQLite&rsquo;s message, and that&rsquo;s the more interesting failure.
+Frameworks mostly key off the code, so 1062 / <code>23000</code> already got Laravel and Doctrine onto the right branch, but
+anything that greps the message for MySQL&rsquo;s <code>Duplicate entry '...' for key '...'</code> shape never matched
+<code>UNIQUE constraint failed: users.email</code>. Now the message gets a MySQL-shaped prefix and keeps SQLite&rsquo;s words:</p>
+<pre tabindex="0"><code>Duplicate entry &#39;&lt;unknown&gt;&#39; for key &#39;users.email&#39; (UNIQUE constraint failed: users.email)
+</code></pre><p>There are two honest gaps in that line. SQLite&rsquo;s message doesn&rsquo;t include the duplicated value and the statement&rsquo;s
+parameters aren&rsquo;t available at this layer, so the slot says <code>&lt;unknown&gt;</code> instead of inventing one. And MySQL names the
+index where SQLite names the columns. For a single-column unique index, and for the name-the-index-after-the-column
+convention WordPress and Laravel both follow, those are the same thing.</p>
+<p>The unit tests passed the first time and the real-backend tests didn&rsquo;t:</p>
+<pre tabindex="0"><code>got: Duplicate entry &#39;&lt;unknown&gt;&#39; for key &#39;UNIQUE constraint failed: users.email&#39;
+     (SQLite error: UNIQUE constraint failed: users.email)
+</code></pre><p>rusqlite wraps the message in <code>SQLite error: </code>, so splitting on the first <code>&quot;: &quot;</code> grabbed the wrapper&rsquo;s colon. The
+column list is now found by the <code>constraint failed: </code> marker instead. The unit tests fed the classifier an idealized
+string and could never have seen it (<a href="https://github.com/ephpm/litewire/pull/31">litewire#31</a>).</p>
+<h3 id="three-versions-and-one-that-never-ran">Three versions, and one that never ran</h3>
+<p>A client can ask for the server version three ways, and each was answered by its own string literal:</p>
+<table>
+  <thead>
+      <tr>
+          <th>Path</th>
+          <th>Read by</th>
+          <th>Was</th>
+      </tr>
+  </thead>
+  <tbody>
+      <tr>
+          <td>wire handshake</td>
+          <td><code>mysqli_get_server_info()</code>, <code>PDO::ATTR_SERVER_VERSION</code></td>
+          <td><code>8.0.36-litewire</code></td>
+      </tr>
+      <tr>
+          <td><code>SELECT VERSION()</code></td>
+          <td><code>$wpdb-&gt;db_version()</code></td>
+          <td><code>8.0.0-litewire</code></td>
+      </tr>
+      <tr>
+          <td><code>@@version</code></td>
+          <td>capability checks</td>
+          <td><code>8.0.0-litewire</code></td>
+      </tr>
+  </tbody>
+</table>
+<p>They all read one constant now. Writing the end-to-end test for that showed <code>SELECT VERSION()</code> had never returned a
+version at all. It returned an error:</p>
+<pre tabindex="0"><code>SQLite error: wrong number of arguments to function coalesce()
+in SELECT coalesce(&#39;8.0.0-litewire&#39;) at offset 7
+</code></pre><p>The rewrite pass only sees the <code>Function</code> node, not its parent expression, so a MySQL built-in with no SQLite analogue
+can&rsquo;t become a bare literal. It has to stay a function call that returns a constant, and the call chosen was
+<code>coalesce()</code>, which SQLite rejects with fewer than two arguments. <code>VERSION</code>, <code>DATABASE</code>, <code>SCHEMA</code>, <code>USER</code>,
+<code>CURRENT_USER</code>, <code>SESSION_USER</code>, <code>SYSTEM_USER</code> and <code>CONNECTION_ID</code> were all emitted that way. The funny part is that the
+<code>FOUND_ROWS</code> arm sitting between the broken ones had a comment explaining exactly this (&ldquo;coalesce and max need &gt;= 2
+args&rdquo;) and used <code>abs(0)</code>. The unit tests asserted on the emitted SQL string and never executed it. Constant folding
+now goes through two helpers, <code>constant_text</code> (<code>trim('...')</code>) and <code>constant_number</code> (<code>abs(n)</code>), so the single-argument
+rule lives in one place (<a href="https://github.com/ephpm/litewire/pull/30">litewire#30</a>):</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-text" data-lang="text"><span class="line"><span class="cl">IN : SELECT VERSION()
+</span></span><span class="line"><span class="cl">OUT: SELECT trim(&#39;8.0.36-litewire&#39;)
+</span></span></code></pre></div><h3 id="a-stray-ok-packet">A stray OK packet</h3>
+<p>This one came from an A/B benchmark of the in-process bridge against the wire path. Under PHP persistent connections
+(<code>PDO::ATTR_PERSISTENT</code>) the wire path desynced twice, with nothing in the server log:</p>
+<pre tabindex="0"><code>Wrong COM_STMT_PREPARE response size. Received 7
+Packets out of order. Expected 1 received 2
+2006 MySQL server has gone away
+</code></pre><p>opensrv-mysql 0.7.0 parses nine client commands. Every other command byte falls into one catch-all that writes a
+default OK packet and logs nothing. OK is the right reply to some of those and the wrong shape for others, and mysqlnd
+sends housekeeping commands on persistent handles. A reply of the wrong shape leaves the client one packet behind, and
+every response after that belongs to the previous command. <code>Received 7</code> is exactly the size of that OK payload.</p>
+<p>litewire can&rsquo;t change opensrv&rsquo;s command loop, so <a href="https://github.com/ephpm/litewire/pull/28">litewire#28</a> puts a
+<code>CommandFilter</code> between the socket and opensrv&rsquo;s reader that looks at the first byte of every command packet:</p>
+<ul>
+<li>Commands opensrv handles go through byte for byte.</li>
+<li><code>COM_STMT_RESET</code>, <code>COM_RESET_CONNECTION</code> and <code>COM_CHANGE_USER</code> are rewritten into a <code>COM_PING</code>, which is opensrv&rsquo;s own
+OK path, so the reply is encoded for whatever capability flags the connection negotiated. The reset ones also raise
+a flag the handler drains before the next statement, rolling back an open transaction and dropping prepared
+statements. Before this, a reset was acknowledged and did nothing.</li>
+<li>Anything else gets <code>ER_UNKNOWN_COM_ERROR</code> (1047), which is what a real server sends, and a <code>warn</code> log with the byte.</li>
+</ul>
+<p>Command packets are told apart from handshake and continuation packets by sequence id, which resets to 0 at the start
+of every command. <code>COM_CHANGE_USER</code> is only a no-op on the single-backend path. When litewire is choosing a backend per
+tenant during the handshake, answering OK would tell the client it&rsquo;s someone else while the connection keeps talking
+to the original tenant&rsquo;s database, so there it&rsquo;s refused.</p>
+<p>I want to be straight about this one: the original desync was probabilistic and never reduced to a repro, so the PR
+doesn&rsquo;t claim to fix that specific trace. What it does guarantee is that no command reaches the catch-all anymore.</p>
+<h3 id="regexp-year-and-like">REGEXP, YEAR() and LIKE</h3>
+<p>The last three were feature degradations WordPress logged and moved past.</p>
+<p><code>populate_options()</code> cleans up stale RSS transients at install time with
+<code>WHERE option_name REGEXP '^rss_[0-9a-f]{32}(_ts)?$'</code>. SQLite parses <code>REGEXP</code> but ships nothing behind it: the operator
+calls a <code>regexp(pattern, subject)</code> function the host has to register. I could have translated anchored patterns to
+<code>GLOB</code>, but that covers only the patterns that happen to be expressible and silently mis-answers the rest. Registering a
+real function is faithful for the whole pattern language, so every rusqlite session now gets one backed by the <code>regex</code>
+crate, with the compiled pattern cached in SQLite&rsquo;s aux-data slot so a constant pattern compiles once per statement
+instead of once per row. The Turso engine already registers an equivalent built-in on the same crate. The differences
+from MySQL are documented: <code>regex</code> syntax rather than ICU, and case-sensitive, where MySQL usually isn&rsquo;t under
+<code>utf8mb4_general_ci</code>. I picked matching Turso over matching MySQL so one query can&rsquo;t mean two things depending on the
+backend.</p>
+<p><code>YEAR()</code>, <code>MONTH()</code> and <code>DAYOFMONTH()</code> are used by <code>wp_old_slug_redirect</code> and the 404 permalink guesser. The cast is
+the part that matters:</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-text" data-lang="text"><span class="line"><span class="cl">IN : SELECT * FROM wp_posts WHERE YEAR(post_date) = 2024 AND MONTH(post_date) = 3
+</span></span><span class="line"><span class="cl">OUT: SELECT * FROM wp_posts WHERE CAST(strftime(&#39;%Y&#39;, post_date) AS INTEGER) = 2024
+</span></span><span class="line"><span class="cl">       AND CAST(strftime(&#39;%m&#39;, post_date) AS INTEGER) = 3
+</span></span></code></pre></div><p><code>strftime</code> returns text, and SQLite applies no affinity to a function result, so <code>'2024' = 2024</code> is false. A bare
+<code>strftime</code> translation would parse, run without error and match nothing, which is worse than the error it replaced
+(<a href="https://github.com/ephpm/litewire/pull/29">litewire#29</a>).</p>
+<p>And <code>LIKE</code>. MySQL&rsquo;s <code>LIKE</code> uses backslash as its escape character by default (only <code>NO_BACKSLASH_ESCAPES</code> turns it
+off); SQLite has no default escape character at all. <code>wpdb::esc_like('50%')</code> produces <code>50\%</code>, which on SQLite matched a
+literal backslash followed by a live wildcard. Every MySQL-dialect <code>LIKE</code> without an explicit <code>ESCAPE</code> now gets one, through the AST visitor so it reaches
+subqueries and <code>UPDATE</code>/<code>DELETE</code> predicates too (<a href="https://github.com/ephpm/litewire/pull/25">litewire#25</a>):</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-text" data-lang="text"><span class="line"><span class="cl">IN : SELECT option_name FROM wp_options WHERE option_name LIKE &#39;50\%&#39;
+</span></span><span class="line"><span class="cl">OUT: SELECT option_name FROM wp_options WHERE option_name LIKE &#39;50\%&#39; ESCAPE &#39;\&#39;
+</span></span></code></pre></div><h3 id="what-i-took-away-from-it">What I took away from it</h3>
+<p>Every one of these had unit tests around it that passed. The translator tests asserted on the SQL string that came
+out; the error map tests fed it the string SQLite was supposed to produce. What found the bugs was executing the
+statement against a real backend or driving a real <code>mysql_async</code> client over the wire and asserting on what came back.
+That&rsquo;s now the rule in the repo: a wire-visible fix lands with a wire-level test reproducing what the client saw.</p>
+<p>ePHPm picked these up in two pin bumps, <a href="https://github.com/ephpm/ephpm/pull/265">ephpm#265</a> and <a href="https://github.com/ephpm/ephpm/pull/297">ephpm#297</a>. Next is the other half of the August work, which was less about
+WordPress and more about not shipping a use-after-free.</p>
+<h3 id="links">Links</h3>
+<ul>
+<li><a href="https://github.com/ephpm/litewire">litewire</a></li>
+<li><a href="https://github.com/ephpm/litewire/pull/26">litewire#26: SQL_CALC_FOUND_ROWS / FOUND_ROWS() and the dropped LIMIT</a></li>
+<li><a href="https://github.com/ephpm/litewire/pull/31">litewire#31: 1146 and a MySQL-shaped 1062</a></li>
+<li><a href="https://github.com/ephpm/litewire/pull/30">litewire#30: one server version</a></li>
+<li><a href="https://github.com/ephpm/litewire/pull/28">litewire#28: the stray OK packet</a></li>
+<li><a href="https://github.com/ephpm/litewire/pull/29">litewire#29: REGEXP and YEAR/MONTH/DAYOFMONTH</a></li>
+<li><a href="https://github.com/ephpm/litewire/pull/25">litewire#25: LIKE escape</a></li>
+<li><a href="https://github.com/ephpm/db-wordpress">ephpm/db-wordpress</a></li>
+</ul>
+
+      </div>
+      <footer>
+        <div class="stats">
+  
+    <ul class="categories">
+      
+        
+          <li><a class="article-terms-link" href="/categories/databases/">databases</a></li>
+        
+          <li><a class="article-terms-link" href="/categories/ephpm/">ephpm</a></li>
+        
+          <li><a class="article-terms-link" href="/categories/php/">php</a></li>
+        
+      
+    </ul>
+  
+  
+    <ul class="tags">
+      
+        
+          <li><a class="article-terms-link" href="/tags/litewire/">litewire</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/ephpm/">ephpm</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/sqlite/">sqlite</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/mysql/">mysql</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/rust/">rust</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/wordpress/">wordpress</a></li>
+        
+      
+    </ul>
+  
+</div>
+
+      </footer>
+    </div>
+    
+      
+  
+  <div class='post giscus-wrap'>
+    <script src='https://giscus.app/client.js'
+            data-repo='luthermonson/luth.io'
+            data-repo-id='R_kgDOGvFBXQ'
+            data-category='Announcements'
+            data-category-id='DIC_kwDOGvFBXc4DH_gv'
+            data-mapping='pathname'
+            data-strict='1'
+            data-reactions-enabled='1'
+            data-emit-metadata='0'
+            data-input-position='top'
+            data-theme='light'
+            data-lang='en'
+            data-loading='lazy'
+            crossorigin='anonymous'
+            async>
+    </script>
+  </div>
+  
+
+
+
+    
+  </article>
+  
+    <nav class="post-nav">
+      
+        <a href="/blog/2026/08/requests-that-end-wrong/" class="post-nav-link older">
+          <span class="post-nav-label">&larr; Older</span>
+          <span class="post-nav-title">Requests That End Wrong: A 200 That Was Really a Crash</span>
+        </a>
+      
+      
+        <a href="/blog/2026/08/rolling-your-own-kv-store/" class="post-nav-link newer">
+          <span class="post-nav-label">Newer &rarr;</span>
+          <span class="post-nav-title">Rolling Your Own KV Store Instead of Embedding Redis</span>
+        </a>
+      
+    </nav>
+  
+
+      </main>
+      <section id="site-sidebar">
+  
+    <section id="recent-posts">
+      <header>
+        <h1>Recent Posts</h1>
+      </header>
+      
+      <article class="mini-post">
+          <a href="/blog/2026/10/ephpm-worker-mode-performance/" class="image" style="--bg-image: url('/img/2026/10/ephpm-worker-mode-performance-cover.svg');">
+    <img class="" src="/img/2026/10/ephpm-worker-mode-performance-cover.svg" alt="Diagram: before, hyper/tokio hands each request to one shared bounded channel whose waiter list all 20 PHP threads contend on; after, a dispatcher hands the job straight into the mailbox of the most recently idle PHP thread and only queues it in a FIFO overflow queue when every thread is busy">
+  </a>
+        <header>
+          <h2><a href="/blog/2026/10/ephpm-worker-mode-performance/">Fourth Place in Worker Mode, and Why It Wasn&#39;t PHP</a></h2>
+          <time class="published" datetime="2026-10-16 08:10:00 -0700 PDT">October 16, 2026</time>
+        </header>
+      </article>
+      
+      <article class="mini-post">
+          <a href="/blog/2026/10/ephpm-websockets-how-to/" class="image" style="--bg-image: url('/img/2026/10/ephpm-websockets-how-to-cover.svg');">
+    <img class="" src="/img/2026/10/ephpm-websockets-how-to-cover.svg" alt="Diagram: browsers hold sockets to ePHPm&#39;s Rust session tasks and registry; each connect, message and disconnect runs websocket.php once on the PHP thread pool, and ordinary HTTP requests push through ephpm_ws_broadcast">
+  </a>
+        <header>
+          <h2><a href="/blog/2026/10/ephpm-websockets-how-to/">WebSockets in ePHPm, From Zero to a Working Chat</a></h2>
+          <time class="published" datetime="2026-10-11 17:30:00 -0700 PDT">October 11, 2026</time>
+        </header>
+      </article>
+      
+      <article class="mini-post">
+          <a href="/blog/2026/10/webhooks-out-of-order-scheduler/" class="image" style="--bg-image: url('/img/2026/10/webhooks-out-of-order-scheduler-timeline.svg');">
+    <img class="" src="/img/2026/10/webhooks-out-of-order-scheduler-timeline.svg" alt="Timeline of three same-label jobs where a runner executing a build is destroyed 2.3 seconds before its in_progress webhook arrives">
+  </a>
+        <header>
+          <h2><a href="/blog/2026/10/webhooks-out-of-order-scheduler/">Webhooks Arrive Out of Order: How My Scheduler Killed Live Builds</a></h2>
+          <time class="published" datetime="2026-10-07 21:10:00 -0700 PDT">October 7, 2026</time>
+        </header>
+      </article>
+      
+      <article class="mini-post">
+          <a href="/blog/2026/10/go-proxmox-five-years-to-v0-8/" class="image" style="--bg-image: url('/img/2026/10/go-proxmox-five-years-to-v0-8-apidiff.svg');">
+    <img class="" src="/img/2026/10/go-proxmox-five-years-to-v0-8-apidiff.svg" alt="Horizontal bar chart of apidiff incompatible and compatible changes for every go-proxmox release from v0.1.0 to v0.8.2">
+  </a>
+        <header>
+          <h2><a href="/blog/2026/10/go-proxmox-five-years-to-v0-8/">Breaking Changes Without Breaking Trust: Five Years to go-proxmox v0.8</a></h2>
+          <time class="published" datetime="2026-10-04 19:40:00 -0700 PDT">October 4, 2026</time>
+        </header>
+      </article>
+      
+      <article class="mini-post">
+          <a href="/blog/2026/10/windows-sigterm-sparse-files/" class="image" style="--bg-image: url('/img/2026/10/windows-sigterm-sparse-files-connections.svg');">
+    <img class="" src="/img/2026/10/windows-sigterm-sparse-files-connections.svg" alt="Bar chart: 96 Cloudflare edge connections held by orphaned cloudflared processes versus 4 for the live daemon">
+  </a>
+        <header>
+          <h2><a href="/blog/2026/10/windows-sigterm-sparse-files/">Windows Grab-Bag: SIGTERM That Doesn&#39;t Exist and Sparse Files That Break Docker</a></h2>
+          <time class="published" datetime="2026-10-03 14:30:00 -0700 PDT">October 3, 2026</time>
+        </header>
+      </article>
+      
+      
+        <footer>
+          <a href="/blog" class="button">See More</a>
+        </footer>
+      
+    </section>
+  
+
+  
+    
+
+      <section id="categories">
+        <header>
+          <h1><a href="/categories">Categories</a></h1>
+        </header>
+        <ul>
+          
+          
+          <li>
+              <a href="/categories/ephpm/">ephpm<span class="count">33</span></a>
+          
+          <li>
+              <a href="/categories/go/">go<span class="count">30</span></a>
+          
+          <li>
+              <a href="/categories/php/">php<span class="count">23</span></a>
+          
+          <li>
+              <a href="/categories/rust/">rust<span class="count">15</span></a>
+          
+          <li>
+              <a href="/categories/homelab/">homelab<span class="count">14</span></a>
+          
+          <li>
+              <a href="/categories/windows/">windows<span class="count">14</span></a>
+          
+          <li>
+              <a href="/categories/ci/">ci<span class="count">9</span></a>
+          
+          <li>
+              <a href="/categories/databases/">databases<span class="count">9</span></a>
+          
+          <li>
+              <a href="/categories/security/">security<span class="count">9</span></a>
+          
+          <li>
+              <a href="/categories/containers/">containers<span class="count">7</span></a>
+          
+          <li>
+              <a href="/categories/tools/">tools<span class="count">5</span></a>
+          
+          <li>
+              <a href="/categories/ai-agents/">ai-agents<span class="count">4</span></a>
+          
+          </li>
+        </ul>
+      </section>
+    
+  
+
+  
+    <section id="mini-bio">
+      <header>
+        <h1>About</h1>
+      </header>
+      <p>Luther is a 20+ year software veteran specializing in backend APIs and architecting products. Employed at <a href='https://www.suse.com'>SUSE</a> as the Team Lead for the <a href='https://github.com/rancher/windows/issues'>Containers on Windows Team</a> working on <a href='https://rancher.com/'>Rancher</a> + <a href='https://kubernetes.io/'>Kubernetes</a></p>
+      <footer>
+        <a href="/about" class="button">Learn More</a>
+      </footer>
+    </section>
+  
+</section>
+
+      <footer id="site-footer">
+  
+      <ul class="socnet-icons">
+        
+
+        <li><a href="//github.com/luthermonson" target="_blank" rel="noopener" title="GitHub" class="fab fa-github"></a></li>
+
+
+
+
+
+
+
+
+
+
+
+<li><a href="//www.linkedin.com/in/luthermonson" target="_blank" rel="noopener" title="LinkedIn" class="fab fa-linkedin"></a></li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li><a href="//twitter.com/luthermonson" target="_blank" rel="noopener" title="Twitter" class="fab fa-twitter"></a></li>
+
+
+
+
+
+
+
+
+
+
+
+<li><a href="mailto:luther.monson@gmail.com" target="_blank" title="Email" class="far fa-envelope"></a></li>
+
+      </ul>
+  
+  <p class="copyright">
+    © 2026 Luther Monson
+      <br>
+    Theme: <a href='https://github.com/pacollins/hugo-future-imperfect-slim' target='_blank' rel='noopener'>Hugo Future Imperfect Slim</a><br>A <a href='https://html5up.net/future-imperfect' target='_blank' rel='noopener'>HTML5 UP port</a> | Powered by <a href='https://gohugo.io/' title='0.160.1' target='_blank' rel='noopener'>Hugo</a>
+  </p>
+</footer>
+<a id="back-to-top" href="#" class="fas fa-arrow-up fa-2x"></a>
+
+      <script src="/js/bundle.min.241b62ebc4792fe8c7a75879e5f710894f226f2b73342e9916b3a3b0526030cc.js" integrity="sha256-JBti68R5L&#43;jHp1h55fcQiU8ibytzNC6ZFrOjsFJgMMw="></script>
+    <script src="/js/add-on.js"></script>
+    </div>
+  </body>
+</html>

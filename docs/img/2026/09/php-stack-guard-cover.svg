@@ -1,0 +1,56 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 440" font-family="system-ui, -apple-system, Segoe UI, sans-serif">
+  <rect width="800" height="440" fill="#ffffff"/>
+  <text x="400" y="34" text-anchor="middle" font-size="20" font-weight="600" fill="#222">Which SIGSEGV gets contained</text>
+
+  <!-- address axis label -->
+  <text x="70" y="70" font-size="13" fill="#6b6b6b">high addresses</text>
+  <text x="70" y="420" font-size="13" fill="#6b6b6b">low addresses</text>
+
+  <!-- thread stack -->
+  <rect x="70" y="84" width="220" height="200" fill="#eef3fa" stroke="#2b6cb0" stroke-width="2"/>
+  <text x="180" y="112" text-anchor="middle" font-size="15" font-weight="600" fill="#2b6cb0">PHP thread stack</text>
+  <text x="180" y="136" text-anchor="middle" font-size="13" fill="#444">8 MiB, grows down</text>
+  <text x="180" y="160" text-anchor="middle" font-size="12" font-family="ui-monospace, Consolas, monospace" fill="#444">zend_objects_store_del</text>
+  <text x="180" y="178" text-anchor="middle" font-size="12" font-family="ui-monospace, Consolas, monospace" fill="#444">zend_object_std_dtor</text>
+  <text x="180" y="196" text-anchor="middle" font-size="12" font-family="ui-monospace, Consolas, monospace" fill="#444">zend_objects_store_del</text>
+  <text x="180" y="214" text-anchor="middle" font-size="12" font-family="ui-monospace, Consolas, monospace" fill="#444">... x 50,000</text>
+  <path d="M 180 230 L 180 270" stroke="#2b6cb0" stroke-width="2" marker-end="url(#b)"/>
+
+  <!-- low bound line -->
+  <line x1="40" y1="284" x2="320" y2="284" stroke="#222" stroke-width="1.5" stroke-dasharray="5,4"/>
+  <text x="330" y="288" font-size="12" font-family="ui-monospace, Consolas, monospace" fill="#222">g_stack_lo (pthread_getattr_np at arm time)</text>
+
+  <!-- guard window -->
+  <rect x="70" y="284" width="220" height="56" fill="#edf7f0" stroke="#3a9a5b" stroke-width="2"/>
+  <text x="180" y="310" text-anchor="middle" font-size="13" fill="#2d7a47">guard page + 64 KiB window</text>
+  <text x="180" y="328" text-anchor="middle" font-size="12" fill="#2d7a47">(+4 KiB slack above lo)</text>
+
+  <!-- elsewhere -->
+  <rect x="70" y="360" width="220" height="40" fill="#f4f4f4" stroke="#6b6b6b" stroke-width="1.5"/>
+  <text x="180" y="385" text-anchor="middle" font-size="13" fill="#444">heap, other threads, libraries</text>
+
+  <!-- outcomes -->
+  <rect x="470" y="300" width="300" height="56" rx="8" fill="#edf7f0" stroke="#3a9a5b" stroke-width="2"/>
+  <text x="620" y="324" text-anchor="middle" font-size="14" font-weight="600" fill="#2d7a47">fault here: siglongjmp</text>
+  <text x="620" y="344" text-anchor="middle" font-size="12" fill="#333">500 to the client, thread retired, PID lives</text>
+  <path d="M 292 312 L 466 324" stroke="#3a9a5b" stroke-width="2" marker-end="url(#g)"/>
+
+  <rect x="470" y="368" width="300" height="56" rx="8" fill="#fbeceb" stroke="#c0392b" stroke-width="2"/>
+  <text x="620" y="392" text-anchor="middle" font-size="14" font-weight="600" fill="#c0392b">fault anywhere else: die</text>
+  <text x="620" y="412" text-anchor="middle" font-size="12" fill="#333">wild write, heap corruption: exit 139, as before</text>
+  <path d="M 292 380 L 466 392" stroke="#c0392b" stroke-width="2" marker-end="url(#r)"/>
+
+  <rect x="470" y="84" width="300" height="150" rx="8" fill="#fdf1e6" stroke="#e07a1f" stroke-width="2"/>
+  <text x="620" y="110" text-anchor="middle" font-size="14" font-weight="600" fill="#b85f12">PHP's own guard (re-armed in #360)</text>
+  <text x="620" y="136" text-anchor="middle" font-size="12" fill="#333">EG(stack_limit) is checked in the VM</text>
+  <text x="620" y="154" text-anchor="middle" font-size="12" fill="#333">and in zend_call_function, so recursion</text>
+  <text x="620" y="172" text-anchor="middle" font-size="12" fill="#333">through array_map / apply_filters becomes</text>
+  <text x="620" y="190" text-anchor="middle" font-size="12" fill="#333">a catchable Error. A destructor cascade</text>
+  <text x="620" y="208" text-anchor="middle" font-size="12" fill="#333">recurses only in C and never hits it.</text>
+
+  <defs>
+    <marker id="b" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#2b6cb0"/></marker>
+    <marker id="g" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#3a9a5b"/></marker>
+    <marker id="r" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#c0392b"/></marker>
+  </defs>
+</svg>

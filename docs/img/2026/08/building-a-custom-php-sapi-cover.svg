@@ -1,0 +1,72 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 600" width="1200" height="600" font-family="system-ui, -apple-system, Segoe UI, Roboto, sans-serif">
+  <defs>
+    <marker id="a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto">
+      <path d="M0,0 L10,5 L0,10 z" fill="#333"/>
+    </marker>
+  </defs>
+  <rect width="1200" height="600" fill="#ffffff"/>
+  <text x="600" y="44" text-anchor="middle" font-size="26" font-weight="600" fill="#222">A SAPI is a struct of function pointers PHP calls for I/O</text>
+  <text x="600" y="74" text-anchor="middle" font-size="16" fill="#6b6b6b">php-fpm, mod_php and the CLI fill it in one way. ePHPm fills it in with C that reads from and writes to Rust-owned request data.</text>
+
+  <!-- left: PHP side -->
+  <text x="190" y="120" text-anchor="middle" font-size="18" font-weight="600" fill="#7d5ba6">your PHP code</text>
+  <!-- middle: sapi_module -->
+  <text x="600" y="120" text-anchor="middle" font-size="18" font-weight="600" fill="#3a9a5b">sapi_module (C)</text>
+  <!-- right: rust -->
+  <text x="1010" y="120" text-anchor="middle" font-size="18" font-weight="600" fill="#2b6cb0">ePHPm (Rust / hyper)</text>
+
+  <g font-size="15">
+    <!-- row helper: y -->
+    <g>
+      <rect x="60" y="140" width="260" height="56" rx="8" fill="#7d5ba6" opacity="0.12" stroke="#7d5ba6"/>
+      <text x="190" y="174" text-anchor="middle" fill="#333">echo / print / templates</text>
+      <rect x="470" y="140" width="260" height="56" rx="8" fill="#3a9a5b" opacity="0.14" stroke="#3a9a5b"/>
+      <text x="600" y="174" text-anchor="middle" fill="#222" font-family="ui-monospace, Consolas, monospace">ub_write</text>
+      <rect x="880" y="140" width="260" height="56" rx="8" fill="#2b6cb0" opacity="0.12" stroke="#2b6cb0"/>
+      <text x="1010" y="174" text-anchor="middle" fill="#333">response body (copied out)</text>
+      <line x1="320" y1="168" x2="466" y2="168" stroke="#333" stroke-width="2" marker-end="url(#a)"/>
+      <line x1="730" y1="168" x2="876" y2="168" stroke="#333" stroke-width="2" marker-end="url(#a)"/>
+    </g>
+    <g>
+      <rect x="60" y="216" width="260" height="56" rx="8" fill="#7d5ba6" opacity="0.12" stroke="#7d5ba6"/>
+      <text x="190" y="250" text-anchor="middle" fill="#333">header(), http_response_code()</text>
+      <rect x="470" y="216" width="260" height="56" rx="8" fill="#3a9a5b" opacity="0.14" stroke="#3a9a5b"/>
+      <text x="600" y="250" text-anchor="middle" fill="#222" font-family="ui-monospace, Consolas, monospace">send_headers + SG(sapi_headers)</text>
+      <rect x="880" y="216" width="260" height="56" rx="8" fill="#2b6cb0" opacity="0.12" stroke="#2b6cb0"/>
+      <text x="1010" y="250" text-anchor="middle" fill="#333">status + header list</text>
+      <line x1="320" y1="244" x2="466" y2="244" stroke="#333" stroke-width="2" marker-end="url(#a)"/>
+      <line x1="730" y1="244" x2="876" y2="244" stroke="#333" stroke-width="2" marker-end="url(#a)"/>
+    </g>
+    <g>
+      <rect x="60" y="292" width="260" height="56" rx="8" fill="#7d5ba6" opacity="0.12" stroke="#7d5ba6"/>
+      <text x="190" y="326" text-anchor="middle" fill="#333">$_POST, $_FILES, php://input</text>
+      <rect x="470" y="292" width="260" height="56" rx="8" fill="#3a9a5b" opacity="0.14" stroke="#3a9a5b"/>
+      <text x="600" y="326" text-anchor="middle" fill="#222" font-family="ui-monospace, Consolas, monospace">read_post</text>
+      <rect x="880" y="292" width="260" height="56" rx="8" fill="#2b6cb0" opacity="0.12" stroke="#2b6cb0"/>
+      <text x="1010" y="326" text-anchor="middle" fill="#333">request body bytes</text>
+      <line x1="466" y1="320" x2="324" y2="320" stroke="#333" stroke-width="2" marker-end="url(#a)"/>
+      <line x1="876" y1="320" x2="734" y2="320" stroke="#333" stroke-width="2" marker-end="url(#a)"/>
+    </g>
+    <g>
+      <rect x="60" y="368" width="260" height="56" rx="8" fill="#7d5ba6" opacity="0.12" stroke="#7d5ba6"/>
+      <text x="190" y="402" text-anchor="middle" fill="#333">$_COOKIE</text>
+      <rect x="470" y="368" width="260" height="56" rx="8" fill="#3a9a5b" opacity="0.14" stroke="#3a9a5b"/>
+      <text x="600" y="402" text-anchor="middle" fill="#222" font-family="ui-monospace, Consolas, monospace">read_cookies</text>
+      <rect x="880" y="368" width="260" height="56" rx="8" fill="#2b6cb0" opacity="0.12" stroke="#2b6cb0"/>
+      <text x="1010" y="402" text-anchor="middle" fill="#333">Cookie header</text>
+      <line x1="466" y1="396" x2="324" y2="396" stroke="#333" stroke-width="2" marker-end="url(#a)"/>
+      <line x1="876" y1="396" x2="734" y2="396" stroke="#333" stroke-width="2" marker-end="url(#a)"/>
+    </g>
+    <g>
+      <rect x="60" y="444" width="260" height="56" rx="8" fill="#7d5ba6" opacity="0.12" stroke="#7d5ba6"/>
+      <text x="190" y="478" text-anchor="middle" fill="#333">$_SERVER</text>
+      <rect x="470" y="444" width="260" height="56" rx="8" fill="#3a9a5b" opacity="0.14" stroke="#3a9a5b"/>
+      <text x="600" y="478" text-anchor="middle" fill="#222" font-family="ui-monospace, Consolas, monospace">register_server_variables</text>
+      <rect x="880" y="444" width="260" height="56" rx="8" fill="#2b6cb0" opacity="0.12" stroke="#2b6cb0"/>
+      <text x="1010" y="478" text-anchor="middle" fill="#333">method, URI, headers → CGI vars</text>
+      <line x1="466" y1="472" x2="324" y2="472" stroke="#333" stroke-width="2" marker-end="url(#a)"/>
+      <line x1="876" y1="472" x2="734" y2="472" stroke="#333" stroke-width="2" marker-end="url(#a)"/>
+    </g>
+  </g>
+  <text x="600" y="550" text-anchor="middle" font-size="15" fill="#6b6b6b">All of it is per request: php_request_shutdown() + php_request_startup() bracket every request on a thread</text>
+</svg>

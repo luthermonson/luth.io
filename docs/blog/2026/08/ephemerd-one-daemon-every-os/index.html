@@ -1,0 +1,653 @@
+<!doctype html>
+<html lang="en">
+  <head>
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-MSTSKGFWTX"></script>
+<script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+
+    gtag('config', 'G-MSTSKGFWTX');
+</script><meta charset="utf-8">
+<title>ephemerd: One Daemon, a Fresh Runner Per Job, Every OS - Luther Monson</title>
+<meta name="description" content="A single Go binary that runs self-hosted GitHub Actions runners on Linux, Windows and macOS, with a new container or VM for every job.">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<meta name="twitter:card" content="summary_large_image"><meta name="twitter:site" content="@luthermonson">
+
+<meta property="og:site_name" content="Luther Monson">
+<meta property="og:title" content="ephemerd: One Daemon, a Fresh Runner Per Job, Every OS">
+<meta property="og:description" content="A single Go binary that runs self-hosted GitHub Actions runners on Linux, Windows and macOS, with a new container or VM for every job.">
+<meta property="og:type" content="article">
+<meta property="og:url" content="https://luth.io/blog/2026/08/ephemerd-one-daemon-every-os/">
+    <meta property="og:image" content="https://luth.io/img/2026/08/ephemerd-one-daemon-every-os-arch.svg">
+    <meta property="og:image:alt" content="ephemerd architecture across Linux, Windows and macOS hosts">
+
+
+  <link rel="manifest" href="/favicon/site.webmanifest?v=1">
+  <link rel="apple-touch-icon" sizes="180x180" href="/favicon/apple-touch-icon.png?v=1">
+  <link rel="icon" type="image/png" sizes="32x32" href="/favicon/favicon-32x32.png?v=1">
+  <link rel="icon" type="image/png" sizes="16x16" href="/favicon/favicon-16x16.png?v=1">
+  
+    <link rel="mask-icon" href="/favicon/safari-pinned-tab.svg?v=1" color="#ffffff">
+    <link rel="shortcut icon" href="/favicon/favicon.ico?v=1">
+    <meta name="msapplication-config" content="/favicon/browserconfig.xml?v=1">
+  
+  <meta name="msapplication-TileColor" content="#ffffff">
+  <meta name="theme-color" content="#ffffff">
+
+
+  <meta name="generator" content="Hugo 0.160.1">
+  <link rel="alternate" type="application/rss+xml" href="https://luth.io/index.xml" title="Luther Monson">
+  <link rel="stylesheet" href="/css/bundle.min.e1ffed86714fbb7eff75eab221c0c61b8260be0c7d1c08db0fcb7a2bdb6af7c9.css" integrity="sha256-4f/thnFPu37/deqyIcDGG4Jgvgx9HAjbD8t6K9tq98k="><link rel="stylesheet" href="/css/add-on.css">
+        <link rel="stylesheet" href="/css/code.css">
+        <link rel="stylesheet" href="/css/mobile.css">
+</head>
+
+  <body>
+    
+
+<header id="site-header">
+  <nav id="site-nav">
+    <h1 class="nav-title">
+      <a href="/" class="nav">
+        <img class="nav-avatar" src="/img/luther-monson-headshot.jpg" alt="" width="32" height="32">
+        
+          Blog
+        
+      </a>
+    </h1>
+    <menu id="site-nav-menu" class="flyout-menu menu">
+      
+        
+          
+          <a href="/" class="nav link"><i class='fa fa-home'></i> Home</a>
+        
+      
+        
+          
+          <a href="/about" class="nav link"><i class='far fa-id-card'></i> About</a>
+        
+      
+        
+          
+          <a href="/blog" class="nav link"><i class='far fa-newspaper'></i> Blog</a>
+        
+      
+        
+          
+          <a href="/archive" class="nav link"><i class='far fa-calendar-alt'></i> Archive</a>
+        
+      
+        
+          
+          <a href="/categories" class="nav link"><i class='fas fa-sitemap'></i> Categories</a>
+        
+      
+      <a href="#share-menu" class="nav link share-toggle"><i class="fas fa-share-alt">&nbsp;</i>Share</a>
+      <a href="#search-input" class="nav link search-toggle"><i class="fas fa-search">&nbsp;</i>Search</a>
+    </menu>
+    <a href="#search-input" class="nav search-toggle"><i class="fas fa-search fa-2x">&nbsp;</i></a>
+    <a href="#share-menu" class="nav share-toggle"><i class="fas fa-share-alt fa-2x">&nbsp;</i></a>
+    
+    <a href="#site-nav" class="nav nav-toggle"><i class="fas fa-bars fa-2x"></i></a>
+  </nav>
+  <menu id="search" class="menu"><input id="search-input" class="search-input menu"></input><div id="search-results" class="search-results menu"></div></menu>
+  
+  
+    <menu id="share-menu" class="flyout-menu menu">
+      <h1>Share Post</h1>
+      
+
+
+
+
+  
+    
+    <a href="//twitter.com/share?text=ephemerd%3a%20One%20Daemon%2c%20a%20Fresh%20Runner%20Per%20Job%2c%20Every%20OS&amp;url=https%3a%2f%2fluth.io%2fblog%2f2026%2f08%2fephemerd-one-daemon-every-os%2f" target="_blank" rel="noopener" class="nav share-btn twitter">
+        <p>Twitter</p>
+      </a>
+  
+
+  
+      <a href="//www.facebook.com/sharer/sharer.php?u=https%3a%2f%2fluth.io%2fblog%2f2026%2f08%2fephemerd-one-daemon-every-os%2f" target="_blank" rel="noopener" class="nav share-btn facebook">
+        <p>Facebook</p>
+        </a>
+  
+
+  
+    <a href="//www.reddit.com/submit?url=https%3a%2f%2fluth.io%2fblog%2f2026%2f08%2fephemerd-one-daemon-every-os%2f&amp;title=ephemerd%3a%20One%20Daemon%2c%20a%20Fresh%20Runner%20Per%20Job%2c%20Every%20OS" target="_blank" rel="noopener" class="nav share-btn reddit">
+          <p>Reddit</p>
+        </a>
+  
+
+  
+        <a href="//www.linkedin.com/shareArticle?url=https%3a%2f%2fluth.io%2fblog%2f2026%2f08%2fephemerd-one-daemon-every-os%2f&amp;title=ephemerd%3a%20One%20Daemon%2c%20a%20Fresh%20Runner%20Per%20Job%2c%20Every%20OS" target="_blank" rel="noopener" class="nav share-btn linkedin">
+            <p>LinkedIn</p>
+          </a>
+  
+
+  
+        <a href="//www.pinterest.com/pin/create/button/?url=https%3a%2f%2fluth.io%2fblog%2f2026%2f08%2fephemerd-one-daemon-every-os%2f&amp;description=ephemerd%3a%20One%20Daemon%2c%20a%20Fresh%20Runner%20Per%20Job%2c%20Every%20OS" target="_blank" rel="noopener" class="nav share-btn pinterest">
+          <p>Pinterest</p>
+        </a>
+  
+
+  
+        <a href="mailto:?subject=Check%20out%20this%20post%20by Luther%20Monson&amp;body=https%3a%2f%2fluth.io%2fblog%2f2026%2f08%2fephemerd-one-daemon-every-os%2f" target="_blank" class="nav share-btn email" data-proofer-ignore>
+          <p>Email</p>
+        </a>
+  
+
+
+    </menu>
+  
+</header>
+
+    <div id="wrapper">
+      <section id="site-intro" class="hidden-single-column">
+  <a href="/"><img src="/img/luther-monson-headshot.jpg" class="circle" width="100" alt="Luther Monson, Staff Software Engineer at SUSE" /></a>
+  <header>
+    <h1>Luther Monson</h1>
+  </header>
+  <main>
+    <p>Go by way of PHP &middot; Containers &middot; VMs &middot; Windows &middot; Kubernetes</p>
+  </main>
+  
+    <footer>
+      <ul class="socnet-icons">
+        
+
+        <li><a href="//github.com/luthermonson" target="_blank" rel="noopener" title="GitHub" class="fab fa-github"></a></li>
+
+
+
+
+
+
+
+
+
+
+
+<li><a href="//www.linkedin.com/in/luthermonson" target="_blank" rel="noopener" title="LinkedIn" class="fab fa-linkedin"></a></li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li><a href="//twitter.com/luthermonson" target="_blank" rel="noopener" title="Twitter" class="fab fa-twitter"></a></li>
+
+
+
+
+
+
+
+
+
+
+
+<li><a href="mailto:luther.monson@gmail.com" target="_blank" title="Email" class="far fa-envelope"></a></li>
+
+      </ul>
+    </footer>
+  
+</section>
+
+      <main id="site-main">
+        
+  <article>
+    <div class="post">
+      <header>
+  <div class="title">
+    
+      <h2><a href="/blog/2026/08/ephemerd-one-daemon-every-os/">ephemerd: One Daemon, a Fresh Runner Per Job, Every OS</a></h2>
+    
+    
+      <p>A single Go binary that runs self-hosted GitHub Actions runners on Linux, Windows and macOS, with a new container or VM for every job.</p>
+    
+  </div>
+  <div class="meta">
+    <time datetime="2026-08-18 21:05:00 -0700 PDT">August 18, 2026</time>
+    
+    <p>6-Minute Read</p>
+  </div>
+</header>
+
+      <div id="socnet-share">
+        
+
+
+
+
+  
+    
+    <a href="//twitter.com/share?text=ephemerd%3a%20One%20Daemon%2c%20a%20Fresh%20Runner%20Per%20Job%2c%20Every%20OS&amp;url=https%3a%2f%2fluth.io%2fblog%2f2026%2f08%2fephemerd-one-daemon-every-os%2f" target="_blank" rel="noopener" class="nav share-btn twitter">
+        <p>Twitter</p>
+      </a>
+  
+
+  
+      <a href="//www.facebook.com/sharer/sharer.php?u=https%3a%2f%2fluth.io%2fblog%2f2026%2f08%2fephemerd-one-daemon-every-os%2f" target="_blank" rel="noopener" class="nav share-btn facebook">
+        <p>Facebook</p>
+        </a>
+  
+
+  
+    <a href="//www.reddit.com/submit?url=https%3a%2f%2fluth.io%2fblog%2f2026%2f08%2fephemerd-one-daemon-every-os%2f&amp;title=ephemerd%3a%20One%20Daemon%2c%20a%20Fresh%20Runner%20Per%20Job%2c%20Every%20OS" target="_blank" rel="noopener" class="nav share-btn reddit">
+          <p>Reddit</p>
+        </a>
+  
+
+  
+        <a href="//www.linkedin.com/shareArticle?url=https%3a%2f%2fluth.io%2fblog%2f2026%2f08%2fephemerd-one-daemon-every-os%2f&amp;title=ephemerd%3a%20One%20Daemon%2c%20a%20Fresh%20Runner%20Per%20Job%2c%20Every%20OS" target="_blank" rel="noopener" class="nav share-btn linkedin">
+            <p>LinkedIn</p>
+          </a>
+  
+
+  
+        <a href="//www.pinterest.com/pin/create/button/?url=https%3a%2f%2fluth.io%2fblog%2f2026%2f08%2fephemerd-one-daemon-every-os%2f&amp;description=ephemerd%3a%20One%20Daemon%2c%20a%20Fresh%20Runner%20Per%20Job%2c%20Every%20OS" target="_blank" rel="noopener" class="nav share-btn pinterest">
+          <p>Pinterest</p>
+        </a>
+  
+
+  
+        <a href="mailto:?subject=Check%20out%20this%20post%20by Luther%20Monson&amp;body=https%3a%2f%2fluth.io%2fblog%2f2026%2f08%2fephemerd-one-daemon-every-os%2f" target="_blank" class="nav share-btn email" data-proofer-ignore>
+          <p>Email</p>
+        </a>
+  
+
+
+      </div>
+      <div class="content">
+        
+        <p>I have CI that needs Linux amd64, Linux arm64, Windows and macOS, and GitHub-hosted runners for all four get expensive fast,
+especially the arm64 and Mac minutes. Self-hosted runners fix the bill and create a different problem. A stock
+<code>actions/runner</code> on a box you own runs whatever the workflow says, keeps whatever the last job left behind, and is one fork
+PR away from somebody running code on your LAN.</p>
+<p>The usual answers didn&rsquo;t fit. <a href="https://github.com/actions/actions-runner-controller">ARC</a> wants a Kubernetes cluster, and
+realistically Linux nodes: Windows only works in its legacy mode if you bring Windows Kubernetes nodes and build your
+own runner image, and macOS isn&rsquo;t on the table. The Firecracker-based runners are Linux only. I wanted one thing I could
+install on every box in the rack, Windows and Mac included, that gives each job a brand new environment and throws it
+away afterwards. That turned into <a href="https://github.com/ephpm/ephemerd">ephemerd</a>, which I&rsquo;ve been building since April
+and which now runs all of my CI.</p>
+<p><img src="/img/2026/08/ephemerd-one-daemon-every-os-arch.svg" alt="ephemerd architecture"></p>
+<h3 id="what-it-is">What it is</h3>
+<p>ephemerd is a single Go binary (MIT licensed) that runs as a system service. It watches your forge for queued jobs, either by
+polling the API every 30 seconds or by receiving webhooks, and for each job it:</p>
+<ol>
+<li>asks GitHub for a just-in-time runner config, good for exactly one job</li>
+<li>creates a fresh container or VM for that job</li>
+<li>starts the embedded Actions runner inside it with the JIT config</li>
+<li>destroys the whole environment when the job completes</li>
+</ol>
+<p>There&rsquo;s no runner pool sitting around between jobs and nothing carries over from one job to the next. GitHub is the main
+provider, and there are providers for Forgejo, Gitea, GitLab and Woodpecker too.</p>
+<p>The part I&rsquo;m happiest with is that it embeds containerd as a Go library instead of talking to a containerd you installed. If
+you&rsquo;ve used <a href="https://k3s.io">k3s</a> or RKE2 that pattern will look familiar, and after my years at Rancher it was the obvious
+way to go. It means one binary, one version of containerd, and no &ldquo;which containerd is on this host&rdquo; support questions.</p>
+<h3 id="linux-containerd-and-runc">Linux: containerd and runc</h3>
+<p>On Linux the job is an OCI container on the host, created through the embedded containerd with runc. This is the fast path,
+a couple hundred milliseconds to get a job container up. The runner image is a normal OCI image, so the same Dockerfile
+builds the job environment for every Linux host.</p>
+<p>Since v0.2.2 there&rsquo;s also an opt-in <a href="https://katacontainers.io/">Kata Containers</a> runtime, which gives each job its own kernel
+in a lightweight VM:</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-toml" data-lang="toml"><span class="line"><span class="cl"><span class="p">[</span><span class="nx">runner</span><span class="p">.</span><span class="nx">linux</span><span class="p">]</span>
+</span></span><span class="line"><span class="cl"><span class="nx">runtime</span> <span class="p">=</span> <span class="s2">&#34;kata&#34;</span>   <span class="c"># default is &#34;runc&#34;</span>
+</span></span></code></pre></div><p>It&rsquo;s not the default because it isn&rsquo;t free. I measured it before merging and the file I/O cost is a lot bigger than the boot
+cost, which is a story for its own post. If you set <code>kata</code> and the shim or <code>/dev/kvm</code> is missing, ephemerd refuses to start
+rather than quietly running your jobs on runc.</p>
+<h3 id="windows-hyper-v-isolated-containers-plus-a-linux-vm">Windows: Hyper-V isolated containers, plus a Linux VM</h3>
+<p>On a Windows host, Windows jobs run in Hyper-V isolated containers. Every job gets its own utility VM and kernel, which is
+the isolation level I want for untrusted code on Windows.</p>
+<p>Linux jobs on the same Windows box go to a Linux VM that ephemerd boots itself. It started out on WSL2, which can&rsquo;t run under
+<code>LocalSystem</code>, so ephemerd now boots an Alpine kernel directly through the Host Compute Service API. I wrote that up
+in <a href="/blog/2026/06/escaping-wsl-hcs-linux-vm/">Escaping WSL: Booting My Own Linux VM Through Hyper-V&rsquo;s HCS API</a>. The Windows
+daemon keeps the GitHub credentials and the scheduler, and sends container lifecycle calls to the ephemerd inside the VM
+over gRPC.</p>
+<h3 id="macos-a-vm-per-job">macOS: a VM per job</h3>
+<p>On Apple silicon there are two kinds of jobs. macOS jobs (Xcode, Swift, anything that needs a real macOS) get their own
+macOS VM through Virtualization.framework. The base disk comes from one of Cirrus Labs'
+<a href="https://tart.run">Tart</a> macOS images, pulled as an OCI artifact, and each job&rsquo;s disk is an APFS clone of it. A clone is
+copy-on-write, so creating one is instant and costs no disk until the job writes something. When the job is done the clone
+is deleted.</p>
+<p>Linux jobs on the Mac go to a long-lived Linux VM (also Virtualization.framework) running containerd, the same model as the
+Windows host. The same Linux runner image works on all three.</p>
+<h3 id="the-parts-jobs-actually-notice">The parts jobs actually notice</h3>
+<p>A lot of the work wasn&rsquo;t about isolation at all, it was about making real workflows run unmodified inside it.</p>
+<p><strong>A Docker API.</strong> Half of all workflows run <code>docker build</code> or <code>docker run</code> somewhere, and <code>container:</code> jobs need a Docker
+daemon for the runner to drive. Rather than run Docker-in-Docker, ephemerd serves a Docker-compatible API per job (backed by
+containerd in a per-job namespace) and points the job at it, with BuildKit embedded for <code>docker build</code>. Sibling containers a
+job starts are torn down with the job.</p>
+<p><strong>Pull-through caches.</strong> Every job starting from nothing means every job downloads the world. ephemerd runs pull-through
+caches for Go modules, npm, pip, cargo and pub, and injects the right environment variables (<code>GOPROXY</code> and friends) into the
+job. Container pulls can be routed through a registry mirror on your LAN. The motivation is in the registry mirror&rsquo;s own
+package docs: one Linux node pulled 294 GB in 4.1 days, and the single biggest contributor was one 1.1 GB CI image pulled
+163 times in a week.</p>
+<p><strong>An egress fence.</strong> A job container can reach the internet and nothing on the private ranges: <code>10.0.0.0/8</code>,
+<code>172.16.0.0/12</code>, <code>192.168.0.0/16</code> and <code>169.254.0.0/16</code> are blocked. On Linux that&rsquo;s iptables. On Windows it turned out to
+be a long fight, and since v0.2.0 the working answer is an opt-in L2Bridge network with VFP ACLs.</p>
+<h3 id="getting-started">Getting started</h3>
+<p>Installation is the same command on all three platforms, and it registers the right kind of service (systemd, launchd or the
+Windows SCM):</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl">ephemerd install
+</span></span><span class="line"><span class="cl">ephemerd start
+</span></span><span class="line"><span class="cl">ephemerd status
+</span></span></code></pre></div><p>The minimum config is the owner you want runners for, plus credentials (a token in the environment, or GitHub App
+credentials in the config):</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-toml" data-lang="toml"><span class="line"><span class="cl"><span class="p">[</span><span class="nx">github</span><span class="p">]</span>
+</span></span><span class="line"><span class="cl"><span class="nx">owner</span> <span class="p">=</span> <span class="s2">&#34;your-org&#34;</span>
+</span></span><span class="line"><span class="cl"><span class="c"># repos = [&#34;repo1&#34;, &#34;repo2&#34;]   # omit for org-level runners</span>
+</span></span></code></pre></div><p>And from a workflow it looks like any other self-hosted runner:</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-yaml" data-lang="yaml"><span class="line"><span class="cl"><span class="nt">jobs</span><span class="p">:</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">  </span><span class="nt">build</span><span class="p">:</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="nt">runs-on</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="l">self-hosted, linux, x64]</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="nt">steps</span><span class="p">:</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">      </span>- <span class="nt">uses</span><span class="p">:</span><span class="w"> </span><span class="l">actions/checkout@v4</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">      </span>- <span class="nt">run</span><span class="p">:</span><span class="w"> </span><span class="l">echo &#34;Running on ephemerd&#34;</span><span class="w">
+</span></span></span></code></pre></div><p>If you&rsquo;d rather not expose anything to the internet, the default polling mode needs no inbound ports at all. For instant
+dispatch it can run a Cloudflare tunnel, ngrok or localtunnel as a managed subprocess and register the webhooks itself.</p>
+<h3 id="where-its-at">Where it&rsquo;s at</h3>
+<p>It&rsquo;s at v0.2.3 as I write this, and it runs my whole fleet: Linux amd64 and arm64 nodes, a Windows Server 2025
+node and a Mac mini. The repo has a containment test suite that runs from inside a real job and tries to reach things it
+shouldn&rsquo;t, which has been the most useful thing in the project for finding out which of my assumptions were wrong.</p>
+<p>There&rsquo;s a Hugo docs site in the repo, and <code>ephemerd doctor</code> checks the host prerequisites for whatever platform it&rsquo;s on.
+There&rsquo;s no Windows arm64 build yet. Next up is writing down some of the more painful lessons from the last few months,
+starting with Windows networking.</p>
+<h3 id="links">Links</h3>
+<ul>
+<li><a href="https://github.com/ephpm/ephemerd">ephemerd on GitHub</a></li>
+<li><a href="https://github.com/ephpm/ephemerd/releases">Releases</a></li>
+<li><a href="/blog/2026/06/escaping-wsl-hcs-linux-vm/">Escaping WSL: Booting My Own Linux VM Through Hyper-V&rsquo;s HCS API</a></li>
+<li><a href="https://containerd.io/">containerd</a>, <a href="https://katacontainers.io/">Kata Containers</a>, <a href="https://tart.run">Tart</a></li>
+</ul>
+
+      </div>
+      <footer>
+        <div class="stats">
+  
+    <ul class="categories">
+      
+        
+          <li><a class="article-terms-link" href="/categories/ci/">ci</a></li>
+        
+          <li><a class="article-terms-link" href="/categories/go/">go</a></li>
+        
+          <li><a class="article-terms-link" href="/categories/containers/">containers</a></li>
+        
+      
+    </ul>
+  
+  
+    <ul class="tags">
+      
+        
+          <li><a class="article-terms-link" href="/tags/go/">go</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/github-actions/">github-actions</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/containerd/">containerd</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/kubernetes/">kubernetes</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/hyper-v/">hyper-v</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/macos/">macos</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/ephemerd/">ephemerd</a></li>
+        
+      
+    </ul>
+  
+</div>
+
+      </footer>
+    </div>
+    
+      
+  
+  <div class='post giscus-wrap'>
+    <script src='https://giscus.app/client.js'
+            data-repo='luthermonson/luth.io'
+            data-repo-id='R_kgDOGvFBXQ'
+            data-category='Announcements'
+            data-category-id='DIC_kwDOGvFBXc4DH_gv'
+            data-mapping='pathname'
+            data-strict='1'
+            data-reactions-enabled='1'
+            data-emit-metadata='0'
+            data-input-position='top'
+            data-theme='light'
+            data-lang='en'
+            data-loading='lazy'
+            crossorigin='anonymous'
+            async>
+    </script>
+  </div>
+  
+
+
+
+    
+  </article>
+  
+    <nav class="post-nav">
+      
+        <a href="/blog/2026/08/rolling-your-own-kv-store/" class="post-nav-link older">
+          <span class="post-nav-label">&larr; Older</span>
+          <span class="post-nav-title">Rolling Your Own KV Store Instead of Embedding Redis</span>
+        </a>
+      
+      
+        <a href="/blog/2026/08/clustered-sqlite-adding-turso/" class="post-nav-link newer">
+          <span class="post-nav-label">Newer &rarr;</span>
+          <span class="post-nav-title">Clustered SQLite in ePHPm, Part 2: Adding Turso</span>
+        </a>
+      
+    </nav>
+  
+
+      </main>
+      <section id="site-sidebar">
+  
+    <section id="recent-posts">
+      <header>
+        <h1>Recent Posts</h1>
+      </header>
+      
+      <article class="mini-post">
+          <a href="/blog/2026/10/ephpm-worker-mode-performance/" class="image" style="--bg-image: url('/img/2026/10/ephpm-worker-mode-performance-cover.svg');">
+    <img class="" src="/img/2026/10/ephpm-worker-mode-performance-cover.svg" alt="Diagram: before, hyper/tokio hands each request to one shared bounded channel whose waiter list all 20 PHP threads contend on; after, a dispatcher hands the job straight into the mailbox of the most recently idle PHP thread and only queues it in a FIFO overflow queue when every thread is busy">
+  </a>
+        <header>
+          <h2><a href="/blog/2026/10/ephpm-worker-mode-performance/">Fourth Place in Worker Mode, and Why It Wasn&#39;t PHP</a></h2>
+          <time class="published" datetime="2026-10-16 08:10:00 -0700 PDT">October 16, 2026</time>
+        </header>
+      </article>
+      
+      <article class="mini-post">
+          <a href="/blog/2026/10/ephpm-websockets-how-to/" class="image" style="--bg-image: url('/img/2026/10/ephpm-websockets-how-to-cover.svg');">
+    <img class="" src="/img/2026/10/ephpm-websockets-how-to-cover.svg" alt="Diagram: browsers hold sockets to ePHPm&#39;s Rust session tasks and registry; each connect, message and disconnect runs websocket.php once on the PHP thread pool, and ordinary HTTP requests push through ephpm_ws_broadcast">
+  </a>
+        <header>
+          <h2><a href="/blog/2026/10/ephpm-websockets-how-to/">WebSockets in ePHPm, From Zero to a Working Chat</a></h2>
+          <time class="published" datetime="2026-10-11 17:30:00 -0700 PDT">October 11, 2026</time>
+        </header>
+      </article>
+      
+      <article class="mini-post">
+          <a href="/blog/2026/10/webhooks-out-of-order-scheduler/" class="image" style="--bg-image: url('/img/2026/10/webhooks-out-of-order-scheduler-timeline.svg');">
+    <img class="" src="/img/2026/10/webhooks-out-of-order-scheduler-timeline.svg" alt="Timeline of three same-label jobs where a runner executing a build is destroyed 2.3 seconds before its in_progress webhook arrives">
+  </a>
+        <header>
+          <h2><a href="/blog/2026/10/webhooks-out-of-order-scheduler/">Webhooks Arrive Out of Order: How My Scheduler Killed Live Builds</a></h2>
+          <time class="published" datetime="2026-10-07 21:10:00 -0700 PDT">October 7, 2026</time>
+        </header>
+      </article>
+      
+      <article class="mini-post">
+          <a href="/blog/2026/10/go-proxmox-five-years-to-v0-8/" class="image" style="--bg-image: url('/img/2026/10/go-proxmox-five-years-to-v0-8-apidiff.svg');">
+    <img class="" src="/img/2026/10/go-proxmox-five-years-to-v0-8-apidiff.svg" alt="Horizontal bar chart of apidiff incompatible and compatible changes for every go-proxmox release from v0.1.0 to v0.8.2">
+  </a>
+        <header>
+          <h2><a href="/blog/2026/10/go-proxmox-five-years-to-v0-8/">Breaking Changes Without Breaking Trust: Five Years to go-proxmox v0.8</a></h2>
+          <time class="published" datetime="2026-10-04 19:40:00 -0700 PDT">October 4, 2026</time>
+        </header>
+      </article>
+      
+      <article class="mini-post">
+          <a href="/blog/2026/10/windows-sigterm-sparse-files/" class="image" style="--bg-image: url('/img/2026/10/windows-sigterm-sparse-files-connections.svg');">
+    <img class="" src="/img/2026/10/windows-sigterm-sparse-files-connections.svg" alt="Bar chart: 96 Cloudflare edge connections held by orphaned cloudflared processes versus 4 for the live daemon">
+  </a>
+        <header>
+          <h2><a href="/blog/2026/10/windows-sigterm-sparse-files/">Windows Grab-Bag: SIGTERM That Doesn&#39;t Exist and Sparse Files That Break Docker</a></h2>
+          <time class="published" datetime="2026-10-03 14:30:00 -0700 PDT">October 3, 2026</time>
+        </header>
+      </article>
+      
+      
+        <footer>
+          <a href="/blog" class="button">See More</a>
+        </footer>
+      
+    </section>
+  
+
+  
+    
+
+      <section id="categories">
+        <header>
+          <h1><a href="/categories">Categories</a></h1>
+        </header>
+        <ul>
+          
+          
+          <li>
+              <a href="/categories/ephpm/">ephpm<span class="count">33</span></a>
+          
+          <li>
+              <a href="/categories/go/">go<span class="count">30</span></a>
+          
+          <li>
+              <a href="/categories/php/">php<span class="count">23</span></a>
+          
+          <li>
+              <a href="/categories/rust/">rust<span class="count">15</span></a>
+          
+          <li>
+              <a href="/categories/homelab/">homelab<span class="count">14</span></a>
+          
+          <li>
+              <a href="/categories/windows/">windows<span class="count">14</span></a>
+          
+          <li>
+              <a href="/categories/ci/">ci<span class="count">9</span></a>
+          
+          <li>
+              <a href="/categories/databases/">databases<span class="count">9</span></a>
+          
+          <li>
+              <a href="/categories/security/">security<span class="count">9</span></a>
+          
+          <li>
+              <a href="/categories/containers/">containers<span class="count">7</span></a>
+          
+          <li>
+              <a href="/categories/tools/">tools<span class="count">5</span></a>
+          
+          <li>
+              <a href="/categories/ai-agents/">ai-agents<span class="count">4</span></a>
+          
+          </li>
+        </ul>
+      </section>
+    
+  
+
+  
+    <section id="mini-bio">
+      <header>
+        <h1>About</h1>
+      </header>
+      <p>Luther is a 20+ year software veteran specializing in backend APIs and architecting products. Employed at <a href='https://www.suse.com'>SUSE</a> as the Team Lead for the <a href='https://github.com/rancher/windows/issues'>Containers on Windows Team</a> working on <a href='https://rancher.com/'>Rancher</a> + <a href='https://kubernetes.io/'>Kubernetes</a></p>
+      <footer>
+        <a href="/about" class="button">Learn More</a>
+      </footer>
+    </section>
+  
+</section>
+
+      <footer id="site-footer">
+  
+      <ul class="socnet-icons">
+        
+
+        <li><a href="//github.com/luthermonson" target="_blank" rel="noopener" title="GitHub" class="fab fa-github"></a></li>
+
+
+
+
+
+
+
+
+
+
+
+<li><a href="//www.linkedin.com/in/luthermonson" target="_blank" rel="noopener" title="LinkedIn" class="fab fa-linkedin"></a></li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li><a href="//twitter.com/luthermonson" target="_blank" rel="noopener" title="Twitter" class="fab fa-twitter"></a></li>
+
+
+
+
+
+
+
+
+
+
+
+<li><a href="mailto:luther.monson@gmail.com" target="_blank" title="Email" class="far fa-envelope"></a></li>
+
+      </ul>
+  
+  <p class="copyright">
+    © 2026 Luther Monson
+      <br>
+    Theme: <a href='https://github.com/pacollins/hugo-future-imperfect-slim' target='_blank' rel='noopener'>Hugo Future Imperfect Slim</a><br>A <a href='https://html5up.net/future-imperfect' target='_blank' rel='noopener'>HTML5 UP port</a> | Powered by <a href='https://gohugo.io/' title='0.160.1' target='_blank' rel='noopener'>Hugo</a>
+  </p>
+</footer>
+<a id="back-to-top" href="#" class="fas fa-arrow-up fa-2x"></a>
+
+      <script src="/js/bundle.min.241b62ebc4792fe8c7a75879e5f710894f226f2b73342e9916b3a3b0526030cc.js" integrity="sha256-JBti68R5L&#43;jHp1h55fcQiU8ibytzNC6ZFrOjsFJgMMw="></script>
+    <script src="/js/add-on.js"></script>
+    </div>
+  </body>
+</html>

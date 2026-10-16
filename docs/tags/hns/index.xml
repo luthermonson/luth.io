@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>Hns on Luther Monson</title>
+    <link>https://luth.io/tags/hns/</link>
+    <description>Recent content in Hns on Luther Monson</description>
+    <generator>Hugo</generator>
+    <language>en</language>
+    <lastBuildDate>Sat, 22 Aug 2026 19:40:00 -0700</lastBuildDate>
+    <atom:link href="https://luth.io/tags/hns/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>Five Ways to Not Firewall a Windows Container (and the One That Works)</title>
+      <link>https://luth.io/blog/2026/08/windows-container-egress-firewall/</link>
+      <pubDate>Sat, 22 Aug 2026 19:40:00 -0700</pubDate>
+      <guid>https://luth.io/blog/2026/08/windows-container-egress-firewall/</guid>
+      <description>&lt;p&gt;&lt;a href=&#34;https://luth.io/blog/2026/08/ephemerd-one-daemon-every-os/&#34;&gt;ephemerd&lt;/a&gt; runs CI jobs from pull requests, and one of the rules is that a job&#xA;can reach the internet but not my LAN. On Linux that&amp;rsquo;s a few iptables rules in the &lt;code&gt;FORWARD&lt;/code&gt; path and I didn&amp;rsquo;t think about it&#xA;much. On Windows I spent about a week finding out how many ways there are to write a firewall rule that Windows accepts,&#xA;lists, and then never applies.&lt;/p&gt;&#xA;&lt;p&gt;The setup: Windows Server 2025 (build 26100), job containers running with Hyper-V isolation, on the default HNS NAT network&#xA;that every Windows container tutorial uses (&lt;code&gt;10.88.0.0/16&lt;/code&gt; in ephemerd&amp;rsquo;s case, gateway &lt;code&gt;10.88.0.1&lt;/code&gt;). The target is the same&#xA;as Linux: block &lt;code&gt;10.0.0.0/8&lt;/code&gt;, &lt;code&gt;172.16.0.0/12&lt;/code&gt;, &lt;code&gt;192.168.0.0/16&lt;/code&gt; and &lt;code&gt;169.254.0.0/16&lt;/code&gt;, allow everything else.&lt;/p&gt;</description>
+    </item>
+  </channel>
+</rss>

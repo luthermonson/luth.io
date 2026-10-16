@@ -1,0 +1,738 @@
+<!doctype html>
+<html lang="en">
+  <head>
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-MSTSKGFWTX"></script>
+<script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+
+    gtag('config', 'G-MSTSKGFWTX');
+</script><meta charset="utf-8">
+<title>The Bugs Were Our Own Linker Wraps: Making a PHP Timeout Actually Time Out - Luther Monson</title>
+<meta name="description" content="max_execution_time did nothing in ePHPm because we had wrapped zend_set_timeout to a no-op. The SDK already had per-thread timers; we just had to stop switching them off.">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<meta name="twitter:card" content="summary_large_image"><meta name="twitter:site" content="@luthermonson">
+
+<meta property="og:site_name" content="Luther Monson">
+<meta property="og:title" content="The Bugs Were Our Own Linker Wraps: Making a PHP Timeout Actually Time Out">
+<meta property="og:description" content="max_execution_time did nothing in ePHPm because we had wrapped zend_set_timeout to a no-op. The SDK already had per-thread timers; we just had to stop switching them off.">
+<meta property="og:type" content="article">
+<meta property="og:url" content="https://luth.io/blog/2026/09/php-timeout-linker-wraps/">
+    <meta property="og:image" content="https://luth.io/img/2026/09/php-timeout-linker-wraps-cover.svg">
+    <meta property="og:image:alt" content="Side by side: a process-wide SIGPROF timer that can land on the wrong thread, versus a per-thread POSIX timer that delivers SIGRTMIN to the PHP thread that armed it">
+
+
+  <link rel="manifest" href="/favicon/site.webmanifest?v=1">
+  <link rel="apple-touch-icon" sizes="180x180" href="/favicon/apple-touch-icon.png?v=1">
+  <link rel="icon" type="image/png" sizes="32x32" href="/favicon/favicon-32x32.png?v=1">
+  <link rel="icon" type="image/png" sizes="16x16" href="/favicon/favicon-16x16.png?v=1">
+  
+    <link rel="mask-icon" href="/favicon/safari-pinned-tab.svg?v=1" color="#ffffff">
+    <link rel="shortcut icon" href="/favicon/favicon.ico?v=1">
+    <meta name="msapplication-config" content="/favicon/browserconfig.xml?v=1">
+  
+  <meta name="msapplication-TileColor" content="#ffffff">
+  <meta name="theme-color" content="#ffffff">
+
+
+  <meta name="generator" content="Hugo 0.160.1">
+  <link rel="alternate" type="application/rss+xml" href="https://luth.io/index.xml" title="Luther Monson">
+  <link rel="stylesheet" href="/css/bundle.min.e1ffed86714fbb7eff75eab221c0c61b8260be0c7d1c08db0fcb7a2bdb6af7c9.css" integrity="sha256-4f/thnFPu37/deqyIcDGG4Jgvgx9HAjbD8t6K9tq98k="><link rel="stylesheet" href="/css/add-on.css">
+        <link rel="stylesheet" href="/css/code.css">
+        <link rel="stylesheet" href="/css/mobile.css">
+</head>
+
+  <body>
+    
+
+<header id="site-header">
+  <nav id="site-nav">
+    <h1 class="nav-title">
+      <a href="/" class="nav">
+        <img class="nav-avatar" src="/img/luther-monson-headshot.jpg" alt="" width="32" height="32">
+        
+          Blog
+        
+      </a>
+    </h1>
+    <menu id="site-nav-menu" class="flyout-menu menu">
+      
+        
+          
+          <a href="/" class="nav link"><i class='fa fa-home'></i> Home</a>
+        
+      
+        
+          
+          <a href="/about" class="nav link"><i class='far fa-id-card'></i> About</a>
+        
+      
+        
+          
+          <a href="/blog" class="nav link"><i class='far fa-newspaper'></i> Blog</a>
+        
+      
+        
+          
+          <a href="/archive" class="nav link"><i class='far fa-calendar-alt'></i> Archive</a>
+        
+      
+        
+          
+          <a href="/categories" class="nav link"><i class='fas fa-sitemap'></i> Categories</a>
+        
+      
+      <a href="#share-menu" class="nav link share-toggle"><i class="fas fa-share-alt">&nbsp;</i>Share</a>
+      <a href="#search-input" class="nav link search-toggle"><i class="fas fa-search">&nbsp;</i>Search</a>
+    </menu>
+    <a href="#search-input" class="nav search-toggle"><i class="fas fa-search fa-2x">&nbsp;</i></a>
+    <a href="#share-menu" class="nav share-toggle"><i class="fas fa-share-alt fa-2x">&nbsp;</i></a>
+    
+    <a href="#site-nav" class="nav nav-toggle"><i class="fas fa-bars fa-2x"></i></a>
+  </nav>
+  <menu id="search" class="menu"><input id="search-input" class="search-input menu"></input><div id="search-results" class="search-results menu"></div></menu>
+  
+  
+    <menu id="share-menu" class="flyout-menu menu">
+      <h1>Share Post</h1>
+      
+
+
+
+
+  
+    
+    <a href="//twitter.com/share?text=The%20Bugs%20Were%20Our%20Own%20Linker%20Wraps%3a%20Making%20a%20PHP%20Timeout%20Actually%20Time%20Out&amp;url=https%3a%2f%2fluth.io%2fblog%2f2026%2f09%2fphp-timeout-linker-wraps%2f" target="_blank" rel="noopener" class="nav share-btn twitter">
+        <p>Twitter</p>
+      </a>
+  
+
+  
+      <a href="//www.facebook.com/sharer/sharer.php?u=https%3a%2f%2fluth.io%2fblog%2f2026%2f09%2fphp-timeout-linker-wraps%2f" target="_blank" rel="noopener" class="nav share-btn facebook">
+        <p>Facebook</p>
+        </a>
+  
+
+  
+    <a href="//www.reddit.com/submit?url=https%3a%2f%2fluth.io%2fblog%2f2026%2f09%2fphp-timeout-linker-wraps%2f&amp;title=The%20Bugs%20Were%20Our%20Own%20Linker%20Wraps%3a%20Making%20a%20PHP%20Timeout%20Actually%20Time%20Out" target="_blank" rel="noopener" class="nav share-btn reddit">
+          <p>Reddit</p>
+        </a>
+  
+
+  
+        <a href="//www.linkedin.com/shareArticle?url=https%3a%2f%2fluth.io%2fblog%2f2026%2f09%2fphp-timeout-linker-wraps%2f&amp;title=The%20Bugs%20Were%20Our%20Own%20Linker%20Wraps%3a%20Making%20a%20PHP%20Timeout%20Actually%20Time%20Out" target="_blank" rel="noopener" class="nav share-btn linkedin">
+            <p>LinkedIn</p>
+          </a>
+  
+
+  
+        <a href="//www.pinterest.com/pin/create/button/?url=https%3a%2f%2fluth.io%2fblog%2f2026%2f09%2fphp-timeout-linker-wraps%2f&amp;description=The%20Bugs%20Were%20Our%20Own%20Linker%20Wraps%3a%20Making%20a%20PHP%20Timeout%20Actually%20Time%20Out" target="_blank" rel="noopener" class="nav share-btn pinterest">
+          <p>Pinterest</p>
+        </a>
+  
+
+  
+        <a href="mailto:?subject=Check%20out%20this%20post%20by Luther%20Monson&amp;body=https%3a%2f%2fluth.io%2fblog%2f2026%2f09%2fphp-timeout-linker-wraps%2f" target="_blank" class="nav share-btn email" data-proofer-ignore>
+          <p>Email</p>
+        </a>
+  
+
+
+    </menu>
+  
+</header>
+
+    <div id="wrapper">
+      <section id="site-intro" class="hidden-single-column">
+  <a href="/"><img src="/img/luther-monson-headshot.jpg" class="circle" width="100" alt="Luther Monson, Staff Software Engineer at SUSE" /></a>
+  <header>
+    <h1>Luther Monson</h1>
+  </header>
+  <main>
+    <p>Go by way of PHP &middot; Containers &middot; VMs &middot; Windows &middot; Kubernetes</p>
+  </main>
+  
+    <footer>
+      <ul class="socnet-icons">
+        
+
+        <li><a href="//github.com/luthermonson" target="_blank" rel="noopener" title="GitHub" class="fab fa-github"></a></li>
+
+
+
+
+
+
+
+
+
+
+
+<li><a href="//www.linkedin.com/in/luthermonson" target="_blank" rel="noopener" title="LinkedIn" class="fab fa-linkedin"></a></li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li><a href="//twitter.com/luthermonson" target="_blank" rel="noopener" title="Twitter" class="fab fa-twitter"></a></li>
+
+
+
+
+
+
+
+
+
+
+
+<li><a href="mailto:luther.monson@gmail.com" target="_blank" title="Email" class="far fa-envelope"></a></li>
+
+      </ul>
+    </footer>
+  
+</section>
+
+      <main id="site-main">
+        
+  <article>
+    <div class="post">
+      <header>
+  <div class="title">
+    
+      <h2><a href="/blog/2026/09/php-timeout-linker-wraps/">The Bugs Were Our Own Linker Wraps: Making a PHP Timeout Actually Time Out</a></h2>
+    
+    
+      <p>max_execution_time did nothing in ePHPm because we had wrapped zend_set_timeout to a no-op. The SDK already had per-thread timers; we just had to stop switching them off.</p>
+    
+  </div>
+  <div class="meta">
+    <time datetime="2026-09-16 19:35:00 -0700 PDT">September 16, 2026</time>
+    
+    <p>8-Minute Read</p>
+  </div>
+</header>
+
+      <div id="socnet-share">
+        
+
+
+
+
+  
+    
+    <a href="//twitter.com/share?text=The%20Bugs%20Were%20Our%20Own%20Linker%20Wraps%3a%20Making%20a%20PHP%20Timeout%20Actually%20Time%20Out&amp;url=https%3a%2f%2fluth.io%2fblog%2f2026%2f09%2fphp-timeout-linker-wraps%2f" target="_blank" rel="noopener" class="nav share-btn twitter">
+        <p>Twitter</p>
+      </a>
+  
+
+  
+      <a href="//www.facebook.com/sharer/sharer.php?u=https%3a%2f%2fluth.io%2fblog%2f2026%2f09%2fphp-timeout-linker-wraps%2f" target="_blank" rel="noopener" class="nav share-btn facebook">
+        <p>Facebook</p>
+        </a>
+  
+
+  
+    <a href="//www.reddit.com/submit?url=https%3a%2f%2fluth.io%2fblog%2f2026%2f09%2fphp-timeout-linker-wraps%2f&amp;title=The%20Bugs%20Were%20Our%20Own%20Linker%20Wraps%3a%20Making%20a%20PHP%20Timeout%20Actually%20Time%20Out" target="_blank" rel="noopener" class="nav share-btn reddit">
+          <p>Reddit</p>
+        </a>
+  
+
+  
+        <a href="//www.linkedin.com/shareArticle?url=https%3a%2f%2fluth.io%2fblog%2f2026%2f09%2fphp-timeout-linker-wraps%2f&amp;title=The%20Bugs%20Were%20Our%20Own%20Linker%20Wraps%3a%20Making%20a%20PHP%20Timeout%20Actually%20Time%20Out" target="_blank" rel="noopener" class="nav share-btn linkedin">
+            <p>LinkedIn</p>
+          </a>
+  
+
+  
+        <a href="//www.pinterest.com/pin/create/button/?url=https%3a%2f%2fluth.io%2fblog%2f2026%2f09%2fphp-timeout-linker-wraps%2f&amp;description=The%20Bugs%20Were%20Our%20Own%20Linker%20Wraps%3a%20Making%20a%20PHP%20Timeout%20Actually%20Time%20Out" target="_blank" rel="noopener" class="nav share-btn pinterest">
+          <p>Pinterest</p>
+        </a>
+  
+
+  
+        <a href="mailto:?subject=Check%20out%20this%20post%20by Luther%20Monson&amp;body=https%3a%2f%2fluth.io%2fblog%2f2026%2f09%2fphp-timeout-linker-wraps%2f" target="_blank" class="nav share-btn email" data-proofer-ignore>
+          <p>Email</p>
+        </a>
+  
+
+
+      </div>
+      <div class="content">
+        
+        <p>In <a href="/blog/2026/09/php-stack-guard-segfault-containment/">the stack guard post</a> the villain was a <code>-Wl,--wrap</code> linker
+flag that turned off PHP&rsquo;s C-stack overflow guard. It wasn&rsquo;t the only one. Until August, <code>max_execution_time</code> did
+nothing in <a href="https://github.com/ephpm/ephpm">ePHPm</a> on Linux, for the same reason: we had wrapped the function that
+arms it to a no-op. A runaway script ran until the HTTP layer&rsquo;s request timeout gave up on it and sent a 504, and the
+PHP thread kept burning CPU after that.</p>
+<p>This one is shorter, and it&rsquo;s really about a habit: a setting you parse and don&rsquo;t enforce is worse than a setting you
+don&rsquo;t have.</p>
+<h3 id="why-the-wrap-existed-in-the-first-place">Why the wrap existed in the first place</h3>
+<p>When you embed PHP, you inherit its global side effects, and signals are the worst of them. PHP&rsquo;s classic timeout uses
+<code>setitimer(ITIMER_PROF)</code>, which delivers SIGPROF to the <em>process</em>. The kernel then hands it to whatever thread it
+likes. In php-fpm that&rsquo;s fine, since each process has one PHP thread. In ePHPm, SIGPROF could land on a tokio worker
+thread with no PHP state at all, and PHP&rsquo;s handler would dereference per-request globals that don&rsquo;t exist there and
+segfault.</p>
+<p>So early in the project, <code>build.rs</code> wrapped PHP&rsquo;s signal plumbing and the timeout functions, and the C wrapper
+replaced them with no-ops:</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-c" data-lang="c"><span class="line"><span class="cl"><span class="kt">void</span> <span class="nf">__wrap_zend_set_timeout</span><span class="p">(</span><span class="kt">long</span> <span class="n">seconds</span><span class="p">,</span> <span class="kt">int</span> <span class="n">reset_signals</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl"><span class="p">{</span>
+</span></span><span class="line"><span class="cl">    <span class="p">(</span><span class="kt">void</span><span class="p">)</span><span class="n">seconds</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">    <span class="p">(</span><span class="kt">void</span><span class="p">)</span><span class="n">reset_signals</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">    <span class="cm">/* no-op: ePHPm manages request timeouts at the HTTP server level */</span>
+</span></span><span class="line"><span class="cl"><span class="p">}</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="kt">void</span> <span class="nf">__wrap_zend_unset_timeout</span><span class="p">(</span><span class="kt">void</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl"><span class="p">{</span>
+</span></span><span class="line"><span class="cl">    <span class="cm">/* no-op */</span>
+</span></span><span class="line"><span class="cl"><span class="p">}</span>
+</span></span></code></pre></div><p><code>--wrap=zend_set_timeout</code> makes GNU ld resolve every call to <code>zend_set_timeout</code> inside <code>libphp.a</code> to
+<code>__wrap_zend_set_timeout</code> instead. It&rsquo;s a clean way to override a function in a static archive you didn&rsquo;t compile,
+and at the time it was the correct call. But it meant <code>[php] max_execution_time</code> was parsed, documented and ignored.
+A docs audit landing the same week had it marked &ldquo;parsed but not enforced&rdquo;.</p>
+<h3 id="the-sdk-already-had-the-fix-compiled-in">The SDK already had the fix compiled in</h3>
+<p>PHP added <code>--enable-zend-max-execution-timers</code> partway through the 8.1 line (8.1.18 and 8.2.5, April 2023). It
+replaces the process-wide itimer with a per-thread POSIX timer. The question was whether our SDK had it. php-fpm users never think about this flag, and the docs for it are
+thin, so I checked the artifacts directly:</p>
+<ul>
+<li><code>php_config.h</code> in the Linux ZTS SDK has <code>#define ZEND_MAX_EXECUTION_TIMERS 1</code>.</li>
+<li><code>libphp.a</code> defines <code>zend_max_execution_timer_init</code>, <code>_settime</code> and <code>_shutdown</code>, and they reference
+<code>timer_create</code> and <code>timer_settime</code>.</li>
+<li>Disassembling <code>zend_max_execution_timer_init</code> shows the important part:
+<code>timer_create(CLOCK_BOOTTIME, SIGEV_THREAD_ID -&gt; gettid(), SIGRTMIN)</code>, with the handler installed through a raw
+<code>sigaction</code> and not through the <code>zend_signal_*</code> functions we also wrap.</li>
+</ul>
+<p>That last point matters. <code>SIGEV_THREAD_ID</code> means the kernel delivers the signal to one specific thread, the PHP thread
+that armed it. The whole reason for the wrap was gone. The source matches what the disassembly shows,
+in <code>Zend/zend_max_execution_timer.c</code>:</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-c" data-lang="c"><span class="line"><span class="cl"><span class="n">sev</span><span class="p">.</span><span class="n">sigev_notify</span> <span class="o">=</span> <span class="n">SIGEV_THREAD_ID</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl"><span class="n">sev</span><span class="p">.</span><span class="n">sigev_signo</span> <span class="o">=</span> <span class="n">SIGRTMIN</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl"><span class="p">...</span>
+</span></span><span class="line"><span class="cl"><span class="k">if</span> <span class="p">(</span><span class="nf">timer_create</span><span class="p">(</span><span class="n">ZEND_MAX_EXECUTION_TIMERS_CLOCK</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">sev</span><span class="p">,</span> <span class="o">&amp;</span><span class="nf">EG</span><span class="p">(</span><span class="n">max_execution_timer_timer</span><span class="p">))</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">)</span> <span class="p">{</span>
+</span></span></code></pre></div><p>and <code>zend_set_timeout()</code> calls into <code>zend_max_execution_timer_settime()</code> when that&rsquo;s compiled in. So the only thing
+standing between ePHPm and a working timeout was our own linker flag.</p>
+<h3 id="probe-dont-assume">Probe, don&rsquo;t assume</h3>
+<p>The fix in <a href="https://github.com/ephpm/ephpm/pull/277">ephpm#277</a> doesn&rsquo;t just delete the wrap, because not every SDK
+we build against has per-thread timers (macOS doesn&rsquo;t, for one). Both build scripts read <code>php_config.h</code> and only drop
+the wrap when the define is present:</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-rust" data-lang="rust"><span class="line"><span class="cl"><span class="kd">let</span><span class="w"> </span><span class="n">has_exec_timers</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">php_config_has_max_exec_timers</span><span class="p">(</span><span class="o">&amp;</span><span class="n">sdk_path</span><span class="p">.</span><span class="n">join</span><span class="p">(</span><span class="s">&#34;include&#34;</span><span class="p">).</span><span class="n">join</span><span class="p">(</span><span class="s">&#34;php&#34;</span><span class="p">));</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="k">if</span><span class="w"> </span><span class="n">has_exec_timers</span><span class="w"> </span><span class="p">{</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="fm">println!</span><span class="p">(</span><span class="s">&#34;cargo::rustc-cfg=php_max_exec_timers&#34;</span><span class="p">);</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="p">}</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="kd">let</span><span class="w"> </span><span class="k">mut</span><span class="w"> </span><span class="n">wrap_funcs</span>: <span class="nb">Vec</span><span class="o">&lt;&amp;</span><span class="kt">str</span><span class="o">&gt;</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="fm">vec!</span><span class="p">[</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="s">&#34;zend_signal_startup&#34;</span><span class="p">,</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="s">&#34;zend_signal_init&#34;</span><span class="p">,</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="s">&#34;zend_signal_deactivate&#34;</span><span class="p">,</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="s">&#34;zend_signal_activate&#34;</span><span class="p">,</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="s">&#34;zend_signal_handler_unblock&#34;</span><span class="p">,</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="c1">// still wrapped at the time; #360 (the stack guard post) removed it
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="s">&#34;zend_call_stack_init&#34;</span><span class="p">,</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="p">];</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="k">if</span><span class="w"> </span><span class="o">!</span><span class="n">has_exec_timers</span><span class="w"> </span><span class="p">{</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="c1">// No per-thread timers: zend_set_timeout() arms a process-wide
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="c1">// setitimer(ITIMER_PROF) + SIGPROF handler, which crashes when the
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="c1">// signal lands on a tokio worker thread.
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="n">wrap_funcs</span><span class="p">.</span><span class="n">push</span><span class="p">(</span><span class="s">&#34;zend_set_timeout&#34;</span><span class="p">);</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="n">wrap_funcs</span><span class="p">.</span><span class="n">push</span><span class="p">(</span><span class="s">&#34;zend_unset_timeout&#34;</span><span class="p">);</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="p">}</span><span class="w">
+</span></span></span></code></pre></div><p>The C side gets the matching <code>EPHPM_NATIVE_EXEC_TIMER</code> define, and the no-op stubs only compile when it&rsquo;s absent.
+On builds without the timers nothing changes: the HTTP request timeout is the only ceiling, and startup warns.</p>
+<h3 id="the-second-thing-turning-it-off-the-embed-sapi">The second thing turning it off: the embed SAPI</h3>
+<p>Dropping the wrap wasn&rsquo;t enough on its own. The timer got created and stayed disarmed. The embed SAPI ships its own
+defaults, and <code>max_execution_time=0</code> is one of them:</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-c" data-lang="c"><span class="line"><span class="cl"><span class="k">static</span> <span class="k">const</span> <span class="kt">char</span> <span class="n">HARDCODED_INI</span><span class="p">[]</span> <span class="o">=</span>
+</span></span><span class="line"><span class="cl">	<span class="s">&#34;html_errors=0</span><span class="se">\n</span><span class="s">&#34;</span>
+</span></span><span class="line"><span class="cl">	<span class="s">&#34;implicit_flush=1</span><span class="se">\n</span><span class="s">&#34;</span>
+</span></span><span class="line"><span class="cl">	<span class="s">&#34;output_buffering=0</span><span class="se">\n</span><span class="s">&#34;</span>
+</span></span><span class="line"><span class="cl">	<span class="s">&#34;max_execution_time=0</span><span class="se">\n</span><span class="s">&#34;</span>
+</span></span><span class="line"><span class="cl">	<span class="s">&#34;max_input_time=-1</span><span class="se">\n\0</span><span class="s">&#34;</span><span class="p">;</span>
+</span></span></code></pre></div><p>In our setup, by the time a script ran, both the ini entry and <code>EG(timeout_seconds)</code> read 0, so PHP&rsquo;s own
+ini-to-timer chain armed nothing. Instead of fighting that, ePHPm records the configured value once from Rust after
+<code>php_embed_init()</code> and arms the timer explicitly per request, right before executing the script:</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-c" data-lang="c"><span class="line"><span class="cl"><span class="cp">#ifdef EPHPM_NATIVE_EXEC_TIMER
+</span></span></span><span class="line"><span class="cl">    <span class="cm">/* php_request_startup above already created the timer but armed it from
+</span></span></span><span class="line"><span class="cl"><span class="cm">     * EG(timeout_seconds), which the embed SAPI has reset to 0, so we arm
+</span></span></span><span class="line"><span class="cl"><span class="cm">     * explicitly from the configured value here. reset_signals = 1 also
+</span></span></span><span class="line"><span class="cl"><span class="cm">     * (re)installs the SIGRTMIN disposition. */</span>
+</span></span><span class="line"><span class="cl">    <span class="nf">zend_set_timeout</span><span class="p">(</span><span class="n">g_configured_max_exec_secs</span><span class="p">,</span> <span class="mi">1</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl"><span class="cp">#endif
+</span></span></span></code></pre></div><p>Arming from a process-wide configured value has a nice side effect: a previous request&rsquo;s <code>set_time_limit(0)</code> (which
+changes the ini entry at runtime) can&rsquo;t leak into the next request on the same thread. <code>set_time_limit()</code> during a
+request still re-arms the timer live on top of it, the same as in php-fpm.</p>
+<p>The result also needed its own status code. A timeout unwinds through <code>zend_bailout()</code> like an out-of-memory fatal,
+and since <a href="/blog/2026/08/requests-that-end-wrong/">ephpm#255</a> a bailout&rsquo;s partial output gets discarded. But a timeout&rsquo;s
+output is a legitimate php-fpm-style error page, so it&rsquo;s told apart by PHP&rsquo;s own message and delivered:</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-c" data-lang="c"><span class="line"><span class="cl"><span class="k">if</span> <span class="p">(</span><span class="nf">PG</span><span class="p">(</span><span class="n">last_error_message</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">    <span class="o">&amp;&amp;</span> <span class="nf">strncmp</span><span class="p">(</span><span class="nf">ZSTR_VAL</span><span class="p">(</span><span class="nf">PG</span><span class="p">(</span><span class="n">last_error_message</span><span class="p">)),</span>
+</span></span><span class="line"><span class="cl">               <span class="s">&#34;Maximum execution time of&#34;</span><span class="p">,</span> <span class="mi">25</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">)</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">    <span class="n">result</span> <span class="o">=</span> <span class="n">EPHPM_EXEC_TIMEOUT</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl"><span class="p">}</span> <span class="k">else</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">    <span class="n">result</span> <span class="o">=</span> <span class="n">EPHPM_EXEC_BAILOUT</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl"><span class="p">}</span>
+</span></span></code></pre></div><h3 id="what-it-does-now">What it does now</h3>
+<p>From the PR, on a PHP-linked build of PHP 8.5.7 with <code>max_execution_time = 2</code> and a 30-second request timeout:</p>
+<table>
+  <thead>
+      <tr>
+          <th>case</th>
+          <th>result</th>
+      </tr>
+  </thead>
+  <tbody>
+      <tr>
+          <td>CPU busy loop</td>
+          <td>500 at 2.004 s, buffered output flushed, shutdown function ran</td>
+      </tr>
+      <tr>
+          <td><code>sleep(5)</code></td>
+          <td>500 at 2.002 s (<code>CLOCK_BOOTTIME</code> is wall clock, so sleeping counts)</td>
+      </tr>
+      <tr>
+          <td><code>set_time_limit(10)</code></td>
+          <td>500 at 10.002 s</td>
+      </tr>
+      <tr>
+          <td><code>set_time_limit(0)</code></td>
+          <td>504 at 30.002 s, only the outer request timeout fires</td>
+      </tr>
+      <tr>
+          <td>blocking <code>fread</code> on an empty FIFO</td>
+          <td>500 at 2.004 s</td>
+      </tr>
+      <tr>
+          <td>normal request afterwards</td>
+          <td>200, same thread, no poisoning</td>
+      </tr>
+  </tbody>
+</table>
+<p>The FIFO row is my favorite. The timer interrupts a read that&rsquo;s blocked in the kernel, which the HTTP-layer timeout
+could never do: it could only stop waiting for the thread, not stop the thread. Worker mode got the same treatment,
+plus disarm-on-idle so a worker sitting in <code>take_request()</code> for longer than the limit doesn&rsquo;t fatal itself, and a
+cross-request test proving a <code>set_time_limit(0)</code> in one request doesn&rsquo;t leave the next one unlimited.</p>
+<p>So there are two layers now, and the docs say so: <code>max_execution_time</code> is PHP&rsquo;s own catchable, <code>set_time_limit</code>-able,
+wall-clock limit that answers 500, and <code>[server.timeouts] request</code> is the outer 504 backstop. Startup warns when
+<code>max_execution_time &gt;= request</code>, since the inner limit could then never fire first.</p>
+<h3 id="the-wider-pattern-silent-settings">The wider pattern: silent settings</h3>
+<p>Two linker wraps in this project switched off a PHP feature and left the config pretending otherwise. Once I started
+looking, the same thing turned up without any linker involved.</p>
+<p><strong>An idle timeout that was parsed and thrown away.</strong> <code>[server.timeouts] idle</code> was read into a variable and dropped,
+so the documented 60-second default did nothing. <a href="https://github.com/ephpm/ephpm/pull/106">ephpm#106</a> implemented it
+(an I/O adapter stamps activity on every byte and a re-arming watchdog triggers hyper&rsquo;s graceful shutdown after a
+quiet window), and in the same pass turned every other silent no-op it found into either a working knob or a loud
+startup warning.</p>
+<p><strong>Typos and knobs from newer versions.</strong> A config key the binary didn&rsquo;t know was silently ignored. This bit for real:
+<code>per_site = true</code> on a binary that predated the knob parsed fine, got dropped on the floor, and brought the node up
+with every tenant sharing one database, with every health check green.
+<a href="https://github.com/ephpm/ephpm/pull/434">ephpm#434</a> made every config section <code>deny_unknown_fields</code>, so an unknown
+key is a startup error that names the key. The top-level struct deliberately stays lenient, because figment maps
+every <code>EPHPM_*</code> environment variable to a top-level key, and ePHPm sets one itself when it runs as a Windows service.
+The migration note in that PR has my favorite sentence of the year: if startup fails naming a key, that key was
+already doing nothing.</p>
+<p><strong>Estimates nobody measured.</strong> Two old perf issues estimated that rebuilding <code>$_SERVER</code> per request and round-tripping
+response headers as text cost about 0.15 ms and 0.05 ms. When <a href="https://github.com/ephpm/ephpm/pull/457">ephpm#457</a>
+actually measured them, they were about 4 µs and 1 µs, off by roughly 40x. The fix still went in (it also closed a
+header-injection gap on the worker path), but it&rsquo;s a few microseconds per request, not the 20% the estimates implied.</p>
+<p>The common thread: a knob that&rsquo;s parsed but doesn&rsquo;t do anything, a feature compiled in and wrapped out, a number
+nobody measured. Each one looks fine from the outside. For the linker case specifically, every <code>--wrap</code> in an
+embedder&rsquo;s build is a runtime feature you&rsquo;ve switched off, and it should have a test that fails the day its reason
+stops being true. The stack-guard regression tests do that now: they fail with a transport error, not a status
+mismatch, if the guard ever goes away again. The timeout matrix above was still run by hand when it merged, and
+turning it into an automated e2e test is on the follow-up list. Writing this post is a decent reminder to go do it.</p>
+<h3 id="links">Links</h3>
+<ul>
+<li><a href="https://github.com/ephpm/ephpm/pull/277">ephpm#277</a> - natively enforce <code>max_execution_time</code> via per-thread timers</li>
+<li><a href="https://github.com/ephpm/ephpm/pull/360">ephpm#360</a> - the other wrap: re-arming PHP&rsquo;s C-stack guard</li>
+<li><a href="https://github.com/ephpm/ephpm/pull/106">ephpm#106</a> - make silent no-op config knobs real or loud</li>
+<li><a href="https://github.com/ephpm/ephpm/pull/434">ephpm#434</a> - reject unknown keys in every config section</li>
+<li><a href="https://github.com/ephpm/ephpm/pull/457">ephpm#457</a> - the <code>$_SERVER</code> and header round-trip, measured</li>
+<li>php-src: <a href="https://github.com/php/php-src/blob/master/Zend/zend_max_execution_timer.c"><code>Zend/zend_max_execution_timer.c</code></a>, <a href="https://github.com/php/php-src/blob/master/sapi/embed/php_embed.c"><code>sapi/embed/php_embed.c</code></a></li>
+<li><a href="https://sourceware.org/binutils/docs/ld/Options.html">GNU ld <code>--wrap</code></a></li>
+</ul>
+
+      </div>
+      <footer>
+        <div class="stats">
+  
+    <ul class="categories">
+      
+        
+          <li><a class="article-terms-link" href="/categories/ephpm/">ephpm</a></li>
+        
+          <li><a class="article-terms-link" href="/categories/php/">php</a></li>
+        
+      
+    </ul>
+  
+  
+    <ul class="tags">
+      
+        
+          <li><a class="article-terms-link" href="/tags/php/">php</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/rust/">rust</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/ephpm/">ephpm</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/linker/">linker</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/signals/">signals</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/config/">config</a></li>
+        
+      
+    </ul>
+  
+</div>
+
+      </footer>
+    </div>
+    
+      
+  
+  <div class='post giscus-wrap'>
+    <script src='https://giscus.app/client.js'
+            data-repo='luthermonson/luth.io'
+            data-repo-id='R_kgDOGvFBXQ'
+            data-category='Announcements'
+            data-category-id='DIC_kwDOGvFBXc4DH_gv'
+            data-mapping='pathname'
+            data-strict='1'
+            data-reactions-enabled='1'
+            data-emit-metadata='0'
+            data-input-position='top'
+            data-theme='light'
+            data-lang='en'
+            data-loading='lazy'
+            crossorigin='anonymous'
+            async>
+    </script>
+  </div>
+  
+
+
+
+    
+  </article>
+  
+    <nav class="post-nav">
+      
+        <a href="/blog/2026/09/clustered-sqlite-cdc-cluster-channel/" class="post-nav-link older">
+          <span class="post-nav-label">&larr; Older</span>
+          <span class="post-nav-title">Clustered SQLite in ePHPm, Part 3: CDC Over the Cluster Channel</span>
+        </a>
+      
+      
+        <a href="/blog/2026/09/os-exec-stdoutpipe-wait-footgun/" class="post-nav-link newer">
+          <span class="post-nav-label">Newer &rarr;</span>
+          <span class="post-nav-title">os/exec&#39;s StdoutPipe Footgun: How cmd.Wait() Ate My Last Frame (Twice)</span>
+        </a>
+      
+    </nav>
+  
+
+      </main>
+      <section id="site-sidebar">
+  
+    <section id="recent-posts">
+      <header>
+        <h1>Recent Posts</h1>
+      </header>
+      
+      <article class="mini-post">
+          <a href="/blog/2026/10/ephpm-worker-mode-performance/" class="image" style="--bg-image: url('/img/2026/10/ephpm-worker-mode-performance-cover.svg');">
+    <img class="" src="/img/2026/10/ephpm-worker-mode-performance-cover.svg" alt="Diagram: before, hyper/tokio hands each request to one shared bounded channel whose waiter list all 20 PHP threads contend on; after, a dispatcher hands the job straight into the mailbox of the most recently idle PHP thread and only queues it in a FIFO overflow queue when every thread is busy">
+  </a>
+        <header>
+          <h2><a href="/blog/2026/10/ephpm-worker-mode-performance/">Fourth Place in Worker Mode, and Why It Wasn&#39;t PHP</a></h2>
+          <time class="published" datetime="2026-10-16 08:10:00 -0700 PDT">October 16, 2026</time>
+        </header>
+      </article>
+      
+      <article class="mini-post">
+          <a href="/blog/2026/10/ephpm-websockets-how-to/" class="image" style="--bg-image: url('/img/2026/10/ephpm-websockets-how-to-cover.svg');">
+    <img class="" src="/img/2026/10/ephpm-websockets-how-to-cover.svg" alt="Diagram: browsers hold sockets to ePHPm&#39;s Rust session tasks and registry; each connect, message and disconnect runs websocket.php once on the PHP thread pool, and ordinary HTTP requests push through ephpm_ws_broadcast">
+  </a>
+        <header>
+          <h2><a href="/blog/2026/10/ephpm-websockets-how-to/">WebSockets in ePHPm, From Zero to a Working Chat</a></h2>
+          <time class="published" datetime="2026-10-11 17:30:00 -0700 PDT">October 11, 2026</time>
+        </header>
+      </article>
+      
+      <article class="mini-post">
+          <a href="/blog/2026/10/webhooks-out-of-order-scheduler/" class="image" style="--bg-image: url('/img/2026/10/webhooks-out-of-order-scheduler-timeline.svg');">
+    <img class="" src="/img/2026/10/webhooks-out-of-order-scheduler-timeline.svg" alt="Timeline of three same-label jobs where a runner executing a build is destroyed 2.3 seconds before its in_progress webhook arrives">
+  </a>
+        <header>
+          <h2><a href="/blog/2026/10/webhooks-out-of-order-scheduler/">Webhooks Arrive Out of Order: How My Scheduler Killed Live Builds</a></h2>
+          <time class="published" datetime="2026-10-07 21:10:00 -0700 PDT">October 7, 2026</time>
+        </header>
+      </article>
+      
+      <article class="mini-post">
+          <a href="/blog/2026/10/go-proxmox-five-years-to-v0-8/" class="image" style="--bg-image: url('/img/2026/10/go-proxmox-five-years-to-v0-8-apidiff.svg');">
+    <img class="" src="/img/2026/10/go-proxmox-five-years-to-v0-8-apidiff.svg" alt="Horizontal bar chart of apidiff incompatible and compatible changes for every go-proxmox release from v0.1.0 to v0.8.2">
+  </a>
+        <header>
+          <h2><a href="/blog/2026/10/go-proxmox-five-years-to-v0-8/">Breaking Changes Without Breaking Trust: Five Years to go-proxmox v0.8</a></h2>
+          <time class="published" datetime="2026-10-04 19:40:00 -0700 PDT">October 4, 2026</time>
+        </header>
+      </article>
+      
+      <article class="mini-post">
+          <a href="/blog/2026/10/windows-sigterm-sparse-files/" class="image" style="--bg-image: url('/img/2026/10/windows-sigterm-sparse-files-connections.svg');">
+    <img class="" src="/img/2026/10/windows-sigterm-sparse-files-connections.svg" alt="Bar chart: 96 Cloudflare edge connections held by orphaned cloudflared processes versus 4 for the live daemon">
+  </a>
+        <header>
+          <h2><a href="/blog/2026/10/windows-sigterm-sparse-files/">Windows Grab-Bag: SIGTERM That Doesn&#39;t Exist and Sparse Files That Break Docker</a></h2>
+          <time class="published" datetime="2026-10-03 14:30:00 -0700 PDT">October 3, 2026</time>
+        </header>
+      </article>
+      
+      
+        <footer>
+          <a href="/blog" class="button">See More</a>
+        </footer>
+      
+    </section>
+  
+
+  
+    
+
+      <section id="categories">
+        <header>
+          <h1><a href="/categories">Categories</a></h1>
+        </header>
+        <ul>
+          
+          
+          <li>
+              <a href="/categories/ephpm/">ephpm<span class="count">33</span></a>
+          
+          <li>
+              <a href="/categories/go/">go<span class="count">30</span></a>
+          
+          <li>
+              <a href="/categories/php/">php<span class="count">23</span></a>
+          
+          <li>
+              <a href="/categories/rust/">rust<span class="count">15</span></a>
+          
+          <li>
+              <a href="/categories/homelab/">homelab<span class="count">14</span></a>
+          
+          <li>
+              <a href="/categories/windows/">windows<span class="count">14</span></a>
+          
+          <li>
+              <a href="/categories/ci/">ci<span class="count">9</span></a>
+          
+          <li>
+              <a href="/categories/databases/">databases<span class="count">9</span></a>
+          
+          <li>
+              <a href="/categories/security/">security<span class="count">9</span></a>
+          
+          <li>
+              <a href="/categories/containers/">containers<span class="count">7</span></a>
+          
+          <li>
+              <a href="/categories/tools/">tools<span class="count">5</span></a>
+          
+          <li>
+              <a href="/categories/ai-agents/">ai-agents<span class="count">4</span></a>
+          
+          </li>
+        </ul>
+      </section>
+    
+  
+
+  
+    <section id="mini-bio">
+      <header>
+        <h1>About</h1>
+      </header>
+      <p>Luther is a 20+ year software veteran specializing in backend APIs and architecting products. Employed at <a href='https://www.suse.com'>SUSE</a> as the Team Lead for the <a href='https://github.com/rancher/windows/issues'>Containers on Windows Team</a> working on <a href='https://rancher.com/'>Rancher</a> + <a href='https://kubernetes.io/'>Kubernetes</a></p>
+      <footer>
+        <a href="/about" class="button">Learn More</a>
+      </footer>
+    </section>
+  
+</section>
+
+      <footer id="site-footer">
+  
+      <ul class="socnet-icons">
+        
+
+        <li><a href="//github.com/luthermonson" target="_blank" rel="noopener" title="GitHub" class="fab fa-github"></a></li>
+
+
+
+
+
+
+
+
+
+
+
+<li><a href="//www.linkedin.com/in/luthermonson" target="_blank" rel="noopener" title="LinkedIn" class="fab fa-linkedin"></a></li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li><a href="//twitter.com/luthermonson" target="_blank" rel="noopener" title="Twitter" class="fab fa-twitter"></a></li>
+
+
+
+
+
+
+
+
+
+
+
+<li><a href="mailto:luther.monson@gmail.com" target="_blank" title="Email" class="far fa-envelope"></a></li>
+
+      </ul>
+  
+  <p class="copyright">
+    © 2026 Luther Monson
+      <br>
+    Theme: <a href='https://github.com/pacollins/hugo-future-imperfect-slim' target='_blank' rel='noopener'>Hugo Future Imperfect Slim</a><br>A <a href='https://html5up.net/future-imperfect' target='_blank' rel='noopener'>HTML5 UP port</a> | Powered by <a href='https://gohugo.io/' title='0.160.1' target='_blank' rel='noopener'>Hugo</a>
+  </p>
+</footer>
+<a id="back-to-top" href="#" class="fas fa-arrow-up fa-2x"></a>
+
+      <script src="/js/bundle.min.241b62ebc4792fe8c7a75879e5f710894f226f2b73342e9916b3a3b0526030cc.js" integrity="sha256-JBti68R5L&#43;jHp1h55fcQiU8ibytzNC6ZFrOjsFJgMMw="></script>
+    <script src="/js/add-on.js"></script>
+    </div>
+  </body>
+</html>

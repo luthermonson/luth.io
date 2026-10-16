@@ -1,20 +1,96 @@
 <?xml version="1.0" encoding="utf-8" standalone="yes"?>
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
   <channel>
-    <title>proxmox on Luther Monson</title>
+    <title>Proxmox on Luther Monson</title>
     <link>https://luth.io/tags/proxmox/</link>
-    <description>Recent content in proxmox on Luther Monson</description>
-    <generator>Hugo -- gohugo.io</generator>
+    <description>Recent content in Proxmox on Luther Monson</description>
+    <generator>Hugo</generator>
     <language>en</language>
-    <lastBuildDate>Sun, 06 Feb 2022 21:54:53 -0700</lastBuildDate><atom:link href="https://luth.io/tags/proxmox/index.xml" rel="self" type="application/rss+xml" />
+    <lastBuildDate>Sun, 04 Oct 2026 19:40:00 -0700</lastBuildDate>
+    <atom:link href="https://luth.io/tags/proxmox/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>Breaking Changes Without Breaking Trust: Five Years to go-proxmox v0.8</title>
+      <link>https://luth.io/blog/2026/10/go-proxmox-five-years-to-v0-8/</link>
+      <pubDate>Sun, 04 Oct 2026 19:40:00 -0700</pubDate>
+      <guid>https://luth.io/blog/2026/10/go-proxmox-five-years-to-v0-8/</guid>
+      <description>&lt;p&gt;&lt;a href=&#34;https://github.com/luthermonson/go-proxmox&#34;&gt;go-proxmox&lt;/a&gt; had its first commit in June 2021 and v0.8.2 went out on&#xA;September 30th. In between: 366 commits, 43 people besides me with a merged PR, and, more to the point of this post,&#xA;downstream projects that I don&amp;rsquo;t control pinning it in their &lt;code&gt;go.mod&lt;/code&gt;. IONOS&amp;rsquo;s&#xA;&lt;a href=&#34;https://github.com/ionos-cloud/cluster-api-provider-proxmox&#34;&gt;Cluster API provider&lt;/a&gt; and Sidero&amp;rsquo;s&#xA;&lt;a href=&#34;https://github.com/siderolabs/omni-infra-provider-proxmox&#34;&gt;Omni Proxmox provider&lt;/a&gt; are both on v0.8.1 today. A&#xA;library with users like that gets judged less on its API and more on what happens to their build when they bump the&#xA;version. I didn&amp;rsquo;t always get that right, so here is the history, measured.&lt;/p&gt;</description>
+    </item>
+    <item>
+      <title>Five Ways to URL-Encode an SSH Key (and Why Proxmox Rejects Them)</title>
+      <link>https://luth.io/blog/2026/07/five-ways-to-url-encode-an-ssh-key/</link>
+      <pubDate>Tue, 28 Jul 2026 20:12:00 -0700</pubDate>
+      <guid>https://luth.io/blog/2026/07/five-ways-to-url-encode-an-ssh-key/</guid>
+      <description>&lt;p&gt;&lt;a href=&#34;https://github.com/luthermonson/go-proxmox/issues/144&#34;&gt;Issue #144&lt;/a&gt; on go-proxmox was opened in April 2024 with the title&#xA;&amp;ldquo;Weird sshkeys SSH public key validation error&amp;rdquo; and it is one of my less proud threads. Thirteen comments of people,&#xA;including me, trying to get a public key into a cloud-init VM through the API, and the working answer took more than a&#xA;year to show up. The fix that finally landed in May is one line. Here&amp;rsquo;s why it took so long.&lt;/p&gt;</description>
+    </item>
+    <item>
+      <title>Two Small go-proxmox Fixes: A Watch Channel That Never Closed, and WithRetry</title>
+      <link>https://luth.io/blog/2026/07/go-proxmox-watch-close-withretry/</link>
+      <pubDate>Sat, 11 Jul 2026 17:26:00 -0700</pubDate>
+      <guid>https://luth.io/blog/2026/07/go-proxmox-watch-close-withretry/</guid>
+      <description>&lt;p&gt;Two changes from the v0.5 to v0.7 stretch of &lt;a href=&#34;https://github.com/luthermonson/go-proxmox&#34;&gt;go-proxmox&lt;/a&gt; that are too small&#xA;for a post each but are worth knowing about if you write long-running tooling against Proxmox. One is a bug in code I&#xA;wrote about in 2022, the other is a feature that replaces a retry loop everybody was writing for themselves.&lt;/p&gt;&#xA;&lt;h3 id=&#34;the-channel-that-only-closed-when-things-went-well&#34;&gt;The channel that only closed when things went well&lt;/h3&gt;&#xA;&lt;p&gt;In 2022 I wrote up &lt;a href=&#34;https://luth.io/blog/2022/03/proxmox-tasks-upid-wait-go/&#34;&gt;how tasks and &lt;code&gt;Watch&lt;/code&gt; work&lt;/a&gt;: &lt;code&gt;Watch&lt;/code&gt; returns a channel of&#xA;log lines and a goroutine tails the task log until the task stops, then closes the channel so you can &lt;code&gt;range&lt;/code&gt; over it.&#xA;Here is the tail loop from that post:&lt;/p&gt;</description>
+    </item>
+    <item>
+      <title>Proxmox JSON, Part 2: null PIDs, 1.12589990684262e&#43;15 and net10</title>
+      <link>https://luth.io/blog/2026/06/proxmox-numbers-null-scientific-notation-net10/</link>
+      <pubDate>Tue, 23 Jun 2026 20:31:00 -0700</pubDate>
+      <guid>https://luth.io/blog/2026/06/proxmox-numbers-null-scientific-notation-net10/</guid>
+      <description>&lt;p&gt;In 2023 I wrote about &lt;a href=&#34;https://luth.io/blog/2023/11/proxmox-doesnt-know-what-type-a-number-is/&#34;&gt;why go-proxmox has &lt;code&gt;StringOrInt&lt;/code&gt; and friends&lt;/a&gt;:&#xA;Proxmox sends the same number quoted in one place and bare in another, so the client has types that accept both. That&#xA;post ended on a pretty confident note. Since then three more shapes of &amp;ldquo;the JSON is valid and Go still won&amp;rsquo;t take it&amp;rdquo;&#xA;have come in, and one of them is a bug I&amp;rsquo;d already fixed once and then reintroduced myself.&lt;/p&gt;</description>
+    </item>
+    <item>
+      <title>Your Zero Value Just Turned Off My TLS Verification: omitempty, Go Defaults and Proxmox</title>
+      <link>https://luth.io/blog/2026/06/omitempty-zero-values-proxmox-defaults/</link>
+      <pubDate>Sat, 13 Jun 2026 19:52:00 -0700</pubDate>
+      <guid>https://luth.io/blog/2026/06/omitempty-zero-values-proxmox-defaults/</guid>
+      <description>&lt;p&gt;Every Go developer knows &lt;code&gt;omitempty&lt;/code&gt; drops zero values. What takes longer to sink in is that a plain &lt;code&gt;bool&lt;/code&gt; only has two&#xA;states and a caller filling in an options struct means one of three: &amp;ldquo;set it true&amp;rdquo;, &amp;ldquo;set it false&amp;rdquo;, and &amp;ldquo;I didn&amp;rsquo;t touch&#xA;this, do whatever the server does by default&amp;rdquo;. With &lt;code&gt;omitempty&lt;/code&gt; you lose &amp;ldquo;false&amp;rdquo;. Without it you lose &amp;ldquo;didn&amp;rsquo;t touch it&amp;rdquo;.&#xA;In &lt;a href=&#34;https://github.com/luthermonson/go-proxmox&#34;&gt;go-proxmox&lt;/a&gt; we managed to ship both bugs, in that order, and the second one&#xA;quietly turned off TLS certificate verification for anyone downloading ISOs through the API.&lt;/p&gt;</description>
+    </item>
+    <item>
+      <title>From 52% to 100%: Measuring a Go Client Against the Proxmox API Schema</title>
+      <link>https://luth.io/blog/2026/06/go-proxmox-endpoint-coverage/</link>
+      <pubDate>Sun, 07 Jun 2026 21:36:00 -0700</pubDate>
+      <guid>https://luth.io/blog/2026/06/go-proxmox-endpoint-coverage/</guid>
+      <description>&lt;p&gt;For five years the honest answer to &amp;ldquo;how much of the Proxmox API does go-proxmox cover?&amp;rdquo; was &amp;ldquo;a lot of it? the parts&#xA;people asked for?&amp;rdquo;. Issues would come in for endpoints that didn&amp;rsquo;t exist in the client and I&amp;rsquo;d have no idea how many more&#xA;were missing. At the end of May I finally built the thing that answers the question, and three days after the first run the&#xA;answer was 100%. The more interesting part is how many times the measuring stick was wrong on the way there.&lt;/p&gt;</description>
+    </item>
+    <item>
+      <title>Cloud-Init ISOs in Pure Go with go-proxmox</title>
+      <link>https://luth.io/blog/2026/06/cloud-init-isos-pure-go-proxmox/</link>
+      <pubDate>Sat, 06 Jun 2026 15:20:00 -0700</pubDate>
+      <guid>https://luth.io/blog/2026/06/cloud-init-isos-pure-go-proxmox/</guid>
+      <description>&lt;p&gt;Proxmox&amp;rsquo;s built-in cloud-init support is fine for the basics: a user, an SSH key, an IP config. It falls apart the second you&#xA;want your own &lt;code&gt;user-data&lt;/code&gt;, &lt;code&gt;vendor-data&lt;/code&gt; or a real &lt;code&gt;network-config&lt;/code&gt;, because the GUI and the &lt;code&gt;ci*&lt;/code&gt; options only expose a&#xA;handful of fields, and the escape hatch (&lt;code&gt;cicustom&lt;/code&gt; pointing at snippet files) means getting files onto the Proxmox host&amp;rsquo;s&#xA;filesystem first. The usual alternative is building a nocloud ISO yourself with &lt;code&gt;genisoimage&lt;/code&gt; or &lt;code&gt;mkisofs&lt;/code&gt;, which means a&#xA;system dependency on whatever machine runs your automation, a different package name on every OS, and a subprocess to babysit.&lt;/p&gt;</description>
+    </item>
+    <item>
+      <title>Staying Logged In to Proxmox: Ticket Renewal, Expiry and Where API Tokens Stop</title>
+      <link>https://luth.io/blog/2026/05/staying-logged-in-to-proxmox/</link>
+      <pubDate>Sun, 31 May 2026 20:24:00 -0700</pubDate>
+      <guid>https://luth.io/blog/2026/05/staying-logged-in-to-proxmox/</guid>
+      <description>&lt;p&gt;Back in 2023 I wrote up &lt;a href=&#34;https://luth.io/blog/2023/08/proxmox-api-auth-tickets-tokens-go/&#34;&gt;how go-proxmox logs in&lt;/a&gt; and ended it with a&#xA;shrug: once a session existed the client never logged in again, so a ticket-based client died at the two hour mark and&#xA;my advice was &amp;ldquo;use an API token for anything long running&amp;rdquo;. It took until this month to actually fix that properly, and&#xA;it took three PRs from two of us to get there. Here&amp;rsquo;s the whole arc, plus the one place where an API token&#xA;isn&amp;rsquo;t an option at all.&lt;/p&gt;</description>
+    </item>
+    <item>
+      <title>Proxmox Doesn&#39;t Know What Type a Number Is</title>
+      <link>https://luth.io/blog/2023/11/proxmox-doesnt-know-what-type-a-number-is/</link>
+      <pubDate>Sat, 25 Nov 2023 20:05:00 -0700</pubDate>
+      <guid>https://luth.io/blog/2023/11/proxmox-doesnt-know-what-type-a-number-is/</guid>
+      <description>&lt;p&gt;Every couple of months somebody opens an issue on &lt;a href=&#34;https://github.com/luthermonson/go-proxmox&#34;&gt;go-proxmox&lt;/a&gt; with a title&#xA;that starts with &lt;code&gt;json: cannot unmarshal string into Go struct field&lt;/code&gt;. The most recent one was fixed last week, and it&amp;rsquo;s the same&#xA;root cause every time: the Proxmox VE API is backed by Perl, Perl doesn&amp;rsquo;t really care whether a scalar is a number or a&#xA;string, and the JSON encoder on the other end writes whatever the scalar happens to be at the time. So a field that is&#xA;documented as an integer comes back as &lt;code&gt;2048&lt;/code&gt; from one endpoint and &lt;code&gt;&amp;quot;2048&amp;quot;&lt;/code&gt; from another, and sometimes from the same&#xA;endpoint depending on how the value got into the config.&lt;/p&gt;</description>
+    </item>
+    <item>
+      <title>Logging In to Proxmox From Go: Tickets, CSRF Tokens and API Tokens</title>
+      <link>https://luth.io/blog/2023/08/proxmox-api-auth-tickets-tokens-go/</link>
+      <pubDate>Sun, 27 Aug 2023 19:18:00 -0700</pubDate>
+      <guid>https://luth.io/blog/2023/08/proxmox-api-auth-tickets-tokens-go/</guid>
+      <description>&lt;p&gt;I just spent a week of evenings on the access side of &lt;a href=&#34;https://github.com/luthermonson/go-proxmox&#34;&gt;go-proxmox&lt;/a&gt;: realms,&#xA;groups, users and roles all landed, and before any of that I reworked how a client gets its credentials in&#xA;the first place. Proxmox gives you two different ways to authenticate and they behave differently enough that it&amp;rsquo;s worth&#xA;writing down how each one works on the wire and what the client does with it.&lt;/p&gt;&#xA;&lt;p&gt;&lt;img src=&#34;https://luth.io/img/2023/08/proxmox-api-auth-tickets-tokens-go-flow.svg&#34; alt=&#34;Ticket and API token flows&#34;&gt;&lt;/p&gt;</description>
+    </item>
+    <item>
+      <title>Waiting on Proxmox: UPIDs, Tasks and WaitFor in Go</title>
+      <link>https://luth.io/blog/2022/03/proxmox-tasks-upid-wait-go/</link>
+      <pubDate>Sun, 20 Mar 2022 16:42:00 -0700</pubDate>
+      <guid>https://luth.io/blog/2022/03/proxmox-tasks-upid-wait-go/</guid>
+      <description>&lt;p&gt;If you start automating &lt;a href=&#34;https://www.proxmox.com/en/&#34;&gt;Proxmox VE&lt;/a&gt; through the API, the first thing that trips you up is&#xA;that almost nothing you ask it to do is finished when the HTTP call returns. Start a VM, clone a template, download an&#xA;ISO to storage, delete a disk&amp;hellip; the response is a single string that looks like a typo and the actual work is happening&#xA;in a worker process on the node. If your next call depends on that work being done you have to go find out when it&amp;rsquo;s done.&lt;/p&gt;</description>
+    </item>
     <item>
       <title>Recreating Proxmox Ve Xtermjs in Go</title>
       <link>https://luth.io/blog/2022/02/recreating-proxmox-ve-xtermjs-in-go/</link>
       <pubDate>Sun, 06 Feb 2022 21:54:53 -0700</pubDate>
-      
       <guid>https://luth.io/blog/2022/02/recreating-proxmox-ve-xtermjs-in-go/</guid>
-      <description>Part of a hobby of mine is running a home lab and using on Proxmox VE to do the virtualization. Since I work in the space I&amp;rsquo;m slowly trying to build tooling around Proxmox that will let me use the home lab full time for work. Usually my work involves building Kubernetes management tooling, you can imagine waiting for public cloud APIs all day can take away hours of your day at cost to your employer for both your time and the compute resources.</description>
+      <description>&lt;p&gt;Part of a hobby of mine is running a home lab and using on &lt;a href=&#34;https://www.proxmox.com/en/&#34;&gt;Proxmox VE&lt;/a&gt; to do the virtualization.&#xA;Since I work in the space I&amp;rsquo;m slowly trying to build tooling around Proxmox that will let me use the home lab full time for work.&#xA;Usually my work involves building Kubernetes management tooling, you can imagine waiting for public cloud APIs all day&#xA;can take away hours of your day at cost to your employer for both your time and the compute resources.&lt;/p&gt;</description>
     </item>
-    
   </channel>
 </rss>

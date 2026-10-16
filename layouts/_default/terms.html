@@ -1,0 +1,16 @@
+{{ define "main" }}
+  <section class="post term-list">
+    <header>
+      <h1>{{ i18n .Data.Plural }}</h1>
+    </header>
+    <ul>
+      {{ range .Data.Terms.ByCount }}
+        <li>
+          <a href="{{ .Page.RelPermalink }}">{{ .Page.Title }}</a>
+          <span class="term-count">{{ .Count }}</span>
+        </li>
+      {{ end }}
+    </ul>
+  </section>
+  {{ $.Scratch.Set "showCategories" false }}
+{{ end }}

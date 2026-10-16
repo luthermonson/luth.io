@@ -1,0 +1,62 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 520" font-family="system-ui, -apple-system, Segoe UI, Roboto, sans-serif" font-size="14">
+  <rect width="960" height="520" fill="#ffffff"/>
+  <defs>
+    <marker id="a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto">
+      <path d="M0,0 L10,5 L0,10 z" fill="#444"/>
+    </marker>
+  </defs>
+  <text x="480" y="30" text-anchor="middle" font-size="18" font-weight="600" fill="#222">One ephemerd binary, a fresh environment per job</text>
+
+  <!-- forge -->
+  <rect x="290" y="50" width="380" height="56" rx="8" fill="#f2f2f2" stroke="#6b6b6b"/>
+  <text x="480" y="74" text-anchor="middle" font-weight="600" fill="#222">GitHub / Forgejo / Gitea / GitLab / Woodpecker</text>
+  <text x="480" y="95" text-anchor="middle" fill="#444" font-size="13">webhook (tunnel) or polling, JIT runner per job</text>
+
+  <line x1="480" y1="106" x2="160" y2="150" stroke="#444" stroke-width="1.4" marker-end="url(#a)"/>
+  <line x1="480" y1="106" x2="480" y2="150" stroke="#444" stroke-width="1.4" marker-end="url(#a)"/>
+  <line x1="480" y1="106" x2="800" y2="150" stroke="#444" stroke-width="1.4" marker-end="url(#a)"/>
+
+  <!-- Linux -->
+  <rect x="20" y="152" width="290" height="300" rx="8" fill="#f4f7fb" stroke="#2b6cb0" stroke-width="1.5"/>
+  <text x="36" y="178" font-weight="600" fill="#2b6cb0">Linux host</text>
+  <rect x="36" y="192" width="258" height="44" rx="6" fill="#fff" stroke="#6b6b6b"/>
+  <text x="50" y="219" fill="#222">ephemerd + embedded containerd</text>
+  <rect x="36" y="250" width="258" height="58" rx="6" fill="#fff" stroke="#2b6cb0"/>
+  <text x="50" y="274" font-weight="600" fill="#222">job container (runc)</text>
+  <text x="50" y="295" fill="#444" font-size="13">or Kata VM per job (opt-in)</text>
+  <rect x="36" y="322" width="258" height="58" rx="6" fill="#fff" stroke="#6b6b6b"/>
+  <text x="50" y="346" fill="#222">iptables egress fence</text>
+  <text x="50" y="367" fill="#444" font-size="13">RFC1918 + link-local blocked</text>
+  <text x="36" y="410" fill="#444" font-size="13">amd64, arm64</text>
+
+  <!-- Windows -->
+  <rect x="335" y="152" width="290" height="300" rx="8" fill="#fdf6ef" stroke="#e07a1f" stroke-width="1.5"/>
+  <text x="351" y="178" font-weight="600" fill="#e07a1f">Windows host</text>
+  <rect x="351" y="192" width="258" height="44" rx="6" fill="#fff" stroke="#6b6b6b"/>
+  <text x="365" y="219" fill="#222">ephemerd.exe (Windows service)</text>
+  <rect x="351" y="250" width="258" height="58" rx="6" fill="#fff" stroke="#e07a1f"/>
+  <text x="365" y="274" font-weight="600" fill="#222">Windows job</text>
+  <text x="365" y="295" fill="#444" font-size="13">Hyper-V isolated container</text>
+  <rect x="351" y="322" width="258" height="72" rx="6" fill="#fff" stroke="#7d5ba6"/>
+  <text x="365" y="346" font-weight="600" fill="#222">Linux job</text>
+  <text x="365" y="367" fill="#444" font-size="13">gRPC dispatch to a Linux VM</text>
+  <text x="365" y="385" fill="#444" font-size="13">booted through HCS (vmcompute.dll)</text>
+  <text x="351" y="425" fill="#444" font-size="13">Windows 11, Server 2025</text>
+
+  <!-- macOS -->
+  <rect x="650" y="152" width="290" height="300" rx="8" fill="#f2f8f4" stroke="#3a9a5b" stroke-width="1.5"/>
+  <text x="666" y="178" font-weight="600" fill="#3a9a5b">macOS host (Apple silicon)</text>
+  <rect x="666" y="192" width="258" height="44" rx="6" fill="#fff" stroke="#6b6b6b"/>
+  <text x="680" y="219" fill="#222">ephemerd (launchd)</text>
+  <rect x="666" y="250" width="258" height="72" rx="6" fill="#fff" stroke="#3a9a5b"/>
+  <text x="680" y="274" font-weight="600" fill="#222">macOS job</text>
+  <text x="680" y="295" fill="#444" font-size="13">per-job VM, APFS clone of a</text>
+  <text x="680" y="313" fill="#444" font-size="13">Tart base image (Virtualization.fw)</text>
+  <rect x="666" y="336" width="258" height="58" rx="6" fill="#fff" stroke="#7d5ba6"/>
+  <text x="680" y="360" font-weight="600" fill="#222">Linux job</text>
+  <text x="680" y="381" fill="#444" font-size="13">containerd in a Vz Linux VM</text>
+
+  <!-- shared services -->
+  <rect x="20" y="466" width="920" height="40" rx="8" fill="#f6f3fa" stroke="#7d5ba6"/>
+  <text x="480" y="491" text-anchor="middle" fill="#222">Built in: Docker API shim (dind) + BuildKit, registry mirror, Go / npm / pip / cargo / pub pull-through caches</text>
+</svg>

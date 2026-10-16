@@ -1,0 +1,698 @@
+<!doctype html>
+<html lang="en">
+  <head>
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-MSTSKGFWTX"></script>
+<script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+
+    gtag('config', 'G-MSTSKGFWTX');
+</script><meta charset="utf-8">
+<title>Zero-Dependency Deployments - Single Binary for WordPress - Luther Monson</title>
+<meta name="description" content="WordPress with no nginx, no php-fpm, no Redis and no MySQL: one ePHPm binary, a SQLite file, and a distroless container image. What&#39;s in the binary, how it gets built, and what it actually takes to run.">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<meta name="twitter:card" content="summary_large_image"><meta name="twitter:site" content="@luthermonson">
+
+<meta property="og:site_name" content="Luther Monson">
+<meta property="og:title" content="Zero-Dependency Deployments - Single Binary for WordPress">
+<meta property="og:description" content="WordPress with no nginx, no php-fpm, no Redis and no MySQL: one ePHPm binary, a SQLite file, and a distroless container image. What&#39;s in the binary, how it gets built, and what it actually takes to run.">
+<meta property="og:type" content="article">
+<meta property="og:url" content="https://luth.io/blog/2026/09/single-binary-wordpress/">
+    <meta property="og:image" content="https://luth.io/img/2026/09/single-binary-wordpress-cover.svg">
+    <meta property="og:image:alt" content="Side by side: nginx, php-fpm, Redis and MySQL as four services, versus one ephpm process containing the HTTP server, embedded PHP, KV store and SQLite">
+
+
+  <link rel="manifest" href="/favicon/site.webmanifest?v=1">
+  <link rel="apple-touch-icon" sizes="180x180" href="/favicon/apple-touch-icon.png?v=1">
+  <link rel="icon" type="image/png" sizes="32x32" href="/favicon/favicon-32x32.png?v=1">
+  <link rel="icon" type="image/png" sizes="16x16" href="/favicon/favicon-16x16.png?v=1">
+  
+    <link rel="mask-icon" href="/favicon/safari-pinned-tab.svg?v=1" color="#ffffff">
+    <link rel="shortcut icon" href="/favicon/favicon.ico?v=1">
+    <meta name="msapplication-config" content="/favicon/browserconfig.xml?v=1">
+  
+  <meta name="msapplication-TileColor" content="#ffffff">
+  <meta name="theme-color" content="#ffffff">
+
+
+  <meta name="generator" content="Hugo 0.160.1">
+  <link rel="alternate" type="application/rss+xml" href="https://luth.io/index.xml" title="Luther Monson">
+  <link rel="stylesheet" href="/css/bundle.min.e1ffed86714fbb7eff75eab221c0c61b8260be0c7d1c08db0fcb7a2bdb6af7c9.css" integrity="sha256-4f/thnFPu37/deqyIcDGG4Jgvgx9HAjbD8t6K9tq98k="><link rel="stylesheet" href="/css/add-on.css">
+        <link rel="stylesheet" href="/css/code.css">
+        <link rel="stylesheet" href="/css/mobile.css">
+</head>
+
+  <body>
+    
+
+<header id="site-header">
+  <nav id="site-nav">
+    <h1 class="nav-title">
+      <a href="/" class="nav">
+        <img class="nav-avatar" src="/img/luther-monson-headshot.jpg" alt="" width="32" height="32">
+        
+          Blog
+        
+      </a>
+    </h1>
+    <menu id="site-nav-menu" class="flyout-menu menu">
+      
+        
+          
+          <a href="/" class="nav link"><i class='fa fa-home'></i> Home</a>
+        
+      
+        
+          
+          <a href="/about" class="nav link"><i class='far fa-id-card'></i> About</a>
+        
+      
+        
+          
+          <a href="/blog" class="nav link"><i class='far fa-newspaper'></i> Blog</a>
+        
+      
+        
+          
+          <a href="/archive" class="nav link"><i class='far fa-calendar-alt'></i> Archive</a>
+        
+      
+        
+          
+          <a href="/categories" class="nav link"><i class='fas fa-sitemap'></i> Categories</a>
+        
+      
+      <a href="#share-menu" class="nav link share-toggle"><i class="fas fa-share-alt">&nbsp;</i>Share</a>
+      <a href="#search-input" class="nav link search-toggle"><i class="fas fa-search">&nbsp;</i>Search</a>
+    </menu>
+    <a href="#search-input" class="nav search-toggle"><i class="fas fa-search fa-2x">&nbsp;</i></a>
+    <a href="#share-menu" class="nav share-toggle"><i class="fas fa-share-alt fa-2x">&nbsp;</i></a>
+    
+    <a href="#site-nav" class="nav nav-toggle"><i class="fas fa-bars fa-2x"></i></a>
+  </nav>
+  <menu id="search" class="menu"><input id="search-input" class="search-input menu"></input><div id="search-results" class="search-results menu"></div></menu>
+  
+  
+    <menu id="share-menu" class="flyout-menu menu">
+      <h1>Share Post</h1>
+      
+
+
+
+
+  
+    
+    <a href="//twitter.com/share?text=Zero-Dependency%20Deployments%20-%20Single%20Binary%20for%20WordPress&amp;url=https%3a%2f%2fluth.io%2fblog%2f2026%2f09%2fsingle-binary-wordpress%2f" target="_blank" rel="noopener" class="nav share-btn twitter">
+        <p>Twitter</p>
+      </a>
+  
+
+  
+      <a href="//www.facebook.com/sharer/sharer.php?u=https%3a%2f%2fluth.io%2fblog%2f2026%2f09%2fsingle-binary-wordpress%2f" target="_blank" rel="noopener" class="nav share-btn facebook">
+        <p>Facebook</p>
+        </a>
+  
+
+  
+    <a href="//www.reddit.com/submit?url=https%3a%2f%2fluth.io%2fblog%2f2026%2f09%2fsingle-binary-wordpress%2f&amp;title=Zero-Dependency%20Deployments%20-%20Single%20Binary%20for%20WordPress" target="_blank" rel="noopener" class="nav share-btn reddit">
+          <p>Reddit</p>
+        </a>
+  
+
+  
+        <a href="//www.linkedin.com/shareArticle?url=https%3a%2f%2fluth.io%2fblog%2f2026%2f09%2fsingle-binary-wordpress%2f&amp;title=Zero-Dependency%20Deployments%20-%20Single%20Binary%20for%20WordPress" target="_blank" rel="noopener" class="nav share-btn linkedin">
+            <p>LinkedIn</p>
+          </a>
+  
+
+  
+        <a href="//www.pinterest.com/pin/create/button/?url=https%3a%2f%2fluth.io%2fblog%2f2026%2f09%2fsingle-binary-wordpress%2f&amp;description=Zero-Dependency%20Deployments%20-%20Single%20Binary%20for%20WordPress" target="_blank" rel="noopener" class="nav share-btn pinterest">
+          <p>Pinterest</p>
+        </a>
+  
+
+  
+        <a href="mailto:?subject=Check%20out%20this%20post%20by Luther%20Monson&amp;body=https%3a%2f%2fluth.io%2fblog%2f2026%2f09%2fsingle-binary-wordpress%2f" target="_blank" class="nav share-btn email" data-proofer-ignore>
+          <p>Email</p>
+        </a>
+  
+
+
+    </menu>
+  
+</header>
+
+    <div id="wrapper">
+      <section id="site-intro" class="hidden-single-column">
+  <a href="/"><img src="/img/luther-monson-headshot.jpg" class="circle" width="100" alt="Luther Monson, Staff Software Engineer at SUSE" /></a>
+  <header>
+    <h1>Luther Monson</h1>
+  </header>
+  <main>
+    <p>Go by way of PHP &middot; Containers &middot; VMs &middot; Windows &middot; Kubernetes</p>
+  </main>
+  
+    <footer>
+      <ul class="socnet-icons">
+        
+
+        <li><a href="//github.com/luthermonson" target="_blank" rel="noopener" title="GitHub" class="fab fa-github"></a></li>
+
+
+
+
+
+
+
+
+
+
+
+<li><a href="//www.linkedin.com/in/luthermonson" target="_blank" rel="noopener" title="LinkedIn" class="fab fa-linkedin"></a></li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li><a href="//twitter.com/luthermonson" target="_blank" rel="noopener" title="Twitter" class="fab fa-twitter"></a></li>
+
+
+
+
+
+
+
+
+
+
+
+<li><a href="mailto:luther.monson@gmail.com" target="_blank" title="Email" class="far fa-envelope"></a></li>
+
+      </ul>
+    </footer>
+  
+</section>
+
+      <main id="site-main">
+        
+  <article>
+    <div class="post">
+      <header>
+  <div class="title">
+    
+      <h2><a href="/blog/2026/09/single-binary-wordpress/">Zero-Dependency Deployments - Single Binary for WordPress</a></h2>
+    
+    
+      <p>WordPress with no nginx, no php-fpm, no Redis and no MySQL: one ePHPm binary, a SQLite file, and a distroless container image. What&#39;s in the binary, how it gets built, and what it actually takes to run.</p>
+    
+  </div>
+  <div class="meta">
+    <time datetime="2026-09-08 20:25:00 -0700 PDT">September 8, 2026</time>
+    
+    <p>7-Minute Read</p>
+  </div>
+</header>
+
+      <div id="socnet-share">
+        
+
+
+
+
+  
+    
+    <a href="//twitter.com/share?text=Zero-Dependency%20Deployments%20-%20Single%20Binary%20for%20WordPress&amp;url=https%3a%2f%2fluth.io%2fblog%2f2026%2f09%2fsingle-binary-wordpress%2f" target="_blank" rel="noopener" class="nav share-btn twitter">
+        <p>Twitter</p>
+      </a>
+  
+
+  
+      <a href="//www.facebook.com/sharer/sharer.php?u=https%3a%2f%2fluth.io%2fblog%2f2026%2f09%2fsingle-binary-wordpress%2f" target="_blank" rel="noopener" class="nav share-btn facebook">
+        <p>Facebook</p>
+        </a>
+  
+
+  
+    <a href="//www.reddit.com/submit?url=https%3a%2f%2fluth.io%2fblog%2f2026%2f09%2fsingle-binary-wordpress%2f&amp;title=Zero-Dependency%20Deployments%20-%20Single%20Binary%20for%20WordPress" target="_blank" rel="noopener" class="nav share-btn reddit">
+          <p>Reddit</p>
+        </a>
+  
+
+  
+        <a href="//www.linkedin.com/shareArticle?url=https%3a%2f%2fluth.io%2fblog%2f2026%2f09%2fsingle-binary-wordpress%2f&amp;title=Zero-Dependency%20Deployments%20-%20Single%20Binary%20for%20WordPress" target="_blank" rel="noopener" class="nav share-btn linkedin">
+            <p>LinkedIn</p>
+          </a>
+  
+
+  
+        <a href="//www.pinterest.com/pin/create/button/?url=https%3a%2f%2fluth.io%2fblog%2f2026%2f09%2fsingle-binary-wordpress%2f&amp;description=Zero-Dependency%20Deployments%20-%20Single%20Binary%20for%20WordPress" target="_blank" rel="noopener" class="nav share-btn pinterest">
+          <p>Pinterest</p>
+        </a>
+  
+
+  
+        <a href="mailto:?subject=Check%20out%20this%20post%20by Luther%20Monson&amp;body=https%3a%2f%2fluth.io%2fblog%2f2026%2f09%2fsingle-binary-wordpress%2f" target="_blank" class="nav share-btn email" data-proofer-ignore>
+          <p>Email</p>
+        </a>
+  
+
+
+      </div>
+      <div class="content">
+        
+        <p>The standard way to run a WordPress site is four services: nginx for HTTP and TLS, php-fpm to run PHP, MySQL for data,
+and Redis once the site gets slow enough that someone installs an object cache plugin. That&rsquo;s four processes, four
+config files, three sockets between them, and four things to upgrade. For a big site that&rsquo;s fine. For a brochure site, a
+staging copy, a PR preview, a CI job that needs a real WordPress to test a plugin against, or a box at the edge, it&rsquo;s
+absurd.</p>
+<p><a href="https://github.com/ephpm/ephpm">ePHPm</a> is my attempt at making that one thing. This post walks through running stock
+WordPress from a single binary with no other services, building a container image that is just that binary and the site,
+and what&rsquo;s actually inside it, as of <a href="https://github.com/ephpm/ephpm/releases/tag/v0.8.2">v0.8.2</a>.</p>
+<h3 id="whats-in-the-binary">What&rsquo;s in the binary</h3>
+<p>One <code>ephpm</code> executable (about 132 MB for the Linux x86_64 build with PHP 8.5.7) carries:</p>
+<ul>
+<li><strong>An HTTP server</strong>: hyper with HTTP/1.1 and HTTP/2, rustls TLS with ACME certificates, static files with ETags and
+compression, virtual hosts.</li>
+<li><strong>PHP itself</strong>: <code>libphp</code> statically linked, ZTS, with OPcache and the usual extensions compiled in (<code>mysqli</code>,
+<code>pdo_mysql</code>, <code>pdo_sqlite</code>, <code>gd</code>, <code>intl</code>, <code>mbstring</code>, <code>curl</code>, <code>zip</code> and friends). The same binary is also a PHP CLI:
+<code>ephpm php -v</code>.</li>
+<li><strong>A KV store</strong> that PHP can call directly through native functions, which is what the WordPress object cache uses.</li>
+<li><strong>A database layer</strong>: either a pooling proxy in front of a real MySQL, or no database server at all.</li>
+</ul>
+<p>&ldquo;Zero dependency&rdquo; needs one footnote. The Linux release is dynamically linked against glibc, not a static musl binary:</p>
+<pre tabindex="0"><code>$ ldd ephpm
+	linux-vdso.so.1
+	libdl.so.2 =&gt; /usr/lib/x86_64-linux-gnu/libdl.so.2
+	libm.so.6 =&gt; /usr/lib/x86_64-linux-gnu/libm.so.6
+	libpthread.so.0 =&gt; /usr/lib/x86_64-linux-gnu/libpthread.so.0
+	librt.so.1 =&gt; /usr/lib/x86_64-linux-gnu/librt.so.1
+	libgcc_s.so.1 =&gt; /usr/lib/x86_64-linux-gnu/libgcc_s.so.1
+	libutil.so.1 =&gt; /usr/lib/x86_64-linux-gnu/libutil.so.1
+	libc.so.6 =&gt; /usr/lib/x86_64-linux-gnu/libc.so.6
+	/lib64/ld-linux-x86-64.so.2
+
+$ objdump -T ephpm | grep -o &#39;GLIBC_[0-9.]*&#39; | sort -uV | tail -1
+GLIBC_2.28
+</code></pre><p>Everything above is glibc&rsquo;s own family plus <code>libgcc_s</code>. The newest symbol version it needs is 2.28, because release
+builds happen in an AlmaLinux 8 container, so it runs on basically any Linux from 2018 onward. I went glibc over musl on
+purpose: native middleware modules are loaded with <code>dlopen</code>, and a fully static musl binary can&rsquo;t do that.</p>
+<h3 id="how-the-binary-gets-built">How the binary gets built</h3>
+<p>Building PHP is the slow, fragile part of all of this, so it&rsquo;s done once per PHP version, not once per ePHPm build.
+<a href="https://github.com/crazywhalecc/static-php-cli">static-php-cli</a> compiles <code>libphp</code> with the embed SAPI and its library
+dependencies into static archives, and <a href="https://github.com/ephpm/php-sdk">ephpm/php-sdk</a> publishes those as release
+assets per OS, architecture and PHP version. ePHPm&rsquo;s build is a cargo <code>xtask</code>:</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl">cargo xtask release 8.5     <span class="c1"># resolve 8.5 -&gt; pinned 8.5.7, download the SDK, build with PHP linked</span>
+</span></span></code></pre></div><p><code>xtask release</code> resolves the PHP minor to a pinned patch version, downloads and unpacks the matching SDK, points
+<code>PHP_SDK_PATH</code> at it, and runs the cargo build with the shipped feature set. <code>build.rs</code> compiles the C SAPI wrapper and
+emits the link flags for <code>libphp.a</code>. A plain <code>cargo build</code> without an SDK builds a stub that answers every PHP request
+with a &ldquo;PHP not linked&rdquo; page, so the Rust side can be developed and tested without PHP at all.</p>
+<p>It&rsquo;s not a cross-compiler: each platform&rsquo;s release is built on that platform (Linux x86_64 and aarch64 in the AlmaLinux
+container, macOS arm64 and Windows x86_64 natively), for PHP 8.3, 8.4 and 8.5.</p>
+<h3 id="wordpress-with-nothing-else">WordPress with nothing else</h3>
+<p>Here&rsquo;s the whole setup. Grab WordPress, the official
+<a href="https://wordpress.org/plugins/sqlite-database-integration/">SQLite Database Integration</a> drop-in (WordPress&rsquo;s own
+project for running on SQLite), and the <a href="https://github.com/ephpm/cache-wordpress">ephpm/cache-wordpress</a> object cache:</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl">curl -sSL https://wordpress.org/wordpress-7.1.tar.gz <span class="p">|</span> tar xz
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="c1"># SQLite instead of MySQL</span>
+</span></span><span class="line"><span class="cl">curl -sSLO https://downloads.wordpress.org/plugin/sqlite-database-integration.3.0.1.zip
+</span></span><span class="line"><span class="cl">unzip -q sqlite-database-integration.3.0.1.zip -d wordpress/wp-content/plugins/
+</span></span><span class="line"><span class="cl">cp wordpress/wp-content/plugins/sqlite-database-integration/db.copy wordpress/wp-content/db.php
+</span></span><span class="line"><span class="cl">mkdir -p wordpress/wp-content/database
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="c1"># Persistent object cache backed by ePHPm&#39;s in-process KV store</span>
+</span></span><span class="line"><span class="cl">git clone https://github.com/ephpm/cache-wordpress wordpress/wp-content/cache-wordpress
+</span></span><span class="line"><span class="cl"><span class="nb">printf</span> <span class="s2">&#34;&lt;?php\nrequire __DIR__ . &#39;/cache-wordpress/dropin/object-cache.php&#39;;\n&#34;</span> <span class="se">\
+</span></span></span><span class="line"><span class="cl">  &gt; wordpress/wp-content/object-cache.php
+</span></span></code></pre></div><p>Copy <code>wp-config-sample.php</code> to <code>wp-config.php</code>, leave the DB credentials as placeholders (the SQLite drop-in ignores
+them), add <code>define( 'WP_CACHE', true );</code>, and start it:</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl">ephpm dev --port <span class="m">8088</span> --document-root <span class="s2">&#34;</span><span class="k">$(</span><span class="nb">pwd</span><span class="k">)</span><span class="s2">/wordpress&#34;</span>
+</span></span></code></pre></div><p>That&rsquo;s a working WordPress on <code>http://127.0.0.1:8088</code>, with the installer, admin, themes and plugins. The database is a
+file at <code>wp-content/database/.ht.sqlite</code>. The object cache lives in the same process as PHP: <code>wp_cache_get()</code> goes
+straight from the Zend engine into the KV store through <code>ephpm_kv_*</code> native functions, no socket and no Redis.</p>
+<h3 id="the-container-is-the-binary-and-the-site">The container is the binary and the site</h3>
+<p>Since there&rsquo;s nothing else to run, the image doesn&rsquo;t need a distro. <code>gcr.io/distroless/cc-debian12</code> is glibc, libssl,
+CA certificates, tzdata and <code>libgcc</code>, with no shell and no package manager, and that covers exactly what the <code>ldd</code>
+output above asks for:</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-dockerfile" data-lang="dockerfile"><span class="line"><span class="cl"><span class="c"># The whole runtime: glibc + libgcc from distroless, one binary, the site.</span><span class="err">
+</span></span></span><span class="line"><span class="cl"><span class="k">FROM</span><span class="w"> </span><span class="s">gcr.io/distroless/cc-debian12:nonroot</span><span class="err">
+</span></span></span><span class="line"><span class="cl"><span class="k">COPY</span> --chmod<span class="o">=</span><span class="m">755</span> ephpm /usr/local/bin/ephpm<span class="err">
+</span></span></span><span class="line"><span class="cl"><span class="k">COPY</span> ephpm.toml /etc/ephpm/ephpm.toml<span class="err">
+</span></span></span><span class="line"><span class="cl"><span class="k">COPY</span> --chown<span class="o">=</span>65532:65532 wordpress/ /srv/www/<span class="err">
+</span></span></span><span class="line"><span class="cl"><span class="k">EXPOSE</span><span class="w"> </span><span class="s">8080</span><span class="err">
+</span></span></span><span class="line"><span class="cl"><span class="k">ENTRYPOINT</span> <span class="p">[</span><span class="s2">&#34;/usr/local/bin/ephpm&#34;</span><span class="p">,</span> <span class="s2">&#34;serve&#34;</span><span class="p">,</span> <span class="s2">&#34;--config&#34;</span><span class="p">,</span> <span class="s2">&#34;/etc/ephpm/ephpm.toml&#34;</span><span class="p">]</span><span class="err">
+</span></span></span></code></pre></div><p>with a config that&rsquo;s about as small as configs get:</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-toml" data-lang="toml"><span class="line"><span class="cl"><span class="p">[</span><span class="nx">server</span><span class="p">]</span>
+</span></span><span class="line"><span class="cl"><span class="nx">listen</span> <span class="p">=</span> <span class="s2">&#34;0.0.0.0:8080&#34;</span>
+</span></span><span class="line"><span class="cl"><span class="nx">document_root</span> <span class="p">=</span> <span class="s2">&#34;/srv/www&#34;</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="p">[</span><span class="nx">kv</span><span class="p">]</span>
+</span></span><span class="line"><span class="cl"><span class="nx">memory_limit</span> <span class="p">=</span> <span class="s2">&#34;64MB&#34;</span>
+</span></span></code></pre></div><p>I built that with v0.8.2 (PHP 8.5.7), WordPress 7.1, SQLite Database Integration 3.0.1 and cache-wordpress, ran it,
+and installed WordPress by posting the installer form with <code>curl</code>:</p>
+<pre tabindex="0"><code>$ podman images
+localhost/blog-wp-zerodep:latest       271 MB
+gcr.io/distroless/cc-debian12:nonroot  25.1 MB
+
+$ podman history --format &#39;{{.Size}} {{.CreatedBy}}&#39; localhost/blog-wp-zerodep | head -5
+0B      ENTRYPOINT [&#34;/usr/local/bin/ephpm&#34;, ...
+0B      EXPOSE 8080
+114MB   COPY dir:...          # WordPress 7.1 + plugins
+3.07kB  COPY file:...         # ephpm.toml
+132MB   COPY file:...         # ephpm
+
+install step2: 200
+&lt;h1&gt;Success!&lt;/h1&gt;
+</code></pre><p>After that the front page served normally. To confirm the pieces were really the ones I thought, I dropped a five-line <code>check.php</code> into the docroot that loads
+WordPress and prints what it&rsquo;s running on:</p>
+<pre tabindex="0"><code>persistent object cache: yes
+cache class: Ephpm\Cache\WordPress\ObjectCache
+db driver: WP_SQLite_DB
+sapi: ephpm
+</code></pre><p>The container sat at about 76 MB of memory after the install and a handful of page views (<code>podman stats</code>), and the
+whole database was one small SQLite file. Out of 271 MB of image, about half is the WordPress tree and half is the binary;
+distroless itself is 25 MB. There&rsquo;s no shell in the container at all, which is nice for security and occasionally
+annoying for debugging (<code>podman exec ... /usr/local/bin/ephpm php -r '...'</code> is the escape hatch, since the binary is also
+a PHP CLI).</p>
+<h3 id="where-this-is-the-right-tool-and-where-it-isnt">Where this is the right tool, and where it isn&rsquo;t</h3>
+<p>Where one binary with a SQLite file makes sense:</p>
+<ul>
+<li><strong>CI</strong>: testing a plugin or theme against a real WordPress without starting MySQL and a web server in the job.</li>
+<li><strong>PR previews and staging copies</strong>, where spinning up and tearing down is the main workload.</li>
+<li><strong>Edge and small boxes</strong>: a Raspberry Pi, a $5 VM, an appliance. Anywhere the LEMP stack is most of the resource budget.</li>
+<li><strong>Low-traffic sites</strong> whose real requirement is &ldquo;it stays up and I don&rsquo;t have to babysit it.&rdquo;</li>
+</ul>
+<p>Where it isn&rsquo;t:</p>
+<ul>
+<li><strong>Write-heavy, multi-writer sites.</strong> SQLite is one writer at a time. A busy WooCommerce store with concurrent checkouts
+wants a real MySQL. ePHPm still helps there: point <code>[db.mysql]</code> at the MySQL server and its proxy pools connections, and
+you&rsquo;ve still dropped nginx, php-fpm and Redis.</li>
+<li><strong>Plugins that assume MySQL-specific SQL</strong> in ways the SQLite drop-in can&rsquo;t translate. WordPress&rsquo;s SQLite project has
+come a long way, but test your plugin list before you commit.</li>
+<li><strong>Anything that needs the cache to survive a restart.</strong> The KV store is a cache; the object cache starts cold.</li>
+</ul>
+<h3 id="whats-next">What&rsquo;s next</h3>
+<p>The single binary is the easy part to show. The interesting work is behind it: making the embedded engine behave like
+php-fpm for the apps that assume php-fpm, and making the database side do more than SQLite-in-a-file without bringing a
+server back. That&rsquo;s where most of the ePHPm commits are going right now.</p>
+<h3 id="how-i-ran-it">How I ran it</h3>
+<p>AMD Ryzen 9 5950X, Windows 11 with WSL2 and Podman 5 (rootful machine). Image built from the files above with
+<code>podman build</code>, run with <code>-p 18300:8080</code>, installer posted from the Ubuntu WSL distro with <code>curl</code>. The three <code>GET /</code>
+timings are the first three requests after install from a cold OPcache, not a benchmark.</p>
+<h3 id="links">Links</h3>
+<ul>
+<li><a href="https://github.com/ephpm/ephpm">ePHPm</a> and the <a href="https://github.com/ephpm/ephpm/releases/tag/v0.8.2">v0.8.2 release</a></li>
+<li><a href="https://github.com/ephpm/php-sdk">ephpm/php-sdk</a>, <a href="https://github.com/crazywhalecc/static-php-cli">static-php-cli</a></li>
+<li><a href="https://github.com/WordPress/sqlite-database-integration">SQLite Database Integration</a></li>
+<li><a href="https://github.com/ephpm/cache-wordpress">ephpm/cache-wordpress</a></li>
+<li><a href="https://github.com/GoogleContainerTools/distroless">distroless</a></li>
+</ul>
+
+      </div>
+      <footer>
+        <div class="stats">
+  
+    <ul class="categories">
+      
+        
+          <li><a class="article-terms-link" href="/categories/ephpm/">ephpm</a></li>
+        
+          <li><a class="article-terms-link" href="/categories/php/">php</a></li>
+        
+          <li><a class="article-terms-link" href="/categories/containers/">containers</a></li>
+        
+      
+    </ul>
+  
+  
+    <ul class="tags">
+      
+        
+          <li><a class="article-terms-link" href="/tags/ephpm/">ephpm</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/wordpress/">wordpress</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/php/">php</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/containers/">containers</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/sqlite/">sqlite</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/deployment/">deployment</a></li>
+        
+      
+    </ul>
+  
+</div>
+
+      </footer>
+    </div>
+    
+      
+  
+  <div class='post giscus-wrap'>
+    <script src='https://giscus.app/client.js'
+            data-repo='luthermonson/luth.io'
+            data-repo-id='R_kgDOGvFBXQ'
+            data-category='Announcements'
+            data-category-id='DIC_kwDOGvFBXc4DH_gv'
+            data-mapping='pathname'
+            data-strict='1'
+            data-reactions-enabled='1'
+            data-emit-metadata='0'
+            data-input-position='top'
+            data-theme='light'
+            data-lang='en'
+            data-loading='lazy'
+            crossorigin='anonymous'
+            async>
+    </script>
+  </div>
+  
+
+
+
+    
+  </article>
+  
+    <nav class="post-nav">
+      
+        <a href="/blog/2026/09/php-dispatch-fair-queue-p99/" class="post-nav-link older">
+          <span class="post-nav-label">&larr; Older</span>
+          <span class="post-nav-title">P99 From 280 ms to 58 ms by Making the Queue Fair</span>
+        </a>
+      
+      
+        <a href="/blog/2026/09/linode-tui/" class="post-nav-link newer">
+          <span class="post-nav-label">Newer &rarr;</span>
+          <span class="post-nav-title">Building k9s for Linode With Bubble Tea</span>
+        </a>
+      
+    </nav>
+  
+
+      </main>
+      <section id="site-sidebar">
+  
+    <section id="recent-posts">
+      <header>
+        <h1>Recent Posts</h1>
+      </header>
+      
+      <article class="mini-post">
+          <a href="/blog/2026/10/ephpm-worker-mode-performance/" class="image" style="--bg-image: url('/img/2026/10/ephpm-worker-mode-performance-cover.svg');">
+    <img class="" src="/img/2026/10/ephpm-worker-mode-performance-cover.svg" alt="Diagram: before, hyper/tokio hands each request to one shared bounded channel whose waiter list all 20 PHP threads contend on; after, a dispatcher hands the job straight into the mailbox of the most recently idle PHP thread and only queues it in a FIFO overflow queue when every thread is busy">
+  </a>
+        <header>
+          <h2><a href="/blog/2026/10/ephpm-worker-mode-performance/">Fourth Place in Worker Mode, and Why It Wasn&#39;t PHP</a></h2>
+          <time class="published" datetime="2026-10-16 08:10:00 -0700 PDT">October 16, 2026</time>
+        </header>
+      </article>
+      
+      <article class="mini-post">
+          <a href="/blog/2026/10/ephpm-websockets-how-to/" class="image" style="--bg-image: url('/img/2026/10/ephpm-websockets-how-to-cover.svg');">
+    <img class="" src="/img/2026/10/ephpm-websockets-how-to-cover.svg" alt="Diagram: browsers hold sockets to ePHPm&#39;s Rust session tasks and registry; each connect, message and disconnect runs websocket.php once on the PHP thread pool, and ordinary HTTP requests push through ephpm_ws_broadcast">
+  </a>
+        <header>
+          <h2><a href="/blog/2026/10/ephpm-websockets-how-to/">WebSockets in ePHPm, From Zero to a Working Chat</a></h2>
+          <time class="published" datetime="2026-10-11 17:30:00 -0700 PDT">October 11, 2026</time>
+        </header>
+      </article>
+      
+      <article class="mini-post">
+          <a href="/blog/2026/10/webhooks-out-of-order-scheduler/" class="image" style="--bg-image: url('/img/2026/10/webhooks-out-of-order-scheduler-timeline.svg');">
+    <img class="" src="/img/2026/10/webhooks-out-of-order-scheduler-timeline.svg" alt="Timeline of three same-label jobs where a runner executing a build is destroyed 2.3 seconds before its in_progress webhook arrives">
+  </a>
+        <header>
+          <h2><a href="/blog/2026/10/webhooks-out-of-order-scheduler/">Webhooks Arrive Out of Order: How My Scheduler Killed Live Builds</a></h2>
+          <time class="published" datetime="2026-10-07 21:10:00 -0700 PDT">October 7, 2026</time>
+        </header>
+      </article>
+      
+      <article class="mini-post">
+          <a href="/blog/2026/10/go-proxmox-five-years-to-v0-8/" class="image" style="--bg-image: url('/img/2026/10/go-proxmox-five-years-to-v0-8-apidiff.svg');">
+    <img class="" src="/img/2026/10/go-proxmox-five-years-to-v0-8-apidiff.svg" alt="Horizontal bar chart of apidiff incompatible and compatible changes for every go-proxmox release from v0.1.0 to v0.8.2">
+  </a>
+        <header>
+          <h2><a href="/blog/2026/10/go-proxmox-five-years-to-v0-8/">Breaking Changes Without Breaking Trust: Five Years to go-proxmox v0.8</a></h2>
+          <time class="published" datetime="2026-10-04 19:40:00 -0700 PDT">October 4, 2026</time>
+        </header>
+      </article>
+      
+      <article class="mini-post">
+          <a href="/blog/2026/10/windows-sigterm-sparse-files/" class="image" style="--bg-image: url('/img/2026/10/windows-sigterm-sparse-files-connections.svg');">
+    <img class="" src="/img/2026/10/windows-sigterm-sparse-files-connections.svg" alt="Bar chart: 96 Cloudflare edge connections held by orphaned cloudflared processes versus 4 for the live daemon">
+  </a>
+        <header>
+          <h2><a href="/blog/2026/10/windows-sigterm-sparse-files/">Windows Grab-Bag: SIGTERM That Doesn&#39;t Exist and Sparse Files That Break Docker</a></h2>
+          <time class="published" datetime="2026-10-03 14:30:00 -0700 PDT">October 3, 2026</time>
+        </header>
+      </article>
+      
+      
+        <footer>
+          <a href="/blog" class="button">See More</a>
+        </footer>
+      
+    </section>
+  
+
+  
+    
+
+      <section id="categories">
+        <header>
+          <h1><a href="/categories">Categories</a></h1>
+        </header>
+        <ul>
+          
+          
+          <li>
+              <a href="/categories/ephpm/">ephpm<span class="count">33</span></a>
+          
+          <li>
+              <a href="/categories/go/">go<span class="count">30</span></a>
+          
+          <li>
+              <a href="/categories/php/">php<span class="count">23</span></a>
+          
+          <li>
+              <a href="/categories/rust/">rust<span class="count">15</span></a>
+          
+          <li>
+              <a href="/categories/homelab/">homelab<span class="count">14</span></a>
+          
+          <li>
+              <a href="/categories/windows/">windows<span class="count">14</span></a>
+          
+          <li>
+              <a href="/categories/ci/">ci<span class="count">9</span></a>
+          
+          <li>
+              <a href="/categories/databases/">databases<span class="count">9</span></a>
+          
+          <li>
+              <a href="/categories/security/">security<span class="count">9</span></a>
+          
+          <li>
+              <a href="/categories/containers/">containers<span class="count">7</span></a>
+          
+          <li>
+              <a href="/categories/tools/">tools<span class="count">5</span></a>
+          
+          <li>
+              <a href="/categories/ai-agents/">ai-agents<span class="count">4</span></a>
+          
+          </li>
+        </ul>
+      </section>
+    
+  
+
+  
+    <section id="mini-bio">
+      <header>
+        <h1>About</h1>
+      </header>
+      <p>Luther is a 20+ year software veteran specializing in backend APIs and architecting products. Employed at <a href='https://www.suse.com'>SUSE</a> as the Team Lead for the <a href='https://github.com/rancher/windows/issues'>Containers on Windows Team</a> working on <a href='https://rancher.com/'>Rancher</a> + <a href='https://kubernetes.io/'>Kubernetes</a></p>
+      <footer>
+        <a href="/about" class="button">Learn More</a>
+      </footer>
+    </section>
+  
+</section>
+
+      <footer id="site-footer">
+  
+      <ul class="socnet-icons">
+        
+
+        <li><a href="//github.com/luthermonson" target="_blank" rel="noopener" title="GitHub" class="fab fa-github"></a></li>
+
+
+
+
+
+
+
+
+
+
+
+<li><a href="//www.linkedin.com/in/luthermonson" target="_blank" rel="noopener" title="LinkedIn" class="fab fa-linkedin"></a></li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li><a href="//twitter.com/luthermonson" target="_blank" rel="noopener" title="Twitter" class="fab fa-twitter"></a></li>
+
+
+
+
+
+
+
+
+
+
+
+<li><a href="mailto:luther.monson@gmail.com" target="_blank" title="Email" class="far fa-envelope"></a></li>
+
+      </ul>
+  
+  <p class="copyright">
+    © 2026 Luther Monson
+      <br>
+    Theme: <a href='https://github.com/pacollins/hugo-future-imperfect-slim' target='_blank' rel='noopener'>Hugo Future Imperfect Slim</a><br>A <a href='https://html5up.net/future-imperfect' target='_blank' rel='noopener'>HTML5 UP port</a> | Powered by <a href='https://gohugo.io/' title='0.160.1' target='_blank' rel='noopener'>Hugo</a>
+  </p>
+</footer>
+<a id="back-to-top" href="#" class="fas fa-arrow-up fa-2x"></a>
+
+      <script src="/js/bundle.min.241b62ebc4792fe8c7a75879e5f710894f226f2b73342e9916b3a3b0526030cc.js" integrity="sha256-JBti68R5L&#43;jHp1h55fcQiU8ibytzNC6ZFrOjsFJgMMw="></script>
+    <script src="/js/add-on.js"></script>
+    </div>
+  </body>
+</html>

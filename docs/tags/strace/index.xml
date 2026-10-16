@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>Strace on Luther Monson</title>
+    <link>https://luth.io/tags/strace/</link>
+    <description>Recent content in Strace on Luther Monson</description>
+    <generator>Hugo</generator>
+    <language>en</language>
+    <lastBuildDate>Thu, 20 Aug 2026 20:45:00 -0700</lastBuildDate>
+    <atom:link href="https://luth.io/tags/strace/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>My Benchmark Was 4x Wrong Because of WSL</title>
+      <link>https://luth.io/blog/2026/08/benchmark-4x-wrong-wsl-drvfs-cwd/</link>
+      <pubDate>Thu, 20 Aug 2026 20:45:00 -0700</pubDate>
+      <guid>https://luth.io/blog/2026/08/benchmark-4x-wrong-wsl-drvfs-cwd/</guid>
+      <description>&lt;p&gt;I do most of my benchmarking on a Windows box in WSL2, because it&amp;rsquo;s the machine with 32 threads and 62 GB of RAM on&#xA;my desk. Everybody who does that learns the first rule early: don&amp;rsquo;t put your data on &lt;code&gt;/mnt/c&lt;/code&gt;. DrvFs, the 9p-backed&#xA;mount that exposes the Windows drives inside WSL, is slow for file-heavy work, so the databases, the docroot and the&#xA;build output all live on the WSL ext4 disk. My scaling harness for &lt;a href=&#34;https://github.com/ephpm/ephpm&#34;&gt;ePHPm&lt;/a&gt; even&#xA;says so in capital letters in its README.&lt;/p&gt;</description>
+    </item>
+  </channel>
+</rss>

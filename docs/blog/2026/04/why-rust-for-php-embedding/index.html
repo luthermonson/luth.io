@@ -1,0 +1,768 @@
+<!doctype html>
+<html lang="en">
+  <head>
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-MSTSKGFWTX"></script>
+<script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+
+    gtag('config', 'G-MSTSKGFWTX');
+</script><meta charset="utf-8">
+<title>Why Rust for PHP Embedding (Not Go) - Luther Monson</title>
+<meta name="description" content="I&#39;m a Go developer building a PHP application server in Rust. Here&#39;s the FFI reasoning, the C wrapper it forced on me, and what cgo actually costs when you measure it.">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<meta name="twitter:card" content="summary_large_image"><meta name="twitter:site" content="@luthermonson">
+
+<meta property="og:site_name" content="Luther Monson">
+<meta property="og:title" content="Why Rust for PHP Embedding (Not Go)">
+<meta property="og:description" content="I&#39;m a Go developer building a PHP application server in Rust. Here&#39;s the FFI reasoning, the C wrapper it forced on me, and what cgo actually costs when you measure it.">
+<meta property="og:type" content="article">
+<meta property="og:url" content="https://luth.io/blog/2026/04/why-rust-for-php-embedding/">
+    <meta property="og:image" content="https://luth.io/img/2026/04/why-rust-for-php-embedding-cover.svg">
+    <meta property="og:image:alt" content="Diagram of a request flowing from hyper/tokio through a Rust blocking thread, a C wrapper with setjmp, and libphp, with SAPI callbacks writing into thread-local C buffers">
+
+
+  <link rel="manifest" href="/favicon/site.webmanifest?v=1">
+  <link rel="apple-touch-icon" sizes="180x180" href="/favicon/apple-touch-icon.png?v=1">
+  <link rel="icon" type="image/png" sizes="32x32" href="/favicon/favicon-32x32.png?v=1">
+  <link rel="icon" type="image/png" sizes="16x16" href="/favicon/favicon-16x16.png?v=1">
+  
+    <link rel="mask-icon" href="/favicon/safari-pinned-tab.svg?v=1" color="#ffffff">
+    <link rel="shortcut icon" href="/favicon/favicon.ico?v=1">
+    <meta name="msapplication-config" content="/favicon/browserconfig.xml?v=1">
+  
+  <meta name="msapplication-TileColor" content="#ffffff">
+  <meta name="theme-color" content="#ffffff">
+
+
+  <meta name="generator" content="Hugo 0.160.1">
+  <link rel="alternate" type="application/rss+xml" href="https://luth.io/index.xml" title="Luther Monson">
+  <link rel="stylesheet" href="/css/bundle.min.e1ffed86714fbb7eff75eab221c0c61b8260be0c7d1c08db0fcb7a2bdb6af7c9.css" integrity="sha256-4f/thnFPu37/deqyIcDGG4Jgvgx9HAjbD8t6K9tq98k="><link rel="stylesheet" href="/css/add-on.css">
+        <link rel="stylesheet" href="/css/code.css">
+        <link rel="stylesheet" href="/css/mobile.css">
+</head>
+
+  <body>
+    
+
+<header id="site-header">
+  <nav id="site-nav">
+    <h1 class="nav-title">
+      <a href="/" class="nav">
+        <img class="nav-avatar" src="/img/luther-monson-headshot.jpg" alt="" width="32" height="32">
+        
+          Blog
+        
+      </a>
+    </h1>
+    <menu id="site-nav-menu" class="flyout-menu menu">
+      
+        
+          
+          <a href="/" class="nav link"><i class='fa fa-home'></i> Home</a>
+        
+      
+        
+          
+          <a href="/about" class="nav link"><i class='far fa-id-card'></i> About</a>
+        
+      
+        
+          
+          <a href="/blog" class="nav link"><i class='far fa-newspaper'></i> Blog</a>
+        
+      
+        
+          
+          <a href="/archive" class="nav link"><i class='far fa-calendar-alt'></i> Archive</a>
+        
+      
+        
+          
+          <a href="/categories" class="nav link"><i class='fas fa-sitemap'></i> Categories</a>
+        
+      
+      <a href="#share-menu" class="nav link share-toggle"><i class="fas fa-share-alt">&nbsp;</i>Share</a>
+      <a href="#search-input" class="nav link search-toggle"><i class="fas fa-search">&nbsp;</i>Search</a>
+    </menu>
+    <a href="#search-input" class="nav search-toggle"><i class="fas fa-search fa-2x">&nbsp;</i></a>
+    <a href="#share-menu" class="nav share-toggle"><i class="fas fa-share-alt fa-2x">&nbsp;</i></a>
+    
+    <a href="#site-nav" class="nav nav-toggle"><i class="fas fa-bars fa-2x"></i></a>
+  </nav>
+  <menu id="search" class="menu"><input id="search-input" class="search-input menu"></input><div id="search-results" class="search-results menu"></div></menu>
+  
+  
+    <menu id="share-menu" class="flyout-menu menu">
+      <h1>Share Post</h1>
+      
+
+
+
+
+  
+    
+    <a href="//twitter.com/share?text=Why%20Rust%20for%20PHP%20Embedding%20%28Not%20Go%29&amp;url=https%3a%2f%2fluth.io%2fblog%2f2026%2f04%2fwhy-rust-for-php-embedding%2f" target="_blank" rel="noopener" class="nav share-btn twitter">
+        <p>Twitter</p>
+      </a>
+  
+
+  
+      <a href="//www.facebook.com/sharer/sharer.php?u=https%3a%2f%2fluth.io%2fblog%2f2026%2f04%2fwhy-rust-for-php-embedding%2f" target="_blank" rel="noopener" class="nav share-btn facebook">
+        <p>Facebook</p>
+        </a>
+  
+
+  
+    <a href="//www.reddit.com/submit?url=https%3a%2f%2fluth.io%2fblog%2f2026%2f04%2fwhy-rust-for-php-embedding%2f&amp;title=Why%20Rust%20for%20PHP%20Embedding%20%28Not%20Go%29" target="_blank" rel="noopener" class="nav share-btn reddit">
+          <p>Reddit</p>
+        </a>
+  
+
+  
+        <a href="//www.linkedin.com/shareArticle?url=https%3a%2f%2fluth.io%2fblog%2f2026%2f04%2fwhy-rust-for-php-embedding%2f&amp;title=Why%20Rust%20for%20PHP%20Embedding%20%28Not%20Go%29" target="_blank" rel="noopener" class="nav share-btn linkedin">
+            <p>LinkedIn</p>
+          </a>
+  
+
+  
+        <a href="//www.pinterest.com/pin/create/button/?url=https%3a%2f%2fluth.io%2fblog%2f2026%2f04%2fwhy-rust-for-php-embedding%2f&amp;description=Why%20Rust%20for%20PHP%20Embedding%20%28Not%20Go%29" target="_blank" rel="noopener" class="nav share-btn pinterest">
+          <p>Pinterest</p>
+        </a>
+  
+
+  
+        <a href="mailto:?subject=Check%20out%20this%20post%20by Luther%20Monson&amp;body=https%3a%2f%2fluth.io%2fblog%2f2026%2f04%2fwhy-rust-for-php-embedding%2f" target="_blank" class="nav share-btn email" data-proofer-ignore>
+          <p>Email</p>
+        </a>
+  
+
+
+    </menu>
+  
+</header>
+
+    <div id="wrapper">
+      <section id="site-intro" class="hidden-single-column">
+  <a href="/"><img src="/img/luther-monson-headshot.jpg" class="circle" width="100" alt="Luther Monson, Staff Software Engineer at SUSE" /></a>
+  <header>
+    <h1>Luther Monson</h1>
+  </header>
+  <main>
+    <p>Go by way of PHP &middot; Containers &middot; VMs &middot; Windows &middot; Kubernetes</p>
+  </main>
+  
+    <footer>
+      <ul class="socnet-icons">
+        
+
+        <li><a href="//github.com/luthermonson" target="_blank" rel="noopener" title="GitHub" class="fab fa-github"></a></li>
+
+
+
+
+
+
+
+
+
+
+
+<li><a href="//www.linkedin.com/in/luthermonson" target="_blank" rel="noopener" title="LinkedIn" class="fab fa-linkedin"></a></li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li><a href="//twitter.com/luthermonson" target="_blank" rel="noopener" title="Twitter" class="fab fa-twitter"></a></li>
+
+
+
+
+
+
+
+
+
+
+
+<li><a href="mailto:luther.monson@gmail.com" target="_blank" title="Email" class="far fa-envelope"></a></li>
+
+      </ul>
+    </footer>
+  
+</section>
+
+      <main id="site-main">
+        
+  <article>
+    <div class="post">
+      <header>
+  <div class="title">
+    
+      <h2><a href="/blog/2026/04/why-rust-for-php-embedding/">Why Rust for PHP Embedding (Not Go)</a></h2>
+    
+    
+      <p>I&#39;m a Go developer building a PHP application server in Rust. Here&#39;s the FFI reasoning, the C wrapper it forced on me, and what cgo actually costs when you measure it.</p>
+    
+  </div>
+  <div class="meta">
+    <time datetime="2026-04-05 19:40:00 -0700 PDT">April 5, 2026</time>
+    
+    <p>11-Minute Read</p>
+  </div>
+</header>
+
+      <div id="socnet-share">
+        
+
+
+
+
+  
+    
+    <a href="//twitter.com/share?text=Why%20Rust%20for%20PHP%20Embedding%20%28Not%20Go%29&amp;url=https%3a%2f%2fluth.io%2fblog%2f2026%2f04%2fwhy-rust-for-php-embedding%2f" target="_blank" rel="noopener" class="nav share-btn twitter">
+        <p>Twitter</p>
+      </a>
+  
+
+  
+      <a href="//www.facebook.com/sharer/sharer.php?u=https%3a%2f%2fluth.io%2fblog%2f2026%2f04%2fwhy-rust-for-php-embedding%2f" target="_blank" rel="noopener" class="nav share-btn facebook">
+        <p>Facebook</p>
+        </a>
+  
+
+  
+    <a href="//www.reddit.com/submit?url=https%3a%2f%2fluth.io%2fblog%2f2026%2f04%2fwhy-rust-for-php-embedding%2f&amp;title=Why%20Rust%20for%20PHP%20Embedding%20%28Not%20Go%29" target="_blank" rel="noopener" class="nav share-btn reddit">
+          <p>Reddit</p>
+        </a>
+  
+
+  
+        <a href="//www.linkedin.com/shareArticle?url=https%3a%2f%2fluth.io%2fblog%2f2026%2f04%2fwhy-rust-for-php-embedding%2f&amp;title=Why%20Rust%20for%20PHP%20Embedding%20%28Not%20Go%29" target="_blank" rel="noopener" class="nav share-btn linkedin">
+            <p>LinkedIn</p>
+          </a>
+  
+
+  
+        <a href="//www.pinterest.com/pin/create/button/?url=https%3a%2f%2fluth.io%2fblog%2f2026%2f04%2fwhy-rust-for-php-embedding%2f&amp;description=Why%20Rust%20for%20PHP%20Embedding%20%28Not%20Go%29" target="_blank" rel="noopener" class="nav share-btn pinterest">
+          <p>Pinterest</p>
+        </a>
+  
+
+  
+        <a href="mailto:?subject=Check%20out%20this%20post%20by Luther%20Monson&amp;body=https%3a%2f%2fluth.io%2fblog%2f2026%2f04%2fwhy-rust-for-php-embedding%2f" target="_blank" class="nav share-btn email" data-proofer-ignore>
+          <p>Email</p>
+        </a>
+  
+
+
+      </div>
+      <div class="content">
+        
+        <p>Go is my primary language and has been for a long time, so when I started building <a href="https://github.com/ephpm/ephpm">ePHPm</a>
+a few weeks ago the obvious move was to write it in Go. ePHPm is a PHP application server: one binary that embeds the
+real PHP interpreter (<code>libphp</code>, the Zend engine) and puts an HTTP server, TLS, a KV cache and a database proxy around it,
+so a PHP app doesn&rsquo;t need nginx + php-fpm + Redis to run. <a href="https://frankenphp.dev/">FrankenPHP</a> already proved the
+&ldquo;PHP inside a Go web server&rdquo; idea works, and it works well. I wrote it in Rust anyway. This post is the reasoning, the
+part of the design that Rust made easier and the part it didn&rsquo;t, and some numbers I should have measured before I wrote
+the design doc instead of after.</p>
+<h3 id="what-embedding-php-actually-means">What embedding PHP actually means</h3>
+<p>PHP is a C library if you build it with <code>--enable-embed=static</code> (plain <code>--enable-embed</code> gives you a shared
+<code>libphp.so</code>). You get <code>libphp.a</code>, a header set, and the embed SAPI
+(<code>php_embed_init()</code> / <code>php_embed_shutdown()</code>). Everything else is your problem: where output goes, where the POST body
+comes from, how <code>$_SERVER</code> gets filled. PHP asks for all of that through the SAPI, a struct of function pointers
+(<code>ub_write</code>, <code>read_post</code>, <code>send_headers</code>, <code>register_server_variables</code> and friends) that the host fills in. php-fpm,
+Apache&rsquo;s mod_php and the CLI are all just different implementations of that struct.</p>
+<p>So the host language talks to PHP in two directions:</p>
+<ul>
+<li><strong>Host calls PHP</strong>: start a request, execute a script, read back results.</li>
+<li><strong>PHP calls host</strong>: every <code>echo</code> is a <code>ub_write</code> callback, reading <code>php://input</code> is <code>read_post</code>, building <code>$_SERVER</code>
+is <code>register_server_variables</code>.</li>
+</ul>
+<p>The second direction is the one that matters for this comparison, because it happens many times per request and it&rsquo;s
+where the language boundary gets crossed from the &ldquo;wrong&rdquo; side.</p>
+<h3 id="what-my-design-doc-said">What my design doc said</h3>
+<p>When I sat down to compare runtimes I wrote up FrankenPHP in some detail (its Caddy module, its worker loop, how it
+parks a PHP thread on a Go channel). The headline in my own project notes (it&rsquo;s in <code>AGENTS.md</code> and the architecture doc) was this line:</p>
+<blockquote>
+<p>Go&rsquo;s CGO incurs ~200ns overhead per call. FrankenPHP crosses the CGO boundary 11+ times per request (~2.2μs+ overhead).
+Rust FFI to libphp is zero overhead.</p>
+</blockquote>
+<p>The 11 crossings came from walking a request through FrankenPHP: dispatch to the PHP thread, the SAPI callbacks for
+superglobals, headers, cookies, body reads, output writes, and the trip back to finish the request. The 200ns was a
+number I&rsquo;d carried around in my head for years from older Go releases. I didn&rsquo;t measure it. That&rsquo;s the kind of thing
+that&rsquo;s fine in a design doc and not fine in a blog post, so I measured it.</p>
+<h3 id="measuring-the-boundary">Measuring the boundary</h3>
+<p>The benchmark is about as small as it gets. Three C functions, compiled with <code>gcc -O2</code> and marked
+<code>noinline</code>, linked into both a Go test binary and a Rust binary (each side gets its own copy of the file; this is the
+Go one):</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-c" data-lang="c"><span class="line"><span class="cl"><span class="cp">#include</span> <span class="cpf">&lt;stddef.h&gt;</span><span class="cp">
+</span></span></span><span class="line"><span class="cl"><span class="nf">__attribute__</span><span class="p">((</span><span class="n">noinline</span><span class="p">))</span> <span class="kt">void</span> <span class="nf">noop</span><span class="p">(</span><span class="kt">void</span><span class="p">)</span> <span class="p">{}</span>
+</span></span><span class="line"><span class="cl"><span class="nf">__attribute__</span><span class="p">((</span><span class="n">noinline</span><span class="p">))</span> <span class="kt">size_t</span> <span class="nf">write_buf</span><span class="p">(</span><span class="kt">char</span> <span class="o">*</span><span class="n">p</span><span class="p">,</span> <span class="kt">size_t</span> <span class="n">n</span><span class="p">)</span> <span class="p">{</span> <span class="k">return</span> <span class="n">n</span> <span class="o">+</span> <span class="p">(</span><span class="n">p</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">);</span> <span class="p">}</span>
+</span></span><span class="line"><span class="cl"><span class="k">extern</span> <span class="kt">size_t</span> <span class="nf">goUbWrite</span><span class="p">(</span><span class="kt">char</span> <span class="o">*</span><span class="n">p</span><span class="p">,</span> <span class="kt">size_t</span> <span class="n">n</span><span class="p">);</span>   <span class="cm">/* rust_ub_write on the Rust side */</span>
+</span></span><span class="line"><span class="cl"><span class="nf">__attribute__</span><span class="p">((</span><span class="n">noinline</span><span class="p">))</span> <span class="kt">size_t</span> <span class="nf">c_calls_host</span><span class="p">(</span><span class="kt">char</span> <span class="o">*</span><span class="n">p</span><span class="p">,</span> <span class="kt">size_t</span> <span class="n">n</span><span class="p">)</span> <span class="p">{</span> <span class="k">return</span> <span class="nf">goUbWrite</span><span class="p">(</span><span class="n">p</span><span class="p">,</span> <span class="n">n</span><span class="p">);</span> <span class="p">}</span>
+</span></span></code></pre></div><p><code>write_buf</code> is the shape of <code>ub_write</code> (a pointer and a length), and <code>c_calls_host</code> is C calling back into the host
+language, which is what every SAPI callback does if the host owns the output buffer. On the Go side it&rsquo;s a cgo package
+with an <code>//export</code>&rsquo;d <code>goUbWrite</code> and a normal <code>testing.B</code> loop. On the Rust side it&rsquo;s an <code>unsafe extern &quot;C&quot;</code> block, a
+<code>#[unsafe(no_mangle)] pub extern &quot;C&quot; fn rust_ub_write</code>, and a loop of 200 million calls timed with <code>Instant</code>, with
+<code>black_box</code> on the arguments so nothing gets folded away. Each case ran five times and I took the median.</p>
+<p><img src="/img/2026/04/why-rust-for-php-embedding-ffi-cost.svg" alt="Bar chart of nanoseconds per call for Go cgo versus Rust extern C across four cases"></p>
+<table>
+  <thead>
+      <tr>
+          <th>Case</th>
+          <th style="text-align: right">Go 1.26 cgo</th>
+          <th style="text-align: right">Rust 1.94</th>
+      </tr>
+  </thead>
+  <tbody>
+      <tr>
+          <td>Plain function call, no FFI (baseline)</td>
+          <td style="text-align: right">1.20 ns</td>
+          <td style="text-align: right">1.15 ns</td>
+      </tr>
+      <tr>
+          <td>Empty C call</td>
+          <td style="text-align: right">23.6 ns</td>
+          <td style="text-align: right">1.15 ns</td>
+      </tr>
+      <tr>
+          <td>C call with pointer + length</td>
+          <td style="text-align: right">29.3 ns</td>
+          <td style="text-align: right">1.39 ns</td>
+      </tr>
+      <tr>
+          <td>C calls back into the host</td>
+          <td style="text-align: right">61.2 ns</td>
+          <td style="text-align: right">1.60 ns</td>
+      </tr>
+  </tbody>
+</table>
+<p>So my doc was wrong, and wrong in Go&rsquo;s favor. A cgo call on Go 1.26 is about 24ns on this box, not 200. Going the other
+way, C calling into an exported Go function, is about 61ns. Rust calling C is indistinguishable from Rust calling Rust,
+because it <em>is</em> the same thing: the same calling convention, the same stack, a <code>call</code> instruction.</p>
+<p>If I redo the napkin math with real numbers, 11 crossings is somewhere between roughly 0.25µs (all cheap calls) and 0.7µs
+(all callbacks) per request. That is real, it&rsquo;s measurable, and it is still small next to running a WordPress page.
+Anyone who tells you cgo overhead alone is what makes Go the wrong choice here is doing what I did in the design doc.</p>
+<h3 id="so-why-rust-anyway">So why Rust anyway</h3>
+<p>The per-call number isn&rsquo;t the whole cost of putting a Go runtime and the Zend engine in the same process. The things
+that actually pushed me over:</p>
+<p><strong>There&rsquo;s no second runtime in the way.</strong> A cgo call isn&rsquo;t just a jump. The goroutine has to move onto the system stack
+and tell the scheduler it&rsquo;s leaving Go, and a callback from C into Go has to get back onto a goroutine (and a C thread
+that Go didn&rsquo;t create has to be adopted by the runtime first). FrankenPHP creates each PHP thread in C with
+<code>pthread_create</code>, calls back into Go from it, and parks it on a channel select waiting for the next request, so the
+goroutine scheduler never gets to move it. All of that is
+well-engineered and all of it is machinery that exists because there are two runtimes in the process with different
+ideas about threads and stacks. In Rust a PHP thread is an OS thread. I call <code>ts_resource(0)</code> on it once to register it
+with PHP&rsquo;s thread-safe resource manager and that&rsquo;s the whole story.</p>
+<p><strong>No GC sharing the process with Zend.</strong> PHP has its own allocator and its own refcounting/GC. Go&rsquo;s GC doesn&rsquo;t scan C
+memory, so it&rsquo;s not a correctness problem, but it is a second source of pauses in the same process as your PHP
+requests, and tail latency is one of the numbers I care about for this project.</p>
+<p><strong>The scope is bigger than an HTTP front end.</strong> ePHPm isn&rsquo;t only going to serve PHP. The plan is an in-process KV store
+that PHP can call into directly, a pooling MySQL/Postgres proxy, gossip clustering. Most of those are hot paths where PHP
+calls <em>out</em> of the Zend engine into host code, and that is exactly the 61ns-vs-1.6ns row in the table. I&rsquo;d rather that
+direction be free from day one than try to batch around it later.</p>
+<p><strong>I want to own the binary.</strong> FrankenPHP is a Caddy build. That&rsquo;s a feature for them. For ePHPm I wanted the HTTP stack
+(hyper), the TLS/ACME stack, and the PHP lifecycle all under my control, with nothing that has to be upstreamed into a
+second project before I can change how a request is dispatched.</p>
+<p>None of that makes Go bad at this. FrankenPHP exists and people run real traffic on it. It&rsquo;s a trade I&rsquo;m comfortable
+with because I&rsquo;m the one paying the Rust learning tax.</p>
+<h3 id="the-part-rust-doesnt-solve-setjmplongjmp">The part Rust doesn&rsquo;t solve: setjmp/longjmp</h3>
+<p>Here&rsquo;s the catch that every embedder hits regardless of language. PHP&rsquo;s error handling is <code>setjmp</code>/<code>longjmp</code>. A fatal
+error, an <code>exit()</code> in older paths, a memory limit, a timeout: the Zend engine calls <code>zend_bailout()</code>, which <code>longjmp</code>s
+back to the nearest <code>zend_try</code>. The <code>zend_try</code>/<code>zend_catch</code> macros expand to a <code>SETJMP</code> on a jump buffer stored in
+executor globals.</p>
+<p>You can&rsquo;t do that from Rust. <code>setjmp</code> &ldquo;returns twice,&rdquo; which Rust&rsquo;s compiler doesn&rsquo;t model, and a <code>longjmp</code> across Rust
+frames skips their destructors and is undefined behavior. If PHP longjmps through a Rust frame that holds a
+<code>MutexGuard</code> or a <code>Vec</code>, you&rsquo;ve leaked or corrupted something and you won&rsquo;t find out until later.</p>
+<p>The fix is boring and mandatory: Rust never calls into the Zend engine directly for anything that can bail out. It calls
+a C function, and the C function owns the jump buffer. This is the core of <code>ephpm_execute_request()</code> in
+<code>crates/ephpm-php/ephpm_wrapper.c</code> (trimmed):</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-c" data-lang="c"><span class="line"><span class="cl"><span class="kt">int</span> <span class="nf">ephpm_execute_request</span><span class="p">(</span><span class="k">const</span> <span class="kt">char</span> <span class="o">*</span><span class="n">filename</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl"><span class="p">{</span>
+</span></span><span class="line"><span class="cl">    <span class="cm">/* ... reset buffers, fill SG(request_info), rebuild superglobals ... */</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">    <span class="kt">int</span> <span class="n">result</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">    <span class="n">JMP_BUF</span> <span class="o">*</span><span class="n">__orig_bailout</span> <span class="o">=</span> <span class="nf">EG</span><span class="p">(</span><span class="n">bailout</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">    <span class="n">JMP_BUF</span> <span class="n">__bailout</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">    <span class="nf">EG</span><span class="p">(</span><span class="n">bailout</span><span class="p">)</span> <span class="o">=</span> <span class="o">&amp;</span><span class="n">__bailout</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">    <span class="k">if</span> <span class="p">(</span><span class="nf">SETJMP</span><span class="p">(</span><span class="n">__bailout</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">)</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">        <span class="n">zend_file_handle</span> <span class="n">file_handle</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">        <span class="nf">zend_stream_init_filename</span><span class="p">(</span><span class="o">&amp;</span><span class="n">file_handle</span><span class="p">,</span> <span class="n">filename</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">        <span class="nf">php_execute_script</span><span class="p">(</span><span class="o">&amp;</span><span class="n">file_handle</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">        <span class="cm">/* PHP 8.x: exit()/die() throws an unwind exit exception instead
+</span></span></span><span class="line"><span class="cl"><span class="cm">         * of calling zend_bailout(). Treat it like the old bailout path. */</span>
+</span></span><span class="line"><span class="cl">        <span class="k">if</span> <span class="p">(</span><span class="nf">EG</span><span class="p">(</span><span class="n">exception</span><span class="p">)</span> <span class="o">&amp;&amp;</span> <span class="nf">zend_is_unwind_exit</span><span class="p">(</span><span class="nf">EG</span><span class="p">(</span><span class="n">exception</span><span class="p">)))</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">            <span class="nf">zend_clear_exception</span><span class="p">();</span>
+</span></span><span class="line"><span class="cl">            <span class="n">result</span> <span class="o">=</span> <span class="o">-</span><span class="mi">2</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">        <span class="p">}</span>
+</span></span><span class="line"><span class="cl">    <span class="p">}</span> <span class="k">else</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">        <span class="cm">/* PHP bailed out (fatal error) */</span>
+</span></span><span class="line"><span class="cl">        <span class="n">result</span> <span class="o">=</span> <span class="o">-</span><span class="mi">2</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">    <span class="p">}</span>
+</span></span><span class="line"><span class="cl">    <span class="nf">EG</span><span class="p">(</span><span class="n">bailout</span><span class="p">)</span> <span class="o">=</span> <span class="n">__orig_bailout</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">    <span class="nf">capture_response_headers</span><span class="p">();</span>
+</span></span><span class="line"><span class="cl">    <span class="n">response_status_code</span> <span class="o">=</span> <span class="nf">SG</span><span class="p">(</span><span class="n">sapi_headers</span><span class="p">).</span><span class="n">http_response_code</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">    <span class="k">return</span> <span class="n">result</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl"><span class="p">}</span>
+</span></span></code></pre></div><p>The <code>longjmp</code> lands in a C frame, the C function returns an <code>int</code>, and Rust only ever sees a normal return. The rules
+the rest of the code follows fall out of that:</p>
+<ul>
+<li>Every Rust → PHP entry point goes through a C function that sets up the bailout.</li>
+<li>SAPI callbacks are C, and they write into thread-local C buffers (<code>output_buf</code>, <code>headers_buf</code>). They don&rsquo;t call into
+Rust while PHP might still bail out above them.</li>
+<li>Rust reads the buffers back after the C function returns.</li>
+</ul>
+<p>On the Rust side, the call is a handful of <code>CString</code>s that have to outlive the call, and then a plain function call:</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-rust" data-lang="rust"><span class="line"><span class="cl"><span class="k">unsafe</span><span class="w"> </span><span class="k">extern</span><span class="w"> </span><span class="s">&#34;C&#34;</span><span class="w"> </span><span class="p">{</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="k">pub</span><span class="w"> </span><span class="k">fn</span> <span class="nf">ephpm_request_set_info</span><span class="p">(</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">        </span><span class="n">method</span>: <span class="o">*</span><span class="k">const</span><span class="w"> </span><span class="n">c_char</span><span class="p">,</span><span class="w"> </span><span class="n">uri</span>: <span class="o">*</span><span class="k">const</span><span class="w"> </span><span class="n">c_char</span><span class="p">,</span><span class="w"> </span><span class="n">query_string</span>: <span class="o">*</span><span class="k">const</span><span class="w"> </span><span class="n">c_char</span><span class="p">,</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">        </span><span class="n">content_type</span>: <span class="o">*</span><span class="k">const</span><span class="w"> </span><span class="n">c_char</span><span class="p">,</span><span class="w"> </span><span class="n">cookie</span>: <span class="o">*</span><span class="k">const</span><span class="w"> </span><span class="n">c_char</span><span class="p">,</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">        </span><span class="n">post_data</span>: <span class="o">*</span><span class="k">const</span><span class="w"> </span><span class="n">c_char</span><span class="p">,</span><span class="w"> </span><span class="n">post_data_len</span>: <span class="kt">usize</span><span class="p">,</span><span class="w"> </span><span class="n">path_translated</span>: <span class="o">*</span><span class="k">const</span><span class="w"> </span><span class="n">c_char</span><span class="p">,</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="p">);</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="k">pub</span><span class="w"> </span><span class="k">fn</span> <span class="nf">ephpm_execute_request</span><span class="p">(</span><span class="n">filename</span>: <span class="o">*</span><span class="k">const</span><span class="w"> </span><span class="n">c_char</span><span class="p">)</span><span class="w"> </span>-&gt; <span class="nc">c_int</span><span class="p">;</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="k">pub</span><span class="w"> </span><span class="k">fn</span> <span class="nf">ephpm_get_output_buf</span><span class="p">(</span><span class="n">out_len</span>: <span class="o">*</span><span class="k">mut</span><span class="w"> </span><span class="kt">usize</span><span class="p">)</span><span class="w"> </span>-&gt; <span class="o">*</span><span class="k">const</span><span class="w"> </span><span class="n">c_char</span><span class="p">;</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="p">}</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="c1">// method, uri, script_filename... are CStrings owned by this stack frame,
+</span></span></span><span class="line"><span class="cl"><span class="c1">// so the pointers C holds stay valid until ephpm_execute_request returns.
+</span></span></span><span class="line"><span class="cl"><span class="kd">let</span><span class="w"> </span><span class="n">ret</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">unsafe</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">ffi</span>::<span class="n">ephpm_execute_request</span><span class="p">(</span><span class="n">script_filename</span><span class="p">.</span><span class="n">as_ptr</span><span class="p">())</span><span class="w"> </span><span class="p">};</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="kd">let</span><span class="w"> </span><span class="n">body</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="kd">let</span><span class="w"> </span><span class="k">mut</span><span class="w"> </span><span class="n">len</span>: <span class="kt">usize</span> <span class="o">=</span><span class="w"> </span><span class="mi">0</span><span class="p">;</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="kd">let</span><span class="w"> </span><span class="n">ptr</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">unsafe</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">ffi</span>::<span class="n">ephpm_get_output_buf</span><span class="p">(</span><span class="o">&amp;</span><span class="k">mut</span><span class="w"> </span><span class="n">len</span><span class="p">)</span><span class="w"> </span><span class="p">};</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="n">ptr</span><span class="p">.</span><span class="n">is_null</span><span class="p">()</span><span class="w"> </span><span class="o">||</span><span class="w"> </span><span class="n">len</span><span class="w"> </span><span class="o">==</span><span class="w"> </span><span class="mi">0</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nb">Vec</span>::<span class="n">new</span><span class="p">()</span><span class="w"> </span><span class="p">}</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="k">else</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="k">unsafe</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">std</span>::<span class="n">slice</span>::<span class="n">from_raw_parts</span><span class="p">(</span><span class="n">ptr</span><span class="p">.</span><span class="n">cast</span>::<span class="o">&lt;</span><span class="kt">u8</span><span class="o">&gt;</span><span class="p">(),</span><span class="w"> </span><span class="n">len</span><span class="p">)</span><span class="w"> </span><span class="p">}.</span><span class="n">to_vec</span><span class="p">()</span><span class="w"> </span><span class="p">}</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="p">};</span><span class="w">
+</span></span></span></code></pre></div><p>The C wrapper is just under 1,400 lines at this point, and most of it is SAPI plumbing I&rsquo;ll write up separately. The
+Rust side is mostly <code>CString</code> conversions and <code>// SAFETY:</code> comments. That split, Rust for everything that&rsquo;s async or
+long-lived, C for anything that touches Zend&rsquo;s control flow, has held up so far.</p>
+<h3 id="threads">Threads</h3>
+<p>The other thing the diagram at the top hides is threading. PHP comes in two flavors: NTS (non-thread-safe, one request
+at a time per process, which is why php-fpm forks) and ZTS (Zend Thread Safety, where every global lives in a
+per-thread slot managed by TSRM). For the first couple of weeks ePHPm ran NTS PHP behind a mutex, which is a fine way
+to get correct output and a terrible way to serve concurrent requests.</p>
+<p>As of this week it&rsquo;s ZTS. hyper and tokio handle connections asynchronously, and each PHP request runs on a tokio
+<code>spawn_blocking</code> thread. The first time a given thread runs PHP it calls into C to register with TSRM and start a
+request context; after that it&rsquo;s a thread-local <code>bool</code> check. All the per-request C state in the wrapper is
+<code>__thread</code>. Rust&rsquo;s threads are OS threads, so there&rsquo;s no question about which thread a piece of code runs on.</p>
+<p>One thing that is <em>not</em> free, and that I learned the hard way the same week I wrote the code above: PHP&rsquo;s init installs
+process-wide signal handlers (including the <code>SIGPROF</code> handler behind <code>max_execution_time</code>), and those do not care that
+your process has 32 tokio threads in it.
+That bug gets its own post.</p>
+<h3 id="what-id-tell-a-go-developer-considering-this">What I&rsquo;d tell a Go developer considering this</h3>
+<p>If you want PHP inside a Go web server, use FrankenPHP. It&rsquo;s mature, it&rsquo;s under the PHP Foundation now, and 24ns per
+crossing is not what&rsquo;s going to hurt you. If you&rsquo;re building something where PHP calls back into host code constantly,
+where you want one runtime in the process, and where you&rsquo;re willing to write a C shim for Zend&rsquo;s control flow either way,
+Rust gets out of the way in a way cgo structurally can&rsquo;t.</p>
+<p>And measure your own numbers before you put them in a design doc.</p>
+<h3 id="how-i-measured">How I measured</h3>
+<ul>
+<li>AMD Ryzen 9 5950X (16 cores / 32 threads), Ubuntu under WSL2, kernel 6.18, gcc 15.2</li>
+<li>Go 1.26.0 (<code>go test -bench</code>, five runs of about 2 seconds each), Rust 1.94.0 (<code>cargo build --release</code>, opt-level 3)</li>
+<li>The same three C functions are linked into both binaries (two copies differing only in <code>const</code> and the callback
+name); they are <code>noinline</code> and live in a separate object, so neither compiler can inline across the boundary (no
+cross-language LTO)</li>
+<li>Numbers are the median of five runs per case</li>
+</ul>
+<h3 id="links">Links</h3>
+<ul>
+<li><a href="https://github.com/ephpm/ephpm">ePHPm</a></li>
+<li><a href="https://frankenphp.dev/">FrankenPHP</a> and its <a href="https://github.com/php/frankenphp">source</a></li>
+<li><a href="https://pkg.go.dev/cmd/cgo">cgo documentation</a></li>
+<li><a href="https://doc.rust-lang.org/nomicon/ffi.html">The Rustonomicon on FFI</a>, whose section on FFI and unwinding is the reason you don&rsquo;t let anything unwind or <code>longjmp</code> through a Rust frame</li>
+<li><a href="https://github.com/php/php-src/tree/master/sapi/embed">PHP embed SAPI source</a></li>
+</ul>
+
+      </div>
+      <footer>
+        <div class="stats">
+  
+    <ul class="categories">
+      
+        
+          <li><a class="article-terms-link" href="/categories/ephpm/">ephpm</a></li>
+        
+          <li><a class="article-terms-link" href="/categories/rust/">rust</a></li>
+        
+          <li><a class="article-terms-link" href="/categories/php/">php</a></li>
+        
+      
+    </ul>
+  
+  
+    <ul class="tags">
+      
+        
+          <li><a class="article-terms-link" href="/tags/ephpm/">ephpm</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/rust/">rust</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/go/">go</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/php/">php</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/ffi/">ffi</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/cgo/">cgo</a></li>
+        
+      
+    </ul>
+  
+</div>
+
+      </footer>
+    </div>
+    
+      
+  
+  <div class='post giscus-wrap'>
+    <script src='https://giscus.app/client.js'
+            data-repo='luthermonson/luth.io'
+            data-repo-id='R_kgDOGvFBXQ'
+            data-category='Announcements'
+            data-category-id='DIC_kwDOGvFBXc4DH_gv'
+            data-mapping='pathname'
+            data-strict='1'
+            data-reactions-enabled='1'
+            data-emit-metadata='0'
+            data-input-position='top'
+            data-theme='light'
+            data-lang='en'
+            data-loading='lazy'
+            crossorigin='anonymous'
+            async>
+    </script>
+  </div>
+  
+
+
+
+    
+  </article>
+  
+    <nav class="post-nav">
+      
+        <a href="/blog/2024/02/goodhosts/" class="post-nav-link older">
+          <span class="post-nav-label">&larr; Older</span>
+          <span class="post-nav-title">Maintaining a Go Tool That Edits /etc/hosts on Every OS</span>
+        </a>
+      
+      
+        <a href="/blog/2026/04/php-signal-safety-init-ordering/" class="post-nav-link newer">
+          <span class="post-nav-label">Newer &rarr;</span>
+          <span class="post-nav-title">PHP Signal Safety - The Init Ordering Bug Nobody Warns You About</span>
+        </a>
+      
+    </nav>
+  
+
+      </main>
+      <section id="site-sidebar">
+  
+    <section id="recent-posts">
+      <header>
+        <h1>Recent Posts</h1>
+      </header>
+      
+      <article class="mini-post">
+          <a href="/blog/2026/10/ephpm-worker-mode-performance/" class="image" style="--bg-image: url('/img/2026/10/ephpm-worker-mode-performance-cover.svg');">
+    <img class="" src="/img/2026/10/ephpm-worker-mode-performance-cover.svg" alt="Diagram: before, hyper/tokio hands each request to one shared bounded channel whose waiter list all 20 PHP threads contend on; after, a dispatcher hands the job straight into the mailbox of the most recently idle PHP thread and only queues it in a FIFO overflow queue when every thread is busy">
+  </a>
+        <header>
+          <h2><a href="/blog/2026/10/ephpm-worker-mode-performance/">Fourth Place in Worker Mode, and Why It Wasn&#39;t PHP</a></h2>
+          <time class="published" datetime="2026-10-16 08:10:00 -0700 PDT">October 16, 2026</time>
+        </header>
+      </article>
+      
+      <article class="mini-post">
+          <a href="/blog/2026/10/ephpm-websockets-how-to/" class="image" style="--bg-image: url('/img/2026/10/ephpm-websockets-how-to-cover.svg');">
+    <img class="" src="/img/2026/10/ephpm-websockets-how-to-cover.svg" alt="Diagram: browsers hold sockets to ePHPm&#39;s Rust session tasks and registry; each connect, message and disconnect runs websocket.php once on the PHP thread pool, and ordinary HTTP requests push through ephpm_ws_broadcast">
+  </a>
+        <header>
+          <h2><a href="/blog/2026/10/ephpm-websockets-how-to/">WebSockets in ePHPm, From Zero to a Working Chat</a></h2>
+          <time class="published" datetime="2026-10-11 17:30:00 -0700 PDT">October 11, 2026</time>
+        </header>
+      </article>
+      
+      <article class="mini-post">
+          <a href="/blog/2026/10/webhooks-out-of-order-scheduler/" class="image" style="--bg-image: url('/img/2026/10/webhooks-out-of-order-scheduler-timeline.svg');">
+    <img class="" src="/img/2026/10/webhooks-out-of-order-scheduler-timeline.svg" alt="Timeline of three same-label jobs where a runner executing a build is destroyed 2.3 seconds before its in_progress webhook arrives">
+  </a>
+        <header>
+          <h2><a href="/blog/2026/10/webhooks-out-of-order-scheduler/">Webhooks Arrive Out of Order: How My Scheduler Killed Live Builds</a></h2>
+          <time class="published" datetime="2026-10-07 21:10:00 -0700 PDT">October 7, 2026</time>
+        </header>
+      </article>
+      
+      <article class="mini-post">
+          <a href="/blog/2026/10/go-proxmox-five-years-to-v0-8/" class="image" style="--bg-image: url('/img/2026/10/go-proxmox-five-years-to-v0-8-apidiff.svg');">
+    <img class="" src="/img/2026/10/go-proxmox-five-years-to-v0-8-apidiff.svg" alt="Horizontal bar chart of apidiff incompatible and compatible changes for every go-proxmox release from v0.1.0 to v0.8.2">
+  </a>
+        <header>
+          <h2><a href="/blog/2026/10/go-proxmox-five-years-to-v0-8/">Breaking Changes Without Breaking Trust: Five Years to go-proxmox v0.8</a></h2>
+          <time class="published" datetime="2026-10-04 19:40:00 -0700 PDT">October 4, 2026</time>
+        </header>
+      </article>
+      
+      <article class="mini-post">
+          <a href="/blog/2026/10/windows-sigterm-sparse-files/" class="image" style="--bg-image: url('/img/2026/10/windows-sigterm-sparse-files-connections.svg');">
+    <img class="" src="/img/2026/10/windows-sigterm-sparse-files-connections.svg" alt="Bar chart: 96 Cloudflare edge connections held by orphaned cloudflared processes versus 4 for the live daemon">
+  </a>
+        <header>
+          <h2><a href="/blog/2026/10/windows-sigterm-sparse-files/">Windows Grab-Bag: SIGTERM That Doesn&#39;t Exist and Sparse Files That Break Docker</a></h2>
+          <time class="published" datetime="2026-10-03 14:30:00 -0700 PDT">October 3, 2026</time>
+        </header>
+      </article>
+      
+      
+        <footer>
+          <a href="/blog" class="button">See More</a>
+        </footer>
+      
+    </section>
+  
+
+  
+    
+
+      <section id="categories">
+        <header>
+          <h1><a href="/categories">Categories</a></h1>
+        </header>
+        <ul>
+          
+          
+          <li>
+              <a href="/categories/ephpm/">ephpm<span class="count">33</span></a>
+          
+          <li>
+              <a href="/categories/go/">go<span class="count">30</span></a>
+          
+          <li>
+              <a href="/categories/php/">php<span class="count">23</span></a>
+          
+          <li>
+              <a href="/categories/rust/">rust<span class="count">15</span></a>
+          
+          <li>
+              <a href="/categories/homelab/">homelab<span class="count">14</span></a>
+          
+          <li>
+              <a href="/categories/windows/">windows<span class="count">14</span></a>
+          
+          <li>
+              <a href="/categories/ci/">ci<span class="count">9</span></a>
+          
+          <li>
+              <a href="/categories/databases/">databases<span class="count">9</span></a>
+          
+          <li>
+              <a href="/categories/security/">security<span class="count">9</span></a>
+          
+          <li>
+              <a href="/categories/containers/">containers<span class="count">7</span></a>
+          
+          <li>
+              <a href="/categories/tools/">tools<span class="count">5</span></a>
+          
+          <li>
+              <a href="/categories/ai-agents/">ai-agents<span class="count">4</span></a>
+          
+          </li>
+        </ul>
+      </section>
+    
+  
+
+  
+    <section id="mini-bio">
+      <header>
+        <h1>About</h1>
+      </header>
+      <p>Luther is a 20+ year software veteran specializing in backend APIs and architecting products. Employed at <a href='https://www.suse.com'>SUSE</a> as the Team Lead for the <a href='https://github.com/rancher/windows/issues'>Containers on Windows Team</a> working on <a href='https://rancher.com/'>Rancher</a> + <a href='https://kubernetes.io/'>Kubernetes</a></p>
+      <footer>
+        <a href="/about" class="button">Learn More</a>
+      </footer>
+    </section>
+  
+</section>
+
+      <footer id="site-footer">
+  
+      <ul class="socnet-icons">
+        
+
+        <li><a href="//github.com/luthermonson" target="_blank" rel="noopener" title="GitHub" class="fab fa-github"></a></li>
+
+
+
+
+
+
+
+
+
+
+
+<li><a href="//www.linkedin.com/in/luthermonson" target="_blank" rel="noopener" title="LinkedIn" class="fab fa-linkedin"></a></li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li><a href="//twitter.com/luthermonson" target="_blank" rel="noopener" title="Twitter" class="fab fa-twitter"></a></li>
+
+
+
+
+
+
+
+
+
+
+
+<li><a href="mailto:luther.monson@gmail.com" target="_blank" title="Email" class="far fa-envelope"></a></li>
+
+      </ul>
+  
+  <p class="copyright">
+    © 2026 Luther Monson
+      <br>
+    Theme: <a href='https://github.com/pacollins/hugo-future-imperfect-slim' target='_blank' rel='noopener'>Hugo Future Imperfect Slim</a><br>A <a href='https://html5up.net/future-imperfect' target='_blank' rel='noopener'>HTML5 UP port</a> | Powered by <a href='https://gohugo.io/' title='0.160.1' target='_blank' rel='noopener'>Hugo</a>
+  </p>
+</footer>
+<a id="back-to-top" href="#" class="fas fa-arrow-up fa-2x"></a>
+
+      <script src="/js/bundle.min.241b62ebc4792fe8c7a75879e5f710894f226f2b73342e9916b3a3b0526030cc.js" integrity="sha256-JBti68R5L&#43;jHp1h55fcQiU8ibytzNC6ZFrOjsFJgMMw="></script>
+    <script src="/js/add-on.js"></script>
+    </div>
+  </body>
+</html>

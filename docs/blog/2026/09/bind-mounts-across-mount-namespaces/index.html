@@ -1,0 +1,699 @@
+<!doctype html>
+<html lang="en">
+  <head>
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-MSTSKGFWTX"></script>
+<script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+
+    gtag('config', 'G-MSTSKGFWTX');
+</script><meta charset="utf-8">
+<title>Bind Mounts Across Mount Namespaces: Four PRs and a Container Escape - Luther Monson</title>
+<meta name="description" content="Making GitHub Actions container: jobs work through ephemerd&#39;s Docker API shim took four tries, then a TOCTOU race turned the working version into an escape.">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<meta name="twitter:card" content="summary_large_image"><meta name="twitter:site" content="@luthermonson">
+
+<meta property="og:site_name" content="Luther Monson">
+<meta property="og:title" content="Bind Mounts Across Mount Namespaces: Four PRs and a Container Escape">
+<meta property="og:description" content="Making GitHub Actions container: jobs work through ephemerd&#39;s Docker API shim took four tries, then a TOCTOU race turned the working version into an escape.">
+<meta property="og:type" content="article">
+<meta property="og:url" content="https://luth.io/blog/2026/09/bind-mounts-across-mount-namespaces/">
+    <meta property="og:image" content="https://luth.io/img/2026/09/bind-mounts-across-mount-namespaces-toctou.svg">
+    <meta property="og:image:alt" content="Sequence diagram of the bind mount TOCTOU race and the openat2 plus staging fix">
+
+
+  <link rel="manifest" href="/favicon/site.webmanifest?v=1">
+  <link rel="apple-touch-icon" sizes="180x180" href="/favicon/apple-touch-icon.png?v=1">
+  <link rel="icon" type="image/png" sizes="32x32" href="/favicon/favicon-32x32.png?v=1">
+  <link rel="icon" type="image/png" sizes="16x16" href="/favicon/favicon-16x16.png?v=1">
+  
+    <link rel="mask-icon" href="/favicon/safari-pinned-tab.svg?v=1" color="#ffffff">
+    <link rel="shortcut icon" href="/favicon/favicon.ico?v=1">
+    <meta name="msapplication-config" content="/favicon/browserconfig.xml?v=1">
+  
+  <meta name="msapplication-TileColor" content="#ffffff">
+  <meta name="theme-color" content="#ffffff">
+
+
+  <meta name="generator" content="Hugo 0.160.1">
+  <link rel="alternate" type="application/rss+xml" href="https://luth.io/index.xml" title="Luther Monson">
+  <link rel="stylesheet" href="/css/bundle.min.e1ffed86714fbb7eff75eab221c0c61b8260be0c7d1c08db0fcb7a2bdb6af7c9.css" integrity="sha256-4f/thnFPu37/deqyIcDGG4Jgvgx9HAjbD8t6K9tq98k="><link rel="stylesheet" href="/css/add-on.css">
+        <link rel="stylesheet" href="/css/code.css">
+        <link rel="stylesheet" href="/css/mobile.css">
+</head>
+
+  <body>
+    
+
+<header id="site-header">
+  <nav id="site-nav">
+    <h1 class="nav-title">
+      <a href="/" class="nav">
+        <img class="nav-avatar" src="/img/luther-monson-headshot.jpg" alt="" width="32" height="32">
+        
+          Blog
+        
+      </a>
+    </h1>
+    <menu id="site-nav-menu" class="flyout-menu menu">
+      
+        
+          
+          <a href="/" class="nav link"><i class='fa fa-home'></i> Home</a>
+        
+      
+        
+          
+          <a href="/about" class="nav link"><i class='far fa-id-card'></i> About</a>
+        
+      
+        
+          
+          <a href="/blog" class="nav link"><i class='far fa-newspaper'></i> Blog</a>
+        
+      
+        
+          
+          <a href="/archive" class="nav link"><i class='far fa-calendar-alt'></i> Archive</a>
+        
+      
+        
+          
+          <a href="/categories" class="nav link"><i class='fas fa-sitemap'></i> Categories</a>
+        
+      
+      <a href="#share-menu" class="nav link share-toggle"><i class="fas fa-share-alt">&nbsp;</i>Share</a>
+      <a href="#search-input" class="nav link search-toggle"><i class="fas fa-search">&nbsp;</i>Search</a>
+    </menu>
+    <a href="#search-input" class="nav search-toggle"><i class="fas fa-search fa-2x">&nbsp;</i></a>
+    <a href="#share-menu" class="nav share-toggle"><i class="fas fa-share-alt fa-2x">&nbsp;</i></a>
+    
+    <a href="#site-nav" class="nav nav-toggle"><i class="fas fa-bars fa-2x"></i></a>
+  </nav>
+  <menu id="search" class="menu"><input id="search-input" class="search-input menu"></input><div id="search-results" class="search-results menu"></div></menu>
+  
+  
+    <menu id="share-menu" class="flyout-menu menu">
+      <h1>Share Post</h1>
+      
+
+
+
+
+  
+    
+    <a href="//twitter.com/share?text=Bind%20Mounts%20Across%20Mount%20Namespaces%3a%20Four%20PRs%20and%20a%20Container%20Escape&amp;url=https%3a%2f%2fluth.io%2fblog%2f2026%2f09%2fbind-mounts-across-mount-namespaces%2f" target="_blank" rel="noopener" class="nav share-btn twitter">
+        <p>Twitter</p>
+      </a>
+  
+
+  
+      <a href="//www.facebook.com/sharer/sharer.php?u=https%3a%2f%2fluth.io%2fblog%2f2026%2f09%2fbind-mounts-across-mount-namespaces%2f" target="_blank" rel="noopener" class="nav share-btn facebook">
+        <p>Facebook</p>
+        </a>
+  
+
+  
+    <a href="//www.reddit.com/submit?url=https%3a%2f%2fluth.io%2fblog%2f2026%2f09%2fbind-mounts-across-mount-namespaces%2f&amp;title=Bind%20Mounts%20Across%20Mount%20Namespaces%3a%20Four%20PRs%20and%20a%20Container%20Escape" target="_blank" rel="noopener" class="nav share-btn reddit">
+          <p>Reddit</p>
+        </a>
+  
+
+  
+        <a href="//www.linkedin.com/shareArticle?url=https%3a%2f%2fluth.io%2fblog%2f2026%2f09%2fbind-mounts-across-mount-namespaces%2f&amp;title=Bind%20Mounts%20Across%20Mount%20Namespaces%3a%20Four%20PRs%20and%20a%20Container%20Escape" target="_blank" rel="noopener" class="nav share-btn linkedin">
+            <p>LinkedIn</p>
+          </a>
+  
+
+  
+        <a href="//www.pinterest.com/pin/create/button/?url=https%3a%2f%2fluth.io%2fblog%2f2026%2f09%2fbind-mounts-across-mount-namespaces%2f&amp;description=Bind%20Mounts%20Across%20Mount%20Namespaces%3a%20Four%20PRs%20and%20a%20Container%20Escape" target="_blank" rel="noopener" class="nav share-btn pinterest">
+          <p>Pinterest</p>
+        </a>
+  
+
+  
+        <a href="mailto:?subject=Check%20out%20this%20post%20by Luther%20Monson&amp;body=https%3a%2f%2fluth.io%2fblog%2f2026%2f09%2fbind-mounts-across-mount-namespaces%2f" target="_blank" class="nav share-btn email" data-proofer-ignore>
+          <p>Email</p>
+        </a>
+  
+
+
+    </menu>
+  
+</header>
+
+    <div id="wrapper">
+      <section id="site-intro" class="hidden-single-column">
+  <a href="/"><img src="/img/luther-monson-headshot.jpg" class="circle" width="100" alt="Luther Monson, Staff Software Engineer at SUSE" /></a>
+  <header>
+    <h1>Luther Monson</h1>
+  </header>
+  <main>
+    <p>Go by way of PHP &middot; Containers &middot; VMs &middot; Windows &middot; Kubernetes</p>
+  </main>
+  
+    <footer>
+      <ul class="socnet-icons">
+        
+
+        <li><a href="//github.com/luthermonson" target="_blank" rel="noopener" title="GitHub" class="fab fa-github"></a></li>
+
+
+
+
+
+
+
+
+
+
+
+<li><a href="//www.linkedin.com/in/luthermonson" target="_blank" rel="noopener" title="LinkedIn" class="fab fa-linkedin"></a></li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li><a href="//twitter.com/luthermonson" target="_blank" rel="noopener" title="Twitter" class="fab fa-twitter"></a></li>
+
+
+
+
+
+
+
+
+
+
+
+<li><a href="mailto:luther.monson@gmail.com" target="_blank" title="Email" class="far fa-envelope"></a></li>
+
+      </ul>
+    </footer>
+  
+</section>
+
+      <main id="site-main">
+        
+  <article>
+    <div class="post">
+      <header>
+  <div class="title">
+    
+      <h2><a href="/blog/2026/09/bind-mounts-across-mount-namespaces/">Bind Mounts Across Mount Namespaces: Four PRs and a Container Escape</a></h2>
+    
+    
+      <p>Making GitHub Actions container: jobs work through ephemerd&#39;s Docker API shim took four tries, then a TOCTOU race turned the working version into an escape.</p>
+    
+  </div>
+  <div class="meta">
+    <time datetime="2026-09-24 21:02:00 -0700 PDT">September 24, 2026</time>
+    
+    <p>8-Minute Read</p>
+  </div>
+</header>
+
+      <div id="socnet-share">
+        
+
+
+
+
+  
+    
+    <a href="//twitter.com/share?text=Bind%20Mounts%20Across%20Mount%20Namespaces%3a%20Four%20PRs%20and%20a%20Container%20Escape&amp;url=https%3a%2f%2fluth.io%2fblog%2f2026%2f09%2fbind-mounts-across-mount-namespaces%2f" target="_blank" rel="noopener" class="nav share-btn twitter">
+        <p>Twitter</p>
+      </a>
+  
+
+  
+      <a href="//www.facebook.com/sharer/sharer.php?u=https%3a%2f%2fluth.io%2fblog%2f2026%2f09%2fbind-mounts-across-mount-namespaces%2f" target="_blank" rel="noopener" class="nav share-btn facebook">
+        <p>Facebook</p>
+        </a>
+  
+
+  
+    <a href="//www.reddit.com/submit?url=https%3a%2f%2fluth.io%2fblog%2f2026%2f09%2fbind-mounts-across-mount-namespaces%2f&amp;title=Bind%20Mounts%20Across%20Mount%20Namespaces%3a%20Four%20PRs%20and%20a%20Container%20Escape" target="_blank" rel="noopener" class="nav share-btn reddit">
+          <p>Reddit</p>
+        </a>
+  
+
+  
+        <a href="//www.linkedin.com/shareArticle?url=https%3a%2f%2fluth.io%2fblog%2f2026%2f09%2fbind-mounts-across-mount-namespaces%2f&amp;title=Bind%20Mounts%20Across%20Mount%20Namespaces%3a%20Four%20PRs%20and%20a%20Container%20Escape" target="_blank" rel="noopener" class="nav share-btn linkedin">
+            <p>LinkedIn</p>
+          </a>
+  
+
+  
+        <a href="//www.pinterest.com/pin/create/button/?url=https%3a%2f%2fluth.io%2fblog%2f2026%2f09%2fbind-mounts-across-mount-namespaces%2f&amp;description=Bind%20Mounts%20Across%20Mount%20Namespaces%3a%20Four%20PRs%20and%20a%20Container%20Escape" target="_blank" rel="noopener" class="nav share-btn pinterest">
+          <p>Pinterest</p>
+        </a>
+  
+
+  
+        <a href="mailto:?subject=Check%20out%20this%20post%20by Luther%20Monson&amp;body=https%3a%2f%2fluth.io%2fblog%2f2026%2f09%2fbind-mounts-across-mount-namespaces%2f" target="_blank" class="nav share-btn email" data-proofer-ignore>
+          <p>Email</p>
+        </a>
+  
+
+
+      </div>
+      <div class="content">
+        
+        <p>GitHub Actions has a <code>container:</code> key that runs a job&rsquo;s steps inside an image of your choosing. It&rsquo;s popular because it
+gives you a reproducible toolchain without building a custom runner image. On a self-hosted runner it works by having the
+runner drive Docker, and on <a href="/blog/2026/08/ephemerd-one-daemon-every-os/">ephemerd</a> &ldquo;Docker&rdquo; is a shim that speaks the
+Docker API and creates containers in containerd. Getting bind mounts right through that shim took four PRs in a week. A
+couple of months later the version that worked turned out to be an escape.</p>
+<h3 id="what-the-runner-asks-for">What the runner asks for</h3>
+<p>For a <code>container:</code> job the runner does a <code>docker create</code> of a sibling container with a long list of binds, then runs every
+step as <code>docker exec sh -e /__w/_temp/&lt;uuid&gt;.sh</code>:</p>
+<pre tabindex="0"><code>-v /home/runner/_work:/__w
+-v /home/runner/_work/_temp:/__w/_temp
+-v /home/runner/_work/_actions:/__w/_actions
+-v /home/runner/externals:/__e:ro
+-v /var/run/docker.sock:/var/run/docker.sock
+...
+</code></pre><p>Every one of those source paths is a path <em>inside the runner&rsquo;s container</em>. The runner writes the step script into its own
+<code>_temp</code>, and expects the sibling to see it at <code>/__w/_temp</code>. But the Docker API server (ephemerd) runs on the host, in a
+different mount namespace, where <code>/home/runner/_work</code> doesn&rsquo;t exist. Translating &ldquo;a path in container A&rsquo;s filesystem&rdquo; into
+&ldquo;something I can bind into container B&rdquo; is the whole problem.</p>
+<h3 id="82-binds-were-silently-dropped">#82: binds were silently dropped</h3>
+<p>The first version of the shim <code>os.Stat</code>&rsquo;d each bind source on its own filesystem and quietly skipped any that didn&rsquo;t exist.
+Since none of them existed from the host&rsquo;s point of view, every bind was dropped. The sibling started fine, and the first
+step died with:</p>
+<pre tabindex="0"><code>sh: 0: cannot open /__w/_temp/&lt;uuid&gt;.sh: No such file
+</code></pre><p>which is confusing because the script very much exists. <a href="https://github.com/ephpm/ephemerd/pull/82">#82</a> added a
+translation layer. The runtime registers the runner&rsquo;s snapshot and its own bind table (docker.sock, <code>/etc/hosts</code>, the
+runner directory) with the shim, and each <code>-v</code> source resolves against, in order: the bind table by longest prefix, the
+overlayfs upperdir (read-write), then the lowerdirs (read-only, since image layers are shared between jobs). Anything else
+gets a 400 instead of a silent drop.</p>
+<h3 id="83-the-wrong-layer">#83: the wrong layer</h3>
+<p>That got the first script running and then <code>actions/checkout</code> failed:</p>
+<pre tabindex="0"><code>exec: &#34;/__e/node20/bin/node&#34;: stat /__e/node20/bin/node: no such file or directory
+</code></pre><p>The resolver returned the first lowerdir that had the requested path. In the runner image, <code>/home/runner/externals/</code> exists
+as a directory entry in one layer, but <code>node20/bin/node</code> lives in a later one. Binding the first match gave the sibling an
+empty tree. Overlay merging is the kernel&rsquo;s job and I was doing it badly by hand.</p>
+<p><a href="https://github.com/ephpm/ephemerd/pull/83">#83</a> let the kernel do it: use <code>/proc/&lt;runner-pid&gt;/root/&lt;src&gt;</code>. That magic link
+walks into the runner&rsquo;s mount namespace and sees the merged overlay exactly as the runner does.</p>
+<h3 id="84-mount2-wont-cross-namespaces">#84: mount(2) won&rsquo;t cross namespaces</h3>
+<p>Which works perfectly for reading, and not at all as a bind source:</p>
+<pre tabindex="0"><code>error mounting &#34;/proc/&lt;pid&gt;/root/home/runner/_work/_temp/_github_workflow&#34;
+to rootfs ... MS_BIND|MS_REC: invalid argument
+</code></pre><p>A bind source has to resolve within the <em>calling</em> process&rsquo;s mount namespace, and <code>/proc/&lt;pid&gt;/root</code> resolves into somebody
+else&rsquo;s. <a href="https://github.com/ephpm/ephemerd/pull/84">#84</a> switched to <code>os.Readlink(&quot;/proc/&lt;pid&gt;/root&quot;)</code> once at registration,
+which should return the host path of the bundle rootfs where runc mounted the merged overlay. That&rsquo;s a normal directory in
+the host namespace, and it has every layer&rsquo;s content.</p>
+<h3 id="85-readlink-says-">#85: readlink says &ldquo;/&rdquo;</h3>
+<p>Inside the Linux VM, that readlink returned <code>/</code>. Every time, before and after <code>task.Start</code>. I never fully traced why; the
+log line was enough:</p>
+<pre tabindex="0"><code>runner rootfs registered ... rootfs_path=/ bind_table_entries=3
+</code></pre><p>So every source resolved to itself on the VM&rsquo;s root filesystem and got rejected. <a href="https://github.com/ephpm/ephemerd/pull/85">#85</a>
+stopped asking procfs and built the path from containerd&rsquo;s own state layout, which ephemerd fully controls since it embeds
+containerd:</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-go" data-lang="go"><span class="line"><span class="cl"><span class="nx">runnerRootfsPath</span><span class="w"> </span><span class="o">:=</span><span class="w"> </span><span class="nx">filepath</span><span class="p">.</span><span class="nf">Join</span><span class="p">(</span><span class="nx">r</span><span class="p">.</span><span class="nx">cfg</span><span class="p">.</span><span class="nx">DataDir</span><span class="p">,</span><span class="w"> </span><span class="s">&#34;containerd&#34;</span><span class="p">,</span><span class="w"> </span><span class="s">&#34;state&#34;</span><span class="p">,</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">	</span><span class="s">&#34;io.containerd.runtime.v2.task&#34;</span><span class="p">,</span><span class="w"> </span><span class="nx">namespace</span><span class="p">,</span><span class="w"> </span><span class="nx">id</span><span class="p">,</span><span class="w"> </span><span class="s">&#34;rootfs&#34;</span><span class="p">)</span><span class="w">
+</span></span></span></code></pre></div><p>That&rsquo;s where the runc shim mounts the merged overlay, every time. A probe workflow wrote a script into <code>_temp</code> from the
+runner, ran it from a sibling via <code>docker run -v</code>, and got <code>HELLO_FROM_SIBLING</code> back. <code>container:</code> jobs worked.</p>
+<h3 id="the-escape">The escape</h3>
+<p>The design at that point: take the job&rsquo;s source path, join it to the runner&rsquo;s rootfs path, <code>os.Stat</code> it, check that it&rsquo;s
+still inside the rootfs, and put the resulting <strong>path string</strong> into the sibling&rsquo;s OCI spec. Then runc, in its own process,
+some milliseconds later, walks that string again to do the mount.</p>
+<p>The job owns every byte of the runner&rsquo;s rootfs. So between ephemerd&rsquo;s check and runc&rsquo;s walk, the job can rename the
+validated directory and drop a symlink in its place. runc follows the symlink and mounts whatever it points at. That&rsquo;s
+issue #125, and <a href="https://github.com/ephpm/ephemerd/pull/173">#173</a> reproduced it against real runc 1.3.4, the same version
+ephemerd embeds:</p>
+<pre tabindex="0"><code>A  path-string source (the code at the time)   runc rc=0  CONTAINER-SAW: SWAPPED   &lt;- escape reproduced
+B  /proc/&lt;pid&gt;/fd/N                             mount ... : invalid argument
+C  staging bind                                 runc rc=0  CONTAINER-SAW: PINNED
+</code></pre><p><img src="/img/2026/09/bind-mounts-across-mount-namespaces-toctou.svg" alt="TOCTOU and the fix"></p>
+<p>Case B is worth a moment. The textbook TOCTOU fix is to resolve once, hold a file descriptor, and hand over the descriptor
+instead of the name. There was even a &ldquo;hardening&rdquo; branch that did exactly that, putting <code>/proc/&lt;pid&gt;/fd/N</code> in the spec. It
+fails for the same reason #84 did: runc runs in its own mount namespace, the fd path doesn&rsquo;t resolve there as a bind source,
+and <em>every</em> bind fails, legitimate ones included. That branch wasn&rsquo;t a fix, it was a regression that nobody had run against
+a real runc. The test that proves this is kept in the repo on purpose (<code>TestBindStaging_RealRunc_ProcFdSourceIsRejected</code>).</p>
+<h3 id="the-fix-pin-it-then-stage-it">The fix: pin it, then stage it</h3>
+<p>Two steps, and both are needed.</p>
+<p><strong>Resolve once, to a descriptor, with the kernel enforcing containment.</strong> <code>openat2(2)</code> with <code>RESOLVE_IN_ROOT</code> treats the
+rootfs fd as <code>/</code> for the whole walk, so <code>..</code> and absolute symlinks clamp inside it rather than escaping, and the result is
+held as an <code>O_PATH</code> fd. Renaming things afterwards can&rsquo;t change what the fd points at:</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-go" data-lang="go"><span class="line"><span class="cl"><span class="nx">how</span><span class="w"> </span><span class="o">:=</span><span class="w"> </span><span class="o">&amp;</span><span class="nx">unix</span><span class="p">.</span><span class="nx">OpenHow</span><span class="p">{</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">	</span><span class="nx">Flags</span><span class="p">:</span><span class="w">   </span><span class="nx">unix</span><span class="p">.</span><span class="nx">O_PATH</span><span class="w"> </span><span class="p">|</span><span class="w"> </span><span class="nx">unix</span><span class="p">.</span><span class="nx">O_CLOEXEC</span><span class="p">,</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">	</span><span class="nx">Resolve</span><span class="p">:</span><span class="w"> </span><span class="nx">unix</span><span class="p">.</span><span class="nx">RESOLVE_IN_ROOT</span><span class="w"> </span><span class="p">|</span><span class="w"> </span><span class="nx">unix</span><span class="p">.</span><span class="nx">RESOLVE_NO_MAGICLINKS</span><span class="p">,</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="p">}</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="nx">fd</span><span class="p">,</span><span class="w"> </span><span class="nx">err</span><span class="w"> </span><span class="o">:=</span><span class="w"> </span><span class="nx">unix</span><span class="p">.</span><span class="nf">Openat2</span><span class="p">(</span><span class="nx">rootFd</span><span class="p">,</span><span class="w"> </span><span class="nx">strings</span><span class="p">.</span><span class="nf">Join</span><span class="p">(</span><span class="nx">comps</span><span class="p">,</span><span class="w"> </span><span class="s">&#34;/&#34;</span><span class="p">),</span><span class="w"> </span><span class="nx">how</span><span class="p">)</span><span class="w">
+</span></span></span></code></pre></div><p>I used <code>openat2</code> rather than Go&rsquo;s <code>os.Root</code> on purpose. <code>os.Root</code> rejects absolute symlinks outright, and merged-usr images
+(<code>/bin -&gt; /usr/bin</code>) are full of them, so it would break every Ubuntu runner image. <code>RESOLVE_IN_ROOT</code> reinterprets them
+relative to the root, which is what a symlink inside a container rootfs means. Kernels older than 5.6 get an
+<code>O_PATH|O_NOFOLLOW</code> component-by-component walk instead, and a test asserts both resolvers land on the same inode.</p>
+<p><strong>Stage it, because a descriptor can&rsquo;t go in the spec.</strong> ephemerd does the bind itself, in its own mount namespace where
+<code>/proc/self/fd/N</code> does resolve, onto a directory it owns. The spec gets the staging path:</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-go" data-lang="go"><span class="line"><span class="cl"><span class="nx">target</span><span class="w"> </span><span class="o">:=</span><span class="w"> </span><span class="nx">filepath</span><span class="p">.</span><span class="nf">Join</span><span class="p">(</span><span class="nx">m</span><span class="p">.</span><span class="nx">dir</span><span class="p">,</span><span class="w"> </span><span class="nx">strconv</span><span class="p">.</span><span class="nf">FormatUint</span><span class="p">(</span><span class="nx">m</span><span class="p">.</span><span class="nx">seq</span><span class="p">,</span><span class="w"> </span><span class="mi">10</span><span class="p">))</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="c1">// ... create a dir or empty file to match the source type ...</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="c1">// /proc/self/fd/&lt;n&gt; is resolvable here because this IS the process that</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="c1">// opened it and this IS its mount namespace — the two conditions runc</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="c1">// cannot satisfy.</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="nx">src</span><span class="w"> </span><span class="o">:=</span><span class="w"> </span><span class="s">&#34;/proc/self/fd/&#34;</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="nx">strconv</span><span class="p">.</span><span class="nf">Itoa</span><span class="p">(</span><span class="nx">p</span><span class="p">.</span><span class="nx">fd</span><span class="p">)</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="k">if</span><span class="w"> </span><span class="nx">err</span><span class="w"> </span><span class="o">:=</span><span class="w"> </span><span class="nx">unix</span><span class="p">.</span><span class="nf">Mount</span><span class="p">(</span><span class="nx">src</span><span class="p">,</span><span class="w"> </span><span class="nx">target</span><span class="p">,</span><span class="w"> </span><span class="s">&#34;&#34;</span><span class="p">,</span><span class="w"> </span><span class="nx">unix</span><span class="p">.</span><span class="nx">MS_BIND</span><span class="p">|</span><span class="nx">unix</span><span class="p">.</span><span class="nx">MS_REC</span><span class="p">,</span><span class="w"> </span><span class="s">&#34;&#34;</span><span class="p">);</span><span class="w"> </span><span class="nx">err</span><span class="w"> </span><span class="o">!=</span><span class="w"> </span><span class="kc">nil</span><span class="w"> </span><span class="p">{</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">	</span><span class="nx">_</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="nx">os</span><span class="p">.</span><span class="nf">Remove</span><span class="p">(</span><span class="nx">target</span><span class="p">)</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">	</span><span class="k">return</span><span class="w"> </span><span class="s">&#34;&#34;</span><span class="p">,</span><span class="w"> </span><span class="nx">fmt</span><span class="p">.</span><span class="nf">Errorf</span><span class="p">(</span><span class="s">&#34;staging bind source %s at %s: %w ...&#34;</span><span class="p">,</span><span class="w"> </span><span class="nx">p</span><span class="p">.</span><span class="nx">logical</span><span class="p">,</span><span class="w"> </span><span class="nx">target</span><span class="p">,</span><span class="w"> </span><span class="nx">err</span><span class="p">)</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="p">}</span><span class="w">
+</span></span></span></code></pre></div><p>runc still walks a path, but now it&rsquo;s <code>&lt;data&gt;/dind-binds/&lt;job&gt;/&lt;n&gt;</code>. The leaf is a bare counter, nothing from the request
+ends up in the name, and every directory above it has to be root-owned and not group- or world-writable (checked, not
+assumed, by <code>ensureTrustedAncestry</code>). There&rsquo;s nothing left for the job to swap.</p>
+<p>The validation is the part I&rsquo;d point other people at. The privileged tests run real runc against real containerd in a
+root shell, and the swap test contains its own control: it runs the old path-string code in the same test and asserts it
+<em>does</em> see <code>SWAPPED</code>. Without the control, a green run proves nothing, and that&rsquo;s precisely how the fd branch got through
+review.</p>
+<h3 id="deleting-through-a-live-bind-mount">Deleting through a live bind mount</h3>
+<p>One detail in #173 deserves its own heading. The obvious place for the staging dir was under the job&rsquo;s directory,
+<code>&lt;data&gt;/jobs/&lt;job-id&gt;/</code>. But the runtime&rsquo;s orphan sweep <code>os.RemoveAll</code>s that tree, and <strong>recursively deleting a directory
+that contains a live bind mount deletes the files you see through the mount</strong>. Here that&rsquo;s the runner&rsquo;s own rootfs. So
+staging lives at <code>&lt;data&gt;/dind-binds/</code>, the teardown refuses to remove a directory that still has mounts under it, and the
+startup sweep unmounts staged binds <em>before</em> sweeping containers and snapshots (a leaked staging mount also pins the rootfs
+so the snapshot can&rsquo;t be removed).</p>
+<p>Pins are held for the container&rsquo;s whole life, not just until the task starts, because <code>docker restart</code> makes runc read the
+spec again.</p>
+<h3 id="201-sweeping-someone-elses-staging-dir">#201: sweeping someone else&rsquo;s staging dir</h3>
+<p>That startup sweep came back to bite me. A later change added a periodic reaper for dead job containers, and it called the
+whole-tree <code>SweepStagedBinds</code> on every pass. That function&rsquo;s own doc comment said &ldquo;startup only&rdquo;, for exactly this reason:
+it doesn&rsquo;t know which jobs are live.</p>
+<p>The symptom was jobs running several <code>docker run -v &quot;$PWD&quot;:/w</code> steps failing partway through:</p>
+<pre tabindex="0"><code>docker: Error response from daemon: bind mount /home/runner/_work/ephpm/ephpm -&gt; /w rejected:
+  creating bind staging mountpoint /var/lib/ephemerd/dind-binds/ephemerd-github-ephpm-sure_hopper/2:
+  mkdir /var/lib/ephemerd/dind-binds/... : no such file or directory
+</code></pre><p>The <code>/2</code> was the tell. Binds 0 and 1 staged fine, then a reaper tick for some unrelated dead container wiped every job&rsquo;s
+staging directory, including this one. Already-running containers didn&rsquo;t notice (their mounts live in their own
+namespaces), but the next <code>docker run -v</code> couldn&rsquo;t create its mountpoint. <a href="https://github.com/ephpm/ephemerd/pull/201">#201</a>
+scopes the periodic sweep to the container actually being reaped, and the test asserts the live job&rsquo;s directory survives.</p>
+<h3 id="what-id-tell-myself-in-may">What I&rsquo;d tell myself in May</h3>
+<ul>
+<li>Paths are names, and names can change between when you check and when somebody else uses them. If a job controls any
+component of a path, that path can&rsquo;t cross a process boundary as a string.</li>
+<li>Mount namespaces are the constraint for every one of these bugs. <code>/proc/&lt;pid&gt;/root</code>, <code>/proc/&lt;pid&gt;/fd/N</code> and a readlink
+that says <code>/</code> are all the same lesson about which namespace a path resolves in.</li>
+<li>Security fixes need a test that fails on the unfixed code, run against the real thing. Mocks of runc don&rsquo;t have mount
+namespaces.</li>
+</ul>
+<h3 id="links">Links</h3>
+<ul>
+<li>PRs: <a href="https://github.com/ephpm/ephemerd/pull/82">#82</a>, <a href="https://github.com/ephpm/ephemerd/pull/83">#83</a>,
+<a href="https://github.com/ephpm/ephemerd/pull/84">#84</a>, <a href="https://github.com/ephpm/ephemerd/pull/85">#85</a>,
+<a href="https://github.com/ephpm/ephemerd/pull/173">#173</a>, <a href="https://github.com/ephpm/ephemerd/pull/201">#201</a></li>
+<li><a href="https://github.com/ephpm/ephemerd/blob/main/docs/arch/dind-bind-translation.md"><code>docs/arch/dind-bind-translation.md</code></a></li>
+<li><a href="https://man7.org/linux/man-pages/man2/openat2.2.html">openat2(2)</a></li>
+</ul>
+
+      </div>
+      <footer>
+        <div class="stats">
+  
+    <ul class="categories">
+      
+        
+          <li><a class="article-terms-link" href="/categories/containers/">containers</a></li>
+        
+          <li><a class="article-terms-link" href="/categories/ci/">ci</a></li>
+        
+          <li><a class="article-terms-link" href="/categories/security/">security</a></li>
+        
+      
+    </ul>
+  
+  
+    <ul class="tags">
+      
+        
+          <li><a class="article-terms-link" href="/tags/linux/">linux</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/containers/">containers</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/runc/">runc</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/containerd/">containerd</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/mount-namespaces/">mount-namespaces</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/security/">security</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/github-actions/">github-actions</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/ephemerd/">ephemerd</a></li>
+        
+      
+    </ul>
+  
+</div>
+
+      </footer>
+    </div>
+    
+      
+  
+  <div class='post giscus-wrap'>
+    <script src='https://giscus.app/client.js'
+            data-repo='luthermonson/luth.io'
+            data-repo-id='R_kgDOGvFBXQ'
+            data-category='Announcements'
+            data-category-id='DIC_kwDOGvFBXc4DH_gv'
+            data-mapping='pathname'
+            data-strict='1'
+            data-reactions-enabled='1'
+            data-emit-metadata='0'
+            data-input-position='top'
+            data-theme='light'
+            data-lang='en'
+            data-loading='lazy'
+            crossorigin='anonymous'
+            async>
+    </script>
+  </div>
+  
+
+
+
+    
+  </article>
+  
+    <nav class="post-nav">
+      
+        <a href="/blog/2026/09/memory-watchdog-for-go-test/" class="post-nav-link older">
+          <span class="post-nav-label">&larr; Older</span>
+          <span class="post-nav-title">A 1 TB Test: Building a Memory Watchdog for go test</span>
+        </a>
+      
+      
+        <a href="/blog/2026/09/process-containment-job-objects-process-groups-cgroups/" class="post-nav-link newer">
+          <span class="post-nav-label">Newer &rarr;</span>
+          <span class="post-nav-title">Cross-Platform Process Containment: Job Objects vs Process Groups vs cgroups</span>
+        </a>
+      
+    </nav>
+  
+
+      </main>
+      <section id="site-sidebar">
+  
+    <section id="recent-posts">
+      <header>
+        <h1>Recent Posts</h1>
+      </header>
+      
+      <article class="mini-post">
+          <a href="/blog/2026/10/ephpm-worker-mode-performance/" class="image" style="--bg-image: url('/img/2026/10/ephpm-worker-mode-performance-cover.svg');">
+    <img class="" src="/img/2026/10/ephpm-worker-mode-performance-cover.svg" alt="Diagram: before, hyper/tokio hands each request to one shared bounded channel whose waiter list all 20 PHP threads contend on; after, a dispatcher hands the job straight into the mailbox of the most recently idle PHP thread and only queues it in a FIFO overflow queue when every thread is busy">
+  </a>
+        <header>
+          <h2><a href="/blog/2026/10/ephpm-worker-mode-performance/">Fourth Place in Worker Mode, and Why It Wasn&#39;t PHP</a></h2>
+          <time class="published" datetime="2026-10-16 08:10:00 -0700 PDT">October 16, 2026</time>
+        </header>
+      </article>
+      
+      <article class="mini-post">
+          <a href="/blog/2026/10/ephpm-websockets-how-to/" class="image" style="--bg-image: url('/img/2026/10/ephpm-websockets-how-to-cover.svg');">
+    <img class="" src="/img/2026/10/ephpm-websockets-how-to-cover.svg" alt="Diagram: browsers hold sockets to ePHPm&#39;s Rust session tasks and registry; each connect, message and disconnect runs websocket.php once on the PHP thread pool, and ordinary HTTP requests push through ephpm_ws_broadcast">
+  </a>
+        <header>
+          <h2><a href="/blog/2026/10/ephpm-websockets-how-to/">WebSockets in ePHPm, From Zero to a Working Chat</a></h2>
+          <time class="published" datetime="2026-10-11 17:30:00 -0700 PDT">October 11, 2026</time>
+        </header>
+      </article>
+      
+      <article class="mini-post">
+          <a href="/blog/2026/10/webhooks-out-of-order-scheduler/" class="image" style="--bg-image: url('/img/2026/10/webhooks-out-of-order-scheduler-timeline.svg');">
+    <img class="" src="/img/2026/10/webhooks-out-of-order-scheduler-timeline.svg" alt="Timeline of three same-label jobs where a runner executing a build is destroyed 2.3 seconds before its in_progress webhook arrives">
+  </a>
+        <header>
+          <h2><a href="/blog/2026/10/webhooks-out-of-order-scheduler/">Webhooks Arrive Out of Order: How My Scheduler Killed Live Builds</a></h2>
+          <time class="published" datetime="2026-10-07 21:10:00 -0700 PDT">October 7, 2026</time>
+        </header>
+      </article>
+      
+      <article class="mini-post">
+          <a href="/blog/2026/10/go-proxmox-five-years-to-v0-8/" class="image" style="--bg-image: url('/img/2026/10/go-proxmox-five-years-to-v0-8-apidiff.svg');">
+    <img class="" src="/img/2026/10/go-proxmox-five-years-to-v0-8-apidiff.svg" alt="Horizontal bar chart of apidiff incompatible and compatible changes for every go-proxmox release from v0.1.0 to v0.8.2">
+  </a>
+        <header>
+          <h2><a href="/blog/2026/10/go-proxmox-five-years-to-v0-8/">Breaking Changes Without Breaking Trust: Five Years to go-proxmox v0.8</a></h2>
+          <time class="published" datetime="2026-10-04 19:40:00 -0700 PDT">October 4, 2026</time>
+        </header>
+      </article>
+      
+      <article class="mini-post">
+          <a href="/blog/2026/10/windows-sigterm-sparse-files/" class="image" style="--bg-image: url('/img/2026/10/windows-sigterm-sparse-files-connections.svg');">
+    <img class="" src="/img/2026/10/windows-sigterm-sparse-files-connections.svg" alt="Bar chart: 96 Cloudflare edge connections held by orphaned cloudflared processes versus 4 for the live daemon">
+  </a>
+        <header>
+          <h2><a href="/blog/2026/10/windows-sigterm-sparse-files/">Windows Grab-Bag: SIGTERM That Doesn&#39;t Exist and Sparse Files That Break Docker</a></h2>
+          <time class="published" datetime="2026-10-03 14:30:00 -0700 PDT">October 3, 2026</time>
+        </header>
+      </article>
+      
+      
+        <footer>
+          <a href="/blog" class="button">See More</a>
+        </footer>
+      
+    </section>
+  
+
+  
+    
+
+      <section id="categories">
+        <header>
+          <h1><a href="/categories">Categories</a></h1>
+        </header>
+        <ul>
+          
+          
+          <li>
+              <a href="/categories/ephpm/">ephpm<span class="count">33</span></a>
+          
+          <li>
+              <a href="/categories/go/">go<span class="count">30</span></a>
+          
+          <li>
+              <a href="/categories/php/">php<span class="count">23</span></a>
+          
+          <li>
+              <a href="/categories/rust/">rust<span class="count">15</span></a>
+          
+          <li>
+              <a href="/categories/homelab/">homelab<span class="count">14</span></a>
+          
+          <li>
+              <a href="/categories/windows/">windows<span class="count">14</span></a>
+          
+          <li>
+              <a href="/categories/ci/">ci<span class="count">9</span></a>
+          
+          <li>
+              <a href="/categories/databases/">databases<span class="count">9</span></a>
+          
+          <li>
+              <a href="/categories/security/">security<span class="count">9</span></a>
+          
+          <li>
+              <a href="/categories/containers/">containers<span class="count">7</span></a>
+          
+          <li>
+              <a href="/categories/tools/">tools<span class="count">5</span></a>
+          
+          <li>
+              <a href="/categories/ai-agents/">ai-agents<span class="count">4</span></a>
+          
+          </li>
+        </ul>
+      </section>
+    
+  
+
+  
+    <section id="mini-bio">
+      <header>
+        <h1>About</h1>
+      </header>
+      <p>Luther is a 20+ year software veteran specializing in backend APIs and architecting products. Employed at <a href='https://www.suse.com'>SUSE</a> as the Team Lead for the <a href='https://github.com/rancher/windows/issues'>Containers on Windows Team</a> working on <a href='https://rancher.com/'>Rancher</a> + <a href='https://kubernetes.io/'>Kubernetes</a></p>
+      <footer>
+        <a href="/about" class="button">Learn More</a>
+      </footer>
+    </section>
+  
+</section>
+
+      <footer id="site-footer">
+  
+      <ul class="socnet-icons">
+        
+
+        <li><a href="//github.com/luthermonson" target="_blank" rel="noopener" title="GitHub" class="fab fa-github"></a></li>
+
+
+
+
+
+
+
+
+
+
+
+<li><a href="//www.linkedin.com/in/luthermonson" target="_blank" rel="noopener" title="LinkedIn" class="fab fa-linkedin"></a></li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li><a href="//twitter.com/luthermonson" target="_blank" rel="noopener" title="Twitter" class="fab fa-twitter"></a></li>
+
+
+
+
+
+
+
+
+
+
+
+<li><a href="mailto:luther.monson@gmail.com" target="_blank" title="Email" class="far fa-envelope"></a></li>
+
+      </ul>
+  
+  <p class="copyright">
+    © 2026 Luther Monson
+      <br>
+    Theme: <a href='https://github.com/pacollins/hugo-future-imperfect-slim' target='_blank' rel='noopener'>Hugo Future Imperfect Slim</a><br>A <a href='https://html5up.net/future-imperfect' target='_blank' rel='noopener'>HTML5 UP port</a> | Powered by <a href='https://gohugo.io/' title='0.160.1' target='_blank' rel='noopener'>Hugo</a>
+  </p>
+</footer>
+<a id="back-to-top" href="#" class="fas fa-arrow-up fa-2x"></a>
+
+      <script src="/js/bundle.min.241b62ebc4792fe8c7a75879e5f710894f226f2b73342e9916b3a3b0526030cc.js" integrity="sha256-JBti68R5L&#43;jHp1h55fcQiU8ibytzNC6ZFrOjsFJgMMw="></script>
+    <script src="/js/add-on.js"></script>
+    </div>
+  </body>
+</html>

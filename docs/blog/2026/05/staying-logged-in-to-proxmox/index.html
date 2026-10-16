@@ -1,0 +1,679 @@
+<!doctype html>
+<html lang="en">
+  <head>
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-MSTSKGFWTX"></script>
+<script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+
+    gtag('config', 'G-MSTSKGFWTX');
+</script><meta charset="utf-8">
+<title>Staying Logged In to Proxmox: Ticket Renewal, Expiry and Where API Tokens Stop - Luther Monson</title>
+<meta name="description" content="Proxmox tickets die after two hours. How go-proxmox went from never re-authenticating to renewing tickets in place, plus the one thing API tokens can&#39;t do.">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<meta name="twitter:card" content="summary_large_image"><meta name="twitter:site" content="@luthermonson">
+
+<meta property="og:site_name" content="Luther Monson">
+<meta property="og:title" content="Staying Logged In to Proxmox: Ticket Renewal, Expiry and Where API Tokens Stop">
+<meta property="og:description" content="Proxmox tickets die after two hours. How go-proxmox went from never re-authenticating to renewing tickets in place, plus the one thing API tokens can&#39;t do.">
+<meta property="og:type" content="article">
+<meta property="og:url" content="https://luth.io/blog/2026/05/staying-logged-in-to-proxmox/">
+    <meta property="og:image" content="https://luth.io/img/2026/05/staying-logged-in-to-proxmox-timeline.svg">
+    <meta property="og:image:alt" content="Timeline of a Proxmox ticket: valid for two hours server side, considered stale by the client after one">
+
+
+  <link rel="manifest" href="/favicon/site.webmanifest?v=1">
+  <link rel="apple-touch-icon" sizes="180x180" href="/favicon/apple-touch-icon.png?v=1">
+  <link rel="icon" type="image/png" sizes="32x32" href="/favicon/favicon-32x32.png?v=1">
+  <link rel="icon" type="image/png" sizes="16x16" href="/favicon/favicon-16x16.png?v=1">
+  
+    <link rel="mask-icon" href="/favicon/safari-pinned-tab.svg?v=1" color="#ffffff">
+    <link rel="shortcut icon" href="/favicon/favicon.ico?v=1">
+    <meta name="msapplication-config" content="/favicon/browserconfig.xml?v=1">
+  
+  <meta name="msapplication-TileColor" content="#ffffff">
+  <meta name="theme-color" content="#ffffff">
+
+
+  <meta name="generator" content="Hugo 0.160.1">
+  <link rel="alternate" type="application/rss+xml" href="https://luth.io/index.xml" title="Luther Monson">
+  <link rel="stylesheet" href="/css/bundle.min.e1ffed86714fbb7eff75eab221c0c61b8260be0c7d1c08db0fcb7a2bdb6af7c9.css" integrity="sha256-4f/thnFPu37/deqyIcDGG4Jgvgx9HAjbD8t6K9tq98k="><link rel="stylesheet" href="/css/add-on.css">
+        <link rel="stylesheet" href="/css/code.css">
+        <link rel="stylesheet" href="/css/mobile.css">
+</head>
+
+  <body>
+    
+
+<header id="site-header">
+  <nav id="site-nav">
+    <h1 class="nav-title">
+      <a href="/" class="nav">
+        <img class="nav-avatar" src="/img/luther-monson-headshot.jpg" alt="" width="32" height="32">
+        
+          Blog
+        
+      </a>
+    </h1>
+    <menu id="site-nav-menu" class="flyout-menu menu">
+      
+        
+          
+          <a href="/" class="nav link"><i class='fa fa-home'></i> Home</a>
+        
+      
+        
+          
+          <a href="/about" class="nav link"><i class='far fa-id-card'></i> About</a>
+        
+      
+        
+          
+          <a href="/blog" class="nav link"><i class='far fa-newspaper'></i> Blog</a>
+        
+      
+        
+          
+          <a href="/archive" class="nav link"><i class='far fa-calendar-alt'></i> Archive</a>
+        
+      
+        
+          
+          <a href="/categories" class="nav link"><i class='fas fa-sitemap'></i> Categories</a>
+        
+      
+      <a href="#share-menu" class="nav link share-toggle"><i class="fas fa-share-alt">&nbsp;</i>Share</a>
+      <a href="#search-input" class="nav link search-toggle"><i class="fas fa-search">&nbsp;</i>Search</a>
+    </menu>
+    <a href="#search-input" class="nav search-toggle"><i class="fas fa-search fa-2x">&nbsp;</i></a>
+    <a href="#share-menu" class="nav share-toggle"><i class="fas fa-share-alt fa-2x">&nbsp;</i></a>
+    
+    <a href="#site-nav" class="nav nav-toggle"><i class="fas fa-bars fa-2x"></i></a>
+  </nav>
+  <menu id="search" class="menu"><input id="search-input" class="search-input menu"></input><div id="search-results" class="search-results menu"></div></menu>
+  
+  
+    <menu id="share-menu" class="flyout-menu menu">
+      <h1>Share Post</h1>
+      
+
+
+
+
+  
+    
+    <a href="//twitter.com/share?text=Staying%20Logged%20In%20to%20Proxmox%3a%20Ticket%20Renewal%2c%20Expiry%20and%20Where%20API%20Tokens%20Stop&amp;url=https%3a%2f%2fluth.io%2fblog%2f2026%2f05%2fstaying-logged-in-to-proxmox%2f" target="_blank" rel="noopener" class="nav share-btn twitter">
+        <p>Twitter</p>
+      </a>
+  
+
+  
+      <a href="//www.facebook.com/sharer/sharer.php?u=https%3a%2f%2fluth.io%2fblog%2f2026%2f05%2fstaying-logged-in-to-proxmox%2f" target="_blank" rel="noopener" class="nav share-btn facebook">
+        <p>Facebook</p>
+        </a>
+  
+
+  
+    <a href="//www.reddit.com/submit?url=https%3a%2f%2fluth.io%2fblog%2f2026%2f05%2fstaying-logged-in-to-proxmox%2f&amp;title=Staying%20Logged%20In%20to%20Proxmox%3a%20Ticket%20Renewal%2c%20Expiry%20and%20Where%20API%20Tokens%20Stop" target="_blank" rel="noopener" class="nav share-btn reddit">
+          <p>Reddit</p>
+        </a>
+  
+
+  
+        <a href="//www.linkedin.com/shareArticle?url=https%3a%2f%2fluth.io%2fblog%2f2026%2f05%2fstaying-logged-in-to-proxmox%2f&amp;title=Staying%20Logged%20In%20to%20Proxmox%3a%20Ticket%20Renewal%2c%20Expiry%20and%20Where%20API%20Tokens%20Stop" target="_blank" rel="noopener" class="nav share-btn linkedin">
+            <p>LinkedIn</p>
+          </a>
+  
+
+  
+        <a href="//www.pinterest.com/pin/create/button/?url=https%3a%2f%2fluth.io%2fblog%2f2026%2f05%2fstaying-logged-in-to-proxmox%2f&amp;description=Staying%20Logged%20In%20to%20Proxmox%3a%20Ticket%20Renewal%2c%20Expiry%20and%20Where%20API%20Tokens%20Stop" target="_blank" rel="noopener" class="nav share-btn pinterest">
+          <p>Pinterest</p>
+        </a>
+  
+
+  
+        <a href="mailto:?subject=Check%20out%20this%20post%20by Luther%20Monson&amp;body=https%3a%2f%2fluth.io%2fblog%2f2026%2f05%2fstaying-logged-in-to-proxmox%2f" target="_blank" class="nav share-btn email" data-proofer-ignore>
+          <p>Email</p>
+        </a>
+  
+
+
+    </menu>
+  
+</header>
+
+    <div id="wrapper">
+      <section id="site-intro" class="hidden-single-column">
+  <a href="/"><img src="/img/luther-monson-headshot.jpg" class="circle" width="100" alt="Luther Monson, Staff Software Engineer at SUSE" /></a>
+  <header>
+    <h1>Luther Monson</h1>
+  </header>
+  <main>
+    <p>Go by way of PHP &middot; Containers &middot; VMs &middot; Windows &middot; Kubernetes</p>
+  </main>
+  
+    <footer>
+      <ul class="socnet-icons">
+        
+
+        <li><a href="//github.com/luthermonson" target="_blank" rel="noopener" title="GitHub" class="fab fa-github"></a></li>
+
+
+
+
+
+
+
+
+
+
+
+<li><a href="//www.linkedin.com/in/luthermonson" target="_blank" rel="noopener" title="LinkedIn" class="fab fa-linkedin"></a></li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li><a href="//twitter.com/luthermonson" target="_blank" rel="noopener" title="Twitter" class="fab fa-twitter"></a></li>
+
+
+
+
+
+
+
+
+
+
+
+<li><a href="mailto:luther.monson@gmail.com" target="_blank" title="Email" class="far fa-envelope"></a></li>
+
+      </ul>
+    </footer>
+  
+</section>
+
+      <main id="site-main">
+        
+  <article>
+    <div class="post">
+      <header>
+  <div class="title">
+    
+      <h2><a href="/blog/2026/05/staying-logged-in-to-proxmox/">Staying Logged In to Proxmox: Ticket Renewal, Expiry and Where API Tokens Stop</a></h2>
+    
+    
+      <p>Proxmox tickets die after two hours. How go-proxmox went from never re-authenticating to renewing tickets in place, plus the one thing API tokens can&#39;t do.</p>
+    
+  </div>
+  <div class="meta">
+    <time datetime="2026-05-31 20:24:00 -0700 PDT">May 31, 2026</time>
+    
+    <p>7-Minute Read</p>
+  </div>
+</header>
+
+      <div id="socnet-share">
+        
+
+
+
+
+  
+    
+    <a href="//twitter.com/share?text=Staying%20Logged%20In%20to%20Proxmox%3a%20Ticket%20Renewal%2c%20Expiry%20and%20Where%20API%20Tokens%20Stop&amp;url=https%3a%2f%2fluth.io%2fblog%2f2026%2f05%2fstaying-logged-in-to-proxmox%2f" target="_blank" rel="noopener" class="nav share-btn twitter">
+        <p>Twitter</p>
+      </a>
+  
+
+  
+      <a href="//www.facebook.com/sharer/sharer.php?u=https%3a%2f%2fluth.io%2fblog%2f2026%2f05%2fstaying-logged-in-to-proxmox%2f" target="_blank" rel="noopener" class="nav share-btn facebook">
+        <p>Facebook</p>
+        </a>
+  
+
+  
+    <a href="//www.reddit.com/submit?url=https%3a%2f%2fluth.io%2fblog%2f2026%2f05%2fstaying-logged-in-to-proxmox%2f&amp;title=Staying%20Logged%20In%20to%20Proxmox%3a%20Ticket%20Renewal%2c%20Expiry%20and%20Where%20API%20Tokens%20Stop" target="_blank" rel="noopener" class="nav share-btn reddit">
+          <p>Reddit</p>
+        </a>
+  
+
+  
+        <a href="//www.linkedin.com/shareArticle?url=https%3a%2f%2fluth.io%2fblog%2f2026%2f05%2fstaying-logged-in-to-proxmox%2f&amp;title=Staying%20Logged%20In%20to%20Proxmox%3a%20Ticket%20Renewal%2c%20Expiry%20and%20Where%20API%20Tokens%20Stop" target="_blank" rel="noopener" class="nav share-btn linkedin">
+            <p>LinkedIn</p>
+          </a>
+  
+
+  
+        <a href="//www.pinterest.com/pin/create/button/?url=https%3a%2f%2fluth.io%2fblog%2f2026%2f05%2fstaying-logged-in-to-proxmox%2f&amp;description=Staying%20Logged%20In%20to%20Proxmox%3a%20Ticket%20Renewal%2c%20Expiry%20and%20Where%20API%20Tokens%20Stop" target="_blank" rel="noopener" class="nav share-btn pinterest">
+          <p>Pinterest</p>
+        </a>
+  
+
+  
+        <a href="mailto:?subject=Check%20out%20this%20post%20by Luther%20Monson&amp;body=https%3a%2f%2fluth.io%2fblog%2f2026%2f05%2fstaying-logged-in-to-proxmox%2f" target="_blank" class="nav share-btn email" data-proofer-ignore>
+          <p>Email</p>
+        </a>
+  
+
+
+      </div>
+      <div class="content">
+        
+        <p>Back in 2023 I wrote up <a href="/blog/2023/08/proxmox-api-auth-tickets-tokens-go/">how go-proxmox logs in</a> and ended it with a
+shrug: once a session existed the client never logged in again, so a ticket-based client died at the two hour mark and
+my advice was &ldquo;use an API token for anything long running&rdquo;. It took until this month to actually fix that properly, and
+it took three PRs from two of us to get there. Here&rsquo;s the whole arc, plus the one place where an API token
+isn&rsquo;t an option at all.</p>
+<p><img src="/img/2026/05/staying-logged-in-to-proxmox-timeline.svg" alt="Ticket timeline"></p>
+<h3 id="step-one-stop-racing-yourself">Step one: stop racing yourself</h3>
+<p>The original 401 handler looked like this:</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-go" data-lang="go"><span class="line"><span class="cl"><span class="k">if</span><span class="w"> </span><span class="nx">c</span><span class="p">.</span><span class="nx">credentials</span><span class="w"> </span><span class="o">!=</span><span class="w"> </span><span class="kc">nil</span><span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span><span class="nx">c</span><span class="p">.</span><span class="nx">session</span><span class="w"> </span><span class="o">==</span><span class="w"> </span><span class="kc">nil</span><span class="w"> </span><span class="p">{</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">	</span><span class="c1">// credentials passed but no session started, try a login and retry the request</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">	</span><span class="k">if</span><span class="w"> </span><span class="nx">_</span><span class="p">,</span><span class="w"> </span><span class="nx">err</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="nx">c</span><span class="p">.</span><span class="nf">Ticket</span><span class="p">(</span><span class="nx">ctx</span><span class="p">,</span><span class="w"> </span><span class="nx">c</span><span class="p">.</span><span class="nx">credentials</span><span class="p">);</span><span class="w"> </span><span class="nx">err</span><span class="w"> </span><span class="o">!=</span><span class="w"> </span><span class="kc">nil</span><span class="w"> </span><span class="p">{</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">		</span><span class="k">return</span><span class="w"> </span><span class="nx">err</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">	</span><span class="p">}</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">	</span><span class="k">return</span><span class="w"> </span><span class="nx">c</span><span class="p">.</span><span class="nf">Req</span><span class="p">(</span><span class="nx">ctx</span><span class="p">,</span><span class="w"> </span><span class="nx">method</span><span class="p">,</span><span class="w"> </span><span class="nx">path</span><span class="p">,</span><span class="w"> </span><span class="nx">data</span><span class="p">,</span><span class="w"> </span><span class="nx">v</span><span class="p">)</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="p">}</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="k">return</span><span class="w"> </span><span class="nx">ErrNotAuthorized</span><span class="w">
+</span></span></span></code></pre></div><p>Two problems. The obvious one is <code>c.session == nil</code>, which means &ldquo;log in once, ever&rdquo;. The less obvious one is that
+<code>c.session</code> is read and written by whatever goroutine got the 401, and a client is usually shared. Fire ten requests at a
+fresh client from ten goroutines and you get ten logins writing the same field.
+<a href="https://github.com/luthermonson/go-proxmox/pull/223">#223</a> from Serge Logvinov put a mutex around it and moved the login
+into <code>CreateSession</code>, which returns <code>ErrSessionExists</code> if somebody else already did the work.</p>
+<h3 id="step-two-know-when-its-stale">Step two: know when it&rsquo;s stale</h3>
+<p>That still never re-logged in. <a href="https://github.com/luthermonson/go-proxmox/pull/239">#239</a>, also from Serge, added an
+expiry so <code>CreateSession</code> treats an old session as gone:</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-go" data-lang="go"><span class="line"><span class="cl"><span class="k">if</span><span class="w"> </span><span class="nx">c</span><span class="p">.</span><span class="nx">session</span><span class="w"> </span><span class="o">!=</span><span class="w"> </span><span class="kc">nil</span><span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span><span class="nx">time</span><span class="p">.</span><span class="nf">Now</span><span class="p">().</span><span class="nf">Before</span><span class="p">(</span><span class="nx">c</span><span class="p">.</span><span class="nx">sessionExpiresAt</span><span class="p">)</span><span class="w"> </span><span class="p">{</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">	</span><span class="k">return</span><span class="w"> </span><span class="nx">ErrSessionExists</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="p">}</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="c1">// ...</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="nx">c</span><span class="p">.</span><span class="nx">sessionExpiresAt</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="nx">time</span><span class="p">.</span><span class="nf">Now</span><span class="p">().</span><span class="nf">Add</span><span class="p">(</span><span class="nx">time</span><span class="p">.</span><span class="nx">Hour</span><span class="p">)</span><span class="w">
+</span></span></span></code></pre></div><p>Proxmox tickets are good for two hours (<code>$ticket_lifetime = 3600 * 2</code> in <code>PVE::AccessControl</code>). The client calls them
+stale after one, which leaves plenty of slack for clock skew between you and the cluster. From here a credential-based
+client survives: the ticket dies at two hours, the next request gets a 401, <code>CreateSession</code> sees a stale session and
+logs in again with the stored password.</p>
+<h3 id="step-three-renew-without-the-password">Step three: renew without the password</h3>
+<p>That fixed username and password logins. It didn&rsquo;t fix two cases people had been asking about since 2024:
+<a href="https://github.com/luthermonson/go-proxmox/issues/181">#181</a> wanted to renew with the existing ticket instead of keeping
+the password around, and <a href="https://github.com/luthermonson/go-proxmox/issues/196">#196</a> was throwing away the whole
+<code>*Client</code> on auth failure and building a new one, which orphaned every cached <code>*VirtualMachine</code> and <code>*Node</code> that held a
+pointer to the old client. And if your login used a TOTP code, re-sending the stored credentials doesn&rsquo;t work at all
+because the code is single use.</p>
+<p>Proxmox has a documented answer for this: <code>POST /access/ticket</code> with the <em>current ticket</em> as the password. On the server
+side <code>create_ticket</code> runs <code>verify_ticket</code> on the password field first and only falls back to a real password check if
+that fails. <a href="https://github.com/luthermonson/go-proxmox/pull/267">#267</a> wires that up:</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-go" data-lang="go"><span class="line"><span class="cl"><span class="kd">func</span><span class="w"> </span><span class="p">(</span><span class="nx">c</span><span class="w"> </span><span class="o">*</span><span class="nx">Client</span><span class="p">)</span><span class="w"> </span><span class="nf">RefreshTicket</span><span class="p">(</span><span class="nx">ctx</span><span class="w"> </span><span class="nx">context</span><span class="p">.</span><span class="nx">Context</span><span class="p">)</span><span class="w"> </span><span class="kt">error</span><span class="w"> </span><span class="p">{</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">	</span><span class="nx">c</span><span class="p">.</span><span class="nx">sessionMux</span><span class="p">.</span><span class="nf">Lock</span><span class="p">()</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">	</span><span class="k">defer</span><span class="w"> </span><span class="nx">c</span><span class="p">.</span><span class="nx">sessionMux</span><span class="p">.</span><span class="nf">Unlock</span><span class="p">()</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">	</span><span class="k">return</span><span class="w"> </span><span class="nx">c</span><span class="p">.</span><span class="nf">refreshTicketLocked</span><span class="p">(</span><span class="nx">ctx</span><span class="p">)</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="p">}</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="kd">func</span><span class="w"> </span><span class="p">(</span><span class="nx">c</span><span class="w"> </span><span class="o">*</span><span class="nx">Client</span><span class="p">)</span><span class="w"> </span><span class="nf">refreshTicketLocked</span><span class="p">(</span><span class="nx">ctx</span><span class="w"> </span><span class="nx">context</span><span class="p">.</span><span class="nx">Context</span><span class="p">)</span><span class="w"> </span><span class="kt">error</span><span class="w"> </span><span class="p">{</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">	</span><span class="k">if</span><span class="w"> </span><span class="nx">c</span><span class="p">.</span><span class="nx">session</span><span class="w"> </span><span class="o">==</span><span class="w"> </span><span class="kc">nil</span><span class="w"> </span><span class="o">||</span><span class="w"> </span><span class="nx">c</span><span class="p">.</span><span class="nx">session</span><span class="p">.</span><span class="nx">Ticket</span><span class="w"> </span><span class="o">==</span><span class="w"> </span><span class="s">&#34;&#34;</span><span class="w"> </span><span class="p">{</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">		</span><span class="k">return</span><span class="w"> </span><span class="nx">ErrNoSession</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">	</span><span class="p">}</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">	</span><span class="k">if</span><span class="w"> </span><span class="nx">_</span><span class="p">,</span><span class="w"> </span><span class="nx">err</span><span class="w"> </span><span class="o">:=</span><span class="w"> </span><span class="nx">c</span><span class="p">.</span><span class="nf">Ticket</span><span class="p">(</span><span class="nx">ctx</span><span class="p">,</span><span class="w"> </span><span class="o">&amp;</span><span class="nx">Credentials</span><span class="p">{</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">		</span><span class="nx">Username</span><span class="p">:</span><span class="w"> </span><span class="nx">c</span><span class="p">.</span><span class="nx">session</span><span class="p">.</span><span class="nx">Username</span><span class="p">,</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">		</span><span class="nx">Password</span><span class="p">:</span><span class="w"> </span><span class="nx">c</span><span class="p">.</span><span class="nx">session</span><span class="p">.</span><span class="nx">Ticket</span><span class="p">,</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">	</span><span class="p">});</span><span class="w"> </span><span class="nx">err</span><span class="w"> </span><span class="o">!=</span><span class="w"> </span><span class="kc">nil</span><span class="w"> </span><span class="p">{</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">		</span><span class="k">return</span><span class="w"> </span><span class="nx">err</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">	</span><span class="p">}</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">	</span><span class="nx">c</span><span class="p">.</span><span class="nx">sessionExpiresAt</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="nx">time</span><span class="p">.</span><span class="nf">Now</span><span class="p">().</span><span class="nf">Add</span><span class="p">(</span><span class="nx">time</span><span class="p">.</span><span class="nx">Hour</span><span class="p">)</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">	</span><span class="k">return</span><span class="w"> </span><span class="kc">nil</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="p">}</span><span class="w">
+</span></span></span></code></pre></div><p><code>CreateSession</code> now tries a renewal first when it has a session and only falls back to the full credential login if that
+fails. The session is replaced on the existing <code>*Client</code>, so every resource handle hanging off it picks up the new ticket
+without doing anything. That&rsquo;s the #196 fix: stop rebuilding clients.</p>
+<h3 id="renewal-is-on-you-though">Renewal is on you, though</h3>
+<p>Here is the part that I think is easy to get wrong, and I had to read the Perl to be sure. Renewal only works with a
+ticket that is still valid. <code>verify_ticket</code> checks the signature <em>and</em> the age against the same two hour lifetime, so an
+expired ticket is just a wrong password. The client only reacts to a 401, and Proxmox doesn&rsquo;t send a 401 until the ticket
+is already past two hours. So the automatic path in <code>CreateSession</code> is mostly going to fall through to the password
+login, and for a client that has no password to fall back to (an OTP login, or one built <code>WithSession</code> from somebody
+else&rsquo;s ticket) that&rsquo;s the end of the session.</p>
+<p>If you&rsquo;re in that situation, renew on a timer and stay inside the window:</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-go" data-lang="go"><span class="line"><span class="cl"><span class="k">go</span><span class="w"> </span><span class="kd">func</span><span class="p">()</span><span class="w"> </span><span class="p">{</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">	</span><span class="nx">t</span><span class="w"> </span><span class="o">:=</span><span class="w"> </span><span class="nx">time</span><span class="p">.</span><span class="nf">NewTicker</span><span class="p">(</span><span class="mi">45</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="nx">time</span><span class="p">.</span><span class="nx">Minute</span><span class="p">)</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">	</span><span class="k">defer</span><span class="w"> </span><span class="nx">t</span><span class="p">.</span><span class="nf">Stop</span><span class="p">()</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">	</span><span class="k">for</span><span class="w"> </span><span class="p">{</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">		</span><span class="k">select</span><span class="w"> </span><span class="p">{</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">		</span><span class="k">case</span><span class="w"> </span><span class="o">&lt;-</span><span class="nx">ctx</span><span class="p">.</span><span class="nf">Done</span><span class="p">():</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">			</span><span class="k">return</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">		</span><span class="k">case</span><span class="w"> </span><span class="o">&lt;-</span><span class="nx">t</span><span class="p">.</span><span class="nx">C</span><span class="p">:</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">			</span><span class="k">if</span><span class="w"> </span><span class="nx">err</span><span class="w"> </span><span class="o">:=</span><span class="w"> </span><span class="nx">client</span><span class="p">.</span><span class="nf">RefreshTicket</span><span class="p">(</span><span class="nx">ctx</span><span class="p">);</span><span class="w"> </span><span class="nx">err</span><span class="w"> </span><span class="o">!=</span><span class="w"> </span><span class="kc">nil</span><span class="w"> </span><span class="p">{</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">				</span><span class="nx">log</span><span class="p">.</span><span class="nf">Printf</span><span class="p">(</span><span class="s">&#34;proxmox ticket refresh: %v&#34;</span><span class="p">,</span><span class="w"> </span><span class="nx">err</span><span class="p">)</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">			</span><span class="p">}</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">		</span><span class="p">}</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">	</span><span class="p">}</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="p">}()</span><span class="w">
+</span></span></span></code></pre></div><p>One more wart I know about and haven&rsquo;t fixed yet: when two goroutines hit a 401 at the same moment, the first one renews
+and the second one waits on the mutex, finds a fresh session, gets <code>ErrSessionExists</code>, and <code>Req</code> turns that into
+<code>ErrNotAuthorized</code> instead of retrying with the new ticket. It&rsquo;s a narrow window, and the fix is a retry rather than an
+error, but it&rsquo;s there.</p>
+<h3 id="the-cost-of-logging-in-lazily">The cost of logging in lazily</h3>
+<p>While I was in here the v0.7 work added a few auth options worth knowing about. <code>WithOTP</code> stashes a single TOTP code and
+zeroes it after the first login so a later re-login doesn&rsquo;t resend a dead code. <code>WithDefaultRealm(&quot;pam&quot;)</code> turns <code>root</code>
+into <code>root@pam</code> so you stop getting 401s for forgetting the realm.</p>
+<p><code>WithEagerAuth</code> is the one with a story. The client has always logged in lazily: the first request goes out without auth,
+gets a 401, logs in, and retries. What I didn&rsquo;t know in 2023 is that <code>pveproxy</code> deliberately slows down every 401:</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-perl" data-lang="perl"><span class="line"><span class="cl"><span class="k">if</span> <span class="p">(</span><span class="nv">$res</span><span class="o">-&gt;</span><span class="p">{</span><span class="n">status</span><span class="p">}</span> <span class="o">==</span> <span class="n">HTTP_UNAUTHORIZED</span><span class="p">)</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">    <span class="c1"># always delay unauthorized calls by 3 seconds</span>
+</span></span><span class="line"><span class="cl">    <span class="nv">$delay</span> <span class="o">=</span> <span class="mi">3</span> <span class="o">-</span> <span class="n">tv_interval</span><span class="p">(</span><span class="nv">$reqstate</span><span class="o">-&gt;</span><span class="p">{</span><span class="n">starttime</span><span class="p">});</span>
+</span></span></code></pre></div><p>So every credential-based client has been paying three seconds on its first call since the beginning.
+<code>WithEagerAuth</code> logs in inside <code>NewClient</code> instead so that cost moves to startup. It swallows the error (options can&rsquo;t
+return one) and the lazy path still kicks in on the first request if it failed, so if you need to know at startup that
+your password is wrong, call <code>CreateSession</code> yourself.</p>
+<h3 id="where-api-tokens-stop">Where API tokens stop</h3>
+<p>API tokens are still the right answer for most automation: one header, no CSRF token, no two hour clock. Except for
+terminals. <a href="https://github.com/luthermonson/go-proxmox/issues/221">#221</a> reported that opening a container terminal
+failed with an opaque <code>failed to create terminal websocket: unexpected EOF</code>, and it turned out to be three separate bugs
+in the websocket handshake (<a href="https://github.com/luthermonson/go-proxmox/pull/259">#259</a>).</p>
+<p>Two of them were mine, from the <a href="/blog/2022/02/recreating-proxmox-ve-xtermjs-in-go/">2022 xterm.js post</a>. The UI opens
+the socket with <code>new WebSocket(url, &quot;binary&quot;)</code> and the vncwebsocket handler hangs up on clients that don&rsquo;t ask for the
+<code>binary</code> subprotocol, so the dialer now sends <code>Subprotocols: []string{&quot;binary&quot;}</code>. And the resize message is
+<code>1:&lt;cols&gt;:&lt;rows&gt;:</code>, width first. I wrote it height first in 2022 (it&rsquo;s right there in that post&rsquo;s resize code) and it
+took four years for anyone, me included, to notice their terminal coming out transposed.</p>
+<p>The third is a Proxmox limitation on older releases. Through PVE 8 and early PVE 9, <code>termproxy</code> verified the VNC ticket
+through <code>/access/ticket</code>, where <code>verify_username</code> rejects the <code>!tokenname</code> suffix a token user carries. The ticket&rsquo;s
+HMAC is bound to that same name, so stripping the suffix on the client side doesn&rsquo;t work either. Newer PVE 9 ships a
+<code>/access/vncticket</code> endpoint that accepts a token id (node shells since pve-manager 9.0.13 in November 2025, guest
+terminals since this spring&rsquo;s qemu-server and pve-container updates), but go-proxmox doesn&rsquo;t detect the server version
+yet, so for now the client fails fast with a sentinel instead of the mystery EOF:</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-go" data-lang="go"><span class="line"><span class="cl"><span class="c1">// ErrAPITokenWebSocketUnsupported is returned by TermWebSocket and VNCWebSocket</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="kd">var</span><span class="w"> </span><span class="nx">ErrAPITokenWebSocketUnsupported</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="nx">errors</span><span class="p">.</span><span class="nf">New</span><span class="p">(</span><span class="s">&#34;proxmox does not accept API tokens for vncwebsocket; use WithCredentials or WithSession&#34;</span><span class="p">)</span><span class="w">
+</span></span></span></code></pre></div><p>So if your tool targets PVE 8 and needs both automation and a shell, it needs a ticket for the shell, and now the ticket can stay alive.</p>
+<h3 id="links">Links</h3>
+<ul>
+<li><a href="https://github.com/luthermonson/go-proxmox/pull/223">#223 session race</a>, <a href="https://github.com/luthermonson/go-proxmox/pull/239">#239 session expiry</a>, <a href="https://github.com/luthermonson/go-proxmox/pull/267">#267 ticket renewal</a></li>
+<li><a href="https://github.com/luthermonson/go-proxmox/pull/259">#259 websocket fixes and the API token limit</a></li>
+<li><a href="https://github.com/luthermonson/go-proxmox/pull/327">#327 TLS, timeout and auth options</a></li>
+<li><a href="https://git.proxmox.com/?p=pve-access-control.git;a=blob;f=src/PVE/AccessControl.pm">pve-access-control, PVE/AccessControl.pm</a></li>
+<li><a href="https://git.proxmox.com/?p=pve-http-server.git;a=blob;f=src/PVE/APIServer/AnyEvent.pm">pve-http-server, PVE/APIServer/AnyEvent.pm</a></li>
+<li><a href="/blog/2023/08/proxmox-api-auth-tickets-tokens-go/">Logging In to Proxmox From Go (2023)</a></li>
+</ul>
+
+      </div>
+      <footer>
+        <div class="stats">
+  
+    <ul class="categories">
+      
+        
+          <li><a class="article-terms-link" href="/categories/go/">go</a></li>
+        
+          <li><a class="article-terms-link" href="/categories/homelab/">homelab</a></li>
+        
+      
+    </ul>
+  
+  
+    <ul class="tags">
+      
+        
+          <li><a class="article-terms-link" href="/tags/proxmox/">proxmox</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/go/">go</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/go-proxmox/">go-proxmox</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/authentication/">authentication</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/websockets/">websockets</a></li>
+        
+      
+    </ul>
+  
+</div>
+
+      </footer>
+    </div>
+    
+      
+  
+  <div class='post giscus-wrap'>
+    <script src='https://giscus.app/client.js'
+            data-repo='luthermonson/luth.io'
+            data-repo-id='R_kgDOGvFBXQ'
+            data-category='Announcements'
+            data-category-id='DIC_kwDOGvFBXc4DH_gv'
+            data-mapping='pathname'
+            data-strict='1'
+            data-reactions-enabled='1'
+            data-emit-metadata='0'
+            data-input-position='top'
+            data-theme='light'
+            data-lang='en'
+            data-loading='lazy'
+            crossorigin='anonymous'
+            async>
+    </script>
+  </div>
+  
+
+
+
+    
+  </article>
+  
+    <nav class="post-nav">
+      
+        <a href="/blog/2026/05/go-diskfs-rock-ridge-joliet-windows/" class="post-nav-link older">
+          <span class="post-nav-label">&larr; Older</span>
+          <span class="post-nav-title">go-diskfs: Getting Rock Ridge Working for Joliet on Windows</span>
+        </a>
+      
+      
+        <a href="/blog/2026/06/cloud-init-isos-pure-go-proxmox/" class="post-nav-link newer">
+          <span class="post-nav-label">Newer &rarr;</span>
+          <span class="post-nav-title">Cloud-Init ISOs in Pure Go with go-proxmox</span>
+        </a>
+      
+    </nav>
+  
+
+      </main>
+      <section id="site-sidebar">
+  
+    <section id="recent-posts">
+      <header>
+        <h1>Recent Posts</h1>
+      </header>
+      
+      <article class="mini-post">
+          <a href="/blog/2026/10/ephpm-worker-mode-performance/" class="image" style="--bg-image: url('/img/2026/10/ephpm-worker-mode-performance-cover.svg');">
+    <img class="" src="/img/2026/10/ephpm-worker-mode-performance-cover.svg" alt="Diagram: before, hyper/tokio hands each request to one shared bounded channel whose waiter list all 20 PHP threads contend on; after, a dispatcher hands the job straight into the mailbox of the most recently idle PHP thread and only queues it in a FIFO overflow queue when every thread is busy">
+  </a>
+        <header>
+          <h2><a href="/blog/2026/10/ephpm-worker-mode-performance/">Fourth Place in Worker Mode, and Why It Wasn&#39;t PHP</a></h2>
+          <time class="published" datetime="2026-10-16 08:10:00 -0700 PDT">October 16, 2026</time>
+        </header>
+      </article>
+      
+      <article class="mini-post">
+          <a href="/blog/2026/10/ephpm-websockets-how-to/" class="image" style="--bg-image: url('/img/2026/10/ephpm-websockets-how-to-cover.svg');">
+    <img class="" src="/img/2026/10/ephpm-websockets-how-to-cover.svg" alt="Diagram: browsers hold sockets to ePHPm&#39;s Rust session tasks and registry; each connect, message and disconnect runs websocket.php once on the PHP thread pool, and ordinary HTTP requests push through ephpm_ws_broadcast">
+  </a>
+        <header>
+          <h2><a href="/blog/2026/10/ephpm-websockets-how-to/">WebSockets in ePHPm, From Zero to a Working Chat</a></h2>
+          <time class="published" datetime="2026-10-11 17:30:00 -0700 PDT">October 11, 2026</time>
+        </header>
+      </article>
+      
+      <article class="mini-post">
+          <a href="/blog/2026/10/webhooks-out-of-order-scheduler/" class="image" style="--bg-image: url('/img/2026/10/webhooks-out-of-order-scheduler-timeline.svg');">
+    <img class="" src="/img/2026/10/webhooks-out-of-order-scheduler-timeline.svg" alt="Timeline of three same-label jobs where a runner executing a build is destroyed 2.3 seconds before its in_progress webhook arrives">
+  </a>
+        <header>
+          <h2><a href="/blog/2026/10/webhooks-out-of-order-scheduler/">Webhooks Arrive Out of Order: How My Scheduler Killed Live Builds</a></h2>
+          <time class="published" datetime="2026-10-07 21:10:00 -0700 PDT">October 7, 2026</time>
+        </header>
+      </article>
+      
+      <article class="mini-post">
+          <a href="/blog/2026/10/go-proxmox-five-years-to-v0-8/" class="image" style="--bg-image: url('/img/2026/10/go-proxmox-five-years-to-v0-8-apidiff.svg');">
+    <img class="" src="/img/2026/10/go-proxmox-five-years-to-v0-8-apidiff.svg" alt="Horizontal bar chart of apidiff incompatible and compatible changes for every go-proxmox release from v0.1.0 to v0.8.2">
+  </a>
+        <header>
+          <h2><a href="/blog/2026/10/go-proxmox-five-years-to-v0-8/">Breaking Changes Without Breaking Trust: Five Years to go-proxmox v0.8</a></h2>
+          <time class="published" datetime="2026-10-04 19:40:00 -0700 PDT">October 4, 2026</time>
+        </header>
+      </article>
+      
+      <article class="mini-post">
+          <a href="/blog/2026/10/windows-sigterm-sparse-files/" class="image" style="--bg-image: url('/img/2026/10/windows-sigterm-sparse-files-connections.svg');">
+    <img class="" src="/img/2026/10/windows-sigterm-sparse-files-connections.svg" alt="Bar chart: 96 Cloudflare edge connections held by orphaned cloudflared processes versus 4 for the live daemon">
+  </a>
+        <header>
+          <h2><a href="/blog/2026/10/windows-sigterm-sparse-files/">Windows Grab-Bag: SIGTERM That Doesn&#39;t Exist and Sparse Files That Break Docker</a></h2>
+          <time class="published" datetime="2026-10-03 14:30:00 -0700 PDT">October 3, 2026</time>
+        </header>
+      </article>
+      
+      
+        <footer>
+          <a href="/blog" class="button">See More</a>
+        </footer>
+      
+    </section>
+  
+
+  
+    
+
+      <section id="categories">
+        <header>
+          <h1><a href="/categories">Categories</a></h1>
+        </header>
+        <ul>
+          
+          
+          <li>
+              <a href="/categories/ephpm/">ephpm<span class="count">33</span></a>
+          
+          <li>
+              <a href="/categories/go/">go<span class="count">30</span></a>
+          
+          <li>
+              <a href="/categories/php/">php<span class="count">23</span></a>
+          
+          <li>
+              <a href="/categories/rust/">rust<span class="count">15</span></a>
+          
+          <li>
+              <a href="/categories/homelab/">homelab<span class="count">14</span></a>
+          
+          <li>
+              <a href="/categories/windows/">windows<span class="count">14</span></a>
+          
+          <li>
+              <a href="/categories/ci/">ci<span class="count">9</span></a>
+          
+          <li>
+              <a href="/categories/databases/">databases<span class="count">9</span></a>
+          
+          <li>
+              <a href="/categories/security/">security<span class="count">9</span></a>
+          
+          <li>
+              <a href="/categories/containers/">containers<span class="count">7</span></a>
+          
+          <li>
+              <a href="/categories/tools/">tools<span class="count">5</span></a>
+          
+          <li>
+              <a href="/categories/ai-agents/">ai-agents<span class="count">4</span></a>
+          
+          </li>
+        </ul>
+      </section>
+    
+  
+
+  
+    <section id="mini-bio">
+      <header>
+        <h1>About</h1>
+      </header>
+      <p>Luther is a 20+ year software veteran specializing in backend APIs and architecting products. Employed at <a href='https://www.suse.com'>SUSE</a> as the Team Lead for the <a href='https://github.com/rancher/windows/issues'>Containers on Windows Team</a> working on <a href='https://rancher.com/'>Rancher</a> + <a href='https://kubernetes.io/'>Kubernetes</a></p>
+      <footer>
+        <a href="/about" class="button">Learn More</a>
+      </footer>
+    </section>
+  
+</section>
+
+      <footer id="site-footer">
+  
+      <ul class="socnet-icons">
+        
+
+        <li><a href="//github.com/luthermonson" target="_blank" rel="noopener" title="GitHub" class="fab fa-github"></a></li>
+
+
+
+
+
+
+
+
+
+
+
+<li><a href="//www.linkedin.com/in/luthermonson" target="_blank" rel="noopener" title="LinkedIn" class="fab fa-linkedin"></a></li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li><a href="//twitter.com/luthermonson" target="_blank" rel="noopener" title="Twitter" class="fab fa-twitter"></a></li>
+
+
+
+
+
+
+
+
+
+
+
+<li><a href="mailto:luther.monson@gmail.com" target="_blank" title="Email" class="far fa-envelope"></a></li>
+
+      </ul>
+  
+  <p class="copyright">
+    © 2026 Luther Monson
+      <br>
+    Theme: <a href='https://github.com/pacollins/hugo-future-imperfect-slim' target='_blank' rel='noopener'>Hugo Future Imperfect Slim</a><br>A <a href='https://html5up.net/future-imperfect' target='_blank' rel='noopener'>HTML5 UP port</a> | Powered by <a href='https://gohugo.io/' title='0.160.1' target='_blank' rel='noopener'>Hugo</a>
+  </p>
+</footer>
+<a id="back-to-top" href="#" class="fas fa-arrow-up fa-2x"></a>
+
+      <script src="/js/bundle.min.241b62ebc4792fe8c7a75879e5f710894f226f2b73342e9916b3a3b0526030cc.js" integrity="sha256-JBti68R5L&#43;jHp1h55fcQiU8ibytzNC6ZFrOjsFJgMMw="></script>
+    <script src="/js/add-on.js"></script>
+    </div>
+  </body>
+</html>

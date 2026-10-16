@@ -1,0 +1,816 @@
+<!doctype html>
+<html lang="en">
+  <head>
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-MSTSKGFWTX"></script>
+<script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+
+    gtag('config', 'G-MSTSKGFWTX');
+</script><meta charset="utf-8">
+<title>Five Ways to Not Firewall a Windows Container (and the One That Works) - Luther Monson</title>
+<meta name="description" content="Five different Windows firewall approaches failed to stop a container from reaching my home network. The sixth, a different network mode for the container, finally worked.">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<meta name="twitter:card" content="summary_large_image"><meta name="twitter:site" content="@luthermonson">
+
+<meta property="og:site_name" content="Luther Monson">
+<meta property="og:title" content="Five Ways to Not Firewall a Windows Container (and the One That Works)">
+<meta property="og:description" content="Five different Windows firewall approaches failed to stop a container from reaching my home network. The sixth, a different network mode for the container, finally worked.">
+<meta property="og:type" content="article">
+<meta property="og:url" content="https://luth.io/blog/2026/08/windows-container-egress-firewall/">
+    <meta property="og:image" content="https://luth.io/img/2026/08/windows-container-egress-firewall-paths.svg">
+    <meta property="og:image:alt" content="Packet path of a Windows container on an HNS NAT network versus an L2Bridge network">
+
+
+  <link rel="manifest" href="/favicon/site.webmanifest?v=1">
+  <link rel="apple-touch-icon" sizes="180x180" href="/favicon/apple-touch-icon.png?v=1">
+  <link rel="icon" type="image/png" sizes="32x32" href="/favicon/favicon-32x32.png?v=1">
+  <link rel="icon" type="image/png" sizes="16x16" href="/favicon/favicon-16x16.png?v=1">
+  
+    <link rel="mask-icon" href="/favicon/safari-pinned-tab.svg?v=1" color="#ffffff">
+    <link rel="shortcut icon" href="/favicon/favicon.ico?v=1">
+    <meta name="msapplication-config" content="/favicon/browserconfig.xml?v=1">
+  
+  <meta name="msapplication-TileColor" content="#ffffff">
+  <meta name="theme-color" content="#ffffff">
+
+
+  <meta name="generator" content="Hugo 0.160.1">
+  <link rel="alternate" type="application/rss+xml" href="https://luth.io/index.xml" title="Luther Monson">
+  <link rel="stylesheet" href="/css/bundle.min.e1ffed86714fbb7eff75eab221c0c61b8260be0c7d1c08db0fcb7a2bdb6af7c9.css" integrity="sha256-4f/thnFPu37/deqyIcDGG4Jgvgx9HAjbD8t6K9tq98k="><link rel="stylesheet" href="/css/add-on.css">
+        <link rel="stylesheet" href="/css/code.css">
+        <link rel="stylesheet" href="/css/mobile.css">
+</head>
+
+  <body>
+    
+
+<header id="site-header">
+  <nav id="site-nav">
+    <h1 class="nav-title">
+      <a href="/" class="nav">
+        <img class="nav-avatar" src="/img/luther-monson-headshot.jpg" alt="" width="32" height="32">
+        
+          Blog
+        
+      </a>
+    </h1>
+    <menu id="site-nav-menu" class="flyout-menu menu">
+      
+        
+          
+          <a href="/" class="nav link"><i class='fa fa-home'></i> Home</a>
+        
+      
+        
+          
+          <a href="/about" class="nav link"><i class='far fa-id-card'></i> About</a>
+        
+      
+        
+          
+          <a href="/blog" class="nav link"><i class='far fa-newspaper'></i> Blog</a>
+        
+      
+        
+          
+          <a href="/archive" class="nav link"><i class='far fa-calendar-alt'></i> Archive</a>
+        
+      
+        
+          
+          <a href="/categories" class="nav link"><i class='fas fa-sitemap'></i> Categories</a>
+        
+      
+      <a href="#share-menu" class="nav link share-toggle"><i class="fas fa-share-alt">&nbsp;</i>Share</a>
+      <a href="#search-input" class="nav link search-toggle"><i class="fas fa-search">&nbsp;</i>Search</a>
+    </menu>
+    <a href="#search-input" class="nav search-toggle"><i class="fas fa-search fa-2x">&nbsp;</i></a>
+    <a href="#share-menu" class="nav share-toggle"><i class="fas fa-share-alt fa-2x">&nbsp;</i></a>
+    
+    <a href="#site-nav" class="nav nav-toggle"><i class="fas fa-bars fa-2x"></i></a>
+  </nav>
+  <menu id="search" class="menu"><input id="search-input" class="search-input menu"></input><div id="search-results" class="search-results menu"></div></menu>
+  
+  
+    <menu id="share-menu" class="flyout-menu menu">
+      <h1>Share Post</h1>
+      
+
+
+
+
+  
+    
+    <a href="//twitter.com/share?text=Five%20Ways%20to%20Not%20Firewall%20a%20Windows%20Container%20%28and%20the%20One%20That%20Works%29&amp;url=https%3a%2f%2fluth.io%2fblog%2f2026%2f08%2fwindows-container-egress-firewall%2f" target="_blank" rel="noopener" class="nav share-btn twitter">
+        <p>Twitter</p>
+      </a>
+  
+
+  
+      <a href="//www.facebook.com/sharer/sharer.php?u=https%3a%2f%2fluth.io%2fblog%2f2026%2f08%2fwindows-container-egress-firewall%2f" target="_blank" rel="noopener" class="nav share-btn facebook">
+        <p>Facebook</p>
+        </a>
+  
+
+  
+    <a href="//www.reddit.com/submit?url=https%3a%2f%2fluth.io%2fblog%2f2026%2f08%2fwindows-container-egress-firewall%2f&amp;title=Five%20Ways%20to%20Not%20Firewall%20a%20Windows%20Container%20%28and%20the%20One%20That%20Works%29" target="_blank" rel="noopener" class="nav share-btn reddit">
+          <p>Reddit</p>
+        </a>
+  
+
+  
+        <a href="//www.linkedin.com/shareArticle?url=https%3a%2f%2fluth.io%2fblog%2f2026%2f08%2fwindows-container-egress-firewall%2f&amp;title=Five%20Ways%20to%20Not%20Firewall%20a%20Windows%20Container%20%28and%20the%20One%20That%20Works%29" target="_blank" rel="noopener" class="nav share-btn linkedin">
+            <p>LinkedIn</p>
+          </a>
+  
+
+  
+        <a href="//www.pinterest.com/pin/create/button/?url=https%3a%2f%2fluth.io%2fblog%2f2026%2f08%2fwindows-container-egress-firewall%2f&amp;description=Five%20Ways%20to%20Not%20Firewall%20a%20Windows%20Container%20%28and%20the%20One%20That%20Works%29" target="_blank" rel="noopener" class="nav share-btn pinterest">
+          <p>Pinterest</p>
+        </a>
+  
+
+  
+        <a href="mailto:?subject=Check%20out%20this%20post%20by Luther%20Monson&amp;body=https%3a%2f%2fluth.io%2fblog%2f2026%2f08%2fwindows-container-egress-firewall%2f" target="_blank" class="nav share-btn email" data-proofer-ignore>
+          <p>Email</p>
+        </a>
+  
+
+
+    </menu>
+  
+</header>
+
+    <div id="wrapper">
+      <section id="site-intro" class="hidden-single-column">
+  <a href="/"><img src="/img/luther-monson-headshot.jpg" class="circle" width="100" alt="Luther Monson, Staff Software Engineer at SUSE" /></a>
+  <header>
+    <h1>Luther Monson</h1>
+  </header>
+  <main>
+    <p>Go by way of PHP &middot; Containers &middot; VMs &middot; Windows &middot; Kubernetes</p>
+  </main>
+  
+    <footer>
+      <ul class="socnet-icons">
+        
+
+        <li><a href="//github.com/luthermonson" target="_blank" rel="noopener" title="GitHub" class="fab fa-github"></a></li>
+
+
+
+
+
+
+
+
+
+
+
+<li><a href="//www.linkedin.com/in/luthermonson" target="_blank" rel="noopener" title="LinkedIn" class="fab fa-linkedin"></a></li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li><a href="//twitter.com/luthermonson" target="_blank" rel="noopener" title="Twitter" class="fab fa-twitter"></a></li>
+
+
+
+
+
+
+
+
+
+
+
+<li><a href="mailto:luther.monson@gmail.com" target="_blank" title="Email" class="far fa-envelope"></a></li>
+
+      </ul>
+    </footer>
+  
+</section>
+
+      <main id="site-main">
+        
+  <article>
+    <div class="post">
+      <header>
+  <div class="title">
+    
+      <h2><a href="/blog/2026/08/windows-container-egress-firewall/">Five Ways to Not Firewall a Windows Container (and the One That Works)</a></h2>
+    
+    
+      <p>Five different Windows firewall approaches failed to stop a container from reaching my home network. The sixth, a different network mode for the container, finally worked.</p>
+    
+  </div>
+  <div class="meta">
+    <time datetime="2026-08-22 19:40:00 -0700 PDT">August 22, 2026</time>
+    
+    <p>10-Minute Read</p>
+  </div>
+</header>
+
+      <div id="socnet-share">
+        
+
+
+
+
+  
+    
+    <a href="//twitter.com/share?text=Five%20Ways%20to%20Not%20Firewall%20a%20Windows%20Container%20%28and%20the%20One%20That%20Works%29&amp;url=https%3a%2f%2fluth.io%2fblog%2f2026%2f08%2fwindows-container-egress-firewall%2f" target="_blank" rel="noopener" class="nav share-btn twitter">
+        <p>Twitter</p>
+      </a>
+  
+
+  
+      <a href="//www.facebook.com/sharer/sharer.php?u=https%3a%2f%2fluth.io%2fblog%2f2026%2f08%2fwindows-container-egress-firewall%2f" target="_blank" rel="noopener" class="nav share-btn facebook">
+        <p>Facebook</p>
+        </a>
+  
+
+  
+    <a href="//www.reddit.com/submit?url=https%3a%2f%2fluth.io%2fblog%2f2026%2f08%2fwindows-container-egress-firewall%2f&amp;title=Five%20Ways%20to%20Not%20Firewall%20a%20Windows%20Container%20%28and%20the%20One%20That%20Works%29" target="_blank" rel="noopener" class="nav share-btn reddit">
+          <p>Reddit</p>
+        </a>
+  
+
+  
+        <a href="//www.linkedin.com/shareArticle?url=https%3a%2f%2fluth.io%2fblog%2f2026%2f08%2fwindows-container-egress-firewall%2f&amp;title=Five%20Ways%20to%20Not%20Firewall%20a%20Windows%20Container%20%28and%20the%20One%20That%20Works%29" target="_blank" rel="noopener" class="nav share-btn linkedin">
+            <p>LinkedIn</p>
+          </a>
+  
+
+  
+        <a href="//www.pinterest.com/pin/create/button/?url=https%3a%2f%2fluth.io%2fblog%2f2026%2f08%2fwindows-container-egress-firewall%2f&amp;description=Five%20Ways%20to%20Not%20Firewall%20a%20Windows%20Container%20%28and%20the%20One%20That%20Works%29" target="_blank" rel="noopener" class="nav share-btn pinterest">
+          <p>Pinterest</p>
+        </a>
+  
+
+  
+        <a href="mailto:?subject=Check%20out%20this%20post%20by Luther%20Monson&amp;body=https%3a%2f%2fluth.io%2fblog%2f2026%2f08%2fwindows-container-egress-firewall%2f" target="_blank" class="nav share-btn email" data-proofer-ignore>
+          <p>Email</p>
+        </a>
+  
+
+
+      </div>
+      <div class="content">
+        
+        <p><a href="/blog/2026/08/ephemerd-one-daemon-every-os/">ephemerd</a> runs CI jobs from pull requests, and one of the rules is that a job
+can reach the internet but not my LAN. On Linux that&rsquo;s a few iptables rules in the <code>FORWARD</code> path and I didn&rsquo;t think about it
+much. On Windows I spent about a week finding out how many ways there are to write a firewall rule that Windows accepts,
+lists, and then never applies.</p>
+<p>The setup: Windows Server 2025 (build 26100), job containers running with Hyper-V isolation, on the default HNS NAT network
+that every Windows container tutorial uses (<code>10.88.0.0/16</code> in ephemerd&rsquo;s case, gateway <code>10.88.0.1</code>). The target is the same
+as Linux: block <code>10.0.0.0/8</code>, <code>172.16.0.0/12</code>, <code>192.168.0.0/16</code> and <code>169.254.0.0/16</code>, allow everything else.</p>
+<h3 id="how-i-knew-it-was-broken">How I knew it was broken</h3>
+<p>The repo has a containment suite (<code>.github/workflows/containment.yml</code>, first drafted in
+<a href="https://github.com/ephpm/ephemerd/pull/134">#134</a> and landed in consolidated form on August 15th), a workflow that runs
+inside a real job on each platform and tries to reach things it shouldn&rsquo;t. For Windows it probes the management planes on my LAN: two Proxmox
+hosts, an Incus API and Grafana. Every attempt below was judged by this output from inside a live job (addresses changed):</p>
+<pre tabindex="0"><code>FAIL: reached Proxmox host A at 10.0.0.11:8006
+FAIL: reached Proxmox host B at 10.0.0.12:8006
+FAIL: reached Incus daemon   at 10.0.1.13:8443
+FAIL: reached Grafana        at 10.0.2.45:3000
+</code></pre><p>I saw those four lines a lot.</p>
+<p><img src="/img/2026/08/windows-container-egress-firewall-paths.svg" alt="Windows container packet paths"></p>
+<h3 id="1-host-windows-firewall-scoped-to-the-container-source">1. Host Windows Firewall, scoped to the container source</h3>
+<p>#136. The theory: WinNAT routes and NATs container traffic through the host,
+so a host firewall rule should be in the path. <code>netsh advfirewall</code> outbound blocks for the private ranges, scoped
+<code>localip=10.88.0.0/16</code> so the host&rsquo;s own LAN traffic could never match.</p>
+<p>One wrinkle made the rule set interesting. Windows Firewall has no rule ordering. Block always beats Allow, so the Linux
+pattern of &ldquo;allow the gateway, then deny 10/8&rdquo; can&rsquo;t be ported. If <code>10.88.0.1</code> ends up inside a block range, DNS and NAT die
+and no allow rule can rescue it. So the container subnet gets subtracted from each blocked range up front with a little CIDR
+arithmetic:</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-go" data-lang="go"><span class="line"><span class="cl"><span class="k">for</span><span class="w"> </span><span class="nx">_</span><span class="p">,</span><span class="w"> </span><span class="nx">cidr</span><span class="w"> </span><span class="o">:=</span><span class="w"> </span><span class="k">range</span><span class="w"> </span><span class="nx">egressBlockedCIDRs</span><span class="w"> </span><span class="p">{</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">	</span><span class="nx">remote</span><span class="p">,</span><span class="w"> </span><span class="nx">err</span><span class="w"> </span><span class="o">:=</span><span class="w"> </span><span class="nf">subtractCIDR</span><span class="p">(</span><span class="nx">cidr</span><span class="p">,</span><span class="w"> </span><span class="nx">subnet</span><span class="p">)</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">	</span><span class="k">if</span><span class="w"> </span><span class="nx">err</span><span class="w"> </span><span class="o">!=</span><span class="w"> </span><span class="kc">nil</span><span class="w"> </span><span class="p">{</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">		</span><span class="k">return</span><span class="w"> </span><span class="kc">nil</span><span class="p">,</span><span class="w"> </span><span class="nx">fmt</span><span class="p">.</span><span class="nf">Errorf</span><span class="p">(</span><span class="s">&#34;computing blocked ranges for %s: %w&#34;</span><span class="p">,</span><span class="w"> </span><span class="nx">cidr</span><span class="p">,</span><span class="w"> </span><span class="nx">err</span><span class="p">)</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">	</span><span class="p">}</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">	</span><span class="nx">rules</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="nb">append</span><span class="p">(</span><span class="nx">rules</span><span class="p">,</span><span class="w"> </span><span class="nx">winFirewallRule</span><span class="p">{</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">		</span><span class="nx">name</span><span class="p">:</span><span class="w"> </span><span class="nx">firewallRulePrefix</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="s">&#34;-block-&#34;</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="nx">strings</span><span class="p">.</span><span class="nf">ReplaceAll</span><span class="p">(</span><span class="nx">cidr</span><span class="p">,</span><span class="w"> </span><span class="s">&#34;/&#34;</span><span class="p">,</span><span class="w"> </span><span class="s">&#34;_&#34;</span><span class="p">),</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">		</span><span class="nx">spec</span><span class="p">:</span><span class="w"> </span><span class="p">[]</span><span class="kt">string</span><span class="p">{</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">			</span><span class="s">&#34;dir=out&#34;</span><span class="p">,</span><span class="w"> </span><span class="s">&#34;action=block&#34;</span><span class="p">,</span><span class="w"> </span><span class="s">&#34;protocol=any&#34;</span><span class="p">,</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">			</span><span class="s">&#34;localip=&#34;</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="nx">subnet</span><span class="p">,</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">			</span><span class="s">&#34;remoteip=&#34;</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="nx">strings</span><span class="p">.</span><span class="nf">Join</span><span class="p">(</span><span class="nx">remote</span><span class="p">,</span><span class="w"> </span><span class="s">&#34;,&#34;</span><span class="p">),</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">			</span><span class="s">&#34;profile=any&#34;</span><span class="p">,</span><span class="w"> </span><span class="s">&#34;enable=yes&#34;</span><span class="p">,</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">		</span><span class="p">},</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">	</span><span class="p">})</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="p">}</span><span class="w">
+</span></span></span></code></pre></div><p><code>10.0.0.0/8</code> becomes <code>10.0.0.0-10.87.255.255,10.89.0.0-10.255.255.255</code>. Unit tested, idempotent, very tidy. On the real node
+it did nothing. The PR body had even flagged the source-IP assumption as unverified without hardware, and that&rsquo;s the
+assumption that was wrong.</p>
+<h3 id="2-the-hyper-v-firewall">2. The Hyper-V firewall</h3>
+<p>#140. Server 2025 ships <code>New-NetFirewallHyperVRule</code>, a firewall that filters
+at the VM&rsquo;s vNIC, before NAT, scoped by a <code>VMCreatorId</code>. That&rsquo;s Microsoft&rsquo;s purpose-built answer for exactly this problem,
+and it&rsquo;s what WSL uses. There&rsquo;s no documented creator GUID for Windows containers, so ephemerd discovered it at runtime with
+<code>Get-NetFirewallHyperVVMCreator</code>, skipping WSL&rsquo;s well-known one.</p>
+<p>On metal, <code>Get-NetFirewallHyperVVMCreator</code> and <code>Get-NetFirewallHyperVPort</code> both came back empty, even with a live container
+running. There&rsquo;s no creator to scope a rule to, so the rules never attach to anything.</p>
+<h3 id="3-hns-endpoint-acls">3. HNS endpoint ACLs</h3>
+<p>These were in the code from the start: HNS ACL policies with <code>RuleType: Switch</code> on each container&rsquo;s endpoint. While a
+containment run was held open I pulled the live endpoint and the rules were right there:</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-json" data-lang="json"><span class="line"><span class="cl"><span class="p">[{</span><span class="nt">&#34;Action&#34;</span><span class="p">:</span><span class="s2">&#34;Block&#34;</span><span class="p">,</span><span class="nt">&#34;Direction&#34;</span><span class="p">:</span><span class="s2">&#34;Out&#34;</span><span class="p">,</span><span class="nt">&#34;Priority&#34;</span><span class="p">:</span><span class="mi">100</span><span class="p">,</span><span class="nt">&#34;Protocols&#34;</span><span class="p">:</span><span class="s2">&#34;6,17&#34;</span><span class="p">,</span>
+</span></span><span class="line"><span class="cl">  <span class="nt">&#34;RemoteAddresses&#34;</span><span class="p">:</span><span class="s2">&#34;10.0.0.0/8&#34;</span><span class="p">,</span><span class="nt">&#34;RuleType&#34;</span><span class="p">:</span><span class="s2">&#34;Switch&#34;</span><span class="p">,</span><span class="nt">&#34;Type&#34;</span><span class="p">:</span><span class="s2">&#34;ACL&#34;</span><span class="p">},</span> <span class="err">...</span><span class="p">]</span>
+</span></span></code></pre></div><p>Present, correct, and inert. <code>vfpctrl /list-vmswitch-port</code> would enumerate the ports, but every port-scoped operation failed:</p>
+<pre tabindex="0"><code>vfpctrl /port &lt;port&gt; /get-port-state  -&gt; ERROR (2) The system cannot find the file specified.
+vfpctrl /port &lt;port&gt; /list-layer      -&gt; exit 1
+vfpctrl /list-nat-range               -&gt; ERROR (87) The parameter is incorrect.
+</code></pre><p>VFP, the switch extension that actually enforces those ACLs, isn&rsquo;t managing the ports on a NAT network. The policy gets
+stored on the endpoint object and nothing ever reads it.</p>
+<h3 id="4-route-blackholes-and-a-firewall-inside-the-container">4. Route blackholes and a firewall inside the container</h3>
+<p>At this point I tried doing it from inside the container. A route for each private range pointing at a dead on-link next
+hop installed fine and the planes were still reachable, because the NAT gateway answers ARP for everything (proxy-ARP).
+Routing to <code>127.0.0.1</code> instead got <code>The route addition failed: The parameter is incorrect.</code></p>
+<p>The in-container Windows Firewall was a non-starter. <code>Get-NetFirewallProfile</code> returned system error 1753, and
+<code>Start-Service BFE</code> returned &ldquo;Cannot start service&rdquo;. There&rsquo;s no Base Filtering Engine running inside a Server Core container.</p>
+<p>At this point I wrote it up as a negative result (#142, closed without merging): the write-up dropped the code&rsquo;s
+&ldquo;refusing to start unfirewalled&rdquo; claim in favour of a warning that Windows egress isn&rsquo;t enforced on this host class,
+recommended putting the Windows runner on a VLAN whose router drops RFC1918, and noted the one software avenue left. The
+warning itself shipped with the L2Bridge work below.</p>
+<h3 id="5-raw-wfp-at-the-forwarding-layer">5. Raw WFP at the forwarding layer</h3>
+<p>On Linux the container rules live in <code>FORWARD</code>, and the Windows Filtering Platform has a direct analogue:
+<code>FWPM_LAYER_IPFORWARD_V4</code>. A plain block filter there needs no callout driver and no kernel signing. Tailscale&rsquo;s pure-Go
+<a href="https://github.com/tailscale/wf">wf</a> package made it easy to try from a small spike binary:</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-go" data-lang="go"><span class="line"><span class="cl"><span class="nx">s</span><span class="p">.</span><span class="nf">AddRule</span><span class="p">(</span><span class="o">&amp;</span><span class="nx">wf</span><span class="p">.</span><span class="nx">Rule</span><span class="p">{</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">	</span><span class="nx">ID</span><span class="p">:</span><span class="w"> </span><span class="nx">ruleID</span><span class="p">,</span><span class="w"> </span><span class="nx">Name</span><span class="p">:</span><span class="w"> </span><span class="s">&#34;ephemerd-spike-block&#34;</span><span class="p">,</span><span class="w"> </span><span class="nx">Layer</span><span class="p">:</span><span class="w"> </span><span class="nx">wf</span><span class="p">.</span><span class="nx">LayerIPForwardV4</span><span class="p">,</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">	</span><span class="nx">Sublayer</span><span class="p">:</span><span class="w"> </span><span class="nx">subID</span><span class="p">,</span><span class="w"> </span><span class="nx">Provider</span><span class="p">:</span><span class="w"> </span><span class="nx">provID</span><span class="p">,</span><span class="w"> </span><span class="nx">Weight</span><span class="p">:</span><span class="w"> </span><span class="mi">1000</span><span class="p">,</span><span class="w"> </span><span class="nx">Action</span><span class="p">:</span><span class="w"> </span><span class="nx">wf</span><span class="p">.</span><span class="nx">ActionBlock</span><span class="p">,</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">	</span><span class="nx">Persistent</span><span class="p">:</span><span class="w"> </span><span class="kc">true</span><span class="p">,</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">	</span><span class="nx">Conditions</span><span class="p">:</span><span class="w"> </span><span class="p">[]</span><span class="o">*</span><span class="nx">wf</span><span class="p">.</span><span class="nx">Match</span><span class="p">{</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">		</span><span class="p">{</span><span class="nx">Field</span><span class="p">:</span><span class="w"> </span><span class="nx">wf</span><span class="p">.</span><span class="nx">FieldIPDestinationAddress</span><span class="p">,</span><span class="w"> </span><span class="nx">Op</span><span class="p">:</span><span class="w"> </span><span class="nx">wf</span><span class="p">.</span><span class="nx">MatchTypeEqual</span><span class="p">,</span><span class="w"> </span><span class="nx">Value</span><span class="p">:</span><span class="w"> </span><span class="nx">netip</span><span class="p">.</span><span class="nf">MustParsePrefix</span><span class="p">(</span><span class="s">&#34;10.0.2.45/32&#34;</span><span class="p">)},</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">		</span><span class="p">{</span><span class="nx">Field</span><span class="p">:</span><span class="w"> </span><span class="nx">wf</span><span class="p">.</span><span class="nx">FieldIPLocalInterface</span><span class="p">,</span><span class="w"> </span><span class="nx">Op</span><span class="p">:</span><span class="w"> </span><span class="nx">wf</span><span class="p">.</span><span class="nx">MatchTypeEqual</span><span class="p">,</span><span class="w"> </span><span class="nx">Value</span><span class="p">:</span><span class="w"> </span><span class="nf">luid</span><span class="p">(</span><span class="mi">9</span><span class="p">)},</span><span class="w"> </span><span class="c1">// the NAT vSwitch vNIC</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">	</span><span class="p">},</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="p">})</span><span class="w">
+</span></span></span></code></pre></div><p>First lesson: enumerate the fields of the layer on the build you&rsquo;re actually running. On this one, <code>IPFORWARD_V4</code> has no
+<code>IP_ARRIVAL_INTERFACE</code>. The arrival interface is <code>IP_LOCAL_INTERFACE</code> and the destination is <code>IP_DESTINATION_ADDRESS</code>, so
+both conditions in my plan had to be remapped before any result meant anything.</p>
+<p>I targeted Grafana only, since blocking it can&rsquo;t cut the runner off from GitHub. A working filter would have dropped one
+<code>FAIL</code> line and kept the other three. Results:</p>
+<table>
+  <thead>
+      <tr>
+          <th>Layer</th>
+          <th>Conditions</th>
+          <th>Grafana</th>
+      </tr>
+  </thead>
+  <tbody>
+      <tr>
+          <td><code>IPFORWARD_V4</code></td>
+          <td>dest + arrival interface</td>
+          <td>reached</td>
+      </tr>
+      <tr>
+          <td><code>IPFORWARD_V4</code></td>
+          <td>dest only</td>
+          <td>reached</td>
+      </tr>
+      <tr>
+          <td><code>INBOUND_IPPACKET_V4</code></td>
+          <td>dest + arrival interface</td>
+          <td>reached</td>
+      </tr>
+      <tr>
+          <td>7 filters at once across inbound, forward and post-NAT outbound</td>
+          <td>every combination</td>
+          <td>reached</td>
+      </tr>
+  </tbody>
+</table>
+<p>The one that convinced me was the post-NAT <code>OUTBOUND_IPPACKET_V4</code> filter on destination alone. After NAT the packet has to
+leave the host&rsquo;s LAN NIC addressed to Grafana, and that filter didn&rsquo;t see it either.</p>
+<p>When a filter matches nothing you have to rule out &ldquo;my filter is broken&rdquo;, so I ran a positive control: the same layer, same
+field, pointed at the host&rsquo;s own traffic to <code>1.1.1.1</code>.</p>
+<pre tabindex="0"><code>ALE_AUTH_CONNECT_V4  block IP_REMOTE_ADDRESS=1.1.1.1 -&gt; host-&gt;1.1.1.1:443 reachable=False
+OUTBOUND_IPPACKET_V4 block IP_REMOTE_ADDRESS=1.1.1.1 -&gt; host-&gt;1.1.1.1:443 reachable=False
+(after provider removed)                             -&gt; host-&gt;1.1.1.1 restored=True
+</code></pre><p>So WFP works and the method was right. The container&rsquo;s packets just never pass through the host&rsquo;s <code>tcpip.sys</code> at all. Two
+more facts point the same way: <code>Get-NetNat</code> is empty (the HNS NAT isn&rsquo;t a NetNat object), and IP forwarding is <code>Disabled</code> on
+both the vSwitch vNIC and the LAN NIC. The NAT happens inside the Hyper-V switch datapath, beside the host stack rather than
+through it. All of this went into an investigation doc in the repo (<code>docs/arch/windows-egress-wfp-investigation.md</code>, PR
+#143) with a reproducer, so nobody starts attempt six from scratch.</p>
+<h3 id="what-worked-l2bridge-and-vfp">What worked: L2Bridge and VFP</h3>
+<p>Attempt 3 had the right enforcement point (the vSwitch port) on the wrong network type. On an HNS <strong>L2Bridge</strong> network, VFP
+is engaged and the same <code>RuleType: Switch</code> ACLs are enforced. The container stops being NAT&rsquo;d and becomes a peer on the
+host&rsquo;s LAN with its own address. That&rsquo;s #144, opt-in behind
+<code>network.l2bridge_egress</code>.</p>
+<p>The non-obvious part is that <strong>VFP goes default-deny the moment any ACL exists on a port</strong>. A port with only block rules
+blocks everything, internet included. So the rules are a ladder, lower priority number wins:</p>
+<table>
+  <thead>
+      <tr>
+          <th>Priority</th>
+          <th>Action</th>
+          <th>Dir</th>
+          <th>Remote</th>
+          <th>Why</th>
+      </tr>
+  </thead>
+  <tbody>
+      <tr>
+          <td>90</td>
+          <td>Allow</td>
+          <td>Out</td>
+          <td>this host <code>/32</code></td>
+          <td>only when dind or the module proxy is on</td>
+      </tr>
+      <tr>
+          <td>95</td>
+          <td>Allow</td>
+          <td>Out</td>
+          <td>operator carve-outs</td>
+          <td>empty by default</td>
+      </tr>
+      <tr>
+          <td>100</td>
+          <td>Block</td>
+          <td>Out</td>
+          <td>10/8, 172.16/12, 192.168/16, 169.254/16</td>
+          <td>the actual policy</td>
+      </tr>
+      <tr>
+          <td>65500</td>
+          <td>Allow</td>
+          <td>Out</td>
+          <td>0.0.0.0/0</td>
+          <td>the internet</td>
+      </tr>
+      <tr>
+          <td>65500</td>
+          <td>Allow</td>
+          <td>In</td>
+          <td>0.0.0.0/0</td>
+          <td>TCP return traffic</td>
+      </tr>
+  </tbody>
+</table>
+<p>That last row is the one nobody tells you about. Without an inbound allow-any, outbound SYNs leave just fine and every connection dies when
+the SYN-ACK comes back, including to destinations the ladder explicitly allows. From the code:</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-go" data-lang="go"><span class="line"><span class="cl"><span class="c1">// Tier: allow-any Out AND In (lowest precedence). BOTH are mandatory:</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="c1">// without them the port default-denies everything (internet included), and</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="c1">// the INBOUND allow is required or TCP return traffic (SYN-ACK) is dropped</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="c1">// and even permitted destinations fail.</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="k">for</span><span class="w"> </span><span class="nx">_</span><span class="p">,</span><span class="w"> </span><span class="nx">dir</span><span class="w"> </span><span class="o">:=</span><span class="w"> </span><span class="k">range</span><span class="w"> </span><span class="p">[]</span><span class="nx">hcn</span><span class="p">.</span><span class="nx">DirectionType</span><span class="p">{</span><span class="nx">hcn</span><span class="p">.</span><span class="nx">DirectionTypeOut</span><span class="p">,</span><span class="w"> </span><span class="nx">hcn</span><span class="p">.</span><span class="nx">DirectionTypeIn</span><span class="p">}</span><span class="w"> </span><span class="p">{</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">	</span><span class="k">if</span><span class="w"> </span><span class="nx">err</span><span class="w"> </span><span class="o">:=</span><span class="w"> </span><span class="nf">add</span><span class="p">(</span><span class="nx">hcn</span><span class="p">.</span><span class="nx">AclPolicySetting</span><span class="p">{</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">		</span><span class="nx">Protocols</span><span class="p">:</span><span class="w">       </span><span class="nx">aclAnyProtocol</span><span class="p">,</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">		</span><span class="nx">Action</span><span class="p">:</span><span class="w">          </span><span class="nx">hcn</span><span class="p">.</span><span class="nx">ActionTypeAllow</span><span class="p">,</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">		</span><span class="nx">Direction</span><span class="p">:</span><span class="w">       </span><span class="nx">dir</span><span class="p">,</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">		</span><span class="nx">RemoteAddresses</span><span class="p">:</span><span class="w"> </span><span class="s">&#34;0.0.0.0/0&#34;</span><span class="p">,</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">		</span><span class="nx">RuleType</span><span class="p">:</span><span class="w">        </span><span class="nx">hcn</span><span class="p">.</span><span class="nx">RuleTypeSwitch</span><span class="p">,</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">		</span><span class="nx">Priority</span><span class="p">:</span><span class="w">        </span><span class="nx">aclPriorityAllowAny</span><span class="p">,</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">	</span><span class="p">});</span><span class="w"> </span><span class="nx">err</span><span class="w"> </span><span class="o">!=</span><span class="w"> </span><span class="kc">nil</span><span class="w"> </span><span class="p">{</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">		</span><span class="k">return</span><span class="w"> </span><span class="kc">nil</span><span class="p">,</span><span class="w"> </span><span class="nx">err</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">	</span><span class="p">}</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="p">}</span><span class="w">
+</span></span></span></code></pre></div><p>The blocks are whole supernets, with no carve-out for the container&rsquo;s own subnet or gateway. On L2Bridge the container
+subnet <em>is</em> the management LAN, so a &ldquo;except my own subnet&rdquo; exception would exempt exactly the hosts I&rsquo;m trying to protect.
+Containers still route through the gateway as a next hop, they just can&rsquo;t address it. Verified from inside a container:
+Grafana, Incus, both Proxmox hosts, the router&rsquo;s web UI and the ephemerd host blocked; <code>1.1.1.1:443</code>, <code>8.8.8.8:53</code>, DNS and
+<code>https://example.com</code> fine.</p>
+<p>Things that bit me on the way:</p>
+<ul>
+<li>
+<p><strong>Port-scoped ACLs blackhole the whole port.</strong> An early ladder had UDP 67/68 allows for DHCP, with ports and no address
+scope. HNS returned success and then nothing egressed at all. Every rule is now address-scoped, and a test fails the build
+if anyone adds a port scope back.</p>
+</li>
+<li>
+<p><strong>HNS won&rsquo;t do DHCP for you.</strong> Without a declared subnet, HNS refuses to create the network (<code>0x803b0005</code>). With one, it
+hands out addresses from it on its own, which on a real LAN means colliding with your DHCP server. So
+<code>network.ip_pool</code> is required, with no default, and ephemerd does the allocation:</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-toml" data-lang="toml"><span class="line"><span class="cl"><span class="p">[</span><span class="nx">network</span><span class="p">]</span>
+</span></span><span class="line"><span class="cl"><span class="nx">l2bridge_egress</span> <span class="p">=</span> <span class="kc">true</span>
+</span></span><span class="line"><span class="cl"><span class="nx">host_nic</span> <span class="p">=</span> <span class="s2">&#34;Ethernet&#34;</span>
+</span></span><span class="line"><span class="cl"><span class="nx">ip_pool</span> <span class="p">=</span> <span class="s2">&#34;192.0.2.200-192.0.2.230&#34;</span>   <span class="c"># a range your DHCP server never leases</span>
+</span></span></code></pre></div></li>
+<li>
+<p><strong>Things were bound to <code>10.88.0.1</code>.</strong> The per-job Docker API listener and the Go module proxy bound to the NAT gateway
+address, which doesn&rsquo;t exist on L2Bridge, so every job failed to provision. They now bind the host&rsquo;s adapter address, and
+the <code>/32</code> allow at priority 90 lets containers reach it.</p>
+</li>
+<li>
+<p><strong>That <code>/32</code> opens every port on the host.</strong> It can&rsquo;t be port-scoped (see above), so port precision moved to the host&rsquo;s
+own firewall, which works here because without NAT the container&rsquo;s real address is on the packet. A pen test from inside
+a job then reached the host&rsquo;s WinRM (5985) and RPC endpoint mapper (135), because a stock Windows host allows those from
+the LAN and the container is now a LAN peer. <a href="https://github.com/ephpm/ephemerd/commit/da802c9"><code>da802c9</code></a> adds inbound
+blocks for 135, 139, 445, 3389, 5985, 5986 and 47001 scoped to the pool, and
+#158 extended them to UDP plus the name-resolution ports.</p>
+</li>
+<li>
+<p><strong>Switching needs a reboot.</strong> Creating an L2Bridge network next to a live NAT network wedged HNS on my test node badly
+enough that recovery took a hard reset from Proxmox. Cordon, drain, reboot, then start ephemerd.</p>
+</li>
+</ul>
+<p>L2Bridge isn&rsquo;t a perfect sandbox either. A container on the LAN segment can see broadcast and multicast from its peers, and
+there&rsquo;s no anti-spoof policy I could apply with confidence yet. The security guide says to pair it with a VLAN, and I&rsquo;d
+still do that.</p>
+<h3 id="what-i-took-away-from-it">What I took away from it</h3>
+<p>The common thread in all five failures is that Windows accepted the configuration every time. <code>netsh</code> added the rule,
+<code>ApplyPolicy</code> returned success, the ACL showed up on the endpoint, WFP listed seven installed filters. None of that tells you
+the packet passes through the thing you configured. The only test that meant anything was a probe from inside a real job,
+and when it said &ldquo;reached&rdquo;, a positive control against traffic I knew went through the engine was what told me whether the
+filter or the path was wrong.</p>
+<h3 id="links">Links</h3>
+<ul>
+<li><a href="https://github.com/ephpm/ephemerd">ephemerd</a> (PRs #136, #140, #142, #143 and #144 carry the full evidence)</li>
+<li><a href="https://github.com/ephpm/ephemerd/blob/main/docs/guides/security.md">ephemerd security guide</a></li>
+<li><a href="https://github.com/tailscale/wf">tailscale/wf</a></li>
+<li><a href="https://learn.microsoft.com/en-us/virtualization/windowscontainers/container-networking/network-drivers-topologies">Windows container networking: network drivers</a></li>
+</ul>
+
+      </div>
+      <footer>
+        <div class="stats">
+  
+    <ul class="categories">
+      
+        
+          <li><a class="article-terms-link" href="/categories/windows/">windows</a></li>
+        
+          <li><a class="article-terms-link" href="/categories/security/">security</a></li>
+        
+          <li><a class="article-terms-link" href="/categories/ci/">ci</a></li>
+        
+      
+    </ul>
+  
+  
+    <ul class="tags">
+      
+        
+          <li><a class="article-terms-link" href="/tags/windows/">windows</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/hyper-v/">hyper-v</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/networking/">networking</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/firewall/">firewall</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/wfp/">wfp</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/hns/">hns</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/security/">security</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/ephemerd/">ephemerd</a></li>
+        
+      
+    </ul>
+  
+</div>
+
+      </footer>
+    </div>
+    
+      
+  
+  <div class='post giscus-wrap'>
+    <script src='https://giscus.app/client.js'
+            data-repo='luthermonson/luth.io'
+            data-repo-id='R_kgDOGvFBXQ'
+            data-category='Announcements'
+            data-category-id='DIC_kwDOGvFBXc4DH_gv'
+            data-mapping='pathname'
+            data-strict='1'
+            data-reactions-enabled='1'
+            data-emit-metadata='0'
+            data-input-position='top'
+            data-theme='light'
+            data-lang='en'
+            data-loading='lazy'
+            crossorigin='anonymous'
+            async>
+    </script>
+  </div>
+  
+
+
+
+    
+  </article>
+  
+    <nav class="post-nav">
+      
+        <a href="/blog/2026/08/shipmates-persona-based-ai-coding-crews/" class="post-nav-link older">
+          <span class="post-nav-label">&larr; Older</span>
+          <span class="post-nav-title">shipmates: Persona-Based AI Coding Crews That Remember</span>
+        </a>
+      
+      
+        <a href="/blog/2026/08/what-an-overloaded-php-server-actually-returns/" class="post-nav-link newer">
+          <span class="post-nav-label">Newer &rarr;</span>
+          <span class="post-nav-title">What an Overloaded PHP Server Actually Returns</span>
+        </a>
+      
+    </nav>
+  
+
+      </main>
+      <section id="site-sidebar">
+  
+    <section id="recent-posts">
+      <header>
+        <h1>Recent Posts</h1>
+      </header>
+      
+      <article class="mini-post">
+          <a href="/blog/2026/10/ephpm-worker-mode-performance/" class="image" style="--bg-image: url('/img/2026/10/ephpm-worker-mode-performance-cover.svg');">
+    <img class="" src="/img/2026/10/ephpm-worker-mode-performance-cover.svg" alt="Diagram: before, hyper/tokio hands each request to one shared bounded channel whose waiter list all 20 PHP threads contend on; after, a dispatcher hands the job straight into the mailbox of the most recently idle PHP thread and only queues it in a FIFO overflow queue when every thread is busy">
+  </a>
+        <header>
+          <h2><a href="/blog/2026/10/ephpm-worker-mode-performance/">Fourth Place in Worker Mode, and Why It Wasn&#39;t PHP</a></h2>
+          <time class="published" datetime="2026-10-16 08:10:00 -0700 PDT">October 16, 2026</time>
+        </header>
+      </article>
+      
+      <article class="mini-post">
+          <a href="/blog/2026/10/ephpm-websockets-how-to/" class="image" style="--bg-image: url('/img/2026/10/ephpm-websockets-how-to-cover.svg');">
+    <img class="" src="/img/2026/10/ephpm-websockets-how-to-cover.svg" alt="Diagram: browsers hold sockets to ePHPm&#39;s Rust session tasks and registry; each connect, message and disconnect runs websocket.php once on the PHP thread pool, and ordinary HTTP requests push through ephpm_ws_broadcast">
+  </a>
+        <header>
+          <h2><a href="/blog/2026/10/ephpm-websockets-how-to/">WebSockets in ePHPm, From Zero to a Working Chat</a></h2>
+          <time class="published" datetime="2026-10-11 17:30:00 -0700 PDT">October 11, 2026</time>
+        </header>
+      </article>
+      
+      <article class="mini-post">
+          <a href="/blog/2026/10/webhooks-out-of-order-scheduler/" class="image" style="--bg-image: url('/img/2026/10/webhooks-out-of-order-scheduler-timeline.svg');">
+    <img class="" src="/img/2026/10/webhooks-out-of-order-scheduler-timeline.svg" alt="Timeline of three same-label jobs where a runner executing a build is destroyed 2.3 seconds before its in_progress webhook arrives">
+  </a>
+        <header>
+          <h2><a href="/blog/2026/10/webhooks-out-of-order-scheduler/">Webhooks Arrive Out of Order: How My Scheduler Killed Live Builds</a></h2>
+          <time class="published" datetime="2026-10-07 21:10:00 -0700 PDT">October 7, 2026</time>
+        </header>
+      </article>
+      
+      <article class="mini-post">
+          <a href="/blog/2026/10/go-proxmox-five-years-to-v0-8/" class="image" style="--bg-image: url('/img/2026/10/go-proxmox-five-years-to-v0-8-apidiff.svg');">
+    <img class="" src="/img/2026/10/go-proxmox-five-years-to-v0-8-apidiff.svg" alt="Horizontal bar chart of apidiff incompatible and compatible changes for every go-proxmox release from v0.1.0 to v0.8.2">
+  </a>
+        <header>
+          <h2><a href="/blog/2026/10/go-proxmox-five-years-to-v0-8/">Breaking Changes Without Breaking Trust: Five Years to go-proxmox v0.8</a></h2>
+          <time class="published" datetime="2026-10-04 19:40:00 -0700 PDT">October 4, 2026</time>
+        </header>
+      </article>
+      
+      <article class="mini-post">
+          <a href="/blog/2026/10/windows-sigterm-sparse-files/" class="image" style="--bg-image: url('/img/2026/10/windows-sigterm-sparse-files-connections.svg');">
+    <img class="" src="/img/2026/10/windows-sigterm-sparse-files-connections.svg" alt="Bar chart: 96 Cloudflare edge connections held by orphaned cloudflared processes versus 4 for the live daemon">
+  </a>
+        <header>
+          <h2><a href="/blog/2026/10/windows-sigterm-sparse-files/">Windows Grab-Bag: SIGTERM That Doesn&#39;t Exist and Sparse Files That Break Docker</a></h2>
+          <time class="published" datetime="2026-10-03 14:30:00 -0700 PDT">October 3, 2026</time>
+        </header>
+      </article>
+      
+      
+        <footer>
+          <a href="/blog" class="button">See More</a>
+        </footer>
+      
+    </section>
+  
+
+  
+    
+
+      <section id="categories">
+        <header>
+          <h1><a href="/categories">Categories</a></h1>
+        </header>
+        <ul>
+          
+          
+          <li>
+              <a href="/categories/ephpm/">ephpm<span class="count">33</span></a>
+          
+          <li>
+              <a href="/categories/go/">go<span class="count">30</span></a>
+          
+          <li>
+              <a href="/categories/php/">php<span class="count">23</span></a>
+          
+          <li>
+              <a href="/categories/rust/">rust<span class="count">15</span></a>
+          
+          <li>
+              <a href="/categories/homelab/">homelab<span class="count">14</span></a>
+          
+          <li>
+              <a href="/categories/windows/">windows<span class="count">14</span></a>
+          
+          <li>
+              <a href="/categories/ci/">ci<span class="count">9</span></a>
+          
+          <li>
+              <a href="/categories/databases/">databases<span class="count">9</span></a>
+          
+          <li>
+              <a href="/categories/security/">security<span class="count">9</span></a>
+          
+          <li>
+              <a href="/categories/containers/">containers<span class="count">7</span></a>
+          
+          <li>
+              <a href="/categories/tools/">tools<span class="count">5</span></a>
+          
+          <li>
+              <a href="/categories/ai-agents/">ai-agents<span class="count">4</span></a>
+          
+          </li>
+        </ul>
+      </section>
+    
+  
+
+  
+    <section id="mini-bio">
+      <header>
+        <h1>About</h1>
+      </header>
+      <p>Luther is a 20+ year software veteran specializing in backend APIs and architecting products. Employed at <a href='https://www.suse.com'>SUSE</a> as the Team Lead for the <a href='https://github.com/rancher/windows/issues'>Containers on Windows Team</a> working on <a href='https://rancher.com/'>Rancher</a> + <a href='https://kubernetes.io/'>Kubernetes</a></p>
+      <footer>
+        <a href="/about" class="button">Learn More</a>
+      </footer>
+    </section>
+  
+</section>
+
+      <footer id="site-footer">
+  
+      <ul class="socnet-icons">
+        
+
+        <li><a href="//github.com/luthermonson" target="_blank" rel="noopener" title="GitHub" class="fab fa-github"></a></li>
+
+
+
+
+
+
+
+
+
+
+
+<li><a href="//www.linkedin.com/in/luthermonson" target="_blank" rel="noopener" title="LinkedIn" class="fab fa-linkedin"></a></li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li><a href="//twitter.com/luthermonson" target="_blank" rel="noopener" title="Twitter" class="fab fa-twitter"></a></li>
+
+
+
+
+
+
+
+
+
+
+
+<li><a href="mailto:luther.monson@gmail.com" target="_blank" title="Email" class="far fa-envelope"></a></li>
+
+      </ul>
+  
+  <p class="copyright">
+    © 2026 Luther Monson
+      <br>
+    Theme: <a href='https://github.com/pacollins/hugo-future-imperfect-slim' target='_blank' rel='noopener'>Hugo Future Imperfect Slim</a><br>A <a href='https://html5up.net/future-imperfect' target='_blank' rel='noopener'>HTML5 UP port</a> | Powered by <a href='https://gohugo.io/' title='0.160.1' target='_blank' rel='noopener'>Hugo</a>
+  </p>
+</footer>
+<a id="back-to-top" href="#" class="fas fa-arrow-up fa-2x"></a>
+
+      <script src="/js/bundle.min.241b62ebc4792fe8c7a75879e5f710894f226f2b73342e9916b3a3b0526030cc.js" integrity="sha256-JBti68R5L&#43;jHp1h55fcQiU8ibytzNC6ZFrOjsFJgMMw="></script>
+    <script src="/js/add-on.js"></script>
+    </div>
+  </body>
+</html>

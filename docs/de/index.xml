@@ -4,7 +4,8 @@
     <title>Luther Monson</title>
     <link>https://luth.io/de/</link>
     <description>Recent content on Luther Monson</description>
-    <generator>Hugo -- gohugo.io</generator>
-    <language>de</language><atom:link href="https://luth.io/de/index.xml" rel="self" type="application/rss+xml" />
+    <generator>Hugo</generator>
+    <language>de</language>
+    <atom:link href="https://luth.io/de/index.xml" rel="self" type="application/rss+xml" />
   </channel>
 </rss>

@@ -1,0 +1,51 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1019 318" width="1019" height="318" font-family="ui-monospace,SFMono-Regular,Menlo,Consolas,monospace" font-size="14">
+<rect width="1019" height="318" rx="8" fill="#1e1e1e"/>
+<rect width="1019" height="26" rx="8" fill="#323233"/><rect y="18" width="1019" height="8" fill="#323233"/>
+<circle cx="16" cy="13" r="5" fill="#ff5f56"/><circle cx="32" cy="13" r="5" fill="#ffbd2e"/><circle cx="48" cy="13" r="5" fill="#27c93f"/>
+<text x="509.5" y="17" fill="#9d9d9d" font-size="12" text-anchor="middle" font-family="system-ui,sans-serif">linode-tui</text>
+<text x="22.4" y="47" fill="#00add8" xml:space="preserve" textLength="84.0" lengthAdjust="spacingAndGlyphs" font-weight="bold">linode-tui</text>
+<text x="114.8" y="47" fill="#6e6e6e" xml:space="preserve" textLength="8.4" lengthAdjust="spacingAndGlyphs">·</text>
+<text x="131.6" y="47" fill="#f39e4c" xml:space="preserve" textLength="84.0" lengthAdjust="spacingAndGlyphs" font-weight="bold">@demo-user</text>
+<text x="224.0" y="47" fill="#6e6e6e" xml:space="preserve" textLength="8.4" lengthAdjust="spacingAndGlyphs">·</text>
+<text x="240.8" y="47" fill="#00add8" xml:space="preserve" textLength="100.8" lengthAdjust="spacingAndGlyphs" font-weight="bold">LKE Clusters</text>
+<text x="350.0" y="47" fill="#6e6e6e" xml:space="preserve" textLength="25.2" lengthAdjust="spacingAndGlyphs">(2)</text>
+<text x="64.4" y="65" fill="#00add8" xml:space="preserve" textLength="16.8" lengthAdjust="spacingAndGlyphs" font-weight="bold">ID</text>
+<text x="165.2" y="65" fill="#00add8" xml:space="preserve" textLength="42.0" lengthAdjust="spacingAndGlyphs" font-weight="bold">LABEL</text>
+<text x="417.2" y="65" fill="#00add8" xml:space="preserve" textLength="50.4" lengthAdjust="spacingAndGlyphs" font-weight="bold">REGION</text>
+<text x="534.8" y="65" fill="#00add8" xml:space="preserve" textLength="50.4" lengthAdjust="spacingAndGlyphs" font-weight="bold">STATUS</text>
+<text x="635.6" y="65" fill="#00add8" xml:space="preserve" textLength="25.2" lengthAdjust="spacingAndGlyphs" font-weight="bold">K8S</text>
+<text x="719.6" y="65" fill="#00add8" xml:space="preserve" textLength="33.6" lengthAdjust="spacingAndGlyphs" font-weight="bold">TIER</text>
+<text x="803.6" y="65" fill="#00add8" xml:space="preserve" textLength="16.8" lengthAdjust="spacingAndGlyphs" font-weight="bold">HA</text>
+<text x="862.4" y="65" fill="#00add8" xml:space="preserve" textLength="33.6" lengthAdjust="spacingAndGlyphs" font-weight="bold">TAGS</text>
+<rect x="14.0" y="70" width="8.4" height="18" fill="#00add8"/>
+<rect x="22.4" y="70" width="25.2" height="18" fill="#00add8"/>
+<text x="64.4" y="83" fill="#e5e5e5" xml:space="preserve" textLength="50.4" lengthAdjust="spacingAndGlyphs">401122</text>
+<text x="165.2" y="83" fill="#e5e5e5" xml:space="preserve" textLength="58.8" lengthAdjust="spacingAndGlyphs">dev-ord</text>
+<text x="417.2" y="83" fill="#e5e5e5" xml:space="preserve" textLength="50.4" lengthAdjust="spacingAndGlyphs">us-ord</text>
+<text x="534.8" y="83" fill="#e5e5e5" xml:space="preserve" textLength="42.0" lengthAdjust="spacingAndGlyphs">ready</text>
+<text x="635.6" y="83" fill="#e5e5e5" xml:space="preserve" textLength="33.6" lengthAdjust="spacingAndGlyphs">1.33</text>
+<text x="803.6" y="83" fill="#e5e5e5" xml:space="preserve" textLength="16.8" lengthAdjust="spacingAndGlyphs">no</text>
+<text x="862.4" y="83" fill="#e5e5e5" xml:space="preserve" textLength="25.2" lengthAdjust="spacingAndGlyphs">dev</text>
+<text x="64.4" y="101" fill="#e5e5e5" xml:space="preserve" textLength="50.4" lengthAdjust="spacingAndGlyphs">401123</text>
+<text x="165.2" y="101" fill="#e5e5e5" xml:space="preserve" textLength="58.8" lengthAdjust="spacingAndGlyphs">e2e-sea</text>
+<text x="417.2" y="101" fill="#e5e5e5" xml:space="preserve" textLength="50.4" lengthAdjust="spacingAndGlyphs">us-sea</text>
+<text x="534.8" y="101" fill="#e5e5e5" xml:space="preserve" textLength="42.0" lengthAdjust="spacingAndGlyphs">ready</text>
+<text x="635.6" y="101" fill="#e5e5e5" xml:space="preserve" textLength="33.6" lengthAdjust="spacingAndGlyphs">1.34</text>
+<text x="803.6" y="101" fill="#e5e5e5" xml:space="preserve" textLength="25.2" lengthAdjust="spacingAndGlyphs">yes</text>
+<text x="862.4" y="101" fill="#e5e5e5" xml:space="preserve" textLength="25.2" lengthAdjust="spacingAndGlyphs">e2e</text>
+<text x="14.0" y="281" fill="#6e6e6e" xml:space="preserve" textLength="277.2" lengthAdjust="spacingAndGlyphs">2 lke clusters · refreshed 1s ago</text>
+<text x="22.4" y="299" fill="#7b61ff" xml:space="preserve" textLength="8.4" lengthAdjust="spacingAndGlyphs">:</text>
+<text x="39.2" y="299" fill="#6e6e6e" xml:space="preserve" textLength="58.8" lengthAdjust="spacingAndGlyphs">command</text>
+<text x="106.4" y="299" fill="#2c2c2e" xml:space="preserve" textLength="8.4" lengthAdjust="spacingAndGlyphs">•</text>
+<text x="123.2" y="299" fill="#7b61ff" xml:space="preserve" textLength="8.4" lengthAdjust="spacingAndGlyphs">/</text>
+<text x="140.0" y="299" fill="#6e6e6e" xml:space="preserve" textLength="50.4" lengthAdjust="spacingAndGlyphs">filter</text>
+<text x="198.8" y="299" fill="#2c2c2e" xml:space="preserve" textLength="8.4" lengthAdjust="spacingAndGlyphs">•</text>
+<text x="215.6" y="299" fill="#7b61ff" xml:space="preserve" textLength="8.4" lengthAdjust="spacingAndGlyphs">?</text>
+<text x="232.4" y="299" fill="#6e6e6e" xml:space="preserve" textLength="33.6" lengthAdjust="spacingAndGlyphs">help</text>
+<text x="274.4" y="299" fill="#2c2c2e" xml:space="preserve" textLength="8.4" lengthAdjust="spacingAndGlyphs">•</text>
+<text x="291.2" y="299" fill="#7b61ff" xml:space="preserve" textLength="50.4" lengthAdjust="spacingAndGlyphs">ctrl+b</text>
+<text x="350.0" y="299" fill="#6e6e6e" xml:space="preserve" textLength="33.6" lengthAdjust="spacingAndGlyphs">back</text>
+<text x="392.0" y="299" fill="#2c2c2e" xml:space="preserve" textLength="8.4" lengthAdjust="spacingAndGlyphs">•</text>
+<text x="408.8" y="299" fill="#7b61ff" xml:space="preserve" textLength="50.4" lengthAdjust="spacingAndGlyphs">ctrl+c</text>
+<text x="467.6" y="299" fill="#6e6e6e" xml:space="preserve" textLength="33.6" lengthAdjust="spacingAndGlyphs">quit</text>
+</svg>

@@ -1,13 +1,13 @@
 ---
 title: "Recreating Proxmox Ve Xtermjs in Go"
+description: "Proxmox's web console is xterm.js over a websocket. Here's how I reverse engineered that protocol and rebuilt the terminal connection in Go with go-proxmox."
 date: 2022-02-06T21:54:53-07:00
 tags:
  - proxmox
  - go
  - javascript
  - websockets
-categories:
- - programming
+categories: [ go, homelab ]
 images:
  - src: img/2022/02/proxmox-logo.png
    alt: "Proxmox VE Logo"

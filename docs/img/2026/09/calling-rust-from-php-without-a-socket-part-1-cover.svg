@@ -1,0 +1,64 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 880 400" font-family="system-ui, -apple-system, Segoe UI, sans-serif">
+  <rect width="880" height="400" fill="#ffffff"/>
+  <defs>
+    <marker id="a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#6b6b6b"/>
+    </marker>
+  </defs>
+  <text x="440" y="30" text-anchor="middle" font-size="19" font-weight="600" fill="#222">Two ways to reach the same KV store from PHP</text>
+
+  <!-- socket path -->
+  <text x="24" y="72" font-size="14" font-weight="600" fill="#c0392b">Over a socket (RESP)</text>
+  <g font-size="13" fill="#222">
+    <rect x="24" y="84" width="118" height="52" rx="6" fill="#fdecea" stroke="#c0392b"/>
+    <text x="83" y="108" text-anchor="middle">$redis-&gt;get()</text>
+    <text x="83" y="125" text-anchor="middle" font-size="11" fill="#6b6b6b">Predis / phpredis</text>
+    <rect x="170" y="84" width="118" height="52" rx="6" fill="#fdecea" stroke="#c0392b"/>
+    <text x="229" y="108" text-anchor="middle">encode RESP</text>
+    <text x="229" y="125" text-anchor="middle" font-size="11" fill="#6b6b6b">*2 $3 GET ...</text>
+    <rect x="316" y="84" width="118" height="52" rx="6" fill="#fdecea" stroke="#c0392b"/>
+    <text x="375" y="108" text-anchor="middle">TCP loopback</text>
+    <text x="375" y="125" text-anchor="middle" font-size="11" fill="#6b6b6b">write + read syscalls</text>
+    <rect x="462" y="84" width="118" height="52" rx="6" fill="#fdecea" stroke="#c0392b"/>
+    <text x="521" y="108" text-anchor="middle">RESP listener</text>
+    <text x="521" y="125" text-anchor="middle" font-size="11" fill="#6b6b6b">tokio task, parse</text>
+    <rect x="608" y="84" width="118" height="52" rx="6" fill="#fdecea" stroke="#c0392b"/>
+    <text x="667" y="108" text-anchor="middle">reply + decode</text>
+    <text x="667" y="125" text-anchor="middle" font-size="11" fill="#6b6b6b">back the same way</text>
+  </g>
+  <g stroke="#6b6b6b" stroke-width="1.5" marker-end="url(#a)">
+    <line x1="142" y1="110" x2="168" y2="110"/>
+    <line x1="288" y1="110" x2="314" y2="110"/>
+    <line x1="434" y1="110" x2="460" y2="110"/>
+    <line x1="580" y1="110" x2="606" y2="110"/>
+    <line x1="540" y1="138" x2="752" y2="200"/>
+  </g>
+
+  <!-- store -->
+  <rect x="742" y="192" width="118" height="70" rx="8" fill="#eaf2fb" stroke="#2b6cb0" stroke-width="1.5"/>
+  <text x="801" y="222" text-anchor="middle" font-size="14" font-weight="600" fill="#2b6cb0">KV Store</text>
+  <text x="801" y="242" text-anchor="middle" font-size="11" fill="#6b6b6b">DashMap, per-site</text>
+
+  <!-- native path -->
+  <text x="24" y="296" font-size="14" font-weight="600" fill="#3a9a5b">Native function (same process, same thread)</text>
+  <g font-size="13" fill="#222">
+    <rect x="24" y="308" width="140" height="56" rx="6" fill="#e9f6ee" stroke="#3a9a5b"/>
+    <text x="94" y="332" text-anchor="middle">ephpm_kv_get()</text>
+    <text x="94" y="350" text-anchor="middle" font-size="11" fill="#6b6b6b">PHP_FUNCTION in C</text>
+    <rect x="196" y="308" width="160" height="56" rx="6" fill="#e9f6ee" stroke="#3a9a5b"/>
+    <text x="276" y="332" text-anchor="middle">g_kv_ops.get(key)</text>
+    <text x="276" y="350" text-anchor="middle" font-size="11" fill="#6b6b6b">fn pointer, #[repr(C)]</text>
+    <rect x="388" y="308" width="160" height="56" rx="6" fill="#e9f6ee" stroke="#3a9a5b"/>
+    <text x="468" y="332" text-anchor="middle">kv_get (Rust)</text>
+    <text x="468" y="350" text-anchor="middle" font-size="11" fill="#6b6b6b">stage in thread-local</text>
+    <rect x="580" y="308" width="140" height="56" rx="6" fill="#e9f6ee" stroke="#3a9a5b"/>
+    <text x="650" y="332" text-anchor="middle">RETURN_STRINGL</text>
+    <text x="650" y="350" text-anchor="middle" font-size="11" fill="#6b6b6b">C copies ptr+len</text>
+  </g>
+  <g stroke="#6b6b6b" stroke-width="1.5" marker-end="url(#a)">
+    <line x1="164" y1="336" x2="194" y2="336"/>
+    <line x1="356" y1="336" x2="386" y2="336"/>
+    <line x1="548" y1="336" x2="578" y2="336"/>
+    <line x1="510" y1="306" x2="752" y2="262"/>
+  </g>
+</svg>

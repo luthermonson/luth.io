@@ -1,0 +1,33 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 330" font-family="system-ui, -apple-system, Segoe UI, Roboto, sans-serif">
+  <rect width="960" height="330" fill="#ffffff"/>
+  <text x="480" y="32" text-anchor="middle" font-size="19" font-weight="600" fill="#222">verify-certificates (Proxmox default: 1) through three versions of one struct field</text>
+  <g font-size="13">
+    <!-- header -->
+    <rect x="20" y="54" width="920" height="34" fill="#f2f2f2"/>
+    <text x="34" y="76" font-weight="600" fill="#222">Go field</text>
+    <text x="400" y="76" font-weight="600" fill="#222">caller leaves it unset</text>
+    <text x="680" y="76" font-weight="600" fill="#222">caller wants verification off</text>
+    <!-- row 1 -->
+    <text x="34" y="118" fill="#222" font-family="ui-monospace, Menlo, Consolas, monospace">IntOrBool `json:",omitempty"`</text>
+    <text x="34" y="138" fill="#6b6b6b" font-size="12">before #210</text>
+    <rect x="390" y="100" width="260" height="42" rx="6" fill="#eaf5ee" stroke="#3a9a5b"/>
+    <text x="520" y="126" text-anchor="middle" fill="#222">omitted, PVE verifies</text>
+    <rect x="670" y="100" width="260" height="42" rx="6" fill="#fdf1e6" stroke="#e07a1f"/>
+    <text x="800" y="126" text-anchor="middle" fill="#222">omitted, can't turn it off</text>
+    <!-- row 2 -->
+    <text x="34" y="182" fill="#222" font-family="ui-monospace, Menlo, Consolas, monospace">IntOrBool `json:""`</text>
+    <text x="34" y="202" fill="#6b6b6b" font-size="12">v0.2.3 to v0.6.x (#210)</text>
+    <rect x="390" y="164" width="260" height="42" rx="6" fill="#fbeceb" stroke="#c0392b"/>
+    <text x="520" y="190" text-anchor="middle" fill="#222">sends 0, TLS verification off</text>
+    <rect x="670" y="164" width="260" height="42" rx="6" fill="#eaf5ee" stroke="#3a9a5b"/>
+    <text x="800" y="190" text-anchor="middle" fill="#222">sends 0</text>
+    <!-- row 3 -->
+    <text x="34" y="246" fill="#222" font-family="ui-monospace, Menlo, Consolas, monospace">*IntOrBool `json:",omitempty"`</text>
+    <text x="34" y="266" fill="#6b6b6b" font-size="12">v0.7.0</text>
+    <rect x="390" y="228" width="260" height="42" rx="6" fill="#eaf5ee" stroke="#3a9a5b"/>
+    <text x="520" y="254" text-anchor="middle" fill="#222">nil, omitted, PVE verifies</text>
+    <rect x="670" y="228" width="260" height="42" rx="6" fill="#eaf5ee" stroke="#3a9a5b"/>
+    <text x="800" y="254" text-anchor="middle" fill="#222">Ptr(IntOrBool(false)) sends 0</text>
+  </g>
+  <text x="480" y="308" text-anchor="middle" font-size="12" fill="#6b6b6b">a plain value can only represent two of the three states a caller means: unset, true, false</text>
+</svg>

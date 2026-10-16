@@ -1,0 +1,81 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 920 520" font-family="system-ui, -apple-system, Segoe UI, Roboto, sans-serif">
+  <defs>
+    <marker id="a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#333"/>
+    </marker>
+    <marker id="ag" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#3a9a5b"/>
+    </marker>
+    <marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#c0392b"/>
+    </marker>
+  </defs>
+  <rect width="920" height="520" fill="#fff"/>
+  <text x="460" y="30" text-anchor="middle" font-size="19" font-weight="600" fill="#222">Clustered SQLite in ePHPm v0.8.x: one process, three planes</text>
+
+  <!-- Primary -->
+  <rect x="30" y="55" width="330" height="410" rx="10" fill="#f6f8fb" stroke="#2b6cb0" stroke-width="2"/>
+  <text x="45" y="80" font-size="15" font-weight="600" fill="#2b6cb0">ephpm (primary / site owner)</text>
+  <rect x="50" y="95" width="290" height="38" rx="5" fill="#e8f0fa" stroke="#2b6cb0"/>
+  <text x="195" y="119" text-anchor="middle" font-size="13" fill="#222">PHP: pdo_mysql / ephpm_db_*</text>
+  <rect x="50" y="150" width="290" height="38" rx="5" fill="#e8f0fa" stroke="#2b6cb0"/>
+  <text x="195" y="174" text-anchor="middle" font-size="13" fill="#222">litewire (MySQL wire -&gt; SQLite)</text>
+  <line x1="195" y1="133" x2="195" y2="148" stroke="#333" marker-end="url(#a)"/>
+  <rect x="50" y="205" width="290" height="62" rx="5" fill="#eef7f1" stroke="#3a9a5b"/>
+  <text x="195" y="228" text-anchor="middle" font-size="13" fill="#222">Turso engine (in-process)</text>
+  <text x="195" y="250" text-anchor="middle" font-size="12" fill="#6b6b6b">app.db + turso_cdc table (DML and DDL)</text>
+  <line x1="195" y1="188" x2="195" y2="203" stroke="#333" marker-end="url(#a)"/>
+  <rect x="50" y="285" width="290" height="55" rx="5" fill="#fdf3e9" stroke="#e07a1f"/>
+  <text x="195" y="307" text-anchor="middle" font-size="13" fill="#222">CdcTailer per subscriber</text>
+  <text x="195" y="327" text-anchor="middle" font-size="12" fill="#6b6b6b">polls turso_cdc past its own cursor</text>
+  <line x1="195" y1="267" x2="195" y2="283" stroke="#333" marker-end="url(#a)"/>
+  <rect x="50" y="358" width="290" height="40" rx="5" fill="#fff" stroke="#c0392b" stroke-width="1.5"/>
+  <text x="195" y="383" text-anchor="middle" font-size="13" fill="#c0392b">cluster channel listener :7948</text>
+  <line x1="195" y1="340" x2="195" y2="356" stroke="#333" marker-end="url(#a)"/>
+  <rect x="50" y="412" width="290" height="38" rx="5" fill="#fff" stroke="#3a9a5b"/>
+  <text x="195" y="436" text-anchor="middle" font-size="13" fill="#3a9a5b">election loop (gossip KV claim)</text>
+
+  <!-- Replica -->
+  <rect x="560" y="55" width="330" height="410" rx="10" fill="#f6f8fb" stroke="#2b6cb0" stroke-width="2"/>
+  <text x="575" y="80" font-size="15" font-weight="600" fill="#2b6cb0">ephpm (replica)</text>
+  <rect x="580" y="95" width="290" height="38" rx="5" fill="#e8f0fa" stroke="#2b6cb0"/>
+  <text x="725" y="119" text-anchor="middle" font-size="13" fill="#222">PHP: reads from the local copy</text>
+  <rect x="580" y="150" width="290" height="38" rx="5" fill="#e8f0fa" stroke="#2b6cb0"/>
+  <text x="725" y="174" text-anchor="middle" font-size="13" fill="#222">litewire</text>
+  <line x1="725" y1="133" x2="725" y2="148" stroke="#333" marker-end="url(#a)"/>
+  <rect x="580" y="205" width="290" height="62" rx="5" fill="#eef7f1" stroke="#3a9a5b"/>
+  <text x="725" y="228" text-anchor="middle" font-size="13" fill="#222">Turso engine (in-process)</text>
+  <text x="725" y="250" text-anchor="middle" font-size="12" fill="#6b6b6b">app.db + per-log watermarks</text>
+  <line x1="725" y1="188" x2="725" y2="203" stroke="#333" marker-end="url(#a)"/>
+  <rect x="580" y="285" width="290" height="55" rx="5" fill="#fdf3e9" stroke="#e07a1f"/>
+  <text x="725" y="307" text-anchor="middle" font-size="13" fill="#222">apply_batch</text>
+  <text x="725" y="327" text-anchor="middle" font-size="12" fill="#6b6b6b">idempotent on the log's watermark</text>
+  <line x1="725" y1="285" x2="725" y2="269" stroke="#333" marker-end="url(#a)"/>
+  <rect x="580" y="358" width="290" height="40" rx="5" fill="#fff" stroke="#c0392b" stroke-width="1.5"/>
+  <text x="725" y="383" text-anchor="middle" font-size="13" fill="#c0392b">cluster channel dialer</text>
+  <line x1="725" y1="358" x2="725" y2="342" stroke="#333" marker-end="url(#a)"/>
+  <rect x="580" y="412" width="290" height="38" rx="5" fill="#fff" stroke="#3a9a5b"/>
+  <text x="725" y="436" text-anchor="middle" font-size="13" fill="#3a9a5b">election loop (gossip KV claim)</text>
+
+  <!-- channel: one TCP connection, many streams -->
+  <rect x="372" y="300" width="176" height="118" rx="8" fill="#fff" stroke="#c0392b" stroke-width="2"/>
+  <text x="460" y="320" text-anchor="middle" font-size="12" font-weight="600" fill="#c0392b">1 TCP conn, yamux</text>
+  <text x="460" y="336" text-anchor="middle" font-size="11" fill="#6b6b6b">ChaCha20-Poly1305 per session</text>
+  <text x="460" y="358" text-anchor="middle" font-size="12" fill="#222">cdc/&lt;site&gt;</text>
+  <text x="460" y="378" text-anchor="middle" font-size="12" fill="#222">snapshot/&lt;site&gt;</text>
+  <text x="460" y="398" text-anchor="middle" font-size="12" fill="#222">sql/&lt;site&gt; (per_site writes)</text>
+  <line x1="342" y1="378" x2="370" y2="378" stroke="#c0392b" stroke-width="2" marker-start="url(#ar)"/>
+  <line x1="550" y1="378" x2="578" y2="378" stroke="#c0392b" stroke-width="2"/>
+
+  <!-- gossip -->
+  <line x1="342" y1="431" x2="578" y2="431" stroke="#3a9a5b" stroke-width="2" marker-start="url(#ag)" marker-end="url(#ag)"/>
+  <text x="460" y="425" text-anchor="middle" font-size="12" fill="#3a9a5b">gossip UDP 7946</text>
+  <text x="460" y="449" text-anchor="middle" font-size="11" fill="#3a9a5b">membership, claims</text>
+
+  <!-- KV data plane -->
+  <line x1="362" y1="110" x2="558" y2="110" stroke="#7d5ba6" stroke-width="2" marker-start="url(#a)" marker-end="url(#a)"/>
+  <text x="460" y="102" text-anchor="middle" font-size="12" fill="#7d5ba6">KV data plane TCP 7947</text>
+  <text x="460" y="128" text-anchor="middle" font-size="11" fill="#7d5ba6">large KV values</text>
+
+  <text x="460" y="495" text-anchor="middle" font-size="12" fill="#6b6b6b">Gossip carries names, the channel carries payloads. No child process, no gRPC, no Hrana hop.</text>
+</svg>

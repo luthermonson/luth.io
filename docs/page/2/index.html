@@ -13,7 +13,7 @@
 <meta name="description" content="Luther Monson&#39;s Blog about Software Engineering mostly using the Go Programming language. Focusing on Containers and Virtualization with an emphasis on Kubernetes distributions and provisioning.">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:card" content="summary_large_image"><meta name="twitter:site" content="@luthermonson">
 
 <meta property="og:site_name" content="Luther Monson">
 <meta property="og:title" content="Luther Monson">
@@ -37,8 +37,11 @@
   <meta name="theme-color" content="#ffffff">
 
 
-  <meta name="generator" content="Hugo 0.92.0" />
-  <link rel="stylesheet" href="/css/bundle.min.5233f2a4cd515395301b4154f6c1c621695e8cf53faa0935b76ac52fed7f4585.css" integrity="sha256-UjPypM1RU5UwG0FU9sHGIWlejPU/qgk1t2rFL&#43;1/RYU="><link rel="stylesheet" href="/css/add-on.css">
+  <meta name="generator" content="Hugo 0.160.1">
+  <link rel="alternate" type="application/rss+xml" href="https://luth.io/index.xml" title="Luther Monson">
+  <link rel="stylesheet" href="/css/bundle.min.e1ffed86714fbb7eff75eab221c0c61b8260be0c7d1c08db0fcb7a2bdb6af7c9.css" integrity="sha256-4f/thnFPu37/deqyIcDGG4Jgvgx9HAjbD8t6K9tq98k="><link rel="stylesheet" href="/css/add-on.css">
+        <link rel="stylesheet" href="/css/code.css">
+        <link rel="stylesheet" href="/css/mobile.css">
 </head>
 
   <body>
@@ -48,6 +51,7 @@
   <nav id="site-nav">
     <h1 class="nav-title">
       <a href="/" class="nav">
+        <img class="nav-avatar" src="/img/luther-monson-headshot.jpg" alt="" width="32" height="32">
         
           LUTH.IO
         
@@ -72,6 +76,11 @@
       
         
           
+          <a href="/archive" class="nav link"><i class='far fa-calendar-alt'></i> Archive</a>
+        
+      
+        
+          
           <a href="/categories" class="nav link"><i class='fas fa-sitemap'></i> Categories</a>
         
       
@@ -80,34 +89,11 @@
     </menu>
     <a href="#search-input" class="nav search-toggle"><i class="fas fa-search fa-2x">&nbsp;</i></a>
     <a href="#share-menu" class="nav share-toggle"><i class="fas fa-share-alt fa-2x">&nbsp;</i></a>
-    <a href="#lang-menu" class="nav lang-toggle" lang="en">en</a>
+    
     <a href="#site-nav" class="nav nav-toggle"><i class="fas fa-bars fa-2x"></i></a>
   </nav>
   <menu id="search" class="menu"><input id="search-input" class="search-input menu"></input><div id="search-results" class="search-results menu"></div></menu>
-  <menu id="lang-menu" class="flyout-menu menu">
-  <a href="#" lang="en" class="nav link active">English (en)</a>
   
-      <a href="https://luth.io/fr/" lang="fr" class="nav link">Français (fr)</a>
-    
-      <a href="https://luth.io/pl/" lang="pl" class="nav link">Polski (pl)</a>
-    
-      <a href="https://luth.io/pt/" lang="pt" class="nav link">Português (pt)</a>
-    
-      <a href="https://luth.io/de/" lang="de" class="nav link">Deutsche (de)</a>
-    
-      <a href="https://luth.io/es/" lang="es" class="nav link">Española (es)</a>
-    
-      <a href="https://luth.io/zh-cn/" lang="zh-cn" class="nav link">中文 (简体) (zh-cn)</a>
-    
-      <a href="https://luth.io/zh-tw/" lang="zh-tw" class="nav link">中文 (正體) (zh-tw)</a>
-    
-      <a href="https://luth.io/ja/" lang="ja" class="nav link">日本語 (ja)</a>
-    
-      <a href="https://luth.io/nl/" lang="nl" class="nav link">Nederlands (nl)</a>
-    
-  
-</menu>
-
   
     <menu id="share-menu" class="flyout-menu menu">
       <h1>Share Post</h1>
@@ -148,7 +134,7 @@
   
 
   
-        <a href="mailto:?subject=Check%20out%20this%20post%20by %7b%20%20%20%20%20%20%20%20map%5b%5d%7d&amp;body=https%3a%2f%2fluth.io%2f" target="_blank" class="nav share-btn email" data-proofer-ignore>
+        <a href="mailto:?subject=Check%20out%20this%20post%20by Luther%20Monson&amp;body=https%3a%2f%2fluth.io%2f" target="_blank" class="nav share-btn email" data-proofer-ignore>
           <p>Email</p>
         </a>
   
@@ -229,34 +215,662 @@
   <header>
   <div class="title">
     
-      <h2><a href="/blog/introduction/">Introduction</a></h2>
+      <h2><a href="/blog/2026/09/calling-rust-from-php-without-a-socket-part-2/">Calling Rust From PHP Without a Socket, Part 2: Making Existing Code Use It</a></h2>
     
+    
+      <p>Thirteen Composer packages that let existing Redis and database code in WordPress, Laravel and Symfony use ePHPm&#39;s built-in versions, and the bugs they turned up.</p>
     
   </div>
   <div class="meta">
-    <time datetime="2022-01-27 10:11:05 -0700 MST">January 27, 2022</time>
+    <time datetime="2026-09-21 19:55:00 -0700 PDT">September 21, 2026</time>
     
-    <p>1-Minute Read</p>
+    <p>8-Minute Read</p>
   </div>
 </header>
 
   <div class="content">
+    <a href="/blog/2026/09/calling-rust-from-php-without-a-socket-part-2/" class="image" style="--bg-image: url('/img/2026/09/calling-rust-from-php-without-a-socket-part-2-cover.svg');">
+    <img class="" src="/img/2026/09/calling-rust-from-php-without-a-socket-part-2-cover.svg" alt="The APIs PHP apps already call, mapped through ePHPm wrapper packages onto ephpm_kv_* and ephpm_db_*">
+  </a>
     
-    
-    <p>Getting a blog up and running to get some of the thoughts out of my head and into a markdown file. For reference on
-who I am please check out the <a href="/about">about</a> section and stay tuned for more content related to what it is I do everyday.</p>
+    <p><a href="/blog/2026/09/calling-rust-from-php-without-a-socket-part-1/">Part 1</a> covered the plumbing: ePHPm registers
+<code>ephpm_kv_*</code> and <code>ephpm_db_*</code> functions that call straight into Rust, and a cache read through one costs about a tenth of
+a microsecond instead of a loopback round trip. That&rsquo;s nice and also useless on its own, because nobody is going to rewrite
+their WordPress object cache or their Laravel cache store around a function called <code>ephpm_kv_set()</code>. Applications talk to
+Redis through phpredis or Predis, to the cache through PSR-6/16 or <code>wp_cache_*</code>, and to&hellip;</p>
   </div>
   <footer>
-    <a href="/blog/introduction/" class="button big">Read More</a>
+    <a href="/blog/2026/09/calling-rust-from-php-without-a-socket-part-2/" class="button big">Read More</a>
     <div class="stats">
   
     <ul class="categories">
-      <li>None</li>
+      
+        
+          <li><a class="article-terms-link" href="/categories/ephpm/">ephpm</a></li>
+        
+          <li><a class="article-terms-link" href="/categories/php/">php</a></li>
+        
+      
     </ul>
   
   
     <ul class="tags">
-      <li>None</li>
+      
+        
+          <li><a class="article-terms-link" href="/tags/ephpm/">ephpm</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/php/">php</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/redis/">redis</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/wordpress/">wordpress</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/laravel/">laravel</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/composer/">composer</a></li>
+        
+      
+    </ul>
+  
+</div>
+
+  </footer>
+</article>
+
+  
+    <article class="post">
+  <header>
+  <div class="title">
+    
+      <h2><a href="/blog/2026/09/ephpm-smaller-angles/">ePHPm Odds and Ends: OOM-Killed Links, Opcode Scanning, WebSockets and a 44 ms Stall</a></h2>
+    
+    
+      <p>Four smaller ePHPm stories that didn&#39;t need a post each but were too useful to leave in PR descriptions.</p>
+    
+  </div>
+  <div class="meta">
+    <time datetime="2026-09-18 20:05:00 -0700 PDT">September 18, 2026</time>
+    
+    <p>7-Minute Read</p>
+  </div>
+</header>
+
+  <div class="content">
+    <a href="/blog/2026/09/ephpm-smaller-angles/" class="image" style="--bg-image: url('/img/2026/09/ephpm-smaller-angles-nodelay.svg');">
+    <img class="" src="/img/2026/09/ephpm-smaller-angles-nodelay.svg" alt="Bar chart: db.php p50 at c=1 dropped from 444 ms on v0.4.0 to 4.4 ms on v0.4.1">
+  </a>
+    
+    <p>Not every fix in <a href="https://github.com/ephpm/ephpm">ePHPm</a> earns a full write-up, but a few of the smaller ones have
+stuck with me because the lesson in each was bigger than the diff. Here are four from this summer.</p>
+  </div>
+  <footer>
+    <a href="/blog/2026/09/ephpm-smaller-angles/" class="button big">Read More</a>
+    <div class="stats">
+  
+    <ul class="categories">
+      
+        
+          <li><a class="article-terms-link" href="/categories/ephpm/">ephpm</a></li>
+        
+          <li><a class="article-terms-link" href="/categories/php/">php</a></li>
+        
+      
+    </ul>
+  
+  
+    <ul class="tags">
+      
+        
+          <li><a class="article-terms-link" href="/tags/php/">php</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/rust/">rust</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/ephpm/">ephpm</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/ci/">ci</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/websockets/">websockets</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/tcp/">tcp</a></li>
+        
+      
+    </ul>
+  
+</div>
+
+  </footer>
+</article>
+
+  
+    <article class="post">
+  <header>
+  <div class="title">
+    
+      <h2><a href="/blog/2026/09/os-exec-stdoutpipe-wait-footgun/">os/exec&#39;s StdoutPipe Footgun: How cmd.Wait() Ate My Last Frame (Twice)</a></h2>
+    
+    
+      <p>Calling Wait while a StdoutPipe reader is still draining throws away the child&#39;s last output. I shipped this bug twice in shipmates.</p>
+    
+  </div>
+  <div class="meta">
+    <time datetime="2026-09-17 20:12:00 -0700 PDT">September 17, 2026</time>
+    
+    <p>9-Minute Read</p>
+  </div>
+</header>
+
+  <div class="content">
+    <a href="/blog/2026/09/os-exec-stdoutpipe-wait-footgun/" class="image" style="--bg-image: url('/img/2026/09/os-exec-stdoutpipe-wait-footgun-cover.svg');">
+    <img class="" src="/img/2026/09/os-exec-stdoutpipe-wait-footgun-cover.svg" alt="Timeline of a child process exiting, Wait closing the pipe, and the reader losing buffered frames">
+  </a>
+    
+    <p><a href="/blog/2026/08/shipmates-persona-based-ai-coding-crews/">shipmates</a> spends most of its life spawning <code>claude</code> (and <code>codex</code>)
+processes and reading newline-delimited JSON off their stdout. The last frame of a turn is the important one, a
+<code>result</code> frame with the cost, the model and the final text. Stderr matters too, because that&rsquo;s where Claude Code
+tells you <code>Invalid API key · Please run /login</code>. For a while I was throwing both away under load, and the cause is
+documented right there in the <code>os/exec</code> godoc. I fixed it in one package and then found the exact&hellip;</p>
+  </div>
+  <footer>
+    <a href="/blog/2026/09/os-exec-stdoutpipe-wait-footgun/" class="button big">Read More</a>
+    <div class="stats">
+  
+    <ul class="categories">
+      
+        
+          <li><a class="article-terms-link" href="/categories/go/">go</a></li>
+        
+      
+    </ul>
+  
+  
+    <ul class="tags">
+      
+        
+          <li><a class="article-terms-link" href="/tags/go/">go</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/os-exec/">os-exec</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/concurrency/">concurrency</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/shipmates/">shipmates</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/debugging/">debugging</a></li>
+        
+      
+    </ul>
+  
+</div>
+
+  </footer>
+</article>
+
+  
+    <article class="post">
+  <header>
+  <div class="title">
+    
+      <h2><a href="/blog/2026/09/php-timeout-linker-wraps/">The Bugs Were Our Own Linker Wraps: Making a PHP Timeout Actually Time Out</a></h2>
+    
+    
+      <p>max_execution_time did nothing in ePHPm because we had wrapped zend_set_timeout to a no-op. The SDK already had per-thread timers; we just had to stop switching them off.</p>
+    
+  </div>
+  <div class="meta">
+    <time datetime="2026-09-16 19:35:00 -0700 PDT">September 16, 2026</time>
+    
+    <p>8-Minute Read</p>
+  </div>
+</header>
+
+  <div class="content">
+    <a href="/blog/2026/09/php-timeout-linker-wraps/" class="image" style="--bg-image: url('/img/2026/09/php-timeout-linker-wraps-cover.svg');">
+    <img class="" src="/img/2026/09/php-timeout-linker-wraps-cover.svg" alt="Side by side: a process-wide SIGPROF timer that can land on the wrong thread, versus a per-thread POSIX timer that delivers SIGRTMIN to the PHP thread that armed it">
+  </a>
+    
+    <p>In <a href="/blog/2026/09/php-stack-guard-segfault-containment/">the stack guard post</a> the villain was a <code>-Wl,--wrap</code> linker
+flag that turned off PHP&rsquo;s C-stack overflow guard. It wasn&rsquo;t the only one. Until August, <code>max_execution_time</code> did
+nothing in <a href="https://github.com/ephpm/ephpm">ePHPm</a> on Linux, for the same reason: we had wrapped the function that
+arms it to a no-op. A runaway script ran until the HTTP layer&rsquo;s request timeout gave up on it and sent a 504, and the
+PHP thread kept burning CPU after that.</p>
+  </div>
+  <footer>
+    <a href="/blog/2026/09/php-timeout-linker-wraps/" class="button big">Read More</a>
+    <div class="stats">
+  
+    <ul class="categories">
+      
+        
+          <li><a class="article-terms-link" href="/categories/ephpm/">ephpm</a></li>
+        
+          <li><a class="article-terms-link" href="/categories/php/">php</a></li>
+        
+      
+    </ul>
+  
+  
+    <ul class="tags">
+      
+        
+          <li><a class="article-terms-link" href="/tags/php/">php</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/rust/">rust</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/ephpm/">ephpm</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/linker/">linker</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/signals/">signals</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/config/">config</a></li>
+        
+      
+    </ul>
+  
+</div>
+
+  </footer>
+</article>
+
+  
+    <article class="post">
+  <header>
+  <div class="title">
+    
+      <h2><a href="/blog/2026/09/clustered-sqlite-cdc-cluster-channel/">Clustered SQLite in ePHPm, Part 3: CDC Over the Cluster Channel</a></h2>
+    
+    
+      <p>Shipping Turso&#39;s change data capture stream between ePHPm nodes over one authenticated, multiplexed TCP connection, and the two failover bugs that showed up when the e2e suite killed the primary.</p>
+    
+  </div>
+  <div class="meta">
+    <time datetime="2026-09-15 21:08:00 -0700 PDT">September 15, 2026</time>
+    
+    <p>15-Minute Read</p>
+  </div>
+</header>
+
+  <div class="content">
+    <a href="/blog/2026/09/clustered-sqlite-cdc-cluster-channel/" class="image" style="--bg-image: url('/img/2026/09/clustered-sqlite-cluster-channel-topology.svg');">
+    <img class="" src="/img/2026/09/clustered-sqlite-cluster-channel-topology.svg" alt="Two ePHPm nodes connected by gossip on UDP 7946, the KV data plane on TCP 7947 and the cluster channel on TCP 7948 carrying cdc, snapshot and sql streams">
+  </a>
+    
+    <p>By the end of <a href="/blog/2026/08/clustered-sqlite-adding-turso/">Part 2</a> ePHPm v0.7.0 ran exactly one SQLite engine, Turso, in
+process, for single-node and clustered mode alike. The sidecar was gone. What I skipped over is how a replica actually gets
+the primary&rsquo;s writes, and what happens when the primary dies with data on it. That&rsquo;s this post.</p>
+  </div>
+  <footer>
+    <a href="/blog/2026/09/clustered-sqlite-cdc-cluster-channel/" class="button big">Read More</a>
+    <div class="stats">
+  
+    <ul class="categories">
+      
+        
+          <li><a class="article-terms-link" href="/categories/ephpm/">ephpm</a></li>
+        
+          <li><a class="article-terms-link" href="/categories/databases/">databases</a></li>
+        
+          <li><a class="article-terms-link" href="/categories/rust/">rust</a></li>
+        
+      
+    </ul>
+  
+  
+    <ul class="tags">
+      
+        
+          <li><a class="article-terms-link" href="/tags/ephpm/">ephpm</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/sqlite/">sqlite</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/turso/">turso</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/rust/">rust</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/clustering/">clustering</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/yamux/">yamux</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/cdc/">cdc</a></li>
+        
+      
+    </ul>
+  
+</div>
+
+  </footer>
+</article>
+
+  
+    <article class="post">
+  <header>
+  <div class="title">
+    
+      <h2><a href="/blog/2026/09/calling-rust-from-php-without-a-socket-part-1/">Calling Rust From PHP Without a Socket, Part 1: The Native Functions</a></h2>
+    
+    
+      <p>How ePHPm exposes its in-process KV store and SQLite bridge to PHP as plain functions, and what it took to make that safe under ZTS.</p>
+    
+  </div>
+  <div class="meta">
+    <time datetime="2026-09-14 20:40:00 -0700 PDT">September 14, 2026</time>
+    
+    <p>14-Minute Read</p>
+  </div>
+</header>
+
+  <div class="content">
+    <a href="/blog/2026/09/calling-rust-from-php-without-a-socket-part-1/" class="image" style="--bg-image: url('/img/2026/09/calling-rust-from-php-without-a-socket-part-1-cover.svg');">
+    <img class="" src="/img/2026/09/calling-rust-from-php-without-a-socket-part-1-cover.svg" alt="Two paths from PHP to the ePHPm KV store: over a RESP socket, or through a native function and a function pointer table">
+  </a>
+    
+    <p><a href="https://github.com/ephpm/ephpm">ePHPm</a> is a single Rust binary that embeds PHP, and it carries its own KV store and its
+own SQLite-backed database in the same process. For a long time the only way PHP code could reach that KV store was the
+same way it reaches Redis: open a TCP socket to the RESP listener ePHPm runs on localhost, encode a command, wait for the
+reply. That works, and every PHP Redis client in existence already speaks it, but it is a strange thing to do when the
+hash map you&rsquo;re talking to lives a few&hellip;</p>
+  </div>
+  <footer>
+    <a href="/blog/2026/09/calling-rust-from-php-without-a-socket-part-1/" class="button big">Read More</a>
+    <div class="stats">
+  
+    <ul class="categories">
+      
+        
+          <li><a class="article-terms-link" href="/categories/ephpm/">ephpm</a></li>
+        
+          <li><a class="article-terms-link" href="/categories/rust/">rust</a></li>
+        
+          <li><a class="article-terms-link" href="/categories/php/">php</a></li>
+        
+      
+    </ul>
+  
+  
+    <ul class="tags">
+      
+        
+          <li><a class="article-terms-link" href="/tags/ephpm/">ephpm</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/php/">php</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/rust/">rust</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/ffi/">ffi</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/redis/">redis</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/sqlite/">sqlite</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/zts/">zts</a></li>
+        
+      
+    </ul>
+  
+</div>
+
+  </footer>
+</article>
+
+  
+    <article class="post">
+  <header>
+  <div class="title">
+    
+      <h2><a href="/blog/2026/09/cross-tenant-breakout-field-guide/">Every Way a Tenant Escaped: A Cross-Tenant Breakout Field Guide</a></h2>
+    
+    
+      <p>Eight ways one site broke out of its sandbox on a multi-tenant PHP server, all found by attacking it on purpose, all fixed.</p>
+    
+  </div>
+  <div class="meta">
+    <time datetime="2026-09-13 16:20:00 -0700 PDT">September 13, 2026</time>
+    
+    <p>10-Minute Read</p>
+  </div>
+</header>
+
+  <div class="content">
+    <a href="/blog/2026/09/cross-tenant-breakout-field-guide/" class="image" style="--bg-image: url('/img/2026/09/cross-tenant-breakout-field-guide-cover.svg');">
+    <img class="" src="/img/2026/09/cross-tenant-breakout-field-guide-cover.svg" alt="Table of tenant isolation boundaries in ePHPm, how each was crossed, and the PR that fixed it">
+  </a>
+    
+    <p><a href="https://github.com/ephpm/ephpm">ePHPm</a> can serve a directory full of sites out of one process. Point <code>sites_dir</code> at
+a folder, every subdirectory is a virtual host, and the Host header decides which one you get. That&rsquo;s how the PR preview
+environment runs: every pull request gets a subdomain, and the code behind it is whatever somebody pushed. One process
+holding many tenants means every per-tenant boundary is something ePHPm enforces itself, in-process. There&rsquo;s no
+container wall between site A and site B unless you add&hellip;</p>
+  </div>
+  <footer>
+    <a href="/blog/2026/09/cross-tenant-breakout-field-guide/" class="button big">Read More</a>
+    <div class="stats">
+  
+    <ul class="categories">
+      
+        
+          <li><a class="article-terms-link" href="/categories/security/">security</a></li>
+        
+          <li><a class="article-terms-link" href="/categories/ephpm/">ephpm</a></li>
+        
+          <li><a class="article-terms-link" href="/categories/php/">php</a></li>
+        
+      
+    </ul>
+  
+  
+    <ul class="tags">
+      
+        
+          <li><a class="article-terms-link" href="/tags/php/">php</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/rust/">rust</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/ephpm/">ephpm</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/security/">security</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/multi-tenant/">multi-tenant</a></li>
+        
+      
+    </ul>
+  
+</div>
+
+  </footer>
+</article>
+
+  
+    <article class="post">
+  <header>
+  <div class="title">
+    
+      <h2><a href="/blog/2026/09/shipmates-short-ones-setup-go-and-voice/">shipmates Short Ones: 8 Minutes Extracting Go, and Three Voice-Loop Bugs</a></h2>
+    
+    
+      <p>Four small stories from shipmates: setup-go stuck extracting on Windows CI, Cloudflare&#39;s 100 second timeout, a voice loop that transcribed itself, and events lost to a timestamp watermark.</p>
+    
+  </div>
+  <div class="meta">
+    <time datetime="2026-09-12 14:35:00 -0700 PDT">September 12, 2026</time>
+    
+    <p>5-Minute Read</p>
+  </div>
+</header>
+
+  <div class="content">
+    <a href="/blog/2026/09/shipmates-short-ones-setup-go-and-voice/" class="image" style="--bg-image: url('/img/2026/09/shipmates-short-ones-setup-go-and-voice-cover.svg');">
+    <img class="" src="/img/2026/09/shipmates-short-ones-setup-go-and-voice-cover.svg" alt="setup-go on Windows CI: 7 seconds to download, 473 seconds extracting before the timeout">
+  </a>
+    
+    <p>A few <a href="/blog/2026/08/shipmates-persona-based-ai-coding-crews/">shipmates</a> bugs that don&rsquo;t need a whole post each but
+were too good to leave in commit messages.</p>
+  </div>
+  <footer>
+    <a href="/blog/2026/09/shipmates-short-ones-setup-go-and-voice/" class="button big">Read More</a>
+    <div class="stats">
+  
+    <ul class="categories">
+      
+        
+          <li><a class="article-terms-link" href="/categories/ai-agents/">ai-agents</a></li>
+        
+          <li><a class="article-terms-link" href="/categories/go/">go</a></li>
+        
+          <li><a class="article-terms-link" href="/categories/ci/">ci</a></li>
+        
+      
+    </ul>
+  
+  
+    <ul class="tags">
+      
+        
+          <li><a class="article-terms-link" href="/tags/go/">go</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/github-actions/">github-actions</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/ci/">ci</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/windows/">windows</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/cloudflare/">cloudflare</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/voice/">voice</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/shipmates/">shipmates</a></li>
+        
+      
+    </ul>
+  
+</div>
+
+  </footer>
+</article>
+
+  
+    <article class="post">
+  <header>
+  <div class="title">
+    
+      <h2><a href="/blog/2026/09/ephpm-php-cli-conformance/">Making ephpm php Byte-for-Byte Indistinguishable From php-cli</a></h2>
+    
+    
+      <p>A differential test harness against upstream php, and the bugs it found in an embedded PHP CLI on day one.</p>
+    
+  </div>
+  <div class="meta">
+    <time datetime="2026-09-10 20:25:00 -0700 PDT">September 10, 2026</time>
+    
+    <p>9-Minute Read</p>
+  </div>
+</header>
+
+  <div class="content">
+    <a href="/blog/2026/09/ephpm-php-cli-conformance/" class="image" style="--bg-image: url('/img/2026/09/ephpm-php-cli-conformance-results.svg');">
+    <img class="" src="/img/2026/09/ephpm-php-cli-conformance-results.svg" alt="Bar chart of conformance corpus results: 65 pass and 10 xfail when the harness landed, 79 pass and 1 xfail after the fixes">
+  </a>
+    
+    <p><a href="https://github.com/ephpm/ephpm">ePHPm</a> embeds PHP into a single Rust binary, and the obvious follow-up question from
+anybody deploying it is &ldquo;do I still need a <code>php</code> on the box?&rdquo; Composer, WP-CLI, artisan, PHPUnit and every build
+script in the world call <code>php</code>. If <code>ephpm php</code> can stand in for it then the answer is no, and the single binary actually
+means a single binary. &ldquo;Mostly works&rdquo; isn&rsquo;t good enough for that though. These tools parse PHP&rsquo;s output, check its exit
+codes and re-invoke it. So the&hellip;</p>
+  </div>
+  <footer>
+    <a href="/blog/2026/09/ephpm-php-cli-conformance/" class="button big">Read More</a>
+    <div class="stats">
+  
+    <ul class="categories">
+      
+        
+          <li><a class="article-terms-link" href="/categories/ephpm/">ephpm</a></li>
+        
+          <li><a class="article-terms-link" href="/categories/php/">php</a></li>
+        
+      
+    </ul>
+  
+  
+    <ul class="tags">
+      
+        
+          <li><a class="article-terms-link" href="/tags/php/">php</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/rust/">rust</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/ephpm/">ephpm</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/testing/">testing</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/cli/">cli</a></li>
+        
+      
+    </ul>
+  
+</div>
+
+  </footer>
+</article>
+
+  
+    <article class="post">
+  <header>
+  <div class="title">
+    
+      <h2><a href="/blog/2026/09/linode-tui/">Building k9s for Linode With Bubble Tea</a></h2>
+    
+    
+      <p>A k9s-style terminal app for managing Linode: search for any resource, browse it, and jump straight into k9s, a database shell or SSH.</p>
+    
+  </div>
+  <div class="meta">
+    <time datetime="2026-09-09 21:22:00 -0700 PDT">September 9, 2026</time>
+    
+    <p>8-Minute Read</p>
+  </div>
+</header>
+
+  <div class="content">
+    <a href="/blog/2026/09/linode-tui/" class="image" style="--bg-image: url('/img/2026/09/linode-tui-linodes.svg');">
+    <img class="" src="/img/2026/09/linode-tui-linodes.svg" alt="linode-tui showing the Linodes view with the command bar open and tab completion suggesting lke">
+  </a>
+    
+    <p>A lot of my day is spent in <a href="https://k9scli.io/">k9s</a>, and when I need something from the Linode side of the house (a node that won&rsquo;t
+boot, a volume nobody cleaned up, the kubeconfig for a cluster I just made) I&rsquo;m back in a browser tab or typing <code>linode-cli</code> incantations.
+I wanted the k9s workflow for the Linode API itself: <code>:</code> to jump to a resource type, <code>/</code> to filter, single-key actions on the selected row,
+and Enter to go deeper. That turned into <a href="https://github.com/luthermonson/linode-tui">linode-tui</a>, a Go TUI built on
+<a href="https://github.com/charmbracelet/bubbletea">Bubble Tea</a>, <a href="https://github.com/linode/linodego">linodego</a> and&hellip;</p>
+  </div>
+  <footer>
+    <a href="/blog/2026/09/linode-tui/" class="button big">Read More</a>
+    <div class="stats">
+  
+    <ul class="categories">
+      
+        
+          <li><a class="article-terms-link" href="/categories/go/">go</a></li>
+        
+          <li><a class="article-terms-link" href="/categories/tools/">tools</a></li>
+        
+      
+    </ul>
+  
+  
+    <ul class="tags">
+      
+        
+          <li><a class="article-terms-link" href="/tags/go/">go</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/bubbletea/">bubbletea</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/tui/">tui</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/linode/">linode</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/kubernetes/">kubernetes</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/k9s/">k9s</a></li>
+        
+      
     </ul>
   
 </div>
@@ -270,6 +884,8 @@ who I am please check out the <a href="/about">about</a> section and stay tuned 
       <a href="/" class="button left"><span>Previous Page</span></a>
     
     
+      <a href="/page/3/" class="button right"><span>Next Page</span></a>
+    
   </div>
 
       </main>
@@ -281,41 +897,59 @@ who I am please check out the <a href="/about">about</a> section and stay tuned 
       </header>
       
       <article class="mini-post">
-          <a href="/blog/2022/02/recreating-proxmox-ve-xtermjs-in-go/" class="image">
-    <img class="" src="/img/2022/02/proxmox-logo.png" alt="Proxmox VE Logo">
+          <a href="/blog/2026/10/ephpm-worker-mode-performance/" class="image" style="--bg-image: url('/img/2026/10/ephpm-worker-mode-performance-cover.svg');">
+    <img class="" src="/img/2026/10/ephpm-worker-mode-performance-cover.svg" alt="Diagram: before, hyper/tokio hands each request to one shared bounded channel whose waiter list all 20 PHP threads contend on; after, a dispatcher hands the job straight into the mailbox of the most recently idle PHP thread and only queues it in a FIFO overflow queue when every thread is busy">
   </a>
         <header>
-          <h2><a href="/blog/2022/02/recreating-proxmox-ve-xtermjs-in-go/">Recreating Proxmox Ve Xtermjs in Go</a></h2>
-          <time class="published" datetime="2022-02-06 21:54:53 -0700 MST">February 6, 2022</time>
+          <h2><a href="/blog/2026/10/ephpm-worker-mode-performance/">Fourth Place in Worker Mode, and Why It Wasn&#39;t PHP</a></h2>
+          <time class="published" datetime="2026-10-16 08:10:00 -0700 PDT">October 16, 2026</time>
         </header>
       </article>
       
       <article class="mini-post">
-          
-        <header>
-          <h2><a href="/blog/2022/01/practical-cue-example/">Practical Cue Example, Produce YAML Config from Go Types</a></h2>
-          <time class="published" datetime="2022-01-31 09:57:26 -0700 MST">January 31, 2022</time>
-        </header>
-      </article>
-      
-      <article class="mini-post">
-          <a href="/blog/2022/01/free-personal-blog-hugo-github-pages/" class="image" style="--bg-image: url('/img/2022/01/github-pages-logo.png');">
-    <img class="" src="/img/2022/01/github-pages-logo.png" alt="Github Pages Logo">
+          <a href="/blog/2026/10/ephpm-websockets-how-to/" class="image" style="--bg-image: url('/img/2026/10/ephpm-websockets-how-to-cover.svg');">
+    <img class="" src="/img/2026/10/ephpm-websockets-how-to-cover.svg" alt="Diagram: browsers hold sockets to ePHPm&#39;s Rust session tasks and registry; each connect, message and disconnect runs websocket.php once on the PHP thread pool, and ordinary HTTP requests push through ephpm_ws_broadcast">
   </a>
         <header>
-          <h2><a href="/blog/2022/01/free-personal-blog-hugo-github-pages/">Free Blog Hosting Using Hugo &#43; Github Pages</a></h2>
-          <time class="published" datetime="2022-01-27 11:51:20 -0700 MST">January 27, 2022</time>
+          <h2><a href="/blog/2026/10/ephpm-websockets-how-to/">WebSockets in ePHPm, From Zero to a Working Chat</a></h2>
+          <time class="published" datetime="2026-10-11 17:30:00 -0700 PDT">October 11, 2026</time>
         </header>
       </article>
       
       <article class="mini-post">
-          
+          <a href="/blog/2026/10/webhooks-out-of-order-scheduler/" class="image" style="--bg-image: url('/img/2026/10/webhooks-out-of-order-scheduler-timeline.svg');">
+    <img class="" src="/img/2026/10/webhooks-out-of-order-scheduler-timeline.svg" alt="Timeline of three same-label jobs where a runner executing a build is destroyed 2.3 seconds before its in_progress webhook arrives">
+  </a>
         <header>
-          <h2><a href="/blog/introduction/">Introduction</a></h2>
-          <time class="published" datetime="2022-01-27 10:11:05 -0700 MST">January 27, 2022</time>
+          <h2><a href="/blog/2026/10/webhooks-out-of-order-scheduler/">Webhooks Arrive Out of Order: How My Scheduler Killed Live Builds</a></h2>
+          <time class="published" datetime="2026-10-07 21:10:00 -0700 PDT">October 7, 2026</time>
         </header>
       </article>
       
+      <article class="mini-post">
+          <a href="/blog/2026/10/go-proxmox-five-years-to-v0-8/" class="image" style="--bg-image: url('/img/2026/10/go-proxmox-five-years-to-v0-8-apidiff.svg');">
+    <img class="" src="/img/2026/10/go-proxmox-five-years-to-v0-8-apidiff.svg" alt="Horizontal bar chart of apidiff incompatible and compatible changes for every go-proxmox release from v0.1.0 to v0.8.2">
+  </a>
+        <header>
+          <h2><a href="/blog/2026/10/go-proxmox-five-years-to-v0-8/">Breaking Changes Without Breaking Trust: Five Years to go-proxmox v0.8</a></h2>
+          <time class="published" datetime="2026-10-04 19:40:00 -0700 PDT">October 4, 2026</time>
+        </header>
+      </article>
+      
+      <article class="mini-post">
+          <a href="/blog/2026/10/windows-sigterm-sparse-files/" class="image" style="--bg-image: url('/img/2026/10/windows-sigterm-sparse-files-connections.svg');">
+    <img class="" src="/img/2026/10/windows-sigterm-sparse-files-connections.svg" alt="Bar chart: 96 Cloudflare edge connections held by orphaned cloudflared processes versus 4 for the live daemon">
+  </a>
+        <header>
+          <h2><a href="/blog/2026/10/windows-sigterm-sparse-files/">Windows Grab-Bag: SIGTERM That Doesn&#39;t Exist and Sparse Files That Break Docker</a></h2>
+          <time class="published" datetime="2026-10-03 14:30:00 -0700 PDT">October 3, 2026</time>
+        </header>
+      </article>
+      
+      
+        <footer>
+          <a href="/blog" class="button">See More</a>
+        </footer>
       
     </section>
   
@@ -325,13 +959,46 @@ who I am please check out the <a href="/about">about</a> section and stay tuned 
 
       <section id="categories">
         <header>
-          <h1><a href="/categories">Category</a></h1>
+          <h1><a href="/categories">Categories</a></h1>
         </header>
         <ul>
           
           
           <li>
-              <a href="/categories/programming/">programming<span class="count">2</span></a>
+              <a href="/categories/ephpm/">ephpm<span class="count">33</span></a>
+          
+          <li>
+              <a href="/categories/go/">go<span class="count">30</span></a>
+          
+          <li>
+              <a href="/categories/php/">php<span class="count">23</span></a>
+          
+          <li>
+              <a href="/categories/rust/">rust<span class="count">15</span></a>
+          
+          <li>
+              <a href="/categories/homelab/">homelab<span class="count">14</span></a>
+          
+          <li>
+              <a href="/categories/windows/">windows<span class="count">14</span></a>
+          
+          <li>
+              <a href="/categories/ci/">ci<span class="count">9</span></a>
+          
+          <li>
+              <a href="/categories/databases/">databases<span class="count">9</span></a>
+          
+          <li>
+              <a href="/categories/security/">security<span class="count">9</span></a>
+          
+          <li>
+              <a href="/categories/containers/">containers<span class="count">7</span></a>
+          
+          <li>
+              <a href="/categories/tools/">tools<span class="count">5</span></a>
+          
+          <li>
+              <a href="/categories/ai-agents/">ai-agents<span class="count">4</span></a>
           
           </li>
         </ul>
@@ -404,16 +1071,14 @@ who I am please check out the <a href="/about">about</a> section and stay tuned 
       </ul>
   
   <p class="copyright">
-    © 2022 Luther Monson
+    © 2026 Luther Monson
       <br>
-    Theme: <a href='https://github.com/pacollins/hugo-future-imperfect-slim' target='_blank' rel='noopener'>Hugo Future Imperfect Slim</a><br>A <a href='https://html5up.net/future-imperfect' target='_blank' rel='noopener'>HTML5 UP port</a> | Powered by <a href='https://gohugo.io/' title='0.92.0' target='_blank' rel='noopener'>Hugo</a>
+    Theme: <a href='https://github.com/pacollins/hugo-future-imperfect-slim' target='_blank' rel='noopener'>Hugo Future Imperfect Slim</a><br>A <a href='https://html5up.net/future-imperfect' target='_blank' rel='noopener'>HTML5 UP port</a> | Powered by <a href='https://gohugo.io/' title='0.160.1' target='_blank' rel='noopener'>Hugo</a>
   </p>
 </footer>
 <a id="back-to-top" href="#" class="fas fa-arrow-up fa-2x"></a>
 
-      <script src="/js/highlight.js"></script>
-    
-    <script>hljs.highlightAll();</script><script src="/js/bundle.min.affa21bd64e761fba63c1eb954f76e46e43ca96b1ef71c742f058ed973ec6df2.js" integrity="sha256-r/ohvWTnYfumPB65VPduRuQ8qWse9xx0LwWO2XPsbfI="></script>
+      <script src="/js/bundle.min.241b62ebc4792fe8c7a75879e5f710894f226f2b73342e9916b3a3b0526030cc.js" integrity="sha256-JBti68R5L&#43;jHp1h55fcQiU8ibytzNC6ZFrOjsFJgMMw="></script>
     <script src="/js/add-on.js"></script>
     </div>
   </body>

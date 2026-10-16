@@ -1,0 +1,41 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 470" font-family="system-ui, -apple-system, Segoe UI, sans-serif">
+  <rect width="900" height="470" fill="#ffffff"/>
+  <text x="450" y="34" text-anchor="middle" font-size="20" font-weight="600" fill="#222">One process, many tenants: the boundaries that broke</text>
+  <text x="40" y="70" font-size="13" font-weight="600" fill="#6b6b6b">BOUNDARY</text>
+  <text x="330" y="70" font-size="13" font-weight="600" fill="#6b6b6b">HOW IT WAS CROSSED</text>
+  <text x="790" y="70" font-size="13" font-weight="600" fill="#6b6b6b">FIX</text>
+  <g font-size="14">
+    <rect x="30" y="82" width="840" height="40" rx="6" fill="#eaf1f9"/>
+    <text x="40" y="107" fill="#2b6cb0" font-weight="600">Host header to site key</text>
+    <text x="330" y="107" fill="#333">Host: ../../../../../etc served /etc/passwd</text>
+    <text x="790" y="107" fill="#333">#280</text>
+    <rect x="30" y="128" width="840" height="40" rx="6" fill="#eaf1f9"/>
+    <text x="40" y="153" fill="#2b6cb0" font-weight="600">Suffix-stripped site key</text>
+    <text x="330" y="153" fill="#333">dotless suffix: apex host became key "" (whole fleet)</text>
+    <text x="790" y="153" fill="#333">#401</text>
+    <rect x="30" y="174" width="840" height="40" rx="6" fill="#edf7f0"/>
+    <text x="40" y="199" fill="#3a9a5b" font-weight="600">Document root</text>
+    <text x="330" y="199" fill="#333">web/ swapped for a symlink to / after boot</text>
+    <text x="790" y="199" fill="#333">#398</text>
+    <rect x="30" y="220" width="840" height="40" rx="6" fill="#edf7f0"/>
+    <text x="40" y="245" fill="#3a9a5b" font-weight="600">open_basedir / temp / sessions</text>
+    <text x="330" y="245" fill="#333">shared /tmp in every vhost: session hijack</text>
+    <text x="790" y="245" fill="#333">#285</text>
+    <rect x="30" y="266" width="840" height="40" rx="6" fill="#fdf2e8"/>
+    <text x="40" y="291" fill="#e07a1f" font-weight="600">Database file</text>
+    <text x="330" y="291" fill="#333">ATTACH another tenant's .db, or a .php in its docroot</text>
+    <text x="790" y="291" fill="#333">#284 #287</text>
+    <rect x="30" y="312" width="840" height="40" rx="6" fill="#fdf2e8"/>
+    <text x="40" y="337" fill="#e07a1f" font-weight="600">One identity per site</text>
+    <text x="330" y="337" fill="#333">shop and shop.local: same docroot, two databases</text>
+    <text x="790" y="337" fill="#333">#293</text>
+    <rect x="30" y="358" width="840" height="40" rx="6" fill="#f3eff8"/>
+    <text x="40" y="383" fill="#7d5ba6" font-weight="600">Loopback ports (eBPF)</text>
+    <text x="330" y="383" fill="#333">::ffff:127.0.0.1 and 127.0.0.2 weren't "loopback"</text>
+    <text x="790" y="383" fill="#333">#489</text>
+    <rect x="30" y="404" width="840" height="40" rx="6" fill="#fbeaea"/>
+    <text x="40" y="429" fill="#c0392b" font-weight="600">Preview login session</text>
+    <text x="330" y="429" fill="#333">cookie for site A verified on every site</text>
+    <text x="790" y="429" fill="#333">#488</text>
+  </g>
+</svg>

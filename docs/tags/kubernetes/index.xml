@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>Kubernetes on Luther Monson</title>
+    <link>https://luth.io/tags/kubernetes/</link>
+    <description>Recent content in Kubernetes on Luther Monson</description>
+    <generator>Hugo</generator>
+    <language>en</language>
+    <lastBuildDate>Wed, 09 Sep 2026 21:22:00 -0700</lastBuildDate>
+    <atom:link href="https://luth.io/tags/kubernetes/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>Building k9s for Linode With Bubble Tea</title>
+      <link>https://luth.io/blog/2026/09/linode-tui/</link>
+      <pubDate>Wed, 09 Sep 2026 21:22:00 -0700</pubDate>
+      <guid>https://luth.io/blog/2026/09/linode-tui/</guid>
+      <description>&lt;p&gt;A lot of my day is spent in &lt;a href=&#34;https://k9scli.io/&#34;&gt;k9s&lt;/a&gt;, and when I need something from the Linode side of the house (a node that won&amp;rsquo;t&#xA;boot, a volume nobody cleaned up, the kubeconfig for a cluster I just made) I&amp;rsquo;m back in a browser tab or typing &lt;code&gt;linode-cli&lt;/code&gt; incantations.&#xA;I wanted the k9s workflow for the Linode API itself: &lt;code&gt;:&lt;/code&gt; to jump to a resource type, &lt;code&gt;/&lt;/code&gt; to filter, single-key actions on the selected row,&#xA;and Enter to go deeper. That turned into &lt;a href=&#34;https://github.com/luthermonson/linode-tui&#34;&gt;linode-tui&lt;/a&gt;, a Go TUI built on&#xA;&lt;a href=&#34;https://github.com/charmbracelet/bubbletea&#34;&gt;Bubble Tea&lt;/a&gt;, &lt;a href=&#34;https://github.com/linode/linodego&#34;&gt;linodego&lt;/a&gt; and urfave/cli v3.&lt;/p&gt;</description>
+    </item>
+    <item>
+      <title>ephemerd: One Daemon, a Fresh Runner Per Job, Every OS</title>
+      <link>https://luth.io/blog/2026/08/ephemerd-one-daemon-every-os/</link>
+      <pubDate>Tue, 18 Aug 2026 21:05:00 -0700</pubDate>
+      <guid>https://luth.io/blog/2026/08/ephemerd-one-daemon-every-os/</guid>
+      <description>&lt;p&gt;I have CI that needs Linux amd64, Linux arm64, Windows and macOS, and GitHub-hosted runners for all four get expensive fast,&#xA;especially the arm64 and Mac minutes. Self-hosted runners fix the bill and create a different problem. A stock&#xA;&lt;code&gt;actions/runner&lt;/code&gt; on a box you own runs whatever the workflow says, keeps whatever the last job left behind, and is one fork&#xA;PR away from somebody running code on your LAN.&lt;/p&gt;</description>
+    </item>
+    <item>
+      <title>Stop Ctrl-C-ing Your tail -f | grep</title>
+      <link>https://luth.io/blog/2026/06/tail-gunner/</link>
+      <pubDate>Sat, 20 Jun 2026 20:31:00 -0700</pubDate>
+      <guid>https://luth.io/blog/2026/06/tail-gunner/</guid>
+      <description>&lt;p&gt;Here&amp;rsquo;s a loop I end up in all the time: &lt;code&gt;tail -f app.log&lt;/code&gt;, something scrolls by that looks wrong, Ctrl-C, &lt;code&gt;tail -f app.log | grep ERROR&lt;/code&gt;,&#xA;wait for it to happen again, decide I also want to drop the health checks, Ctrl-C, &lt;code&gt;| grep -v healthz&lt;/code&gt;, wait again. Every filter tweak&#xA;throws away the stream and every line that already went past. I got tired of it and wrote &lt;a href=&#34;https://github.com/luthermonson/tail-gunner&#34;&gt;tail-gunner&lt;/a&gt;,&#xA;a &lt;code&gt;tail&lt;/code&gt; replacement that you can promote into a filtering TUI with one keystroke and drop back out of without the stream ever stopping.&lt;/p&gt;</description>
+    </item>
+  </channel>
+</rss>

@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>Mage on Luther Monson</title>
+    <link>https://luth.io/tags/mage/</link>
+    <description>Recent content in Mage on Luther Monson</description>
+    <generator>Hugo</generator>
+    <language>en</language>
+    <lastBuildDate>Sun, 07 Jun 2026 21:36:00 -0700</lastBuildDate>
+    <atom:link href="https://luth.io/tags/mage/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>From 52% to 100%: Measuring a Go Client Against the Proxmox API Schema</title>
+      <link>https://luth.io/blog/2026/06/go-proxmox-endpoint-coverage/</link>
+      <pubDate>Sun, 07 Jun 2026 21:36:00 -0700</pubDate>
+      <guid>https://luth.io/blog/2026/06/go-proxmox-endpoint-coverage/</guid>
+      <description>&lt;p&gt;For five years the honest answer to &amp;ldquo;how much of the Proxmox API does go-proxmox cover?&amp;rdquo; was &amp;ldquo;a lot of it? the parts&#xA;people asked for?&amp;rdquo;. Issues would come in for endpoints that didn&amp;rsquo;t exist in the client and I&amp;rsquo;d have no idea how many more&#xA;were missing. At the end of May I finally built the thing that answers the question, and three days after the first run the&#xA;answer was 100%. The more interesting part is how many times the measuring stick was wrong on the way there.&lt;/p&gt;</description>
+    </item>
+  </channel>
+</rss>

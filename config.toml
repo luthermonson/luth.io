@@ -13,6 +13,10 @@ disableLanguages        = []
 [markup.goldmark.renderer]
   unsafe                = true
 
+# Code blocks: CSS classes instead of inline Monokai, styled by static/css/code.css.
+[markup.highlight]
+  noClasses             = false
+
 [module]
   [module.hugoVersion]
   extended              = true
@@ -24,9 +28,9 @@ disableLanguages        = []
 [params]
   googleMeasurementId     = "G-MSTSKGFWTX"
   enableCDN             = false
-  cssFiles              = ["default"]
+  cssFiles              = ["default", "css/code.css", "css/mobile.css"]
   jsFiles               = ["default"]
-  highlightjs           = true
+  highlightjs           = false
   highlightjsTheme      = ""
   highlightjsLang       = []
   viewMorePostsLink     = "blog"
@@ -35,7 +39,7 @@ disableLanguages        = []
   removeBlur            = false
   socialShare           = ["twitter", "facebook", "reddit", "linkedin", "pinterest", "email"]
   hideEmptyStats        = false
-  toc                   = true
+  toc                   = false
   tocWords              = 400
 
   [params.meta]
@@ -52,15 +56,15 @@ disableLanguages        = []
     dynamicTitles       = true
     searchMenu          = true
     shareMenu           = true
-    languageMenu        = true
+    languageMenu        = false
 
   [params.intro]
     header                = "Luther Monson"
     paragraph             = "Go by way of PHP &middot; Containers &middot; VMs &middot; Windows &middot; Kubernetes"
     rssIntro              = true
     socialIntro           = true
-    hideWhenSingleColumn  = false
-    alwaysOnHomepage      = false
+    hideWhenSingleColumn  = true
+    alwaysOnHomepage      = true
 
     [params.intro.pic]
       src                 = "/img/luther-monson-headshot.jpg"
@@ -86,8 +90,17 @@ disableLanguages        = []
     label               = ""
     theme               = "github-light"
 
-  [params.staticman]
+  # Comments via giscus (GitHub Discussions on this repo, "Announcements" category).
+  [params.giscus]
     enabled             = true
+    repo                = "luthermonson/luth.io"
+    repoId              = "R_kgDOGvFBXQ"
+    category            = "Announcements"
+    categoryId          = "DIC_kwDOGvFBXc4DH_gv"
+    theme               = "light"
+
+  [params.staticman]
+    enabled             = false
     api                 = ""  # No Trailing Slash
     gitProvider         = ""
     username            = ""
@@ -120,6 +133,13 @@ disableLanguages        = []
     url               = "blog"
     pre               = "<i class='far fa-newspaper'></i>"
     weight            = 3
+
+  [[menu.main]]
+    name              = "Archive"
+    identifier        = "archive"
+    url               = "archive"
+    pre               = "<i class='far fa-calendar-alt'></i>"
+    weight            = 4
 
   [[menu.main]]
     name              = "Categories"
@@ -298,7 +318,7 @@ disableLanguages        = []
       pre               = "<i class='fas fa-sitemap'></i>"
       weight            = 5
 
-[social]
+[params.social]
   # Coding Communities
   github                = "luthermonson"
   gitlab                = ""

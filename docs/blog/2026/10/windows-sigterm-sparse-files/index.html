@@ -1,0 +1,701 @@
+<!doctype html>
+<html lang="en">
+  <head>
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-MSTSKGFWTX"></script>
+<script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+
+    gtag('config', 'G-MSTSKGFWTX');
+</script><meta charset="utf-8">
+<title>Windows Grab-Bag: SIGTERM That Doesn&#39;t Exist and Sparse Files That Break Docker - Luther Monson</title>
+<meta name="description" content="Two Windows-only bugs from ephemerd: Go can&#39;t SIGTERM a child on Windows, so cloudflared processes piled up, and Delivery Optimization&#39;s sparse temp files broke image layer commits.">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<meta name="twitter:card" content="summary_large_image"><meta name="twitter:site" content="@luthermonson">
+
+<meta property="og:site_name" content="Luther Monson">
+<meta property="og:title" content="Windows Grab-Bag: SIGTERM That Doesn&#39;t Exist and Sparse Files That Break Docker">
+<meta property="og:description" content="Two Windows-only bugs from ephemerd: Go can&#39;t SIGTERM a child on Windows, so cloudflared processes piled up, and Delivery Optimization&#39;s sparse temp files broke image layer commits.">
+<meta property="og:type" content="article">
+<meta property="og:url" content="https://luth.io/blog/2026/10/windows-sigterm-sparse-files/">
+    <meta property="og:image" content="https://luth.io/img/2026/10/windows-sigterm-sparse-files-connections.svg">
+    <meta property="og:image:alt" content="Bar chart: 96 Cloudflare edge connections held by orphaned cloudflared processes versus 4 for the live daemon">
+
+
+  <link rel="manifest" href="/favicon/site.webmanifest?v=1">
+  <link rel="apple-touch-icon" sizes="180x180" href="/favicon/apple-touch-icon.png?v=1">
+  <link rel="icon" type="image/png" sizes="32x32" href="/favicon/favicon-32x32.png?v=1">
+  <link rel="icon" type="image/png" sizes="16x16" href="/favicon/favicon-16x16.png?v=1">
+  
+    <link rel="mask-icon" href="/favicon/safari-pinned-tab.svg?v=1" color="#ffffff">
+    <link rel="shortcut icon" href="/favicon/favicon.ico?v=1">
+    <meta name="msapplication-config" content="/favicon/browserconfig.xml?v=1">
+  
+  <meta name="msapplication-TileColor" content="#ffffff">
+  <meta name="theme-color" content="#ffffff">
+
+
+  <meta name="generator" content="Hugo 0.160.1">
+  <link rel="alternate" type="application/rss+xml" href="https://luth.io/index.xml" title="Luther Monson">
+  <link rel="stylesheet" href="/css/bundle.min.e1ffed86714fbb7eff75eab221c0c61b8260be0c7d1c08db0fcb7a2bdb6af7c9.css" integrity="sha256-4f/thnFPu37/deqyIcDGG4Jgvgx9HAjbD8t6K9tq98k="><link rel="stylesheet" href="/css/add-on.css">
+        <link rel="stylesheet" href="/css/code.css">
+        <link rel="stylesheet" href="/css/mobile.css">
+</head>
+
+  <body>
+    
+
+<header id="site-header">
+  <nav id="site-nav">
+    <h1 class="nav-title">
+      <a href="/" class="nav">
+        <img class="nav-avatar" src="/img/luther-monson-headshot.jpg" alt="" width="32" height="32">
+        
+          Blog
+        
+      </a>
+    </h1>
+    <menu id="site-nav-menu" class="flyout-menu menu">
+      
+        
+          
+          <a href="/" class="nav link"><i class='fa fa-home'></i> Home</a>
+        
+      
+        
+          
+          <a href="/about" class="nav link"><i class='far fa-id-card'></i> About</a>
+        
+      
+        
+          
+          <a href="/blog" class="nav link"><i class='far fa-newspaper'></i> Blog</a>
+        
+      
+        
+          
+          <a href="/archive" class="nav link"><i class='far fa-calendar-alt'></i> Archive</a>
+        
+      
+        
+          
+          <a href="/categories" class="nav link"><i class='fas fa-sitemap'></i> Categories</a>
+        
+      
+      <a href="#share-menu" class="nav link share-toggle"><i class="fas fa-share-alt">&nbsp;</i>Share</a>
+      <a href="#search-input" class="nav link search-toggle"><i class="fas fa-search">&nbsp;</i>Search</a>
+    </menu>
+    <a href="#search-input" class="nav search-toggle"><i class="fas fa-search fa-2x">&nbsp;</i></a>
+    <a href="#share-menu" class="nav share-toggle"><i class="fas fa-share-alt fa-2x">&nbsp;</i></a>
+    
+    <a href="#site-nav" class="nav nav-toggle"><i class="fas fa-bars fa-2x"></i></a>
+  </nav>
+  <menu id="search" class="menu"><input id="search-input" class="search-input menu"></input><div id="search-results" class="search-results menu"></div></menu>
+  
+  
+    <menu id="share-menu" class="flyout-menu menu">
+      <h1>Share Post</h1>
+      
+
+
+
+
+  
+    
+    <a href="//twitter.com/share?text=Windows%20Grab-Bag%3a%20SIGTERM%20That%20Doesn%27t%20Exist%20and%20Sparse%20Files%20That%20Break%20Docker&amp;url=https%3a%2f%2fluth.io%2fblog%2f2026%2f10%2fwindows-sigterm-sparse-files%2f" target="_blank" rel="noopener" class="nav share-btn twitter">
+        <p>Twitter</p>
+      </a>
+  
+
+  
+      <a href="//www.facebook.com/sharer/sharer.php?u=https%3a%2f%2fluth.io%2fblog%2f2026%2f10%2fwindows-sigterm-sparse-files%2f" target="_blank" rel="noopener" class="nav share-btn facebook">
+        <p>Facebook</p>
+        </a>
+  
+
+  
+    <a href="//www.reddit.com/submit?url=https%3a%2f%2fluth.io%2fblog%2f2026%2f10%2fwindows-sigterm-sparse-files%2f&amp;title=Windows%20Grab-Bag%3a%20SIGTERM%20That%20Doesn%27t%20Exist%20and%20Sparse%20Files%20That%20Break%20Docker" target="_blank" rel="noopener" class="nav share-btn reddit">
+          <p>Reddit</p>
+        </a>
+  
+
+  
+        <a href="//www.linkedin.com/shareArticle?url=https%3a%2f%2fluth.io%2fblog%2f2026%2f10%2fwindows-sigterm-sparse-files%2f&amp;title=Windows%20Grab-Bag%3a%20SIGTERM%20That%20Doesn%27t%20Exist%20and%20Sparse%20Files%20That%20Break%20Docker" target="_blank" rel="noopener" class="nav share-btn linkedin">
+            <p>LinkedIn</p>
+          </a>
+  
+
+  
+        <a href="//www.pinterest.com/pin/create/button/?url=https%3a%2f%2fluth.io%2fblog%2f2026%2f10%2fwindows-sigterm-sparse-files%2f&amp;description=Windows%20Grab-Bag%3a%20SIGTERM%20That%20Doesn%27t%20Exist%20and%20Sparse%20Files%20That%20Break%20Docker" target="_blank" rel="noopener" class="nav share-btn pinterest">
+          <p>Pinterest</p>
+        </a>
+  
+
+  
+        <a href="mailto:?subject=Check%20out%20this%20post%20by Luther%20Monson&amp;body=https%3a%2f%2fluth.io%2fblog%2f2026%2f10%2fwindows-sigterm-sparse-files%2f" target="_blank" class="nav share-btn email" data-proofer-ignore>
+          <p>Email</p>
+        </a>
+  
+
+
+    </menu>
+  
+</header>
+
+    <div id="wrapper">
+      <section id="site-intro" class="hidden-single-column">
+  <a href="/"><img src="/img/luther-monson-headshot.jpg" class="circle" width="100" alt="Luther Monson, Staff Software Engineer at SUSE" /></a>
+  <header>
+    <h1>Luther Monson</h1>
+  </header>
+  <main>
+    <p>Go by way of PHP &middot; Containers &middot; VMs &middot; Windows &middot; Kubernetes</p>
+  </main>
+  
+    <footer>
+      <ul class="socnet-icons">
+        
+
+        <li><a href="//github.com/luthermonson" target="_blank" rel="noopener" title="GitHub" class="fab fa-github"></a></li>
+
+
+
+
+
+
+
+
+
+
+
+<li><a href="//www.linkedin.com/in/luthermonson" target="_blank" rel="noopener" title="LinkedIn" class="fab fa-linkedin"></a></li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li><a href="//twitter.com/luthermonson" target="_blank" rel="noopener" title="Twitter" class="fab fa-twitter"></a></li>
+
+
+
+
+
+
+
+
+
+
+
+<li><a href="mailto:luther.monson@gmail.com" target="_blank" title="Email" class="far fa-envelope"></a></li>
+
+      </ul>
+    </footer>
+  
+</section>
+
+      <main id="site-main">
+        
+  <article>
+    <div class="post">
+      <header>
+  <div class="title">
+    
+      <h2><a href="/blog/2026/10/windows-sigterm-sparse-files/">Windows Grab-Bag: SIGTERM That Doesn&#39;t Exist and Sparse Files That Break Docker</a></h2>
+    
+    
+      <p>Two Windows-only bugs from ephemerd: Go can&#39;t SIGTERM a child on Windows, so cloudflared processes piled up, and Delivery Optimization&#39;s sparse temp files broke image layer commits.</p>
+    
+  </div>
+  <div class="meta">
+    <time datetime="2026-10-03 14:30:00 -0700 PDT">October 3, 2026</time>
+    
+    <p>7-Minute Read</p>
+  </div>
+</header>
+
+      <div id="socnet-share">
+        
+
+
+
+
+  
+    
+    <a href="//twitter.com/share?text=Windows%20Grab-Bag%3a%20SIGTERM%20That%20Doesn%27t%20Exist%20and%20Sparse%20Files%20That%20Break%20Docker&amp;url=https%3a%2f%2fluth.io%2fblog%2f2026%2f10%2fwindows-sigterm-sparse-files%2f" target="_blank" rel="noopener" class="nav share-btn twitter">
+        <p>Twitter</p>
+      </a>
+  
+
+  
+      <a href="//www.facebook.com/sharer/sharer.php?u=https%3a%2f%2fluth.io%2fblog%2f2026%2f10%2fwindows-sigterm-sparse-files%2f" target="_blank" rel="noopener" class="nav share-btn facebook">
+        <p>Facebook</p>
+        </a>
+  
+
+  
+    <a href="//www.reddit.com/submit?url=https%3a%2f%2fluth.io%2fblog%2f2026%2f10%2fwindows-sigterm-sparse-files%2f&amp;title=Windows%20Grab-Bag%3a%20SIGTERM%20That%20Doesn%27t%20Exist%20and%20Sparse%20Files%20That%20Break%20Docker" target="_blank" rel="noopener" class="nav share-btn reddit">
+          <p>Reddit</p>
+        </a>
+  
+
+  
+        <a href="//www.linkedin.com/shareArticle?url=https%3a%2f%2fluth.io%2fblog%2f2026%2f10%2fwindows-sigterm-sparse-files%2f&amp;title=Windows%20Grab-Bag%3a%20SIGTERM%20That%20Doesn%27t%20Exist%20and%20Sparse%20Files%20That%20Break%20Docker" target="_blank" rel="noopener" class="nav share-btn linkedin">
+            <p>LinkedIn</p>
+          </a>
+  
+
+  
+        <a href="//www.pinterest.com/pin/create/button/?url=https%3a%2f%2fluth.io%2fblog%2f2026%2f10%2fwindows-sigterm-sparse-files%2f&amp;description=Windows%20Grab-Bag%3a%20SIGTERM%20That%20Doesn%27t%20Exist%20and%20Sparse%20Files%20That%20Break%20Docker" target="_blank" rel="noopener" class="nav share-btn pinterest">
+          <p>Pinterest</p>
+        </a>
+  
+
+  
+        <a href="mailto:?subject=Check%20out%20this%20post%20by Luther%20Monson&amp;body=https%3a%2f%2fluth.io%2fblog%2f2026%2f10%2fwindows-sigterm-sparse-files%2f" target="_blank" class="nav share-btn email" data-proofer-ignore>
+          <p>Email</p>
+        </a>
+  
+
+
+      </div>
+      <div class="content">
+        
+        <p>Two short ones from the Windows node of <a href="/blog/2026/08/ephemerd-one-daemon-every-os/">ephemerd</a> from the last few weeks. Neither is
+complicated once you know what&rsquo;s going on. Both took longer than they should have to find, because the failure showed up a
+long way from the cause.</p>
+<h3 id="part-1-there-is-no-sigterm-on-windows">Part 1: there is no SIGTERM on Windows</h3>
+<p>ephemerd can run a Cloudflare tunnel so GitHub webhooks reach a node behind NAT. It does that by running <code>cloudflared</code> as a
+managed subprocess. On Linux the child is tied to ephemerd&rsquo;s lifetime by the kernel with <code>Pdeathsig</code>:</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-go" data-lang="go"><span class="line"><span class="cl"><span class="kd">func</span><span class="w"> </span><span class="nf">applyPdeathsig</span><span class="p">(</span><span class="nx">cmd</span><span class="w"> </span><span class="o">*</span><span class="nx">exec</span><span class="p">.</span><span class="nx">Cmd</span><span class="p">)</span><span class="w"> </span><span class="p">{</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">	</span><span class="k">if</span><span class="w"> </span><span class="nx">cmd</span><span class="p">.</span><span class="nx">SysProcAttr</span><span class="w"> </span><span class="o">==</span><span class="w"> </span><span class="kc">nil</span><span class="w"> </span><span class="p">{</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">		</span><span class="nx">cmd</span><span class="p">.</span><span class="nx">SysProcAttr</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="o">&amp;</span><span class="nx">syscall</span><span class="p">.</span><span class="nx">SysProcAttr</span><span class="p">{}</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">	</span><span class="p">}</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">	</span><span class="nx">cmd</span><span class="p">.</span><span class="nx">SysProcAttr</span><span class="p">.</span><span class="nx">Pdeathsig</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="nx">syscall</span><span class="p">.</span><span class="nx">SIGTERM</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">	</span><span class="nx">cmd</span><span class="p">.</span><span class="nx">SysProcAttr</span><span class="p">.</span><span class="nx">Setpgid</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="kc">true</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="p">}</span><span class="w">
+</span></span></span></code></pre></div><p>If ephemerd exits for any reason (clean stop, panic, <code>SIGKILL</code>) the kernel sends <code>cloudflared</code> a SIGTERM. On Windows
+<code>SysProcAttr</code> has no <code>Pdeathsig</code>, and the comment in the non-Linux file said the graceful <code>Close()</code> path was the sole shutdown
+mechanism there. Both the context-cancel hook and <code>close()</code> did the same thing, <code>cmd.Process.Signal(syscall.SIGTERM)</code>:</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-go" data-lang="go"><span class="line"><span class="cl"><span class="nx">cmd</span><span class="p">.</span><span class="nx">Cancel</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="kd">func</span><span class="p">()</span><span class="w"> </span><span class="kt">error</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="k">return</span><span class="w"> </span><span class="nx">cmd</span><span class="p">.</span><span class="nx">Process</span><span class="p">.</span><span class="nf">Signal</span><span class="p">(</span><span class="nx">syscall</span><span class="p">.</span><span class="nx">SIGTERM</span><span class="p">)</span><span class="w"> </span><span class="p">}</span><span class="w">
+</span></span></span></code></pre></div><p>Go&rsquo;s <code>os.Process.Signal</code> on Windows supports exactly one signal, <code>os.Kill</code>. Everything else returns an error. That error was
+logged at <code>Debug</code> and dropped. On top of that, every config push and every upgrade on that node stops the service, and in
+practice each restart left a <code>cloudflared</code> behind. Measured on the node on 2026-09-22:</p>
+<pre tabindex="0"><code>live ephemerd pid : 6908
+children of live  : 1
+orphaned          : 25
+orphan parents still alive: 0
+orphan RAM MB     : 868
+</code></pre><p>The oldest orphan was 13 days old. 868 MB of RAM is annoying but it&rsquo;s not the real problem. All 25 were running the same
+tunnel config and holding live connections to Cloudflare&rsquo;s edge:</p>
+<p><img src="/img/2026/10/windows-sigterm-sparse-files-connections.svg" alt="Edge connections"></p>
+<p>Cloudflare load-balances incoming requests across every connection registered for a tunnel. 96 of the 100 connections
+belonged to processes whose ephemerd was gone, so most webhook deliveries were being handed to clients that had nowhere to
+forward them. That makes it the prime suspect for something I&rsquo;d been chasing separately: the webhook listener on that node
+seemed to go deaf for hours after an upgrade.</p>
+<h4 id="job-objects-are-windows-pdeathsig">Job Objects are Windows&rsquo; Pdeathsig</h4>
+<p>The Windows answer is a Job Object with <code>JOB_OBJECT_LIMIT_KILL_ON_JOB_CLOSE</code>. Put the child in the job, hold the job handle,
+and when the last handle closes the kernel kills everything in it. A process&rsquo;s handles close when it exits by any means, so
+this covers service stop, crash and <code>taskkill</code> the same way (<a href="https://github.com/ephpm/ephemerd/pull/206">#206</a>):</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-go" data-lang="go"><span class="line"><span class="cl"><span class="kd">func</span><span class="w"> </span><span class="nf">bindChildLifetime</span><span class="p">(</span><span class="nx">cmd</span><span class="w"> </span><span class="o">*</span><span class="nx">exec</span><span class="p">.</span><span class="nx">Cmd</span><span class="p">)</span><span class="w"> </span><span class="p">(</span><span class="nx">io</span><span class="p">.</span><span class="nx">Closer</span><span class="p">,</span><span class="w"> </span><span class="kt">error</span><span class="p">)</span><span class="w"> </span><span class="p">{</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">	</span><span class="nx">job</span><span class="p">,</span><span class="w"> </span><span class="nx">err</span><span class="w"> </span><span class="o">:=</span><span class="w"> </span><span class="nx">windows</span><span class="p">.</span><span class="nf">CreateJobObject</span><span class="p">(</span><span class="kc">nil</span><span class="p">,</span><span class="w"> </span><span class="kc">nil</span><span class="p">)</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">	</span><span class="k">if</span><span class="w"> </span><span class="nx">err</span><span class="w"> </span><span class="o">!=</span><span class="w"> </span><span class="kc">nil</span><span class="w"> </span><span class="p">{</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">		</span><span class="k">return</span><span class="w"> </span><span class="kc">nil</span><span class="p">,</span><span class="w"> </span><span class="nx">fmt</span><span class="p">.</span><span class="nf">Errorf</span><span class="p">(</span><span class="s">&#34;cloudflared: create job object: %w&#34;</span><span class="p">,</span><span class="w"> </span><span class="nx">err</span><span class="p">)</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">	</span><span class="p">}</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">	</span><span class="nx">info</span><span class="w"> </span><span class="o">:=</span><span class="w"> </span><span class="nx">windows</span><span class="p">.</span><span class="nx">JOBOBJECT_EXTENDED_LIMIT_INFORMATION</span><span class="p">{</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">		</span><span class="nx">BasicLimitInformation</span><span class="p">:</span><span class="w"> </span><span class="nx">windows</span><span class="p">.</span><span class="nx">JOBOBJECT_BASIC_LIMIT_INFORMATION</span><span class="p">{</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">			</span><span class="nx">LimitFlags</span><span class="p">:</span><span class="w"> </span><span class="nx">windows</span><span class="p">.</span><span class="nx">JOB_OBJECT_LIMIT_KILL_ON_JOB_CLOSE</span><span class="p">,</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">		</span><span class="p">},</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">	</span><span class="p">}</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">	</span><span class="k">if</span><span class="w"> </span><span class="nx">_</span><span class="p">,</span><span class="w"> </span><span class="nx">err</span><span class="w"> </span><span class="o">:=</span><span class="w"> </span><span class="nx">windows</span><span class="p">.</span><span class="nf">SetInformationJobObject</span><span class="p">(</span><span class="nx">job</span><span class="p">,</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">		</span><span class="nx">windows</span><span class="p">.</span><span class="nx">JobObjectExtendedLimitInformation</span><span class="p">,</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">		</span><span class="nb">uintptr</span><span class="p">(</span><span class="nx">unsafe</span><span class="p">.</span><span class="nf">Pointer</span><span class="p">(</span><span class="o">&amp;</span><span class="nx">info</span><span class="p">)),</span><span class="w"> </span><span class="nb">uint32</span><span class="p">(</span><span class="nx">unsafe</span><span class="p">.</span><span class="nf">Sizeof</span><span class="p">(</span><span class="nx">info</span><span class="p">)));</span><span class="w"> </span><span class="nx">err</span><span class="w"> </span><span class="o">!=</span><span class="w"> </span><span class="kc">nil</span><span class="w"> </span><span class="p">{</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">		</span><span class="nx">_</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="nx">windows</span><span class="p">.</span><span class="nf">CloseHandle</span><span class="p">(</span><span class="nx">job</span><span class="p">)</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">		</span><span class="k">return</span><span class="w"> </span><span class="kc">nil</span><span class="p">,</span><span class="w"> </span><span class="nx">fmt</span><span class="p">.</span><span class="nf">Errorf</span><span class="p">(</span><span class="s">&#34;cloudflared: set job limits: %w&#34;</span><span class="p">,</span><span class="w"> </span><span class="nx">err</span><span class="p">)</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">	</span><span class="p">}</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">	</span><span class="c1">// OpenProcess rather than reusing the handle inside os.Process: that one is</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">	</span><span class="c1">// owned by the runtime and closed when the Process is released, which would</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">	</span><span class="c1">// make assignment racy against Wait.</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">	</span><span class="nx">h</span><span class="p">,</span><span class="w"> </span><span class="nx">err</span><span class="w"> </span><span class="o">:=</span><span class="w"> </span><span class="nx">windows</span><span class="p">.</span><span class="nf">OpenProcess</span><span class="p">(</span><span class="nx">windows</span><span class="p">.</span><span class="nx">PROCESS_SET_QUOTA</span><span class="p">|</span><span class="nx">windows</span><span class="p">.</span><span class="nx">PROCESS_TERMINATE</span><span class="p">,</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">		</span><span class="kc">false</span><span class="p">,</span><span class="w"> </span><span class="nb">uint32</span><span class="p">(</span><span class="nx">cmd</span><span class="p">.</span><span class="nx">Process</span><span class="p">.</span><span class="nx">Pid</span><span class="p">))</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">	</span><span class="k">if</span><span class="w"> </span><span class="nx">err</span><span class="w"> </span><span class="o">!=</span><span class="w"> </span><span class="kc">nil</span><span class="w"> </span><span class="p">{</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">		</span><span class="nx">_</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="nx">windows</span><span class="p">.</span><span class="nf">CloseHandle</span><span class="p">(</span><span class="nx">job</span><span class="p">)</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">		</span><span class="k">return</span><span class="w"> </span><span class="kc">nil</span><span class="p">,</span><span class="w"> </span><span class="nx">fmt</span><span class="p">.</span><span class="nf">Errorf</span><span class="p">(</span><span class="s">&#34;cloudflared: open child process: %w&#34;</span><span class="p">,</span><span class="w"> </span><span class="nx">err</span><span class="p">)</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">	</span><span class="p">}</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">	</span><span class="k">defer</span><span class="w"> </span><span class="kd">func</span><span class="p">()</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nx">_</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="nx">windows</span><span class="p">.</span><span class="nf">CloseHandle</span><span class="p">(</span><span class="nx">h</span><span class="p">)</span><span class="w"> </span><span class="p">}()</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">	</span><span class="k">if</span><span class="w"> </span><span class="nx">err</span><span class="w"> </span><span class="o">:=</span><span class="w"> </span><span class="nx">windows</span><span class="p">.</span><span class="nf">AssignProcessToJobObject</span><span class="p">(</span><span class="nx">job</span><span class="p">,</span><span class="w"> </span><span class="nx">h</span><span class="p">);</span><span class="w"> </span><span class="nx">err</span><span class="w"> </span><span class="o">!=</span><span class="w"> </span><span class="kc">nil</span><span class="w"> </span><span class="p">{</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">		</span><span class="nx">_</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="nx">windows</span><span class="p">.</span><span class="nf">CloseHandle</span><span class="p">(</span><span class="nx">job</span><span class="p">)</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">		</span><span class="k">return</span><span class="w"> </span><span class="kc">nil</span><span class="p">,</span><span class="w"> </span><span class="nx">fmt</span><span class="p">.</span><span class="nf">Errorf</span><span class="p">(</span><span class="s">&#34;cloudflared: assign to job object: %w&#34;</span><span class="p">,</span><span class="w"> </span><span class="nx">err</span><span class="p">)</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">	</span><span class="p">}</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">	</span><span class="k">return</span><span class="w"> </span><span class="o">&amp;</span><span class="nx">jobHandle</span><span class="p">{</span><span class="nx">h</span><span class="p">:</span><span class="w"> </span><span class="nx">job</span><span class="p">},</span><span class="w"> </span><span class="kc">nil</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="p">}</span><span class="w">
+</span></span></span></code></pre></div><p>Two small decisions in there. Closing the job is itself a guaranteed kill, so <code>close()</code> releases it <em>after</em> the graceful
+attempts rather than instead of them, which lets a clean shutdown close its edge connections properly. And if binding the
+job fails, ephemerd warns and keeps the tunnel running. A tunnel that might leak beats no tunnel, but it&rsquo;s a <code>Warn</code>, not a
+<code>Debug</code>, because it&rsquo;s the difference between one stray process and one per restart forever.</p>
+<p>The test is revert-verified: reduce <code>bindChildLifetime</code> to the old no-op and it fails with &ldquo;the child is unbound&rdquo;.</p>
+<h4 id="cleaning-up-the-ones-already-running">Cleaning up the ones already running</h4>
+<p>A Job Object only covers children this binary starts. It can&rsquo;t adopt the 25 already running. Left alone they&rsquo;d survive until
+a reboot, and they weren&rsquo;t idle: each one kept re-registering edge connections for the same tunnel, and past some count
+Cloudflare started refusing. The node was logging <code>unknown error registering the connection</code> about 300 times an hour while
+the live daemon limped along on 3 of its 4 connections. PR #207 adds a
+sweep at startup, before spawning:</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-go" data-lang="go"><span class="line"><span class="cl"><span class="k">for</span><span class="w"> </span><span class="nx">_</span><span class="p">,</span><span class="w"> </span><span class="nx">pid</span><span class="w"> </span><span class="o">:=</span><span class="w"> </span><span class="k">range</span><span class="w"> </span><span class="nx">pids</span><span class="w"> </span><span class="p">{</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">	</span><span class="k">if</span><span class="w"> </span><span class="nx">pid</span><span class="w"> </span><span class="o">==</span><span class="w"> </span><span class="mi">0</span><span class="w"> </span><span class="o">||</span><span class="w"> </span><span class="nx">pid</span><span class="w"> </span><span class="o">==</span><span class="w"> </span><span class="nx">self</span><span class="w"> </span><span class="p">{</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">		</span><span class="k">continue</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">	</span><span class="p">}</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">	</span><span class="nx">path</span><span class="p">,</span><span class="w"> </span><span class="nx">ok</span><span class="w"> </span><span class="o">:=</span><span class="w"> </span><span class="nf">processImagePath</span><span class="p">(</span><span class="nx">pid</span><span class="p">)</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">	</span><span class="k">if</span><span class="w"> </span><span class="p">!</span><span class="nx">ok</span><span class="w"> </span><span class="o">||</span><span class="w"> </span><span class="nx">strings</span><span class="p">.</span><span class="nf">ToLower</span><span class="p">(</span><span class="nx">path</span><span class="p">)</span><span class="w"> </span><span class="o">!=</span><span class="w"> </span><span class="nx">want</span><span class="w"> </span><span class="p">{</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">		</span><span class="k">continue</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">	</span><span class="p">}</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">	</span><span class="k">if</span><span class="w"> </span><span class="nf">parentPID</span><span class="p">(</span><span class="nx">pid</span><span class="p">)</span><span class="w"> </span><span class="o">==</span><span class="w"> </span><span class="nx">self</span><span class="w"> </span><span class="p">{</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">		</span><span class="k">continue</span><span class="w"> </span><span class="c1">// our own child, not a stray</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">	</span><span class="p">}</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">	</span><span class="k">if</span><span class="w"> </span><span class="nx">err</span><span class="w"> </span><span class="o">:=</span><span class="w"> </span><span class="nf">killPID</span><span class="p">(</span><span class="nx">pid</span><span class="p">);</span><span class="w"> </span><span class="nx">err</span><span class="w"> </span><span class="o">!=</span><span class="w"> </span><span class="kc">nil</span><span class="w"> </span><span class="p">{</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">		</span><span class="nx">log</span><span class="p">.</span><span class="nf">Warn</span><span class="p">(</span><span class="s">&#34;could not kill stray cloudflared&#34;</span><span class="p">,</span><span class="w"> </span><span class="s">&#34;pid&#34;</span><span class="p">,</span><span class="w"> </span><span class="nx">pid</span><span class="p">,</span><span class="w"> </span><span class="s">&#34;error&#34;</span><span class="p">,</span><span class="w"> </span><span class="nx">err</span><span class="p">)</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">		</span><span class="k">continue</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">	</span><span class="p">}</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">	</span><span class="nx">killed</span><span class="o">++</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="p">}</span><span class="w">
+</span></span></span></code></pre></div><p>The important line is the image path match. It only touches <code>cloudflared</code> running out of <em>this</em> ephemerd&rsquo;s data directory,
+never by process name, so somebody&rsquo;s own tunnel on the same box is safe. Killing an operator&rsquo;s unrelated tunnel would be a
+worse bug than the leak.</p>
+<p>Here&rsquo;s what the errors did around the reap, from the hours recorded in the PR:</p>
+<p><img src="/img/2026/10/windows-sigterm-sparse-files-errors.svg" alt="Registration errors per hour"></p>
+<p>Testing this one had a trap I fell right into. To test an orphan reaper you need real orphans, and if the test spawns
+<code>cloudflared</code> stand-ins directly, they&rsquo;re the test process&rsquo;s own children, which the reaper deliberately skips. My first
+version did exactly that and passed while proving nothing. The test now spawns them through a launcher that exits, which
+makes them genuine orphans, and it&rsquo;s revert-verified twice: a no-op reaper fails with <code>stray pid 41292 survived the reap</code>,
+and matching on name instead of path fails with <code>killed an unrelated cloudflared</code>.</p>
+<h3 id="part-2-sparse-files-and-unknown-stream-id-9">Part 2: sparse files and &ldquo;unknown stream ID 9&rdquo;</h3>
+<p>The other one came from building a Windows CI image with the MSVC toolchain baked in, so Windows jobs stop installing Visual
+Studio Build Tools every run. The build failed three times, for three different reasons:</p>
+<ol>
+<li>the checkout was killed by an unrelated teardown incident on the node</li>
+<li>the shell-form <code>RUN</code> for the <code>rustup</code> step lost its double quotes to Windows command-line parsing before PowerShell
+ever saw them (<a href="https://github.com/ephpm/ephemerd/pull/191">#191</a>)</li>
+<li>this one, which isn&rsquo;t in my Dockerfile at all</li>
+</ol>
+<pre tabindex="0"><code>failed to commit ... during finalize: failed to reimport snapshot:
+Files/Windows/Temp/DO32B1.tmp: unknown stream ID 9
+</code></pre><p><code>DO*.tmp</code> in <code>C:\Windows\Temp</code> belongs to the Delivery Optimization service (DoSvc), the thing that peer-to-peer distributes
+Windows updates. It runs inside Server Core containers and writes <strong>sparse</strong> temp files on its own schedule. When a layer
+commits, the Windows snapshotter serializes the layer with go-winio&rsquo;s backuptar, which reads files through the Win32 backup
+stream API. Stream ID 9 is <code>BACKUP_SPARSE_BLOCK</code>, and the go-winio in that stack (v0.6.2) rejects it in its layer-export pass with
+exactly that error. Upstream merged a fix for that path in September, but it isn&rsquo;t in a tagged release yet. Until it is, whichever <code>RUN</code> step happens to
+be live when DoSvc drops a file loses its commit.</p>
+<p>That&rsquo;s why it was nondeterministic. Earlier runs committed the same steps fine; the failing step was a read-only
+verification <code>RUN</code> that didn&rsquo;t write anything itself.</p>
+<p>The fix (<a href="https://github.com/ephpm/ephemerd/pull/192">#192</a>) is one early layer, right after <code>SHELL</code>, that turns the service
+off before anything else happens:</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-dockerfile" data-lang="dockerfile"><span class="line"><span class="cl"><span class="k">RUN</span> Stop-Service DoSvc -Force -ErrorAction SilentlyContinue<span class="p">;</span> <span class="sb">`</span><span class="err">
+</span></span></span><span class="line"><span class="cl">    Set-Service DoSvc -StartupType Disabled -ErrorAction SilentlyContinue<span class="p">;</span> <span class="sb">`</span><span class="err">
+</span></span></span><span class="line"><span class="cl">    Remove-Item -Path <span class="s1">&#39;C:\Windows\Temp\DO*.tmp&#39;</span> -Force -ErrorAction SilentlyContinue<span class="p">;</span> <span class="sb">`</span><span class="err">
+</span></span></span><span class="line"><span class="cl">    Write-Host <span class="s1">&#39;Delivery Optimization disabled (sparse DO*.tmp files break Windows layer commits)&#39;</span><span class="err">
+</span></span></span></code></pre></div><p>Service start type is registry state, so it persists into every later layer. <code>SilentlyContinue</code> on all of it, because a
+future base image without DoSvc should count as success. The cost was one rebuild of the cached Build Tools layer (about 25
+minutes), and that cache would have been poisoned by the same bug sooner or later anyway.</p>
+<p>If you build Windows images with BuildKit or containerd and see <code>unknown stream ID 9</code>, look for a background service writing
+sparse files (and a go-winio without that September fix) before you look at your own steps.</p>
+<h3 id="the-common-thread">The common thread</h3>
+<p>Both of these were the platform quietly not doing what the code assumed. <code>Signal(SIGTERM)</code> returned an error into a debug
+log, and a service I&rsquo;d never heard of wrote a file type the layer archiver can&rsquo;t handle. In both cases the fix was small and
+the expensive part was noticing.</p>
+<h3 id="links">Links</h3>
+<ul>
+<li><a href="https://github.com/ephpm/ephemerd/pull/206">#206 Job Object for cloudflared</a></li>
+<li><a href="https://github.com/ephpm/ephemerd/pull/192">#192 disable DoSvc in the MSVC image</a></li>
+<li><a href="https://learn.microsoft.com/en-us/windows/win32/procthread/job-objects">Job Objects (Win32)</a></li>
+<li><a href="https://learn.microsoft.com/en-us/windows/win32/api/winbase/ns-winbase-win32_stream_id">WIN32_STREAM_ID and BACKUP_SPARSE_BLOCK</a></li>
+<li><a href="https://github.com/microsoft/go-winio">microsoft/go-winio</a></li>
+</ul>
+
+      </div>
+      <footer>
+        <div class="stats">
+  
+    <ul class="categories">
+      
+        
+          <li><a class="article-terms-link" href="/categories/windows/">windows</a></li>
+        
+          <li><a class="article-terms-link" href="/categories/ci/">ci</a></li>
+        
+          <li><a class="article-terms-link" href="/categories/go/">go</a></li>
+        
+      
+    </ul>
+  
+  
+    <ul class="tags">
+      
+        
+          <li><a class="article-terms-link" href="/tags/go/">go</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/windows/">windows</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/cloudflare/">cloudflare</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/containers/">containers</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/docker/">docker</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/ephemerd/">ephemerd</a></li>
+        
+      
+    </ul>
+  
+</div>
+
+      </footer>
+    </div>
+    
+      
+  
+  <div class='post giscus-wrap'>
+    <script src='https://giscus.app/client.js'
+            data-repo='luthermonson/luth.io'
+            data-repo-id='R_kgDOGvFBXQ'
+            data-category='Announcements'
+            data-category-id='DIC_kwDOGvFBXc4DH_gv'
+            data-mapping='pathname'
+            data-strict='1'
+            data-reactions-enabled='1'
+            data-emit-metadata='0'
+            data-input-position='top'
+            data-theme='light'
+            data-lang='en'
+            data-loading='lazy'
+            crossorigin='anonymous'
+            async>
+    </script>
+  </div>
+  
+
+
+
+    
+  </article>
+  
+    <nav class="post-nav">
+      
+        <a href="/blog/2026/10/php-jit-use-after-free/" class="post-nav-link older">
+          <span class="post-nav-label">&larr; Older</span>
+          <span class="post-nav-title">An Upstream PHP JIT Use-After-Free, and Why Our Default Flipped Twice</span>
+        </a>
+      
+      
+        <a href="/blog/2026/10/go-proxmox-five-years-to-v0-8/" class="post-nav-link newer">
+          <span class="post-nav-label">Newer &rarr;</span>
+          <span class="post-nav-title">Breaking Changes Without Breaking Trust: Five Years to go-proxmox v0.8</span>
+        </a>
+      
+    </nav>
+  
+
+      </main>
+      <section id="site-sidebar">
+  
+    <section id="recent-posts">
+      <header>
+        <h1>Recent Posts</h1>
+      </header>
+      
+      <article class="mini-post">
+          <a href="/blog/2026/10/ephpm-worker-mode-performance/" class="image" style="--bg-image: url('/img/2026/10/ephpm-worker-mode-performance-cover.svg');">
+    <img class="" src="/img/2026/10/ephpm-worker-mode-performance-cover.svg" alt="Diagram: before, hyper/tokio hands each request to one shared bounded channel whose waiter list all 20 PHP threads contend on; after, a dispatcher hands the job straight into the mailbox of the most recently idle PHP thread and only queues it in a FIFO overflow queue when every thread is busy">
+  </a>
+        <header>
+          <h2><a href="/blog/2026/10/ephpm-worker-mode-performance/">Fourth Place in Worker Mode, and Why It Wasn&#39;t PHP</a></h2>
+          <time class="published" datetime="2026-10-16 08:10:00 -0700 PDT">October 16, 2026</time>
+        </header>
+      </article>
+      
+      <article class="mini-post">
+          <a href="/blog/2026/10/ephpm-websockets-how-to/" class="image" style="--bg-image: url('/img/2026/10/ephpm-websockets-how-to-cover.svg');">
+    <img class="" src="/img/2026/10/ephpm-websockets-how-to-cover.svg" alt="Diagram: browsers hold sockets to ePHPm&#39;s Rust session tasks and registry; each connect, message and disconnect runs websocket.php once on the PHP thread pool, and ordinary HTTP requests push through ephpm_ws_broadcast">
+  </a>
+        <header>
+          <h2><a href="/blog/2026/10/ephpm-websockets-how-to/">WebSockets in ePHPm, From Zero to a Working Chat</a></h2>
+          <time class="published" datetime="2026-10-11 17:30:00 -0700 PDT">October 11, 2026</time>
+        </header>
+      </article>
+      
+      <article class="mini-post">
+          <a href="/blog/2026/10/webhooks-out-of-order-scheduler/" class="image" style="--bg-image: url('/img/2026/10/webhooks-out-of-order-scheduler-timeline.svg');">
+    <img class="" src="/img/2026/10/webhooks-out-of-order-scheduler-timeline.svg" alt="Timeline of three same-label jobs where a runner executing a build is destroyed 2.3 seconds before its in_progress webhook arrives">
+  </a>
+        <header>
+          <h2><a href="/blog/2026/10/webhooks-out-of-order-scheduler/">Webhooks Arrive Out of Order: How My Scheduler Killed Live Builds</a></h2>
+          <time class="published" datetime="2026-10-07 21:10:00 -0700 PDT">October 7, 2026</time>
+        </header>
+      </article>
+      
+      <article class="mini-post">
+          <a href="/blog/2026/10/go-proxmox-five-years-to-v0-8/" class="image" style="--bg-image: url('/img/2026/10/go-proxmox-five-years-to-v0-8-apidiff.svg');">
+    <img class="" src="/img/2026/10/go-proxmox-five-years-to-v0-8-apidiff.svg" alt="Horizontal bar chart of apidiff incompatible and compatible changes for every go-proxmox release from v0.1.0 to v0.8.2">
+  </a>
+        <header>
+          <h2><a href="/blog/2026/10/go-proxmox-five-years-to-v0-8/">Breaking Changes Without Breaking Trust: Five Years to go-proxmox v0.8</a></h2>
+          <time class="published" datetime="2026-10-04 19:40:00 -0700 PDT">October 4, 2026</time>
+        </header>
+      </article>
+      
+      <article class="mini-post">
+          <a href="/blog/2026/10/windows-sigterm-sparse-files/" class="image" style="--bg-image: url('/img/2026/10/windows-sigterm-sparse-files-connections.svg');">
+    <img class="" src="/img/2026/10/windows-sigterm-sparse-files-connections.svg" alt="Bar chart: 96 Cloudflare edge connections held by orphaned cloudflared processes versus 4 for the live daemon">
+  </a>
+        <header>
+          <h2><a href="/blog/2026/10/windows-sigterm-sparse-files/">Windows Grab-Bag: SIGTERM That Doesn&#39;t Exist and Sparse Files That Break Docker</a></h2>
+          <time class="published" datetime="2026-10-03 14:30:00 -0700 PDT">October 3, 2026</time>
+        </header>
+      </article>
+      
+      
+        <footer>
+          <a href="/blog" class="button">See More</a>
+        </footer>
+      
+    </section>
+  
+
+  
+    
+
+      <section id="categories">
+        <header>
+          <h1><a href="/categories">Categories</a></h1>
+        </header>
+        <ul>
+          
+          
+          <li>
+              <a href="/categories/ephpm/">ephpm<span class="count">33</span></a>
+          
+          <li>
+              <a href="/categories/go/">go<span class="count">30</span></a>
+          
+          <li>
+              <a href="/categories/php/">php<span class="count">23</span></a>
+          
+          <li>
+              <a href="/categories/rust/">rust<span class="count">15</span></a>
+          
+          <li>
+              <a href="/categories/homelab/">homelab<span class="count">14</span></a>
+          
+          <li>
+              <a href="/categories/windows/">windows<span class="count">14</span></a>
+          
+          <li>
+              <a href="/categories/ci/">ci<span class="count">9</span></a>
+          
+          <li>
+              <a href="/categories/databases/">databases<span class="count">9</span></a>
+          
+          <li>
+              <a href="/categories/security/">security<span class="count">9</span></a>
+          
+          <li>
+              <a href="/categories/containers/">containers<span class="count">7</span></a>
+          
+          <li>
+              <a href="/categories/tools/">tools<span class="count">5</span></a>
+          
+          <li>
+              <a href="/categories/ai-agents/">ai-agents<span class="count">4</span></a>
+          
+          </li>
+        </ul>
+      </section>
+    
+  
+
+  
+    <section id="mini-bio">
+      <header>
+        <h1>About</h1>
+      </header>
+      <p>Luther is a 20+ year software veteran specializing in backend APIs and architecting products. Employed at <a href='https://www.suse.com'>SUSE</a> as the Team Lead for the <a href='https://github.com/rancher/windows/issues'>Containers on Windows Team</a> working on <a href='https://rancher.com/'>Rancher</a> + <a href='https://kubernetes.io/'>Kubernetes</a></p>
+      <footer>
+        <a href="/about" class="button">Learn More</a>
+      </footer>
+    </section>
+  
+</section>
+
+      <footer id="site-footer">
+  
+      <ul class="socnet-icons">
+        
+
+        <li><a href="//github.com/luthermonson" target="_blank" rel="noopener" title="GitHub" class="fab fa-github"></a></li>
+
+
+
+
+
+
+
+
+
+
+
+<li><a href="//www.linkedin.com/in/luthermonson" target="_blank" rel="noopener" title="LinkedIn" class="fab fa-linkedin"></a></li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li><a href="//twitter.com/luthermonson" target="_blank" rel="noopener" title="Twitter" class="fab fa-twitter"></a></li>
+
+
+
+
+
+
+
+
+
+
+
+<li><a href="mailto:luther.monson@gmail.com" target="_blank" title="Email" class="far fa-envelope"></a></li>
+
+      </ul>
+  
+  <p class="copyright">
+    © 2026 Luther Monson
+      <br>
+    Theme: <a href='https://github.com/pacollins/hugo-future-imperfect-slim' target='_blank' rel='noopener'>Hugo Future Imperfect Slim</a><br>A <a href='https://html5up.net/future-imperfect' target='_blank' rel='noopener'>HTML5 UP port</a> | Powered by <a href='https://gohugo.io/' title='0.160.1' target='_blank' rel='noopener'>Hugo</a>
+  </p>
+</footer>
+<a id="back-to-top" href="#" class="fas fa-arrow-up fa-2x"></a>
+
+      <script src="/js/bundle.min.241b62ebc4792fe8c7a75879e5f710894f226f2b73342e9916b3a3b0526030cc.js" integrity="sha256-JBti68R5L&#43;jHp1h55fcQiU8ibytzNC6ZFrOjsFJgMMw="></script>
+    <script src="/js/add-on.js"></script>
+    </div>
+  </body>
+</html>

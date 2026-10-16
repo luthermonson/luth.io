@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>Go-Diskfs on Luther Monson</title>
+    <link>https://luth.io/tags/go-diskfs/</link>
+    <description>Recent content in Go-Diskfs on Luther Monson</description>
+    <generator>Hugo</generator>
+    <language>en</language>
+    <lastBuildDate>Sat, 06 Jun 2026 15:20:00 -0700</lastBuildDate>
+    <atom:link href="https://luth.io/tags/go-diskfs/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>Cloud-Init ISOs in Pure Go with go-proxmox</title>
+      <link>https://luth.io/blog/2026/06/cloud-init-isos-pure-go-proxmox/</link>
+      <pubDate>Sat, 06 Jun 2026 15:20:00 -0700</pubDate>
+      <guid>https://luth.io/blog/2026/06/cloud-init-isos-pure-go-proxmox/</guid>
+      <description>&lt;p&gt;Proxmox&amp;rsquo;s built-in cloud-init support is fine for the basics: a user, an SSH key, an IP config. It falls apart the second you&#xA;want your own &lt;code&gt;user-data&lt;/code&gt;, &lt;code&gt;vendor-data&lt;/code&gt; or a real &lt;code&gt;network-config&lt;/code&gt;, because the GUI and the &lt;code&gt;ci*&lt;/code&gt; options only expose a&#xA;handful of fields, and the escape hatch (&lt;code&gt;cicustom&lt;/code&gt; pointing at snippet files) means getting files onto the Proxmox host&amp;rsquo;s&#xA;filesystem first. The usual alternative is building a nocloud ISO yourself with &lt;code&gt;genisoimage&lt;/code&gt; or &lt;code&gt;mkisofs&lt;/code&gt;, which means a&#xA;system dependency on whatever machine runs your automation, a different package name on every OS, and a subprocess to babysit.&lt;/p&gt;</description>
+    </item>
+    <item>
+      <title>go-diskfs: Getting Rock Ridge Working for Joliet on Windows</title>
+      <link>https://luth.io/blog/2026/05/go-diskfs-rock-ridge-joliet-windows/</link>
+      <pubDate>Sun, 17 May 2026 20:40:00 -0700</pubDate>
+      <guid>https://luth.io/blog/2026/05/go-diskfs-rock-ridge-joliet-windows/</guid>
+      <description>&lt;p&gt;&lt;a href=&#34;https://github.com/luthermonson/go-proxmox&#34;&gt;go-proxmox&lt;/a&gt; has had a &lt;code&gt;CloudInit()&lt;/code&gt; helper since 2023. It builds a small&#xA;nocloud ISO in Go, uploads it to Proxmox and mounts it on the VM as a CD-ROM. It&amp;rsquo;s always worked fine for Linux guests. It&#xA;has never worked for Windows guests running &lt;a href=&#34;https://cloudbase.it/cloudbase-init/&#34;&gt;cloudbase-init&lt;/a&gt;, and the reason is a&#xA;filesystem extension from 1995 called Joliet.&lt;/p&gt;&#xA;&lt;p&gt;Getting it fixed took three PRs to &lt;a href=&#34;https://github.com/diskfs/go-diskfs&#34;&gt;go-diskfs&lt;/a&gt; over about seven weeks, plus a bug report&#xA;from a user who actually ran it on Windows, which turned out to be the most important part.&lt;/p&gt;</description>
+    </item>
+  </channel>
+</rss>

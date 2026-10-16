@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>Durability on Luther Monson</title>
+    <link>https://luth.io/tags/durability/</link>
+    <description>Recent content in Durability on Luther Monson</description>
+    <generator>Hugo</generator>
+    <language>en</language>
+    <lastBuildDate>Thu, 06 Aug 2026 21:27:00 -0700</lastBuildDate>
+    <atom:link href="https://luth.io/tags/durability/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>Atomic File Replacement on NTFS Is Not rename &#43; fsync</title>
+      <link>https://luth.io/blog/2026/08/ntfs-atomic-file-replacement-not-rename-fsync/</link>
+      <pubDate>Thu, 06 Aug 2026 21:27:00 -0700</pubDate>
+      <guid>https://luth.io/blog/2026/08/ntfs-atomic-file-replacement-not-rename-fsync/</guid>
+      <description>&lt;p&gt;&lt;a href=&#34;https://github.com/luthermonson/shipmates&#34;&gt;shipmates&lt;/a&gt; writes a lot of small state files that other&#xA;processes read: voyage plans and state, tracker files. Each of them has to be replaced atomically (a reader sees&#xA;the old file or the new one, never half of each) and durably (when the function returns success, a power cut doesn&amp;rsquo;t&#xA;take it back). Every Unix programmer knows the recipe for that. It doesn&amp;rsquo;t work on Windows, and the reasons are more&#xA;interesting than &amp;ldquo;Windows is different&amp;rdquo;.&lt;/p&gt;</description>
+    </item>
+  </channel>
+</rss>

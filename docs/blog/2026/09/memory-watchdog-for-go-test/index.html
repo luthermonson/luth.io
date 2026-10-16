@@ -1,0 +1,731 @@
+<!doctype html>
+<html lang="en">
+  <head>
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-MSTSKGFWTX"></script>
+<script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+
+    gtag('config', 'G-MSTSKGFWTX');
+</script><meta charset="utf-8">
+<title>A 1 TB Test: Building a Memory Watchdog for go test - Luther Monson</title>
+<meta name="description" content="A runaway test binary hit about 1 TB of commit charge and took my desktop down. Here&#39;s the PowerShell and POSIX sh wrapper I put around go test, and the bug in it that the Windows box couldn&#39;t show me.">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<meta name="twitter:card" content="summary_large_image"><meta name="twitter:site" content="@luthermonson">
+
+<meta property="og:site_name" content="Luther Monson">
+<meta property="og:title" content="A 1 TB Test: Building a Memory Watchdog for go test">
+<meta property="og:description" content="A runaway test binary hit about 1 TB of commit charge and took my desktop down. Here&#39;s the PowerShell and POSIX sh wrapper I put around go test, and the bug in it that the Windows box couldn&#39;t show me.">
+<meta property="og:type" content="article">
+<meta property="og:url" content="https://luth.io/blog/2026/09/memory-watchdog-for-go-test/">
+    <meta property="og:image" content="https://luth.io/img/2026/09/memory-watchdog-for-go-test-cover.svg">
+    <meta property="og:image:alt" content="go test process tree with per-package test binaries watched by the safe-test wrapper">
+
+
+  <link rel="manifest" href="/favicon/site.webmanifest?v=1">
+  <link rel="apple-touch-icon" sizes="180x180" href="/favicon/apple-touch-icon.png?v=1">
+  <link rel="icon" type="image/png" sizes="32x32" href="/favicon/favicon-32x32.png?v=1">
+  <link rel="icon" type="image/png" sizes="16x16" href="/favicon/favicon-16x16.png?v=1">
+  
+    <link rel="mask-icon" href="/favicon/safari-pinned-tab.svg?v=1" color="#ffffff">
+    <link rel="shortcut icon" href="/favicon/favicon.ico?v=1">
+    <meta name="msapplication-config" content="/favicon/browserconfig.xml?v=1">
+  
+  <meta name="msapplication-TileColor" content="#ffffff">
+  <meta name="theme-color" content="#ffffff">
+
+
+  <meta name="generator" content="Hugo 0.160.1">
+  <link rel="alternate" type="application/rss+xml" href="https://luth.io/index.xml" title="Luther Monson">
+  <link rel="stylesheet" href="/css/bundle.min.e1ffed86714fbb7eff75eab221c0c61b8260be0c7d1c08db0fcb7a2bdb6af7c9.css" integrity="sha256-4f/thnFPu37/deqyIcDGG4Jgvgx9HAjbD8t6K9tq98k="><link rel="stylesheet" href="/css/add-on.css">
+        <link rel="stylesheet" href="/css/code.css">
+        <link rel="stylesheet" href="/css/mobile.css">
+</head>
+
+  <body>
+    
+
+<header id="site-header">
+  <nav id="site-nav">
+    <h1 class="nav-title">
+      <a href="/" class="nav">
+        <img class="nav-avatar" src="/img/luther-monson-headshot.jpg" alt="" width="32" height="32">
+        
+          Blog
+        
+      </a>
+    </h1>
+    <menu id="site-nav-menu" class="flyout-menu menu">
+      
+        
+          
+          <a href="/" class="nav link"><i class='fa fa-home'></i> Home</a>
+        
+      
+        
+          
+          <a href="/about" class="nav link"><i class='far fa-id-card'></i> About</a>
+        
+      
+        
+          
+          <a href="/blog" class="nav link"><i class='far fa-newspaper'></i> Blog</a>
+        
+      
+        
+          
+          <a href="/archive" class="nav link"><i class='far fa-calendar-alt'></i> Archive</a>
+        
+      
+        
+          
+          <a href="/categories" class="nav link"><i class='fas fa-sitemap'></i> Categories</a>
+        
+      
+      <a href="#share-menu" class="nav link share-toggle"><i class="fas fa-share-alt">&nbsp;</i>Share</a>
+      <a href="#search-input" class="nav link search-toggle"><i class="fas fa-search">&nbsp;</i>Search</a>
+    </menu>
+    <a href="#search-input" class="nav search-toggle"><i class="fas fa-search fa-2x">&nbsp;</i></a>
+    <a href="#share-menu" class="nav share-toggle"><i class="fas fa-share-alt fa-2x">&nbsp;</i></a>
+    
+    <a href="#site-nav" class="nav nav-toggle"><i class="fas fa-bars fa-2x"></i></a>
+  </nav>
+  <menu id="search" class="menu"><input id="search-input" class="search-input menu"></input><div id="search-results" class="search-results menu"></div></menu>
+  
+  
+    <menu id="share-menu" class="flyout-menu menu">
+      <h1>Share Post</h1>
+      
+
+
+
+
+  
+    
+    <a href="//twitter.com/share?text=A%201%20TB%20Test%3a%20Building%20a%20Memory%20Watchdog%20for%20go%20test&amp;url=https%3a%2f%2fluth.io%2fblog%2f2026%2f09%2fmemory-watchdog-for-go-test%2f" target="_blank" rel="noopener" class="nav share-btn twitter">
+        <p>Twitter</p>
+      </a>
+  
+
+  
+      <a href="//www.facebook.com/sharer/sharer.php?u=https%3a%2f%2fluth.io%2fblog%2f2026%2f09%2fmemory-watchdog-for-go-test%2f" target="_blank" rel="noopener" class="nav share-btn facebook">
+        <p>Facebook</p>
+        </a>
+  
+
+  
+    <a href="//www.reddit.com/submit?url=https%3a%2f%2fluth.io%2fblog%2f2026%2f09%2fmemory-watchdog-for-go-test%2f&amp;title=A%201%20TB%20Test%3a%20Building%20a%20Memory%20Watchdog%20for%20go%20test" target="_blank" rel="noopener" class="nav share-btn reddit">
+          <p>Reddit</p>
+        </a>
+  
+
+  
+        <a href="//www.linkedin.com/shareArticle?url=https%3a%2f%2fluth.io%2fblog%2f2026%2f09%2fmemory-watchdog-for-go-test%2f&amp;title=A%201%20TB%20Test%3a%20Building%20a%20Memory%20Watchdog%20for%20go%20test" target="_blank" rel="noopener" class="nav share-btn linkedin">
+            <p>LinkedIn</p>
+          </a>
+  
+
+  
+        <a href="//www.pinterest.com/pin/create/button/?url=https%3a%2f%2fluth.io%2fblog%2f2026%2f09%2fmemory-watchdog-for-go-test%2f&amp;description=A%201%20TB%20Test%3a%20Building%20a%20Memory%20Watchdog%20for%20go%20test" target="_blank" rel="noopener" class="nav share-btn pinterest">
+          <p>Pinterest</p>
+        </a>
+  
+
+  
+        <a href="mailto:?subject=Check%20out%20this%20post%20by Luther%20Monson&amp;body=https%3a%2f%2fluth.io%2fblog%2f2026%2f09%2fmemory-watchdog-for-go-test%2f" target="_blank" class="nav share-btn email" data-proofer-ignore>
+          <p>Email</p>
+        </a>
+  
+
+
+    </menu>
+  
+</header>
+
+    <div id="wrapper">
+      <section id="site-intro" class="hidden-single-column">
+  <a href="/"><img src="/img/luther-monson-headshot.jpg" class="circle" width="100" alt="Luther Monson, Staff Software Engineer at SUSE" /></a>
+  <header>
+    <h1>Luther Monson</h1>
+  </header>
+  <main>
+    <p>Go by way of PHP &middot; Containers &middot; VMs &middot; Windows &middot; Kubernetes</p>
+  </main>
+  
+    <footer>
+      <ul class="socnet-icons">
+        
+
+        <li><a href="//github.com/luthermonson" target="_blank" rel="noopener" title="GitHub" class="fab fa-github"></a></li>
+
+
+
+
+
+
+
+
+
+
+
+<li><a href="//www.linkedin.com/in/luthermonson" target="_blank" rel="noopener" title="LinkedIn" class="fab fa-linkedin"></a></li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li><a href="//twitter.com/luthermonson" target="_blank" rel="noopener" title="Twitter" class="fab fa-twitter"></a></li>
+
+
+
+
+
+
+
+
+
+
+
+<li><a href="mailto:luther.monson@gmail.com" target="_blank" title="Email" class="far fa-envelope"></a></li>
+
+      </ul>
+    </footer>
+  
+</section>
+
+      <main id="site-main">
+        
+  <article>
+    <div class="post">
+      <header>
+  <div class="title">
+    
+      <h2><a href="/blog/2026/09/memory-watchdog-for-go-test/">A 1 TB Test: Building a Memory Watchdog for go test</a></h2>
+    
+    
+      <p>A runaway test binary hit about 1 TB of commit charge and took my desktop down. Here&#39;s the PowerShell and POSIX sh wrapper I put around go test, and the bug in it that the Windows box couldn&#39;t show me.</p>
+    
+  </div>
+  <div class="meta">
+    <time datetime="2026-09-22 20:48:00 -0700 PDT">September 22, 2026</time>
+    
+    <p>8-Minute Read</p>
+  </div>
+</header>
+
+      <div id="socnet-share">
+        
+
+
+
+
+  
+    
+    <a href="//twitter.com/share?text=A%201%20TB%20Test%3a%20Building%20a%20Memory%20Watchdog%20for%20go%20test&amp;url=https%3a%2f%2fluth.io%2fblog%2f2026%2f09%2fmemory-watchdog-for-go-test%2f" target="_blank" rel="noopener" class="nav share-btn twitter">
+        <p>Twitter</p>
+      </a>
+  
+
+  
+      <a href="//www.facebook.com/sharer/sharer.php?u=https%3a%2f%2fluth.io%2fblog%2f2026%2f09%2fmemory-watchdog-for-go-test%2f" target="_blank" rel="noopener" class="nav share-btn facebook">
+        <p>Facebook</p>
+        </a>
+  
+
+  
+    <a href="//www.reddit.com/submit?url=https%3a%2f%2fluth.io%2fblog%2f2026%2f09%2fmemory-watchdog-for-go-test%2f&amp;title=A%201%20TB%20Test%3a%20Building%20a%20Memory%20Watchdog%20for%20go%20test" target="_blank" rel="noopener" class="nav share-btn reddit">
+          <p>Reddit</p>
+        </a>
+  
+
+  
+        <a href="//www.linkedin.com/shareArticle?url=https%3a%2f%2fluth.io%2fblog%2f2026%2f09%2fmemory-watchdog-for-go-test%2f&amp;title=A%201%20TB%20Test%3a%20Building%20a%20Memory%20Watchdog%20for%20go%20test" target="_blank" rel="noopener" class="nav share-btn linkedin">
+            <p>LinkedIn</p>
+          </a>
+  
+
+  
+        <a href="//www.pinterest.com/pin/create/button/?url=https%3a%2f%2fluth.io%2fblog%2f2026%2f09%2fmemory-watchdog-for-go-test%2f&amp;description=A%201%20TB%20Test%3a%20Building%20a%20Memory%20Watchdog%20for%20go%20test" target="_blank" rel="noopener" class="nav share-btn pinterest">
+          <p>Pinterest</p>
+        </a>
+  
+
+  
+        <a href="mailto:?subject=Check%20out%20this%20post%20by Luther%20Monson&amp;body=https%3a%2f%2fluth.io%2fblog%2f2026%2f09%2fmemory-watchdog-for-go-test%2f" target="_blank" class="nav share-btn email" data-proofer-ignore>
+          <p>Email</p>
+        </a>
+  
+
+
+      </div>
+      <div class="content">
+        
+        <p>On August 16th a <code>server.test.exe</code> from <a href="/blog/2026/08/shipmates-persona-based-ai-coding-crews/">shipmates</a> climbed to
+roughly <strong>1 TB of commit charge</strong> on my Windows workstation. Windows Terminal, which was hosting several agent sessions
+in tabs, hard-faulted with <code>E_OUTOFMEMORY</code> and every one of those sessions died at the same moment. It wasn&rsquo;t the first
+time either. An earlier one hit about 236 GB through an infinite <code>filepath.Dir</code> loop.</p>
+<p>The machine has 128 GB of RAM. Commit charge doesn&rsquo;t care, it&rsquo;s backed by the page file, and Windows will happily let a
+process reserve-and-commit until the commit limit is gone. Then everything else on the desktop starts failing
+allocations too.</p>
+<p>I wanted the worst case to be a killed test process instead of a dead desktop.</p>
+<h3 id="watch-the-children-not-go">Watch the children, not go</h3>
+<p><code>go test ./...</code> builds one test binary per package and runs it as a child: <code>server.test.exe</code>,
+<code>permissions.test.exe</code> and so on. A test that allocates without bound blows up in that child. The parent <code>go</code> process
+stays small the entire time, so anything that watches <code>go</code> (a job limit on the shell, a <code>ulimit</code> on the parent&rsquo;s
+RSS, eyeballing Task Manager for <code>go.exe</code>) misses it.</p>
+<p>So <a href="https://github.com/luthermonson/shipmates/pull/54">PR #54</a> added two scripts with the same contract,
+<code>scripts/safe-test.ps1</code> for Windows and <code>scripts/safe-test.sh</code> for Linux, macOS and CI:</p>
+<ol>
+<li>Start <code>go test -count=1 &lt;target&gt;</code> with output captured to a temp file outside the repo.</li>
+<li>Every 0.5 s, walk the process tree from <em>that</em> <code>go</code> pid down and pick out the <code>*.test</code> binaries. A sibling
+<code>go test</code> running for another agent is left alone, which matters on a box running four or five crews.</li>
+<li>Record a per-package peak.</li>
+<li>If a child crosses the cap (default 2000 MB), kill it, kill the whole <code>go</code> tree, print which package tripped and
+the tail of its output, and exit 1.</li>
+</ol>
+<p>The Windows tree walk is a <code>Win32_Process</code> snapshot and a stack:</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-powershell" data-lang="powershell"><span class="line"><span class="cl"><span class="kd">function</span><span class="w"> </span><span class="nb">Get-Descendants($snapshot</span><span class="p">,</span> <span class="p">[</span><span class="no">int</span><span class="p">]</span><span class="nv">$root</span><span class="p">)</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">    <span class="nv">$desc</span> <span class="p">=</span> <span class="p">[</span><span class="no">System.Collections.Generic.HashSet[int]</span><span class="p">]::</span><span class="n">new</span><span class="p">()</span>
+</span></span><span class="line"><span class="cl">    <span class="nv">$stack</span> <span class="p">=</span> <span class="p">[</span><span class="no">System.Collections.Generic.Stack[int]</span><span class="p">]::</span><span class="n">new</span><span class="p">()</span>
+</span></span><span class="line"><span class="cl">    <span class="nv">$stack</span><span class="p">.</span><span class="py">Push</span><span class="p">(</span><span class="nv">$root</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">    <span class="k">while</span> <span class="p">(</span><span class="nv">$stack</span><span class="p">.</span><span class="py">Count</span> <span class="o">-gt</span> <span class="mf">0</span><span class="p">)</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">        <span class="nv">$cur</span> <span class="p">=</span> <span class="nv">$stack</span><span class="p">.</span><span class="py">Pop</span><span class="p">()</span>
+</span></span><span class="line"><span class="cl">        <span class="k">if</span> <span class="p">(</span><span class="nv">$snapshot</span><span class="p">.</span><span class="py">ChildrenOf</span><span class="p">.</span><span class="py">ContainsKey</span><span class="p">(</span><span class="nv">$cur</span><span class="p">))</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">            <span class="k">foreach</span> <span class="p">(</span><span class="nv">$c</span> <span class="k">in</span> <span class="nv">$snapshot</span><span class="p">.</span><span class="n">ChildrenOf</span><span class="p">[</span><span class="nv">$cur</span><span class="p">])</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">                <span class="k">if</span> <span class="p">(</span><span class="nv">$desc</span><span class="p">.</span><span class="py">Add</span><span class="p">(</span><span class="nv">$c</span><span class="p">))</span> <span class="p">{</span> <span class="nv">$stack</span><span class="p">.</span><span class="py">Push</span><span class="p">(</span><span class="nv">$c</span><span class="p">)</span> <span class="p">}</span>
+</span></span><span class="line"><span class="cl">            <span class="p">}</span>
+</span></span><span class="line"><span class="cl">        <span class="p">}</span>
+</span></span><span class="line"><span class="cl">    <span class="p">}</span>
+</span></span><span class="line"><span class="cl">    <span class="k">return</span> <span class="nv">$desc</span>
+</span></span><span class="line"><span class="cl"><span class="p">}</span>
+</span></span></code></pre></div><h3 id="commit-charge-on-windows-rss-everywhere-else">Commit charge on Windows, RSS everywhere else</h3>
+<p>The two scripts deliberately measure different things.</p>
+<p>On Windows the runaway <em>was</em> commit charge. Working set (physical RAM actually in use) could stay small while commit
+ran to a terabyte, because the pages were committed but mostly never touched. So the PowerShell side reads
+<code>PagedMemorySize64</code>, which is the process&rsquo;s page-file-backed committed memory:</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-powershell" data-lang="powershell"><span class="line"><span class="cl"><span class="c"># PagedMemorySize64 is the process&#39;s committed (page-file-backed)</span>
+</span></span><span class="line"><span class="cl"><span class="c"># memory -- the commit charge, which is what the OOM was about. Working</span>
+</span></span><span class="line"><span class="cl"><span class="c"># set (physical RAM) would have stayed small while commit ran to a TB.</span>
+</span></span><span class="line"><span class="cl"><span class="nv">$commit</span> <span class="p">=</span> <span class="p">[</span><span class="no">int64</span><span class="p">]</span><span class="nv">$gp</span><span class="p">.</span><span class="py">PagedMemorySize64</span>
+</span></span><span class="line"><span class="cl"><span class="nv">$pkg</span> <span class="p">=</span> <span class="nv">$proc</span><span class="p">.</span><span class="py">Name</span> <span class="o">-replace</span> <span class="s1">&#39;\.test\.exe$&#39;</span><span class="p">,</span> <span class="s1">&#39;&#39;</span>
+</span></span></code></pre></div><p>On Linux the equivalent number is useless. Every Go process reserves a big chunk of virtual address space up front and
+Linux overcommits by default, so VSZ is large and harmless. What takes a Linux box down is resident memory, so the sh
+script reads RSS from <code>ps</code>.</p>
+<h3 id="validating-it-the-right-way">Validating it the right way</h3>
+<p>The 1 TB test itself is the more interesting part of the story. It was a test of a <em>bounded</em> behavior (the ring-buffer or
+event-log-cap kind), and to prove the cap mattered it exercised the &ldquo;fails without the guard&rdquo; case by disabling the
+bound and running unbounded. That turns a bounded test into an unbounded allocator. The rule that went into <code>CONTRIBUTING.md</code>:</p>
+<blockquote>
+<p>When you test that a limit holds, do not verify the &ldquo;fails without the guard&rdquo; case by disabling the bound and running
+unbounded. Assert against an injected small cap instead (fill a 4-slot buffer, prove the 5th is dropped), or run under
+the watchdog with a low cap.</p>
+</blockquote>
+<p>The watchdog got the same treatment. You don&rsquo;t prove a kill switch works by letting something run away and hoping. The
+PR validated it against a throwaway allocator with <code>-CapMB 300</code>: a healthy <code>./internal/server/...</code> run peaked at
+104.3 MB and passed, and the allocator tripped the kill at 300.2 MB and exited 1.</p>
+<p>I reran the same idea for this post with a test that grows by 16 MiB every 50 ms, touches every page so it shows up in
+RSS too, and stops itself at 1.5 GiB so a watchdog that misses it can&rsquo;t hurt anything:</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-go" data-lang="go"><span class="line"><span class="cl"><span class="kd">func</span><span class="w"> </span><span class="nf">TestRunaway</span><span class="p">(</span><span class="nx">t</span><span class="w"> </span><span class="o">*</span><span class="nx">testing</span><span class="p">.</span><span class="nx">T</span><span class="p">)</span><span class="w"> </span><span class="p">{</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">	</span><span class="kd">var</span><span class="w"> </span><span class="nx">keep</span><span class="w"> </span><span class="p">[][]</span><span class="kt">byte</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">	</span><span class="k">for</span><span class="w"> </span><span class="nx">i</span><span class="w"> </span><span class="o">:=</span><span class="w"> </span><span class="mi">0</span><span class="p">;</span><span class="w"> </span><span class="nx">i</span><span class="w"> </span><span class="p">&lt;</span><span class="w"> </span><span class="mi">96</span><span class="p">;</span><span class="w"> </span><span class="nx">i</span><span class="o">++</span><span class="w"> </span><span class="p">{</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">		</span><span class="nx">b</span><span class="w"> </span><span class="o">:=</span><span class="w"> </span><span class="nb">make</span><span class="p">([]</span><span class="kt">byte</span><span class="p">,</span><span class="w"> </span><span class="mi">16</span><span class="o">&lt;&lt;</span><span class="mi">20</span><span class="p">)</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">		</span><span class="k">for</span><span class="w"> </span><span class="nx">j</span><span class="w"> </span><span class="o">:=</span><span class="w"> </span><span class="mi">0</span><span class="p">;</span><span class="w"> </span><span class="nx">j</span><span class="w"> </span><span class="p">&lt;</span><span class="w"> </span><span class="nb">len</span><span class="p">(</span><span class="nx">b</span><span class="p">);</span><span class="w"> </span><span class="nx">j</span><span class="w"> </span><span class="o">+=</span><span class="w"> </span><span class="mi">4096</span><span class="w"> </span><span class="p">{</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">			</span><span class="nx">b</span><span class="p">[</span><span class="nx">j</span><span class="p">]</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="mi">1</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">		</span><span class="p">}</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">		</span><span class="nx">keep</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="nb">append</span><span class="p">(</span><span class="nx">keep</span><span class="p">,</span><span class="w"> </span><span class="nx">b</span><span class="p">)</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">		</span><span class="nx">time</span><span class="p">.</span><span class="nf">Sleep</span><span class="p">(</span><span class="mi">50</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="nx">time</span><span class="p">.</span><span class="nx">Millisecond</span><span class="p">)</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">	</span><span class="p">}</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">	</span><span class="nx">runtime</span><span class="p">.</span><span class="nf">KeepAlive</span><span class="p">(</span><span class="nx">keep</span><span class="p">)</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="p">}</span><span class="w">
+</span></span></span></code></pre></div><p>On Windows:</p>
+<pre tabindex="0"><code>safe-test: go test -count=1 ./permissions/...
+safe-test: cap=300 MB  timeout=15 min  poll=0.5 s
+------------------------------------------------------------
+exit status 0xffffffff
+FAIL	runaway/permissions	1.365s
+FAIL
+
+------------------------------------------------------------
+safe-test: per-package peak commit charge
+     354.0 MB  permissions
+------------------------------------------------------------
+
+WATCHDOG: package &#39;permissions&#39; (pid 55232) crossed the 300 MB cap at 354 MB commit charge.
+WATCHDOG: killed it and the parent &#39;go&#39; process. This is the runaway -- fix the test before re-running the full suite.
+</code></pre><p>It overshoots the cap by 54 MB because it samples. At 16 MiB per 50 ms, a half-second poll can miss about 160 MB of
+growth between looks. That&rsquo;s the honest limit of this design, and it&rsquo;s spelled out in the contributing guide now: the
+watchdog catches runaway <em>growth</em>, which is what has actually taken this machine down. It is not a hard per-allocation
+ceiling. If you want that on Windows, a Job Object memory limit is the tool, which is what shipmates uses for the agent
+processes themselves. That deserves its own post.</p>
+<h3 id="the-bug-the-windows-box-hid">The bug the Windows box hid</h3>
+<p>You may have noticed the package in my runaway test is named <code>permissions</code>. That&rsquo;s on purpose.</p>
+<p>A review of the watchdog before #54 merged (the PR sat open from mid-August to mid-September) found a hole in the sh
+version (<a href="https://github.com/luthermonson/shipmates/commit/166d208"><code>166d208</code></a>), so the fix went out with the rest of it in v0.6.0.
+It matched test children with <code>ps -o comm=</code>, and Linux truncates <code>comm</code> to 15 characters (<code>TASK_COMM_LEN</code> is 16
+including the NUL). Here&rsquo;s a binary named <code>permissions.test</code>:</p>
+<pre tabindex="0"><code>comm=[permissions.tes]
+args=[./permissions.test]
+</code></pre><p><code>permissions.tes</code> doesn&rsquo;t match <code>\.test$</code>, so the watchdog never saw it. Same for <code>personaname</code> and <code>containment</code>, which
+are, of course, the security-sensitive packages. PowerShell&rsquo;s <code>Process.Name</code> isn&rsquo;t truncated, so the Windows script was
+fine, and I only ever ran the Windows script at my desk.</p>
+<p>Here&rsquo;s the original sh script (from <code>291f29e</code>) and the fixed one against the same runaway test under WSL2:</p>
+<pre tabindex="0"><code># before: matched on comm
+safe-test: go test -count=1 ./permissions/...
+safe-test: cap=300 MB  timeout=15 min  poll=1 s
+------------------------------------------------------------
+ok  	runaway/permissions	6.180s
+
+------------------------------------------------------------
+safe-test: per-package peak resident memory
+  (no *.test child observed -- packages may have had no tests, or ran faster than one poll)
+------------------------------------------------------------
+
+safe-test: clean pass.
+</code></pre><p>A 1.5 GiB test against a 300 MB cap, reported as a clean pass with exit 0. That&rsquo;s the worst thing a guardrail can do.
+After the fix:</p>
+<pre tabindex="0"><code>safe-test: go test -count=1 ./permissions/...
+safe-test: cap=300 MB  timeout=15 min  poll=0.5 s
+------------------------------------------------------------
+
+------------------------------------------------------------
+safe-test: per-package peak resident memory
+     229.7 MB  permissions
+------------------------------------------------------------
+
+WATCHDOG: package &#39;permissions&#39; (pid 405042) crossed the 300 MB cap at 373 MB resident.
+WATCHDOG: killed it and the parent &#39;go&#39; process. This is the runaway -- fix the test before re-running the full suite.
+</code></pre><p>(The peak line is the last sample <em>under</em> the cap; the breaching sample is the one in the WATCHDOG line.)</p>
+<p>The fix reads <code>args</code> instead, which comes from <code>/proc/&lt;pid&gt;/cmdline</code> and isn&rsquo;t truncated, takes argv[0], and basenames
+it. The whole tree walk and filter is one awk pass:</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-sh" data-lang="sh"><span class="line"><span class="cl">snapshot<span class="o">()</span> <span class="o">{</span>
+</span></span><span class="line"><span class="cl">    ps -Ao <span class="nv">pid</span><span class="o">=</span>,ppid<span class="o">=</span>,rss<span class="o">=</span>,args<span class="o">=</span> <span class="p">|</span> awk -v <span class="nv">root</span><span class="o">=</span><span class="s2">&#34;</span><span class="nv">$1</span><span class="s2">&#34;</span> <span class="s1">&#39;
+</span></span></span><span class="line"><span class="cl"><span class="s1">    {
+</span></span></span><span class="line"><span class="cl"><span class="s1">        pid=$1; ppid=$2; rss=$3; exe=$4;   # exe = argv[0], first token of args
+</span></span></span><span class="line"><span class="cl"><span class="s1">        RSS[pid]=rss; EXE[pid]=exe;
+</span></span></span><span class="line"><span class="cl"><span class="s1">        kids[ppid] = kids[ppid] &#34; &#34; pid;
+</span></span></span><span class="line"><span class="cl"><span class="s1">    }
+</span></span></span><span class="line"><span class="cl"><span class="s1">    END {
+</span></span></span><span class="line"><span class="cl"><span class="s1">        n=0; queue[n++]=root;
+</span></span></span><span class="line"><span class="cl"><span class="s1">        for (i=0; i&lt;n; i++) {
+</span></span></span><span class="line"><span class="cl"><span class="s1">            m=split(kids[queue[i]], a, &#34; &#34;);
+</span></span></span><span class="line"><span class="cl"><span class="s1">            for (j=1; j&lt;=m; j++) if (a[j] != &#34;&#34;) { desc[a[j]]=1; queue[n++]=a[j]; }
+</span></span></span><span class="line"><span class="cl"><span class="s1">        }
+</span></span></span><span class="line"><span class="cl"><span class="s1">        for (p in desc) {
+</span></span></span><span class="line"><span class="cl"><span class="s1">            c=EXE[p]; sub(/.*\//, &#34;&#34;, c);
+</span></span></span><span class="line"><span class="cl"><span class="s1">            if (c ~ /\.test$/) { pkg=c; sub(/\.test$/, &#34;&#34;, pkg); print pkg, p, RSS[p]; }
+</span></span></span><span class="line"><span class="cl"><span class="s1">        }
+</span></span></span><span class="line"><span class="cl"><span class="s1">    }&#39;</span>
+</span></span><span class="line"><span class="cl"><span class="o">}</span>
+</span></span></code></pre></div><p>The same commit dropped the default poll from 1 s to 0.5 s to shrink the window between samples.</p>
+<p>The lesson is the same one twice. Test the guardrail against a deliberately small cap, and test it on the platform it&rsquo;s
+going to run on. The commit message for the fix even says the live Linux <code>ps</code> behavior &ldquo;can&rsquo;t be exercised on this
+Windows dev box&rdquo;. It could, it just needed WSL and five minutes.</p>
+<h3 id="using-it">Using it</h3>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-powershell" data-lang="powershell"><span class="line"><span class="cl"><span class="n">powershell</span> <span class="n">-ExecutionPolicy</span> <span class="n">Bypass</span> <span class="o">-File</span> <span class="n">scripts</span><span class="p">\</span><span class="nb">safe-test</span><span class="p">.</span><span class="py">ps1</span>
+</span></span><span class="line"><span class="cl"><span class="n">powershell</span> <span class="n">-ExecutionPolicy</span> <span class="n">Bypass</span> <span class="o">-File</span> <span class="n">scripts</span><span class="p">\</span><span class="nb">safe-test</span><span class="p">.</span><span class="py">ps1</span> <span class="n">-Target</span> <span class="p">./</span><span class="n">internal</span><span class="p">/</span><span class="n">server</span><span class="p">/...</span> <span class="n">-CapMB</span> <span class="mf">500</span>
+</span></span></code></pre></div><div class="highlight"><pre tabindex="0" class="chroma"><code class="language-sh" data-lang="sh"><span class="line"><span class="cl">scripts/safe-test.sh
+</span></span><span class="line"><span class="cl">scripts/safe-test.sh -t ./internal/server/... -c <span class="m">500</span>
+</span></span></code></pre></div><p>Both exit non-zero if they kill anything or if <code>go test</code> fails, so they work as a pre-push hook. CI still calls
+<code>go test</code> directly; the runners are ephemeral VMs and a runaway there only hurts itself.</p>
+<h3 id="how-i-measured">How I measured</h3>
+<p>Windows 11 Pro on an AMD Ryzen 9 5950X with 128 GB RAM, Windows PowerShell 5.1, Go 1.26. Linux runs were under WSL2
+(kernel 6.18.33.2, procps-ng 4.0.4, Go 1.26.0). The runaway module lives in a scratch directory with a single
+<code>permissions</code> package containing the test above. Commands:</p>
+<pre tabindex="0"><code>powershell -NoProfile -ExecutionPolicy Bypass -File safe-test.ps1 -Target ./permissions/... -CapMB 300
+sh safe-test-old.sh -t ./permissions/... -c 300   # git show 291f29e:scripts/safe-test.sh
+sh safe-test-new.sh -t ./permissions/... -c 300   # scripts/safe-test.sh at 166d208
+</code></pre><p>The 104.3 MB healthy peak and 300.2 MB trip are from the PR #54 description, not my runs.</p>
+<h3 id="links">Links</h3>
+<ul>
+<li><a href="https://github.com/luthermonson/shipmates/pull/54">shipmates PR #54</a> (the watchdog)</li>
+<li><a href="https://github.com/luthermonson/shipmates/commit/166d208"><code>166d208</code></a> (argv[0] instead of <code>comm</code>)</li>
+<li><a href="https://github.com/luthermonson/shipmates/blob/main/scripts/safe-test.ps1"><code>scripts/safe-test.ps1</code></a> and <a href="https://github.com/luthermonson/shipmates/blob/main/scripts/safe-test.sh"><code>scripts/safe-test.sh</code></a></li>
+<li><a href="https://man7.org/linux/man-pages/man5/proc_pid_comm.5.html">proc(5): <code>/proc/pid/comm</code></a></li>
+</ul>
+
+      </div>
+      <footer>
+        <div class="stats">
+  
+    <ul class="categories">
+      
+        
+          <li><a class="article-terms-link" href="/categories/go/">go</a></li>
+        
+          <li><a class="article-terms-link" href="/categories/windows/">windows</a></li>
+        
+      
+    </ul>
+  
+  
+    <ul class="tags">
+      
+        
+          <li><a class="article-terms-link" href="/tags/go/">go</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/testing/">testing</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/windows/">windows</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/linux/">linux</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/powershell/">powershell</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/shipmates/">shipmates</a></li>
+        
+      
+    </ul>
+  
+</div>
+
+      </footer>
+    </div>
+    
+      
+  
+  <div class='post giscus-wrap'>
+    <script src='https://giscus.app/client.js'
+            data-repo='luthermonson/luth.io'
+            data-repo-id='R_kgDOGvFBXQ'
+            data-category='Announcements'
+            data-category-id='DIC_kwDOGvFBXc4DH_gv'
+            data-mapping='pathname'
+            data-strict='1'
+            data-reactions-enabled='1'
+            data-emit-metadata='0'
+            data-input-position='top'
+            data-theme='light'
+            data-lang='en'
+            data-loading='lazy'
+            crossorigin='anonymous'
+            async>
+    </script>
+  </div>
+  
+
+
+
+    
+  </article>
+  
+    <nav class="post-nav">
+      
+        <a href="/blog/2026/09/calling-rust-from-php-without-a-socket-part-2/" class="post-nav-link older">
+          <span class="post-nav-label">&larr; Older</span>
+          <span class="post-nav-title">Calling Rust From PHP Without a Socket, Part 2: Making Existing Code Use It</span>
+        </a>
+      
+      
+        <a href="/blog/2026/09/bind-mounts-across-mount-namespaces/" class="post-nav-link newer">
+          <span class="post-nav-label">Newer &rarr;</span>
+          <span class="post-nav-title">Bind Mounts Across Mount Namespaces: Four PRs and a Container Escape</span>
+        </a>
+      
+    </nav>
+  
+
+      </main>
+      <section id="site-sidebar">
+  
+    <section id="recent-posts">
+      <header>
+        <h1>Recent Posts</h1>
+      </header>
+      
+      <article class="mini-post">
+          <a href="/blog/2026/10/ephpm-worker-mode-performance/" class="image" style="--bg-image: url('/img/2026/10/ephpm-worker-mode-performance-cover.svg');">
+    <img class="" src="/img/2026/10/ephpm-worker-mode-performance-cover.svg" alt="Diagram: before, hyper/tokio hands each request to one shared bounded channel whose waiter list all 20 PHP threads contend on; after, a dispatcher hands the job straight into the mailbox of the most recently idle PHP thread and only queues it in a FIFO overflow queue when every thread is busy">
+  </a>
+        <header>
+          <h2><a href="/blog/2026/10/ephpm-worker-mode-performance/">Fourth Place in Worker Mode, and Why It Wasn&#39;t PHP</a></h2>
+          <time class="published" datetime="2026-10-16 08:10:00 -0700 PDT">October 16, 2026</time>
+        </header>
+      </article>
+      
+      <article class="mini-post">
+          <a href="/blog/2026/10/ephpm-websockets-how-to/" class="image" style="--bg-image: url('/img/2026/10/ephpm-websockets-how-to-cover.svg');">
+    <img class="" src="/img/2026/10/ephpm-websockets-how-to-cover.svg" alt="Diagram: browsers hold sockets to ePHPm&#39;s Rust session tasks and registry; each connect, message and disconnect runs websocket.php once on the PHP thread pool, and ordinary HTTP requests push through ephpm_ws_broadcast">
+  </a>
+        <header>
+          <h2><a href="/blog/2026/10/ephpm-websockets-how-to/">WebSockets in ePHPm, From Zero to a Working Chat</a></h2>
+          <time class="published" datetime="2026-10-11 17:30:00 -0700 PDT">October 11, 2026</time>
+        </header>
+      </article>
+      
+      <article class="mini-post">
+          <a href="/blog/2026/10/webhooks-out-of-order-scheduler/" class="image" style="--bg-image: url('/img/2026/10/webhooks-out-of-order-scheduler-timeline.svg');">
+    <img class="" src="/img/2026/10/webhooks-out-of-order-scheduler-timeline.svg" alt="Timeline of three same-label jobs where a runner executing a build is destroyed 2.3 seconds before its in_progress webhook arrives">
+  </a>
+        <header>
+          <h2><a href="/blog/2026/10/webhooks-out-of-order-scheduler/">Webhooks Arrive Out of Order: How My Scheduler Killed Live Builds</a></h2>
+          <time class="published" datetime="2026-10-07 21:10:00 -0700 PDT">October 7, 2026</time>
+        </header>
+      </article>
+      
+      <article class="mini-post">
+          <a href="/blog/2026/10/go-proxmox-five-years-to-v0-8/" class="image" style="--bg-image: url('/img/2026/10/go-proxmox-five-years-to-v0-8-apidiff.svg');">
+    <img class="" src="/img/2026/10/go-proxmox-five-years-to-v0-8-apidiff.svg" alt="Horizontal bar chart of apidiff incompatible and compatible changes for every go-proxmox release from v0.1.0 to v0.8.2">
+  </a>
+        <header>
+          <h2><a href="/blog/2026/10/go-proxmox-five-years-to-v0-8/">Breaking Changes Without Breaking Trust: Five Years to go-proxmox v0.8</a></h2>
+          <time class="published" datetime="2026-10-04 19:40:00 -0700 PDT">October 4, 2026</time>
+        </header>
+      </article>
+      
+      <article class="mini-post">
+          <a href="/blog/2026/10/windows-sigterm-sparse-files/" class="image" style="--bg-image: url('/img/2026/10/windows-sigterm-sparse-files-connections.svg');">
+    <img class="" src="/img/2026/10/windows-sigterm-sparse-files-connections.svg" alt="Bar chart: 96 Cloudflare edge connections held by orphaned cloudflared processes versus 4 for the live daemon">
+  </a>
+        <header>
+          <h2><a href="/blog/2026/10/windows-sigterm-sparse-files/">Windows Grab-Bag: SIGTERM That Doesn&#39;t Exist and Sparse Files That Break Docker</a></h2>
+          <time class="published" datetime="2026-10-03 14:30:00 -0700 PDT">October 3, 2026</time>
+        </header>
+      </article>
+      
+      
+        <footer>
+          <a href="/blog" class="button">See More</a>
+        </footer>
+      
+    </section>
+  
+
+  
+    
+
+      <section id="categories">
+        <header>
+          <h1><a href="/categories">Categories</a></h1>
+        </header>
+        <ul>
+          
+          
+          <li>
+              <a href="/categories/ephpm/">ephpm<span class="count">33</span></a>
+          
+          <li>
+              <a href="/categories/go/">go<span class="count">30</span></a>
+          
+          <li>
+              <a href="/categories/php/">php<span class="count">23</span></a>
+          
+          <li>
+              <a href="/categories/rust/">rust<span class="count">15</span></a>
+          
+          <li>
+              <a href="/categories/homelab/">homelab<span class="count">14</span></a>
+          
+          <li>
+              <a href="/categories/windows/">windows<span class="count">14</span></a>
+          
+          <li>
+              <a href="/categories/ci/">ci<span class="count">9</span></a>
+          
+          <li>
+              <a href="/categories/databases/">databases<span class="count">9</span></a>
+          
+          <li>
+              <a href="/categories/security/">security<span class="count">9</span></a>
+          
+          <li>
+              <a href="/categories/containers/">containers<span class="count">7</span></a>
+          
+          <li>
+              <a href="/categories/tools/">tools<span class="count">5</span></a>
+          
+          <li>
+              <a href="/categories/ai-agents/">ai-agents<span class="count">4</span></a>
+          
+          </li>
+        </ul>
+      </section>
+    
+  
+
+  
+    <section id="mini-bio">
+      <header>
+        <h1>About</h1>
+      </header>
+      <p>Luther is a 20+ year software veteran specializing in backend APIs and architecting products. Employed at <a href='https://www.suse.com'>SUSE</a> as the Team Lead for the <a href='https://github.com/rancher/windows/issues'>Containers on Windows Team</a> working on <a href='https://rancher.com/'>Rancher</a> + <a href='https://kubernetes.io/'>Kubernetes</a></p>
+      <footer>
+        <a href="/about" class="button">Learn More</a>
+      </footer>
+    </section>
+  
+</section>
+
+      <footer id="site-footer">
+  
+      <ul class="socnet-icons">
+        
+
+        <li><a href="//github.com/luthermonson" target="_blank" rel="noopener" title="GitHub" class="fab fa-github"></a></li>
+
+
+
+
+
+
+
+
+
+
+
+<li><a href="//www.linkedin.com/in/luthermonson" target="_blank" rel="noopener" title="LinkedIn" class="fab fa-linkedin"></a></li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li><a href="//twitter.com/luthermonson" target="_blank" rel="noopener" title="Twitter" class="fab fa-twitter"></a></li>
+
+
+
+
+
+
+
+
+
+
+
+<li><a href="mailto:luther.monson@gmail.com" target="_blank" title="Email" class="far fa-envelope"></a></li>
+
+      </ul>
+  
+  <p class="copyright">
+    © 2026 Luther Monson
+      <br>
+    Theme: <a href='https://github.com/pacollins/hugo-future-imperfect-slim' target='_blank' rel='noopener'>Hugo Future Imperfect Slim</a><br>A <a href='https://html5up.net/future-imperfect' target='_blank' rel='noopener'>HTML5 UP port</a> | Powered by <a href='https://gohugo.io/' title='0.160.1' target='_blank' rel='noopener'>Hugo</a>
+  </p>
+</footer>
+<a id="back-to-top" href="#" class="fas fa-arrow-up fa-2x"></a>
+
+      <script src="/js/bundle.min.241b62ebc4792fe8c7a75879e5f710894f226f2b73342e9916b3a3b0526030cc.js" integrity="sha256-JBti68R5L&#43;jHp1h55fcQiU8ibytzNC6ZFrOjsFJgMMw="></script>
+    <script src="/js/add-on.js"></script>
+    </div>
+  </body>
+</html>

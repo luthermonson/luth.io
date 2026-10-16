@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>Middleware on Luther Monson</title>
+    <link>https://luth.io/tags/middleware/</link>
+    <description>Recent content in Middleware on Luther Monson</description>
+    <generator>Hugo</generator>
+    <language>en</language>
+    <lastBuildDate>Mon, 31 Aug 2026 20:50:00 -0700</lastBuildDate>
+    <atom:link href="https://luth.io/tags/middleware/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>Middleware in PHP: Compiling It With elephc, Then Not Needing To</title>
+      <link>https://luth.io/blog/2026/08/php-middleware-elephc/</link>
+      <pubDate>Mon, 31 Aug 2026 20:50:00 -0700</pubDate>
+      <guid>https://luth.io/blog/2026/08/php-middleware-elephc/</guid>
+      <description>&lt;p&gt;&lt;a href=&#34;https://github.com/ephpm/ephpm&#34;&gt;ePHPm&lt;/a&gt; middleware runs &lt;em&gt;before&lt;/em&gt; PHP. It&amp;rsquo;s a small versioned C ABI, loaded with&#xA;&lt;code&gt;dlopen&lt;/code&gt;, that gets to look at a request and reject it before PHP boots or the request body is read. That&amp;rsquo;s the&#xA;right shape for a gateway, and it&amp;rsquo;s the wrong shape for most PHP shops, who want to write their middleware in PHP.&#xA;This is the story of compiling PHP into a native &lt;code&gt;.so&lt;/code&gt; to fit that ABI, finding exactly where it broke, and then&#xA;building the lane that should have existed in the first place.&lt;/p&gt;</description>
+    </item>
+  </channel>
+</rss>

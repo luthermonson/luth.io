@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>Mount-Namespaces on Luther Monson</title>
+    <link>https://luth.io/tags/mount-namespaces/</link>
+    <description>Recent content in Mount-Namespaces on Luther Monson</description>
+    <generator>Hugo</generator>
+    <language>en</language>
+    <lastBuildDate>Thu, 24 Sep 2026 21:02:00 -0700</lastBuildDate>
+    <atom:link href="https://luth.io/tags/mount-namespaces/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>Bind Mounts Across Mount Namespaces: Four PRs and a Container Escape</title>
+      <link>https://luth.io/blog/2026/09/bind-mounts-across-mount-namespaces/</link>
+      <pubDate>Thu, 24 Sep 2026 21:02:00 -0700</pubDate>
+      <guid>https://luth.io/blog/2026/09/bind-mounts-across-mount-namespaces/</guid>
+      <description>&lt;p&gt;GitHub Actions has a &lt;code&gt;container:&lt;/code&gt; key that runs a job&amp;rsquo;s steps inside an image of your choosing. It&amp;rsquo;s popular because it&#xA;gives you a reproducible toolchain without building a custom runner image. On a self-hosted runner it works by having the&#xA;runner drive Docker, and on &lt;a href=&#34;https://luth.io/blog/2026/08/ephemerd-one-daemon-every-os/&#34;&gt;ephemerd&lt;/a&gt; &amp;ldquo;Docker&amp;rdquo; is a shim that speaks the&#xA;Docker API and creates containers in containerd. Getting bind mounts right through that shim took four PRs in a week. A&#xA;couple of months later the version that worked turned out to be an escape.&lt;/p&gt;</description>
+    </item>
+  </channel>
+</rss>

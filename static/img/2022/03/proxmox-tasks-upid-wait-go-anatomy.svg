@@ -1,0 +1,45 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 300" font-family="system-ui, -apple-system, Segoe UI, Roboto, sans-serif">
+  <rect width="960" height="300" fill="#ffffff"/>
+  <text x="480" y="34" text-anchor="middle" font-size="20" font-weight="600" fill="#222">Anatomy of a Proxmox UPID</text>
+  <text x="480" y="62" text-anchor="middle" font-size="14" fill="#6b6b6b" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace">UPID:i7:00303F51:09D93CFE:61CCA568:download:8fd77349e9f6.iso:root@pam:</text>
+  <g font-size="13" text-anchor="middle">
+    <!-- boxes -->
+    <rect x="20"  y="90" width="80"  height="44" rx="6" fill="#6b6b6b"/>
+    <text x="60"  y="117" fill="#fff" font-weight="600">UPID</text>
+    <rect x="108" y="90" width="70"  height="44" rx="6" fill="#2b6cb0"/>
+    <text x="143" y="117" fill="#fff" font-weight="600">i7</text>
+    <rect x="186" y="90" width="110" height="44" rx="6" fill="#7d5ba6"/>
+    <text x="241" y="117" fill="#fff" font-weight="600">00303F51</text>
+    <rect x="304" y="90" width="110" height="44" rx="6" fill="#7d5ba6"/>
+    <text x="359" y="117" fill="#fff" font-weight="600">09D93CFE</text>
+    <rect x="422" y="90" width="110" height="44" rx="6" fill="#7d5ba6"/>
+    <text x="477" y="117" fill="#fff" font-weight="600">61CCA568</text>
+    <rect x="540" y="90" width="100" height="44" rx="6" fill="#e07a1f"/>
+    <text x="590" y="117" fill="#fff" font-weight="600">download</text>
+    <rect x="648" y="90" width="170" height="44" rx="6" fill="#3a9a5b"/>
+    <text x="733" y="117" fill="#fff" font-weight="600">8fd77349e9f6.iso</text>
+    <rect x="826" y="90" width="114" height="44" rx="6" fill="#c0392b"/>
+    <text x="883" y="117" fill="#fff" font-weight="600">root@pam</text>
+    <!-- labels -->
+    <text x="60"  y="160" fill="#222">prefix</text>
+    <text x="143" y="160" fill="#222">node</text>
+    <text x="241" y="160" fill="#222">pid (hex)</text>
+    <text x="359" y="160" fill="#222">pstart (hex)</text>
+    <text x="477" y="160" fill="#222">starttime (hex)</text>
+    <text x="590" y="160" fill="#222">type</text>
+    <text x="733" y="160" fill="#222">id</text>
+    <text x="883" y="160" fill="#222">user</text>
+    <!-- decoded -->
+    <text x="143" y="184" fill="#6b6b6b">sp[1]</text>
+    <text x="241" y="184" fill="#6b6b6b">3161937</text>
+    <text x="359" y="184" fill="#6b6b6b">165231870</text>
+    <text x="477" y="184" fill="#6b6b6b">1640801640</text>
+    <text x="590" y="184" fill="#6b6b6b">sp[5]</text>
+    <text x="733" y="184" fill="#6b6b6b">sp[6]</text>
+    <text x="883" y="184" fill="#6b6b6b">sp[7]</text>
+    <text x="477" y="204" fill="#6b6b6b">2021-12-29 18:14:00 UTC</text>
+  </g>
+  <line x1="40" y1="232" x2="920" y2="232" stroke="#ddd"/>
+  <text x="480" y="262" text-anchor="middle" font-size="14" fill="#222">GET /nodes/{node}/tasks/{upid}/status  until status != "running", then check exitstatus</text>
+  <text x="480" y="284" text-anchor="middle" font-size="12" fill="#6b6b6b">the node comes from the UPID itself, so a Task can poll without being told where it runs</text>
+</svg>

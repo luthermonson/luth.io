@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>Segfault on Luther Monson</title>
+    <link>https://luth.io/tags/segfault/</link>
+    <description>Recent content in Segfault on Luther Monson</description>
+    <generator>Hugo</generator>
+    <language>en</language>
+    <lastBuildDate>Sun, 06 Sep 2026 15:05:00 -0700</lastBuildDate>
+    <atom:link href="https://luth.io/tags/segfault/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>We Disabled PHP&#39;s Stack Guard Ourselves: Containing Segfaults in a Single-Process PHP Server</title>
+      <link>https://luth.io/blog/2026/09/php-stack-guard-segfault-containment/</link>
+      <pubDate>Sun, 06 Sep 2026 15:05:00 -0700</pubDate>
+      <guid>https://luth.io/blog/2026/09/php-stack-guard-segfault-containment/</guid>
+      <description>&lt;p&gt;php-fpm has a property nobody thinks about until they leave it: when a worker segfaults, you lose one request. The&#xA;master forks a new child and life goes on. &lt;a href=&#34;https://github.com/ephpm/ephpm&#34;&gt;ePHPm&lt;/a&gt; runs every tenant&amp;rsquo;s PHP as threads&#xA;inside one process. That&amp;rsquo;s where the memory and latency wins come from, and it also means one tenant&amp;rsquo;s segfault&#xA;takes down every other tenant on the box.&lt;/p&gt;&#xA;&lt;p&gt;This is the story of closing that gap, in four steps over about two weeks. The last step turned out to be a bug we&amp;rsquo;d&#xA;put there ourselves. It&amp;rsquo;s also the payoff for the thread pool work in&#xA;&lt;a href=&#34;https://luth.io/blog/2026/09/own-your-php-thread-pool/&#34;&gt;the previous post&lt;/a&gt;: everything below that actually shipped depends on&#xA;ePHPm owning its own PHP threads.&lt;/p&gt;</description>
+    </item>
+  </channel>
+</rss>

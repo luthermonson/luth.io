@@ -4,55 +4,534 @@
     <title>Luther Monson</title>
     <link>https://luth.io/</link>
     <description>Recent content on Luther Monson</description>
-    <generator>Hugo -- gohugo.io</generator>
+    <generator>Hugo</generator>
     <language>en</language>
-    <lastBuildDate>Sun, 06 Feb 2022 21:54:53 -0700</lastBuildDate><atom:link href="https://luth.io/index.xml" rel="self" type="application/rss+xml" />
+    <lastBuildDate>Fri, 16 Oct 2026 08:10:00 -0700</lastBuildDate>
+    <atom:link href="https://luth.io/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>Fourth Place in Worker Mode, and Why It Wasn&#39;t PHP</title>
+      <link>https://luth.io/blog/2026/10/ephpm-worker-mode-performance/</link>
+      <pubDate>Fri, 16 Oct 2026 08:10:00 -0700</pubDate>
+      <guid>https://luth.io/blog/2026/10/ephpm-worker-mode-performance/</guid>
+      <description>&lt;p&gt;We added &lt;a href=&#34;https://github.com/ephpm/ephpm&#34;&gt;ePHPm&lt;/a&gt; to the&#xA;&lt;a href=&#34;https://github.com/Yii3-Benchmarks/app-api&#34;&gt;Yii3 runtime benchmark&lt;/a&gt;, which runs the same Yii3 API app on a bunch of&#xA;PHP runtimes and compares them (our fork with the ePHPm runner is &lt;a href=&#34;https://github.com/ephpm/app-api&#34;&gt;ephpm/app-api&lt;/a&gt;).&#xA;Most of the results were good. ePHPm came first in classic mode, the PHP-FPM style where every request starts fresh,&#xA;and first on the database endpoint in both modes.&lt;/p&gt;&#xA;&lt;p&gt;Worker mode was the surprise. That&amp;rsquo;s the mode where the app boots once and stays in memory, like Octane or&#xA;FrankenPHP&amp;rsquo;s worker mode. We came fourth of ten, at about 50.7k requests a second, behind Workerman (~65k) and&#xA;Swoole (~62k).&lt;/p&gt;</description>
+    </item>
+    <item>
+      <title>WebSockets in ePHPm, From Zero to a Working Chat</title>
+      <link>https://luth.io/blog/2026/10/ephpm-websockets-how-to/</link>
+      <pubDate>Sun, 11 Oct 2026 17:30:00 -0700</pubDate>
+      <guid>https://luth.io/blog/2026/10/ephpm-websockets-how-to/</guid>
+      <description>&lt;p&gt;I covered the design of &lt;a href=&#34;https://github.com/ephpm/ephpm&#34;&gt;ePHPm&lt;/a&gt;&amp;rsquo;s native WebSockets in a few paragraphs of the&#xA;&lt;a href=&#34;https://luth.io/blog/2026/09/ephpm-smaller-angles/&#34;&gt;odds and ends post&lt;/a&gt;: Rust owns the socket, PHP runs once per event, and an idle&#xA;connection never costs you a PHP thread. That was the why. This post is the how. We&amp;rsquo;ll build a small chat app with&#xA;login, per-user push notifications from ordinary HTTP requests, and a browser client. Then we&amp;rsquo;ll serve it over TLS&#xA;and look at the limits, the sharp edges, and how to debug it when the browser only tells you &lt;code&gt;1006&lt;/code&gt;.&lt;/p&gt;</description>
+    </item>
+    <item>
+      <title>Webhooks Arrive Out of Order: How My Scheduler Killed Live Builds</title>
+      <link>https://luth.io/blog/2026/10/webhooks-out-of-order-scheduler/</link>
+      <pubDate>Wed, 07 Oct 2026 21:10:00 -0700</pubDate>
+      <guid>https://luth.io/blog/2026/10/webhooks-out-of-order-scheduler/</guid>
+      <description>&lt;p&gt;The scheduler in &lt;a href=&#34;https://luth.io/blog/2026/08/ephemerd-one-daemon-every-os/&#34;&gt;ephemerd&lt;/a&gt; is event-driven. GitHub sends a &lt;code&gt;workflow_job&lt;/code&gt;&#xA;webhook when a job is queued, when it starts and when it completes, and ephemerd creates and destroys runners to match.&#xA;For a while that worked well enough that I stopped thinking about it. Then a &lt;code&gt;docker-build&lt;/code&gt; job failed with &amp;ldquo;The&#xA;self-hosted runner lost communication with the server&amp;rdquo;, and when I pulled the node&amp;rsquo;s journal, ephemerd had destroyed that&#xA;runner itself, on purpose, while it was running the build.&lt;/p&gt;</description>
+    </item>
+    <item>
+      <title>Breaking Changes Without Breaking Trust: Five Years to go-proxmox v0.8</title>
+      <link>https://luth.io/blog/2026/10/go-proxmox-five-years-to-v0-8/</link>
+      <pubDate>Sun, 04 Oct 2026 19:40:00 -0700</pubDate>
+      <guid>https://luth.io/blog/2026/10/go-proxmox-five-years-to-v0-8/</guid>
+      <description>&lt;p&gt;&lt;a href=&#34;https://github.com/luthermonson/go-proxmox&#34;&gt;go-proxmox&lt;/a&gt; had its first commit in June 2021 and v0.8.2 went out on&#xA;September 30th. In between: 366 commits, 43 people besides me with a merged PR, and, more to the point of this post,&#xA;downstream projects that I don&amp;rsquo;t control pinning it in their &lt;code&gt;go.mod&lt;/code&gt;. IONOS&amp;rsquo;s&#xA;&lt;a href=&#34;https://github.com/ionos-cloud/cluster-api-provider-proxmox&#34;&gt;Cluster API provider&lt;/a&gt; and Sidero&amp;rsquo;s&#xA;&lt;a href=&#34;https://github.com/siderolabs/omni-infra-provider-proxmox&#34;&gt;Omni Proxmox provider&lt;/a&gt; are both on v0.8.1 today. A&#xA;library with users like that gets judged less on its API and more on what happens to their build when they bump the&#xA;version. I didn&amp;rsquo;t always get that right, so here is the history, measured.&lt;/p&gt;</description>
+    </item>
+    <item>
+      <title>Windows Grab-Bag: SIGTERM That Doesn&#39;t Exist and Sparse Files That Break Docker</title>
+      <link>https://luth.io/blog/2026/10/windows-sigterm-sparse-files/</link>
+      <pubDate>Sat, 03 Oct 2026 14:30:00 -0700</pubDate>
+      <guid>https://luth.io/blog/2026/10/windows-sigterm-sparse-files/</guid>
+      <description>&lt;p&gt;Two short ones from the Windows node of &lt;a href=&#34;https://luth.io/blog/2026/08/ephemerd-one-daemon-every-os/&#34;&gt;ephemerd&lt;/a&gt; from the last few weeks. Neither is&#xA;complicated once you know what&amp;rsquo;s going on. Both took longer than they should have to find, because the failure showed up a&#xA;long way from the cause.&lt;/p&gt;&#xA;&lt;h3 id=&#34;part-1-there-is-no-sigterm-on-windows&#34;&gt;Part 1: there is no SIGTERM on Windows&lt;/h3&gt;&#xA;&lt;p&gt;ephemerd can run a Cloudflare tunnel so GitHub webhooks reach a node behind NAT. It does that by running &lt;code&gt;cloudflared&lt;/code&gt; as a&#xA;managed subprocess. On Linux the child is tied to ephemerd&amp;rsquo;s lifetime by the kernel with &lt;code&gt;Pdeathsig&lt;/code&gt;:&lt;/p&gt;</description>
+    </item>
+    <item>
+      <title>An Upstream PHP JIT Use-After-Free, and Why Our Default Flipped Twice</title>
+      <link>https://luth.io/blog/2026/10/php-jit-use-after-free/</link>
+      <pubDate>Thu, 01 Oct 2026 20:10:00 -0700</pubDate>
+      <guid>https://luth.io/blog/2026/10/php-jit-use-after-free/</guid>
+      <description>&lt;p&gt;In August, &lt;a href=&#34;https://github.com/ephpm/ephpm&#34;&gt;ePHPm&lt;/a&gt; turned PHP&amp;rsquo;s tracing JIT on by default in single-site serve mode.&#xA;Three days later it went back off, on every platform, and it&amp;rsquo;s still off. The reason turned out to be a&#xA;use-after-free in PHP&amp;rsquo;s tracing JIT that has nothing to do with ePHPm: stock &lt;code&gt;php -S&lt;/code&gt; with a stock Laravel skeleton&#xA;dies on it in a couple of requests. The fix is now released upstream, so this seemed like the right time to write up&#xA;how we got there, and what still has to happen before the default can flip again.&lt;/p&gt;</description>
+    </item>
+    <item>
+      <title>Your Agent&#39;s Shell Allowlist Is Bypassable</title>
+      <link>https://luth.io/blog/2026/09/agent-shell-allowlist-bypassable/</link>
+      <pubDate>Tue, 29 Sep 2026 20:30:00 -0700</pubDate>
+      <guid>https://luth.io/blog/2026/09/agent-shell-allowlist-bypassable/</guid>
+      <description>&lt;p&gt;Every &lt;a href=&#34;https://luth.io/blog/2026/08/shipmates-persona-based-ai-coding-crews/&#34;&gt;shipmates&lt;/a&gt; crew member runs shell commands, and before any&#xA;of them runs it goes through a permission gate. The gate uses the same rule syntax as Claude Code settings,&#xA;&lt;code&gt;Bash(git status)&lt;/code&gt;, &lt;code&gt;Bash(rm *)&lt;/code&gt;, &lt;code&gt;Write(**/.claude/settings.json)&lt;/code&gt;, merged from several layers: a fleet-wide deny list&#xA;pushed from Fleet Command, per-persona policy files, project settings, and the Brig, which compiles shipmates&amp;rsquo; fifteen&#xA;&amp;ldquo;Ship&amp;rsquo;s Articles&amp;rdquo; into deny and ask rules. Deny beats ask, ask beats allow.&lt;/p&gt;</description>
+    </item>
+    <item>
+      <title>Cross-Platform Process Containment: Job Objects vs Process Groups vs cgroups</title>
+      <link>https://luth.io/blog/2026/09/process-containment-job-objects-process-groups-cgroups/</link>
+      <pubDate>Sat, 26 Sep 2026 16:20:00 -0700</pubDate>
+      <guid>https://luth.io/blog/2026/09/process-containment-job-objects-process-groups-cgroups/</guid>
+      <description>&lt;p&gt;Every turn a &lt;a href=&#34;https://luth.io/blog/2026/08/shipmates-persona-based-ai-coding-crews/&#34;&gt;shipmates&lt;/a&gt; crew member takes is a subprocess:&#xA;&lt;code&gt;claude&lt;/code&gt; or the &lt;code&gt;codex&lt;/code&gt; app-server, which in turn spawns shells, &lt;code&gt;go test&lt;/code&gt;, &lt;code&gt;npm&lt;/code&gt;, whatever the task calls for. Two&#xA;things have to be true about that tree. When a turn ends or gets killed, the &lt;em&gt;whole&lt;/em&gt; tree goes, including the&#xA;grandchildren. And if somebody sets a memory or CPU budget, the budget applies to the whole tree, not just the&#xA;process I happened to start.&lt;/p&gt;</description>
+    </item>
+    <item>
+      <title>Bind Mounts Across Mount Namespaces: Four PRs and a Container Escape</title>
+      <link>https://luth.io/blog/2026/09/bind-mounts-across-mount-namespaces/</link>
+      <pubDate>Thu, 24 Sep 2026 21:02:00 -0700</pubDate>
+      <guid>https://luth.io/blog/2026/09/bind-mounts-across-mount-namespaces/</guid>
+      <description>&lt;p&gt;GitHub Actions has a &lt;code&gt;container:&lt;/code&gt; key that runs a job&amp;rsquo;s steps inside an image of your choosing. It&amp;rsquo;s popular because it&#xA;gives you a reproducible toolchain without building a custom runner image. On a self-hosted runner it works by having the&#xA;runner drive Docker, and on &lt;a href=&#34;https://luth.io/blog/2026/08/ephemerd-one-daemon-every-os/&#34;&gt;ephemerd&lt;/a&gt; &amp;ldquo;Docker&amp;rdquo; is a shim that speaks the&#xA;Docker API and creates containers in containerd. Getting bind mounts right through that shim took four PRs in a week. A&#xA;couple of months later the version that worked turned out to be an escape.&lt;/p&gt;</description>
+    </item>
+    <item>
+      <title>A 1 TB Test: Building a Memory Watchdog for go test</title>
+      <link>https://luth.io/blog/2026/09/memory-watchdog-for-go-test/</link>
+      <pubDate>Tue, 22 Sep 2026 20:48:00 -0700</pubDate>
+      <guid>https://luth.io/blog/2026/09/memory-watchdog-for-go-test/</guid>
+      <description>&lt;p&gt;On August 16th a &lt;code&gt;server.test.exe&lt;/code&gt; from &lt;a href=&#34;https://luth.io/blog/2026/08/shipmates-persona-based-ai-coding-crews/&#34;&gt;shipmates&lt;/a&gt; climbed to&#xA;roughly &lt;strong&gt;1 TB of commit charge&lt;/strong&gt; on my Windows workstation. Windows Terminal, which was hosting several agent sessions&#xA;in tabs, hard-faulted with &lt;code&gt;E_OUTOFMEMORY&lt;/code&gt; and every one of those sessions died at the same moment. It wasn&amp;rsquo;t the first&#xA;time either. An earlier one hit about 236 GB through an infinite &lt;code&gt;filepath.Dir&lt;/code&gt; loop.&lt;/p&gt;&#xA;&lt;p&gt;The machine has 128 GB of RAM. Commit charge doesn&amp;rsquo;t care, it&amp;rsquo;s backed by the page file, and Windows will happily let a&#xA;process reserve-and-commit until the commit limit is gone. Then everything else on the desktop starts failing&#xA;allocations too.&lt;/p&gt;</description>
+    </item>
+    <item>
+      <title>Calling Rust From PHP Without a Socket, Part 2: Making Existing Code Use It</title>
+      <link>https://luth.io/blog/2026/09/calling-rust-from-php-without-a-socket-part-2/</link>
+      <pubDate>Mon, 21 Sep 2026 19:55:00 -0700</pubDate>
+      <guid>https://luth.io/blog/2026/09/calling-rust-from-php-without-a-socket-part-2/</guid>
+      <description>&lt;p&gt;&lt;a href=&#34;https://luth.io/blog/2026/09/calling-rust-from-php-without-a-socket-part-1/&#34;&gt;Part 1&lt;/a&gt; covered the plumbing: ePHPm registers&#xA;&lt;code&gt;ephpm_kv_*&lt;/code&gt; and &lt;code&gt;ephpm_db_*&lt;/code&gt; functions that call straight into Rust, and a cache read through one costs about a tenth of&#xA;a microsecond instead of a loopback round trip. That&amp;rsquo;s nice and also useless on its own, because nobody is going to rewrite&#xA;their WordPress object cache or their Laravel cache store around a function called &lt;code&gt;ephpm_kv_set()&lt;/code&gt;. Applications talk to&#xA;Redis through phpredis or Predis, to the cache through PSR-6/16 or &lt;code&gt;wp_cache_*&lt;/code&gt;, and to the database through &lt;code&gt;wpdb&lt;/code&gt;,&#xA;mysqli, Eloquent or DBAL.&lt;/p&gt;</description>
+    </item>
+    <item>
+      <title>ePHPm Odds and Ends: OOM-Killed Links, Opcode Scanning, WebSockets and a 44 ms Stall</title>
+      <link>https://luth.io/blog/2026/09/ephpm-smaller-angles/</link>
+      <pubDate>Fri, 18 Sep 2026 20:05:00 -0700</pubDate>
+      <guid>https://luth.io/blog/2026/09/ephpm-smaller-angles/</guid>
+      <description>&lt;p&gt;Not every fix in &lt;a href=&#34;https://github.com/ephpm/ephpm&#34;&gt;ePHPm&lt;/a&gt; earns a full write-up, but a few of the smaller ones have&#xA;stuck with me because the lesson in each was bigger than the diff. Here are four from this summer.&lt;/p&gt;&#xA;&lt;h3 id=&#34;a-release-build-the-oom-killer-kept-eating&#34;&gt;A release build the OOM killer kept eating&lt;/h3&gt;&#xA;&lt;p&gt;ePHPm statically links libphp, ICU and a pile of other C libraries into one Rust binary, and it ships for four targets.&#xA;For the v0.4.2 performance release I set the release profile to &lt;code&gt;lto = &amp;quot;fat&amp;quot;&lt;/code&gt; with &lt;code&gt;codegen-units = 1&lt;/code&gt;&#xA;(&lt;a href=&#34;https://github.com/ephpm/ephpm/pull/171&#34;&gt;#171&lt;/a&gt;). Fat LTO pulls every crate&amp;rsquo;s LLVM IR into one module in one process&#xA;and optimizes it as a unit, and one codegen unit removes the parallelism that would otherwise spread that memory out.&#xA;That&amp;rsquo;s one very large process at the final link.&lt;/p&gt;</description>
+    </item>
+    <item>
+      <title>os/exec&#39;s StdoutPipe Footgun: How cmd.Wait() Ate My Last Frame (Twice)</title>
+      <link>https://luth.io/blog/2026/09/os-exec-stdoutpipe-wait-footgun/</link>
+      <pubDate>Thu, 17 Sep 2026 20:12:00 -0700</pubDate>
+      <guid>https://luth.io/blog/2026/09/os-exec-stdoutpipe-wait-footgun/</guid>
+      <description>&lt;p&gt;&lt;a href=&#34;https://luth.io/blog/2026/08/shipmates-persona-based-ai-coding-crews/&#34;&gt;shipmates&lt;/a&gt; spends most of its life spawning &lt;code&gt;claude&lt;/code&gt; (and &lt;code&gt;codex&lt;/code&gt;)&#xA;processes and reading newline-delimited JSON off their stdout. The last frame of a turn is the important one, a&#xA;&lt;code&gt;result&lt;/code&gt; frame with the cost, the model and the final text. Stderr matters too, because that&amp;rsquo;s where Claude Code&#xA;tells you &lt;code&gt;Invalid API key · Please run /login&lt;/code&gt;. For a while I was throwing both away under load, and the cause is&#xA;documented right there in the &lt;code&gt;os/exec&lt;/code&gt; godoc. I fixed it in one package and then found the exact same bug again&#xA;a month later in another.&lt;/p&gt;</description>
+    </item>
+    <item>
+      <title>The Bugs Were Our Own Linker Wraps: Making a PHP Timeout Actually Time Out</title>
+      <link>https://luth.io/blog/2026/09/php-timeout-linker-wraps/</link>
+      <pubDate>Wed, 16 Sep 2026 19:35:00 -0700</pubDate>
+      <guid>https://luth.io/blog/2026/09/php-timeout-linker-wraps/</guid>
+      <description>&lt;p&gt;In &lt;a href=&#34;https://luth.io/blog/2026/09/php-stack-guard-segfault-containment/&#34;&gt;the stack guard post&lt;/a&gt; the villain was a &lt;code&gt;-Wl,--wrap&lt;/code&gt; linker&#xA;flag that turned off PHP&amp;rsquo;s C-stack overflow guard. It wasn&amp;rsquo;t the only one. Until August, &lt;code&gt;max_execution_time&lt;/code&gt; did&#xA;nothing in &lt;a href=&#34;https://github.com/ephpm/ephpm&#34;&gt;ePHPm&lt;/a&gt; on Linux, for the same reason: we had wrapped the function that&#xA;arms it to a no-op. A runaway script ran until the HTTP layer&amp;rsquo;s request timeout gave up on it and sent a 504, and the&#xA;PHP thread kept burning CPU after that.&lt;/p&gt;</description>
+    </item>
+    <item>
+      <title>Clustered SQLite in ePHPm, Part 3: CDC Over the Cluster Channel</title>
+      <link>https://luth.io/blog/2026/09/clustered-sqlite-cdc-cluster-channel/</link>
+      <pubDate>Tue, 15 Sep 2026 21:08:00 -0700</pubDate>
+      <guid>https://luth.io/blog/2026/09/clustered-sqlite-cdc-cluster-channel/</guid>
+      <description>&lt;p&gt;By the end of &lt;a href=&#34;https://luth.io/blog/2026/08/clustered-sqlite-adding-turso/&#34;&gt;Part 2&lt;/a&gt; ePHPm v0.7.0 ran exactly one SQLite engine, Turso, in&#xA;process, for single-node and clustered mode alike. The sidecar was gone. What I skipped over is how a replica actually gets&#xA;the primary&amp;rsquo;s writes, and what happens when the primary dies with data on it. That&amp;rsquo;s this post.&lt;/p&gt;&#xA;&lt;ul&gt;&#xA;&lt;li&gt;&lt;a href=&#34;https://luth.io/blog/2026/08/clustered-sqlite-sqld-sidecar/&#34;&gt;Part 1: Replication by sidecar with sqld&lt;/a&gt;&lt;/li&gt;&#xA;&lt;li&gt;&lt;a href=&#34;https://luth.io/blog/2026/08/clustered-sqlite-adding-turso/&#34;&gt;Part 2: Adding Turso&lt;/a&gt;&lt;/li&gt;&#xA;&lt;li&gt;Part 3: CDC over the cluster channel (this post)&lt;/li&gt;&#xA;&lt;/ul&gt;&#xA;&lt;h3 id=&#34;cdc-from-the-engine-itself&#34;&gt;CDC from the engine itself&lt;/h3&gt;&#xA;&lt;p&gt;Turso has change data capture built in. Turn it on for a connection and every committed change lands in a &lt;code&gt;turso_cdc&lt;/code&gt;&#xA;table with a monotonically increasing &lt;code&gt;change_id&lt;/code&gt;, the table, the rowid, and before/after images of the record. The&#xA;primary tails that table and ships transaction batches. Replicas apply them. That&amp;rsquo;s the whole design, and it landed as an&#xA;experimental path in &lt;a href=&#34;https://github.com/ephpm/ephpm/pull/186&#34;&gt;#186&lt;/a&gt; at the end of July, with the tailer and applier in&#xA;litewire (&lt;a href=&#34;https://github.com/ephpm/litewire/pull/10&#34;&gt;litewire#10&lt;/a&gt;).&lt;/p&gt;</description>
+    </item>
+    <item>
+      <title>Calling Rust From PHP Without a Socket, Part 1: The Native Functions</title>
+      <link>https://luth.io/blog/2026/09/calling-rust-from-php-without-a-socket-part-1/</link>
+      <pubDate>Mon, 14 Sep 2026 20:40:00 -0700</pubDate>
+      <guid>https://luth.io/blog/2026/09/calling-rust-from-php-without-a-socket-part-1/</guid>
+      <description>&lt;p&gt;&lt;a href=&#34;https://github.com/ephpm/ephpm&#34;&gt;ePHPm&lt;/a&gt; is a single Rust binary that embeds PHP, and it carries its own KV store and its&#xA;own SQLite-backed database in the same process. For a long time the only way PHP code could reach that KV store was the&#xA;same way it reaches Redis: open a TCP socket to the RESP listener ePHPm runs on localhost, encode a command, wait for the&#xA;reply. That works, and every PHP Redis client in existence already speaks it, but it is a strange thing to do when the&#xA;hash map you&amp;rsquo;re talking to lives a few pointers away in the same address space.&lt;/p&gt;</description>
+    </item>
+    <item>
+      <title>Every Way a Tenant Escaped: A Cross-Tenant Breakout Field Guide</title>
+      <link>https://luth.io/blog/2026/09/cross-tenant-breakout-field-guide/</link>
+      <pubDate>Sun, 13 Sep 2026 16:20:00 -0700</pubDate>
+      <guid>https://luth.io/blog/2026/09/cross-tenant-breakout-field-guide/</guid>
+      <description>&lt;p&gt;&lt;a href=&#34;https://github.com/ephpm/ephpm&#34;&gt;ePHPm&lt;/a&gt; can serve a directory full of sites out of one process. Point &lt;code&gt;sites_dir&lt;/code&gt; at&#xA;a folder, every subdirectory is a virtual host, and the Host header decides which one you get. That&amp;rsquo;s how the PR preview&#xA;environment runs: every pull request gets a subdomain, and the code behind it is whatever somebody pushed. One process&#xA;holding many tenants means every per-tenant boundary is something ePHPm enforces itself, in-process. There&amp;rsquo;s no&#xA;container wall between site A and site B unless you add one.&lt;/p&gt;</description>
+    </item>
+    <item>
+      <title>shipmates Short Ones: 8 Minutes Extracting Go, and Three Voice-Loop Bugs</title>
+      <link>https://luth.io/blog/2026/09/shipmates-short-ones-setup-go-and-voice/</link>
+      <pubDate>Sat, 12 Sep 2026 14:35:00 -0700</pubDate>
+      <guid>https://luth.io/blog/2026/09/shipmates-short-ones-setup-go-and-voice/</guid>
+      <description>&lt;p&gt;A few &lt;a href=&#34;https://luth.io/blog/2026/08/shipmates-persona-based-ai-coding-crews/&#34;&gt;shipmates&lt;/a&gt; bugs that don&amp;rsquo;t need a whole post each but&#xA;were too good to leave in commit messages.&lt;/p&gt;&#xA;&lt;h3 id=&#34;setup-go-spends-8-minutes-extracting-go-on-windows-ci&#34;&gt;setup-go spends 8 minutes extracting Go on Windows CI&lt;/h3&gt;&#xA;&lt;p&gt;shipmates CI runs on my own &lt;a href=&#34;https://luth.io/blog/2026/08/ephemerd-one-daemon-every-os/&#34;&gt;ephemerd&lt;/a&gt; runners, and on Windows those jobs&#xA;run inside a Hyper-V utility VM. The windows-x64 leg kept timing out in &lt;code&gt;actions/setup-go&lt;/code&gt;. Here&amp;rsquo;s the log from&#xA;&lt;a href=&#34;https://github.com/luthermonson/shipmates/pull/48&#34;&gt;PR #48&lt;/a&gt;:&lt;/p&gt;&#xA;&lt;pre tabindex=&#34;0&#34;&gt;&lt;code&gt;20:58:46  Setup go version spec 1.26.6&#xA;20:58:46  Attempting to download 1.26.6...     &amp;lt;- tool-cache MISS&#xA;20:58:48  Acquiring 1.26.6 from ...zip&#xA;20:58:53  Extracting Go...&#xA;21:06:46  ERROR: The action &amp;#39;Run actions/setup-go@v5&amp;#39; has timed out after 8 minutes&#xA;&lt;/code&gt;&lt;/pre&gt;&lt;p&gt;Seven seconds from the start of the step to &lt;code&gt;Extracting Go...&lt;/code&gt;, then almost eight minutes extracting until the step&#xA;timeout killed it.&lt;/p&gt;</description>
+    </item>
+    <item>
+      <title>Making ephpm php Byte-for-Byte Indistinguishable From php-cli</title>
+      <link>https://luth.io/blog/2026/09/ephpm-php-cli-conformance/</link>
+      <pubDate>Thu, 10 Sep 2026 20:25:00 -0700</pubDate>
+      <guid>https://luth.io/blog/2026/09/ephpm-php-cli-conformance/</guid>
+      <description>&lt;p&gt;&lt;a href=&#34;https://github.com/ephpm/ephpm&#34;&gt;ePHPm&lt;/a&gt; embeds PHP into a single Rust binary, and the obvious follow-up question from&#xA;anybody deploying it is &amp;ldquo;do I still need a &lt;code&gt;php&lt;/code&gt; on the box?&amp;rdquo; Composer, WP-CLI, artisan, PHPUnit and every build&#xA;script in the world call &lt;code&gt;php&lt;/code&gt;. If &lt;code&gt;ephpm php&lt;/code&gt; can stand in for it then the answer is no, and the single binary actually&#xA;means a single binary. &amp;ldquo;Mostly works&amp;rdquo; isn&amp;rsquo;t good enough for that though. These tools parse PHP&amp;rsquo;s output, check its exit&#xA;codes and re-invoke it. So the goal was simple to state: &lt;code&gt;ephpm php&lt;/code&gt; should be indistinguishable from php-cli.&lt;/p&gt;</description>
+    </item>
+    <item>
+      <title>Building k9s for Linode With Bubble Tea</title>
+      <link>https://luth.io/blog/2026/09/linode-tui/</link>
+      <pubDate>Wed, 09 Sep 2026 21:22:00 -0700</pubDate>
+      <guid>https://luth.io/blog/2026/09/linode-tui/</guid>
+      <description>&lt;p&gt;A lot of my day is spent in &lt;a href=&#34;https://k9scli.io/&#34;&gt;k9s&lt;/a&gt;, and when I need something from the Linode side of the house (a node that won&amp;rsquo;t&#xA;boot, a volume nobody cleaned up, the kubeconfig for a cluster I just made) I&amp;rsquo;m back in a browser tab or typing &lt;code&gt;linode-cli&lt;/code&gt; incantations.&#xA;I wanted the k9s workflow for the Linode API itself: &lt;code&gt;:&lt;/code&gt; to jump to a resource type, &lt;code&gt;/&lt;/code&gt; to filter, single-key actions on the selected row,&#xA;and Enter to go deeper. That turned into &lt;a href=&#34;https://github.com/luthermonson/linode-tui&#34;&gt;linode-tui&lt;/a&gt;, a Go TUI built on&#xA;&lt;a href=&#34;https://github.com/charmbracelet/bubbletea&#34;&gt;Bubble Tea&lt;/a&gt;, &lt;a href=&#34;https://github.com/linode/linodego&#34;&gt;linodego&lt;/a&gt; and urfave/cli v3.&lt;/p&gt;</description>
+    </item>
+    <item>
+      <title>Zero-Dependency Deployments - Single Binary for WordPress</title>
+      <link>https://luth.io/blog/2026/09/single-binary-wordpress/</link>
+      <pubDate>Tue, 08 Sep 2026 20:25:00 -0700</pubDate>
+      <guid>https://luth.io/blog/2026/09/single-binary-wordpress/</guid>
+      <description>&lt;p&gt;The standard way to run a WordPress site is four services: nginx for HTTP and TLS, php-fpm to run PHP, MySQL for data,&#xA;and Redis once the site gets slow enough that someone installs an object cache plugin. That&amp;rsquo;s four processes, four&#xA;config files, three sockets between them, and four things to upgrade. For a big site that&amp;rsquo;s fine. For a brochure site, a&#xA;staging copy, a PR preview, a CI job that needs a real WordPress to test a plugin against, or a box at the edge, it&amp;rsquo;s&#xA;absurd.&lt;/p&gt;</description>
+    </item>
+    <item>
+      <title>P99 From 280 ms to 58 ms by Making the Queue Fair</title>
+      <link>https://luth.io/blog/2026/09/php-dispatch-fair-queue-p99/</link>
+      <pubDate>Mon, 07 Sep 2026 19:45:00 -0700</pubDate>
+      <guid>https://luth.io/blog/2026/09/php-dispatch-fair-queue-p99/</guid>
+      <description>&lt;p&gt;A third-party Laravel runtime comparison put &lt;a href=&#34;https://github.com/ephpm/ephpm&#34;&gt;ePHPm&lt;/a&gt;&amp;rsquo;s worker mode at the top on&#xA;throughput, about 19% ahead of FrankenPHP on &lt;code&gt;/api/static&lt;/code&gt;, and at the bottom of the fast group on tail latency: P99 of&#xA;157 ms against FrankenPHP&amp;rsquo;s 57 ms. Best throughput plus the fattest tail is a shape worth chasing, because fast&#xA;execution can&amp;rsquo;t produce it. Making requests faster lowers the mean &lt;em&gt;and&lt;/em&gt; the tail. Only waiting can pull them apart,&#xA;and specifically, unfair waiting.&lt;/p&gt;</description>
+    </item>
+    <item>
+      <title>We Disabled PHP&#39;s Stack Guard Ourselves: Containing Segfaults in a Single-Process PHP Server</title>
+      <link>https://luth.io/blog/2026/09/php-stack-guard-segfault-containment/</link>
+      <pubDate>Sun, 06 Sep 2026 15:05:00 -0700</pubDate>
+      <guid>https://luth.io/blog/2026/09/php-stack-guard-segfault-containment/</guid>
+      <description>&lt;p&gt;php-fpm has a property nobody thinks about until they leave it: when a worker segfaults, you lose one request. The&#xA;master forks a new child and life goes on. &lt;a href=&#34;https://github.com/ephpm/ephpm&#34;&gt;ePHPm&lt;/a&gt; runs every tenant&amp;rsquo;s PHP as threads&#xA;inside one process. That&amp;rsquo;s where the memory and latency wins come from, and it also means one tenant&amp;rsquo;s segfault&#xA;takes down every other tenant on the box.&lt;/p&gt;&#xA;&lt;p&gt;This is the story of closing that gap, in four steps over about two weeks. The last step turned out to be a bug we&amp;rsquo;d&#xA;put there ourselves. It&amp;rsquo;s also the payoff for the thread pool work in&#xA;&lt;a href=&#34;https://luth.io/blog/2026/09/own-your-php-thread-pool/&#34;&gt;the previous post&lt;/a&gt;: everything below that actually shipped depends on&#xA;ePHPm owning its own PHP threads.&lt;/p&gt;</description>
+    </item>
+    <item>
+      <title>Stop Running PHP on tokio&#39;s spawn_blocking - Own Your Thread Pool</title>
+      <link>https://luth.io/blog/2026/09/own-your-php-thread-pool/</link>
+      <pubDate>Fri, 04 Sep 2026 20:30:00 -0700</pubDate>
+      <guid>https://luth.io/blog/2026/09/own-your-php-thread-pool/</guid>
+      <description>&lt;p&gt;For most of its life, &lt;a href=&#34;https://github.com/ephpm/ephpm&#34;&gt;ePHPm&lt;/a&gt; ran every PHP request on tokio&amp;rsquo;s &lt;code&gt;spawn_blocking&lt;/code&gt;&#xA;pool. It works. It passes tests, it serves benchmarks fine, and it&amp;rsquo;s the first thing anybody reaches for when they&#xA;need to call blocking code from async Rust. It&amp;rsquo;s also quietly wrong for a language runtime, in ways that only show up&#xA;under overload or after a crash. Over the last three weeks it got replaced with a pool of OS threads that ePHPm owns,&#xA;first behind a config flag, then as the default, and as of v0.9.0 the &lt;code&gt;spawn_blocking&lt;/code&gt; engine is gone.&lt;/p&gt;</description>
+    </item>
+    <item>
+      <title>Kata Containers for CI: Boot Cost Isn&#39;t the Problem, File I/O Is</title>
+      <link>https://luth.io/blog/2026/09/kata-containers-for-ci/</link>
+      <pubDate>Thu, 03 Sep 2026 21:35:00 -0700</pubDate>
+      <guid>https://luth.io/blog/2026/09/kata-containers-for-ci/</guid>
+      <description>&lt;p&gt;Of the three platforms &lt;a href=&#34;https://luth.io/blog/2026/08/ephemerd-one-daemon-every-os/&#34;&gt;ephemerd&lt;/a&gt; runs jobs on, Linux has the weakest&#xA;isolation. Windows jobs get a Hyper-V isolated container with its own kernel, macOS jobs get a whole VM, and a Linux job is&#xA;an ordinary runc container sharing the host kernel. A kernel escape from a Linux job is a host compromise.&#xA;&lt;a href=&#34;https://katacontainers.io/&#34;&gt;Kata Containers&lt;/a&gt; fixes that by putting each container in a lightweight VM with its own kernel,&#xA;and it plugs into containerd as just another runtime handler. So I added it in&#xA;&lt;a href=&#34;https://github.com/ephpm/ephemerd/pull/155&#34;&gt;#155&lt;/a&gt;, measured it, and left it off by default. This post is why.&lt;/p&gt;</description>
+    </item>
+    <item>
+      <title>Clustered ACME in Production: Three Bugs That Took TLS Down</title>
+      <link>https://luth.io/blog/2026/09/clustered-acme-three-bugs/</link>
+      <pubDate>Wed, 02 Sep 2026 19:30:00 -0700</pubDate>
+      <guid>https://luth.io/blog/2026/09/clustered-acme-three-bugs/</guid>
+      <description>&lt;p&gt;&lt;a href=&#34;https://github.com/ephpm/ephpm&#34;&gt;ePHPm&lt;/a&gt; gets its own certificates from Let&amp;rsquo;s Encrypt, and in a cluster only one node&#xA;should be talking to the CA. The nodes elect an ACME leader over the shared KV store, the leader orders the cert, and&#xA;everybody else installs it from KV. That all had unit tests and had worked on single nodes for months. Then I tried to&#xA;move wildcard TLS termination for our preview environment off a separate proxy and onto the 3-node cluster itself, and&#xA;in about two days it found three separate bugs that each took TLS down. None of them showed up in a unit test, and all&#xA;of them are the kind of thing you only learn by putting the feature on real machines.&lt;/p&gt;</description>
+    </item>
+    <item>
+      <title>Finding a Data Race in rancher/remotedialer, Then Pinning Only Two-Thirds of the Fix</title>
+      <link>https://luth.io/blog/2026/09/remotedialer-data-race-two-thirds-fix/</link>
+      <pubDate>Tue, 01 Sep 2026 21:05:00 -0700</pubDate>
+      <guid>https://luth.io/blog/2026/09/remotedialer-data-race-two-thirds-fix/</guid>
+      <description>&lt;p&gt;&lt;a href=&#34;https://luth.io/blog/2026/08/shipmates-persona-based-ai-coding-crews/&#34;&gt;shipmates&lt;/a&gt; ships connect to Fleet Command over outbound&#xA;websocket tunnels so nothing on the ship side has to be exposed to the internet. I didn&amp;rsquo;t write that tunnel layer,&#xA;I used &lt;a href=&#34;https://github.com/rancher/remotedialer&#34;&gt;rancher/remotedialer&lt;/a&gt;, the same library Rancher uses to reach&#xA;downstream cluster agents. I spent years around that code at Rancher, so it was the obvious pick. What I didn&amp;rsquo;t&#xA;expect was for my CI&amp;rsquo;s race job to find two data races in it in the first week.&lt;/p&gt;</description>
+    </item>
+    <item>
+      <title>Middleware in PHP: Compiling It With elephc, Then Not Needing To</title>
+      <link>https://luth.io/blog/2026/08/php-middleware-elephc/</link>
+      <pubDate>Mon, 31 Aug 2026 20:50:00 -0700</pubDate>
+      <guid>https://luth.io/blog/2026/08/php-middleware-elephc/</guid>
+      <description>&lt;p&gt;&lt;a href=&#34;https://github.com/ephpm/ephpm&#34;&gt;ePHPm&lt;/a&gt; middleware runs &lt;em&gt;before&lt;/em&gt; PHP. It&amp;rsquo;s a small versioned C ABI, loaded with&#xA;&lt;code&gt;dlopen&lt;/code&gt;, that gets to look at a request and reject it before PHP boots or the request body is read. That&amp;rsquo;s the&#xA;right shape for a gateway, and it&amp;rsquo;s the wrong shape for most PHP shops, who want to write their middleware in PHP.&#xA;This is the story of compiling PHP into a native &lt;code&gt;.so&lt;/code&gt; to fit that ABI, finding exactly where it broke, and then&#xA;building the lane that should have existed in the first place.&lt;/p&gt;</description>
+    </item>
+    <item>
+      <title>OPcache on Windows: Two Silent Failures</title>
+      <link>https://luth.io/blog/2026/08/opcache-on-windows-two-silent-failures/</link>
+      <pubDate>Sat, 29 Aug 2026 16:45:00 -0700</pubDate>
+      <guid>https://luth.io/blog/2026/08/opcache-on-windows-two-silent-failures/</guid>
+      <description>&lt;p&gt;Windows is the platform where &lt;a href=&#34;https://github.com/ephpm/ephpm&#34;&gt;ePHPm&lt;/a&gt; gets the least traffic and the most surprises.&#xA;Last week closed out two OPcache bugs that only exist there, and both were quiet in their own way. One killed the&#xA;server at startup with nothing in our own logs. The other didn&amp;rsquo;t kill anything: it just ran PHP 8.3 with no opcode&#xA;cache at all, and for three weeks after a fixed SDK was published every check stayed green.&lt;/p&gt;</description>
+    </item>
+    <item>
+      <title>Per-Tenant Network Policy in One Process: ePHPm&#39;s eBPF Thread Tags</title>
+      <link>https://luth.io/blog/2026/08/ephpm-ebpf-per-vhost-network-policy/</link>
+      <pubDate>Fri, 28 Aug 2026 20:40:00 -0700</pubDate>
+      <guid>https://luth.io/blog/2026/08/ephpm-ebpf-per-vhost-network-policy/</guid>
+      <description>&lt;p&gt;In multi-tenant mode &lt;a href=&#34;https://github.com/ephpm/ephpm&#34;&gt;ePHPm&lt;/a&gt; serves every site in &lt;code&gt;sites_dir&lt;/code&gt; from one process. Every&#xA;tenant&amp;rsquo;s PHP runs as the same OS user, on the same pool of ZTS threads, and a thread that just served &lt;code&gt;blog.example&lt;/code&gt;&#xA;will serve &lt;code&gt;shop.example&lt;/code&gt; a few milliseconds later. That&amp;rsquo;s the density win. It also means the kernel has no idea&#xA;which tenant is behind a given &lt;code&gt;connect()&lt;/code&gt;. As far as Linux is concerned it&amp;rsquo;s all &lt;code&gt;ephpm-web&lt;/code&gt;.&lt;/p&gt;&#xA;&lt;p&gt;Most of the isolation work in ePHPm happens above the kernel: &lt;code&gt;open_basedir&lt;/code&gt;, the function denylist, per-site&#xA;databases and KV keyspaces. Network is the one place where that isn&amp;rsquo;t enough. This week we brought eBPF in to give&#xA;the kernel a per-tenant identity. It went from a roadmap doc on Wednesday morning to merged that evening&#xA;(&lt;a href=&#34;https://github.com/ephpm/ephpm/pull/413&#34;&gt;#413&lt;/a&gt;, aimed at v0.8.1). v0.8.1 never got a release because its Linux&#xA;legs failed to link. v0.8.2 shipped with the BPF object silently stubbed out, and v0.8.3 was the first release that&#xA;actually carried it. This post covers what it enforces, what it costs, what broke on the way out the door, and what&#xA;it doesn&amp;rsquo;t do.&lt;/p&gt;</description>
+    </item>
+    <item>
+      <title>Security and Performance Hardening of a Rust Database Proxy</title>
+      <link>https://luth.io/blog/2026/08/hardening-rust-database-proxy/</link>
+      <pubDate>Thu, 27 Aug 2026 20:30:00 -0700</pubDate>
+      <guid>https://luth.io/blog/2026/08/hardening-rust-database-proxy/</guid>
+      <description>&lt;p&gt;&lt;a href=&#34;https://github.com/ephpm/litewire&#34;&gt;litewire&lt;/a&gt; is the piece of ePHPm that lets PHP apps talk MySQL to a SQLite file. I&#xA;wrote about &lt;a href=&#34;https://luth.io/blog/2026/07/sqlite-production-database-protocol-translation/&#34;&gt;how it works&lt;/a&gt; and about&#xA;&lt;a href=&#34;https://luth.io/blog/2026/08/faking-mysql-quirks-wordpress/&#34;&gt;the MySQL quirks WordPress depends on&lt;/a&gt;. This one is the less visible&#xA;half of August: an audit pass on litewire, a multi-tenant mode that turned a database proxy into a security boundary,&#xA;and a performance regression I shipped and then had to go find.&lt;/p&gt;&#xA;&lt;p&gt;It&amp;rsquo;s written in Rust, so memory safety is supposed to be the part I don&amp;rsquo;t have to think about. It mostly is. The&#xA;use-after-free in this story was in a dependency, and the worst bug wasn&amp;rsquo;t a memory bug at all.&lt;/p&gt;</description>
+    </item>
+    <item>
+      <title>My iptables Rule Matched 0 Packets in 9.8 GB</title>
+      <link>https://luth.io/blog/2026/08/iptables-rule-zero-packets/</link>
+      <pubDate>Wed, 26 Aug 2026 20:30:00 -0700</pubDate>
+      <guid>https://luth.io/blog/2026/08/iptables-rule-zero-packets/</guid>
+      <description>&lt;p&gt;After a week of Windows firewall rules that &lt;a href=&#34;https://luth.io/blog/2026/08/windows-container-egress-firewall/&#34;&gt;listed fine and enforced nothing&lt;/a&gt;,&#xA;I went back to the Linux side of &lt;a href=&#34;https://github.com/ephpm/ephemerd&#34;&gt;ephemerd&lt;/a&gt; feeling pretty good about it. iptables is&#xA;the boring, well-understood one. Then I looked at the packet counters on a live node and found a rule that had never&#xA;matched a packet in its life, on a node that had pushed 9.8 GB through the same chain.&lt;/p&gt;&#xA;&lt;h3 id=&#34;the-rules-i-thought-i-had&#34;&gt;The rules I thought I had&lt;/h3&gt;&#xA;&lt;p&gt;Job containers sit on a CNI bridge, &lt;code&gt;10.88.0.0/16&lt;/code&gt;, with the host on &lt;code&gt;10.88.0.1&lt;/code&gt;. ephemerd puts its egress policy in its&#xA;own chain, &lt;code&gt;EPHEMERD-FORWARD&lt;/code&gt;, jumped to from &lt;code&gt;FORWARD&lt;/code&gt; for anything to or from the container subnet. From a live node:&lt;/p&gt;</description>
+    </item>
+    <item>
+      <title>What Does One More WordPress Site Cost?</title>
+      <link>https://luth.io/blog/2026/08/what-does-one-more-wordpress-site-cost/</link>
+      <pubDate>Tue, 25 Aug 2026 20:20:00 -0700</pubDate>
+      <guid>https://luth.io/blog/2026/08/what-does-one-more-wordpress-site-cost/</guid>
+      <description>&lt;p&gt;ePHPm v0.7.0 shipped per-site multi-tenancy: point &lt;code&gt;[server] sites_dir&lt;/code&gt; at a directory, every &lt;code&gt;Host&lt;/code&gt; maps to its own&#xA;docroot and its own Turso database file, and one process serves all of them. The first question anybody asks about&#xA;that is &amp;ldquo;how many sites fit on a box?&amp;rdquo;, and the honest way to answer it is to turn the question around. What does&#xA;&lt;strong&gt;one more&lt;/strong&gt; site cost? If you know the marginal RAM, file descriptors, CPU and disk for a tenant, the box size falls&#xA;out of arithmetic.&lt;/p&gt;</description>
+    </item>
+    <item>
+      <title>What an Overloaded PHP Server Actually Returns</title>
+      <link>https://luth.io/blog/2026/08/what-an-overloaded-php-server-actually-returns/</link>
+      <pubDate>Mon, 24 Aug 2026 19:40:00 -0700</pubDate>
+      <guid>https://luth.io/blog/2026/08/what-an-overloaded-php-server-actually-returns/</guid>
+      <description>&lt;p&gt;Ask most people what their PHP server does when it&amp;rsquo;s overloaded and you&amp;rsquo;ll hear &amp;ldquo;it returns 503s.&amp;rdquo; Ask them how they&#xA;know and it usually comes down to a config setting they read about. I was in that camp for &lt;a href=&#34;https://github.com/ephpm/ephpm&#34;&gt;ePHPm&lt;/a&gt;.&#xA;We had a &lt;code&gt;[server.limits] max_connections&lt;/code&gt; knob, the docs said it returned 503 at the cap, and every benchmark we had&#xA;ever run reported zero errors under heavy load. Then I wrote a load generator that could actually produce overload,&#xA;and the honest answer was that an overloaded ePHPm returned nothing at all.&lt;/p&gt;</description>
+    </item>
+    <item>
+      <title>Five Ways to Not Firewall a Windows Container (and the One That Works)</title>
+      <link>https://luth.io/blog/2026/08/windows-container-egress-firewall/</link>
+      <pubDate>Sat, 22 Aug 2026 19:40:00 -0700</pubDate>
+      <guid>https://luth.io/blog/2026/08/windows-container-egress-firewall/</guid>
+      <description>&lt;p&gt;&lt;a href=&#34;https://luth.io/blog/2026/08/ephemerd-one-daemon-every-os/&#34;&gt;ephemerd&lt;/a&gt; runs CI jobs from pull requests, and one of the rules is that a job&#xA;can reach the internet but not my LAN. On Linux that&amp;rsquo;s a few iptables rules in the &lt;code&gt;FORWARD&lt;/code&gt; path and I didn&amp;rsquo;t think about it&#xA;much. On Windows I spent about a week finding out how many ways there are to write a firewall rule that Windows accepts,&#xA;lists, and then never applies.&lt;/p&gt;&#xA;&lt;p&gt;The setup: Windows Server 2025 (build 26100), job containers running with Hyper-V isolation, on the default HNS NAT network&#xA;that every Windows container tutorial uses (&lt;code&gt;10.88.0.0/16&lt;/code&gt; in ephemerd&amp;rsquo;s case, gateway &lt;code&gt;10.88.0.1&lt;/code&gt;). The target is the same&#xA;as Linux: block &lt;code&gt;10.0.0.0/8&lt;/code&gt;, &lt;code&gt;172.16.0.0/12&lt;/code&gt;, &lt;code&gt;192.168.0.0/16&lt;/code&gt; and &lt;code&gt;169.254.0.0/16&lt;/code&gt;, allow everything else.&lt;/p&gt;</description>
+    </item>
+    <item>
+      <title>shipmates: Persona-Based AI Coding Crews That Remember</title>
+      <link>https://luth.io/blog/2026/08/shipmates-persona-based-ai-coding-crews/</link>
+      <pubDate>Fri, 21 Aug 2026 21:18:00 -0700</pubDate>
+      <guid>https://luth.io/blog/2026/08/shipmates-persona-based-ai-coding-crews/</guid>
+      <description>&lt;p&gt;Since June most of my evenings have gone into &lt;a href=&#34;https://github.com/luthermonson/shipmates&#34;&gt;shipmates&lt;/a&gt;, a Go CLI and daemon&#xA;for running crews of AI coding agents. I tagged &lt;a href=&#34;https://github.com/luthermonson/shipmates/releases/tag/v0.5.0&#34;&gt;v0.5.0&lt;/a&gt;&#xA;on August 17th, two months and about 240 commits after the first architecture doc, so it&amp;rsquo;s a good time to write down what&#xA;it is and why it exists.&lt;/p&gt;&#xA;&lt;h3 id=&#34;the-problem&#34;&gt;The problem&lt;/h3&gt;&#xA;&lt;p&gt;I run a lot of agent sessions. On a normal night this workstation has four or five projects going at once, each with a&#xA;few Claude Code sessions doing different jobs: one reviewing, one writing tests, one chasing a bug. Two things kept&#xA;annoying me.&lt;/p&gt;</description>
+    </item>
+    <item>
+      <title>My Benchmark Was 4x Wrong Because of WSL</title>
+      <link>https://luth.io/blog/2026/08/benchmark-4x-wrong-wsl-drvfs-cwd/</link>
+      <pubDate>Thu, 20 Aug 2026 20:45:00 -0700</pubDate>
+      <guid>https://luth.io/blog/2026/08/benchmark-4x-wrong-wsl-drvfs-cwd/</guid>
+      <description>&lt;p&gt;I do most of my benchmarking on a Windows box in WSL2, because it&amp;rsquo;s the machine with 32 threads and 62 GB of RAM on&#xA;my desk. Everybody who does that learns the first rule early: don&amp;rsquo;t put your data on &lt;code&gt;/mnt/c&lt;/code&gt;. DrvFs, the 9p-backed&#xA;mount that exposes the Windows drives inside WSL, is slow for file-heavy work, so the databases, the docroot and the&#xA;build output all live on the WSL ext4 disk. My scaling harness for &lt;a href=&#34;https://github.com/ephpm/ephpm&#34;&gt;ePHPm&lt;/a&gt; even&#xA;says so in capital letters in its README.&lt;/p&gt;</description>
+    </item>
+    <item>
+      <title>Clustered SQLite in ePHPm, Part 2: Adding Turso</title>
+      <link>https://luth.io/blog/2026/08/clustered-sqlite-adding-turso/</link>
+      <pubDate>Wed, 19 Aug 2026 20:37:00 -0700</pubDate>
+      <guid>https://luth.io/blog/2026/08/clustered-sqlite-adding-turso/</guid>
+      <description>&lt;p&gt;&lt;a href=&#34;https://luth.io/blog/2026/08/clustered-sqlite-sqld-sidecar/&#34;&gt;Part 1&lt;/a&gt; ended with ePHPm running two SQLite engines: rusqlite in-process&#xA;for a single node, and an embedded sqld child process for a cluster. The sidecar fell off a cliff past four concurrent&#xA;writers and the best fix I could ship was a semaphore set to 1. This post is about replacing both engines with one, and&#xA;about how I decided that engine was ready.&lt;/p&gt;&#xA;&lt;ul&gt;&#xA;&lt;li&gt;&lt;a href=&#34;https://luth.io/blog/2026/08/clustered-sqlite-sqld-sidecar/&#34;&gt;Part 1: Replication by sidecar with sqld&lt;/a&gt;&lt;/li&gt;&#xA;&lt;li&gt;Part 2: Adding Turso (this post)&lt;/li&gt;&#xA;&lt;li&gt;&lt;a href=&#34;https://luth.io/blog/2026/09/clustered-sqlite-cdc-cluster-channel/&#34;&gt;Part 3: CDC over the cluster channel&lt;/a&gt;&lt;/li&gt;&#xA;&lt;/ul&gt;&#xA;&lt;h3 id=&#34;the-thesis&#34;&gt;The thesis&lt;/h3&gt;&#xA;&lt;p&gt;&lt;a href=&#34;https://github.com/tursodatabase/turso&#34;&gt;Turso Database&lt;/a&gt; is a rewrite of SQLite in Rust, MIT licensed, file-format&#xA;compatible, with MVCC for concurrent writers and change data capture built into the engine. Read that list again from the&#xA;perspective of Part 1. An in-process engine means no child process and no Hrana hop. MVCC means writers don&amp;rsquo;t queue up&#xA;behind one lock. Built-in CDC means the engine itself can tell me what changed, so ePHPm&amp;rsquo;s existing cluster layer can ship&#xA;it. One engine for both modes, and clustered SQLite with zero child processes.&lt;/p&gt;</description>
+    </item>
+    <item>
+      <title>ephemerd: One Daemon, a Fresh Runner Per Job, Every OS</title>
+      <link>https://luth.io/blog/2026/08/ephemerd-one-daemon-every-os/</link>
+      <pubDate>Tue, 18 Aug 2026 21:05:00 -0700</pubDate>
+      <guid>https://luth.io/blog/2026/08/ephemerd-one-daemon-every-os/</guid>
+      <description>&lt;p&gt;I have CI that needs Linux amd64, Linux arm64, Windows and macOS, and GitHub-hosted runners for all four get expensive fast,&#xA;especially the arm64 and Mac minutes. Self-hosted runners fix the bill and create a different problem. A stock&#xA;&lt;code&gt;actions/runner&lt;/code&gt; on a box you own runs whatever the workflow says, keeps whatever the last job left behind, and is one fork&#xA;PR away from somebody running code on your LAN.&lt;/p&gt;</description>
+    </item>
+    <item>
+      <title>Rolling Your Own KV Store Instead of Embedding Redis</title>
+      <link>https://luth.io/blog/2026/08/rolling-your-own-kv-store/</link>
+      <pubDate>Mon, 17 Aug 2026 20:44:00 -0700</pubDate>
+      <guid>https://luth.io/blog/2026/08/rolling-your-own-kv-store/</guid>
+      <description>&lt;p&gt;Every PHP deployment I&amp;rsquo;ve run eventually grew a Redis. Sessions, the WordPress object cache, Laravel&amp;rsquo;s cache and locks,&#xA;rate limiting. &lt;a href=&#34;https://github.com/ephpm/ephpm&#34;&gt;ePHPm&lt;/a&gt; is supposed to be one binary that replaces nginx + php-fpm +&#xA;Redis, so it needed a cache in the box. I didn&amp;rsquo;t want to write one. This post is why I did anyway, how it&amp;rsquo;s built, the&#xA;bug that sat in its eviction code from March until last month, and how it holds up against a stock Redis on the same&#xA;machine with &lt;code&gt;redis-benchmark&lt;/code&gt; doing the talking.&lt;/p&gt;</description>
+    </item>
+    <item>
+      <title>Faking MySQL&#39;s Quirks Well Enough to Fool WordPress</title>
+      <link>https://luth.io/blog/2026/08/faking-mysql-quirks-wordpress/</link>
+      <pubDate>Sun, 16 Aug 2026 15:50:00 -0700</pubDate>
+      <guid>https://luth.io/blog/2026/08/faking-mysql-quirks-wordpress/</guid>
+      <description>&lt;p&gt;Last month I wrote about &lt;a href=&#34;https://luth.io/blog/2026/07/sqlite-production-database-protocol-translation/&#34;&gt;running SQLite behind a MySQL socket&lt;/a&gt;&#xA;with &lt;a href=&#34;https://github.com/ephpm/litewire&#34;&gt;litewire&lt;/a&gt;, and ended on &amp;ldquo;passing an install suite is not the same thing as&#xA;behaving like MySQL&amp;rdquo;. That turned out to be accurate. On August 10th a few things happened at once: I put a real&#xA;WordPress 7.0.3 site through a benchmark on ePHPm, A/B tested the new in-process database bridge against the wire path, and started building&#xA;&lt;a href=&#34;https://github.com/ephpm/db-wordpress&#34;&gt;ephpm/db-wordpress&lt;/a&gt;, a &lt;code&gt;wpdb&lt;/code&gt; drop-in that talks to the database in-process&#xA;instead of over a socket. Between them they produced six litewire issues in about three hours. None of them broke&#xA;the install. All of them made WordPress quietly do the wrong thing.&lt;/p&gt;</description>
+    </item>
+    <item>
+      <title>Requests That End Wrong: A 200 That Was Really a Crash</title>
+      <link>https://luth.io/blog/2026/08/requests-that-end-wrong/</link>
+      <pubDate>Thu, 13 Aug 2026 21:14:00 -0700</pubDate>
+      <guid>https://luth.io/blog/2026/08/requests-that-end-wrong/</guid>
+      <description>&lt;p&gt;The scariest response a server can send isn&amp;rsquo;t a 500. It&amp;rsquo;s a 200 that should have been a 500. A crash is loud: the&#xA;pod restarts, an alert fires, somebody looks. A truncated page with a success status code gets cached by your CDN,&#xA;the health check calls the box healthy, and a client parses half a document as if it were the whole thing.&lt;/p&gt;&#xA;&lt;p&gt;&lt;a href=&#34;https://github.com/ephpm/ephpm&#34;&gt;ePHPm&lt;/a&gt; embeds PHP inside a Rust server, so we own the part of PHP that php-fpm&#xA;normally owns: starting a request, running the script, and ending it. Over the last couple of months I&amp;rsquo;ve fixed three&#xA;bugs that all live in that start-and-end code, and none of them were in the SAPI I/O callbacks (&lt;code&gt;ub_write&lt;/code&gt;,&#xA;&lt;code&gt;read_post&lt;/code&gt; and friends) where you&amp;rsquo;d expect to find embed bugs. They were in the Zend request lifecycle and in TSRM&#xA;teardown, which is code you never touch when you run PHP behind php-fpm.&lt;/p&gt;</description>
+    </item>
+    <item>
+      <title>libxml2 2.14 Broke PHP Windows Builds - And Nobody Noticed</title>
+      <link>https://luth.io/blog/2026/08/libxml2-2-14-broke-php-windows-builds/</link>
+      <pubDate>Tue, 11 Aug 2026 20:36:00 -0700</pubDate>
+      <guid>https://luth.io/blog/2026/08/libxml2-2-14-broke-php-windows-builds/</guid>
+      <description>&lt;p&gt;Back in April I was getting the embed SAPI building on Windows through my fork of&#xA;&lt;a href=&#34;https://github.com/crazywhalecc/static-php-cli&#34;&gt;static-php-cli&lt;/a&gt; (SPC) for &lt;a href=&#34;https://github.com/ephpm/ephpm&#34;&gt;ePHPm&lt;/a&gt;, and the&#xA;link step for &lt;code&gt;php8ts.dll&lt;/code&gt; fell over with a wall of errors that all looked like this:&lt;/p&gt;&#xA;&lt;pre tabindex=&#34;0&#34;&gt;&lt;code&gt;php8ts.dll.def : error LNK2001: unresolved external symbol UTF8ToHtml&#xA;php8ts.dll.def : error LNK2001: unresolved external symbol UTF8Toisolat1&#xA;php8ts.dll.def : error LNK2001: unresolved external symbol __htmlDefaultSAXHandler&#xA;...&#xA;php8ts.dll.def : error LNK2001: unresolved external symbol attributeDecl&#xA;...&#xA;&lt;/code&gt;&lt;/pre&gt;&lt;p&gt;(That excerpt is from &lt;a href=&#34;https://github.com/php/php-src/issues/22752&#34;&gt;php/php-src#22752&lt;/a&gt;, which is the same failure someone&#xA;else hit three months later. My log is long gone, theirs is public.)&lt;/p&gt;</description>
+    </item>
+    <item>
+      <title>Database Connection Pooling with Smart Reset</title>
+      <link>https://luth.io/blog/2026/08/db-connection-pooling-smart-reset/</link>
+      <pubDate>Sun, 09 Aug 2026 16:25:00 -0700</pubDate>
+      <guid>https://luth.io/blog/2026/08/db-connection-pooling-smart-reset/</guid>
+      <description>&lt;p&gt;PHP&amp;rsquo;s share-nothing model is one of its best properties and it has one expensive side effect: a request can&amp;rsquo;t keep a&#xA;database connection for the next request. php-fpm gives you &lt;code&gt;PDO::ATTR_PERSISTENT&lt;/code&gt; and &lt;code&gt;mysqli&lt;/code&gt;&amp;rsquo;s &lt;code&gt;p:&lt;/code&gt; hosts, but&#xA;those are per-worker-process, PDO&amp;rsquo;s keep whatever session state the last request left behind (mysqli at least resets&#xA;the session with &lt;code&gt;COM_CHANGE_USER&lt;/code&gt; on reuse), and almost nobody turns them on. So in practice every PHP request does a&#xA;TCP connect, a MySQL handshake, an auth exchange, maybe some &lt;code&gt;SET&lt;/code&gt;s, its queries, and then &lt;code&gt;COM_QUIT&lt;/code&gt;. Multiply that by your request rate and MySQL spends a real share of its time authenticating&#xA;clients it just said goodbye to.&lt;/p&gt;</description>
+    </item>
+    <item>
+      <title>Clustered SQLite in ePHPm, Part 1: Replication by Sidecar</title>
+      <link>https://luth.io/blog/2026/08/clustered-sqlite-sqld-sidecar/</link>
+      <pubDate>Sat, 08 Aug 2026 20:14:00 -0700</pubDate>
+      <guid>https://luth.io/blog/2026/08/clustered-sqlite-sqld-sidecar/</guid>
+      <description>&lt;p&gt;Most PHP sites I have run in the last twenty years did not need a MySQL server. They needed &lt;em&gt;a&lt;/em&gt; database, and MySQL was the&#xA;one every framework spoke. With &lt;a href=&#34;https://github.com/ephpm/ephpm&#34;&gt;ePHPm&lt;/a&gt; I have been trying to get rid of that server for&#xA;the common case, and the piece that makes it possible is &lt;a href=&#34;https://github.com/ephpm/litewire&#34;&gt;litewire&lt;/a&gt;: PHP connects with&#xA;plain &lt;code&gt;pdo_mysql&lt;/code&gt;, litewire speaks the MySQL wire protocol, and the queries land in a SQLite file. WordPress and Laravel&#xA;don&amp;rsquo;t know the difference. No &lt;code&gt;mysqld&lt;/code&gt;, no child processes, just &lt;code&gt;ephpm&lt;/code&gt; and a &lt;code&gt;.db&lt;/code&gt; file.&lt;/p&gt;</description>
+    </item>
+    <item>
+      <title>Atomic File Replacement on NTFS Is Not rename &#43; fsync</title>
+      <link>https://luth.io/blog/2026/08/ntfs-atomic-file-replacement-not-rename-fsync/</link>
+      <pubDate>Thu, 06 Aug 2026 21:27:00 -0700</pubDate>
+      <guid>https://luth.io/blog/2026/08/ntfs-atomic-file-replacement-not-rename-fsync/</guid>
+      <description>&lt;p&gt;&lt;a href=&#34;https://github.com/luthermonson/shipmates&#34;&gt;shipmates&lt;/a&gt; writes a lot of small state files that other&#xA;processes read: voyage plans and state, tracker files. Each of them has to be replaced atomically (a reader sees&#xA;the old file or the new one, never half of each) and durably (when the function returns success, a power cut doesn&amp;rsquo;t&#xA;take it back). Every Unix programmer knows the recipe for that. It doesn&amp;rsquo;t work on Windows, and the reasons are more&#xA;interesting than &amp;ldquo;Windows is different&amp;rdquo;.&lt;/p&gt;</description>
+    </item>
+    <item>
+      <title>Gossip-Based Clustering for PHP Apps</title>
+      <link>https://luth.io/blog/2026/08/gossip-clustering-for-php/</link>
+      <pubDate>Tue, 04 Aug 2026 20:52:00 -0700</pubDate>
+      <guid>https://luth.io/blog/2026/08/gossip-clustering-for-php/</guid>
+      <description>&lt;p&gt;Most PHP developers never touch clustering primitives, and that&amp;rsquo;s by design. PHP is share-nothing: each request starts&#xA;from zero, and anything shared lives somewhere else. Sessions go in Redis, cache goes in Redis or Memcached, locks go in&#xA;Redis, and when you run two app servers the &amp;ldquo;cluster&amp;rdquo; is really two stateless boxes pointed at the same Redis. That works&#xA;until Redis is the thing you&amp;rsquo;re trying not to run.&lt;/p&gt;</description>
+    </item>
+    <item>
+      <title>Rescuing a Windows Dynamic Disk Over USB with WSL2 and USB/IP</title>
+      <link>https://luth.io/blog/2026/08/windows-dynamic-disk-usb-wsl2-usbip/</link>
+      <pubDate>Sat, 01 Aug 2026 13:15:00 -0700</pubDate>
+      <guid>https://luth.io/blog/2026/08/windows-dynamic-disk-usb-wsl2-usbip/</guid>
+      <description>&lt;p&gt;I pulled a 1 TB NVMe out of an old Windows box, dropped it in a USB enclosure, plugged it in, and Windows showed nothing.&#xA;No drive letter, no &amp;ldquo;initialize this disk&amp;rdquo; prompt, nothing in Explorer. Disk Management listed it as &lt;code&gt;Invalid&lt;/code&gt;, and the&#xA;enclosure&amp;rsquo;s booklet said to &amp;ldquo;bring the disk online&amp;rdquo;, which silently did nothing. The data was completely intact. Windows was&#xA;refusing on &lt;strong&gt;policy&lt;/strong&gt; grounds, not because anything was broken, and getting it back meant going around the Windows storage&#xA;stack entirely and handing the raw USB device to a Linux kernel that doesn&amp;rsquo;t share Windows&amp;rsquo; opinions.&lt;/p&gt;</description>
+    </item>
+    <item>
+      <title>Building a Custom SAPI - How PHP Actually Talks to the Outside World</title>
+      <link>https://luth.io/blog/2026/07/building-a-custom-php-sapi/</link>
+      <pubDate>Thu, 30 Jul 2026 20:18:00 -0700</pubDate>
+      <guid>https://luth.io/blog/2026/07/building-a-custom-php-sapi/</guid>
+      <description>&lt;p&gt;If you&amp;rsquo;ve only ever run PHP behind nginx you&amp;rsquo;ve probably never had to think about how &lt;code&gt;echo&lt;/code&gt; reaches a socket. When you&#xA;embed PHP, as &lt;a href=&#34;https://github.com/ephpm/ephpm&#34;&gt;ePHPm&lt;/a&gt; does, it&amp;rsquo;s the first thing you have to answer, and the answer is a&#xA;SAPI. There is very little written about implementing one. Most of what I know came from reading &lt;code&gt;sapi/cli&lt;/code&gt;,&#xA;&lt;code&gt;sapi/cgi&lt;/code&gt; and &lt;code&gt;sapi/embed&lt;/code&gt; in php-src and then finding out which parts I&amp;rsquo;d misread. This is the write-up I wanted back&#xA;in March.&lt;/p&gt;</description>
+    </item>
+    <item>
+      <title>Five Ways to URL-Encode an SSH Key (and Why Proxmox Rejects Them)</title>
+      <link>https://luth.io/blog/2026/07/five-ways-to-url-encode-an-ssh-key/</link>
+      <pubDate>Tue, 28 Jul 2026 20:12:00 -0700</pubDate>
+      <guid>https://luth.io/blog/2026/07/five-ways-to-url-encode-an-ssh-key/</guid>
+      <description>&lt;p&gt;&lt;a href=&#34;https://github.com/luthermonson/go-proxmox/issues/144&#34;&gt;Issue #144&lt;/a&gt; on go-proxmox was opened in April 2024 with the title&#xA;&amp;ldquo;Weird sshkeys SSH public key validation error&amp;rdquo; and it is one of my less proud threads. Thirteen comments of people,&#xA;including me, trying to get a public key into a cloud-init VM through the API, and the working answer took more than a&#xA;year to show up. The fix that finally landed in May is one line. Here&amp;rsquo;s why it took so long.&lt;/p&gt;</description>
+    </item>
+    <item>
+      <title>SQLite as a Production Database via Protocol Translation</title>
+      <link>https://luth.io/blog/2026/07/sqlite-production-database-protocol-translation/</link>
+      <pubDate>Sat, 25 Jul 2026 20:40:00 -0700</pubDate>
+      <guid>https://luth.io/blog/2026/07/sqlite-production-database-protocol-translation/</guid>
+      <description>&lt;p&gt;Most of the PHP sites I&amp;rsquo;d put on &lt;a href=&#34;https://github.com/ephpm/ephpm&#34;&gt;ePHPm&lt;/a&gt; don&amp;rsquo;t need a MySQL server. A brochure WordPress,&#xA;an internal Laravel tool, a preview environment that lives for an afternoon. What they do need is something that&#xA;&lt;em&gt;looks&lt;/em&gt; like MySQL, because &lt;code&gt;mysqli&lt;/code&gt; and &lt;code&gt;pdo_mysql&lt;/code&gt; are the only database drivers their code has ever been pointed at.&#xA;I mentioned this in the &lt;a href=&#34;https://luth.io/blog/2026/06/ephpm-pragmatism/&#34;&gt;ePHPm pragmatism post&lt;/a&gt; as a one-paragraph &amp;ldquo;because&amp;rdquo;. This is the&#xA;longer version, now that WordPress 7.0 and Laravel 13 both install and run end to end on it.&lt;/p&gt;</description>
+    </item>
+    <item>
+      <title>Fixing Windows Archive Extraction in SPC</title>
+      <link>https://luth.io/blog/2026/07/spc-windows-archive-extraction/</link>
+      <pubDate>Sat, 18 Jul 2026 16:10:00 -0700</pubDate>
+      <guid>https://luth.io/blog/2026/07/spc-windows-archive-extraction/</guid>
+      <description>&lt;p&gt;One of the first things that broke when I started building PHP on Windows with&#xA;&lt;a href=&#34;https://github.com/crazywhalecc/static-php-cli&#34;&gt;static-php-cli&lt;/a&gt; (SPC) wasn&amp;rsquo;t PHP at all. It was unpacking the source&#xA;tarballs. libxml2, xz, a couple of others would die partway through extraction with:&lt;/p&gt;&#xA;&lt;pre tabindex=&#34;0&#34;&gt;&lt;code&gt;ERROR: The pipe has been ended.&#xA;&lt;/code&gt;&lt;/pre&gt;&lt;p&gt;Over the last few months I&amp;rsquo;ve &amp;ldquo;fixed&amp;rdquo; this two different ways, and the maintainers fixed it a third. It&amp;rsquo;s a small piece&#xA;of code but it&amp;rsquo;s a good example of how much Linux assumption hides in a single shell pipeline, so here&amp;rsquo;s the whole thing.&lt;/p&gt;</description>
+    </item>
+    <item>
+      <title>Two Small go-proxmox Fixes: A Watch Channel That Never Closed, and WithRetry</title>
+      <link>https://luth.io/blog/2026/07/go-proxmox-watch-close-withretry/</link>
+      <pubDate>Sat, 11 Jul 2026 17:26:00 -0700</pubDate>
+      <guid>https://luth.io/blog/2026/07/go-proxmox-watch-close-withretry/</guid>
+      <description>&lt;p&gt;Two changes from the v0.5 to v0.7 stretch of &lt;a href=&#34;https://github.com/luthermonson/go-proxmox&#34;&gt;go-proxmox&lt;/a&gt; that are too small&#xA;for a post each but are worth knowing about if you write long-running tooling against Proxmox. One is a bug in code I&#xA;wrote about in 2022, the other is a feature that replaces a retry loop everybody was writing for themselves.&lt;/p&gt;&#xA;&lt;h3 id=&#34;the-channel-that-only-closed-when-things-went-well&#34;&gt;The channel that only closed when things went well&lt;/h3&gt;&#xA;&lt;p&gt;In 2022 I wrote up &lt;a href=&#34;https://luth.io/blog/2022/03/proxmox-tasks-upid-wait-go/&#34;&gt;how tasks and &lt;code&gt;Watch&lt;/code&gt; work&lt;/a&gt;: &lt;code&gt;Watch&lt;/code&gt; returns a channel of&#xA;log lines and a goroutine tails the task log until the task stops, then closes the channel so you can &lt;code&gt;range&lt;/code&gt; over it.&#xA;Here is the tail loop from that post:&lt;/p&gt;</description>
+    </item>
+    <item>
+      <title>Maintaining an Open-Source Library With AI Agents: AGENTS.md and the Rule They Kept Breaking</title>
+      <link>https://luth.io/blog/2026/06/go-proxmox-agents-md/</link>
+      <pubDate>Sat, 27 Jun 2026 18:47:00 -0700</pubDate>
+      <guid>https://luth.io/blog/2026/06/go-proxmox-agents-md/</guid>
+      <description>&lt;p&gt;On May 9th I merged &lt;a href=&#34;https://github.com/luthermonson/go-proxmox/pull/264&#34;&gt;#264&lt;/a&gt;, which added an &lt;code&gt;AGENTS.md&lt;/code&gt; to&#xA;&lt;a href=&#34;https://github.com/luthermonson/go-proxmox&#34;&gt;go-proxmox&lt;/a&gt; and a stub &lt;code&gt;CLAUDE.md&lt;/code&gt; that just points at it. Over the&#xA;next six weeks, through the v0.8.0 migration guide on June 15th, &lt;code&gt;main&lt;/code&gt; took 77 commits, +31,794 / -1,144 lines, went from&#xA;84 to 186 &lt;code&gt;.go&lt;/code&gt; files, and endpoint coverage went from 30% to &lt;a href=&#34;https://luth.io/blog/2026/06/go-proxmox-endpoint-coverage/&#34;&gt;100% of the Proxmox API&lt;/a&gt;.&#xA;Most of that code was typed by coding agents, a lot of it by several at once. This is what that looked like from the&#xA;maintainer&amp;rsquo;s chair, mostly the parts that went wrong, because that&amp;rsquo;s where &lt;code&gt;AGENTS.md&lt;/code&gt; got its content.&lt;/p&gt;</description>
+    </item>
+    <item>
+      <title>Proxmox JSON, Part 2: null PIDs, 1.12589990684262e&#43;15 and net10</title>
+      <link>https://luth.io/blog/2026/06/proxmox-numbers-null-scientific-notation-net10/</link>
+      <pubDate>Tue, 23 Jun 2026 20:31:00 -0700</pubDate>
+      <guid>https://luth.io/blog/2026/06/proxmox-numbers-null-scientific-notation-net10/</guid>
+      <description>&lt;p&gt;In 2023 I wrote about &lt;a href=&#34;https://luth.io/blog/2023/11/proxmox-doesnt-know-what-type-a-number-is/&#34;&gt;why go-proxmox has &lt;code&gt;StringOrInt&lt;/code&gt; and friends&lt;/a&gt;:&#xA;Proxmox sends the same number quoted in one place and bare in another, so the client has types that accept both. That&#xA;post ended on a pretty confident note. Since then three more shapes of &amp;ldquo;the JSON is valid and Go still won&amp;rsquo;t take it&amp;rdquo;&#xA;have come in, and one of them is a bug I&amp;rsquo;d already fixed once and then reintroduced myself.&lt;/p&gt;</description>
+    </item>
+    <item>
+      <title>The Pragmatism of ePHPm - Every Decision Has a &#34;Because&#34; Behind It</title>
+      <link>https://luth.io/blog/2026/06/ephpm-pragmatism/</link>
+      <pubDate>Sun, 21 Jun 2026 19:05:00 -0700</pubDate>
+      <guid>https://luth.io/blog/2026/06/ephpm-pragmatism/</guid>
+      <description>&lt;p&gt;&lt;a href=&#34;https://github.com/ephpm/ephpm&#34;&gt;ePHPm&lt;/a&gt; tagged &lt;a href=&#34;https://github.com/ephpm/ephpm/releases/tag/v0.1.0&#34;&gt;v0.1.0&lt;/a&gt; this&#xA;week, three months after the first commit. Before the feature list grows any further I want to write down how&#xA;decisions get made on it, mostly for myself, because the easiest way to ruin a project like this is to let it turn into&#xA;a checklist of things other projects have.&lt;/p&gt;&#xA;&lt;p&gt;The pitch is simple: one binary that runs a PHP app with fewer moving parts than nginx + php-fpm + Redis + MySQL. Every&#xA;feature has to trace back to that. If I can&amp;rsquo;t finish the sentence &amp;ldquo;this exists because&amp;hellip;&amp;rdquo; with a real problem from&#xA;running PHP in production, it doesn&amp;rsquo;t go in.&lt;/p&gt;</description>
+    </item>
+    <item>
+      <title>Stop Ctrl-C-ing Your tail -f | grep</title>
+      <link>https://luth.io/blog/2026/06/tail-gunner/</link>
+      <pubDate>Sat, 20 Jun 2026 20:31:00 -0700</pubDate>
+      <guid>https://luth.io/blog/2026/06/tail-gunner/</guid>
+      <description>&lt;p&gt;Here&amp;rsquo;s a loop I end up in all the time: &lt;code&gt;tail -f app.log&lt;/code&gt;, something scrolls by that looks wrong, Ctrl-C, &lt;code&gt;tail -f app.log | grep ERROR&lt;/code&gt;,&#xA;wait for it to happen again, decide I also want to drop the health checks, Ctrl-C, &lt;code&gt;| grep -v healthz&lt;/code&gt;, wait again. Every filter tweak&#xA;throws away the stream and every line that already went past. I got tired of it and wrote &lt;a href=&#34;https://github.com/luthermonson/tail-gunner&#34;&gt;tail-gunner&lt;/a&gt;,&#xA;a &lt;code&gt;tail&lt;/code&gt; replacement that you can promote into a filtering TUI with one keystroke and drop back out of without the stream ever stopping.&lt;/p&gt;</description>
+    </item>
+    <item>
+      <title>Escaping WSL: Booting My Own Linux VM Through Hyper-V&#39;s HCS API</title>
+      <link>https://luth.io/blog/2026/06/escaping-wsl-hcs-linux-vm/</link>
+      <pubDate>Sun, 14 Jun 2026 20:12:00 -0700</pubDate>
+      <guid>https://luth.io/blog/2026/06/escaping-wsl-hcs-linux-vm/</guid>
+      <description>&lt;p&gt;I&amp;rsquo;ve been building &lt;a href=&#34;https://github.com/ephpm/ephemerd&#34;&gt;ephemerd&lt;/a&gt;, a daemon that runs self-hosted GitHub Actions runners&#xA;with a fresh environment per job. On a Windows host, Windows jobs run in Hyper-V isolated containers, but Linux jobs still&#xA;need a Linux kernel from somewhere. The obvious answer on Windows in 2026 is WSL2, and that&amp;rsquo;s what I used first. It worked&#xA;great from my terminal and fell over the moment ephemerd became a real Windows service.&lt;/p&gt;</description>
+    </item>
+    <item>
+      <title>Your Zero Value Just Turned Off My TLS Verification: omitempty, Go Defaults and Proxmox</title>
+      <link>https://luth.io/blog/2026/06/omitempty-zero-values-proxmox-defaults/</link>
+      <pubDate>Sat, 13 Jun 2026 19:52:00 -0700</pubDate>
+      <guid>https://luth.io/blog/2026/06/omitempty-zero-values-proxmox-defaults/</guid>
+      <description>&lt;p&gt;Every Go developer knows &lt;code&gt;omitempty&lt;/code&gt; drops zero values. What takes longer to sink in is that a plain &lt;code&gt;bool&lt;/code&gt; only has two&#xA;states and a caller filling in an options struct means one of three: &amp;ldquo;set it true&amp;rdquo;, &amp;ldquo;set it false&amp;rdquo;, and &amp;ldquo;I didn&amp;rsquo;t touch&#xA;this, do whatever the server does by default&amp;rdquo;. With &lt;code&gt;omitempty&lt;/code&gt; you lose &amp;ldquo;false&amp;rdquo;. Without it you lose &amp;ldquo;didn&amp;rsquo;t touch it&amp;rdquo;.&#xA;In &lt;a href=&#34;https://github.com/luthermonson/go-proxmox&#34;&gt;go-proxmox&lt;/a&gt; we managed to ship both bugs, in that order, and the second one&#xA;quietly turned off TLS certificate verification for anyone downloading ISOs through the API.&lt;/p&gt;</description>
+    </item>
+    <item>
+      <title>From 52% to 100%: Measuring a Go Client Against the Proxmox API Schema</title>
+      <link>https://luth.io/blog/2026/06/go-proxmox-endpoint-coverage/</link>
+      <pubDate>Sun, 07 Jun 2026 21:36:00 -0700</pubDate>
+      <guid>https://luth.io/blog/2026/06/go-proxmox-endpoint-coverage/</guid>
+      <description>&lt;p&gt;For five years the honest answer to &amp;ldquo;how much of the Proxmox API does go-proxmox cover?&amp;rdquo; was &amp;ldquo;a lot of it? the parts&#xA;people asked for?&amp;rdquo;. Issues would come in for endpoints that didn&amp;rsquo;t exist in the client and I&amp;rsquo;d have no idea how many more&#xA;were missing. At the end of May I finally built the thing that answers the question, and three days after the first run the&#xA;answer was 100%. The more interesting part is how many times the measuring stick was wrong on the way there.&lt;/p&gt;</description>
+    </item>
+    <item>
+      <title>Cloud-Init ISOs in Pure Go with go-proxmox</title>
+      <link>https://luth.io/blog/2026/06/cloud-init-isos-pure-go-proxmox/</link>
+      <pubDate>Sat, 06 Jun 2026 15:20:00 -0700</pubDate>
+      <guid>https://luth.io/blog/2026/06/cloud-init-isos-pure-go-proxmox/</guid>
+      <description>&lt;p&gt;Proxmox&amp;rsquo;s built-in cloud-init support is fine for the basics: a user, an SSH key, an IP config. It falls apart the second you&#xA;want your own &lt;code&gt;user-data&lt;/code&gt;, &lt;code&gt;vendor-data&lt;/code&gt; or a real &lt;code&gt;network-config&lt;/code&gt;, because the GUI and the &lt;code&gt;ci*&lt;/code&gt; options only expose a&#xA;handful of fields, and the escape hatch (&lt;code&gt;cicustom&lt;/code&gt; pointing at snippet files) means getting files onto the Proxmox host&amp;rsquo;s&#xA;filesystem first. The usual alternative is building a nocloud ISO yourself with &lt;code&gt;genisoimage&lt;/code&gt; or &lt;code&gt;mkisofs&lt;/code&gt;, which means a&#xA;system dependency on whatever machine runs your automation, a different package name on every OS, and a subprocess to babysit.&lt;/p&gt;</description>
+    </item>
+    <item>
+      <title>Staying Logged In to Proxmox: Ticket Renewal, Expiry and Where API Tokens Stop</title>
+      <link>https://luth.io/blog/2026/05/staying-logged-in-to-proxmox/</link>
+      <pubDate>Sun, 31 May 2026 20:24:00 -0700</pubDate>
+      <guid>https://luth.io/blog/2026/05/staying-logged-in-to-proxmox/</guid>
+      <description>&lt;p&gt;Back in 2023 I wrote up &lt;a href=&#34;https://luth.io/blog/2023/08/proxmox-api-auth-tickets-tokens-go/&#34;&gt;how go-proxmox logs in&lt;/a&gt; and ended it with a&#xA;shrug: once a session existed the client never logged in again, so a ticket-based client died at the two hour mark and&#xA;my advice was &amp;ldquo;use an API token for anything long running&amp;rdquo;. It took until this month to actually fix that properly, and&#xA;it took three PRs from two of us to get there. Here&amp;rsquo;s the whole arc, plus the one place where an API token&#xA;isn&amp;rsquo;t an option at all.&lt;/p&gt;</description>
+    </item>
+    <item>
+      <title>go-diskfs: Getting Rock Ridge Working for Joliet on Windows</title>
+      <link>https://luth.io/blog/2026/05/go-diskfs-rock-ridge-joliet-windows/</link>
+      <pubDate>Sun, 17 May 2026 20:40:00 -0700</pubDate>
+      <guid>https://luth.io/blog/2026/05/go-diskfs-rock-ridge-joliet-windows/</guid>
+      <description>&lt;p&gt;&lt;a href=&#34;https://github.com/luthermonson/go-proxmox&#34;&gt;go-proxmox&lt;/a&gt; has had a &lt;code&gt;CloudInit()&lt;/code&gt; helper since 2023. It builds a small&#xA;nocloud ISO in Go, uploads it to Proxmox and mounts it on the VM as a CD-ROM. It&amp;rsquo;s always worked fine for Linux guests. It&#xA;has never worked for Windows guests running &lt;a href=&#34;https://cloudbase.it/cloudbase-init/&#34;&gt;cloudbase-init&lt;/a&gt;, and the reason is a&#xA;filesystem extension from 1995 called Joliet.&lt;/p&gt;&#xA;&lt;p&gt;Getting it fixed took three PRs to &lt;a href=&#34;https://github.com/diskfs/go-diskfs&#34;&gt;go-diskfs&lt;/a&gt; over about seven weeks, plus a bug report&#xA;from a user who actually ran it on Windows, which turned out to be the most important part.&lt;/p&gt;</description>
+    </item>
+    <item>
+      <title>PHP Signal Safety - The Init Ordering Bug Nobody Warns You About</title>
+      <link>https://luth.io/blog/2026/04/php-signal-safety-init-ordering/</link>
+      <pubDate>Sun, 12 Apr 2026 20:15:00 -0700</pubDate>
+      <guid>https://luth.io/blog/2026/04/php-signal-safety-init-ordering/</guid>
+      <description>&lt;p&gt;Last week I wrote about &lt;a href=&#34;https://luth.io/blog/2026/04/why-rust-for-php-embedding/&#34;&gt;why ePHPm embeds PHP from Rust&lt;/a&gt; and promised the&#xA;signal bug its own post. Here it is. It&amp;rsquo;s the kind of bug where the fix is about ten lines and the explanation is the&#xA;whole post, because nothing in PHP&amp;rsquo;s embed documentation (there&amp;rsquo;s barely any) tells you that initializing PHP has&#xA;process-wide side effects that assume PHP is the only thing in the process.&lt;/p&gt;&#xA;&lt;h3 id=&#34;the-setup&#34;&gt;The setup&lt;/h3&gt;&#xA;&lt;p&gt;The first working version of &lt;code&gt;ephpm serve&lt;/code&gt; looked like every async Rust program: &lt;code&gt;#[tokio::main]&lt;/code&gt;-style, build the&#xA;runtime, then inside it load config, initialize PHP, start the HTTP server. PHP requests run on &lt;code&gt;spawn_blocking&lt;/code&gt;&#xA;threads. Simplified:&lt;/p&gt;</description>
+    </item>
+    <item>
+      <title>Why Rust for PHP Embedding (Not Go)</title>
+      <link>https://luth.io/blog/2026/04/why-rust-for-php-embedding/</link>
+      <pubDate>Sun, 05 Apr 2026 19:40:00 -0700</pubDate>
+      <guid>https://luth.io/blog/2026/04/why-rust-for-php-embedding/</guid>
+      <description>&lt;p&gt;Go is my primary language and has been for a long time, so when I started building &lt;a href=&#34;https://github.com/ephpm/ephpm&#34;&gt;ePHPm&lt;/a&gt;&#xA;a few weeks ago the obvious move was to write it in Go. ePHPm is a PHP application server: one binary that embeds the&#xA;real PHP interpreter (&lt;code&gt;libphp&lt;/code&gt;, the Zend engine) and puts an HTTP server, TLS, a KV cache and a database proxy around it,&#xA;so a PHP app doesn&amp;rsquo;t need nginx + php-fpm + Redis to run. &lt;a href=&#34;https://frankenphp.dev/&#34;&gt;FrankenPHP&lt;/a&gt; already proved the&#xA;&amp;ldquo;PHP inside a Go web server&amp;rdquo; idea works, and it works well. I wrote it in Rust anyway. This post is the reasoning, the&#xA;part of the design that Rust made easier and the part it didn&amp;rsquo;t, and some numbers I should have measured before I wrote&#xA;the design doc instead of after.&lt;/p&gt;</description>
+    </item>
+    <item>
+      <title>Maintaining a Go Tool That Edits /etc/hosts on Every OS</title>
+      <link>https://luth.io/blog/2024/02/goodhosts/</link>
+      <pubDate>Sat, 03 Feb 2024 19:22:00 -0700</pubDate>
+      <guid>https://luth.io/blog/2024/02/goodhosts/</guid>
+      <description>&lt;p&gt;Editing the hosts file sounds like the most boring problem in software. Read a text file, add a line, write it back. Then you find out&#xA;your binary is being shelled out to from a Ruby Vagrant plugin on a Windows laptop with UAC prompts, your library is being called in a&#xA;loop by &lt;a href=&#34;https://github.com/ddev/ddev&#34;&gt;ddev&lt;/a&gt;, and every hosts file you parse was hand-edited by somebody at some point.&#xA;I&amp;rsquo;ve been maintaining &lt;a href=&#34;https://github.com/goodhosts&#34;&gt;goodhosts&lt;/a&gt; for a few years now, and since I just spent a chunk of the fall and the&#xA;holidays on it, here&amp;rsquo;s what that looks like.&lt;/p&gt;</description>
+    </item>
+    <item>
+      <title>Proxmox Doesn&#39;t Know What Type a Number Is</title>
+      <link>https://luth.io/blog/2023/11/proxmox-doesnt-know-what-type-a-number-is/</link>
+      <pubDate>Sat, 25 Nov 2023 20:05:00 -0700</pubDate>
+      <guid>https://luth.io/blog/2023/11/proxmox-doesnt-know-what-type-a-number-is/</guid>
+      <description>&lt;p&gt;Every couple of months somebody opens an issue on &lt;a href=&#34;https://github.com/luthermonson/go-proxmox&#34;&gt;go-proxmox&lt;/a&gt; with a title&#xA;that starts with &lt;code&gt;json: cannot unmarshal string into Go struct field&lt;/code&gt;. The most recent one was fixed last week, and it&amp;rsquo;s the same&#xA;root cause every time: the Proxmox VE API is backed by Perl, Perl doesn&amp;rsquo;t really care whether a scalar is a number or a&#xA;string, and the JSON encoder on the other end writes whatever the scalar happens to be at the time. So a field that is&#xA;documented as an integer comes back as &lt;code&gt;2048&lt;/code&gt; from one endpoint and &lt;code&gt;&amp;quot;2048&amp;quot;&lt;/code&gt; from another, and sometimes from the same&#xA;endpoint depending on how the value got into the config.&lt;/p&gt;</description>
+    </item>
+    <item>
+      <title>Logging In to Proxmox From Go: Tickets, CSRF Tokens and API Tokens</title>
+      <link>https://luth.io/blog/2023/08/proxmox-api-auth-tickets-tokens-go/</link>
+      <pubDate>Sun, 27 Aug 2023 19:18:00 -0700</pubDate>
+      <guid>https://luth.io/blog/2023/08/proxmox-api-auth-tickets-tokens-go/</guid>
+      <description>&lt;p&gt;I just spent a week of evenings on the access side of &lt;a href=&#34;https://github.com/luthermonson/go-proxmox&#34;&gt;go-proxmox&lt;/a&gt;: realms,&#xA;groups, users and roles all landed, and before any of that I reworked how a client gets its credentials in&#xA;the first place. Proxmox gives you two different ways to authenticate and they behave differently enough that it&amp;rsquo;s worth&#xA;writing down how each one works on the wire and what the client does with it.&lt;/p&gt;&#xA;&lt;p&gt;&lt;img src=&#34;https://luth.io/img/2023/08/proxmox-api-auth-tickets-tokens-go-flow.svg&#34; alt=&#34;Ticket and API token flows&#34;&gt;&lt;/p&gt;</description>
+    </item>
+    <item>
+      <title>Waiting on Proxmox: UPIDs, Tasks and WaitFor in Go</title>
+      <link>https://luth.io/blog/2022/03/proxmox-tasks-upid-wait-go/</link>
+      <pubDate>Sun, 20 Mar 2022 16:42:00 -0700</pubDate>
+      <guid>https://luth.io/blog/2022/03/proxmox-tasks-upid-wait-go/</guid>
+      <description>&lt;p&gt;If you start automating &lt;a href=&#34;https://www.proxmox.com/en/&#34;&gt;Proxmox VE&lt;/a&gt; through the API, the first thing that trips you up is&#xA;that almost nothing you ask it to do is finished when the HTTP call returns. Start a VM, clone a template, download an&#xA;ISO to storage, delete a disk&amp;hellip; the response is a single string that looks like a typo and the actual work is happening&#xA;in a worker process on the node. If your next call depends on that work being done you have to go find out when it&amp;rsquo;s done.&lt;/p&gt;</description>
+    </item>
     <item>
       <title>Recreating Proxmox Ve Xtermjs in Go</title>
       <link>https://luth.io/blog/2022/02/recreating-proxmox-ve-xtermjs-in-go/</link>
       <pubDate>Sun, 06 Feb 2022 21:54:53 -0700</pubDate>
-      
       <guid>https://luth.io/blog/2022/02/recreating-proxmox-ve-xtermjs-in-go/</guid>
-      <description>Part of a hobby of mine is running a home lab and using on Proxmox VE to do the virtualization. Since I work in the space I&amp;rsquo;m slowly trying to build tooling around Proxmox that will let me use the home lab full time for work. Usually my work involves building Kubernetes management tooling, you can imagine waiting for public cloud APIs all day can take away hours of your day at cost to your employer for both your time and the compute resources.</description>
+      <description>&lt;p&gt;Part of a hobby of mine is running a home lab and using on &lt;a href=&#34;https://www.proxmox.com/en/&#34;&gt;Proxmox VE&lt;/a&gt; to do the virtualization.&#xA;Since I work in the space I&amp;rsquo;m slowly trying to build tooling around Proxmox that will let me use the home lab full time for work.&#xA;Usually my work involves building Kubernetes management tooling, you can imagine waiting for public cloud APIs all day&#xA;can take away hours of your day at cost to your employer for both your time and the compute resources.&lt;/p&gt;</description>
     </item>
-    
     <item>
       <title>Practical Cue Example, Produce YAML Config from Go Types</title>
       <link>https://luth.io/blog/2022/01/practical-cue-example/</link>
       <pubDate>Mon, 31 Jan 2022 09:57:26 -0700</pubDate>
-      
       <guid>https://luth.io/blog/2022/01/practical-cue-example/</guid>
-      <description>I recently had to spend some time to learn Cue and felt the examples/tutorials were a bit lacking and the paradigm shift to the entire language sort of messed with my head and some things Cue does were a bit foreign to me. To get started, note that the two places I spent all of my time to get this information came from their main docs and a community Cuetorials site.</description>
+      <description>&lt;p&gt;I recently had to spend some time to learn &lt;a href=&#34;https://cuelang.org/&#34;&gt;Cue&lt;/a&gt; and felt the examples/tutorials were a bit lacking&#xA;and the paradigm shift to the entire language sort of messed with my head and some things Cue does were a bit foreign to me.&#xA;To get started, note that the two places I spent all of my time to get this information came from their main &lt;a href=&#34;https://cuelang.org/docs/&#34;&gt;docs&lt;/a&gt;&#xA;and a community &lt;a href=&#34;https://cuetorials.com/&#34;&gt;Cuetorials&lt;/a&gt; site. This will be a tutorial on how you can use Cue to generate&#xA;two different YAML documents using Cue all starting with Go types to generate Cue files.&lt;/p&gt;</description>
     </item>
-    
     <item>
       <title>Free Blog Hosting Using Hugo &#43; Github Pages</title>
       <link>https://luth.io/blog/2022/01/free-personal-blog-hugo-github-pages/</link>
       <pubDate>Thu, 27 Jan 2022 11:51:20 -0700</pubDate>
-      
       <guid>https://luth.io/blog/2022/01/free-personal-blog-hugo-github-pages/</guid>
-      <description>Since I just rode this merry-go-round here is a quick overview of how you can achieve a professional looking personal blog with custom DNS with minimal effort at no cost and completely run out of a single Github Repository.
-Prerequisites You&amp;rsquo;ll need to do your own homework on how to use Hugo and you should have a Github account and have a decent understanding of using git and getting changes committed and pushed to a repo.</description>
+      <description>&lt;p&gt;Since I just rode this merry-go-round here is a quick overview of how you can achieve a professional&#xA;looking personal blog with custom DNS with minimal effort at no cost and completely run out of a single Github Repository.&lt;/p&gt;&#xA;&lt;h3 id=&#34;prerequisites&#34;&gt;Prerequisites&lt;/h3&gt;&#xA;&lt;p&gt;You&amp;rsquo;ll need to do your own homework on how to use &lt;a href=&#34;https://gohugo.io/&#34;&gt;Hugo&lt;/a&gt; and you should have a &lt;a href=&#34;https://github.com/&#34;&gt;Github&lt;/a&gt;&#xA;account and have a decent understanding of using git and getting changes committed and pushed to a repo. You should also&#xA;have a domain and know how to do some basic DNS changes. Note that the only thing you likely can&amp;rsquo;t get for free is a domain name as&#xA;there are registration costs through registrars but, you can get introductory $0.99USD domains for the first year if you shop around and don&amp;rsquo;t care the &lt;a href=&#34;https://en.wikipedia.org/wiki/Top-level_domain&#34;&gt;TLD&lt;/a&gt;&#xA;you end up with. For reference, luth.io cost me $30/year to register with &lt;a href=&#34;https://www.cloudflare.com/products/registrar/&#34;&gt;CloudFlare&lt;/a&gt;.&lt;/p&gt;</description>
     </item>
-    
     <item>
       <title>Introduction</title>
       <link>https://luth.io/blog/introduction/</link>
       <pubDate>Thu, 27 Jan 2022 10:11:05 -0700</pubDate>
-      
       <guid>https://luth.io/blog/introduction/</guid>
-      <description>Getting a blog up and running to get some of the thoughts out of my head and into a markdown file. For reference on who I am please check out the about section and stay tuned for more content related to what it is I do everyday.</description>
+      <description>&lt;p&gt;Getting a blog up and running to get some of the thoughts out of my head and into a markdown file. For reference on&#xA;who I am please check out the &lt;a href=&#34;https://luth.io/about/&#34;&gt;about&lt;/a&gt; section and stay tuned for more content related to what it is I do everyday.&lt;/p&gt;</description>
     </item>
-    
     <item>
       <title>About the Blogger</title>
       <link>https://luth.io/about/</link>
       <pubDate>Wed, 26 Jan 2022 08:26:16 -0700</pubDate>
-      
       <guid>https://luth.io/about/</guid>
-      <description>Originally born and raised in the Midwest, Luther moved to the expansive deserts of the American Southwest after receiving a Bachelor of the Arts in Computer Science from Gustavus Adolphus College in Southern Minnesota. After moving to Arizona, Luther spent his career building web APIs and utilities for various industries in PHP and NodeJS before migrating to Open Source DevOps tooling using Containers and Virtualization.
-Luther is an Open Source developer mostly writing Go and working in the Kubernetes space by way of his employer SUSE and their Multi-Cluster Management tool Rancher.</description>
+      <description>&lt;p&gt;Originally born and raised in the Midwest, Luther moved to the expansive deserts of the American Southwest after&#xA;receiving a Bachelor of the Arts in Computer Science from &lt;a href=&#34;https://gustavus.edu/&#34;&gt;Gustavus Adolphus College&lt;/a&gt; in Southern Minnesota.&#xA;After moving to Arizona, Luther spent his career building web APIs and utilities for various industries in PHP and NodeJS&#xA;before migrating to Open Source DevOps tooling using Containers and Virtualization.&lt;/p&gt;&#xA;&lt;p&gt;Luther works at &lt;a href=&#34;https://www.akamai.com/&#34;&gt;Akamai&lt;/a&gt; on &lt;a href=&#34;https://www.linode.com/products/kubernetes/&#34;&gt;LKE Enterprise&lt;/a&gt;,&#xA;the enterprise tier of the Linode Kubernetes Engine. Before Akamai he spent years in the Kubernetes space at&#xA;Rancher Labs and &lt;a href=&#34;https://suse.com/&#34;&gt;SUSE&lt;/a&gt; working on the Multi-Cluster Management tool&#xA;&lt;a href=&#34;https://rancher.com/&#34;&gt;Rancher&lt;/a&gt;. As the Team Lead for &lt;a href=&#34;https://github.com/rancher/windows&#34;&gt;Windows on Rancher&lt;/a&gt; he&#xA;specialized in Kubernetes on alternative operating systems and architectures including Windows, arm64 and s390x.&#xA;After Rancher he worked at &lt;a href=&#34;https://www.spectrocloud.com/&#34;&gt;Spectro Cloud&lt;/a&gt; on Cluster API providers for AWS and Azure,&#xA;including OIDC/IRSA support for self-managed clusters on AWS.&#xA;Working in this unique space and working from home full time has made him a home lab aficionado and consumer of&#xA;&lt;a href=&#34;https://www.proxmox.com/en/&#34;&gt;Proxmox VE&lt;/a&gt;.&lt;/p&gt;</description>
     </item>
-    
+    <item>
+      <title>Archive</title>
+      <link>https://luth.io/archive/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      <guid>https://luth.io/archive/</guid>
+      <description></description>
+    </item>
   </channel>
 </rss>

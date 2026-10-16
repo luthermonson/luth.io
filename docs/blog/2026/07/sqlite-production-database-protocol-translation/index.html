@@ -1,0 +1,766 @@
+<!doctype html>
+<html lang="en">
+  <head>
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-MSTSKGFWTX"></script>
+<script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+
+    gtag('config', 'G-MSTSKGFWTX');
+</script><meta charset="utf-8">
+<title>SQLite as a Production Database via Protocol Translation - Luther Monson</title>
+<meta name="description" content="litewire speaks the MySQL wire protocol on one side and SQLite on the other, so WordPress and Laravel run against a .db file without a code change. Here&#39;s how it works and what it took.">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<meta name="twitter:card" content="summary_large_image"><meta name="twitter:site" content="@luthermonson">
+
+<meta property="og:site_name" content="Luther Monson">
+<meta property="og:title" content="SQLite as a Production Database via Protocol Translation">
+<meta property="og:description" content="litewire speaks the MySQL wire protocol on one side and SQLite on the other, so WordPress and Laravel run against a .db file without a code change. Here&#39;s how it works and what it took.">
+<meta property="og:type" content="article">
+<meta property="og:url" content="https://luth.io/blog/2026/07/sqlite-production-database-protocol-translation/">
+    <meta property="og:image" content="https://luth.io/img/2026/07/sqlite-production-database-protocol-translation-cover.svg">
+    <meta property="og:image:alt" content="A PHP app connecting over the MySQL wire protocol on port 3306 to litewire, which translates the SQL and runs it against a SQLite file">
+
+
+  <link rel="manifest" href="/favicon/site.webmanifest?v=1">
+  <link rel="apple-touch-icon" sizes="180x180" href="/favicon/apple-touch-icon.png?v=1">
+  <link rel="icon" type="image/png" sizes="32x32" href="/favicon/favicon-32x32.png?v=1">
+  <link rel="icon" type="image/png" sizes="16x16" href="/favicon/favicon-16x16.png?v=1">
+  
+    <link rel="mask-icon" href="/favicon/safari-pinned-tab.svg?v=1" color="#ffffff">
+    <link rel="shortcut icon" href="/favicon/favicon.ico?v=1">
+    <meta name="msapplication-config" content="/favicon/browserconfig.xml?v=1">
+  
+  <meta name="msapplication-TileColor" content="#ffffff">
+  <meta name="theme-color" content="#ffffff">
+
+
+  <meta name="generator" content="Hugo 0.160.1">
+  <link rel="alternate" type="application/rss+xml" href="https://luth.io/index.xml" title="Luther Monson">
+  <link rel="stylesheet" href="/css/bundle.min.e1ffed86714fbb7eff75eab221c0c61b8260be0c7d1c08db0fcb7a2bdb6af7c9.css" integrity="sha256-4f/thnFPu37/deqyIcDGG4Jgvgx9HAjbD8t6K9tq98k="><link rel="stylesheet" href="/css/add-on.css">
+        <link rel="stylesheet" href="/css/code.css">
+        <link rel="stylesheet" href="/css/mobile.css">
+</head>
+
+  <body>
+    
+
+<header id="site-header">
+  <nav id="site-nav">
+    <h1 class="nav-title">
+      <a href="/" class="nav">
+        <img class="nav-avatar" src="/img/luther-monson-headshot.jpg" alt="" width="32" height="32">
+        
+          Blog
+        
+      </a>
+    </h1>
+    <menu id="site-nav-menu" class="flyout-menu menu">
+      
+        
+          
+          <a href="/" class="nav link"><i class='fa fa-home'></i> Home</a>
+        
+      
+        
+          
+          <a href="/about" class="nav link"><i class='far fa-id-card'></i> About</a>
+        
+      
+        
+          
+          <a href="/blog" class="nav link"><i class='far fa-newspaper'></i> Blog</a>
+        
+      
+        
+          
+          <a href="/archive" class="nav link"><i class='far fa-calendar-alt'></i> Archive</a>
+        
+      
+        
+          
+          <a href="/categories" class="nav link"><i class='fas fa-sitemap'></i> Categories</a>
+        
+      
+      <a href="#share-menu" class="nav link share-toggle"><i class="fas fa-share-alt">&nbsp;</i>Share</a>
+      <a href="#search-input" class="nav link search-toggle"><i class="fas fa-search">&nbsp;</i>Search</a>
+    </menu>
+    <a href="#search-input" class="nav search-toggle"><i class="fas fa-search fa-2x">&nbsp;</i></a>
+    <a href="#share-menu" class="nav share-toggle"><i class="fas fa-share-alt fa-2x">&nbsp;</i></a>
+    
+    <a href="#site-nav" class="nav nav-toggle"><i class="fas fa-bars fa-2x"></i></a>
+  </nav>
+  <menu id="search" class="menu"><input id="search-input" class="search-input menu"></input><div id="search-results" class="search-results menu"></div></menu>
+  
+  
+    <menu id="share-menu" class="flyout-menu menu">
+      <h1>Share Post</h1>
+      
+
+
+
+
+  
+    
+    <a href="//twitter.com/share?text=SQLite%20as%20a%20Production%20Database%20via%20Protocol%20Translation&amp;url=https%3a%2f%2fluth.io%2fblog%2f2026%2f07%2fsqlite-production-database-protocol-translation%2f" target="_blank" rel="noopener" class="nav share-btn twitter">
+        <p>Twitter</p>
+      </a>
+  
+
+  
+      <a href="//www.facebook.com/sharer/sharer.php?u=https%3a%2f%2fluth.io%2fblog%2f2026%2f07%2fsqlite-production-database-protocol-translation%2f" target="_blank" rel="noopener" class="nav share-btn facebook">
+        <p>Facebook</p>
+        </a>
+  
+
+  
+    <a href="//www.reddit.com/submit?url=https%3a%2f%2fluth.io%2fblog%2f2026%2f07%2fsqlite-production-database-protocol-translation%2f&amp;title=SQLite%20as%20a%20Production%20Database%20via%20Protocol%20Translation" target="_blank" rel="noopener" class="nav share-btn reddit">
+          <p>Reddit</p>
+        </a>
+  
+
+  
+        <a href="//www.linkedin.com/shareArticle?url=https%3a%2f%2fluth.io%2fblog%2f2026%2f07%2fsqlite-production-database-protocol-translation%2f&amp;title=SQLite%20as%20a%20Production%20Database%20via%20Protocol%20Translation" target="_blank" rel="noopener" class="nav share-btn linkedin">
+            <p>LinkedIn</p>
+          </a>
+  
+
+  
+        <a href="//www.pinterest.com/pin/create/button/?url=https%3a%2f%2fluth.io%2fblog%2f2026%2f07%2fsqlite-production-database-protocol-translation%2f&amp;description=SQLite%20as%20a%20Production%20Database%20via%20Protocol%20Translation" target="_blank" rel="noopener" class="nav share-btn pinterest">
+          <p>Pinterest</p>
+        </a>
+  
+
+  
+        <a href="mailto:?subject=Check%20out%20this%20post%20by Luther%20Monson&amp;body=https%3a%2f%2fluth.io%2fblog%2f2026%2f07%2fsqlite-production-database-protocol-translation%2f" target="_blank" class="nav share-btn email" data-proofer-ignore>
+          <p>Email</p>
+        </a>
+  
+
+
+    </menu>
+  
+</header>
+
+    <div id="wrapper">
+      <section id="site-intro" class="hidden-single-column">
+  <a href="/"><img src="/img/luther-monson-headshot.jpg" class="circle" width="100" alt="Luther Monson, Staff Software Engineer at SUSE" /></a>
+  <header>
+    <h1>Luther Monson</h1>
+  </header>
+  <main>
+    <p>Go by way of PHP &middot; Containers &middot; VMs &middot; Windows &middot; Kubernetes</p>
+  </main>
+  
+    <footer>
+      <ul class="socnet-icons">
+        
+
+        <li><a href="//github.com/luthermonson" target="_blank" rel="noopener" title="GitHub" class="fab fa-github"></a></li>
+
+
+
+
+
+
+
+
+
+
+
+<li><a href="//www.linkedin.com/in/luthermonson" target="_blank" rel="noopener" title="LinkedIn" class="fab fa-linkedin"></a></li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li><a href="//twitter.com/luthermonson" target="_blank" rel="noopener" title="Twitter" class="fab fa-twitter"></a></li>
+
+
+
+
+
+
+
+
+
+
+
+<li><a href="mailto:luther.monson@gmail.com" target="_blank" title="Email" class="far fa-envelope"></a></li>
+
+      </ul>
+    </footer>
+  
+</section>
+
+      <main id="site-main">
+        
+  <article>
+    <div class="post">
+      <header>
+  <div class="title">
+    
+      <h2><a href="/blog/2026/07/sqlite-production-database-protocol-translation/">SQLite as a Production Database via Protocol Translation</a></h2>
+    
+    
+      <p>litewire speaks the MySQL wire protocol on one side and SQLite on the other, so WordPress and Laravel run against a .db file without a code change. Here&#39;s how it works and what it took.</p>
+    
+  </div>
+  <div class="meta">
+    <time datetime="2026-07-25 20:40:00 -0700 PDT">July 25, 2026</time>
+    
+    <p>10-Minute Read</p>
+  </div>
+</header>
+
+      <div id="socnet-share">
+        
+
+
+
+
+  
+    
+    <a href="//twitter.com/share?text=SQLite%20as%20a%20Production%20Database%20via%20Protocol%20Translation&amp;url=https%3a%2f%2fluth.io%2fblog%2f2026%2f07%2fsqlite-production-database-protocol-translation%2f" target="_blank" rel="noopener" class="nav share-btn twitter">
+        <p>Twitter</p>
+      </a>
+  
+
+  
+      <a href="//www.facebook.com/sharer/sharer.php?u=https%3a%2f%2fluth.io%2fblog%2f2026%2f07%2fsqlite-production-database-protocol-translation%2f" target="_blank" rel="noopener" class="nav share-btn facebook">
+        <p>Facebook</p>
+        </a>
+  
+
+  
+    <a href="//www.reddit.com/submit?url=https%3a%2f%2fluth.io%2fblog%2f2026%2f07%2fsqlite-production-database-protocol-translation%2f&amp;title=SQLite%20as%20a%20Production%20Database%20via%20Protocol%20Translation" target="_blank" rel="noopener" class="nav share-btn reddit">
+          <p>Reddit</p>
+        </a>
+  
+
+  
+        <a href="//www.linkedin.com/shareArticle?url=https%3a%2f%2fluth.io%2fblog%2f2026%2f07%2fsqlite-production-database-protocol-translation%2f&amp;title=SQLite%20as%20a%20Production%20Database%20via%20Protocol%20Translation" target="_blank" rel="noopener" class="nav share-btn linkedin">
+            <p>LinkedIn</p>
+          </a>
+  
+
+  
+        <a href="//www.pinterest.com/pin/create/button/?url=https%3a%2f%2fluth.io%2fblog%2f2026%2f07%2fsqlite-production-database-protocol-translation%2f&amp;description=SQLite%20as%20a%20Production%20Database%20via%20Protocol%20Translation" target="_blank" rel="noopener" class="nav share-btn pinterest">
+          <p>Pinterest</p>
+        </a>
+  
+
+  
+        <a href="mailto:?subject=Check%20out%20this%20post%20by Luther%20Monson&amp;body=https%3a%2f%2fluth.io%2fblog%2f2026%2f07%2fsqlite-production-database-protocol-translation%2f" target="_blank" class="nav share-btn email" data-proofer-ignore>
+          <p>Email</p>
+        </a>
+  
+
+
+      </div>
+      <div class="content">
+        
+        <p>Most of the PHP sites I&rsquo;d put on <a href="https://github.com/ephpm/ephpm">ePHPm</a> don&rsquo;t need a MySQL server. A brochure WordPress,
+an internal Laravel tool, a preview environment that lives for an afternoon. What they do need is something that
+<em>looks</em> like MySQL, because <code>mysqli</code> and <code>pdo_mysql</code> are the only database drivers their code has ever been pointed at.
+I mentioned this in the <a href="/blog/2026/06/ephpm-pragmatism/">ePHPm pragmatism post</a> as a one-paragraph &ldquo;because&rdquo;. This is the
+longer version, now that WordPress 7.0 and Laravel 13 both install and run end to end on it.</p>
+<p>The piece doing the work is <a href="https://github.com/ephpm/litewire">litewire</a>, a standalone Rust project (MIT) that I
+started at the end of March. It accepts MySQL, PostgreSQL, SQL Server (TDS) and Hrana HTTP connections, translates the
+dialect to SQLite on the fly, and runs it against a pluggable backend. ePHPm embeds it as a library.</p>
+<h3 id="the-challenge-to-you-need-mysql">The challenge to &ldquo;you need MySQL&rdquo;</h3>
+<p>The usual objection is that SQLite isn&rsquo;t a production database. For a lot of workloads that&rsquo;s just habit. A single-node
+site with a few writes a second and mostly reads is squarely what SQLite in WAL mode is good at, and the operational
+difference is large: there&rsquo;s no server to patch, no credentials to rotate, no connection limit to tune, and the backup
+is a file.</p>
+<p>What actually stops people is the application. WordPress doesn&rsquo;t have a SQLite driver in core, it has a
+<a href="https://wordpress.org/plugins/sqlite-database-integration/">plugin</a> that rewrites queries inside PHP. Laravel supports
+SQLite, but every plugin, package and raw query in a real app was written and tested against MySQL. Asking someone to
+port that is asking them not to use your thing. So the translation has to happen below the app, at the wire.</p>
+<h3 id="the-shape-of-it">The shape of it</h3>
+<pre tabindex="0"><code>PHP (pdo_mysql, mysqli)
+        |  MySQL wire protocol, 127.0.0.1:3306
+        v
+  litewire-mysql      opensrv-mysql shim: handshake, COM_QUERY, prepared statements
+        |
+  litewire-translate  metadata emulation, no-ops, text pre-passes, sqlparser AST rewrite
+        |
+  litewire-backend    Backend::connect() -&gt; one BackendConn per wire connection
+        |
+     SQLite (rusqlite, WAL)
+</code></pre><p>The MySQL frontend is built on <a href="https://github.com/datafuselabs/opensrv">opensrv-mysql</a>, which handles the packet
+framing and the handshake and calls into a shim for each command. PostgreSQL uses <a href="https://github.com/sunng87/pgwire">pgwire</a>.
+SQL Server has no Rust server-side TDS crate (tiberius is client only) so that frontend is hand-rolled and
+experimental. The Hrana frontend skips translation entirely since the SQL is already SQLite.</p>
+<p>The translator is where the real work is. It runs a fixed pipeline on every statement:</p>
+<ol>
+<li><strong>Metadata detection</strong> before parsing, because some of the input isn&rsquo;t valid SQL to begin with. <code>SHOW FULL COLUMNS</code>,
+<code>DESCRIBE</code>, <code>INFORMATION_SCHEMA.*</code>, <code>SELECT @@vars</code> are answered by emulation queries against <code>sqlite_master</code> and
+<code>PRAGMA</code>.</li>
+<li><strong>Transaction rewrites</strong>: <code>START TRANSACTION</code>, <code>BEGIN WORK</code> and friends become <code>BEGIN</code>.</li>
+<li><strong>No-ops</strong>: <code>SET NAMES</code>, <code>SET time_zone</code>, <code>SET sql_mode</code>, isolation level changes. They return OK without touching
+SQLite.</li>
+<li><strong>Text pre-passes</strong> for MySQL syntax <a href="https://github.com/apache/datafusion-sqlparser-rs">sqlparser-rs</a> can&rsquo;t
+represent, like <code>bigint(20)</code> display widths and <code>KEY k (col(191))</code> index prefix lengths.</li>
+<li><strong>Parse, rewrite the AST, emit</strong> with sqlparser&rsquo;s <code>Display</code>.</li>
+</ol>
+<p>Rather than describe the rewrites, here&rsquo;s what the translator does with real WordPress and Laravel statements. I ran
+these through <code>litewire_translate::translate(sql, Dialect::MySQL)</code> at litewire <code>699e634</code>:</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-text" data-lang="text"><span class="line"><span class="cl">IN : CREATE TABLE wp_usermeta (
+</span></span><span class="line"><span class="cl">       umeta_id bigint(20) unsigned NOT NULL auto_increment,
+</span></span><span class="line"><span class="cl">       user_id bigint(20) unsigned NOT NULL default &#39;0&#39;,
+</span></span><span class="line"><span class="cl">       meta_key varchar(255) default NULL,
+</span></span><span class="line"><span class="cl">       meta_value longtext,
+</span></span><span class="line"><span class="cl">       PRIMARY KEY  (umeta_id),
+</span></span><span class="line"><span class="cl">       KEY user_id (user_id),
+</span></span><span class="line"><span class="cl">       KEY meta_key (meta_key(191))
+</span></span><span class="line"><span class="cl">     ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_520_ci
+</span></span><span class="line"><span class="cl">OUT: CREATE TABLE wp_usermeta (umeta_id INTEGER NOT NULL, user_id INTEGER NOT NULL DEFAULT &#39;0&#39;,
+</span></span><span class="line"><span class="cl">       meta_key TEXT DEFAULT NULL, meta_value TEXT, PRIMARY KEY (umeta_id))
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">IN : INSERT INTO `wp_options` (`option_name`, `option_value`, `autoload`)
+</span></span><span class="line"><span class="cl">       VALUES (&#39;siteurl&#39;, &#39;http://example.test&#39;, &#39;yes&#39;)
+</span></span><span class="line"><span class="cl">       ON DUPLICATE KEY UPDATE `option_name` = VALUES(`option_name`),
+</span></span><span class="line"><span class="cl">       `option_value` = VALUES(`option_value`), `autoload` = VALUES(`autoload`)
+</span></span><span class="line"><span class="cl">OUT: INSERT INTO `wp_options` (`option_name`, `option_value`, `autoload`)
+</span></span><span class="line"><span class="cl">       VALUES (&#39;siteurl&#39;, &#39;http://example.test&#39;, &#39;yes&#39;)
+</span></span><span class="line"><span class="cl">       ON CONFLICT DO UPDATE SET `option_name` = excluded.`option_name`,
+</span></span><span class="line"><span class="cl">       `option_value` = excluded.`option_value`, `autoload` = excluded.`autoload`
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">IN : SELECT ... FROM wp_posts WHERE ... ORDER BY wp_posts.post_date DESC LIMIT 10, 10
+</span></span><span class="line"><span class="cl">OUT: SELECT ... FROM wp_posts WHERE ... ORDER BY wp_posts.post_date DESC LIMIT 10 OFFSET 10
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">IN : alter table `users` add unique `users_email_unique`(`email`)
+</span></span><span class="line"><span class="cl">OUT: CREATE UNIQUE INDEX `users_email_unique` ON `users`(`email`)
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">IN : START TRANSACTION          OUT: BEGIN
+</span></span><span class="line"><span class="cl">IN : SET NAMES utf8mb4          OUT: &lt;noop&gt;
+</span></span><span class="line"><span class="cl">IN : SELECT LAST_INSERT_ID()    OUT: SELECT last_insert_rowid()
+</span></span><span class="line"><span class="cl">IN : SHOW FULL COLUMNS FROM `wp_options`
+</span></span><span class="line"><span class="cl">OUT: &lt;metadata ShowColumns { table: &#34;wp_options&#34; }&gt;
+</span></span></code></pre></div><p>Two of those are worth a closer look. The <code>wp_usermeta</code> table keeps <code>PRIMARY KEY (umeta_id)</code> on an <code>INTEGER</code> column,
+which SQLite treats as a rowid alias, so <code>auto_increment</code> behaves the way WordPress expects without the keyword. And
+the two inline <code>KEY</code> lines are gone. SQLite has no inline secondary index syntax, and the translator drops them rather
+than failing the whole <code>CREATE TABLE</code>. That&rsquo;s a deliberate trade, written down in the source as &ldquo;a performance concern,
+not a correctness one&rdquo;, and it&rsquo;s one I&rsquo;d like to revisit by emitting real <code>CREATE INDEX</code> statements the way the
+<code>ALTER TABLE ... ADD UNIQUE</code> path already does.</p>
+<p>The upsert one is load-bearing: <code>add_option()</code> uses that exact shape (and <code>update_option()</code> falls back to it for a new option), so if <code>VALUES(col)</code> doesn&rsquo;t
+become <code>excluded.col</code> WordPress can&rsquo;t save a setting.</p>
+<p>All of that sits behind a bounded LRU cache keyed on the SQL text. A WordPress-shaped join measured 39 µs per
+translation cold and 277 ns warm in release mode, in the PR that added the cache
+(<a href="https://github.com/ephpm/litewire/pull/5">litewire#5</a>). PHP apps send the same few hundred statement shapes over and
+over, so the parser runs rarely after warmup.</p>
+<h3 id="wiring-it-into-ephpm">Wiring it into ePHPm</h3>
+<p>On the ePHPm side the config is a file path. The MySQL listener defaults to <code>127.0.0.1:3306</code>, and you only need the
+proxy block if you want to move it or add the Hrana listener for external tools:</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-toml" data-lang="toml"><span class="line"><span class="cl"><span class="p">[</span><span class="nx">db</span><span class="p">.</span><span class="nx">sqlite</span><span class="p">]</span>
+</span></span><span class="line"><span class="cl"><span class="nx">path</span> <span class="p">=</span> <span class="s2">&#34;/var/lib/ephpm/myapp.db&#34;</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="p">[</span><span class="nx">db</span><span class="p">.</span><span class="nx">sqlite</span><span class="p">.</span><span class="nx">proxy</span><span class="p">]</span>
+</span></span><span class="line"><span class="cl"><span class="nx">mysql_listen</span> <span class="p">=</span> <span class="s2">&#34;127.0.0.1:3306&#34;</span>
+</span></span><span class="line"><span class="cl"><span class="nx">hrana_listen</span> <span class="p">=</span> <span class="s2">&#34;127.0.0.1:8080&#34;</span>  <span class="c"># optional</span>
+</span></span></code></pre></div><p>The app&rsquo;s config stays the MySQL config it already had. For Laravel that&rsquo;s the stock <code>.env</code>:</p>
+<pre tabindex="0"><code class="language-dotenv" data-lang="dotenv">DB_CONNECTION=mysql
+DB_HOST=127.0.0.1
+DB_PORT=3306
+DB_DATABASE=laravel
+DB_USERNAME=ephpm
+DB_PASSWORD=
+</code></pre><p>In single-node mode litewire runs in-process with the rusqlite backend, so there&rsquo;s no child process and nothing else
+listening. Clustered mode swaps the backend for a client to a replicated SQLite server, which is a separate story.
+There&rsquo;s also an experimental <code>engine = &quot;turso&quot;</code> knob that runs the same frontends over the Turso engine instead of
+SQLite&rsquo;s C library. And if you do want a real MySQL, <code>[db.mysql]</code> turns the same listener into a pooling proxy and
+SQLite drops out of the picture entirely.</p>
+<h3 id="what-it-took-to-make-wordpress-actually-install">What it took to make WordPress actually install</h3>
+<p>For most of litewire&rsquo;s life, &ldquo;WordPress works&rdquo; was a claim in the README that nothing tested. I took it out in July
+(<a href="https://github.com/ephpm/litewire/pull/4">litewire#4</a>) and replaced it with what the end-to-end tests actually cover.
+Then I put full installs through it. ePHPm&rsquo;s Turso evaluation needed a WordPress and Laravel suite run against both
+engines anyway, so I ran a WordPress 7.0.1 <code>wp core install</code> and a Laravel 13 <code>php artisan migrate</code> through the MySQL
+frontend on the then-default SQLite engine as the control. Neither got past installation:</p>
+<pre tabindex="0"><code>Error: Error: WordPress 7.0.1 requires MySQL 5.5.5 or higher
+</code></pre><p>opensrv-mysql&rsquo;s default handshake banner is <code>5.1.10-alpha-msql-proxy</code>, and WordPress 6.5 and later refuse to talk to
+anything that old. Dropping back to WordPress 6.4.3 got further and then died in <code>dbDelta</code>:</p>
+<pre tabindex="0"><code>wp_usermeta -&gt; SQL translation error: SQL parse error: sql parser error: Expected: ), found: ( at Line: 9, Column: 24
+</code></pre><p>That&rsquo;s the <code>meta_key(191)</code> index prefix length, and it hit 7 of the 12 core tables. Laravel failed on the very first
+statement of <code>migrate</code>, because the table options went straight through to SQLite:</p>
+<pre tabindex="0"><code>SQLSTATE[HY000]: General error: 1105 SQLite error: near &#34;DEFAULT&#34;: syntax error in
+CREATE TABLE `migrations` (...) DEFAULT CHARACTER SET = utf8mb4 COLLATE = &#39;utf8mb4_unicode_ci&#39; at offset 115
+</code></pre><p>The
+five WordPress tables that did parse were never actually created, because their inline <code>KEY</code> constraints were emitted
+verbatim.</p>
+<p>The full list came to nine gaps: the handshake version, index prefix lengths, table options, inline <code>KEY</code>/<code>INDEX</code>,
+<code>ON DUPLICATE KEY UPDATE ... VALUES(col)</code>, a mis-shaped <code>SHOW FULL COLUMNS</code> (WordPress read every core option back as
+an empty string), <code>SQL_CALC_FOUND_ROWS</code>, <code>information_schema</code> existence probes that Laravel uses before migrating, and
+qualified <code>UPDATE t SET t.col = ...</code> references. The important thing about the list is that both engines failed it
+identically, which made it obvious every one of them lived in the wire and translate layer, not the database.</p>
+<p>They landed together in <a href="https://github.com/ephpm/litewire/pull/11">litewire#11</a> with 13 regression tests. After it,
+the WordPress suite (install, theme render, posts, comments, a hundred options, generated content, search-replace,
+plugin DDL) and the Laravel suite (migrate, seed, CRUD, transaction commit and rollback, migrate rollback, re-migrate)
+went 20/20 green on both engines. ePHPm picked up the pin in <a href="https://github.com/ephpm/ephpm/pull/190">ephpm#190</a>.</p>
+<h3 id="two-bugs-a-test-suite-wouldnt-have-found">Two bugs a test suite wouldn&rsquo;t have found</h3>
+<p>Getting the install green was the visible part. Two problems that would have hurt in production came out of putting
+real PHP traffic through it in the same couple of weeks.</p>
+<p><strong>Transactions weren&rsquo;t per client.</strong> The rusqlite backend held one <code>Arc&lt;Mutex&lt;Connection&gt;&gt;</code> shared by every wire
+connection. The MySQL handler tracked <code>in_transaction</code> per client in Rust, but the actual <code>BEGIN</code> ran on the shared
+handle. Client A&rsquo;s <code>BEGIN</code> meant client B&rsquo;s next <code>INSERT</code> landed inside A&rsquo;s transaction, and either one&rsquo;s <code>COMMIT</code>
+finalized both. The mutex also serialized every query, which threw away WAL&rsquo;s concurrent readers before they ever
+reached SQLite. The fix in <a href="https://github.com/ephpm/litewire/pull/6">litewire#6</a> turned <code>Backend</code> into a factory:</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-rust" data-lang="rust"><span class="line"><span class="cl"><span class="cp">#[async_trait]</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="k">pub</span><span class="w"> </span><span class="k">trait</span><span class="w"> </span><span class="n">Backend</span>: <span class="nb">Send</span> <span class="o">+</span><span class="w"> </span><span class="nb">Sync</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="nb">&#39;static</span><span class="w"> </span><span class="p">{</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="sd">/// Open a new session. Each BackendConn has its own transaction state.
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="k">async</span><span class="w"> </span><span class="k">fn</span> <span class="nf">connect</span><span class="p">(</span><span class="o">&amp;</span><span class="bp">self</span><span class="p">)</span><span class="w"> </span>-&gt; <span class="nb">Result</span><span class="o">&lt;</span><span class="nb">Box</span><span class="o">&lt;</span><span class="k">dyn</span><span class="w"> </span><span class="n">BackendConn</span><span class="o">&gt;</span><span class="p">,</span><span class="w"> </span><span class="n">BackendError</span><span class="o">&gt;</span><span class="p">;</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="c1">// stateless query/execute/describe_columns kept as defaults
+</span></span></span><span class="line"><span class="cl"><span class="p">}</span><span class="w">
+</span></span></span></code></pre></div><p>Every accepted connection calls <code>connect()</code> once and holds its own rusqlite connection to the same file. SQLite&rsquo;s file
+locking coordinates writers, <code>busy_timeout</code> (5 s default) handles <code>SQLITE_BUSY</code>, and litewire defaults each session to
+<code>synchronous=NORMAL</code>, the usual setting for WAL mode. One wrinkle: <code>open_in_memory()</code> gives each connection a <em>different</em> database, and the shared-cache URI
+workaround defeats WAL, so <code>Rusqlite::memory()</code> now quietly backs itself with a temp file.</p>
+<p><strong>Every SELECT took 44 ms.</strong> Measured from ePHPm with PHP PDO on loopback, a point <code>SELECT</code> was 44.01 ms p50 and an
+<code>INSERT</code> was 1.36 ms. The asymmetry is the clue. An <code>INSERT</code> reply is one OK packet; a result set is a column count,
+column definitions, an EOF, rows and another EOF, and opensrv-mysql wrote each of those as its own TCP segment. Something
+on the loopback path sat on those small segments for about 40 ms, which is the classic Nagle/delayed-ACK stall. I never
+got a packet capture inside the test host to prove which side was holding, and setting <code>TCP_NODELAY</code> on the server side
+(<a href="https://github.com/ephpm/litewire/pull/3">litewire#3</a>) was the right thing to do and didn&rsquo;t cure it on its own. Wrapping the write half in
+a 64 KiB <code>BufWriter</code> so the whole result set goes out as one write did
+(<a href="https://github.com/ephpm/litewire/pull/7">litewire#7</a>):</p>
+<table>
+  <thead>
+      <tr>
+          <th>op</th>
+          <th style="text-align: right">before</th>
+          <th style="text-align: right">after</th>
+      </tr>
+  </thead>
+  <tbody>
+      <tr>
+          <td>point <code>SELECT</code> p50</td>
+          <td style="text-align: right">44.01 ms</td>
+          <td style="text-align: right">0.23 ms</td>
+      </tr>
+      <tr>
+          <td><code>INSERT</code> p50</td>
+          <td style="text-align: right">1.36 ms</td>
+          <td style="text-align: right">0.30 ms</td>
+      </tr>
+  </tbody>
+</table>
+<p>Those numbers are from the PR, measured on a rebuilt ePHPm image. It only ever reproduced through PHP;
+<code>mysql_async</code> and the <code>mysql</code> CLI against the same server never showed it, and I don&rsquo;t have a satisfying explanation for
+the difference yet. mysqlnd sets <code>TCP_NODELAY</code> on its sockets too, so it isn&rsquo;t that.</p>
+<h3 id="where-it-doesnt-make-sense">Where it doesn&rsquo;t make sense</h3>
+<p>I&rsquo;d rather be specific about this than have someone find out the hard way:</p>
+<ul>
+<li><strong>One writer at a time.</strong> WAL gives you concurrent readers and a single writer. If the app does heavy concurrent
+writes, run MySQL or Postgres and use ePHPm&rsquo;s proxy mode instead.</li>
+<li><strong>One process owns the file.</strong> Don&rsquo;t point a second server or a cron job&rsquo;s own SQLite client at the live database.</li>
+<li><strong>Not every MySQL behavior is emulated.</strong> <code>SET autocommit = 0</code> is a no-op with a warning, because half-emulating
+MySQL&rsquo;s implicit transactions with a hidden <code>BEGIN</code> would be worse than saying so. <code>LOCK TABLES</code> is also a no-op with a
+warning, since SQLite only has file-level locking. Inline secondary indexes are dropped, as above.</li>
+<li><strong>PostgreSQL and TDS are CRUD-level.</strong> The MySQL frontend is the one that gets tested against real applications.</li>
+</ul>
+<p>Inside those lines it&rsquo;s a good fit: CI and preview environments, a single VPS, edge boxes, small production sites. The
+same <code>.db</code> file runs under <code>ephpm dev</code> on a laptop and on the server, and the app never knows.</p>
+<p>Next up is the long tail. Passing an install suite is not the same thing as behaving like MySQL on every query a
+plugin might send, and I expect real traffic to find the next round.</p>
+<h3 id="links">Links</h3>
+<ul>
+<li><a href="https://github.com/ephpm/litewire">litewire</a></li>
+<li><a href="https://github.com/ephpm/ephpm">ePHPm</a></li>
+<li><a href="https://github.com/ephpm/litewire/pull/11">litewire#11: WordPress and Laravel run over the MySQL frontend</a></li>
+<li><a href="https://github.com/ephpm/litewire/pull/6">litewire#6: per-wire-connection sessions</a></li>
+<li><a href="https://github.com/ephpm/litewire/pull/7">litewire#7: coalescing the result-set write</a></li>
+<li><a href="https://github.com/ephpm/litewire/pull/5">litewire#5: translate cache</a></li>
+<li><a href="https://github.com/datafuselabs/opensrv">opensrv-mysql</a></li>
+<li><a href="https://github.com/apache/datafusion-sqlparser-rs">sqlparser-rs</a></li>
+</ul>
+
+      </div>
+      <footer>
+        <div class="stats">
+  
+    <ul class="categories">
+      
+        
+          <li><a class="article-terms-link" href="/categories/databases/">databases</a></li>
+        
+          <li><a class="article-terms-link" href="/categories/rust/">rust</a></li>
+        
+          <li><a class="article-terms-link" href="/categories/ephpm/">ephpm</a></li>
+        
+      
+    </ul>
+  
+  
+    <ul class="tags">
+      
+        
+          <li><a class="article-terms-link" href="/tags/litewire/">litewire</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/ephpm/">ephpm</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/sqlite/">sqlite</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/mysql/">mysql</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/rust/">rust</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/wordpress/">wordpress</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/laravel/">laravel</a></li>
+        
+      
+    </ul>
+  
+</div>
+
+      </footer>
+    </div>
+    
+      
+  
+  <div class='post giscus-wrap'>
+    <script src='https://giscus.app/client.js'
+            data-repo='luthermonson/luth.io'
+            data-repo-id='R_kgDOGvFBXQ'
+            data-category='Announcements'
+            data-category-id='DIC_kwDOGvFBXc4DH_gv'
+            data-mapping='pathname'
+            data-strict='1'
+            data-reactions-enabled='1'
+            data-emit-metadata='0'
+            data-input-position='top'
+            data-theme='light'
+            data-lang='en'
+            data-loading='lazy'
+            crossorigin='anonymous'
+            async>
+    </script>
+  </div>
+  
+
+
+
+    
+  </article>
+  
+    <nav class="post-nav">
+      
+        <a href="/blog/2026/07/spc-windows-archive-extraction/" class="post-nav-link older">
+          <span class="post-nav-label">&larr; Older</span>
+          <span class="post-nav-title">Fixing Windows Archive Extraction in SPC</span>
+        </a>
+      
+      
+        <a href="/blog/2026/07/five-ways-to-url-encode-an-ssh-key/" class="post-nav-link newer">
+          <span class="post-nav-label">Newer &rarr;</span>
+          <span class="post-nav-title">Five Ways to URL-Encode an SSH Key (and Why Proxmox Rejects Them)</span>
+        </a>
+      
+    </nav>
+  
+
+      </main>
+      <section id="site-sidebar">
+  
+    <section id="recent-posts">
+      <header>
+        <h1>Recent Posts</h1>
+      </header>
+      
+      <article class="mini-post">
+          <a href="/blog/2026/10/ephpm-worker-mode-performance/" class="image" style="--bg-image: url('/img/2026/10/ephpm-worker-mode-performance-cover.svg');">
+    <img class="" src="/img/2026/10/ephpm-worker-mode-performance-cover.svg" alt="Diagram: before, hyper/tokio hands each request to one shared bounded channel whose waiter list all 20 PHP threads contend on; after, a dispatcher hands the job straight into the mailbox of the most recently idle PHP thread and only queues it in a FIFO overflow queue when every thread is busy">
+  </a>
+        <header>
+          <h2><a href="/blog/2026/10/ephpm-worker-mode-performance/">Fourth Place in Worker Mode, and Why It Wasn&#39;t PHP</a></h2>
+          <time class="published" datetime="2026-10-16 08:10:00 -0700 PDT">October 16, 2026</time>
+        </header>
+      </article>
+      
+      <article class="mini-post">
+          <a href="/blog/2026/10/ephpm-websockets-how-to/" class="image" style="--bg-image: url('/img/2026/10/ephpm-websockets-how-to-cover.svg');">
+    <img class="" src="/img/2026/10/ephpm-websockets-how-to-cover.svg" alt="Diagram: browsers hold sockets to ePHPm&#39;s Rust session tasks and registry; each connect, message and disconnect runs websocket.php once on the PHP thread pool, and ordinary HTTP requests push through ephpm_ws_broadcast">
+  </a>
+        <header>
+          <h2><a href="/blog/2026/10/ephpm-websockets-how-to/">WebSockets in ePHPm, From Zero to a Working Chat</a></h2>
+          <time class="published" datetime="2026-10-11 17:30:00 -0700 PDT">October 11, 2026</time>
+        </header>
+      </article>
+      
+      <article class="mini-post">
+          <a href="/blog/2026/10/webhooks-out-of-order-scheduler/" class="image" style="--bg-image: url('/img/2026/10/webhooks-out-of-order-scheduler-timeline.svg');">
+    <img class="" src="/img/2026/10/webhooks-out-of-order-scheduler-timeline.svg" alt="Timeline of three same-label jobs where a runner executing a build is destroyed 2.3 seconds before its in_progress webhook arrives">
+  </a>
+        <header>
+          <h2><a href="/blog/2026/10/webhooks-out-of-order-scheduler/">Webhooks Arrive Out of Order: How My Scheduler Killed Live Builds</a></h2>
+          <time class="published" datetime="2026-10-07 21:10:00 -0700 PDT">October 7, 2026</time>
+        </header>
+      </article>
+      
+      <article class="mini-post">
+          <a href="/blog/2026/10/go-proxmox-five-years-to-v0-8/" class="image" style="--bg-image: url('/img/2026/10/go-proxmox-five-years-to-v0-8-apidiff.svg');">
+    <img class="" src="/img/2026/10/go-proxmox-five-years-to-v0-8-apidiff.svg" alt="Horizontal bar chart of apidiff incompatible and compatible changes for every go-proxmox release from v0.1.0 to v0.8.2">
+  </a>
+        <header>
+          <h2><a href="/blog/2026/10/go-proxmox-five-years-to-v0-8/">Breaking Changes Without Breaking Trust: Five Years to go-proxmox v0.8</a></h2>
+          <time class="published" datetime="2026-10-04 19:40:00 -0700 PDT">October 4, 2026</time>
+        </header>
+      </article>
+      
+      <article class="mini-post">
+          <a href="/blog/2026/10/windows-sigterm-sparse-files/" class="image" style="--bg-image: url('/img/2026/10/windows-sigterm-sparse-files-connections.svg');">
+    <img class="" src="/img/2026/10/windows-sigterm-sparse-files-connections.svg" alt="Bar chart: 96 Cloudflare edge connections held by orphaned cloudflared processes versus 4 for the live daemon">
+  </a>
+        <header>
+          <h2><a href="/blog/2026/10/windows-sigterm-sparse-files/">Windows Grab-Bag: SIGTERM That Doesn&#39;t Exist and Sparse Files That Break Docker</a></h2>
+          <time class="published" datetime="2026-10-03 14:30:00 -0700 PDT">October 3, 2026</time>
+        </header>
+      </article>
+      
+      
+        <footer>
+          <a href="/blog" class="button">See More</a>
+        </footer>
+      
+    </section>
+  
+
+  
+    
+
+      <section id="categories">
+        <header>
+          <h1><a href="/categories">Categories</a></h1>
+        </header>
+        <ul>
+          
+          
+          <li>
+              <a href="/categories/ephpm/">ephpm<span class="count">33</span></a>
+          
+          <li>
+              <a href="/categories/go/">go<span class="count">30</span></a>
+          
+          <li>
+              <a href="/categories/php/">php<span class="count">23</span></a>
+          
+          <li>
+              <a href="/categories/rust/">rust<span class="count">15</span></a>
+          
+          <li>
+              <a href="/categories/homelab/">homelab<span class="count">14</span></a>
+          
+          <li>
+              <a href="/categories/windows/">windows<span class="count">14</span></a>
+          
+          <li>
+              <a href="/categories/ci/">ci<span class="count">9</span></a>
+          
+          <li>
+              <a href="/categories/databases/">databases<span class="count">9</span></a>
+          
+          <li>
+              <a href="/categories/security/">security<span class="count">9</span></a>
+          
+          <li>
+              <a href="/categories/containers/">containers<span class="count">7</span></a>
+          
+          <li>
+              <a href="/categories/tools/">tools<span class="count">5</span></a>
+          
+          <li>
+              <a href="/categories/ai-agents/">ai-agents<span class="count">4</span></a>
+          
+          </li>
+        </ul>
+      </section>
+    
+  
+
+  
+    <section id="mini-bio">
+      <header>
+        <h1>About</h1>
+      </header>
+      <p>Luther is a 20+ year software veteran specializing in backend APIs and architecting products. Employed at <a href='https://www.suse.com'>SUSE</a> as the Team Lead for the <a href='https://github.com/rancher/windows/issues'>Containers on Windows Team</a> working on <a href='https://rancher.com/'>Rancher</a> + <a href='https://kubernetes.io/'>Kubernetes</a></p>
+      <footer>
+        <a href="/about" class="button">Learn More</a>
+      </footer>
+    </section>
+  
+</section>
+
+      <footer id="site-footer">
+  
+      <ul class="socnet-icons">
+        
+
+        <li><a href="//github.com/luthermonson" target="_blank" rel="noopener" title="GitHub" class="fab fa-github"></a></li>
+
+
+
+
+
+
+
+
+
+
+
+<li><a href="//www.linkedin.com/in/luthermonson" target="_blank" rel="noopener" title="LinkedIn" class="fab fa-linkedin"></a></li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li><a href="//twitter.com/luthermonson" target="_blank" rel="noopener" title="Twitter" class="fab fa-twitter"></a></li>
+
+
+
+
+
+
+
+
+
+
+
+<li><a href="mailto:luther.monson@gmail.com" target="_blank" title="Email" class="far fa-envelope"></a></li>
+
+      </ul>
+  
+  <p class="copyright">
+    © 2026 Luther Monson
+      <br>
+    Theme: <a href='https://github.com/pacollins/hugo-future-imperfect-slim' target='_blank' rel='noopener'>Hugo Future Imperfect Slim</a><br>A <a href='https://html5up.net/future-imperfect' target='_blank' rel='noopener'>HTML5 UP port</a> | Powered by <a href='https://gohugo.io/' title='0.160.1' target='_blank' rel='noopener'>Hugo</a>
+  </p>
+</footer>
+<a id="back-to-top" href="#" class="fas fa-arrow-up fa-2x"></a>
+
+      <script src="/js/bundle.min.241b62ebc4792fe8c7a75879e5f710894f226f2b73342e9916b3a3b0526030cc.js" integrity="sha256-JBti68R5L&#43;jHp1h55fcQiU8ibytzNC6ZFrOjsFJgMMw="></script>
+    <script src="/js/add-on.js"></script>
+    </div>
+  </body>
+</html>

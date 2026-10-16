@@ -1,0 +1,62 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 980 470" font-family="system-ui, -apple-system, Segoe UI, Roboto, sans-serif" font-size="14">
+  <rect width="980" height="470" fill="#ffffff"/>
+  <text x="490" y="30" text-anchor="middle" font-size="18" font-weight="600" fill="#222">Three same-label jobs, one live build destroyed (times from the node's journal)</text>
+
+  <!-- axis: x = 200 + (t - 33) * 38.95 -->
+  <line x1="200" y1="400" x2="950" y2="400" stroke="#6b6b6b"/>
+  <g fill="#444" font-size="12" text-anchor="middle">
+    <line x1="200" y1="396" x2="200" y2="404" stroke="#6b6b6b"/><text x="200" y="420">:33</text>
+    <line x1="395" y1="396" x2="395" y2="404" stroke="#6b6b6b"/><text x="395" y="420">:38</text>
+    <line x1="590" y1="396" x2="590" y2="404" stroke="#6b6b6b"/><text x="590" y="420">:43</text>
+    <line x1="784" y1="396" x2="784" y2="404" stroke="#6b6b6b"/><text x="784" y="420">:48</text>
+    <line x1="940" y1="396" x2="940" y2="404" stroke="#6b6b6b"/><text x="940" y="420">:52</text>
+  </g>
+  <text x="575" y="445" text-anchor="middle" fill="#444" font-size="13">seconds past 23:39</text>
+
+  <g font-size="13" fill="#222">
+    <text x="20" y="104" font-weight="600">vivid_heisenberg</text><text x="20" y="122" fill="#444" font-size="12">dispatched for 551</text>
+    <text x="20" y="194" font-weight="600">warm_ride</text><text x="20" y="212" fill="#444" font-size="12">dispatched for 556</text>
+    <text x="20" y="284" font-weight="600">slim_mayer</text><text x="20" y="302" fill="#444" font-size="12">dispatched for 567</text>
+    <text x="20" y="364" font-weight="600">scheduler</text>
+  </g>
+  <line x1="200" y1="110" x2="950" y2="110" stroke="#eee"/>
+  <line x1="200" y1="200" x2="950" y2="200" stroke="#eee"/>
+  <line x1="200" y1="290" x2="950" y2="290" stroke="#eee"/>
+  <line x1="200" y1="360" x2="950" y2="360" stroke="#eee"/>
+
+  <!-- JIT registration ticks -->
+  <rect x="237" y="100" width="4" height="20" fill="#6b6b6b"/>
+  <rect x="276" y="190" width="4" height="20" fill="#6b6b6b"/>
+  <rect x="276" y="280" width="4" height="20" fill="#6b6b6b"/>
+
+  <!-- vivid: in_progress 556 at 41.967 (x=549) to exit 45.368 (x=682) -->
+  <rect x="549" y="100" width="133" height="20" fill="#2b6cb0"/>
+  <text x="549" y="94" fill="#2b6cb0" font-size="12">running 556 (GitHub's choice, not 551)</text>
+
+  <!-- warm_ride: executing 551, start not logged; destroyed 48.403 (x=800) -->
+  <rect x="280" y="190" width="520" height="20" fill="#e07a1f" opacity="0.25" stroke="#e07a1f" stroke-dasharray="5 3"/>
+  <text x="290" y="184" fill="#b35f12" font-size="12">assigned 551 (docker-build) by GitHub, executing; still "unbound" in the ledger</text>
+  <line x1="800" y1="182" x2="800" y2="218" stroke="#c0392b" stroke-width="3"/>
+  <text x="792" y="232" fill="#c0392b" font-size="12" font-weight="600" text-anchor="end">destroyed :48.403</text>
+  <!-- in_progress 551 arrives 50.716 (x=890) -->
+  <line x1="890" y1="170" x2="890" y2="246" stroke="#7d5ba6" stroke-width="2" stroke-dasharray="4 3"/>
+  <text x="965" y="258" fill="#7d5ba6" font-size="12" text-anchor="end">in_progress 551 :50.716</text>
+  <text x="965" y="273" fill="#7d5ba6" font-size="12" text-anchor="end">(2.3 s too late)</text>
+
+  <!-- slim_mayer: in_progress 567 at 41.967 to completed 48.403 -->
+  <rect x="549" y="280" width="251" height="20" fill="#3a9a5b"/>
+  <text x="549" y="274" fill="#3a9a5b" font-size="12">running 567</text>
+
+  <!-- scheduler events -->
+  <circle cx="549" cy="360" r="5" fill="#2b6cb0"/>
+  <text x="549" y="346" text-anchor="middle" fill="#444" font-size="12">started[556] set</text>
+  <text x="549" y="384" text-anchor="middle" fill="#2b6cb0" font-size="12">:41.967 in_progress 556, 567</text>
+  <circle cx="800" cy="360" r="5" fill="#c0392b"/>
+  <text x="800" y="346" text-anchor="middle" fill="#c0392b" font-size="12">completed 567 -> orphan sweep</text>
+  <text x="800" y="384" text-anchor="middle" fill="#c0392b" font-size="12">warm_ride: unbound + discharged + 0 demand</text>
+
+  <!-- legend -->
+  <rect x="200" y="56" width="4" height="12" fill="#6b6b6b"/><text x="210" y="66" font-size="12" fill="#444">JIT runner registered</text>
+  <rect x="350" y="56" width="14" height="12" fill="#2b6cb0"/><text x="370" y="66" font-size="12" fill="#444">executing (logged)</text>
+  <rect x="500" y="56" width="14" height="12" fill="#e07a1f" opacity="0.25" stroke="#e07a1f" stroke-dasharray="3 2"/><text x="520" y="66" font-size="12" fill="#444">executing (start not logged)</text>
+</svg>

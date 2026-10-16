@@ -1,0 +1,806 @@
+<!doctype html>
+<html lang="en">
+  <head>
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-MSTSKGFWTX"></script>
+<script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+
+    gtag('config', 'G-MSTSKGFWTX');
+</script><meta charset="utf-8">
+<title>Database Connection Pooling with Smart Reset - Luther Monson</title>
+<meta name="description" content="PHP opens a new MySQL connection on every request. ePHPm reuses them and cleans up only the ones that need it. How it works, two bugs it had, and how much load it takes off MySQL.">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<meta name="twitter:card" content="summary_large_image"><meta name="twitter:site" content="@luthermonson">
+
+<meta property="og:site_name" content="Luther Monson">
+<meta property="og:title" content="Database Connection Pooling with Smart Reset">
+<meta property="og:description" content="PHP opens a new MySQL connection on every request. ePHPm reuses them and cleans up only the ones that need it. How it works, two bugs it had, and how much load it takes off MySQL.">
+<meta property="og:type" content="article">
+<meta property="og:url" content="https://luth.io/blog/2026/08/db-connection-pooling-smart-reset/">
+    <meta property="og:image" content="https://luth.io/img/2026/08/db-connection-pooling-smart-reset-cover.svg">
+    <meta property="og:image:alt" content="PHP request connecting to the ePHPm MySQL proxy, which lends it a pooled backend connection and resets it only if the session was dirtied">
+
+
+  <link rel="manifest" href="/favicon/site.webmanifest?v=1">
+  <link rel="apple-touch-icon" sizes="180x180" href="/favicon/apple-touch-icon.png?v=1">
+  <link rel="icon" type="image/png" sizes="32x32" href="/favicon/favicon-32x32.png?v=1">
+  <link rel="icon" type="image/png" sizes="16x16" href="/favicon/favicon-16x16.png?v=1">
+  
+    <link rel="mask-icon" href="/favicon/safari-pinned-tab.svg?v=1" color="#ffffff">
+    <link rel="shortcut icon" href="/favicon/favicon.ico?v=1">
+    <meta name="msapplication-config" content="/favicon/browserconfig.xml?v=1">
+  
+  <meta name="msapplication-TileColor" content="#ffffff">
+  <meta name="theme-color" content="#ffffff">
+
+
+  <meta name="generator" content="Hugo 0.160.1">
+  <link rel="alternate" type="application/rss+xml" href="https://luth.io/index.xml" title="Luther Monson">
+  <link rel="stylesheet" href="/css/bundle.min.e1ffed86714fbb7eff75eab221c0c61b8260be0c7d1c08db0fcb7a2bdb6af7c9.css" integrity="sha256-4f/thnFPu37/deqyIcDGG4Jgvgx9HAjbD8t6K9tq98k="><link rel="stylesheet" href="/css/add-on.css">
+        <link rel="stylesheet" href="/css/code.css">
+        <link rel="stylesheet" href="/css/mobile.css">
+</head>
+
+  <body>
+    
+
+<header id="site-header">
+  <nav id="site-nav">
+    <h1 class="nav-title">
+      <a href="/" class="nav">
+        <img class="nav-avatar" src="/img/luther-monson-headshot.jpg" alt="" width="32" height="32">
+        
+          Blog
+        
+      </a>
+    </h1>
+    <menu id="site-nav-menu" class="flyout-menu menu">
+      
+        
+          
+          <a href="/" class="nav link"><i class='fa fa-home'></i> Home</a>
+        
+      
+        
+          
+          <a href="/about" class="nav link"><i class='far fa-id-card'></i> About</a>
+        
+      
+        
+          
+          <a href="/blog" class="nav link"><i class='far fa-newspaper'></i> Blog</a>
+        
+      
+        
+          
+          <a href="/archive" class="nav link"><i class='far fa-calendar-alt'></i> Archive</a>
+        
+      
+        
+          
+          <a href="/categories" class="nav link"><i class='fas fa-sitemap'></i> Categories</a>
+        
+      
+      <a href="#share-menu" class="nav link share-toggle"><i class="fas fa-share-alt">&nbsp;</i>Share</a>
+      <a href="#search-input" class="nav link search-toggle"><i class="fas fa-search">&nbsp;</i>Search</a>
+    </menu>
+    <a href="#search-input" class="nav search-toggle"><i class="fas fa-search fa-2x">&nbsp;</i></a>
+    <a href="#share-menu" class="nav share-toggle"><i class="fas fa-share-alt fa-2x">&nbsp;</i></a>
+    
+    <a href="#site-nav" class="nav nav-toggle"><i class="fas fa-bars fa-2x"></i></a>
+  </nav>
+  <menu id="search" class="menu"><input id="search-input" class="search-input menu"></input><div id="search-results" class="search-results menu"></div></menu>
+  
+  
+    <menu id="share-menu" class="flyout-menu menu">
+      <h1>Share Post</h1>
+      
+
+
+
+
+  
+    
+    <a href="//twitter.com/share?text=Database%20Connection%20Pooling%20with%20Smart%20Reset&amp;url=https%3a%2f%2fluth.io%2fblog%2f2026%2f08%2fdb-connection-pooling-smart-reset%2f" target="_blank" rel="noopener" class="nav share-btn twitter">
+        <p>Twitter</p>
+      </a>
+  
+
+  
+      <a href="//www.facebook.com/sharer/sharer.php?u=https%3a%2f%2fluth.io%2fblog%2f2026%2f08%2fdb-connection-pooling-smart-reset%2f" target="_blank" rel="noopener" class="nav share-btn facebook">
+        <p>Facebook</p>
+        </a>
+  
+
+  
+    <a href="//www.reddit.com/submit?url=https%3a%2f%2fluth.io%2fblog%2f2026%2f08%2fdb-connection-pooling-smart-reset%2f&amp;title=Database%20Connection%20Pooling%20with%20Smart%20Reset" target="_blank" rel="noopener" class="nav share-btn reddit">
+          <p>Reddit</p>
+        </a>
+  
+
+  
+        <a href="//www.linkedin.com/shareArticle?url=https%3a%2f%2fluth.io%2fblog%2f2026%2f08%2fdb-connection-pooling-smart-reset%2f&amp;title=Database%20Connection%20Pooling%20with%20Smart%20Reset" target="_blank" rel="noopener" class="nav share-btn linkedin">
+            <p>LinkedIn</p>
+          </a>
+  
+
+  
+        <a href="//www.pinterest.com/pin/create/button/?url=https%3a%2f%2fluth.io%2fblog%2f2026%2f08%2fdb-connection-pooling-smart-reset%2f&amp;description=Database%20Connection%20Pooling%20with%20Smart%20Reset" target="_blank" rel="noopener" class="nav share-btn pinterest">
+          <p>Pinterest</p>
+        </a>
+  
+
+  
+        <a href="mailto:?subject=Check%20out%20this%20post%20by Luther%20Monson&amp;body=https%3a%2f%2fluth.io%2fblog%2f2026%2f08%2fdb-connection-pooling-smart-reset%2f" target="_blank" class="nav share-btn email" data-proofer-ignore>
+          <p>Email</p>
+        </a>
+  
+
+
+    </menu>
+  
+</header>
+
+    <div id="wrapper">
+      <section id="site-intro" class="hidden-single-column">
+  <a href="/"><img src="/img/luther-monson-headshot.jpg" class="circle" width="100" alt="Luther Monson, Staff Software Engineer at SUSE" /></a>
+  <header>
+    <h1>Luther Monson</h1>
+  </header>
+  <main>
+    <p>Go by way of PHP &middot; Containers &middot; VMs &middot; Windows &middot; Kubernetes</p>
+  </main>
+  
+    <footer>
+      <ul class="socnet-icons">
+        
+
+        <li><a href="//github.com/luthermonson" target="_blank" rel="noopener" title="GitHub" class="fab fa-github"></a></li>
+
+
+
+
+
+
+
+
+
+
+
+<li><a href="//www.linkedin.com/in/luthermonson" target="_blank" rel="noopener" title="LinkedIn" class="fab fa-linkedin"></a></li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li><a href="//twitter.com/luthermonson" target="_blank" rel="noopener" title="Twitter" class="fab fa-twitter"></a></li>
+
+
+
+
+
+
+
+
+
+
+
+<li><a href="mailto:luther.monson@gmail.com" target="_blank" title="Email" class="far fa-envelope"></a></li>
+
+      </ul>
+    </footer>
+  
+</section>
+
+      <main id="site-main">
+        
+  <article>
+    <div class="post">
+      <header>
+  <div class="title">
+    
+      <h2><a href="/blog/2026/08/db-connection-pooling-smart-reset/">Database Connection Pooling with Smart Reset</a></h2>
+    
+    
+      <p>PHP opens a new MySQL connection on every request. ePHPm reuses them and cleans up only the ones that need it. How it works, two bugs it had, and how much load it takes off MySQL.</p>
+    
+  </div>
+  <div class="meta">
+    <time datetime="2026-08-09 16:25:00 -0700 PDT">August 9, 2026</time>
+    
+    <p>10-Minute Read</p>
+  </div>
+</header>
+
+      <div id="socnet-share">
+        
+
+
+
+
+  
+    
+    <a href="//twitter.com/share?text=Database%20Connection%20Pooling%20with%20Smart%20Reset&amp;url=https%3a%2f%2fluth.io%2fblog%2f2026%2f08%2fdb-connection-pooling-smart-reset%2f" target="_blank" rel="noopener" class="nav share-btn twitter">
+        <p>Twitter</p>
+      </a>
+  
+
+  
+      <a href="//www.facebook.com/sharer/sharer.php?u=https%3a%2f%2fluth.io%2fblog%2f2026%2f08%2fdb-connection-pooling-smart-reset%2f" target="_blank" rel="noopener" class="nav share-btn facebook">
+        <p>Facebook</p>
+        </a>
+  
+
+  
+    <a href="//www.reddit.com/submit?url=https%3a%2f%2fluth.io%2fblog%2f2026%2f08%2fdb-connection-pooling-smart-reset%2f&amp;title=Database%20Connection%20Pooling%20with%20Smart%20Reset" target="_blank" rel="noopener" class="nav share-btn reddit">
+          <p>Reddit</p>
+        </a>
+  
+
+  
+        <a href="//www.linkedin.com/shareArticle?url=https%3a%2f%2fluth.io%2fblog%2f2026%2f08%2fdb-connection-pooling-smart-reset%2f&amp;title=Database%20Connection%20Pooling%20with%20Smart%20Reset" target="_blank" rel="noopener" class="nav share-btn linkedin">
+            <p>LinkedIn</p>
+          </a>
+  
+
+  
+        <a href="//www.pinterest.com/pin/create/button/?url=https%3a%2f%2fluth.io%2fblog%2f2026%2f08%2fdb-connection-pooling-smart-reset%2f&amp;description=Database%20Connection%20Pooling%20with%20Smart%20Reset" target="_blank" rel="noopener" class="nav share-btn pinterest">
+          <p>Pinterest</p>
+        </a>
+  
+
+  
+        <a href="mailto:?subject=Check%20out%20this%20post%20by Luther%20Monson&amp;body=https%3a%2f%2fluth.io%2fblog%2f2026%2f08%2fdb-connection-pooling-smart-reset%2f" target="_blank" class="nav share-btn email" data-proofer-ignore>
+          <p>Email</p>
+        </a>
+  
+
+
+      </div>
+      <div class="content">
+        
+        <p>PHP&rsquo;s share-nothing model is one of its best properties and it has one expensive side effect: a request can&rsquo;t keep a
+database connection for the next request. php-fpm gives you <code>PDO::ATTR_PERSISTENT</code> and <code>mysqli</code>&rsquo;s <code>p:</code> hosts, but
+those are per-worker-process, PDO&rsquo;s keep whatever session state the last request left behind (mysqli at least resets
+the session with <code>COM_CHANGE_USER</code> on reuse), and almost nobody turns them on. So in practice every PHP request does a
+TCP connect, a MySQL handshake, an auth exchange, maybe some <code>SET</code>s, its queries, and then <code>COM_QUIT</code>. Multiply that by your request rate and MySQL spends a real share of its time authenticating
+clients it just said goodbye to.</p>
+<p><a href="https://github.com/ephpm/ephpm">ePHPm</a> puts a pooling proxy in the same process as PHP. PHP connects to
+<code>127.0.0.1:3306</code> exactly like it would to MySQL, and the proxy lends it a connection that&rsquo;s already authenticated. This
+post is how that works, what &ldquo;smart&rdquo; reset means, the two bugs that made the default configuration unusable until June
+and then again until this month, and some numbers on what it does to the database.</p>
+<h3 id="the-proxy-in-30-seconds">The proxy in 30 seconds</h3>
+<p>Configuration is a URL and a listen address:</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-toml" data-lang="toml"><span class="line"><span class="cl"><span class="p">[</span><span class="nx">db</span><span class="p">.</span><span class="nx">mysql</span><span class="p">]</span>
+</span></span><span class="line"><span class="cl"><span class="nx">url</span> <span class="p">=</span> <span class="s2">&#34;mysql://app:secret@db.internal:3306/app&#34;</span>
+</span></span><span class="line"><span class="cl"><span class="nx">listen</span> <span class="p">=</span> <span class="s2">&#34;127.0.0.1:3306&#34;</span>
+</span></span><span class="line"><span class="cl"><span class="nx">min_connections</span> <span class="p">=</span> <span class="mi">2</span>
+</span></span><span class="line"><span class="cl"><span class="nx">max_connections</span> <span class="p">=</span> <span class="mi">20</span>
+</span></span><span class="line"><span class="cl"><span class="nx">reset_strategy</span> <span class="p">=</span> <span class="s2">&#34;smart&#34;</span>   <span class="c"># or &#34;always&#34; / &#34;never&#34;</span>
+</span></span></code></pre></div><p>When PHP connects, the proxy doesn&rsquo;t touch the backend at all for the handshake. It sends PHP a synthetic
+<code>HandshakeV10</code> built from the real server&rsquo;s saved metadata and a fresh challenge, reads PHP&rsquo;s <code>HandshakeResponse41</code>,
+and answers <code>OK</code>. It doesn&rsquo;t validate the credentials: the listener is meant for loopback and the docs say in bold not to
+bind it anywhere else. The real credentials only ever travel on the pool&rsquo;s own connections to MySQL (both
+<code>mysql_native_password</code> and <code>caching_sha2_password</code>, including the RSA full-auth path for MySQL 8&rsquo;s default plugin).</p>
+<p>Then the proxy checks out a pooled backend and relays packets in both directions until PHP&rsquo;s session ends.</p>
+<h3 id="what-has-to-be-reset-and-when">What has to be reset, and when</h3>
+<p>A pooled connection carries session state from whoever used it last: user variables, <code>SET SESSION</code> changes, temp
+tables, prepared statements, an open transaction, <code>LAST_INSERT_ID()</code>. Handing that to the next PHP request is how you
+get the worst kind of bug, the one where request B sees request A&rsquo;s data. MySQL 5.7 added <code>COM_RESET_CONNECTION</code> for
+exactly this: one packet (<code>0x1F</code>), one <code>OK</code> back, and the session is clean without re-authenticating.</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-rust" data-lang="rust"><span class="line"><span class="cl"><span class="sd">/// Resets: transaction state, user variables, prepared statements, temporary
+</span></span></span><span class="line"><span class="cl"><span class="sd">/// tables, and `LAST_INSERT_ID()`. Available since MySQL 5.7.
+</span></span></span><span class="line"><span class="cl"><span class="k">async</span><span class="w"> </span><span class="k">fn</span> <span class="nf">reset_connection</span><span class="p">(</span><span class="k">mut</span><span class="w"> </span><span class="n">stream</span>: <span class="nc">TcpStream</span><span class="p">)</span><span class="w"> </span>-&gt; <span class="nb">Result</span><span class="o">&lt;</span><span class="n">TcpStream</span><span class="p">,</span><span class="w"> </span><span class="n">DbError</span><span class="o">&gt;</span><span class="w"> </span><span class="p">{</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="c1">// COM_RESET_CONNECTION = 0x1F, sequence = 0.
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="n">write_packet</span><span class="p">(</span><span class="o">&amp;</span><span class="k">mut</span><span class="w"> </span><span class="n">stream</span><span class="p">,</span><span class="w"> </span><span class="mi">0</span><span class="p">,</span><span class="w"> </span><span class="o">&amp;</span><span class="p">[</span><span class="mh">0x1F</span><span class="p">]).</span><span class="k">await</span><span class="o">?</span><span class="p">;</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="kd">let</span><span class="w"> </span><span class="p">(</span><span class="n">_</span><span class="p">,</span><span class="w"> </span><span class="n">resp</span><span class="p">)</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">read_packet</span><span class="p">(</span><span class="o">&amp;</span><span class="k">mut</span><span class="w"> </span><span class="n">stream</span><span class="p">).</span><span class="k">await</span><span class="o">?</span><span class="p">;</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="n">resp</span><span class="p">.</span><span class="n">first</span><span class="p">()</span><span class="w"> </span><span class="o">!=</span><span class="w"> </span><span class="nb">Some</span><span class="p">(</span><span class="o">&amp;</span><span class="mh">0x00</span><span class="p">)</span><span class="w"> </span><span class="p">{</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">        </span><span class="k">return</span><span class="w"> </span><span class="nb">Err</span><span class="p">(</span><span class="n">DbError</span>::<span class="n">Protocol</span><span class="p">(</span><span class="s">&#34;COM_RESET_CONNECTION did not return OK&#34;</span><span class="p">.</span><span class="n">into</span><span class="p">()));</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="p">}</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="nb">Ok</span><span class="p">(</span><span class="n">stream</span><span class="p">)</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="p">}</span><span class="w">
+</span></span></span></code></pre></div><p>That&rsquo;s a round trip, and the three strategies are about when to pay it:</p>
+<ul>
+<li><strong><code>always</code></strong>: reset every connection when the session ends. Correct, one extra round trip per PHP request.</li>
+<li><strong><code>never</code></strong>: park the connection as-is. Fastest, and only safe if you control every query that runs (dev boxes).</li>
+<li><strong><code>smart</code></strong> (the default): track a dirty bit per session and reset only if something could have changed state.</li>
+</ul>
+<p>The dirty tracking happens in the relay loop, which already has to parse packet boundaries (more on why below). Each
+command PHP sends gets classified:</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-rust" data-lang="rust"><span class="line"><span class="cl"><span class="kd">let</span><span class="w"> </span><span class="n">writeish</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">match</span><span class="w"> </span><span class="n">cmd</span><span class="w"> </span><span class="p">{</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="mh">0x0E</span><span class="w"> </span><span class="cm">/* COM_PING */</span><span class="w"> </span><span class="o">=&gt;</span><span class="w"> </span><span class="kc">false</span><span class="p">,</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="no">COM_QUERY</span><span class="w"> </span><span class="o">=&gt;</span><span class="w"> </span><span class="p">{</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">        </span><span class="kd">let</span><span class="w"> </span><span class="n">sql</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">std</span>::<span class="kt">str</span>::<span class="n">from_utf8</span><span class="p">(</span><span class="o">&amp;</span><span class="n">payload</span><span class="p">[</span><span class="mi">1</span><span class="o">..</span><span class="p">]).</span><span class="n">unwrap_or</span><span class="p">(</span><span class="s">&#34;&#34;</span><span class="p">);</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">        </span><span class="o">!</span><span class="fm">matches!</span><span class="p">(</span><span class="n">classify_mysql_query</span><span class="p">(</span><span class="n">sql</span><span class="p">),</span><span class="w"> </span><span class="n">QueryKind</span>::<span class="n">Read</span><span class="p">)</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="p">}</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="n">_</span><span class="w"> </span><span class="o">=&gt;</span><span class="w"> </span><span class="kc">true</span><span class="p">,</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="p">};</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="k">if</span><span class="w"> </span><span class="n">writeish</span><span class="w"> </span><span class="p">{</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="n">dirty_w</span><span class="p">.</span><span class="n">store</span><span class="p">(</span><span class="kc">true</span><span class="p">,</span><span class="w"> </span><span class="n">Ordering</span>::<span class="n">Relaxed</span><span class="p">);</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="p">}</span><span class="w">
+</span></span></span></code></pre></div><p>and <code>classify_mysql_query</code> looks at the first keyword: <code>SELECT</code>, <code>SHOW</code>, <code>EXPLAIN</code>, <code>DESCRIBE</code> are reads (unless the
+statement contains <code>FOR UPDATE</code> or <code>FOR SHARE</code>), <code>BEGIN</code>/<code>START</code> and <code>COMMIT</code>/<code>ROLLBACK</code> are transaction boundaries, and
+everything else is treated as a write, because &ldquo;unknown&rdquo; has to mean &ldquo;dirty.&rdquo; Any command that isn&rsquo;t <code>COM_QUERY</code> or
+<code>COM_PING</code> (prepared statements, <code>COM_INIT_DB</code>) also marks the session dirty.</p>
+<p>When PHP&rsquo;s session ends:</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-rust" data-lang="rust"><span class="line"><span class="cl"><span class="k">match</span><span class="w"> </span><span class="n">outcome</span><span class="p">.</span><span class="n">backend</span><span class="w"> </span><span class="p">{</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="nb">Some</span><span class="p">(</span><span class="n">backend</span><span class="p">)</span><span class="w"> </span><span class="o">=&gt;</span><span class="w"> </span><span class="k">match</span><span class="w"> </span><span class="bp">self</span><span class="p">.</span><span class="n">reset_strategy</span><span class="w"> </span><span class="p">{</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">        </span><span class="n">ResetStrategy</span>::<span class="n">Never</span><span class="w"> </span><span class="o">=&gt;</span><span class="w"> </span><span class="n">checkout</span><span class="p">.</span><span class="n">return_to_pool</span><span class="p">(</span><span class="n">backend</span><span class="p">),</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">        </span><span class="n">ResetStrategy</span>::<span class="n">Always</span><span class="w"> </span><span class="o">=&gt;</span><span class="w"> </span><span class="n">checkout</span><span class="p">.</span><span class="n">return_with_reset</span><span class="p">(</span><span class="n">backend</span><span class="p">).</span><span class="k">await</span><span class="p">,</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">        </span><span class="n">ResetStrategy</span>::<span class="n">Smart</span><span class="w"> </span><span class="o">=&gt;</span><span class="w"> </span><span class="p">{</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">            </span><span class="k">if</span><span class="w"> </span><span class="n">outcome</span><span class="p">.</span><span class="n">dirty</span><span class="w"> </span><span class="p">{</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">                </span><span class="n">checkout</span><span class="p">.</span><span class="n">return_with_reset</span><span class="p">(</span><span class="n">backend</span><span class="p">).</span><span class="k">await</span><span class="p">;</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">            </span><span class="p">}</span><span class="w"> </span><span class="k">else</span><span class="w"> </span><span class="p">{</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">                </span><span class="n">checkout</span><span class="p">.</span><span class="n">return_to_pool</span><span class="p">(</span><span class="n">backend</span><span class="p">);</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">            </span><span class="p">}</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">        </span><span class="p">}</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="p">},</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="nb">None</span><span class="w"> </span><span class="o">=&gt;</span><span class="w"> </span><span class="n">checkout</span><span class="p">.</span><span class="n">retire</span><span class="p">(),</span><span class="w"> </span><span class="c1">// backend broke mid-session: never recycle it
+</span></span></span><span class="line"><span class="cl"><span class="p">}</span><span class="w">
+</span></span></span></code></pre></div><h3 id="the-honest-limits-of-smart">The honest limits of &ldquo;smart&rdquo;</h3>
+<p>First-keyword classification is cheap, and it&rsquo;s a heuristic. Two things it can&rsquo;t see:</p>
+<ul>
+<li><strong>A <code>SELECT</code> with side effects.</strong> <code>SELECT @x := 1</code>, <code>SELECT GET_LOCK('job', 10)</code>, <code>SELECT LAST_INSERT_ID(42)</code> and
+<code>SELECT ... INTO @var</code> all start with <code>SELECT</code> and all change session state. A session that does only that is
+&ldquo;clean&rdquo; and gets parked without a reset. The named lock case is the nasty one: the lock is held by the connection, so
+the next PHP request to draw it from the pool inherits a lock it never took. If your code uses <code>GET_LOCK</code>, use
+<code>always</code>.</li>
+<li><strong>Most real apps are dirty on connect.</strong> WordPress&rsquo;s <code>wpdb</code> sets the charset (mysqlnd sends that as a <code>SET NAMES</code>) on
+every connection, and on a stock MySQL 8 <code>sql_mode</code> it also runs <code>SET SESSION sql_mode=...</code> to drop the modes it
+doesn&rsquo;t support, all before its first real query. Those are writes by this definition (correctly, they change session state), so
+for WordPress, <code>smart</code> behaves exactly like <code>always</code>. The win only shows up for code that connects and reads.</li>
+</ul>
+<p>Neither of these makes <code>smart</code> wrong as a default, but it&rsquo;s not magic, and the second one is why the numbers below have
+two workloads.</p>
+<h3 id="bug-one-smart-reset-hung-on-the-first-query">Bug one: smart reset hung on the first query</h3>
+<p>Until June, <code>smart</code> didn&rsquo;t use the relay above. It used a per-command routing loop (built for read/write splitting) that
+acquired a backend from the pool <em>for every command</em>. Two problems compounded (<a href="https://github.com/ephpm/ephpm/pull/97">#97</a>):</p>
+<ol>
+<li>Its response forwarder stopped at the first <code>EOF</code> packet, which in a MySQL result set is the one that ends the column
+definitions, not the rows. The rows sat unread in the backend&rsquo;s buffer and the client waited forever. The first query
+<code>mysql_async</code> sends on every connection, <code>SELECT @@max_allowed_packet,@@wait_timeout</code>, is two columns and one row,
+which was enough.</li>
+<li>Underneath that, picking a new backend per command destroys session continuity: <code>SET @v = 42</code> lands on backend A and
+<code>SELECT @v</code> on backend B. Transactions and prepared statements break the same way. Bug 1 just hid it.</li>
+</ol>
+<p>The integration tests only exercised <code>always</code>, which used a different path. The WordPress compose example had quietly
+shipped with <code>reset_strategy = &quot;always&quot;</code> as a workaround, which tells you how it was found. The fix was to only use the
+per-command loop when read/write splitting is actually on, and otherwise hold one backend for the whole client session.</p>
+<h3 id="bug-two-the-pool-served-corpses-on-quiet-sites">Bug two: the pool served corpses on quiet sites</h3>
+<p>The second one is my favorite bug of the year, because it got <em>worse</em> the less traffic you had
+(<a href="https://github.com/ephpm/ephpm/pull/221">#221</a>). With the default config, a site would serve a couple of requests and
+then fail every request after that with <code>MySQL server has gone away</code>, permanently. The number of successes tracked
+the pool&rsquo;s warm connections: once they were used up, every request drew a corpse.</p>
+<p>PHP doesn&rsquo;t know the proxy pools anything. At the end of every request PDO destroys its handle and mysqlnd sends
+<code>COM_QUIT</code>, which means &ldquo;close this connection.&rdquo; The relay classified <code>COM_QUIT</code> as not-dirty and then forwarded it to
+the backend anyway, and MySQL closed the pooled connection. A clean session then parked that dead socket as healthy, the
+next request drew it, the write failed with a broken pipe, and the error path mapped that to a successful session end
+and parked the corpse again.</p>
+<p>Under load you&rsquo;d never see it: a connection returned and immediately re-acquired hasn&rsquo;t been noticed as closed yet. On a
+quiet site, where a connection sits idle for a moment between requests, every one of them is dead. The fix has three
+parts:</p>
+<ul>
+<li><code>COM_QUIT</code> is intercepted and never forwarded. It ends the <em>client</em> session, full stop. This is also why the relay has
+to parse packet boundaries: there&rsquo;s no correct dumb byte-copy for a pooled backend.</li>
+<li>A connection that has been idle for at least 500ms gets a <code>COM_PING</code> on checkout. Below that it can&rsquo;t have died for any
+reason a ping would detect, so busy pools never pay for it, and quiet sites (the ones that expose dead connections)
+always do.</li>
+<li>A backend that errors mid-session is retired, never re-parked.</li>
+</ul>
+<h3 id="what-it-does-to-mysql">What it does to MySQL</h3>
+<p>To put numbers on it I ran MySQL 8.4 in a container and three copies of the ePHPm v0.6.2 proxy in front of it (one
+per reset strategy), and drove them from PHP itself (<code>ephpm php</code>, PHP 8.4, <code>pdo_mysql</code>). Each &ldquo;request&rdquo; is: <code>new PDO</code>,
+the session&rsquo;s statements, <code>$pdo = null</code>. Two session shapes, 2,000 sessions each, run sequentially:</p>
+<ul>
+<li><strong>read-only</strong>: one primary-key <code>SELECT</code></li>
+<li><strong>WordPress-shaped</strong>: <code>SET NAMES utf8mb4</code>, <code>SET SESSION sql_mode=...</code>, then the same <code>SELECT</code></li>
+</ul>
+<p>Before and after each run I read MySQL&rsquo;s own counters (<code>Connections</code> from <code>SHOW GLOBAL STATUS</code>, and the
+<code>statement/com/Reset Connection</code> and <code>statement/com/Ping</code> counts from <code>performance_schema</code>).</p>
+<p>Medians of three runs, 2,000 sessions each:</p>
+<table>
+  <thead>
+      <tr>
+          <th>Target</th>
+          <th>Session</th>
+          <th style="text-align: right">µs per session</th>
+          <th style="text-align: right">MySQL <code>Connections</code></th>
+          <th style="text-align: right"><code>COM_RESET_CONNECTION</code></th>
+          <th style="text-align: right"><code>COM_PING</code></th>
+      </tr>
+  </thead>
+  <tbody>
+      <tr>
+          <td>MySQL directly</td>
+          <td>read-only</td>
+          <td style="text-align: right">479</td>
+          <td style="text-align: right">2,000</td>
+          <td style="text-align: right">0</td>
+          <td style="text-align: right">0</td>
+      </tr>
+      <tr>
+          <td>proxy, <code>smart</code></td>
+          <td>read-only</td>
+          <td style="text-align: right">467</td>
+          <td style="text-align: right">0</td>
+          <td style="text-align: right">0</td>
+          <td style="text-align: right">4</td>
+      </tr>
+      <tr>
+          <td>proxy, <code>always</code></td>
+          <td>read-only</td>
+          <td style="text-align: right">456</td>
+          <td style="text-align: right">0</td>
+          <td style="text-align: right">2,000</td>
+          <td style="text-align: right">4</td>
+      </tr>
+      <tr>
+          <td>proxy, <code>never</code></td>
+          <td>read-only</td>
+          <td style="text-align: right">470</td>
+          <td style="text-align: right">0</td>
+          <td style="text-align: right">0</td>
+          <td style="text-align: right">4</td>
+      </tr>
+      <tr>
+          <td>MySQL directly</td>
+          <td>WordPress-shaped</td>
+          <td style="text-align: right">664</td>
+          <td style="text-align: right">2,000</td>
+          <td style="text-align: right">0</td>
+          <td style="text-align: right">0</td>
+      </tr>
+      <tr>
+          <td>proxy, <code>smart</code></td>
+          <td>WordPress-shaped</td>
+          <td style="text-align: right">816</td>
+          <td style="text-align: right">0</td>
+          <td style="text-align: right">2,000</td>
+          <td style="text-align: right">4</td>
+      </tr>
+      <tr>
+          <td>proxy, <code>always</code></td>
+          <td>WordPress-shaped</td>
+          <td style="text-align: right">822</td>
+          <td style="text-align: right">0</td>
+          <td style="text-align: right">2,000</td>
+          <td style="text-align: right">4</td>
+      </tr>
+      <tr>
+          <td>proxy, <code>never</code></td>
+          <td>WordPress-shaped</td>
+          <td style="text-align: right">834</td>
+          <td style="text-align: right">0</td>
+          <td style="text-align: right">0</td>
+          <td style="text-align: right">4</td>
+      </tr>
+  </tbody>
+</table>
+<p>(One of the three <code>smart</code> WordPress-shaped runs saw one new backend connection and 16 pings; the other two saw 0 and
+4-5. I didn&rsquo;t chase it.)</p>
+<p>What that says, in order of how much it matters:</p>
+<p><strong>MySQL stopped accepting connections.</strong> 6,000 PHP sessions per strategy and session shape, and one new backend
+connection in total (that one odd run). The pool&rsquo;s warm connections did all the work, and outside that one run MySQL
+never ran an authentication exchange after startup. That&rsquo;s the whole point of the proxy and it does exactly that. The
+four or five pings per run are mostly the four warm connections being validated on first checkout after sitting idle
+between runs, which is the quiet-site fix doing its job.</p>
+<p><strong><code>smart</code> is only smart for read-only sessions.</strong> Read-only: zero resets. WordPress-shaped: 2,000 resets, identical to
+<code>always</code>, because <code>SET NAMES</code> and <code>SET SESSION sql_mode</code> dirty every session. If you run WordPress through this proxy,
+<code>smart</code> and <code>always</code> are the same setting.</p>
+<p><strong>The reset isn&rsquo;t on the client&rsquo;s clock.</strong> <code>always</code> was no slower than <code>smart</code> from PHP&rsquo;s point of view. The proxy sends
+<code>COM_RESET_CONNECTION</code> after PHP&rsquo;s session has already ended, so the cost lands on the pool (the connection comes back a
+round trip later), not on the request. Under a saturated pool that round trip would start to matter; at this load it
+didn&rsquo;t show up at all.</p>
+<p><strong>On loopback, pooling doesn&rsquo;t make PHP faster, and the extra hop can make it slower.</strong> This was the one I didn&rsquo;t
+expect going in. A direct MySQL connect plus auth on loopback is cheap here, so a read-only session costs about the same
+either way. The WordPress-shaped session got <em>slower</em> through the proxy, 664 to about 820µs, because each of its three
+statements now crosses two sockets instead of one, and that extra hop costs more than the connect it saved. Across a
+real network, with TLS to the database, a fresh connection is several round trips before the first query and the
+balance should tip the other way, but I didn&rsquo;t measure that here, so I&rsquo;m not going to claim a number for it.</p>
+<p>So the honest pitch for the pool is the database side: no connection storm when traffic spikes, no per-request auth on
+MySQL, a hard cap (<code>max_connections</code>) on how many backend connections a fleet of PHP workers can hold, and session state
+that can&rsquo;t leak between requests. Lower request latency isn&rsquo;t on that list unless your database is far away.</p>
+<h3 id="how-i-measured">How I measured</h3>
+<ul>
+<li>AMD Ryzen 9 5950X, Windows 11 + WSL2. MySQL 8.4 (<code>docker.io/library/mysql:8.4</code>) in Podman with host networking on
+port 3307; ePHPm <code>v0.6.2+php8.4.23</code> proxies on 3311/3312/3313 (<code>smart</code>/<code>always</code>/<code>never</code>, <code>min_connections = 4</code>,
+<code>max_connections = 20</code>) in the Ubuntu WSL distro; the client is <code>ephpm php bench.php &lt;port&gt; &lt;profile&gt; 2000</code> from the same
+binary. Everything is loopback on one machine, so absolute latencies are lower than over a real network and the
+difference between direct and pooled connects is, if anything, understated.</li>
+<li>Three repetitions per cell; medians reported. Counter deltas exclude the one connection the script uses to read them.</li>
+</ul>
+<h3 id="links">Links</h3>
+<ul>
+<li><a href="https://github.com/ephpm/ephpm">ePHPm</a>, the proxy is <code>crates/ephpm-db</code></li>
+<li><a href="https://github.com/ephpm/ephpm/pull/97">#97</a> smart reset hang, <a href="https://github.com/ephpm/ephpm/pull/221">#221</a> <code>COM_QUIT</code> and dead pooled connections</li>
+<li><a href="https://dev.mysql.com/doc/dev/mysql-server/latest/page_protocol_com_reset_connection.html">MySQL <code>COM_RESET_CONNECTION</code></a></li>
+<li><a href="https://developer.wordpress.org/reference/classes/wpdb/db_connect/">WordPress <code>wpdb::db_connect()</code></a>, which sets the charset and <code>sql_mode</code> on every connection</li>
+</ul>
+
+      </div>
+      <footer>
+        <div class="stats">
+  
+    <ul class="categories">
+      
+        
+          <li><a class="article-terms-link" href="/categories/ephpm/">ephpm</a></li>
+        
+          <li><a class="article-terms-link" href="/categories/databases/">databases</a></li>
+        
+      
+    </ul>
+  
+  
+    <ul class="tags">
+      
+        
+          <li><a class="article-terms-link" href="/tags/ephpm/">ephpm</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/mysql/">mysql</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/php/">php</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/rust/">rust</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/connection-pooling/">connection pooling</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/performance/">performance</a></li>
+        
+      
+    </ul>
+  
+</div>
+
+      </footer>
+    </div>
+    
+      
+  
+  <div class='post giscus-wrap'>
+    <script src='https://giscus.app/client.js'
+            data-repo='luthermonson/luth.io'
+            data-repo-id='R_kgDOGvFBXQ'
+            data-category='Announcements'
+            data-category-id='DIC_kwDOGvFBXc4DH_gv'
+            data-mapping='pathname'
+            data-strict='1'
+            data-reactions-enabled='1'
+            data-emit-metadata='0'
+            data-input-position='top'
+            data-theme='light'
+            data-lang='en'
+            data-loading='lazy'
+            crossorigin='anonymous'
+            async>
+    </script>
+  </div>
+  
+
+
+
+    
+  </article>
+  
+    <nav class="post-nav">
+      
+        <a href="/blog/2026/08/clustered-sqlite-sqld-sidecar/" class="post-nav-link older">
+          <span class="post-nav-label">&larr; Older</span>
+          <span class="post-nav-title">Clustered SQLite in ePHPm, Part 1: Replication by Sidecar</span>
+        </a>
+      
+      
+        <a href="/blog/2026/08/libxml2-2-14-broke-php-windows-builds/" class="post-nav-link newer">
+          <span class="post-nav-label">Newer &rarr;</span>
+          <span class="post-nav-title">libxml2 2.14 Broke PHP Windows Builds - And Nobody Noticed</span>
+        </a>
+      
+    </nav>
+  
+
+      </main>
+      <section id="site-sidebar">
+  
+    <section id="recent-posts">
+      <header>
+        <h1>Recent Posts</h1>
+      </header>
+      
+      <article class="mini-post">
+          <a href="/blog/2026/10/ephpm-worker-mode-performance/" class="image" style="--bg-image: url('/img/2026/10/ephpm-worker-mode-performance-cover.svg');">
+    <img class="" src="/img/2026/10/ephpm-worker-mode-performance-cover.svg" alt="Diagram: before, hyper/tokio hands each request to one shared bounded channel whose waiter list all 20 PHP threads contend on; after, a dispatcher hands the job straight into the mailbox of the most recently idle PHP thread and only queues it in a FIFO overflow queue when every thread is busy">
+  </a>
+        <header>
+          <h2><a href="/blog/2026/10/ephpm-worker-mode-performance/">Fourth Place in Worker Mode, and Why It Wasn&#39;t PHP</a></h2>
+          <time class="published" datetime="2026-10-16 08:10:00 -0700 PDT">October 16, 2026</time>
+        </header>
+      </article>
+      
+      <article class="mini-post">
+          <a href="/blog/2026/10/ephpm-websockets-how-to/" class="image" style="--bg-image: url('/img/2026/10/ephpm-websockets-how-to-cover.svg');">
+    <img class="" src="/img/2026/10/ephpm-websockets-how-to-cover.svg" alt="Diagram: browsers hold sockets to ePHPm&#39;s Rust session tasks and registry; each connect, message and disconnect runs websocket.php once on the PHP thread pool, and ordinary HTTP requests push through ephpm_ws_broadcast">
+  </a>
+        <header>
+          <h2><a href="/blog/2026/10/ephpm-websockets-how-to/">WebSockets in ePHPm, From Zero to a Working Chat</a></h2>
+          <time class="published" datetime="2026-10-11 17:30:00 -0700 PDT">October 11, 2026</time>
+        </header>
+      </article>
+      
+      <article class="mini-post">
+          <a href="/blog/2026/10/webhooks-out-of-order-scheduler/" class="image" style="--bg-image: url('/img/2026/10/webhooks-out-of-order-scheduler-timeline.svg');">
+    <img class="" src="/img/2026/10/webhooks-out-of-order-scheduler-timeline.svg" alt="Timeline of three same-label jobs where a runner executing a build is destroyed 2.3 seconds before its in_progress webhook arrives">
+  </a>
+        <header>
+          <h2><a href="/blog/2026/10/webhooks-out-of-order-scheduler/">Webhooks Arrive Out of Order: How My Scheduler Killed Live Builds</a></h2>
+          <time class="published" datetime="2026-10-07 21:10:00 -0700 PDT">October 7, 2026</time>
+        </header>
+      </article>
+      
+      <article class="mini-post">
+          <a href="/blog/2026/10/go-proxmox-five-years-to-v0-8/" class="image" style="--bg-image: url('/img/2026/10/go-proxmox-five-years-to-v0-8-apidiff.svg');">
+    <img class="" src="/img/2026/10/go-proxmox-five-years-to-v0-8-apidiff.svg" alt="Horizontal bar chart of apidiff incompatible and compatible changes for every go-proxmox release from v0.1.0 to v0.8.2">
+  </a>
+        <header>
+          <h2><a href="/blog/2026/10/go-proxmox-five-years-to-v0-8/">Breaking Changes Without Breaking Trust: Five Years to go-proxmox v0.8</a></h2>
+          <time class="published" datetime="2026-10-04 19:40:00 -0700 PDT">October 4, 2026</time>
+        </header>
+      </article>
+      
+      <article class="mini-post">
+          <a href="/blog/2026/10/windows-sigterm-sparse-files/" class="image" style="--bg-image: url('/img/2026/10/windows-sigterm-sparse-files-connections.svg');">
+    <img class="" src="/img/2026/10/windows-sigterm-sparse-files-connections.svg" alt="Bar chart: 96 Cloudflare edge connections held by orphaned cloudflared processes versus 4 for the live daemon">
+  </a>
+        <header>
+          <h2><a href="/blog/2026/10/windows-sigterm-sparse-files/">Windows Grab-Bag: SIGTERM That Doesn&#39;t Exist and Sparse Files That Break Docker</a></h2>
+          <time class="published" datetime="2026-10-03 14:30:00 -0700 PDT">October 3, 2026</time>
+        </header>
+      </article>
+      
+      
+        <footer>
+          <a href="/blog" class="button">See More</a>
+        </footer>
+      
+    </section>
+  
+
+  
+    
+
+      <section id="categories">
+        <header>
+          <h1><a href="/categories">Categories</a></h1>
+        </header>
+        <ul>
+          
+          
+          <li>
+              <a href="/categories/ephpm/">ephpm<span class="count">33</span></a>
+          
+          <li>
+              <a href="/categories/go/">go<span class="count">30</span></a>
+          
+          <li>
+              <a href="/categories/php/">php<span class="count">23</span></a>
+          
+          <li>
+              <a href="/categories/rust/">rust<span class="count">15</span></a>
+          
+          <li>
+              <a href="/categories/homelab/">homelab<span class="count">14</span></a>
+          
+          <li>
+              <a href="/categories/windows/">windows<span class="count">14</span></a>
+          
+          <li>
+              <a href="/categories/ci/">ci<span class="count">9</span></a>
+          
+          <li>
+              <a href="/categories/databases/">databases<span class="count">9</span></a>
+          
+          <li>
+              <a href="/categories/security/">security<span class="count">9</span></a>
+          
+          <li>
+              <a href="/categories/containers/">containers<span class="count">7</span></a>
+          
+          <li>
+              <a href="/categories/tools/">tools<span class="count">5</span></a>
+          
+          <li>
+              <a href="/categories/ai-agents/">ai-agents<span class="count">4</span></a>
+          
+          </li>
+        </ul>
+      </section>
+    
+  
+
+  
+    <section id="mini-bio">
+      <header>
+        <h1>About</h1>
+      </header>
+      <p>Luther is a 20+ year software veteran specializing in backend APIs and architecting products. Employed at <a href='https://www.suse.com'>SUSE</a> as the Team Lead for the <a href='https://github.com/rancher/windows/issues'>Containers on Windows Team</a> working on <a href='https://rancher.com/'>Rancher</a> + <a href='https://kubernetes.io/'>Kubernetes</a></p>
+      <footer>
+        <a href="/about" class="button">Learn More</a>
+      </footer>
+    </section>
+  
+</section>
+
+      <footer id="site-footer">
+  
+      <ul class="socnet-icons">
+        
+
+        <li><a href="//github.com/luthermonson" target="_blank" rel="noopener" title="GitHub" class="fab fa-github"></a></li>
+
+
+
+
+
+
+
+
+
+
+
+<li><a href="//www.linkedin.com/in/luthermonson" target="_blank" rel="noopener" title="LinkedIn" class="fab fa-linkedin"></a></li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li><a href="//twitter.com/luthermonson" target="_blank" rel="noopener" title="Twitter" class="fab fa-twitter"></a></li>
+
+
+
+
+
+
+
+
+
+
+
+<li><a href="mailto:luther.monson@gmail.com" target="_blank" title="Email" class="far fa-envelope"></a></li>
+
+      </ul>
+  
+  <p class="copyright">
+    © 2026 Luther Monson
+      <br>
+    Theme: <a href='https://github.com/pacollins/hugo-future-imperfect-slim' target='_blank' rel='noopener'>Hugo Future Imperfect Slim</a><br>A <a href='https://html5up.net/future-imperfect' target='_blank' rel='noopener'>HTML5 UP port</a> | Powered by <a href='https://gohugo.io/' title='0.160.1' target='_blank' rel='noopener'>Hugo</a>
+  </p>
+</footer>
+<a id="back-to-top" href="#" class="fas fa-arrow-up fa-2x"></a>
+
+      <script src="/js/bundle.min.241b62ebc4792fe8c7a75879e5f710894f226f2b73342e9916b3a3b0526030cc.js" integrity="sha256-JBti68R5L&#43;jHp1h55fcQiU8ibytzNC6ZFrOjsFJgMMw="></script>
+    <script src="/js/add-on.js"></script>
+    </div>
+  </body>
+</html>

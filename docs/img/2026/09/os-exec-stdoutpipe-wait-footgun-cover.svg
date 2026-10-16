@@ -1,0 +1,43 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 400" font-family="system-ui, -apple-system, Segoe UI, sans-serif">
+  <rect width="800" height="400" fill="#ffffff"/>
+  <text x="400" y="34" text-anchor="middle" font-size="20" font-weight="600" fill="#222">cmd.Wait() racing a StdoutPipe reader</text>
+
+  <!-- lane labels -->
+  <text x="20" y="92" font-size="14" fill="#444" font-weight="600">child</text>
+  <text x="20" y="172" font-size="14" fill="#444" font-weight="600">pipe buffer</text>
+  <text x="20" y="252" font-size="14" fill="#444" font-weight="600">reader</text>
+  <text x="20" y="332" font-size="14" fill="#444" font-weight="600">Wait()</text>
+
+  <!-- lane lines -->
+  <line x1="120" y1="88" x2="780" y2="88" stroke="#ddd"/>
+  <line x1="120" y1="168" x2="780" y2="168" stroke="#ddd"/>
+  <line x1="120" y1="248" x2="780" y2="248" stroke="#ddd"/>
+  <line x1="120" y1="328" x2="780" y2="328" stroke="#ddd"/>
+
+  <!-- child writes 200 frames then exits -->
+  <rect x="130" y="74" width="140" height="28" rx="4" fill="#2b6cb0"/>
+  <text x="200" y="93" text-anchor="middle" font-size="13" fill="#fff">writes 200 frames</text>
+  <rect x="280" y="74" width="60" height="28" rx="4" fill="#6b6b6b"/>
+  <text x="310" y="93" text-anchor="middle" font-size="13" fill="#fff">exit 0</text>
+
+  <!-- pipe buffer holding frames -->
+  <rect x="160" y="154" width="250" height="28" rx="4" fill="#3a9a5b" opacity="0.85"/>
+  <text x="285" y="173" text-anchor="middle" font-size="13" fill="#fff">unread: frames 137..199 + result</text>
+  <rect x="410" y="154" width="140" height="28" rx="4" fill="#c0392b"/>
+  <text x="480" y="173" text-anchor="middle" font-size="13" fill="#fff">discarded</text>
+
+  <!-- reader slow -->
+  <rect x="160" y="234" width="250" height="28" rx="4" fill="#e07a1f"/>
+  <text x="285" y="253" text-anchor="middle" font-size="13" fill="#fff">reads frames 1..136 slowly</text>
+  <text x="420" y="253" font-size="13" fill="#c0392b">read |0: file already closed</text>
+
+  <!-- wait -->
+  <rect x="345" y="314" width="65" height="28" rx="4" fill="#7d5ba6"/>
+  <text x="377" y="333" text-anchor="middle" font-size="13" fill="#fff">reap</text>
+  <line x1="410" y1="314" x2="410" y2="120" stroke="#c0392b" stroke-width="2" stroke-dasharray="6 4"/>
+  <text x="418" y="132" font-size="13" fill="#c0392b">Wait closes the pipe it created</text>
+  <text x="418" y="360" font-size="13" fill="#444">returns nil: the child exited 0</text>
+
+  <!-- fix -->
+  <text x="400" y="390" text-anchor="middle" font-size="13" fill="#3a9a5b">fix: os.Pipe() + one reaper that closes the read ends only after the readers drain</text>
+</svg>

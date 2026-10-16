@@ -1,0 +1,795 @@
+<!doctype html>
+<html lang="en">
+  <head>
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-MSTSKGFWTX"></script>
+<script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+
+    gtag('config', 'G-MSTSKGFWTX');
+</script><meta charset="utf-8">
+<title>Clustered SQLite in ePHPm, Part 1: Replication by Sidecar - Luther Monson</title>
+<meta name="description" content="How ePHPm first made SQLite highly available by embedding sqld as a child process, and the list of things that went wrong with it.">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<meta name="twitter:card" content="summary_large_image"><meta name="twitter:site" content="@luthermonson">
+
+<meta property="og:site_name" content="Luther Monson">
+<meta property="og:title" content="Clustered SQLite in ePHPm, Part 1: Replication by Sidecar">
+<meta property="og:description" content="How ePHPm first made SQLite highly available by embedding sqld as a child process, and the list of things that went wrong with it.">
+<meta property="og:type" content="article">
+<meta property="og:url" content="https://luth.io/blog/2026/08/clustered-sqlite-sqld-sidecar/">
+    <meta property="og:image" content="https://luth.io/img/2026/08/clustered-sqlite-sqld-sidecar-topology.svg">
+    <meta property="og:image:alt" content="Two ePHPm nodes, each running an embedded sqld child process, connected by gossip, a KV data plane and sqld gRPC">
+
+
+  <link rel="manifest" href="/favicon/site.webmanifest?v=1">
+  <link rel="apple-touch-icon" sizes="180x180" href="/favicon/apple-touch-icon.png?v=1">
+  <link rel="icon" type="image/png" sizes="32x32" href="/favicon/favicon-32x32.png?v=1">
+  <link rel="icon" type="image/png" sizes="16x16" href="/favicon/favicon-16x16.png?v=1">
+  
+    <link rel="mask-icon" href="/favicon/safari-pinned-tab.svg?v=1" color="#ffffff">
+    <link rel="shortcut icon" href="/favicon/favicon.ico?v=1">
+    <meta name="msapplication-config" content="/favicon/browserconfig.xml?v=1">
+  
+  <meta name="msapplication-TileColor" content="#ffffff">
+  <meta name="theme-color" content="#ffffff">
+
+
+  <meta name="generator" content="Hugo 0.160.1">
+  <link rel="alternate" type="application/rss+xml" href="https://luth.io/index.xml" title="Luther Monson">
+  <link rel="stylesheet" href="/css/bundle.min.e1ffed86714fbb7eff75eab221c0c61b8260be0c7d1c08db0fcb7a2bdb6af7c9.css" integrity="sha256-4f/thnFPu37/deqyIcDGG4Jgvgx9HAjbD8t6K9tq98k="><link rel="stylesheet" href="/css/add-on.css">
+        <link rel="stylesheet" href="/css/code.css">
+        <link rel="stylesheet" href="/css/mobile.css">
+</head>
+
+  <body>
+    
+
+<header id="site-header">
+  <nav id="site-nav">
+    <h1 class="nav-title">
+      <a href="/" class="nav">
+        <img class="nav-avatar" src="/img/luther-monson-headshot.jpg" alt="" width="32" height="32">
+        
+          Blog
+        
+      </a>
+    </h1>
+    <menu id="site-nav-menu" class="flyout-menu menu">
+      
+        
+          
+          <a href="/" class="nav link"><i class='fa fa-home'></i> Home</a>
+        
+      
+        
+          
+          <a href="/about" class="nav link"><i class='far fa-id-card'></i> About</a>
+        
+      
+        
+          
+          <a href="/blog" class="nav link"><i class='far fa-newspaper'></i> Blog</a>
+        
+      
+        
+          
+          <a href="/archive" class="nav link"><i class='far fa-calendar-alt'></i> Archive</a>
+        
+      
+        
+          
+          <a href="/categories" class="nav link"><i class='fas fa-sitemap'></i> Categories</a>
+        
+      
+      <a href="#share-menu" class="nav link share-toggle"><i class="fas fa-share-alt">&nbsp;</i>Share</a>
+      <a href="#search-input" class="nav link search-toggle"><i class="fas fa-search">&nbsp;</i>Search</a>
+    </menu>
+    <a href="#search-input" class="nav search-toggle"><i class="fas fa-search fa-2x">&nbsp;</i></a>
+    <a href="#share-menu" class="nav share-toggle"><i class="fas fa-share-alt fa-2x">&nbsp;</i></a>
+    
+    <a href="#site-nav" class="nav nav-toggle"><i class="fas fa-bars fa-2x"></i></a>
+  </nav>
+  <menu id="search" class="menu"><input id="search-input" class="search-input menu"></input><div id="search-results" class="search-results menu"></div></menu>
+  
+  
+    <menu id="share-menu" class="flyout-menu menu">
+      <h1>Share Post</h1>
+      
+
+
+
+
+  
+    
+    <a href="//twitter.com/share?text=Clustered%20SQLite%20in%20ePHPm%2c%20Part%201%3a%20Replication%20by%20Sidecar&amp;url=https%3a%2f%2fluth.io%2fblog%2f2026%2f08%2fclustered-sqlite-sqld-sidecar%2f" target="_blank" rel="noopener" class="nav share-btn twitter">
+        <p>Twitter</p>
+      </a>
+  
+
+  
+      <a href="//www.facebook.com/sharer/sharer.php?u=https%3a%2f%2fluth.io%2fblog%2f2026%2f08%2fclustered-sqlite-sqld-sidecar%2f" target="_blank" rel="noopener" class="nav share-btn facebook">
+        <p>Facebook</p>
+        </a>
+  
+
+  
+    <a href="//www.reddit.com/submit?url=https%3a%2f%2fluth.io%2fblog%2f2026%2f08%2fclustered-sqlite-sqld-sidecar%2f&amp;title=Clustered%20SQLite%20in%20ePHPm%2c%20Part%201%3a%20Replication%20by%20Sidecar" target="_blank" rel="noopener" class="nav share-btn reddit">
+          <p>Reddit</p>
+        </a>
+  
+
+  
+        <a href="//www.linkedin.com/shareArticle?url=https%3a%2f%2fluth.io%2fblog%2f2026%2f08%2fclustered-sqlite-sqld-sidecar%2f&amp;title=Clustered%20SQLite%20in%20ePHPm%2c%20Part%201%3a%20Replication%20by%20Sidecar" target="_blank" rel="noopener" class="nav share-btn linkedin">
+            <p>LinkedIn</p>
+          </a>
+  
+
+  
+        <a href="//www.pinterest.com/pin/create/button/?url=https%3a%2f%2fluth.io%2fblog%2f2026%2f08%2fclustered-sqlite-sqld-sidecar%2f&amp;description=Clustered%20SQLite%20in%20ePHPm%2c%20Part%201%3a%20Replication%20by%20Sidecar" target="_blank" rel="noopener" class="nav share-btn pinterest">
+          <p>Pinterest</p>
+        </a>
+  
+
+  
+        <a href="mailto:?subject=Check%20out%20this%20post%20by Luther%20Monson&amp;body=https%3a%2f%2fluth.io%2fblog%2f2026%2f08%2fclustered-sqlite-sqld-sidecar%2f" target="_blank" class="nav share-btn email" data-proofer-ignore>
+          <p>Email</p>
+        </a>
+  
+
+
+    </menu>
+  
+</header>
+
+    <div id="wrapper">
+      <section id="site-intro" class="hidden-single-column">
+  <a href="/"><img src="/img/luther-monson-headshot.jpg" class="circle" width="100" alt="Luther Monson, Staff Software Engineer at SUSE" /></a>
+  <header>
+    <h1>Luther Monson</h1>
+  </header>
+  <main>
+    <p>Go by way of PHP &middot; Containers &middot; VMs &middot; Windows &middot; Kubernetes</p>
+  </main>
+  
+    <footer>
+      <ul class="socnet-icons">
+        
+
+        <li><a href="//github.com/luthermonson" target="_blank" rel="noopener" title="GitHub" class="fab fa-github"></a></li>
+
+
+
+
+
+
+
+
+
+
+
+<li><a href="//www.linkedin.com/in/luthermonson" target="_blank" rel="noopener" title="LinkedIn" class="fab fa-linkedin"></a></li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li><a href="//twitter.com/luthermonson" target="_blank" rel="noopener" title="Twitter" class="fab fa-twitter"></a></li>
+
+
+
+
+
+
+
+
+
+
+
+<li><a href="mailto:luther.monson@gmail.com" target="_blank" title="Email" class="far fa-envelope"></a></li>
+
+      </ul>
+    </footer>
+  
+</section>
+
+      <main id="site-main">
+        
+  <article>
+    <div class="post">
+      <header>
+  <div class="title">
+    
+      <h2><a href="/blog/2026/08/clustered-sqlite-sqld-sidecar/">Clustered SQLite in ePHPm, Part 1: Replication by Sidecar</a></h2>
+    
+    
+      <p>How ePHPm first made SQLite highly available by embedding sqld as a child process, and the list of things that went wrong with it.</p>
+    
+  </div>
+  <div class="meta">
+    <time datetime="2026-08-08 20:14:00 -0700 PDT">August 8, 2026</time>
+    
+    <p>8-Minute Read</p>
+  </div>
+</header>
+
+      <div id="socnet-share">
+        
+
+
+
+
+  
+    
+    <a href="//twitter.com/share?text=Clustered%20SQLite%20in%20ePHPm%2c%20Part%201%3a%20Replication%20by%20Sidecar&amp;url=https%3a%2f%2fluth.io%2fblog%2f2026%2f08%2fclustered-sqlite-sqld-sidecar%2f" target="_blank" rel="noopener" class="nav share-btn twitter">
+        <p>Twitter</p>
+      </a>
+  
+
+  
+      <a href="//www.facebook.com/sharer/sharer.php?u=https%3a%2f%2fluth.io%2fblog%2f2026%2f08%2fclustered-sqlite-sqld-sidecar%2f" target="_blank" rel="noopener" class="nav share-btn facebook">
+        <p>Facebook</p>
+        </a>
+  
+
+  
+    <a href="//www.reddit.com/submit?url=https%3a%2f%2fluth.io%2fblog%2f2026%2f08%2fclustered-sqlite-sqld-sidecar%2f&amp;title=Clustered%20SQLite%20in%20ePHPm%2c%20Part%201%3a%20Replication%20by%20Sidecar" target="_blank" rel="noopener" class="nav share-btn reddit">
+          <p>Reddit</p>
+        </a>
+  
+
+  
+        <a href="//www.linkedin.com/shareArticle?url=https%3a%2f%2fluth.io%2fblog%2f2026%2f08%2fclustered-sqlite-sqld-sidecar%2f&amp;title=Clustered%20SQLite%20in%20ePHPm%2c%20Part%201%3a%20Replication%20by%20Sidecar" target="_blank" rel="noopener" class="nav share-btn linkedin">
+            <p>LinkedIn</p>
+          </a>
+  
+
+  
+        <a href="//www.pinterest.com/pin/create/button/?url=https%3a%2f%2fluth.io%2fblog%2f2026%2f08%2fclustered-sqlite-sqld-sidecar%2f&amp;description=Clustered%20SQLite%20in%20ePHPm%2c%20Part%201%3a%20Replication%20by%20Sidecar" target="_blank" rel="noopener" class="nav share-btn pinterest">
+          <p>Pinterest</p>
+        </a>
+  
+
+  
+        <a href="mailto:?subject=Check%20out%20this%20post%20by Luther%20Monson&amp;body=https%3a%2f%2fluth.io%2fblog%2f2026%2f08%2fclustered-sqlite-sqld-sidecar%2f" target="_blank" class="nav share-btn email" data-proofer-ignore>
+          <p>Email</p>
+        </a>
+  
+
+
+      </div>
+      <div class="content">
+        
+        <p>Most PHP sites I have run in the last twenty years did not need a MySQL server. They needed <em>a</em> database, and MySQL was the
+one every framework spoke. With <a href="https://github.com/ephpm/ephpm">ePHPm</a> I have been trying to get rid of that server for
+the common case, and the piece that makes it possible is <a href="https://github.com/ephpm/litewire">litewire</a>: PHP connects with
+plain <code>pdo_mysql</code>, litewire speaks the MySQL wire protocol, and the queries land in a SQLite file. WordPress and Laravel
+don&rsquo;t know the difference. No <code>mysqld</code>, no child processes, just <code>ephpm</code> and a <code>.db</code> file.</p>
+<p>That works great until somebody asks the obvious question: what happens when the box dies? SQLite has no replication.
+This is a three-part series about how ePHPm went from &ldquo;SQLite file plus a sidecar&rdquo; to replication done entirely inside the
+process. The PHP side never changes across all three posts. Everything interesting happens behind litewire.</p>
+<ul>
+<li>Part 1: Replication by sidecar with sqld (this post)</li>
+<li><a href="/blog/2026/08/clustered-sqlite-adding-turso/">Part 2: Adding Turso, one engine in-process</a></li>
+<li><a href="/blog/2026/09/clustered-sqlite-cdc-cluster-channel/">Part 3: CDC over the cluster channel</a></li>
+</ul>
+<h3 id="the-first-answer-sqld">The first answer: sqld</h3>
+<p>When I wanted HA in March, the shortest path was <a href="https://github.com/tursodatabase/libsql">sqld</a>, which is libsql-server,
+Turso&rsquo;s MIT-licensed SQLite server. It already does primary/replica replication: replicas pull WAL frames from the primary
+over gRPC and forward writes back to it. I pinned v0.24.32 and the first wiring landed on 2026-03-30. The initial commit
+(&ldquo;single node sqld&rdquo;) got reverted 17 minutes later, and &ldquo;clustering sqld&rdquo; landed that night. That should have been a hint
+about how this was going to go.</p>
+<p>The thing I care about most in ePHPm is the single binary, so sqld had to be inside it. The release build downloads the
+sqld binary and a <code>build.rs</code> copies it into <code>OUT_DIR</code> so <code>include_bytes!()</code> can embed it:</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-rust" data-lang="rust"><span class="line"><span class="cl"><span class="k">fn</span> <span class="nf">main</span><span class="p">()</span><span class="w"> </span><span class="p">{</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="fm">println!</span><span class="p">(</span><span class="s">&#34;cargo::rustc-check-cfg=cfg(sqld_embedded)&#34;</span><span class="p">);</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="fm">println!</span><span class="p">(</span><span class="s">&#34;cargo::rerun-if-env-changed=SQLD_BINARY_PATH&#34;</span><span class="p">);</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="kd">let</span><span class="w"> </span><span class="nb">Ok</span><span class="p">(</span><span class="n">path</span><span class="p">)</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">std</span>::<span class="n">env</span>::<span class="n">var</span><span class="p">(</span><span class="s">&#34;SQLD_BINARY_PATH&#34;</span><span class="p">)</span><span class="w"> </span><span class="p">{</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">        </span><span class="kd">let</span><span class="w"> </span><span class="n">src</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">std</span>::<span class="n">path</span>::<span class="n">Path</span>::<span class="n">new</span><span class="p">(</span><span class="o">&amp;</span><span class="n">path</span><span class="p">);</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">        </span><span class="fm">assert!</span><span class="p">(</span><span class="n">src</span><span class="p">.</span><span class="n">exists</span><span class="p">(),</span><span class="w"> </span><span class="s">&#34;SQLD_BINARY_PATH points to non-existent file: {path}&#34;</span><span class="p">);</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">        </span><span class="kd">let</span><span class="w"> </span><span class="n">out_dir</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">std</span>::<span class="n">env</span>::<span class="n">var</span><span class="p">(</span><span class="s">&#34;OUT_DIR&#34;</span><span class="p">).</span><span class="n">expect</span><span class="p">(</span><span class="s">&#34;OUT_DIR not set&#34;</span><span class="p">);</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">        </span><span class="kd">let</span><span class="w"> </span><span class="n">dest</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">std</span>::<span class="n">path</span>::<span class="n">Path</span>::<span class="n">new</span><span class="p">(</span><span class="o">&amp;</span><span class="n">out_dir</span><span class="p">).</span><span class="n">join</span><span class="p">(</span><span class="s">&#34;sqld&#34;</span><span class="p">);</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">        </span><span class="n">std</span>::<span class="n">fs</span>::<span class="n">copy</span><span class="p">(</span><span class="n">src</span><span class="p">,</span><span class="w"> </span><span class="o">&amp;</span><span class="n">dest</span><span class="p">).</span><span class="n">expect</span><span class="p">(</span><span class="s">&#34;failed to copy sqld binary to OUT_DIR&#34;</span><span class="p">);</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">        </span><span class="fm">println!</span><span class="p">(</span><span class="s">&#34;cargo::rustc-cfg=sqld_embedded&#34;</span><span class="p">);</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">        </span><span class="fm">println!</span><span class="p">(</span><span class="s">&#34;cargo::rustc-env=SQLD_BINARY_PATH=</span><span class="si">{}</span><span class="s">&#34;</span><span class="p">,</span><span class="w"> </span><span class="n">dest</span><span class="p">.</span><span class="n">display</span><span class="p">());</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="p">}</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="p">}</span><span class="w">
+</span></span></span></code></pre></div><div class="highlight"><pre tabindex="0" class="chroma"><code class="language-rust" data-lang="rust"><span class="line"><span class="cl"><span class="cp">#[cfg(sqld_embedded)]</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="k">static</span><span class="w"> </span><span class="no">SQLD_BINARY</span>: <span class="kp">&amp;</span><span class="p">[</span><span class="kt">u8</span><span class="p">]</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="fm">include_bytes!</span><span class="p">(</span><span class="fm">env!</span><span class="p">(</span><span class="s">&#34;SQLD_BINARY_PATH&#34;</span><span class="p">));</span><span class="w">
+</span></span></span></code></pre></div><p>At startup the clustered path writes those bytes to a temp file, marks it executable, spawns it as a child process, polls
+its <code>/health</code> endpoint, and then hands litewire a different backend. Single-node mode used rusqlite in-process. Clustered
+mode swapped litewire&rsquo;s backend to a Hrana HTTP client pointed at the local sqld:</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-rust" data-lang="rust"><span class="line"><span class="cl"><span class="kd">let</span><span class="w"> </span><span class="k">mut</span><span class="w"> </span><span class="n">backend</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">litewire</span>::<span class="n">backend</span>::<span class="n">HranaClient</span>::<span class="n">new</span><span class="p">(</span><span class="o">&amp;</span><span class="n">sqld_http_url</span><span class="p">);</span><span class="w">
+</span></span></span></code></pre></div><p>So &ldquo;single binary&rdquo; was technically true. It was a single binary with another binary inside it. And there were now two
+modes running two different engines: rusqlite for one node, sqld for a cluster. That split is the seed of everything in
+Parts 2 and 3.</p>
+<p><img src="/img/2026/08/clustered-sqlite-sqld-sidecar-topology.svg" alt="sqld sidecar topology"></p>
+<h3 id="sqld-doesnt-elect-anybody">sqld doesn&rsquo;t elect anybody</h3>
+<p>sqld knows how to be a primary or a replica. It does not decide which one it is. That is your problem. ePHPm already had a
+gossip layer (<a href="https://github.com/quickwit-oss/chitchat">chitchat</a>, scuttlebutt-style anti-entropy with a phi-accrual failure detector) for the KV
+store, so the election went on top of it. The rule: lowest-ordinal alive node wins, the winner writes a claim into the
+gossip KV at <code>sqlite:primary</code>, refreshes it every 5 seconds, and the claim has a 10 second TTL.</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-rust" data-lang="rust"><span class="line"><span class="cl"><span class="sd">/// Gossip KV key for the primary node identity.
+</span></span></span><span class="line"><span class="cl"><span class="k">const</span><span class="w"> </span><span class="no">PRIMARY_KEY</span>: <span class="kp">&amp;</span><span class="kt">str</span> <span class="o">=</span><span class="w"> </span><span class="s">&#34;sqlite:primary&#34;</span><span class="p">;</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="sd">/// How often the primary refreshes its claim.
+</span></span></span><span class="line"><span class="cl"><span class="k">const</span><span class="w"> </span><span class="no">HEARTBEAT_INTERVAL</span>: <span class="nc">Duration</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">Duration</span>::<span class="n">from_secs</span><span class="p">(</span><span class="mi">5</span><span class="p">);</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="sd">/// TTL for the primary claim. If not refreshed, the key expires and
+</span></span></span><span class="line"><span class="cl"><span class="sd">/// triggers re-election.
+</span></span></span><span class="line"><span class="cl"><span class="k">const</span><span class="w"> </span><span class="no">PRIMARY_TTL</span>: <span class="nc">Duration</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">Duration</span>::<span class="n">from_secs</span><span class="p">(</span><span class="mi">10</span><span class="p">);</span><span class="w">
+</span></span></span></code></pre></div><p>The claim value is just <code>node_id|grpc_addr</code>. When the role changes, a watcher task restarts sqld with new arguments. On
+Unix that means SIGTERM, wait up to 5 seconds, SIGKILL if it&rsquo;s still there, and spawn again:</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-rust" data-lang="rust"><span class="line"><span class="cl"><span class="k">pub</span><span class="w"> </span><span class="k">async</span><span class="w"> </span><span class="k">fn</span> <span class="nf">restart</span><span class="p">(</span><span class="o">&amp;</span><span class="k">mut</span><span class="w"> </span><span class="bp">self</span><span class="p">,</span><span class="w"> </span><span class="n">new_role</span>: <span class="nc">SqldRole</span><span class="p">)</span><span class="w"> </span>-&gt; <span class="nc">anyhow</span>::<span class="nb">Result</span><span class="o">&lt;</span><span class="p">()</span><span class="o">&gt;</span><span class="w"> </span><span class="p">{</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="bp">self</span><span class="p">.</span><span class="n">stop_child</span><span class="p">().</span><span class="k">await</span><span class="o">?</span><span class="p">;</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="bp">self</span><span class="p">.</span><span class="n">role</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">new_role</span><span class="p">;</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="bp">self</span><span class="p">.</span><span class="n">child</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">spawn_child</span><span class="p">(</span><span class="o">&amp;</span><span class="bp">self</span><span class="p">.</span><span class="n">temp_path</span><span class="p">,</span><span class="w"> </span><span class="o">&amp;</span><span class="bp">self</span><span class="p">.</span><span class="n">config</span><span class="p">,</span><span class="w"> </span><span class="o">&amp;</span><span class="bp">self</span><span class="p">.</span><span class="n">role</span><span class="p">)</span><span class="o">?</span><span class="p">;</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="nb">Ok</span><span class="p">(())</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="p">}</span><span class="w">
+</span></span></span></code></pre></div><p>That&rsquo;s a failover: kill a process and start it again with different flags. It works, in the sense that each piece does what
+it says. The rest of this post is the list of ways it didn&rsquo;t work, because that list is the actual reason the next two
+posts exist.</p>
+<h3 id="failure-1-async-replication-loses-data-on-failover">Failure 1: async replication loses data on failover</h3>
+<p>sqld replicas pull frames from the primary. Anything the primary committed and acknowledged to PHP but hadn&rsquo;t shipped yet
+is gone when the primary dies and a replica gets promoted. That&rsquo;s the nature of async replication, it&rsquo;s not a sqld bug, but
+it is a real window and it was mine to document.</p>
+<h3 id="failure-2-no-windows">Failure 2: no Windows</h3>
+<p>There is no sqld build for Windows. ePHPm runs on Windows (I spend a lot of time making sure it does), so clustered SQLite
+was simply a startup error there:</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-rust" data-lang="rust"><span class="line"><span class="cl"><span class="cp">#[cfg(target_os = </span><span class="s">&#34;windows&#34;</span><span class="cp">)]</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="p">{</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="n">anyhow</span>::<span class="fm">bail!</span><span class="p">(</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">        </span><span class="s">&#34;clustered SQLite (sqld sidecar) is not supported on Windows. </span><span class="se">\</span><span class="s">
+</span></span></span><span class="line"><span class="cl"><span class="s">         Use single-node mode (remove [db.sqlite.replication] or set role = </span><span class="se">\&#34;</span><span class="s">auto</span><span class="se">\&#34;</span><span class="s"> </span><span class="se">\</span><span class="s">
+</span></span></span><span class="line"><span class="cl"><span class="s">         without clustering), or run on Linux/macOS/WSL.&#34;</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="p">);</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="p">}</span><span class="w">
+</span></span></span></code></pre></div><h3 id="failure-3-replica-mode-had-never-started">Failure 3: replica mode had never started</h3>
+<p>This one stings. In July I built a <a href="https://github.com/ephpm/turso-cluster-e2e">two-node comparison fixture</a> to measure sqld
+against the new Turso path (Part 2). The sqld half wouldn&rsquo;t come up. sqld&rsquo;s CLI rejects <code>--grpc-listen-addr</code> combined with
+<code>--primary-grpc-url</code>, and ePHPm was passing both to replicas. Every two-node bringup had died at spawn. The fix
+(<a href="https://github.com/ephpm/ephpm/pull/189">#189</a>) was a few lines:</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-rust" data-lang="rust"><span class="line"><span class="cl"><span class="k">match</span><span class="w"> </span><span class="n">role</span><span class="w"> </span><span class="p">{</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="n">SqldRole</span>::<span class="n">Primary</span><span class="w"> </span><span class="o">=&gt;</span><span class="w"> </span><span class="p">{</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">        </span><span class="n">cmd</span><span class="p">.</span><span class="n">arg</span><span class="p">(</span><span class="s">&#34;--grpc-listen-addr&#34;</span><span class="p">).</span><span class="n">arg</span><span class="p">(</span><span class="o">&amp;</span><span class="n">config</span><span class="p">.</span><span class="n">grpc_listen</span><span class="p">);</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="p">}</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="n">SqldRole</span>::<span class="n">Replica</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">primary_grpc_url</span><span class="w"> </span><span class="p">}</span><span class="w"> </span><span class="o">=&gt;</span><span class="w"> </span><span class="p">{</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">        </span><span class="c1">// sqld rejects --grpc-listen-addr when --primary-grpc-url is
+</span></span></span><span class="line"><span class="cl"><span class="w">        </span><span class="c1">// set. A replica syncs from the primary and does not serve
+</span></span></span><span class="line"><span class="cl"><span class="w">        </span><span class="c1">// WAL frames to further replicas in this topology.
+</span></span></span><span class="line"><span class="cl"><span class="w">        </span><span class="n">cmd</span><span class="p">.</span><span class="n">arg</span><span class="p">(</span><span class="s">&#34;--primary-grpc-url&#34;</span><span class="p">).</span><span class="n">arg</span><span class="p">(</span><span class="n">primary_grpc_url</span><span class="p">);</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="p">}</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="p">}</span><span class="w">
+</span></span></span></code></pre></div><p>The fix is boring. What it says isn&rsquo;t. The feature had unit tests, an election, docs, and config. It had never once run
+with two nodes. &ldquo;Implemented&rdquo; and &ldquo;exercised&rdquo; are different words and I had been using them as if they were the same.</p>
+<h3 id="failure-4-the-control-plane-was-open">Failure 4: the control plane was open</h3>
+<p>A security audit pass in late July (<a href="https://github.com/ephpm/ephpm/pull/201">#201</a>) found three things, all rooted in the
+same threat model, a plaintext and unauthenticated cluster control plane:</p>
+<ul>
+<li><strong>Empty secret meant plaintext.</strong> With <code>[cluster] secret</code> unset, gossip and the KV data plane ran unauthenticated, with
+only a startup warning. Any host on the network could forge KV writes: sessions, rate-limit counters, ACME keys. Now
+clustering refuses to start without a secret unless you set <code>allow_insecure_no_auth = true</code> on purpose.</li>
+<li><strong>Forged primary claims.</strong> Replicas dialed whatever <code>grpc_addr</code> was in the gossip claim. Inject a claim and you could
+point every replica at an attacker&rsquo;s sqld. Claims are now validated against live gossip membership (by host, since
+gossip and gRPC use different ports on the same machine) before anyone dials them.</li>
+<li><strong>Predictable extraction path.</strong> The embedded binary was written to <code>temp_dir()/ephpm-sqld-&lt;pid&gt;</code>, then chmodded and
+executed. Classic symlink race on a shared <code>/tmp</code>. It now goes into a fresh <code>0700</code> directory from <code>mkdtemp</code>, created
+with <code>O_EXCL</code>.</li>
+</ul>
+<p>None of these are sqld&rsquo;s fault either. They are what happens when you bolt a process manager and an election onto a
+gossip layer that was designed for cache keys.</p>
+<h3 id="failure-5-the-write-cliff">Failure 5: the write cliff</h3>
+<p>This is the one that ended it. For v0.6.0 I benchmarked four lanes: rusqlite and Turso, each single-node and clustered,
+one machine, <code>--cpus 1</code> per node, one autocommit INSERT per request. The clustered sqld lane did this as concurrent writers
+went up (<a href="https://github.com/ephpm/ephpm/issues/217">issue #217</a>):</p>
+<p><img src="/img/2026/08/clustered-sqlite-sqld-sidecar-write-cliff.svg" alt="clustered sqld write throughput by concurrency"></p>
+<table>
+  <thead>
+      <tr>
+          <th>writers</th>
+          <th>RPS</th>
+          <th>p50</th>
+          <th>p99</th>
+          <th>HTTP 500s</th>
+      </tr>
+  </thead>
+  <tbody>
+      <tr>
+          <td>1</td>
+          <td>458</td>
+          <td>2.12 ms</td>
+          <td>2.99 ms</td>
+          <td>0</td>
+      </tr>
+      <tr>
+          <td>2</td>
+          <td>635</td>
+          <td>3.04 ms</td>
+          <td>4.63 ms</td>
+          <td>0</td>
+      </tr>
+      <tr>
+          <td>4</td>
+          <td><strong>744</strong> (peak)</td>
+          <td>4.99 ms</td>
+          <td>12.96 ms</td>
+          <td>2</td>
+      </tr>
+      <tr>
+          <td>8</td>
+          <td>453</td>
+          <td>9.6 ms</td>
+          <td>29.8 ms</td>
+          <td>8</td>
+      </tr>
+      <tr>
+          <td>16</td>
+          <td><strong>37</strong></td>
+          <td>20.4 ms</td>
+          <td><strong>5.04 s</strong></td>
+          <td>0</td>
+      </tr>
+  </tbody>
+</table>
+<p>Peak at four writers, half that at eight, and at sixteen it fell over. In the release-build run, the c=16 cell completed
+<em>zero</em> requests in both 20 second reps. When there was an error, it looked like this:</p>
+<pre tabindex="0"><code>SQLSTATE[HY000]: General error: 1205 SQLite error: [SQLITE_BUSY] database is locked
+</code></pre><p>That is SQLite&rsquo;s single write lock, with an HTTP round trip from litewire to sqld for every statement, and a busy
+timeout that runs out. Mostly, though, there were no errors. Look at the 500 column at c=16: zero. The requests hung. The
+primary logged nothing, with no busy line and no timeout. A health check watching for 5xx would have called that node
+healthy while it served nobody.</p>
+<p>Every other lane got faster with more writers. Single-node rusqlite went 648 to 1130 RPS from c=1 to c=16, and the
+clustered Turso lane went 558 to 876. sqld was the only one that went off a cliff.</p>
+<h3 id="the-band-aid-that-proved-the-point">The band-aid that proved the point</h3>
+<p>For the 0.6.x line I added write admission control (<a href="https://github.com/ephpm/ephpm/pull/222">#222</a>): a semaphore in
+front of the Hrana backend, <code>[db.sqlite.sqld] write_permits</code>. Reads never take a permit. With the knob unset, c=8 and c=16
+completed nothing. With <code>write_permits = 1</code>:</p>
+<table>
+  <thead>
+      <tr>
+          <th><code>write_permits</code></th>
+          <th>c=1</th>
+          <th>c=4</th>
+          <th>c=8</th>
+          <th>c=16</th>
+      </tr>
+  </thead>
+  <tbody>
+      <tr>
+          <td>0 (default)</td>
+          <td>442-455</td>
+          <td>118-552</td>
+          <td>0 completed</td>
+          <td>0 completed</td>
+      </tr>
+      <tr>
+          <td>1</td>
+          <td>415-445</td>
+          <td>561-595</td>
+          <td>527-593</td>
+          <td>551-598</td>
+      </tr>
+      <tr>
+          <td>8</td>
+          <td>444-451</td>
+          <td>232-266</td>
+          <td>0 completed</td>
+          <td>0 completed</td>
+      </tr>
+  </tbody>
+</table>
+<p>(Ranges are across two reps and two separate cluster bring-ups, from the PR.) One permit, which means one write at a
+time, fixed it. Eight permits sits above the cliff and reproduces it exactly. The best fix I could ship for clustered
+writes was to stop doing them concurrently. That is a useful knob and a terrible architecture.</p>
+<h3 id="where-that-left-things">Where that left things</h3>
+<p>Count the moving parts in the diagram above. Gossip on UDP 7946. The KV data plane on TCP 7947. sqld gRPC between nodes.
+Hrana HTTP between litewire and sqld on every node. A child process per node with its own lifecycle, extracted from bytes
+inside the main binary. Two engines depending on whether the config said <code>[cluster]</code>. No Windows. And concurrent writes
+needed a semaphore set to 1.</p>
+<p>A sidecar means another process, another protocol hop, and another failure domain, and WAL plus a busy timeout doesn&rsquo;t
+hold up under concurrent writers. The same benchmark that drew the cliff above had a fourth lane in it, Turso with
+in-process change data capture, sustaining 876 RPS at c=16 on the same fixture. That&rsquo;s
+<a href="/blog/2026/08/clustered-sqlite-adding-turso/">Part 2</a>.</p>
+<h3 id="links">Links</h3>
+<ul>
+<li>ePHPm: <a href="https://github.com/ephpm/ephpm">github.com/ephpm/ephpm</a>, litewire: <a href="https://github.com/ephpm/litewire">github.com/ephpm/litewire</a></li>
+<li>sqld / libsql-server: <a href="https://github.com/tursodatabase/libsql">github.com/tursodatabase/libsql</a></li>
+<li><a href="https://github.com/ephpm/ephpm/pull/189">#189 fix(sqld): omit &ndash;grpc-listen-addr for replicas</a></li>
+<li><a href="https://github.com/ephpm/ephpm/pull/201">#201 Harden cluster/sqld control plane</a></li>
+<li><a href="https://github.com/ephpm/ephpm/pull/216">#216 Turso vs SQLite performance, measured</a></li>
+<li><a href="https://github.com/ephpm/ephpm/issues/217">#217 Clustered SQLite (sqld) collapses under concurrent writes</a></li>
+<li><a href="https://github.com/ephpm/ephpm/pull/222">#222 sqld write admission control</a></li>
+<li>Two-node fixture: <a href="https://github.com/ephpm/turso-cluster-e2e">github.com/ephpm/turso-cluster-e2e</a></li>
+</ul>
+
+      </div>
+      <footer>
+        <div class="stats">
+  
+    <ul class="categories">
+      
+        
+          <li><a class="article-terms-link" href="/categories/ephpm/">ephpm</a></li>
+        
+          <li><a class="article-terms-link" href="/categories/databases/">databases</a></li>
+        
+      
+    </ul>
+  
+  
+    <ul class="tags">
+      
+        
+          <li><a class="article-terms-link" href="/tags/ephpm/">ephpm</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/sqlite/">sqlite</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/sqld/">sqld</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/libsql/">libsql</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/rust/">rust</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/clustering/">clustering</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/php/">php</a></li>
+        
+      
+    </ul>
+  
+</div>
+
+      </footer>
+    </div>
+    
+      
+  
+  <div class='post giscus-wrap'>
+    <script src='https://giscus.app/client.js'
+            data-repo='luthermonson/luth.io'
+            data-repo-id='R_kgDOGvFBXQ'
+            data-category='Announcements'
+            data-category-id='DIC_kwDOGvFBXc4DH_gv'
+            data-mapping='pathname'
+            data-strict='1'
+            data-reactions-enabled='1'
+            data-emit-metadata='0'
+            data-input-position='top'
+            data-theme='light'
+            data-lang='en'
+            data-loading='lazy'
+            crossorigin='anonymous'
+            async>
+    </script>
+  </div>
+  
+
+
+
+    
+  </article>
+  
+    <nav class="post-nav">
+      
+        <a href="/blog/2026/08/ntfs-atomic-file-replacement-not-rename-fsync/" class="post-nav-link older">
+          <span class="post-nav-label">&larr; Older</span>
+          <span class="post-nav-title">Atomic File Replacement on NTFS Is Not rename &#43; fsync</span>
+        </a>
+      
+      
+        <a href="/blog/2026/08/db-connection-pooling-smart-reset/" class="post-nav-link newer">
+          <span class="post-nav-label">Newer &rarr;</span>
+          <span class="post-nav-title">Database Connection Pooling with Smart Reset</span>
+        </a>
+      
+    </nav>
+  
+
+      </main>
+      <section id="site-sidebar">
+  
+    <section id="recent-posts">
+      <header>
+        <h1>Recent Posts</h1>
+      </header>
+      
+      <article class="mini-post">
+          <a href="/blog/2026/10/ephpm-worker-mode-performance/" class="image" style="--bg-image: url('/img/2026/10/ephpm-worker-mode-performance-cover.svg');">
+    <img class="" src="/img/2026/10/ephpm-worker-mode-performance-cover.svg" alt="Diagram: before, hyper/tokio hands each request to one shared bounded channel whose waiter list all 20 PHP threads contend on; after, a dispatcher hands the job straight into the mailbox of the most recently idle PHP thread and only queues it in a FIFO overflow queue when every thread is busy">
+  </a>
+        <header>
+          <h2><a href="/blog/2026/10/ephpm-worker-mode-performance/">Fourth Place in Worker Mode, and Why It Wasn&#39;t PHP</a></h2>
+          <time class="published" datetime="2026-10-16 08:10:00 -0700 PDT">October 16, 2026</time>
+        </header>
+      </article>
+      
+      <article class="mini-post">
+          <a href="/blog/2026/10/ephpm-websockets-how-to/" class="image" style="--bg-image: url('/img/2026/10/ephpm-websockets-how-to-cover.svg');">
+    <img class="" src="/img/2026/10/ephpm-websockets-how-to-cover.svg" alt="Diagram: browsers hold sockets to ePHPm&#39;s Rust session tasks and registry; each connect, message and disconnect runs websocket.php once on the PHP thread pool, and ordinary HTTP requests push through ephpm_ws_broadcast">
+  </a>
+        <header>
+          <h2><a href="/blog/2026/10/ephpm-websockets-how-to/">WebSockets in ePHPm, From Zero to a Working Chat</a></h2>
+          <time class="published" datetime="2026-10-11 17:30:00 -0700 PDT">October 11, 2026</time>
+        </header>
+      </article>
+      
+      <article class="mini-post">
+          <a href="/blog/2026/10/webhooks-out-of-order-scheduler/" class="image" style="--bg-image: url('/img/2026/10/webhooks-out-of-order-scheduler-timeline.svg');">
+    <img class="" src="/img/2026/10/webhooks-out-of-order-scheduler-timeline.svg" alt="Timeline of three same-label jobs where a runner executing a build is destroyed 2.3 seconds before its in_progress webhook arrives">
+  </a>
+        <header>
+          <h2><a href="/blog/2026/10/webhooks-out-of-order-scheduler/">Webhooks Arrive Out of Order: How My Scheduler Killed Live Builds</a></h2>
+          <time class="published" datetime="2026-10-07 21:10:00 -0700 PDT">October 7, 2026</time>
+        </header>
+      </article>
+      
+      <article class="mini-post">
+          <a href="/blog/2026/10/go-proxmox-five-years-to-v0-8/" class="image" style="--bg-image: url('/img/2026/10/go-proxmox-five-years-to-v0-8-apidiff.svg');">
+    <img class="" src="/img/2026/10/go-proxmox-five-years-to-v0-8-apidiff.svg" alt="Horizontal bar chart of apidiff incompatible and compatible changes for every go-proxmox release from v0.1.0 to v0.8.2">
+  </a>
+        <header>
+          <h2><a href="/blog/2026/10/go-proxmox-five-years-to-v0-8/">Breaking Changes Without Breaking Trust: Five Years to go-proxmox v0.8</a></h2>
+          <time class="published" datetime="2026-10-04 19:40:00 -0700 PDT">October 4, 2026</time>
+        </header>
+      </article>
+      
+      <article class="mini-post">
+          <a href="/blog/2026/10/windows-sigterm-sparse-files/" class="image" style="--bg-image: url('/img/2026/10/windows-sigterm-sparse-files-connections.svg');">
+    <img class="" src="/img/2026/10/windows-sigterm-sparse-files-connections.svg" alt="Bar chart: 96 Cloudflare edge connections held by orphaned cloudflared processes versus 4 for the live daemon">
+  </a>
+        <header>
+          <h2><a href="/blog/2026/10/windows-sigterm-sparse-files/">Windows Grab-Bag: SIGTERM That Doesn&#39;t Exist and Sparse Files That Break Docker</a></h2>
+          <time class="published" datetime="2026-10-03 14:30:00 -0700 PDT">October 3, 2026</time>
+        </header>
+      </article>
+      
+      
+        <footer>
+          <a href="/blog" class="button">See More</a>
+        </footer>
+      
+    </section>
+  
+
+  
+    
+
+      <section id="categories">
+        <header>
+          <h1><a href="/categories">Categories</a></h1>
+        </header>
+        <ul>
+          
+          
+          <li>
+              <a href="/categories/ephpm/">ephpm<span class="count">33</span></a>
+          
+          <li>
+              <a href="/categories/go/">go<span class="count">30</span></a>
+          
+          <li>
+              <a href="/categories/php/">php<span class="count">23</span></a>
+          
+          <li>
+              <a href="/categories/rust/">rust<span class="count">15</span></a>
+          
+          <li>
+              <a href="/categories/homelab/">homelab<span class="count">14</span></a>
+          
+          <li>
+              <a href="/categories/windows/">windows<span class="count">14</span></a>
+          
+          <li>
+              <a href="/categories/ci/">ci<span class="count">9</span></a>
+          
+          <li>
+              <a href="/categories/databases/">databases<span class="count">9</span></a>
+          
+          <li>
+              <a href="/categories/security/">security<span class="count">9</span></a>
+          
+          <li>
+              <a href="/categories/containers/">containers<span class="count">7</span></a>
+          
+          <li>
+              <a href="/categories/tools/">tools<span class="count">5</span></a>
+          
+          <li>
+              <a href="/categories/ai-agents/">ai-agents<span class="count">4</span></a>
+          
+          </li>
+        </ul>
+      </section>
+    
+  
+
+  
+    <section id="mini-bio">
+      <header>
+        <h1>About</h1>
+      </header>
+      <p>Luther is a 20+ year software veteran specializing in backend APIs and architecting products. Employed at <a href='https://www.suse.com'>SUSE</a> as the Team Lead for the <a href='https://github.com/rancher/windows/issues'>Containers on Windows Team</a> working on <a href='https://rancher.com/'>Rancher</a> + <a href='https://kubernetes.io/'>Kubernetes</a></p>
+      <footer>
+        <a href="/about" class="button">Learn More</a>
+      </footer>
+    </section>
+  
+</section>
+
+      <footer id="site-footer">
+  
+      <ul class="socnet-icons">
+        
+
+        <li><a href="//github.com/luthermonson" target="_blank" rel="noopener" title="GitHub" class="fab fa-github"></a></li>
+
+
+
+
+
+
+
+
+
+
+
+<li><a href="//www.linkedin.com/in/luthermonson" target="_blank" rel="noopener" title="LinkedIn" class="fab fa-linkedin"></a></li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li><a href="//twitter.com/luthermonson" target="_blank" rel="noopener" title="Twitter" class="fab fa-twitter"></a></li>
+
+
+
+
+
+
+
+
+
+
+
+<li><a href="mailto:luther.monson@gmail.com" target="_blank" title="Email" class="far fa-envelope"></a></li>
+
+      </ul>
+  
+  <p class="copyright">
+    © 2026 Luther Monson
+      <br>
+    Theme: <a href='https://github.com/pacollins/hugo-future-imperfect-slim' target='_blank' rel='noopener'>Hugo Future Imperfect Slim</a><br>A <a href='https://html5up.net/future-imperfect' target='_blank' rel='noopener'>HTML5 UP port</a> | Powered by <a href='https://gohugo.io/' title='0.160.1' target='_blank' rel='noopener'>Hugo</a>
+  </p>
+</footer>
+<a id="back-to-top" href="#" class="fas fa-arrow-up fa-2x"></a>
+
+      <script src="/js/bundle.min.241b62ebc4792fe8c7a75879e5f710894f226f2b73342e9916b3a3b0526030cc.js" integrity="sha256-JBti68R5L&#43;jHp1h55fcQiU8ibytzNC6ZFrOjsFJgMMw="></script>
+    <script src="/js/add-on.js"></script>
+    </div>
+  </body>
+</html>

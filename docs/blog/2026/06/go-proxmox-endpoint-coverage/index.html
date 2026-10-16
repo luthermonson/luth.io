@@ -1,0 +1,688 @@
+<!doctype html>
+<html lang="en">
+  <head>
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-MSTSKGFWTX"></script>
+<script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+
+    gtag('config', 'G-MSTSKGFWTX');
+</script><meta charset="utf-8">
+<title>From 52% to 100%: Measuring a Go Client Against the Proxmox API Schema - Luther Monson</title>
+<meta name="description" content="A stdlib-only mage target that pulls Proxmox&#39;s own API schema, regex-scans go-proxmox for HTTP call sites, and reports coverage. The tool was wrong more often than the code was.">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<meta name="twitter:card" content="summary_large_image"><meta name="twitter:site" content="@luthermonson">
+
+<meta property="og:site_name" content="Luther Monson">
+<meta property="og:title" content="From 52% to 100%: Measuring a Go Client Against the Proxmox API Schema">
+<meta property="og:description" content="A stdlib-only mage target that pulls Proxmox&#39;s own API schema, regex-scans go-proxmox for HTTP call sites, and reports coverage. The tool was wrong more often than the code was.">
+<meta property="og:type" content="article">
+<meta property="og:url" content="https://luth.io/blog/2026/06/go-proxmox-endpoint-coverage/">
+    <meta property="og:image" content="https://luth.io/img/2026/06/go-proxmox-endpoint-coverage-history.svg">
+    <meta property="og:image:alt" content="Line chart of go-proxmox endpoint coverage from 4% in 2021 to 100% in May 2026">
+
+
+  <link rel="manifest" href="/favicon/site.webmanifest?v=1">
+  <link rel="apple-touch-icon" sizes="180x180" href="/favicon/apple-touch-icon.png?v=1">
+  <link rel="icon" type="image/png" sizes="32x32" href="/favicon/favicon-32x32.png?v=1">
+  <link rel="icon" type="image/png" sizes="16x16" href="/favicon/favicon-16x16.png?v=1">
+  
+    <link rel="mask-icon" href="/favicon/safari-pinned-tab.svg?v=1" color="#ffffff">
+    <link rel="shortcut icon" href="/favicon/favicon.ico?v=1">
+    <meta name="msapplication-config" content="/favicon/browserconfig.xml?v=1">
+  
+  <meta name="msapplication-TileColor" content="#ffffff">
+  <meta name="theme-color" content="#ffffff">
+
+
+  <meta name="generator" content="Hugo 0.160.1">
+  <link rel="alternate" type="application/rss+xml" href="https://luth.io/index.xml" title="Luther Monson">
+  <link rel="stylesheet" href="/css/bundle.min.e1ffed86714fbb7eff75eab221c0c61b8260be0c7d1c08db0fcb7a2bdb6af7c9.css" integrity="sha256-4f/thnFPu37/deqyIcDGG4Jgvgx9HAjbD8t6K9tq98k="><link rel="stylesheet" href="/css/add-on.css">
+        <link rel="stylesheet" href="/css/code.css">
+        <link rel="stylesheet" href="/css/mobile.css">
+</head>
+
+  <body>
+    
+
+<header id="site-header">
+  <nav id="site-nav">
+    <h1 class="nav-title">
+      <a href="/" class="nav">
+        <img class="nav-avatar" src="/img/luther-monson-headshot.jpg" alt="" width="32" height="32">
+        
+          Blog
+        
+      </a>
+    </h1>
+    <menu id="site-nav-menu" class="flyout-menu menu">
+      
+        
+          
+          <a href="/" class="nav link"><i class='fa fa-home'></i> Home</a>
+        
+      
+        
+          
+          <a href="/about" class="nav link"><i class='far fa-id-card'></i> About</a>
+        
+      
+        
+          
+          <a href="/blog" class="nav link"><i class='far fa-newspaper'></i> Blog</a>
+        
+      
+        
+          
+          <a href="/archive" class="nav link"><i class='far fa-calendar-alt'></i> Archive</a>
+        
+      
+        
+          
+          <a href="/categories" class="nav link"><i class='fas fa-sitemap'></i> Categories</a>
+        
+      
+      <a href="#share-menu" class="nav link share-toggle"><i class="fas fa-share-alt">&nbsp;</i>Share</a>
+      <a href="#search-input" class="nav link search-toggle"><i class="fas fa-search">&nbsp;</i>Search</a>
+    </menu>
+    <a href="#search-input" class="nav search-toggle"><i class="fas fa-search fa-2x">&nbsp;</i></a>
+    <a href="#share-menu" class="nav share-toggle"><i class="fas fa-share-alt fa-2x">&nbsp;</i></a>
+    
+    <a href="#site-nav" class="nav nav-toggle"><i class="fas fa-bars fa-2x"></i></a>
+  </nav>
+  <menu id="search" class="menu"><input id="search-input" class="search-input menu"></input><div id="search-results" class="search-results menu"></div></menu>
+  
+  
+    <menu id="share-menu" class="flyout-menu menu">
+      <h1>Share Post</h1>
+      
+
+
+
+
+  
+    
+    <a href="//twitter.com/share?text=From%2052%25%20to%20100%25%3a%20Measuring%20a%20Go%20Client%20Against%20the%20Proxmox%20API%20Schema&amp;url=https%3a%2f%2fluth.io%2fblog%2f2026%2f06%2fgo-proxmox-endpoint-coverage%2f" target="_blank" rel="noopener" class="nav share-btn twitter">
+        <p>Twitter</p>
+      </a>
+  
+
+  
+      <a href="//www.facebook.com/sharer/sharer.php?u=https%3a%2f%2fluth.io%2fblog%2f2026%2f06%2fgo-proxmox-endpoint-coverage%2f" target="_blank" rel="noopener" class="nav share-btn facebook">
+        <p>Facebook</p>
+        </a>
+  
+
+  
+    <a href="//www.reddit.com/submit?url=https%3a%2f%2fluth.io%2fblog%2f2026%2f06%2fgo-proxmox-endpoint-coverage%2f&amp;title=From%2052%25%20to%20100%25%3a%20Measuring%20a%20Go%20Client%20Against%20the%20Proxmox%20API%20Schema" target="_blank" rel="noopener" class="nav share-btn reddit">
+          <p>Reddit</p>
+        </a>
+  
+
+  
+        <a href="//www.linkedin.com/shareArticle?url=https%3a%2f%2fluth.io%2fblog%2f2026%2f06%2fgo-proxmox-endpoint-coverage%2f&amp;title=From%2052%25%20to%20100%25%3a%20Measuring%20a%20Go%20Client%20Against%20the%20Proxmox%20API%20Schema" target="_blank" rel="noopener" class="nav share-btn linkedin">
+            <p>LinkedIn</p>
+          </a>
+  
+
+  
+        <a href="//www.pinterest.com/pin/create/button/?url=https%3a%2f%2fluth.io%2fblog%2f2026%2f06%2fgo-proxmox-endpoint-coverage%2f&amp;description=From%2052%25%20to%20100%25%3a%20Measuring%20a%20Go%20Client%20Against%20the%20Proxmox%20API%20Schema" target="_blank" rel="noopener" class="nav share-btn pinterest">
+          <p>Pinterest</p>
+        </a>
+  
+
+  
+        <a href="mailto:?subject=Check%20out%20this%20post%20by Luther%20Monson&amp;body=https%3a%2f%2fluth.io%2fblog%2f2026%2f06%2fgo-proxmox-endpoint-coverage%2f" target="_blank" class="nav share-btn email" data-proofer-ignore>
+          <p>Email</p>
+        </a>
+  
+
+
+    </menu>
+  
+</header>
+
+    <div id="wrapper">
+      <section id="site-intro" class="hidden-single-column">
+  <a href="/"><img src="/img/luther-monson-headshot.jpg" class="circle" width="100" alt="Luther Monson, Staff Software Engineer at SUSE" /></a>
+  <header>
+    <h1>Luther Monson</h1>
+  </header>
+  <main>
+    <p>Go by way of PHP &middot; Containers &middot; VMs &middot; Windows &middot; Kubernetes</p>
+  </main>
+  
+    <footer>
+      <ul class="socnet-icons">
+        
+
+        <li><a href="//github.com/luthermonson" target="_blank" rel="noopener" title="GitHub" class="fab fa-github"></a></li>
+
+
+
+
+
+
+
+
+
+
+
+<li><a href="//www.linkedin.com/in/luthermonson" target="_blank" rel="noopener" title="LinkedIn" class="fab fa-linkedin"></a></li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li><a href="//twitter.com/luthermonson" target="_blank" rel="noopener" title="Twitter" class="fab fa-twitter"></a></li>
+
+
+
+
+
+
+
+
+
+
+
+<li><a href="mailto:luther.monson@gmail.com" target="_blank" title="Email" class="far fa-envelope"></a></li>
+
+      </ul>
+    </footer>
+  
+</section>
+
+      <main id="site-main">
+        
+  <article>
+    <div class="post">
+      <header>
+  <div class="title">
+    
+      <h2><a href="/blog/2026/06/go-proxmox-endpoint-coverage/">From 52% to 100%: Measuring a Go Client Against the Proxmox API Schema</a></h2>
+    
+    
+      <p>A stdlib-only mage target that pulls Proxmox&#39;s own API schema, regex-scans go-proxmox for HTTP call sites, and reports coverage. The tool was wrong more often than the code was.</p>
+    
+  </div>
+  <div class="meta">
+    <time datetime="2026-06-07 21:36:00 -0700 PDT">June 7, 2026</time>
+    
+    <p>8-Minute Read</p>
+  </div>
+</header>
+
+      <div id="socnet-share">
+        
+
+
+
+
+  
+    
+    <a href="//twitter.com/share?text=From%2052%25%20to%20100%25%3a%20Measuring%20a%20Go%20Client%20Against%20the%20Proxmox%20API%20Schema&amp;url=https%3a%2f%2fluth.io%2fblog%2f2026%2f06%2fgo-proxmox-endpoint-coverage%2f" target="_blank" rel="noopener" class="nav share-btn twitter">
+        <p>Twitter</p>
+      </a>
+  
+
+  
+      <a href="//www.facebook.com/sharer/sharer.php?u=https%3a%2f%2fluth.io%2fblog%2f2026%2f06%2fgo-proxmox-endpoint-coverage%2f" target="_blank" rel="noopener" class="nav share-btn facebook">
+        <p>Facebook</p>
+        </a>
+  
+
+  
+    <a href="//www.reddit.com/submit?url=https%3a%2f%2fluth.io%2fblog%2f2026%2f06%2fgo-proxmox-endpoint-coverage%2f&amp;title=From%2052%25%20to%20100%25%3a%20Measuring%20a%20Go%20Client%20Against%20the%20Proxmox%20API%20Schema" target="_blank" rel="noopener" class="nav share-btn reddit">
+          <p>Reddit</p>
+        </a>
+  
+
+  
+        <a href="//www.linkedin.com/shareArticle?url=https%3a%2f%2fluth.io%2fblog%2f2026%2f06%2fgo-proxmox-endpoint-coverage%2f&amp;title=From%2052%25%20to%20100%25%3a%20Measuring%20a%20Go%20Client%20Against%20the%20Proxmox%20API%20Schema" target="_blank" rel="noopener" class="nav share-btn linkedin">
+            <p>LinkedIn</p>
+          </a>
+  
+
+  
+        <a href="//www.pinterest.com/pin/create/button/?url=https%3a%2f%2fluth.io%2fblog%2f2026%2f06%2fgo-proxmox-endpoint-coverage%2f&amp;description=From%2052%25%20to%20100%25%3a%20Measuring%20a%20Go%20Client%20Against%20the%20Proxmox%20API%20Schema" target="_blank" rel="noopener" class="nav share-btn pinterest">
+          <p>Pinterest</p>
+        </a>
+  
+
+  
+        <a href="mailto:?subject=Check%20out%20this%20post%20by Luther%20Monson&amp;body=https%3a%2f%2fluth.io%2fblog%2f2026%2f06%2fgo-proxmox-endpoint-coverage%2f" target="_blank" class="nav share-btn email" data-proofer-ignore>
+          <p>Email</p>
+        </a>
+  
+
+
+      </div>
+      <div class="content">
+        
+        <p>For five years the honest answer to &ldquo;how much of the Proxmox API does go-proxmox cover?&rdquo; was &ldquo;a lot of it? the parts
+people asked for?&rdquo;. Issues would come in for endpoints that didn&rsquo;t exist in the client and I&rsquo;d have no idea how many more
+were missing. At the end of May I finally built the thing that answers the question, and three days after the first run the
+answer was 100%. The more interesting part is how many times the measuring stick was wrong on the way there.</p>
+<h3 id="proxmox-publishes-its-schema-sort-of">Proxmox publishes its schema, sort of</h3>
+<p>The <a href="https://pve.proxmox.com/pve-docs/api-viewer/index.html">API viewer</a> is an ExtJS app, and the whole API definition
+lives in one file next to it: <code>apidoc.js</code>. It&rsquo;s a JavaScript file, not JSON, but it starts with
+<code>const apiSchema = [</code> and the array is valid JSON. Each node in the tree has a path segment (<code>text</code>), an <code>info</code> map keyed
+by HTTP method, and <code>children</code>. Flatten that and you have every <code>(method, path)</code> pair Proxmox serves.</p>
+<p>The first gotcha is getting the array out. The obvious &ldquo;first <code>[</code> to last <code>]</code>&rdquo; breaks, because below the schema the file
+has the viewer&rsquo;s own code, including template literals like <code>${m2c[method]}</code>, and that&rsquo;s the last <code>]</code> in the file. The
+array is pretty-printed with the closing bracket on its own line followed by the semicolon, so that&rsquo;s the anchor:</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-go" data-lang="go"><span class="line"><span class="cl"><span class="c1">// extractSchemaJSON peels the `const apiSchema = [ ... ];` array out of the</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="c1">// upstream JS file. We anchor on `\n]\n;` rather than the last `]` because</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="c1">// the JS handler code below the schema contains template literals like</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="c1">// `${m2c[method]}` whose `]` would be matched first.</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="kd">func</span><span class="w"> </span><span class="nf">extractSchemaJSON</span><span class="p">(</span><span class="nx">raw</span><span class="w"> </span><span class="p">[]</span><span class="kt">byte</span><span class="p">)</span><span class="w"> </span><span class="p">([]</span><span class="kt">byte</span><span class="p">,</span><span class="w"> </span><span class="kt">error</span><span class="p">)</span><span class="w"> </span><span class="p">{</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">	</span><span class="nx">start</span><span class="w"> </span><span class="o">:=</span><span class="w"> </span><span class="nx">bytes</span><span class="p">.</span><span class="nf">IndexByte</span><span class="p">(</span><span class="nx">raw</span><span class="p">,</span><span class="w"> </span><span class="sc">&#39;[&#39;</span><span class="p">)</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">	</span><span class="nx">endIdx</span><span class="w"> </span><span class="o">:=</span><span class="w"> </span><span class="nx">bytes</span><span class="p">.</span><span class="nf">Index</span><span class="p">(</span><span class="nx">raw</span><span class="p">,</span><span class="w"> </span><span class="p">[]</span><span class="nb">byte</span><span class="p">(</span><span class="s">&#34;\n]\n;&#34;</span><span class="p">))</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">	</span><span class="k">if</span><span class="w"> </span><span class="nx">start</span><span class="w"> </span><span class="p">&lt;</span><span class="w"> </span><span class="mi">0</span><span class="w"> </span><span class="o">||</span><span class="w"> </span><span class="nx">endIdx</span><span class="w"> </span><span class="o">&lt;=</span><span class="w"> </span><span class="nx">start</span><span class="w"> </span><span class="p">{</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">		</span><span class="k">return</span><span class="w"> </span><span class="kc">nil</span><span class="p">,</span><span class="w"> </span><span class="nx">fmt</span><span class="p">.</span><span class="nf">Errorf</span><span class="p">(</span><span class="s">&#34;could not locate JSON array boundaries in apidoc.js&#34;</span><span class="p">)</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">	</span><span class="p">}</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">	</span><span class="k">return</span><span class="w"> </span><span class="nx">raw</span><span class="p">[</span><span class="nx">start</span><span class="w"> </span><span class="p">:</span><span class="w"> </span><span class="nx">endIdx</span><span class="o">+</span><span class="mi">2</span><span class="p">],</span><span class="w"> </span><span class="kc">nil</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="p">}</span><span class="w">
+</span></span></span></code></pre></div><p>On PVE 9.2.1 that&rsquo;s 675 endpoints across 444 unique paths: 340 <code>GET</code>, 173 <code>POST</code>, 83 <code>PUT</code> and 79 <code>DELETE</code>.</p>
+<h3 id="scanning-go-with-regular-expressions">Scanning Go with regular expressions</h3>
+<p>The other side is &ldquo;which of those does the library call&rdquo;. Every HTTP call in go-proxmox goes through
+<code>client.Get/Post/Put/Delete(ctx, path, ...)</code> and the path is nearly always a <code>fmt.Sprintf</code> with the Proxmox path as the
+format string. So it&rsquo;s a regex per line, then normalize both sides so <code>{node}</code>, <code>%s</code> and <code>%d</code> all become <code>{}</code>:</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-go" data-lang="go"><span class="line"><span class="cl"><span class="nx">callRE</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="nx">regexp</span><span class="p">.</span><span class="nf">MustCompile</span><span class="p">(</span><span class="s">`\b\w+\.(Get|Post|Put|Delete)(?:WithParams)?\s*\(\s*ctx\s*,\s*(.*?)$`</span><span class="p">)</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="kd">func</span><span class="w"> </span><span class="nf">normalizePath</span><span class="p">(</span><span class="nx">p</span><span class="w"> </span><span class="kt">string</span><span class="p">)</span><span class="w"> </span><span class="kt">string</span><span class="w"> </span><span class="p">{</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">	</span><span class="k">if</span><span class="w"> </span><span class="nx">i</span><span class="w"> </span><span class="o">:=</span><span class="w"> </span><span class="nx">strings</span><span class="p">.</span><span class="nf">IndexByte</span><span class="p">(</span><span class="nx">p</span><span class="p">,</span><span class="w"> </span><span class="sc">&#39;?&#39;</span><span class="p">);</span><span class="w"> </span><span class="nx">i</span><span class="w"> </span><span class="o">&gt;=</span><span class="w"> </span><span class="mi">0</span><span class="w"> </span><span class="p">{</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">		</span><span class="nx">p</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="nx">p</span><span class="p">[:</span><span class="nx">i</span><span class="p">]</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">	</span><span class="p">}</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">	</span><span class="nx">p</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="nx">braceRE</span><span class="p">.</span><span class="nf">ReplaceAllString</span><span class="p">(</span><span class="nx">p</span><span class="p">,</span><span class="w"> </span><span class="s">&#34;{}&#34;</span><span class="p">)</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">	</span><span class="nx">p</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="nx">fmtVerbRE</span><span class="p">.</span><span class="nf">ReplaceAllString</span><span class="p">(</span><span class="nx">p</span><span class="p">,</span><span class="w"> </span><span class="s">&#34;{}&#34;</span><span class="p">)</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">	</span><span class="nx">p</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="nx">volidRE</span><span class="p">.</span><span class="nf">ReplaceAllString</span><span class="p">(</span><span class="nx">p</span><span class="p">,</span><span class="w"> </span><span class="s">&#34;{}&#34;</span><span class="p">)</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">	</span><span class="k">if</span><span class="w"> </span><span class="nb">len</span><span class="p">(</span><span class="nx">p</span><span class="p">)</span><span class="w"> </span><span class="p">&gt;</span><span class="w"> </span><span class="mi">1</span><span class="w"> </span><span class="p">{</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">		</span><span class="nx">p</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="nx">strings</span><span class="p">.</span><span class="nf">TrimRight</span><span class="p">(</span><span class="nx">p</span><span class="p">,</span><span class="w"> </span><span class="s">&#34;/&#34;</span><span class="p">)</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">	</span><span class="p">}</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">	</span><span class="k">return</span><span class="w"> </span><span class="nx">p</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="p">}</span><span class="w">
+</span></span></span></code></pre></div><p>The <code>volidRE</code> is there because storage volumes are a single <code>{volume}</code> segment in the schema but the Go code builds them
+as <code>%s:%s/%s</code>. I considered walking the AST instead, and didn&rsquo;t bother: the regex resolved 98.4% of call sites on the first
+run and the rest were real, just in unusual shapes. The whole thing is <code>mage/endpoints/endpoints.go</code>, standard library
+only, with three targets: <code>endpoints:sync</code> downloads and flattens the schema into <code>.cache/pve-api/</code>, <code>endpoints:extract</code>
+re-parses offline, and <code>endpoints:coverage</code> writes the uncovered list and a per-area table.</p>
+<p>The first run (<a href="https://github.com/luthermonson/go-proxmox/pull/298">#298</a>) said <strong>353 of 675, 52.3%</strong>, with the
+<code>cluster</code> area at 94 of 259 and Ceph, node SDN and node scan at zero.</p>
+<h3 id="the-tool-was-wrong-before-the-code-was">The tool was wrong before the code was</h3>
+<p>Then I started using it to decide what to write next, and kept finding that &ldquo;missing&rdquo; meant &ldquo;the scanner can&rsquo;t see it&rdquo;.</p>
+<ul>
+<li><strong><code>url.URL{Path: ...}.String()</code></strong> (<a href="https://github.com/luthermonson/go-proxmox/pull/300">#300</a>). Calls that need query
+parameters build a <code>url.URL</code>, set <code>RawQuery</code>, and pass <code>u.String()</code>. The regex matched the call and then found no
+string literal. Tracking <code>&lt;var&gt; := url.URL{Path: ...}</code> per file uncovered nine endpoints that were already wrapped,
+including <code>RRDData</code>, which was next on the list to &ldquo;add&rdquo;. Fixing the tool first saved writing a duplicate.</li>
+<li><strong>Websocket helpers</strong> (in <a href="https://github.com/luthermonson/go-proxmox/pull/306">#306</a>). <code>VNCWebSocket</code> and
+<code>TermWebSocket</code> don&rsquo;t take a context, so <code>ctx,</code> never matched.</li>
+<li><strong><code>*WithParams</code> variants</strong> (<a href="https://github.com/luthermonson/go-proxmox/pull/313">#313</a>). <code>Container.Delete</code> uses
+<code>DeleteWithParams</code>, so <code>DELETE /lxc/{vmid}</code> showed as missing for a method that has existed for years.</li>
+<li><strong>Directory-index helpers and uploads</strong> (<a href="https://github.com/luthermonson/go-proxmox/pull/318">#318</a>,
+<a href="https://github.com/luthermonson/go-proxmox/pull/321">#321</a>). Shared <code>&lt;area&gt;Diridx</code> helpers and
+<code>client.UploadReader(</code> with the path on the <em>next</em> line both needed their own rules. The upload one needs a little
+state machine: when the regex matches with nothing after the <code>(</code>, take the path from the next non-blank, non-comment
+line, and give up after one line so a stray match can&rsquo;t bind to something far below it.</li>
+</ul>
+<p>Every one of those made the number go up without a line of library code changing. If you build a coverage tool, the
+first few days are spent finding out what it can&rsquo;t see, and the only way to find that out is to distrust every &ldquo;missing&rdquo;
+until you&rsquo;ve looked at it.</p>
+<h3 id="endpoints-we-skip-on-purpose">Endpoints we skip on purpose</h3>
+<p>A few endpoints don&rsquo;t fit <code>Get/Post/Put/Delete</code> at all, and I didn&rsquo;t want the number stuck at 99.6% forever or people
+writing fake wrappers to make it move. So there is an explicit exclusion map with a reason per entry:</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-go" data-lang="go"><span class="line"><span class="cl"><span class="kd">var</span><span class="w"> </span><span class="nx">intentionallyExcluded</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="kd">map</span><span class="p">[</span><span class="kt">string</span><span class="p">]</span><span class="kt">string</span><span class="p">{</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">	</span><span class="s">&#34;get /nodes/{}/qemu/{}/mtunnelwebsocket&#34;</span><span class="p">:</span><span class="w">         </span><span class="s">&#34;URL-builder helper (MigrationTunnelWebSocketPath); caller drives the websocket dialer&#34;</span><span class="p">,</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">	</span><span class="s">&#34;get /nodes/{}/lxc/{}/mtunnelwebsocket&#34;</span><span class="p">:</span><span class="w">          </span><span class="s">&#34;URL-builder helper (MigrationTunnelWebSocketPath); caller drives the websocket dialer&#34;</span><span class="p">,</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">	</span><span class="s">&#34;get /nodes/{}/storage/{}/file-restore/download&#34;</span><span class="p">:</span><span class="w"> </span><span class="s">&#34;streaming binary download; needs custom io.Reader plumbing, not the JSON Get helper&#34;</span><span class="p">,</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="p">}</span><span class="w">
+</span></span></span></code></pre></div><p>Excluded endpoints come out of the denominator, so the headline is 672, not 675. The important detail is that every
+coverage run checks the map against the live schema and fails if an entry no longer exists upstream. An exclusion list
+that silently outlives the endpoint it excludes is how you end up hiding a regression.</p>
+<p>Directory-index endpoints (the ones that return <code>[{&quot;subdir&quot;: &quot;x&quot;}, ...]</code>) looked like obvious exclusion candidates and
+are deliberately <em>not</em> on the list. They&rsquo;re real, callable endpoints that any token can hit, they&rsquo;re cheap to wrap, and
+keeping them in the denominator means the scanner&rsquo;s <code>Diridx</code> rule gets exercised, so they got real wrappers.</p>
+<h3 id="may-by-commit">May, by commit</h3>
+<p>With the tool trustworthy the rest was work: Ceph went from 0 of 41 to 41 of 41 in one PR, qemu from 81% to all of it,
+and <a href="https://github.com/luthermonson/go-proxmox/pull/322">#322</a> closed the last 38 cluster endpoints (config, custom CPU
+models, bulk actions, Ceph flags, HA arm/disarm and friends), the final step in taking <code>cluster</code> from 36% at the start of the week to 259 of 259.</p>
+<p>I re-ran the final version of the scanner over every commit that landed on <code>main</code> in May to get the curve:</p>
+<p><img src="/img/2026/06/go-proxmox-endpoint-coverage-may-2026.svg" alt="Coverage per merged commit in May 2026"></p>
+<p>The flat stretch from the 16th to the 24th is a stack of open PRs waiting on review, the jump late on the 24th is them landing,
+and the vertical bits on the 26th and 27th are the Ceph, SDN, node and cluster sweeps. Today, on v0.7.1:</p>
+<pre tabindex="0"><code>go-proxmox endpoint coverage
+  schema endpoints   : 675
+  call sites scanned : 698 (matched=698, no-match=0 → match rate 100.0%)
+  unique covered     : 672 / 672  →  100.0%  (excluded by design: 3)
+
+area                       covered    total excluded  missing      pct
+cluster                        259      259        0        0   100.0%
+nodes/qemu                      96       97        1        0   100.0%
+nodes/lxc                       61       62        1        0   100.0%
+access                          45       45        0        0   100.0%
+nodes/ceph                      41       41        0        0   100.0%
+nodes/storage                   19       20        1        0   100.0%
+nodes/disks                     18       18        0        0   100.0%
+...
+</code></pre><h3 id="five-years-of-it">Five years of it</h3>
+<p>Since the scanner only needs a source tree, I pointed it at every release tag and a few early commits, all against the
+same 9.2.1 schema:</p>
+<p><img src="/img/2026/06/go-proxmox-endpoint-coverage-history.svg" alt="Coverage history"></p>
+<p>That&rsquo;s 3.9% in August 2021 (26 endpoints, mostly VMs, containers and storage), 11.8% at the first alpha tag in January 2023,
+24.1% at v0.1.0 in June 2024, 29.3% at v0.3.0 on the last day of 2025, and 30.1% on May 7th of this year. Four and a half
+years to get to 30%, and three weeks for the other 70.</p>
+<p>Two caveats on the old points. Code before October 2023 predates context support, so for those I relaxed the call regex
+to make <code>ctx,</code> optional. And the very early code built a few paths with string concatenation, which the scanner can&rsquo;t
+resolve, so 2021 and 2022 are probably undercounted by a handful. Also note the first run printed 52.3% and the final
+scanner over the same week&rsquo;s code says 52.8%: that difference is the exclusion list plus the blind spots above.</p>
+<h3 id="what-100-doesnt-mean">What 100% doesn&rsquo;t mean</h3>
+<p>It means every endpoint in the schema has at least one Go call site. It says nothing about whether the request and
+response types are right, whether a zero value in a struct quietly overrides a Proxmox default, or whether a JSON tag has
+a typo in it. That&rsquo;s a different audit and it found plenty, which is its own post. The scanner&rsquo;s job now is to be a gate:
+<code>AGENTS.md</code> says new wrappers should move the number in the right direction, and if the scanner can&rsquo;t see a new wrapper,
+teach the scanner rather than adding to the exclusion list.</p>
+<h3 id="how-i-measured">How I measured</h3>
+<ul>
+<li>Schema: <code>apidoc.js</code> extracted from the <code>pve-docs_9.2.1_all.deb</code> package on <code>download.proxmox.com</code> (trixie,
+pve-no-subscription), 675 endpoints, so old and new code are measured against the same API.</li>
+<li>Scanner: <code>mage/endpoints/endpoints.go</code> copied verbatim from <code>main</code> into a scratch <code>main</code> package with a tiny harness
+that takes a schema path and a source directory. For pre-2023-10 revisions only, the call regex&rsquo;s <code>ctx\s*,</code> is optional.</li>
+<li>Revisions: every release tag from <code>v0.0.0-alpha1</code> to <code>v0.7.1</code>, five early commits (the last commit before 2021-09-01,
+2022-01-01, 2022-04-01, 2022-07-01, 2023-01-01) and every first-parent commit on <code>main</code> from May 7 to May 31, 2026,
+extracted with <code>git archive &lt;rev&gt; | tar -x</code>.</li>
+<li>Machine: Windows 11, Go 1.26. The chart is the &ldquo;unique covered&rdquo; line from each run.</li>
+</ul>
+<h3 id="links">Links</h3>
+<ul>
+<li><a href="https://github.com/luthermonson/go-proxmox">go-proxmox</a> and <a href="https://github.com/luthermonson/go-proxmox/blob/main/mage/endpoints/endpoints.go">mage/endpoints/endpoints.go</a></li>
+<li><a href="https://github.com/luthermonson/go-proxmox/pull/298">#298 the scanner</a>, fixes in <a href="https://github.com/luthermonson/go-proxmox/pull/300">#300</a>, <a href="https://github.com/luthermonson/go-proxmox/pull/313">#313</a>, <a href="https://github.com/luthermonson/go-proxmox/pull/318">#318</a>, <a href="https://github.com/luthermonson/go-proxmox/pull/321">#321</a></li>
+<li><a href="https://github.com/luthermonson/go-proxmox/pull/322">#322 cluster to 100%</a></li>
+<li><a href="https://pve.proxmox.com/pve-docs/api-viewer/index.html">Proxmox VE API viewer</a></li>
+</ul>
+
+      </div>
+      <footer>
+        <div class="stats">
+  
+    <ul class="categories">
+      
+        
+          <li><a class="article-terms-link" href="/categories/go/">go</a></li>
+        
+          <li><a class="article-terms-link" href="/categories/homelab/">homelab</a></li>
+        
+      
+    </ul>
+  
+  
+    <ul class="tags">
+      
+        
+          <li><a class="article-terms-link" href="/tags/proxmox/">proxmox</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/go/">go</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/go-proxmox/">go-proxmox</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/mage/">mage</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/api/">api</a></li>
+        
+      
+    </ul>
+  
+</div>
+
+      </footer>
+    </div>
+    
+      
+  
+  <div class='post giscus-wrap'>
+    <script src='https://giscus.app/client.js'
+            data-repo='luthermonson/luth.io'
+            data-repo-id='R_kgDOGvFBXQ'
+            data-category='Announcements'
+            data-category-id='DIC_kwDOGvFBXc4DH_gv'
+            data-mapping='pathname'
+            data-strict='1'
+            data-reactions-enabled='1'
+            data-emit-metadata='0'
+            data-input-position='top'
+            data-theme='light'
+            data-lang='en'
+            data-loading='lazy'
+            crossorigin='anonymous'
+            async>
+    </script>
+  </div>
+  
+
+
+
+    
+  </article>
+  
+    <nav class="post-nav">
+      
+        <a href="/blog/2026/06/cloud-init-isos-pure-go-proxmox/" class="post-nav-link older">
+          <span class="post-nav-label">&larr; Older</span>
+          <span class="post-nav-title">Cloud-Init ISOs in Pure Go with go-proxmox</span>
+        </a>
+      
+      
+        <a href="/blog/2026/06/omitempty-zero-values-proxmox-defaults/" class="post-nav-link newer">
+          <span class="post-nav-label">Newer &rarr;</span>
+          <span class="post-nav-title">Your Zero Value Just Turned Off My TLS Verification: omitempty, Go Defaults and Proxmox</span>
+        </a>
+      
+    </nav>
+  
+
+      </main>
+      <section id="site-sidebar">
+  
+    <section id="recent-posts">
+      <header>
+        <h1>Recent Posts</h1>
+      </header>
+      
+      <article class="mini-post">
+          <a href="/blog/2026/10/ephpm-worker-mode-performance/" class="image" style="--bg-image: url('/img/2026/10/ephpm-worker-mode-performance-cover.svg');">
+    <img class="" src="/img/2026/10/ephpm-worker-mode-performance-cover.svg" alt="Diagram: before, hyper/tokio hands each request to one shared bounded channel whose waiter list all 20 PHP threads contend on; after, a dispatcher hands the job straight into the mailbox of the most recently idle PHP thread and only queues it in a FIFO overflow queue when every thread is busy">
+  </a>
+        <header>
+          <h2><a href="/blog/2026/10/ephpm-worker-mode-performance/">Fourth Place in Worker Mode, and Why It Wasn&#39;t PHP</a></h2>
+          <time class="published" datetime="2026-10-16 08:10:00 -0700 PDT">October 16, 2026</time>
+        </header>
+      </article>
+      
+      <article class="mini-post">
+          <a href="/blog/2026/10/ephpm-websockets-how-to/" class="image" style="--bg-image: url('/img/2026/10/ephpm-websockets-how-to-cover.svg');">
+    <img class="" src="/img/2026/10/ephpm-websockets-how-to-cover.svg" alt="Diagram: browsers hold sockets to ePHPm&#39;s Rust session tasks and registry; each connect, message and disconnect runs websocket.php once on the PHP thread pool, and ordinary HTTP requests push through ephpm_ws_broadcast">
+  </a>
+        <header>
+          <h2><a href="/blog/2026/10/ephpm-websockets-how-to/">WebSockets in ePHPm, From Zero to a Working Chat</a></h2>
+          <time class="published" datetime="2026-10-11 17:30:00 -0700 PDT">October 11, 2026</time>
+        </header>
+      </article>
+      
+      <article class="mini-post">
+          <a href="/blog/2026/10/webhooks-out-of-order-scheduler/" class="image" style="--bg-image: url('/img/2026/10/webhooks-out-of-order-scheduler-timeline.svg');">
+    <img class="" src="/img/2026/10/webhooks-out-of-order-scheduler-timeline.svg" alt="Timeline of three same-label jobs where a runner executing a build is destroyed 2.3 seconds before its in_progress webhook arrives">
+  </a>
+        <header>
+          <h2><a href="/blog/2026/10/webhooks-out-of-order-scheduler/">Webhooks Arrive Out of Order: How My Scheduler Killed Live Builds</a></h2>
+          <time class="published" datetime="2026-10-07 21:10:00 -0700 PDT">October 7, 2026</time>
+        </header>
+      </article>
+      
+      <article class="mini-post">
+          <a href="/blog/2026/10/go-proxmox-five-years-to-v0-8/" class="image" style="--bg-image: url('/img/2026/10/go-proxmox-five-years-to-v0-8-apidiff.svg');">
+    <img class="" src="/img/2026/10/go-proxmox-five-years-to-v0-8-apidiff.svg" alt="Horizontal bar chart of apidiff incompatible and compatible changes for every go-proxmox release from v0.1.0 to v0.8.2">
+  </a>
+        <header>
+          <h2><a href="/blog/2026/10/go-proxmox-five-years-to-v0-8/">Breaking Changes Without Breaking Trust: Five Years to go-proxmox v0.8</a></h2>
+          <time class="published" datetime="2026-10-04 19:40:00 -0700 PDT">October 4, 2026</time>
+        </header>
+      </article>
+      
+      <article class="mini-post">
+          <a href="/blog/2026/10/windows-sigterm-sparse-files/" class="image" style="--bg-image: url('/img/2026/10/windows-sigterm-sparse-files-connections.svg');">
+    <img class="" src="/img/2026/10/windows-sigterm-sparse-files-connections.svg" alt="Bar chart: 96 Cloudflare edge connections held by orphaned cloudflared processes versus 4 for the live daemon">
+  </a>
+        <header>
+          <h2><a href="/blog/2026/10/windows-sigterm-sparse-files/">Windows Grab-Bag: SIGTERM That Doesn&#39;t Exist and Sparse Files That Break Docker</a></h2>
+          <time class="published" datetime="2026-10-03 14:30:00 -0700 PDT">October 3, 2026</time>
+        </header>
+      </article>
+      
+      
+        <footer>
+          <a href="/blog" class="button">See More</a>
+        </footer>
+      
+    </section>
+  
+
+  
+    
+
+      <section id="categories">
+        <header>
+          <h1><a href="/categories">Categories</a></h1>
+        </header>
+        <ul>
+          
+          
+          <li>
+              <a href="/categories/ephpm/">ephpm<span class="count">33</span></a>
+          
+          <li>
+              <a href="/categories/go/">go<span class="count">30</span></a>
+          
+          <li>
+              <a href="/categories/php/">php<span class="count">23</span></a>
+          
+          <li>
+              <a href="/categories/rust/">rust<span class="count">15</span></a>
+          
+          <li>
+              <a href="/categories/homelab/">homelab<span class="count">14</span></a>
+          
+          <li>
+              <a href="/categories/windows/">windows<span class="count">14</span></a>
+          
+          <li>
+              <a href="/categories/ci/">ci<span class="count">9</span></a>
+          
+          <li>
+              <a href="/categories/databases/">databases<span class="count">9</span></a>
+          
+          <li>
+              <a href="/categories/security/">security<span class="count">9</span></a>
+          
+          <li>
+              <a href="/categories/containers/">containers<span class="count">7</span></a>
+          
+          <li>
+              <a href="/categories/tools/">tools<span class="count">5</span></a>
+          
+          <li>
+              <a href="/categories/ai-agents/">ai-agents<span class="count">4</span></a>
+          
+          </li>
+        </ul>
+      </section>
+    
+  
+
+  
+    <section id="mini-bio">
+      <header>
+        <h1>About</h1>
+      </header>
+      <p>Luther is a 20+ year software veteran specializing in backend APIs and architecting products. Employed at <a href='https://www.suse.com'>SUSE</a> as the Team Lead for the <a href='https://github.com/rancher/windows/issues'>Containers on Windows Team</a> working on <a href='https://rancher.com/'>Rancher</a> + <a href='https://kubernetes.io/'>Kubernetes</a></p>
+      <footer>
+        <a href="/about" class="button">Learn More</a>
+      </footer>
+    </section>
+  
+</section>
+
+      <footer id="site-footer">
+  
+      <ul class="socnet-icons">
+        
+
+        <li><a href="//github.com/luthermonson" target="_blank" rel="noopener" title="GitHub" class="fab fa-github"></a></li>
+
+
+
+
+
+
+
+
+
+
+
+<li><a href="//www.linkedin.com/in/luthermonson" target="_blank" rel="noopener" title="LinkedIn" class="fab fa-linkedin"></a></li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li><a href="//twitter.com/luthermonson" target="_blank" rel="noopener" title="Twitter" class="fab fa-twitter"></a></li>
+
+
+
+
+
+
+
+
+
+
+
+<li><a href="mailto:luther.monson@gmail.com" target="_blank" title="Email" class="far fa-envelope"></a></li>
+
+      </ul>
+  
+  <p class="copyright">
+    © 2026 Luther Monson
+      <br>
+    Theme: <a href='https://github.com/pacollins/hugo-future-imperfect-slim' target='_blank' rel='noopener'>Hugo Future Imperfect Slim</a><br>A <a href='https://html5up.net/future-imperfect' target='_blank' rel='noopener'>HTML5 UP port</a> | Powered by <a href='https://gohugo.io/' title='0.160.1' target='_blank' rel='noopener'>Hugo</a>
+  </p>
+</footer>
+<a id="back-to-top" href="#" class="fas fa-arrow-up fa-2x"></a>
+
+      <script src="/js/bundle.min.241b62ebc4792fe8c7a75879e5f710894f226f2b73342e9916b3a3b0526030cc.js" integrity="sha256-JBti68R5L&#43;jHp1h55fcQiU8ibytzNC6ZFrOjsFJgMMw="></script>
+    <script src="/js/add-on.js"></script>
+    </div>
+  </body>
+</html>

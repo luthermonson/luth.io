@@ -1,0 +1,40 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 420" font-family="system-ui, -apple-system, Segoe UI, sans-serif">
+  <rect width="800" height="420" fill="#ffffff"/>
+  <text x="400" y="34" text-anchor="middle" font-size="20" font-weight="600" fill="#222">Where a bare zend_bailout() goes</text>
+
+  <!-- outer: ePHPm SETJMP -->
+  <rect x="40" y="60" width="480" height="320" rx="10" fill="#eef3fa" stroke="#2b6cb0" stroke-width="2"/>
+  <text x="58" y="86" font-size="15" font-weight="600" fill="#2b6cb0">ePHPm: SETJMP(__bailout) around the call</text>
+  <text x="58" y="106" font-size="13" fill="#444">never sees a bailout raised by the script</text>
+
+  <!-- inner: php_execute_script zend_try -->
+  <rect x="70" y="124" width="420" height="200" rx="10" fill="#fdf1e6" stroke="#e07a1f" stroke-width="2"/>
+  <text x="88" y="150" font-size="15" font-weight="600" fill="#b85f12">php_execute_script(): zend_try { ... }</text>
+  <text x="88" y="170" font-size="13" fill="#444">zend_end_try() restores EG(bailout) and falls through</text>
+
+  <!-- script -->
+  <rect x="100" y="188" width="360" height="106" rx="8" fill="#ffffff" stroke="#6b6b6b" stroke-width="1.5"/>
+  <text x="118" y="214" font-size="14" fill="#222">your script / an extension</text>
+  <text x="118" y="240" font-size="14" font-family="ui-monospace, Consolas, monospace" fill="#c0392b">zend_bailout();</text>
+  <text x="118" y="262" font-size="13" fill="#444">sets CG(unclean_shutdown) = 1</text>
+  <text x="118" y="280" font-size="13" fill="#444">then LONGJMP to the nearest zend_try</text>
+
+  <!-- arrow from script up to inner try -->
+  <path d="M 440 230 C 480 210, 480 170, 452 158" fill="none" stroke="#c0392b" stroke-width="2.5" marker-end="url(#a)"/>
+  <text x="70" y="352" font-size="13" fill="#444">before #255: the call returns normally, 200 with a cut-short body, no log</text>
+
+  <!-- right side: the fix -->
+  <rect x="560" y="124" width="200" height="200" rx="10" fill="#edf7f0" stroke="#3a9a5b" stroke-width="2"/>
+  <text x="660" y="152" text-anchor="middle" font-size="15" font-weight="600" fill="#2d7a47">The check that works</text>
+  <text x="660" y="186" text-anchor="middle" font-size="13" font-family="ui-monospace, Consolas, monospace" fill="#222">if (CG(unclean_</text>
+  <text x="660" y="204" text-anchor="middle" font-size="13" font-family="ui-monospace, Consolas, monospace" fill="#222">shutdown))</text>
+  <text x="660" y="236" text-anchor="middle" font-size="13" fill="#444">force 500</text>
+  <text x="660" y="256" text-anchor="middle" font-size="13" fill="#444">discard partial body</text>
+  <text x="660" y="276" text-anchor="middle" font-size="13" fill="#444">log the output tail</text>
+  <path d="M 520 224 L 556 224" stroke="#3a9a5b" stroke-width="2.5" marker-end="url(#g)"/>
+
+  <defs>
+    <marker id="a" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#c0392b"/></marker>
+    <marker id="g" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#3a9a5b"/></marker>
+  </defs>
+</svg>

@@ -1,0 +1,46 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 420" font-family="system-ui, -apple-system, Segoe UI, Roboto, sans-serif">
+  <defs>
+    <marker id="a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto">
+      <path d="M0 0 L10 5 L0 10 z" fill="#6b6b6b"/>
+    </marker>
+  </defs>
+  <rect width="900" height="420" fill="#ffffff"/>
+  <text x="450" y="32" text-anchor="middle" font-size="20" font-weight="600" fill="#222">A plain runner VM on Proxmox: what survives between jobs</text>
+
+  <rect x="30" y="56" width="840" height="340" rx="12" fill="#ffffff" stroke="#3a9a5b" stroke-width="2"/>
+  <text x="50" y="80" font-size="13" fill="#3a9a5b" font-weight="600">Proxmox VE node</text>
+
+  <rect x="60" y="96" width="780" height="280" rx="10" fill="#ffffff" stroke="#2b6cb0" stroke-width="2"/>
+  <text x="80" y="120" font-size="13" fill="#2b6cb0" font-weight="600">Ubuntu 24.04 VM (cloud image + cloud-init), runner as a systemd unit</text>
+
+  <!-- job lanes -->
+  <rect x="90" y="140" width="150" height="50" rx="6" fill="#2b6cb0"/>
+  <text x="165" y="170" text-anchor="middle" font-size="13" fill="#fff">job 1</text>
+  <rect x="290" y="140" width="150" height="50" rx="6" fill="#2b6cb0"/>
+  <text x="365" y="170" text-anchor="middle" font-size="13" fill="#fff">job 2</text>
+  <rect x="490" y="140" width="150" height="50" rx="6" fill="#2b6cb0"/>
+  <text x="565" y="170" text-anchor="middle" font-size="13" fill="#fff">job 3</text>
+  <path d="M240 165 L 288 165" stroke="#6b6b6b" stroke-width="2" marker-end="url(#a)"/>
+  <path d="M440 165 L 488 165" stroke="#6b6b6b" stroke-width="2" marker-end="url(#a)"/>
+  <text x="740" y="160" text-anchor="middle" font-size="12" fill="#6b6b6b">one job at a time</text>
+  <text x="740" y="178" text-anchor="middle" font-size="12" fill="#6b6b6b">per runner process</text>
+
+  <!-- persisted -->
+  <rect x="90" y="220" width="350" height="130" rx="8" fill="#ffffff" stroke="#e07a1f" stroke-width="2"/>
+  <text x="265" y="244" text-anchor="middle" font-size="14" fill="#e07a1f" font-weight="600">kept (the good part)</text>
+  <g font-size="12" fill="#222">
+    <text x="108" y="270">_work/_tool  setup-go / setup-node toolcache</text>
+    <text x="108" y="292">~/go/pkg/mod, ~/.cache/go-build</text>
+    <text x="108" y="314">docker images and build cache</text>
+    <text x="108" y="336">apt packages you installed once</text>
+  </g>
+
+  <rect x="460" y="220" width="350" height="130" rx="8" fill="#ffffff" stroke="#c0392b" stroke-width="2"/>
+  <text x="635" y="244" text-anchor="middle" font-size="14" fill="#c0392b" font-weight="600">also kept (the bad part)</text>
+  <g font-size="12" fill="#222">
+    <text x="478" y="270">untracked build output in _work/&lt;repo&gt;</text>
+    <text x="478" y="292">files written outside the workspace</text>
+    <text x="478" y="314">background processes a job forgot</text>
+    <text x="478" y="336">whatever a malicious PR left behind</text>
+  </g>
+</svg>

@@ -1,0 +1,761 @@
+<!doctype html>
+<html lang="en">
+  <head>
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-MSTSKGFWTX"></script>
+<script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+
+    gtag('config', 'G-MSTSKGFWTX');
+</script><meta charset="utf-8">
+<title>Clustered SQLite in ePHPm, Part 2: Adding Turso - Luther Monson</title>
+<meta name="description" content="Deciding a beta database engine is ready by testing it instead of reading its version number, and replacing both rusqlite and sqld with Turso in ePHPm v0.7.0.">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<meta name="twitter:card" content="summary_large_image"><meta name="twitter:site" content="@luthermonson">
+
+<meta property="og:site_name" content="Luther Monson">
+<meta property="og:title" content="Clustered SQLite in ePHPm, Part 2: Adding Turso">
+<meta property="og:description" content="Deciding a beta database engine is ready by testing it instead of reading its version number, and replacing both rusqlite and sqld with Turso in ePHPm v0.7.0.">
+<meta property="og:type" content="article">
+<meta property="og:url" content="https://luth.io/blog/2026/08/clustered-sqlite-adding-turso/">
+    <meta property="og:image" content="https://luth.io/img/2026/08/clustered-sqlite-adding-turso-four-lanes.svg">
+    <meta property="og:image:alt" content="Bar chart of four SQLite lanes at 16 concurrent connections: rusqlite and Turso single node, sqld and Turso CDC clustered">
+
+
+  <link rel="manifest" href="/favicon/site.webmanifest?v=1">
+  <link rel="apple-touch-icon" sizes="180x180" href="/favicon/apple-touch-icon.png?v=1">
+  <link rel="icon" type="image/png" sizes="32x32" href="/favicon/favicon-32x32.png?v=1">
+  <link rel="icon" type="image/png" sizes="16x16" href="/favicon/favicon-16x16.png?v=1">
+  
+    <link rel="mask-icon" href="/favicon/safari-pinned-tab.svg?v=1" color="#ffffff">
+    <link rel="shortcut icon" href="/favicon/favicon.ico?v=1">
+    <meta name="msapplication-config" content="/favicon/browserconfig.xml?v=1">
+  
+  <meta name="msapplication-TileColor" content="#ffffff">
+  <meta name="theme-color" content="#ffffff">
+
+
+  <meta name="generator" content="Hugo 0.160.1">
+  <link rel="alternate" type="application/rss+xml" href="https://luth.io/index.xml" title="Luther Monson">
+  <link rel="stylesheet" href="/css/bundle.min.e1ffed86714fbb7eff75eab221c0c61b8260be0c7d1c08db0fcb7a2bdb6af7c9.css" integrity="sha256-4f/thnFPu37/deqyIcDGG4Jgvgx9HAjbD8t6K9tq98k="><link rel="stylesheet" href="/css/add-on.css">
+        <link rel="stylesheet" href="/css/code.css">
+        <link rel="stylesheet" href="/css/mobile.css">
+</head>
+
+  <body>
+    
+
+<header id="site-header">
+  <nav id="site-nav">
+    <h1 class="nav-title">
+      <a href="/" class="nav">
+        <img class="nav-avatar" src="/img/luther-monson-headshot.jpg" alt="" width="32" height="32">
+        
+          Blog
+        
+      </a>
+    </h1>
+    <menu id="site-nav-menu" class="flyout-menu menu">
+      
+        
+          
+          <a href="/" class="nav link"><i class='fa fa-home'></i> Home</a>
+        
+      
+        
+          
+          <a href="/about" class="nav link"><i class='far fa-id-card'></i> About</a>
+        
+      
+        
+          
+          <a href="/blog" class="nav link"><i class='far fa-newspaper'></i> Blog</a>
+        
+      
+        
+          
+          <a href="/archive" class="nav link"><i class='far fa-calendar-alt'></i> Archive</a>
+        
+      
+        
+          
+          <a href="/categories" class="nav link"><i class='fas fa-sitemap'></i> Categories</a>
+        
+      
+      <a href="#share-menu" class="nav link share-toggle"><i class="fas fa-share-alt">&nbsp;</i>Share</a>
+      <a href="#search-input" class="nav link search-toggle"><i class="fas fa-search">&nbsp;</i>Search</a>
+    </menu>
+    <a href="#search-input" class="nav search-toggle"><i class="fas fa-search fa-2x">&nbsp;</i></a>
+    <a href="#share-menu" class="nav share-toggle"><i class="fas fa-share-alt fa-2x">&nbsp;</i></a>
+    
+    <a href="#site-nav" class="nav nav-toggle"><i class="fas fa-bars fa-2x"></i></a>
+  </nav>
+  <menu id="search" class="menu"><input id="search-input" class="search-input menu"></input><div id="search-results" class="search-results menu"></div></menu>
+  
+  
+    <menu id="share-menu" class="flyout-menu menu">
+      <h1>Share Post</h1>
+      
+
+
+
+
+  
+    
+    <a href="//twitter.com/share?text=Clustered%20SQLite%20in%20ePHPm%2c%20Part%202%3a%20Adding%20Turso&amp;url=https%3a%2f%2fluth.io%2fblog%2f2026%2f08%2fclustered-sqlite-adding-turso%2f" target="_blank" rel="noopener" class="nav share-btn twitter">
+        <p>Twitter</p>
+      </a>
+  
+
+  
+      <a href="//www.facebook.com/sharer/sharer.php?u=https%3a%2f%2fluth.io%2fblog%2f2026%2f08%2fclustered-sqlite-adding-turso%2f" target="_blank" rel="noopener" class="nav share-btn facebook">
+        <p>Facebook</p>
+        </a>
+  
+
+  
+    <a href="//www.reddit.com/submit?url=https%3a%2f%2fluth.io%2fblog%2f2026%2f08%2fclustered-sqlite-adding-turso%2f&amp;title=Clustered%20SQLite%20in%20ePHPm%2c%20Part%202%3a%20Adding%20Turso" target="_blank" rel="noopener" class="nav share-btn reddit">
+          <p>Reddit</p>
+        </a>
+  
+
+  
+        <a href="//www.linkedin.com/shareArticle?url=https%3a%2f%2fluth.io%2fblog%2f2026%2f08%2fclustered-sqlite-adding-turso%2f&amp;title=Clustered%20SQLite%20in%20ePHPm%2c%20Part%202%3a%20Adding%20Turso" target="_blank" rel="noopener" class="nav share-btn linkedin">
+            <p>LinkedIn</p>
+          </a>
+  
+
+  
+        <a href="//www.pinterest.com/pin/create/button/?url=https%3a%2f%2fluth.io%2fblog%2f2026%2f08%2fclustered-sqlite-adding-turso%2f&amp;description=Clustered%20SQLite%20in%20ePHPm%2c%20Part%202%3a%20Adding%20Turso" target="_blank" rel="noopener" class="nav share-btn pinterest">
+          <p>Pinterest</p>
+        </a>
+  
+
+  
+        <a href="mailto:?subject=Check%20out%20this%20post%20by Luther%20Monson&amp;body=https%3a%2f%2fluth.io%2fblog%2f2026%2f08%2fclustered-sqlite-adding-turso%2f" target="_blank" class="nav share-btn email" data-proofer-ignore>
+          <p>Email</p>
+        </a>
+  
+
+
+    </menu>
+  
+</header>
+
+    <div id="wrapper">
+      <section id="site-intro" class="hidden-single-column">
+  <a href="/"><img src="/img/luther-monson-headshot.jpg" class="circle" width="100" alt="Luther Monson, Staff Software Engineer at SUSE" /></a>
+  <header>
+    <h1>Luther Monson</h1>
+  </header>
+  <main>
+    <p>Go by way of PHP &middot; Containers &middot; VMs &middot; Windows &middot; Kubernetes</p>
+  </main>
+  
+    <footer>
+      <ul class="socnet-icons">
+        
+
+        <li><a href="//github.com/luthermonson" target="_blank" rel="noopener" title="GitHub" class="fab fa-github"></a></li>
+
+
+
+
+
+
+
+
+
+
+
+<li><a href="//www.linkedin.com/in/luthermonson" target="_blank" rel="noopener" title="LinkedIn" class="fab fa-linkedin"></a></li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li><a href="//twitter.com/luthermonson" target="_blank" rel="noopener" title="Twitter" class="fab fa-twitter"></a></li>
+
+
+
+
+
+
+
+
+
+
+
+<li><a href="mailto:luther.monson@gmail.com" target="_blank" title="Email" class="far fa-envelope"></a></li>
+
+      </ul>
+    </footer>
+  
+</section>
+
+      <main id="site-main">
+        
+  <article>
+    <div class="post">
+      <header>
+  <div class="title">
+    
+      <h2><a href="/blog/2026/08/clustered-sqlite-adding-turso/">Clustered SQLite in ePHPm, Part 2: Adding Turso</a></h2>
+    
+    
+      <p>Deciding a beta database engine is ready by testing it instead of reading its version number, and replacing both rusqlite and sqld with Turso in ePHPm v0.7.0.</p>
+    
+  </div>
+  <div class="meta">
+    <time datetime="2026-08-19 20:37:00 -0700 PDT">August 19, 2026</time>
+    
+    <p>9-Minute Read</p>
+  </div>
+</header>
+
+      <div id="socnet-share">
+        
+
+
+
+
+  
+    
+    <a href="//twitter.com/share?text=Clustered%20SQLite%20in%20ePHPm%2c%20Part%202%3a%20Adding%20Turso&amp;url=https%3a%2f%2fluth.io%2fblog%2f2026%2f08%2fclustered-sqlite-adding-turso%2f" target="_blank" rel="noopener" class="nav share-btn twitter">
+        <p>Twitter</p>
+      </a>
+  
+
+  
+      <a href="//www.facebook.com/sharer/sharer.php?u=https%3a%2f%2fluth.io%2fblog%2f2026%2f08%2fclustered-sqlite-adding-turso%2f" target="_blank" rel="noopener" class="nav share-btn facebook">
+        <p>Facebook</p>
+        </a>
+  
+
+  
+    <a href="//www.reddit.com/submit?url=https%3a%2f%2fluth.io%2fblog%2f2026%2f08%2fclustered-sqlite-adding-turso%2f&amp;title=Clustered%20SQLite%20in%20ePHPm%2c%20Part%202%3a%20Adding%20Turso" target="_blank" rel="noopener" class="nav share-btn reddit">
+          <p>Reddit</p>
+        </a>
+  
+
+  
+        <a href="//www.linkedin.com/shareArticle?url=https%3a%2f%2fluth.io%2fblog%2f2026%2f08%2fclustered-sqlite-adding-turso%2f&amp;title=Clustered%20SQLite%20in%20ePHPm%2c%20Part%202%3a%20Adding%20Turso" target="_blank" rel="noopener" class="nav share-btn linkedin">
+            <p>LinkedIn</p>
+          </a>
+  
+
+  
+        <a href="//www.pinterest.com/pin/create/button/?url=https%3a%2f%2fluth.io%2fblog%2f2026%2f08%2fclustered-sqlite-adding-turso%2f&amp;description=Clustered%20SQLite%20in%20ePHPm%2c%20Part%202%3a%20Adding%20Turso" target="_blank" rel="noopener" class="nav share-btn pinterest">
+          <p>Pinterest</p>
+        </a>
+  
+
+  
+        <a href="mailto:?subject=Check%20out%20this%20post%20by Luther%20Monson&amp;body=https%3a%2f%2fluth.io%2fblog%2f2026%2f08%2fclustered-sqlite-adding-turso%2f" target="_blank" class="nav share-btn email" data-proofer-ignore>
+          <p>Email</p>
+        </a>
+  
+
+
+      </div>
+      <div class="content">
+        
+        <p><a href="/blog/2026/08/clustered-sqlite-sqld-sidecar/">Part 1</a> ended with ePHPm running two SQLite engines: rusqlite in-process
+for a single node, and an embedded sqld child process for a cluster. The sidecar fell off a cliff past four concurrent
+writers and the best fix I could ship was a semaphore set to 1. This post is about replacing both engines with one, and
+about how I decided that engine was ready.</p>
+<ul>
+<li><a href="/blog/2026/08/clustered-sqlite-sqld-sidecar/">Part 1: Replication by sidecar with sqld</a></li>
+<li>Part 2: Adding Turso (this post)</li>
+<li><a href="/blog/2026/09/clustered-sqlite-cdc-cluster-channel/">Part 3: CDC over the cluster channel</a></li>
+</ul>
+<h3 id="the-thesis">The thesis</h3>
+<p><a href="https://github.com/tursodatabase/turso">Turso Database</a> is a rewrite of SQLite in Rust, MIT licensed, file-format
+compatible, with MVCC for concurrent writers and change data capture built into the engine. Read that list again from the
+perspective of Part 1. An in-process engine means no child process and no Hrana hop. MVCC means writers don&rsquo;t queue up
+behind one lock. Built-in CDC means the engine itself can tell me what changed, so ePHPm&rsquo;s existing cluster layer can ship
+it. One engine for both modes, and clustered SQLite with zero child processes.</p>
+<p>I wrote that down as a roadmap page on 2026-07-10 (<a href="https://github.com/ephpm/ephpm/pull/166">#166</a>). At the time Turso was
+on its v0.7.0-pre line and labeled beta. I&rsquo;m comfortable running a mature beta. The engine is MIT, the sync protocol is
+open, it has a real user base, and it holds to SQLite&rsquo;s file format. What I&rsquo;m not comfortable with is a label deciding for
+me in either direction. &ldquo;Beta&rdquo; doesn&rsquo;t tell you whether it&rsquo;s safe for your workload, and neither does &ldquo;1.0&rdquo;. So the roadmap
+set five gates:</p>
+<ol>
+<li>Upstream GA</li>
+<li>Performance at parity or better on my matrix, tails included</li>
+<li>File-format round trip, verified by me</li>
+<li>Crash recovery</li>
+<li>WordPress and Laravel end to end</li>
+</ol>
+<p>Gate 1 is somebody else&rsquo;s decision. The other four I could close or fail with my own evidence.</p>
+<h3 id="phase-1-one-knob-nothing-else-changes">Phase 1: one knob, nothing else changes</h3>
+<p>The first PR (<a href="https://github.com/ephpm/ephpm/pull/183">#183</a>) added exactly one setting:</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-toml" data-lang="toml"><span class="line"><span class="cl"><span class="p">[</span><span class="nx">db</span><span class="p">.</span><span class="nx">sqlite</span><span class="p">]</span>
+</span></span><span class="line"><span class="cl"><span class="nx">engine</span> <span class="p">=</span> <span class="s2">&#34;turso&#34;</span>   <span class="c"># default &#34;sqlite&#34;</span>
+</span></span></code></pre></div><p>Single node only, a warning at startup that it&rsquo;s experimental, and clustered plus Turso was a hard startup error. Unknown
+values are also a startup error rather than a quiet fallback to the default. If you typo the engine name you should find
+out at boot, not after a week of writing data into the engine you didn&rsquo;t pick.</p>
+<p>litewire got a Turso backend (<a href="https://github.com/ephpm/litewire/pull/9">litewire#9</a>) behind the same <code>Backend</code> trait the
+other engines use, so the gate measurements could run at that seam: same SQL, same harness, back to back, on WSL2.</p>
+<table>
+  <thead>
+      <tr>
+          <th>op</th>
+          <th>rusqlite p50</th>
+          <th>Turso p50</th>
+      </tr>
+  </thead>
+  <tbody>
+      <tr>
+          <td>point SELECT</td>
+          <td>81.2 µs</td>
+          <td>2.9 µs</td>
+      </tr>
+      <tr>
+          <td>INSERT (autocommit)</td>
+          <td>138.5 µs</td>
+          <td>17.3 µs</td>
+      </tr>
+      <tr>
+          <td>10-query page</td>
+          <td>840.1 µs</td>
+          <td>30.2 µs</td>
+      </tr>
+      <tr>
+          <td>8 concurrent writers</td>
+          <td>3,609 inserts/s</td>
+          <td>14,451 inserts/s</td>
+      </tr>
+  </tbody>
+</table>
+<p>Before anybody quotes the 28x on point SELECT: most of that gap is litewire&rsquo;s rusqlite backend paying a <code>spawn_blocking</code>
+round trip (about 80 µs on that host) that the async-native Turso backend doesn&rsquo;t pay. It&rsquo;s a real cost ePHPm was paying,
+but it&rsquo;s not &ldquo;Turso reads 28x faster than SQLite.&rdquo; The INSERT gap and the concurrent writers number are the engine. Eight
+writers, 2,000 rows, zero busy errors on either side, and MVCC did about 4x the throughput.</p>
+<p>Gate 3 was a round trip with 500 rows of hostile data (<code>i64::MIN</code>/<code>MAX</code>, floats near ±1e308, NULLs in every column, CJK and
+combining characters, BLOBs, a UNIQUE index), written by one engine and read by the other in both directions, checksums
+compared. Both matched. Gate 4 got a smoke test: <code>kill -9</code> mid-write ten times, ten clean recoveries. That is a smoke test
+and not the soak the gate asks for, and the gate stayed open.</p>
+<h3 id="benchmark-the-defaults-before-you-benchmark-the-engines">Benchmark the defaults before you benchmark the engines</h3>
+<p>The first run of that matrix made Turso look terrible on writes: an autocommit INSERT p50 of 1,815 µs, and 351 inserts/s
+for the eight writers. That&rsquo;s 41x slower than the number in the table above.</p>
+<p>The cause was in the Turso source, not my harness. Turso&rsquo;s default sync mode is <code>FULL</code>. litewire&rsquo;s rusqlite backend had
+always set <code>synchronous=NORMAL</code> per session, so I was comparing an engine that fsyncs every commit to one that doesn&rsquo;t.
+The Turso backend now sets <code>PRAGMA synchronous = NORMAL</code> per session, the same as the rusqlite one. If you are about to
+compare Turso to a tuned SQLite, check this first. Otherwise you are benchmarking two durability settings and calling it an
+engine comparison.</p>
+<h3 id="gate-5-the-failures-werent-tursos">Gate 5: the failures weren&rsquo;t Turso&rsquo;s</h3>
+<p>Gate 5 (<a href="https://github.com/ephpm/ephpm/pull/188">#188</a>) installed WordPress and Laravel on both engines through
+<code>pdo_mysql</code>, with rusqlite as the control. As pinned, it failed. Neither app installed on <em>either</em> engine. Running the
+control first is what made that easy to read: all nine blockers were in litewire&rsquo;s MySQL frontend and SQL translation
+layer, and they fired before any engine code ran. With a local litewire patch for those nine, both apps went green on both
+engines, and Turso matched the control on all 20 matrix rows.</p>
+<p>The one Turso-specific thing it found was a real bug. Selecting from <code>pragma_table_info()</code> left the connection in a
+phantom transaction state. Later writes reported success and were never durable. WordPress &ldquo;installed&rdquo; into a 4 KB
+database with an empty WAL. Turso already had this as
+<a href="https://github.com/tursodatabase/turso/issues/7466">issue #7466</a>, so I traced it into the VDBE, found that virtual table
+cursors weren&rsquo;t closed before transaction finalization, and sent the fix upstream as
+<a href="https://github.com/tursodatabase/turso/pull/7855">turso#7855</a>. It was merged the next day.</p>
+<p>That&rsquo;s what I mean by a mature beta. The failures in my integration were mostly mine, the one engine bug was already
+reported upstream, and a fix from an outside contributor went from PR to merged in about a day. That tells me more about
+whether I can depend on a project than the word &ldquo;beta&rdquo; does.</p>
+<h3 id="the-benchmark-that-made-the-case">The benchmark that made the case</h3>
+<p>For v0.6.0 I measured four lanes with the same fixtures, one machine, one session, <code>--cpus 1</code> per node, 100% 2xx checked
+on every cell (<a href="https://github.com/ephpm/ephpm/pull/216">#216</a>, release numbers in the
+<a href="https://ephpm.dev/benchmarking/results/">benchmark results</a>):</p>
+<ul>
+<li><strong>A</strong>: rusqlite, single node</li>
+<li><strong>B</strong>: Turso, single node</li>
+<li><strong>C</strong>: rusqlite + sqld sidecar, clustered (the shipping clustered path at the time)</li>
+<li><strong>D</strong>: Turso + CDC replication, clustered, no sidecar (experimental, Part 3)</li>
+</ul>
+<p><img src="/img/2026/08/clustered-sqlite-adding-turso-four-lanes.svg" alt="four lanes at c=16"></p>
+<table>
+  <thead>
+      <tr>
+          <th>lane</th>
+          <th>reads c=16 RPS</th>
+          <th>reads p99</th>
+          <th>writes c=1 RPS</th>
+          <th>writes c=16 RPS</th>
+          <th>writes p99</th>
+      </tr>
+  </thead>
+  <tbody>
+      <tr>
+          <td>A rusqlite single</td>
+          <td>612</td>
+          <td>46.02 ms</td>
+          <td>648</td>
+          <td>1130</td>
+          <td>18.68 ms</td>
+      </tr>
+      <tr>
+          <td>B Turso single</td>
+          <td>646</td>
+          <td>30.93 ms</td>
+          <td>666</td>
+          <td>1120</td>
+          <td>20.77 ms</td>
+      </tr>
+      <tr>
+          <td>C sqld cluster</td>
+          <td>240</td>
+          <td>92.07 ms</td>
+          <td>384</td>
+          <td>0 completed</td>
+          <td>-</td>
+      </tr>
+      <tr>
+          <td>D Turso cluster</td>
+          <td>601</td>
+          <td>33.19 ms</td>
+          <td>558</td>
+          <td>876</td>
+          <td>26.34 ms</td>
+      </tr>
+  </tbody>
+</table>
+<p>Reads are the 10-SELECT <code>db.php</code> fixture, writes are one INSERT per request. The zero for lane C is not a rounding error.
+That cell completed nothing in both 20 second reps.</p>
+<p>Three things I take from this:</p>
+<ul>
+<li><strong>Single node is a wash on writes and a win on read tails.</strong> Writes are even (rusqlite has a slightly better c=16 p99,
+within this harness&rsquo;s run-to-run spread). Reads are 15% more throughput at c=1 (371 vs 322 RPS in
+the release tables) and a much steadier c=16 tail.</li>
+<li><strong>Clustered is not close.</strong> CDC replication does 2.5x the read throughput of the sidecar with a third of the p99.</li>
+<li><strong>Cost of replication against each engine&rsquo;s own baseline.</strong> At c=16 writes, clustered Turso keeps 78% of single-node
+Turso&rsquo;s throughput while shipping every change to a replica. Clustered rusqlite keeps 0%.</li>
+</ul>
+<p>These are A/B numbers on one box under podman on WSL2. The absolute RPS won&rsquo;t transfer to your hardware. The deltas are
+the claim.</p>
+<h3 id="v070-turso-only">v0.7.0: Turso only</h3>
+<p>Gate 2 was substantially evidenced and gate 3 was met. Gate 5 had the matrix, plus a live WordPress and WooCommerce demo
+on Turso, but not yet an automated suite in CI. Gates 1 and 4 were open. Then a pen-test of multi-site mode turned up
+<a href="https://github.com/ephpm/ephpm/issues/274">#274</a>: <code>ATTACH DATABASE</code> from one tenant&rsquo;s PHP could write a PHP file into
+another tenant&rsquo;s docroot and execute it. Cross-tenant RCE, through the rusqlite path. That changed the trade-off. Keeping
+an engine with that primitive around was more dangerous than adopting a beta engine that had passed my gates, so the
+remaining gates now gate the GA label, not the ship.</p>
+<p><a href="https://github.com/ephpm/ephpm/pull/278">#278</a> is the demolition, +681 / -2075 lines. Gone:</p>
+<ul>
+<li>the <code>ephpm-sqld</code> crate, the <code>include_bytes!</code> embedding, the extract/chmod/spawn/health/SIGTERM state machine</li>
+<li>the sqld download in <code>xtask</code> and the Windows special case in the release build</li>
+<li>the rusqlite single-node path in ePHPm (litewire still ships the backend for its other users)</li>
+<li><code>[db.sqlite.sqld]</code> and <code>write_permits</code>, kept as parsed-but-warned shims so an old config tells you what happened</li>
+</ul>
+<p>The <code>engine</code> knob now defaults to <code>&quot;turso&quot;</code> and that&rsquo;s the only accepted value. <code>engine = &quot;sqlite&quot;</code> is a hard startup
+error that points you at the v0.7.0 upgrade notes. The reasoning in the PR: a silent fallback would have run Turso on
+data the user thought was rusqlite, which is exactly the failure mode the error exists to prevent. A silent swap would
+be worse than an error you have to read once.</p>
+<p>The migration got verified rather than assumed. Standard SQLite files made by the <code>sqlite3</code> CLI 3.46.1, in WAL and in
+rollback journal mode, with non-ASCII text, BLOBs and an index, opened through ePHPm&rsquo;s actual Turso path with
+<code>PRAGMA integrity_check</code> returning <code>ok</code> and every row intact. So a cleanly shut down 0.6.x database upgrades in place, with
+no dump and reload. There are two caveats in the docs: a database with a hot, uncheckpointed <code>-wal</code> left by a crash wasn&rsquo;t
+verified to replay (shut down cleanly before you upgrade), and non-UTF-8 TEXT may not round trip because Turso surfaces
+TEXT as a Rust <code>String</code>.</p>
+<p>v0.7.0 was tagged on 2026-08-18 with <code>turso_core</code> 0.7.2, which includes the #7855 fix. Clustering now always goes through
+the CDC path, and the cluster channel binds whenever SQLite resolves to clustered mode. Windows doesn&rsquo;t have a sqld
+blocker anymore, but clustered on Windows is untested so the docs don&rsquo;t claim it.</p>
+<h3 id="whats-next">What&rsquo;s next</h3>
+<p>The engine is in-process now and so is replication, so one binary is actually one process. But the replication path in
+v0.7.0 has only been exercised the friendly way: bring up nodes, write, watch rows show up. Nobody has killed the primary
+in a test with data on it yet. That, plus the cluster channel that carries the CDC stream, is
+<a href="/blog/2026/09/clustered-sqlite-cdc-cluster-channel/">Part 3</a>.</p>
+<h3 id="links">Links</h3>
+<ul>
+<li><a href="https://github.com/tursodatabase/turso">Turso Database</a> and <a href="https://github.com/tursodatabase/turso/pull/7855">turso#7855</a></li>
+<li><a href="https://github.com/ephpm/ephpm/pull/166">#166 roadmap: Turso engine</a></li>
+<li><a href="https://github.com/ephpm/ephpm/pull/183">#183 Phase 1 engine knob and gate evidence</a></li>
+<li><a href="https://github.com/ephpm/ephpm/pull/188">#188 gate 5: WordPress and Laravel on Turso</a></li>
+<li><a href="https://github.com/ephpm/ephpm/pull/216">#216 Turso vs SQLite, measured</a></li>
+<li><a href="https://github.com/ephpm/ephpm/issues/274">#274 cross-tenant RCE via ATTACH</a></li>
+<li><a href="https://github.com/ephpm/ephpm/pull/278">#278 v0.7.0 Turso only</a></li>
+<li><a href="https://github.com/ephpm/litewire/pull/9">litewire#9 Turso backend</a></li>
+</ul>
+
+      </div>
+      <footer>
+        <div class="stats">
+  
+    <ul class="categories">
+      
+        
+          <li><a class="article-terms-link" href="/categories/ephpm/">ephpm</a></li>
+        
+          <li><a class="article-terms-link" href="/categories/databases/">databases</a></li>
+        
+      
+    </ul>
+  
+  
+    <ul class="tags">
+      
+        
+          <li><a class="article-terms-link" href="/tags/ephpm/">ephpm</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/sqlite/">sqlite</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/turso/">turso</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/rust/">rust</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/benchmarks/">benchmarks</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/php/">php</a></li>
+        
+      
+    </ul>
+  
+</div>
+
+      </footer>
+    </div>
+    
+      
+  
+  <div class='post giscus-wrap'>
+    <script src='https://giscus.app/client.js'
+            data-repo='luthermonson/luth.io'
+            data-repo-id='R_kgDOGvFBXQ'
+            data-category='Announcements'
+            data-category-id='DIC_kwDOGvFBXc4DH_gv'
+            data-mapping='pathname'
+            data-strict='1'
+            data-reactions-enabled='1'
+            data-emit-metadata='0'
+            data-input-position='top'
+            data-theme='light'
+            data-lang='en'
+            data-loading='lazy'
+            crossorigin='anonymous'
+            async>
+    </script>
+  </div>
+  
+
+
+
+    
+  </article>
+  
+    <nav class="post-nav">
+      
+        <a href="/blog/2026/08/ephemerd-one-daemon-every-os/" class="post-nav-link older">
+          <span class="post-nav-label">&larr; Older</span>
+          <span class="post-nav-title">ephemerd: One Daemon, a Fresh Runner Per Job, Every OS</span>
+        </a>
+      
+      
+        <a href="/blog/2026/08/benchmark-4x-wrong-wsl-drvfs-cwd/" class="post-nav-link newer">
+          <span class="post-nav-label">Newer &rarr;</span>
+          <span class="post-nav-title">My Benchmark Was 4x Wrong Because of WSL</span>
+        </a>
+      
+    </nav>
+  
+
+      </main>
+      <section id="site-sidebar">
+  
+    <section id="recent-posts">
+      <header>
+        <h1>Recent Posts</h1>
+      </header>
+      
+      <article class="mini-post">
+          <a href="/blog/2026/10/ephpm-worker-mode-performance/" class="image" style="--bg-image: url('/img/2026/10/ephpm-worker-mode-performance-cover.svg');">
+    <img class="" src="/img/2026/10/ephpm-worker-mode-performance-cover.svg" alt="Diagram: before, hyper/tokio hands each request to one shared bounded channel whose waiter list all 20 PHP threads contend on; after, a dispatcher hands the job straight into the mailbox of the most recently idle PHP thread and only queues it in a FIFO overflow queue when every thread is busy">
+  </a>
+        <header>
+          <h2><a href="/blog/2026/10/ephpm-worker-mode-performance/">Fourth Place in Worker Mode, and Why It Wasn&#39;t PHP</a></h2>
+          <time class="published" datetime="2026-10-16 08:10:00 -0700 PDT">October 16, 2026</time>
+        </header>
+      </article>
+      
+      <article class="mini-post">
+          <a href="/blog/2026/10/ephpm-websockets-how-to/" class="image" style="--bg-image: url('/img/2026/10/ephpm-websockets-how-to-cover.svg');">
+    <img class="" src="/img/2026/10/ephpm-websockets-how-to-cover.svg" alt="Diagram: browsers hold sockets to ePHPm&#39;s Rust session tasks and registry; each connect, message and disconnect runs websocket.php once on the PHP thread pool, and ordinary HTTP requests push through ephpm_ws_broadcast">
+  </a>
+        <header>
+          <h2><a href="/blog/2026/10/ephpm-websockets-how-to/">WebSockets in ePHPm, From Zero to a Working Chat</a></h2>
+          <time class="published" datetime="2026-10-11 17:30:00 -0700 PDT">October 11, 2026</time>
+        </header>
+      </article>
+      
+      <article class="mini-post">
+          <a href="/blog/2026/10/webhooks-out-of-order-scheduler/" class="image" style="--bg-image: url('/img/2026/10/webhooks-out-of-order-scheduler-timeline.svg');">
+    <img class="" src="/img/2026/10/webhooks-out-of-order-scheduler-timeline.svg" alt="Timeline of three same-label jobs where a runner executing a build is destroyed 2.3 seconds before its in_progress webhook arrives">
+  </a>
+        <header>
+          <h2><a href="/blog/2026/10/webhooks-out-of-order-scheduler/">Webhooks Arrive Out of Order: How My Scheduler Killed Live Builds</a></h2>
+          <time class="published" datetime="2026-10-07 21:10:00 -0700 PDT">October 7, 2026</time>
+        </header>
+      </article>
+      
+      <article class="mini-post">
+          <a href="/blog/2026/10/go-proxmox-five-years-to-v0-8/" class="image" style="--bg-image: url('/img/2026/10/go-proxmox-five-years-to-v0-8-apidiff.svg');">
+    <img class="" src="/img/2026/10/go-proxmox-five-years-to-v0-8-apidiff.svg" alt="Horizontal bar chart of apidiff incompatible and compatible changes for every go-proxmox release from v0.1.0 to v0.8.2">
+  </a>
+        <header>
+          <h2><a href="/blog/2026/10/go-proxmox-five-years-to-v0-8/">Breaking Changes Without Breaking Trust: Five Years to go-proxmox v0.8</a></h2>
+          <time class="published" datetime="2026-10-04 19:40:00 -0700 PDT">October 4, 2026</time>
+        </header>
+      </article>
+      
+      <article class="mini-post">
+          <a href="/blog/2026/10/windows-sigterm-sparse-files/" class="image" style="--bg-image: url('/img/2026/10/windows-sigterm-sparse-files-connections.svg');">
+    <img class="" src="/img/2026/10/windows-sigterm-sparse-files-connections.svg" alt="Bar chart: 96 Cloudflare edge connections held by orphaned cloudflared processes versus 4 for the live daemon">
+  </a>
+        <header>
+          <h2><a href="/blog/2026/10/windows-sigterm-sparse-files/">Windows Grab-Bag: SIGTERM That Doesn&#39;t Exist and Sparse Files That Break Docker</a></h2>
+          <time class="published" datetime="2026-10-03 14:30:00 -0700 PDT">October 3, 2026</time>
+        </header>
+      </article>
+      
+      
+        <footer>
+          <a href="/blog" class="button">See More</a>
+        </footer>
+      
+    </section>
+  
+
+  
+    
+
+      <section id="categories">
+        <header>
+          <h1><a href="/categories">Categories</a></h1>
+        </header>
+        <ul>
+          
+          
+          <li>
+              <a href="/categories/ephpm/">ephpm<span class="count">33</span></a>
+          
+          <li>
+              <a href="/categories/go/">go<span class="count">30</span></a>
+          
+          <li>
+              <a href="/categories/php/">php<span class="count">23</span></a>
+          
+          <li>
+              <a href="/categories/rust/">rust<span class="count">15</span></a>
+          
+          <li>
+              <a href="/categories/homelab/">homelab<span class="count">14</span></a>
+          
+          <li>
+              <a href="/categories/windows/">windows<span class="count">14</span></a>
+          
+          <li>
+              <a href="/categories/ci/">ci<span class="count">9</span></a>
+          
+          <li>
+              <a href="/categories/databases/">databases<span class="count">9</span></a>
+          
+          <li>
+              <a href="/categories/security/">security<span class="count">9</span></a>
+          
+          <li>
+              <a href="/categories/containers/">containers<span class="count">7</span></a>
+          
+          <li>
+              <a href="/categories/tools/">tools<span class="count">5</span></a>
+          
+          <li>
+              <a href="/categories/ai-agents/">ai-agents<span class="count">4</span></a>
+          
+          </li>
+        </ul>
+      </section>
+    
+  
+
+  
+    <section id="mini-bio">
+      <header>
+        <h1>About</h1>
+      </header>
+      <p>Luther is a 20+ year software veteran specializing in backend APIs and architecting products. Employed at <a href='https://www.suse.com'>SUSE</a> as the Team Lead for the <a href='https://github.com/rancher/windows/issues'>Containers on Windows Team</a> working on <a href='https://rancher.com/'>Rancher</a> + <a href='https://kubernetes.io/'>Kubernetes</a></p>
+      <footer>
+        <a href="/about" class="button">Learn More</a>
+      </footer>
+    </section>
+  
+</section>
+
+      <footer id="site-footer">
+  
+      <ul class="socnet-icons">
+        
+
+        <li><a href="//github.com/luthermonson" target="_blank" rel="noopener" title="GitHub" class="fab fa-github"></a></li>
+
+
+
+
+
+
+
+
+
+
+
+<li><a href="//www.linkedin.com/in/luthermonson" target="_blank" rel="noopener" title="LinkedIn" class="fab fa-linkedin"></a></li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li><a href="//twitter.com/luthermonson" target="_blank" rel="noopener" title="Twitter" class="fab fa-twitter"></a></li>
+
+
+
+
+
+
+
+
+
+
+
+<li><a href="mailto:luther.monson@gmail.com" target="_blank" title="Email" class="far fa-envelope"></a></li>
+
+      </ul>
+  
+  <p class="copyright">
+    © 2026 Luther Monson
+      <br>
+    Theme: <a href='https://github.com/pacollins/hugo-future-imperfect-slim' target='_blank' rel='noopener'>Hugo Future Imperfect Slim</a><br>A <a href='https://html5up.net/future-imperfect' target='_blank' rel='noopener'>HTML5 UP port</a> | Powered by <a href='https://gohugo.io/' title='0.160.1' target='_blank' rel='noopener'>Hugo</a>
+  </p>
+</footer>
+<a id="back-to-top" href="#" class="fas fa-arrow-up fa-2x"></a>
+
+      <script src="/js/bundle.min.241b62ebc4792fe8c7a75879e5f710894f226f2b73342e9916b3a3b0526030cc.js" integrity="sha256-JBti68R5L&#43;jHp1h55fcQiU8ibytzNC6ZFrOjsFJgMMw="></script>
+    <script src="/js/add-on.js"></script>
+    </div>
+  </body>
+</html>

@@ -1,0 +1,50 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 430" font-family="system-ui, -apple-system, Segoe UI, sans-serif">
+  <rect width="900" height="430" fill="#ffffff"/>
+  <text x="450" y="34" text-anchor="middle" font-size="20" font-weight="600" fill="#222">WD SN550 1 TB: a dynamic (LDM) disk behind a USB bridge</text>
+  <text x="450" y="58" text-anchor="middle" font-size="13" fill="#6b6b6b">GPT partitions, not to scale</text>
+
+  <!-- partition bar -->
+  <g font-size="12">
+    <rect x="30" y="80" width="70" height="80" fill="#f2f2f2" stroke="#6b6b6b"/>
+    <text x="65" y="112" text-anchor="middle" fill="#333">EFI</text><text x="65" y="130" text-anchor="middle" fill="#6b6b6b">100 MB</text>
+
+    <rect x="100" y="80" width="70" height="80" fill="#fff4e8" stroke="#e07a1f" stroke-width="2"/>
+    <text x="135" y="106" text-anchor="middle" fill="#e07a1f" font-weight="600">LDM</text><text x="135" y="122" text-anchor="middle" fill="#e07a1f" font-weight="600">Metadata</text><text x="135" y="140" text-anchor="middle" fill="#6b6b6b">1 MB</text>
+
+    <rect x="170" y="80" width="70" height="80" fill="#f2f2f2" stroke="#6b6b6b"/>
+    <text x="205" y="112" text-anchor="middle" fill="#333">MSR</text><text x="205" y="130" text-anchor="middle" fill="#6b6b6b">15 MB</text>
+
+    <rect x="240" y="80" width="460" height="80" fill="#eaf1f8" stroke="#2b6cb0" stroke-width="2"/>
+    <text x="470" y="108" text-anchor="middle" fill="#2b6cb0" font-size="15" font-weight="600">LDM Data: 930.3 GiB</text>
+    <text x="470" y="130" text-anchor="middle" fill="#333" font-size="13">NTFS boot sector at offset +0, NTFS size == partition size</text>
+    <text x="470" y="148" text-anchor="middle" fill="#333" font-size="13">a simple volume: mountable directly as /dev/sdX4</text>
+
+    <rect x="700" y="80" width="80" height="80" fill="#fff4e8" stroke="#e07a1f" stroke-width="2"/>
+    <text x="740" y="106" text-anchor="middle" fill="#e07a1f" font-weight="600">LDM</text><text x="740" y="122" text-anchor="middle" fill="#e07a1f" font-weight="600">Data</text><text x="740" y="140" text-anchor="middle" fill="#6b6b6b">660 KB</text>
+
+    <rect x="780" y="80" width="90" height="80" fill="#f2f2f2" stroke="#6b6b6b"/>
+    <text x="825" y="112" text-anchor="middle" fill="#333">Recovery</text><text x="825" y="130" text-anchor="middle" fill="#6b6b6b">1.1 GB</text>
+  </g>
+
+  <text x="135" y="186" text-anchor="middle" font-size="11" fill="#e07a1f">5808C8AA-...</text>
+  <text x="470" y="186" text-anchor="middle" font-size="11" fill="#2b6cb0">AF9B60A0-1431-4F62-BC68-3311714A69AD</text>
+
+  <!-- two paths -->
+  <rect x="30" y="220" width="400" height="160" rx="8" fill="#fbeaea" stroke="#c0392b" stroke-width="2"/>
+  <text x="230" y="246" text-anchor="middle" font-size="15" font-weight="600" fill="#c0392b">Windows storage stack (USB bus)</text>
+  <text x="50" y="272" font-size="13" fill="#333">Win32_DiskDrive: disk present, Status OK</text>
+  <text x="50" y="294" font-size="13" fill="#333">diskpart: Invalid, Dyn</text>
+  <text x="50" y="316" font-size="13" fill="#333">Get-Disk / MSFT_Disk: not listed</text>
+  <text x="50" y="338" font-size="13" fill="#333">wsl --mount: ERROR_FILE_NOT_FOUND</text>
+  <text x="50" y="360" font-size="13" fill="#6b6b6b">Dynamic disks are not brought online over USB</text>
+
+  <rect x="470" y="220" width="400" height="160" rx="8" fill="#eaf6ee" stroke="#3a9a5b" stroke-width="2"/>
+  <text x="670" y="246" text-anchor="middle" font-size="15" font-weight="600" fill="#3a9a5b">usbipd-win -&gt; WSL2 Linux kernel</text>
+  <text x="490" y="272" font-size="13" fill="#333">usbipd bind (x3) + attach --wsl</text>
+  <text x="490" y="294" font-size="13" fill="#333">GPT parsed, type GUIDs ignored</text>
+  <text x="490" y="316" font-size="13" fill="#333">lsblk: sdX4 FSTYPE=ntfs</text>
+  <text x="490" y="338" font-size="13" fill="#333">mount -o ro -t ntfs-3g /dev/sdX4 /mnt/old</text>
+  <text x="490" y="360" font-size="13" fill="#6b6b6b">browse at \\wsl.localhost\Ubuntu\mnt\old</text>
+
+  <text x="450" y="412" text-anchor="middle" font-size="12" fill="#6b6b6b">Sizes from the partition table read off the drive; GUIDs are the standard LDM partition types.</text>
+</svg>

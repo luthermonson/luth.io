@@ -1,0 +1,749 @@
+<!doctype html>
+<html lang="en">
+  <head>
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-MSTSKGFWTX"></script>
+<script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+
+    gtag('config', 'G-MSTSKGFWTX');
+</script><meta charset="utf-8">
+<title>Requests That End Wrong: A 200 That Was Really a Crash - Luther Monson</title>
+<meta name="description" content="Three ePHPm bugs in how an embedded PHP request starts and ends: a bailout that returned 200, an empty $_POST, and a SIGTERM that corrupted the heap.">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<meta name="twitter:card" content="summary_large_image"><meta name="twitter:site" content="@luthermonson">
+
+<meta property="og:site_name" content="Luther Monson">
+<meta property="og:title" content="Requests That End Wrong: A 200 That Was Really a Crash">
+<meta property="og:description" content="Three ePHPm bugs in how an embedded PHP request starts and ends: a bailout that returned 200, an empty $_POST, and a SIGTERM that corrupted the heap.">
+<meta property="og:type" content="article">
+<meta property="og:url" content="https://luth.io/blog/2026/08/requests-that-end-wrong/">
+    <meta property="og:image" content="https://luth.io/img/2026/08/requests-that-end-wrong-cover.svg">
+    <meta property="og:image:alt" content="Diagram of a bare zend_bailout being absorbed by php_execute_script&#39;s own zend_try instead of reaching ePHPm&#39;s guard">
+
+
+  <link rel="manifest" href="/favicon/site.webmanifest?v=1">
+  <link rel="apple-touch-icon" sizes="180x180" href="/favicon/apple-touch-icon.png?v=1">
+  <link rel="icon" type="image/png" sizes="32x32" href="/favicon/favicon-32x32.png?v=1">
+  <link rel="icon" type="image/png" sizes="16x16" href="/favicon/favicon-16x16.png?v=1">
+  
+    <link rel="mask-icon" href="/favicon/safari-pinned-tab.svg?v=1" color="#ffffff">
+    <link rel="shortcut icon" href="/favicon/favicon.ico?v=1">
+    <meta name="msapplication-config" content="/favicon/browserconfig.xml?v=1">
+  
+  <meta name="msapplication-TileColor" content="#ffffff">
+  <meta name="theme-color" content="#ffffff">
+
+
+  <meta name="generator" content="Hugo 0.160.1">
+  <link rel="alternate" type="application/rss+xml" href="https://luth.io/index.xml" title="Luther Monson">
+  <link rel="stylesheet" href="/css/bundle.min.e1ffed86714fbb7eff75eab221c0c61b8260be0c7d1c08db0fcb7a2bdb6af7c9.css" integrity="sha256-4f/thnFPu37/deqyIcDGG4Jgvgx9HAjbD8t6K9tq98k="><link rel="stylesheet" href="/css/add-on.css">
+        <link rel="stylesheet" href="/css/code.css">
+        <link rel="stylesheet" href="/css/mobile.css">
+</head>
+
+  <body>
+    
+
+<header id="site-header">
+  <nav id="site-nav">
+    <h1 class="nav-title">
+      <a href="/" class="nav">
+        <img class="nav-avatar" src="/img/luther-monson-headshot.jpg" alt="" width="32" height="32">
+        
+          Blog
+        
+      </a>
+    </h1>
+    <menu id="site-nav-menu" class="flyout-menu menu">
+      
+        
+          
+          <a href="/" class="nav link"><i class='fa fa-home'></i> Home</a>
+        
+      
+        
+          
+          <a href="/about" class="nav link"><i class='far fa-id-card'></i> About</a>
+        
+      
+        
+          
+          <a href="/blog" class="nav link"><i class='far fa-newspaper'></i> Blog</a>
+        
+      
+        
+          
+          <a href="/archive" class="nav link"><i class='far fa-calendar-alt'></i> Archive</a>
+        
+      
+        
+          
+          <a href="/categories" class="nav link"><i class='fas fa-sitemap'></i> Categories</a>
+        
+      
+      <a href="#share-menu" class="nav link share-toggle"><i class="fas fa-share-alt">&nbsp;</i>Share</a>
+      <a href="#search-input" class="nav link search-toggle"><i class="fas fa-search">&nbsp;</i>Search</a>
+    </menu>
+    <a href="#search-input" class="nav search-toggle"><i class="fas fa-search fa-2x">&nbsp;</i></a>
+    <a href="#share-menu" class="nav share-toggle"><i class="fas fa-share-alt fa-2x">&nbsp;</i></a>
+    
+    <a href="#site-nav" class="nav nav-toggle"><i class="fas fa-bars fa-2x"></i></a>
+  </nav>
+  <menu id="search" class="menu"><input id="search-input" class="search-input menu"></input><div id="search-results" class="search-results menu"></div></menu>
+  
+  
+    <menu id="share-menu" class="flyout-menu menu">
+      <h1>Share Post</h1>
+      
+
+
+
+
+  
+    
+    <a href="//twitter.com/share?text=Requests%20That%20End%20Wrong%3a%20A%20200%20That%20Was%20Really%20a%20Crash&amp;url=https%3a%2f%2fluth.io%2fblog%2f2026%2f08%2frequests-that-end-wrong%2f" target="_blank" rel="noopener" class="nav share-btn twitter">
+        <p>Twitter</p>
+      </a>
+  
+
+  
+      <a href="//www.facebook.com/sharer/sharer.php?u=https%3a%2f%2fluth.io%2fblog%2f2026%2f08%2frequests-that-end-wrong%2f" target="_blank" rel="noopener" class="nav share-btn facebook">
+        <p>Facebook</p>
+        </a>
+  
+
+  
+    <a href="//www.reddit.com/submit?url=https%3a%2f%2fluth.io%2fblog%2f2026%2f08%2frequests-that-end-wrong%2f&amp;title=Requests%20That%20End%20Wrong%3a%20A%20200%20That%20Was%20Really%20a%20Crash" target="_blank" rel="noopener" class="nav share-btn reddit">
+          <p>Reddit</p>
+        </a>
+  
+
+  
+        <a href="//www.linkedin.com/shareArticle?url=https%3a%2f%2fluth.io%2fblog%2f2026%2f08%2frequests-that-end-wrong%2f&amp;title=Requests%20That%20End%20Wrong%3a%20A%20200%20That%20Was%20Really%20a%20Crash" target="_blank" rel="noopener" class="nav share-btn linkedin">
+            <p>LinkedIn</p>
+          </a>
+  
+
+  
+        <a href="//www.pinterest.com/pin/create/button/?url=https%3a%2f%2fluth.io%2fblog%2f2026%2f08%2frequests-that-end-wrong%2f&amp;description=Requests%20That%20End%20Wrong%3a%20A%20200%20That%20Was%20Really%20a%20Crash" target="_blank" rel="noopener" class="nav share-btn pinterest">
+          <p>Pinterest</p>
+        </a>
+  
+
+  
+        <a href="mailto:?subject=Check%20out%20this%20post%20by Luther%20Monson&amp;body=https%3a%2f%2fluth.io%2fblog%2f2026%2f08%2frequests-that-end-wrong%2f" target="_blank" class="nav share-btn email" data-proofer-ignore>
+          <p>Email</p>
+        </a>
+  
+
+
+    </menu>
+  
+</header>
+
+    <div id="wrapper">
+      <section id="site-intro" class="hidden-single-column">
+  <a href="/"><img src="/img/luther-monson-headshot.jpg" class="circle" width="100" alt="Luther Monson, Staff Software Engineer at SUSE" /></a>
+  <header>
+    <h1>Luther Monson</h1>
+  </header>
+  <main>
+    <p>Go by way of PHP &middot; Containers &middot; VMs &middot; Windows &middot; Kubernetes</p>
+  </main>
+  
+    <footer>
+      <ul class="socnet-icons">
+        
+
+        <li><a href="//github.com/luthermonson" target="_blank" rel="noopener" title="GitHub" class="fab fa-github"></a></li>
+
+
+
+
+
+
+
+
+
+
+
+<li><a href="//www.linkedin.com/in/luthermonson" target="_blank" rel="noopener" title="LinkedIn" class="fab fa-linkedin"></a></li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li><a href="//twitter.com/luthermonson" target="_blank" rel="noopener" title="Twitter" class="fab fa-twitter"></a></li>
+
+
+
+
+
+
+
+
+
+
+
+<li><a href="mailto:luther.monson@gmail.com" target="_blank" title="Email" class="far fa-envelope"></a></li>
+
+      </ul>
+    </footer>
+  
+</section>
+
+      <main id="site-main">
+        
+  <article>
+    <div class="post">
+      <header>
+  <div class="title">
+    
+      <h2><a href="/blog/2026/08/requests-that-end-wrong/">Requests That End Wrong: A 200 That Was Really a Crash</a></h2>
+    
+    
+      <p>Three ePHPm bugs in how an embedded PHP request starts and ends: a bailout that returned 200, an empty $_POST, and a SIGTERM that corrupted the heap.</p>
+    
+  </div>
+  <div class="meta">
+    <time datetime="2026-08-13 21:14:00 -0700 PDT">August 13, 2026</time>
+    
+    <p>10-Minute Read</p>
+  </div>
+</header>
+
+      <div id="socnet-share">
+        
+
+
+
+
+  
+    
+    <a href="//twitter.com/share?text=Requests%20That%20End%20Wrong%3a%20A%20200%20That%20Was%20Really%20a%20Crash&amp;url=https%3a%2f%2fluth.io%2fblog%2f2026%2f08%2frequests-that-end-wrong%2f" target="_blank" rel="noopener" class="nav share-btn twitter">
+        <p>Twitter</p>
+      </a>
+  
+
+  
+      <a href="//www.facebook.com/sharer/sharer.php?u=https%3a%2f%2fluth.io%2fblog%2f2026%2f08%2frequests-that-end-wrong%2f" target="_blank" rel="noopener" class="nav share-btn facebook">
+        <p>Facebook</p>
+        </a>
+  
+
+  
+    <a href="//www.reddit.com/submit?url=https%3a%2f%2fluth.io%2fblog%2f2026%2f08%2frequests-that-end-wrong%2f&amp;title=Requests%20That%20End%20Wrong%3a%20A%20200%20That%20Was%20Really%20a%20Crash" target="_blank" rel="noopener" class="nav share-btn reddit">
+          <p>Reddit</p>
+        </a>
+  
+
+  
+        <a href="//www.linkedin.com/shareArticle?url=https%3a%2f%2fluth.io%2fblog%2f2026%2f08%2frequests-that-end-wrong%2f&amp;title=Requests%20That%20End%20Wrong%3a%20A%20200%20That%20Was%20Really%20a%20Crash" target="_blank" rel="noopener" class="nav share-btn linkedin">
+            <p>LinkedIn</p>
+          </a>
+  
+
+  
+        <a href="//www.pinterest.com/pin/create/button/?url=https%3a%2f%2fluth.io%2fblog%2f2026%2f08%2frequests-that-end-wrong%2f&amp;description=Requests%20That%20End%20Wrong%3a%20A%20200%20That%20Was%20Really%20a%20Crash" target="_blank" rel="noopener" class="nav share-btn pinterest">
+          <p>Pinterest</p>
+        </a>
+  
+
+  
+        <a href="mailto:?subject=Check%20out%20this%20post%20by Luther%20Monson&amp;body=https%3a%2f%2fluth.io%2fblog%2f2026%2f08%2frequests-that-end-wrong%2f" target="_blank" class="nav share-btn email" data-proofer-ignore>
+          <p>Email</p>
+        </a>
+  
+
+
+      </div>
+      <div class="content">
+        
+        <p>The scariest response a server can send isn&rsquo;t a 500. It&rsquo;s a 200 that should have been a 500. A crash is loud: the
+pod restarts, an alert fires, somebody looks. A truncated page with a success status code gets cached by your CDN,
+the health check calls the box healthy, and a client parses half a document as if it were the whole thing.</p>
+<p><a href="https://github.com/ephpm/ephpm">ePHPm</a> embeds PHP inside a Rust server, so we own the part of PHP that php-fpm
+normally owns: starting a request, running the script, and ending it. Over the last couple of months I&rsquo;ve fixed three
+bugs that all live in that start-and-end code, and none of them were in the SAPI I/O callbacks (<code>ub_write</code>,
+<code>read_post</code> and friends) where you&rsquo;d expect to find embed bugs. They were in the Zend request lifecycle and in TSRM
+teardown, which is code you never touch when you run PHP behind php-fpm.</p>
+<p>Versions for context: PHP 8.5.7 ZTS from our static SDK, ePHPm around v0.6.x.</p>
+<h3 id="a-bare-zend_bailout-came-back-as-http-200">A bare zend_bailout() came back as HTTP 200</h3>
+<p>Here is what a script terminated by a bare <code>zend_bailout()</code> returned, against a real PHP-linked release build with a
+small shared ZTS extension I use for fault injection:</p>
+<pre tabindex="0"><code>HTTP/1.1 200 OK
+content-type: text/html; charset=UTF-8
+content-length: 31
+
+calling ephpm_crash(&#39;bailout&#39;)
+</code></pre><p>Thirty-one bytes, status 200, and nothing in the server log. <code>zend_bailout()</code> is PHP&rsquo;s &ldquo;abandon this request&rdquo; escape
+hatch. It&rsquo;s a <code>longjmp</code> to the nearest <code>zend_try</code>. You don&rsquo;t call it from userland, but C extensions, resource limits
+and OPcache can raise it directly, and a fatal <code>zend_error(E_ERROR)</code> uses it too.</p>
+<p>ePHPm already had a guard for this. The C wrapper puts its own <code>SETJMP</code> around the script, and the Rust side turns a
+bailout into a 500:</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-c" data-lang="c"><span class="line"><span class="cl"><span class="nf">EG</span><span class="p">(</span><span class="n">bailout</span><span class="p">)</span> <span class="o">=</span> <span class="o">&amp;</span><span class="n">__bailout</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl"><span class="k">if</span> <span class="p">(</span><span class="nf">SETJMP</span><span class="p">(</span><span class="n">__bailout</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">)</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">    <span class="n">zend_file_handle</span> <span class="n">file_handle</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">    <span class="nf">zend_stream_init_filename</span><span class="p">(</span><span class="o">&amp;</span><span class="n">file_handle</span><span class="p">,</span> <span class="n">filename</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">    <span class="nf">php_execute_script</span><span class="p">(</span><span class="o">&amp;</span><span class="n">file_handle</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl"><span class="p">}</span> <span class="k">else</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">    <span class="n">result</span> <span class="o">=</span> <span class="n">EPHPM_EXEC_BAILOUT</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl"><span class="p">}</span>
+</span></span><span class="line"><span class="cl"><span class="nf">EG</span><span class="p">(</span><span class="n">bailout</span><span class="p">)</span> <span class="o">=</span> <span class="n">__orig_bailout</span><span class="p">;</span>
+</span></span></code></pre></div><p>It looked like it worked, because fatals came back as 500s. The trouble is <em>which</em> fatals. <code>php_execute_script()</code>
+wraps the compile and execute in its <strong>own</strong> <code>zend_try</code> / <code>zend_end_try</code>, and <code>zend_end_try</code> does not re-raise. It
+restores <code>EG(bailout)</code> and falls through. So a bailout raised anywhere inside the script gets absorbed one frame
+below us and never reaches our <code>SETJMP</code>. Our <code>else</code> branch only ever ran for a bailout raised <em>outside</em>
+<code>php_execute_script</code>, which basically never happens.</p>
+<p>So why did the other fatals return 500? Different signal. There was a second check on <code>PG(last_error_type)</code>, and
+anything routed through <code>zend_error()</code> sets it: <code>E_ERROR</code>, parse errors, an uncaught <code>Throwable</code>. A bare
+<code>zend_bailout()</code> sets no error type at all. It just jumps.</p>
+<h3 id="cgunclean_shutdown-is-the-signal-that-cant-be-absorbed">CG(unclean_shutdown) is the signal that can&rsquo;t be absorbed</h3>
+<p>I went looking for something the engine writes on <em>every</em> bailout, no matter which <code>zend_try</code> ends up catching it.
+That&rsquo;s <code>CG(unclean_shutdown)</code>. <code>_zend_bailout()</code> sets it to 1 unconditionally, right before the <code>LONGJMP</code>, and
+nothing else in the engine writes it. <code>init_compiler()</code> clears it per request, and we clear it again ourselves before
+running the script so a value can never leak over from the previous request on a reused thread:</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-c" data-lang="c"><span class="line"><span class="cl"><span class="cm">/* _zend_bailout() sets CG(unclean_shutdown) = 1 immediately before its
+</span></span></span><span class="line"><span class="cl"><span class="cm"> * LONGJMP, unconditionally and regardless of which zend_try catches it, and
+</span></span></span><span class="line"><span class="cl"><span class="cm"> * nothing else in the engine sets that flag. */</span>
+</span></span><span class="line"><span class="cl"><span class="cp">#define ephpm_bailout_reset()    (CG(unclean_shutdown) = 0)
+</span></span></span><span class="line"><span class="cl"><span class="cp">#define ephpm_bailout_observed() (CG(unclean_shutdown) != 0)
+</span></span></span></code></pre></div><p>Then the decision after the script (and after shutdown functions and output buffers are flushed, since a bailout in
+either of those truncates the response too):</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-c" data-lang="c"><span class="line"><span class="cl"><span class="kt">int</span> <span class="n">fatal_error_mask</span> <span class="o">=</span> <span class="n">E_ERROR</span> <span class="o">|</span> <span class="n">E_CORE_ERROR</span> <span class="o">|</span> <span class="n">E_COMPILE_ERROR</span>
+</span></span><span class="line"><span class="cl">                       <span class="o">|</span> <span class="n">E_USER_ERROR</span> <span class="o">|</span> <span class="n">E_RECOVERABLE_ERROR</span> <span class="o">|</span> <span class="n">E_PARSE</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl"><span class="k">if</span> <span class="p">(</span><span class="nf">ephpm_bailout_observed</span><span class="p">())</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">    <span class="n">response_status_code</span> <span class="o">=</span> <span class="mi">500</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">    <span class="n">result</span> <span class="o">=</span> <span class="n">EPHPM_EXEC_BAILOUT</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl"><span class="p">}</span> <span class="k">else</span> <span class="k">if</span> <span class="p">((</span><span class="nf">PG</span><span class="p">(</span><span class="n">last_error_type</span><span class="p">)</span> <span class="o">&amp;</span> <span class="n">fatal_error_mask</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">           <span class="o">&amp;&amp;</span> <span class="n">response_status_code</span> <span class="o">==</span> <span class="mi">200</span><span class="p">)</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">    <span class="n">response_status_code</span> <span class="o">=</span> <span class="mi">500</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl"><span class="p">}</span>
+</span></span></code></pre></div><p>The two branches deliberately have different rules. A bailout forces a 500 <em>unconditionally</em>: it&rsquo;s never something a
+script asks for (PHP 8&rsquo;s <code>exit()</code> throws an unwind-exit exception instead of bailing out), so any status the script
+set earlier describes a response it never finished producing. The <code>last_error_type</code> branch only overrides a default
+200, because a framework&rsquo;s own error handler legitimately sets its status before the engine records the fatal.</p>
+<h3 id="the-rule-never-complete-a-response-for-a-script-that-bailed-out">The rule: never complete a response for a script that bailed out</h3>
+<p>Forcing the status isn&rsquo;t enough, because what you do with the partial body depends on whether it already went out the
+door. That split falls out of ePHPm&rsquo;s two execution modes:</p>
+<ul>
+<li><strong>Per-request (fpm-style) mode</strong> buffers the whole response before it reaches the wire. So on a bailout it&rsquo;s still
+ours to throw away: force the 500, discard the truncated body <em>and</em> the script&rsquo;s headers, and log the script,
+method, URI, discarded byte count and the tail of the discarded output at <code>ERROR</code>.</li>
+<li><strong>Worker mode, headers not sent yet</strong>: same thing. The worker stops building a response from the capture buffers and
+the supervisor answers 500.</li>
+<li><strong>Worker mode, headers already sent</strong>: this is the case that needs thought. A streamed response has already told the
+client <code>200</code>, and you can&rsquo;t take that back. So the response gets <em>deliberately broken</em>. Worker streaming uses
+<code>Transfer-Encoding: chunked</code>; a flag is set before the chunk sender is dropped, and the hyper body stream reads it
+at end-of-channel and ends the body with an <code>io::Error</code>. hyper then never writes the terminating zero-length chunk.</li>
+</ul>
+<p>That last one was the sneakiest part of the original bug. Before the fix, the flushed case just dropped the sender,
+which on the wire is byte-for-byte identical to a finished download. With the body broken, curl exits 18 (&ldquo;transfer
+closed with outstanding read data remaining&rdquo;) and a cache won&rsquo;t store it. The before and after from the
+fault-injection lab:</p>
+<table>
+  <thead>
+      <tr>
+          <th>Probe</th>
+          <th>Before</th>
+          <th>After</th>
+      </tr>
+  </thead>
+  <tbody>
+      <tr>
+          <td>bare <code>zend_bailout()</code></td>
+          <td>200, 31-byte truncated body, no log</td>
+          <td>500, body discarded, <code>ERROR</code> log with output tail</td>
+      </tr>
+      <tr>
+          <td><code>zend_error(E_ERROR)</code></td>
+          <td>500</td>
+          <td>500</td>
+      </tr>
+      <tr>
+          <td>uncaught <code>Throwable</code></td>
+          <td>500 + fatal text</td>
+          <td>500 + fatal text</td>
+      </tr>
+      <tr>
+          <td>worker, bailout mid-stream</td>
+          <td>clean 200, curl exit 0</td>
+          <td>first chunk delivered, no terminating chunk, curl exit 18</td>
+      </tr>
+  </tbody>
+</table>
+<p>There&rsquo;s one user-visible change beyond the bug. Fatals that do bail out (memory limit, <code>E_USER_ERROR</code>) used to come
+back as a 500 <em>with</em> the partial output and PHP&rsquo;s fatal text in the body. Now that text goes to the server log
+instead and the client gets a generic 500. That follows the rule, and I&rsquo;m fine with it: a half-rendered page with a
+stack trace glued to the bottom isn&rsquo;t something I want to send anybody. That&rsquo;s
+<a href="https://github.com/ephpm/ephpm/pull/255">ephpm#255</a>.</p>
+<h3 id="earlier-_post-was-empty-and-status-codes-leaked-between-requests">Earlier: $_POST was empty and status codes leaked between requests</h3>
+<p>The bailout bug has a cousin from back in June, from when ePHPm first started running a real
+<code>php_request_shutdown()</code> / <code>php_request_startup()</code> cycle per request
+(<a href="https://github.com/ephpm/ephpm/pull/104">ephpm#104</a>). Before that, a reused thread kept its user functions, classes
+and globals across requests, and vanilla WordPress only rendered the first request per thread.</p>
+<p>Moving to a real per-request cycle exposed two problems in the code around it. The first was a SIGSEGV under load.
+The old wrapper rebuilt the superglobals by hand after startup, which was fine when startup didn&rsquo;t run per request.
+Once it did, the hand-rolled rebuild destroyed the <code>PG(http_globals)</code> arrays startup had just created and re-ran
+<code>treat_data</code> over them: a use-after-free that faulted on tokio&rsquo;s blocking threads under load. The fix was to delete
+the rebuild, fill in <code>SG(request_info)</code> <em>before</em> <code>php_request_startup()</code>, and let PHP build the superglobals itself,
+the way php-fpm does.</p>
+<p>That&rsquo;s when <code>$_POST</code> went empty. <code>php://input</code> still worked, but <code>$_POST</code> stayed empty for every form post. The
+reason is a gate in <code>sapi_activate()</code>: it only reads and parses the POST body into <code>$_POST</code> when
+<code>SG(server_context)</code> is non-NULL. That&rsquo;s how PHP tells a real request apart from a CLI run, and the embed SAPI never
+sets it. Our callbacks don&rsquo;t use that pointer at all, so the fix is a sentinel:</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-c" data-lang="c"><span class="line"><span class="cl"><span class="cm">/* sapi_activate() only reads and parses the POST body into $_POST when
+</span></span></span><span class="line"><span class="cl"><span class="cm"> * SG(server_context) is non-NULL. A stable non-NULL sentinel is all that&#39;s
+</span></span></span><span class="line"><span class="cl"><span class="cm"> * needed to enable native POST parsing. */</span>
+</span></span><span class="line"><span class="cl"><span class="nf">SG</span><span class="p">(</span><span class="n">server_context</span><span class="p">)</span> <span class="o">=</span> <span class="o">&amp;</span><span class="n">ephpm_server_context_marker</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="k">if</span> <span class="p">(</span><span class="nf">php_request_startup</span><span class="p">()</span> <span class="o">!=</span> <span class="n">SUCCESS</span><span class="p">)</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">    <span class="k">return</span> <span class="n">EPHPM_EXEC_STARTUP_FAIL</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl"><span class="p">}</span>
+</span></span></code></pre></div><p>The value is never dereferenced. It only has to be non-NULL.</p>
+<p>The same PR caught a status leak: <code>http_response_code</code> isn&rsquo;t reset by request startup (the reset in <code>sapi_activate()</code>
+is commented out in php-src), so a <code>201</code> (or a <code>500</code> from a fatal) on one request could come back on the next <code>200</code>
+served by the same thread. Resetting it, <code>headers_sent</code> and <code>no_headers</code> after startup fixed it, and a 40-way concurrent e2e test now checks that
+every request sees fresh per-request state.</p>
+<h3 id="sigterm-after-wordpress-zend_mm_heap-corrupted">SIGTERM after WordPress: zend_mm_heap corrupted</h3>
+<p>The last one is about how the <em>process</em> ends, and it was deterministic: serve a few WordPress pages, send SIGTERM, and
+every shutdown died with <code>zend_mm_heap corrupted</code> and exit code 134. Plain docroots never tripped it. The fatal-signal
+reporter I&rsquo;d added a few days before (<a href="https://github.com/ephpm/ephpm/pull/253">ephpm#253</a>) symbolized the chain, which
+is the only reason this took an afternoon instead of a week:</p>
+<pre tabindex="0"><code>PhpRuntime::shutdown -&gt; php_embed_shutdown -&gt; php_module_shutdown
+  -&gt; module_destructor -&gt; ts_free_id -&gt; (pcre GSHUTDOWN)
+  -&gt; zend_string_release_ex -&gt; _efree -&gt; zend_mm_panic
+</code></pre><p>Under ZTS, every thread that registers with TSRM is supposed to free its own slot with <code>ts_free_thread()</code>, <em>on that
+thread</em>, before the main thread runs <code>php_module_shutdown()</code>. ePHPm registered its PHP threads and never unregistered
+them. On top of that, a thread&rsquo;s last request stayed open, because request teardown was lazy (it ran at the top of
+the thread&rsquo;s <em>next</em> request), so <code>PHP_RSHUTDOWN(pcre)</code> never ran for it.</p>
+<p>WordPress is what made it fatal. PHP&rsquo;s pcre extension caches compiled patterns per thread, and for patterns with named
+subpatterns it also caches the group names as request-lifetime strings, <code>emalloc</code>&rsquo;d on the compiling thread&rsquo;s own
+Zend MM heap. WordPress compiles named-group regexes on every serving thread. At shutdown, <code>ts_free_id()</code> walks
+<em>every</em> thread&rsquo;s TSRM entry and runs pcre&rsquo;s global shutdown for each copy <em>on the main thread</em>. So the main thread
+<code>efree</code>s a pointer that belongs to worker thread X&rsquo;s heap, and the allocator panics.</p>
+<p>You can&rsquo;t fix that by running module shutdown on &ldquo;the right thread&rdquo;, because the strings belong to N different heaps.
+The fix is the mirror image of how init works (init is pinned to a single-threaded phase before tokio starts, and
+shutdown now goes back to one):</p>
+<ol>
+<li>Every PHP thread retires its own TSRM slot at thread exit. A thread-local guard&rsquo;s <code>Drop</code> runs
+<code>php_request_shutdown()</code> + <code>ts_free_thread()</code> on the exiting thread, so request-lifetime state is freed into the
+heap that allocated it.</li>
+<li>Global shutdown waits until every PHP thread is gone:</li>
+</ol>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-rust" data-lang="rust"><span class="line"><span class="cl"><span class="c1">// Drop the runtime BEFORE tearing down PHP (issue #266). Dropping joins
+</span></span></span><span class="line"><span class="cl"><span class="c1">// every worker and blocking-pool thread; each PHP-registered blocking
+</span></span></span><span class="line"><span class="cl"><span class="c1">// thread&#39;s TLS guard then runs php_request_shutdown + ts_free_thread on
+</span></span></span><span class="line"><span class="cl"><span class="c1">// the thread itself.
+</span></span></span><span class="line"><span class="cl"><span class="nb">drop</span><span class="p">(</span><span class="n">rt</span><span class="p">);</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="c1">// Shutdown PHP runtime: all PHP threads are gone, only the main
+</span></span></span><span class="line"><span class="cl"><span class="c1">// thread&#39;s TSRM entry remains.
+</span></span></span><span class="line"><span class="cl"><span class="n">ephpm_php</span>::<span class="n">PhpRuntime</span>::<span class="n">shutdown</span><span class="p">().</span><span class="n">context</span><span class="p">(</span><span class="s">&#34;failed to shutdown PHP runtime&#34;</span><span class="p">)</span><span class="o">?</span><span class="p">;</span><span class="w">
+</span></span></span></code></pre></div><p>Before: 3 of 3 runs exited 134. After: 3 of 3 exited 0, in both per-request and worker mode. That&rsquo;s
+<a href="https://github.com/ephpm/ephpm/pull/268">ephpm#268</a>. It matters more than it sounds: on Kubernetes, every rolling
+restart was logging a crash, and exit-code alerting can&rsquo;t tell &ldquo;crashed during graceful shutdown&rdquo; from &ldquo;crashed&rdquo;.</p>
+<h3 id="what-the-three-have-in-common">What the three have in common</h3>
+<p>All three bugs are about the edges of a request: the instant it starts, the instant the script stops, the instant the
+thread or the process goes away. php-fpm handles those edges for you, and when you embed PHP you inherit them. The
+documentation for this part of PHP is mostly the source, so the fixes all came from reading <code>main.c</code>, <code>SAPI.c</code>,
+<code>zend.c</code> and <code>TSRM.c</code> until the behavior made sense.</p>
+<p>The pattern I&rsquo;m taking from it: for each of these, find the one piece of engine state that&rsquo;s written on every path
+(<code>CG(unclean_shutdown)</code>, a non-NULL <code>SG(server_context)</code>, &ldquo;this thread freed its own slot&rdquo;) and key off that, instead of
+off whatever flag happens to be set on the path you tested.</p>
+<h3 id="links">Links</h3>
+<ul>
+<li><a href="https://github.com/ephpm/ephpm/pull/255">ephpm#255</a> - a bare <code>zend_bailout()</code> returned HTTP 200 with a truncated body</li>
+<li><a href="https://github.com/ephpm/ephpm/pull/104">ephpm#104</a> - per-request state isolation, the <code>$_POST</code> sentinel and the status leak</li>
+<li><a href="https://github.com/ephpm/ephpm/issues/266">ephpm#266</a> / <a href="https://github.com/ephpm/ephpm/pull/268">ephpm#268</a> - SIGTERM after WordPress aborted with <code>zend_mm_heap corrupted</code></li>
+<li><a href="https://github.com/ephpm/ephpm/pull/253">ephpm#253</a> - the async-signal-safe fatal-signal reporter that symbolized the shutdown crash</li>
+<li>PHP source: <a href="https://github.com/php/php-src/blob/master/Zend/zend.c"><code>Zend/zend.c</code></a> (<code>_zend_bailout</code>), <a href="https://github.com/php/php-src/blob/master/main/SAPI.c"><code>main/SAPI.c</code></a> (<code>sapi_activate</code>), <a href="https://github.com/php/php-src/blob/master/TSRM/TSRM.c"><code>TSRM/TSRM.c</code></a> (<code>ts_free_id</code>, <code>ts_free_thread</code>)</li>
+</ul>
+
+      </div>
+      <footer>
+        <div class="stats">
+  
+    <ul class="categories">
+      
+        
+          <li><a class="article-terms-link" href="/categories/ephpm/">ephpm</a></li>
+        
+          <li><a class="article-terms-link" href="/categories/php/">php</a></li>
+        
+          <li><a class="article-terms-link" href="/categories/rust/">rust</a></li>
+        
+      
+    </ul>
+  
+  
+    <ul class="tags">
+      
+        
+          <li><a class="article-terms-link" href="/tags/php/">php</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/rust/">rust</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/ephpm/">ephpm</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/zend/">zend</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/debugging/">debugging</a></li>
+        
+      
+    </ul>
+  
+</div>
+
+      </footer>
+    </div>
+    
+      
+  
+  <div class='post giscus-wrap'>
+    <script src='https://giscus.app/client.js'
+            data-repo='luthermonson/luth.io'
+            data-repo-id='R_kgDOGvFBXQ'
+            data-category='Announcements'
+            data-category-id='DIC_kwDOGvFBXc4DH_gv'
+            data-mapping='pathname'
+            data-strict='1'
+            data-reactions-enabled='1'
+            data-emit-metadata='0'
+            data-input-position='top'
+            data-theme='light'
+            data-lang='en'
+            data-loading='lazy'
+            crossorigin='anonymous'
+            async>
+    </script>
+  </div>
+  
+
+
+
+    
+  </article>
+  
+    <nav class="post-nav">
+      
+        <a href="/blog/2026/08/libxml2-2-14-broke-php-windows-builds/" class="post-nav-link older">
+          <span class="post-nav-label">&larr; Older</span>
+          <span class="post-nav-title">libxml2 2.14 Broke PHP Windows Builds - And Nobody Noticed</span>
+        </a>
+      
+      
+        <a href="/blog/2026/08/faking-mysql-quirks-wordpress/" class="post-nav-link newer">
+          <span class="post-nav-label">Newer &rarr;</span>
+          <span class="post-nav-title">Faking MySQL&#39;s Quirks Well Enough to Fool WordPress</span>
+        </a>
+      
+    </nav>
+  
+
+      </main>
+      <section id="site-sidebar">
+  
+    <section id="recent-posts">
+      <header>
+        <h1>Recent Posts</h1>
+      </header>
+      
+      <article class="mini-post">
+          <a href="/blog/2026/10/ephpm-worker-mode-performance/" class="image" style="--bg-image: url('/img/2026/10/ephpm-worker-mode-performance-cover.svg');">
+    <img class="" src="/img/2026/10/ephpm-worker-mode-performance-cover.svg" alt="Diagram: before, hyper/tokio hands each request to one shared bounded channel whose waiter list all 20 PHP threads contend on; after, a dispatcher hands the job straight into the mailbox of the most recently idle PHP thread and only queues it in a FIFO overflow queue when every thread is busy">
+  </a>
+        <header>
+          <h2><a href="/blog/2026/10/ephpm-worker-mode-performance/">Fourth Place in Worker Mode, and Why It Wasn&#39;t PHP</a></h2>
+          <time class="published" datetime="2026-10-16 08:10:00 -0700 PDT">October 16, 2026</time>
+        </header>
+      </article>
+      
+      <article class="mini-post">
+          <a href="/blog/2026/10/ephpm-websockets-how-to/" class="image" style="--bg-image: url('/img/2026/10/ephpm-websockets-how-to-cover.svg');">
+    <img class="" src="/img/2026/10/ephpm-websockets-how-to-cover.svg" alt="Diagram: browsers hold sockets to ePHPm&#39;s Rust session tasks and registry; each connect, message and disconnect runs websocket.php once on the PHP thread pool, and ordinary HTTP requests push through ephpm_ws_broadcast">
+  </a>
+        <header>
+          <h2><a href="/blog/2026/10/ephpm-websockets-how-to/">WebSockets in ePHPm, From Zero to a Working Chat</a></h2>
+          <time class="published" datetime="2026-10-11 17:30:00 -0700 PDT">October 11, 2026</time>
+        </header>
+      </article>
+      
+      <article class="mini-post">
+          <a href="/blog/2026/10/webhooks-out-of-order-scheduler/" class="image" style="--bg-image: url('/img/2026/10/webhooks-out-of-order-scheduler-timeline.svg');">
+    <img class="" src="/img/2026/10/webhooks-out-of-order-scheduler-timeline.svg" alt="Timeline of three same-label jobs where a runner executing a build is destroyed 2.3 seconds before its in_progress webhook arrives">
+  </a>
+        <header>
+          <h2><a href="/blog/2026/10/webhooks-out-of-order-scheduler/">Webhooks Arrive Out of Order: How My Scheduler Killed Live Builds</a></h2>
+          <time class="published" datetime="2026-10-07 21:10:00 -0700 PDT">October 7, 2026</time>
+        </header>
+      </article>
+      
+      <article class="mini-post">
+          <a href="/blog/2026/10/go-proxmox-five-years-to-v0-8/" class="image" style="--bg-image: url('/img/2026/10/go-proxmox-five-years-to-v0-8-apidiff.svg');">
+    <img class="" src="/img/2026/10/go-proxmox-five-years-to-v0-8-apidiff.svg" alt="Horizontal bar chart of apidiff incompatible and compatible changes for every go-proxmox release from v0.1.0 to v0.8.2">
+  </a>
+        <header>
+          <h2><a href="/blog/2026/10/go-proxmox-five-years-to-v0-8/">Breaking Changes Without Breaking Trust: Five Years to go-proxmox v0.8</a></h2>
+          <time class="published" datetime="2026-10-04 19:40:00 -0700 PDT">October 4, 2026</time>
+        </header>
+      </article>
+      
+      <article class="mini-post">
+          <a href="/blog/2026/10/windows-sigterm-sparse-files/" class="image" style="--bg-image: url('/img/2026/10/windows-sigterm-sparse-files-connections.svg');">
+    <img class="" src="/img/2026/10/windows-sigterm-sparse-files-connections.svg" alt="Bar chart: 96 Cloudflare edge connections held by orphaned cloudflared processes versus 4 for the live daemon">
+  </a>
+        <header>
+          <h2><a href="/blog/2026/10/windows-sigterm-sparse-files/">Windows Grab-Bag: SIGTERM That Doesn&#39;t Exist and Sparse Files That Break Docker</a></h2>
+          <time class="published" datetime="2026-10-03 14:30:00 -0700 PDT">October 3, 2026</time>
+        </header>
+      </article>
+      
+      
+        <footer>
+          <a href="/blog" class="button">See More</a>
+        </footer>
+      
+    </section>
+  
+
+  
+    
+
+      <section id="categories">
+        <header>
+          <h1><a href="/categories">Categories</a></h1>
+        </header>
+        <ul>
+          
+          
+          <li>
+              <a href="/categories/ephpm/">ephpm<span class="count">33</span></a>
+          
+          <li>
+              <a href="/categories/go/">go<span class="count">30</span></a>
+          
+          <li>
+              <a href="/categories/php/">php<span class="count">23</span></a>
+          
+          <li>
+              <a href="/categories/rust/">rust<span class="count">15</span></a>
+          
+          <li>
+              <a href="/categories/homelab/">homelab<span class="count">14</span></a>
+          
+          <li>
+              <a href="/categories/windows/">windows<span class="count">14</span></a>
+          
+          <li>
+              <a href="/categories/ci/">ci<span class="count">9</span></a>
+          
+          <li>
+              <a href="/categories/databases/">databases<span class="count">9</span></a>
+          
+          <li>
+              <a href="/categories/security/">security<span class="count">9</span></a>
+          
+          <li>
+              <a href="/categories/containers/">containers<span class="count">7</span></a>
+          
+          <li>
+              <a href="/categories/tools/">tools<span class="count">5</span></a>
+          
+          <li>
+              <a href="/categories/ai-agents/">ai-agents<span class="count">4</span></a>
+          
+          </li>
+        </ul>
+      </section>
+    
+  
+
+  
+    <section id="mini-bio">
+      <header>
+        <h1>About</h1>
+      </header>
+      <p>Luther is a 20+ year software veteran specializing in backend APIs and architecting products. Employed at <a href='https://www.suse.com'>SUSE</a> as the Team Lead for the <a href='https://github.com/rancher/windows/issues'>Containers on Windows Team</a> working on <a href='https://rancher.com/'>Rancher</a> + <a href='https://kubernetes.io/'>Kubernetes</a></p>
+      <footer>
+        <a href="/about" class="button">Learn More</a>
+      </footer>
+    </section>
+  
+</section>
+
+      <footer id="site-footer">
+  
+      <ul class="socnet-icons">
+        
+
+        <li><a href="//github.com/luthermonson" target="_blank" rel="noopener" title="GitHub" class="fab fa-github"></a></li>
+
+
+
+
+
+
+
+
+
+
+
+<li><a href="//www.linkedin.com/in/luthermonson" target="_blank" rel="noopener" title="LinkedIn" class="fab fa-linkedin"></a></li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li><a href="//twitter.com/luthermonson" target="_blank" rel="noopener" title="Twitter" class="fab fa-twitter"></a></li>
+
+
+
+
+
+
+
+
+
+
+
+<li><a href="mailto:luther.monson@gmail.com" target="_blank" title="Email" class="far fa-envelope"></a></li>
+
+      </ul>
+  
+  <p class="copyright">
+    © 2026 Luther Monson
+      <br>
+    Theme: <a href='https://github.com/pacollins/hugo-future-imperfect-slim' target='_blank' rel='noopener'>Hugo Future Imperfect Slim</a><br>A <a href='https://html5up.net/future-imperfect' target='_blank' rel='noopener'>HTML5 UP port</a> | Powered by <a href='https://gohugo.io/' title='0.160.1' target='_blank' rel='noopener'>Hugo</a>
+  </p>
+</footer>
+<a id="back-to-top" href="#" class="fas fa-arrow-up fa-2x"></a>
+
+      <script src="/js/bundle.min.241b62ebc4792fe8c7a75879e5f710894f226f2b73342e9916b3a3b0526030cc.js" integrity="sha256-JBti68R5L&#43;jHp1h55fcQiU8ibytzNC6ZFrOjsFJgMMw="></script>
+    <script src="/js/add-on.js"></script>
+    </div>
+  </body>
+</html>

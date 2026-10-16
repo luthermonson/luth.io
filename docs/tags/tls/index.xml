@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>Tls on Luther Monson</title>
+    <link>https://luth.io/tags/tls/</link>
+    <description>Recent content in Tls on Luther Monson</description>
+    <generator>Hugo</generator>
+    <language>en</language>
+    <lastBuildDate>Wed, 02 Sep 2026 19:30:00 -0700</lastBuildDate>
+    <atom:link href="https://luth.io/tags/tls/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>Clustered ACME in Production: Three Bugs That Took TLS Down</title>
+      <link>https://luth.io/blog/2026/09/clustered-acme-three-bugs/</link>
+      <pubDate>Wed, 02 Sep 2026 19:30:00 -0700</pubDate>
+      <guid>https://luth.io/blog/2026/09/clustered-acme-three-bugs/</guid>
+      <description>&lt;p&gt;&lt;a href=&#34;https://github.com/ephpm/ephpm&#34;&gt;ePHPm&lt;/a&gt; gets its own certificates from Let&amp;rsquo;s Encrypt, and in a cluster only one node&#xA;should be talking to the CA. The nodes elect an ACME leader over the shared KV store, the leader orders the cert, and&#xA;everybody else installs it from KV. That all had unit tests and had worked on single nodes for months. Then I tried to&#xA;move wildcard TLS termination for our preview environment off a separate proxy and onto the 3-node cluster itself, and&#xA;in about two days it found three separate bugs that each took TLS down. None of them showed up in a unit test, and all&#xA;of them are the kind of thing you only learn by putting the feature on real machines.&lt;/p&gt;</description>
+    </item>
+  </channel>
+</rss>

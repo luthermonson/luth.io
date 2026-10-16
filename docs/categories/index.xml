@@ -4,17 +4,93 @@
     <title>Categories on Luther Monson</title>
     <link>https://luth.io/categories/</link>
     <description>Recent content in Categories on Luther Monson</description>
-    <generator>Hugo -- gohugo.io</generator>
+    <generator>Hugo</generator>
     <language>en</language>
-    <lastBuildDate>Sun, 06 Feb 2022 21:54:53 -0700</lastBuildDate><atom:link href="https://luth.io/categories/index.xml" rel="self" type="application/rss+xml" />
+    <lastBuildDate>Fri, 16 Oct 2026 08:10:00 -0700</lastBuildDate>
+    <atom:link href="https://luth.io/categories/index.xml" rel="self" type="application/rss+xml" />
     <item>
-      <title>programming</title>
-      <link>https://luth.io/categories/programming/</link>
-      <pubDate>Sun, 06 Feb 2022 21:54:53 -0700</pubDate>
-      
-      <guid>https://luth.io/categories/programming/</guid>
+      <title>ePHPm</title>
+      <link>https://luth.io/categories/ephpm/</link>
+      <pubDate>Fri, 16 Oct 2026 08:10:00 -0700</pubDate>
+      <guid>https://luth.io/categories/ephpm/</guid>
       <description></description>
     </item>
-    
+    <item>
+      <title>PHP</title>
+      <link>https://luth.io/categories/php/</link>
+      <pubDate>Fri, 16 Oct 2026 08:10:00 -0700</pubDate>
+      <guid>https://luth.io/categories/php/</guid>
+      <description></description>
+    </item>
+    <item>
+      <title>CI &amp; Runners</title>
+      <link>https://luth.io/categories/ci/</link>
+      <pubDate>Wed, 07 Oct 2026 21:10:00 -0700</pubDate>
+      <guid>https://luth.io/categories/ci/</guid>
+      <description></description>
+    </item>
+    <item>
+      <title>Go</title>
+      <link>https://luth.io/categories/go/</link>
+      <pubDate>Wed, 07 Oct 2026 21:10:00 -0700</pubDate>
+      <guid>https://luth.io/categories/go/</guid>
+      <description></description>
+    </item>
+    <item>
+      <title>Homelab &amp; Proxmox</title>
+      <link>https://luth.io/categories/homelab/</link>
+      <pubDate>Sun, 04 Oct 2026 19:40:00 -0700</pubDate>
+      <guid>https://luth.io/categories/homelab/</guid>
+      <description></description>
+    </item>
+    <item>
+      <title>Windows</title>
+      <link>https://luth.io/categories/windows/</link>
+      <pubDate>Sat, 03 Oct 2026 14:30:00 -0700</pubDate>
+      <guid>https://luth.io/categories/windows/</guid>
+      <description></description>
+    </item>
+    <item>
+      <title>AI Agents</title>
+      <link>https://luth.io/categories/ai-agents/</link>
+      <pubDate>Tue, 29 Sep 2026 20:30:00 -0700</pubDate>
+      <guid>https://luth.io/categories/ai-agents/</guid>
+      <description></description>
+    </item>
+    <item>
+      <title>Security</title>
+      <link>https://luth.io/categories/security/</link>
+      <pubDate>Tue, 29 Sep 2026 20:30:00 -0700</pubDate>
+      <guid>https://luth.io/categories/security/</guid>
+      <description></description>
+    </item>
+    <item>
+      <title>Containers &amp; Linux</title>
+      <link>https://luth.io/categories/containers/</link>
+      <pubDate>Sat, 26 Sep 2026 16:20:00 -0700</pubDate>
+      <guid>https://luth.io/categories/containers/</guid>
+      <description></description>
+    </item>
+    <item>
+      <title>Databases</title>
+      <link>https://luth.io/categories/databases/</link>
+      <pubDate>Tue, 15 Sep 2026 21:08:00 -0700</pubDate>
+      <guid>https://luth.io/categories/databases/</guid>
+      <description></description>
+    </item>
+    <item>
+      <title>Rust</title>
+      <link>https://luth.io/categories/rust/</link>
+      <pubDate>Tue, 15 Sep 2026 21:08:00 -0700</pubDate>
+      <guid>https://luth.io/categories/rust/</guid>
+      <description></description>
+    </item>
+    <item>
+      <title>Tools &amp; CLIs</title>
+      <link>https://luth.io/categories/tools/</link>
+      <pubDate>Wed, 09 Sep 2026 21:22:00 -0700</pubDate>
+      <guid>https://luth.io/categories/tools/</guid>
+      <description></description>
+    </item>
   </channel>
 </rss>

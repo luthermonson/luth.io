@@ -1,0 +1,888 @@
+<!doctype html>
+<html lang="en">
+  <head>
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-MSTSKGFWTX"></script>
+<script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+
+    gtag('config', 'G-MSTSKGFWTX');
+</script><meta charset="utf-8">
+<title>Clustered SQLite in ePHPm, Part 3: CDC Over the Cluster Channel - Luther Monson</title>
+<meta name="description" content="Shipping Turso&#39;s change data capture stream between ePHPm nodes over one authenticated, multiplexed TCP connection, and the two failover bugs that showed up when the e2e suite killed the primary.">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<meta name="twitter:card" content="summary_large_image"><meta name="twitter:site" content="@luthermonson">
+
+<meta property="og:site_name" content="Luther Monson">
+<meta property="og:title" content="Clustered SQLite in ePHPm, Part 3: CDC Over the Cluster Channel">
+<meta property="og:description" content="Shipping Turso&#39;s change data capture stream between ePHPm nodes over one authenticated, multiplexed TCP connection, and the two failover bugs that showed up when the e2e suite killed the primary.">
+<meta property="og:type" content="article">
+<meta property="og:url" content="https://luth.io/blog/2026/09/clustered-sqlite-cdc-cluster-channel/">
+    <meta property="og:image" content="https://luth.io/img/2026/09/clustered-sqlite-cluster-channel-topology.svg">
+    <meta property="og:image:alt" content="Two ePHPm nodes connected by gossip on UDP 7946, the KV data plane on TCP 7947 and the cluster channel on TCP 7948 carrying cdc, snapshot and sql streams">
+
+
+  <link rel="manifest" href="/favicon/site.webmanifest?v=1">
+  <link rel="apple-touch-icon" sizes="180x180" href="/favicon/apple-touch-icon.png?v=1">
+  <link rel="icon" type="image/png" sizes="32x32" href="/favicon/favicon-32x32.png?v=1">
+  <link rel="icon" type="image/png" sizes="16x16" href="/favicon/favicon-16x16.png?v=1">
+  
+    <link rel="mask-icon" href="/favicon/safari-pinned-tab.svg?v=1" color="#ffffff">
+    <link rel="shortcut icon" href="/favicon/favicon.ico?v=1">
+    <meta name="msapplication-config" content="/favicon/browserconfig.xml?v=1">
+  
+  <meta name="msapplication-TileColor" content="#ffffff">
+  <meta name="theme-color" content="#ffffff">
+
+
+  <meta name="generator" content="Hugo 0.160.1">
+  <link rel="alternate" type="application/rss+xml" href="https://luth.io/index.xml" title="Luther Monson">
+  <link rel="stylesheet" href="/css/bundle.min.e1ffed86714fbb7eff75eab221c0c61b8260be0c7d1c08db0fcb7a2bdb6af7c9.css" integrity="sha256-4f/thnFPu37/deqyIcDGG4Jgvgx9HAjbD8t6K9tq98k="><link rel="stylesheet" href="/css/add-on.css">
+        <link rel="stylesheet" href="/css/code.css">
+        <link rel="stylesheet" href="/css/mobile.css">
+</head>
+
+  <body>
+    
+
+<header id="site-header">
+  <nav id="site-nav">
+    <h1 class="nav-title">
+      <a href="/" class="nav">
+        <img class="nav-avatar" src="/img/luther-monson-headshot.jpg" alt="" width="32" height="32">
+        
+          Blog
+        
+      </a>
+    </h1>
+    <menu id="site-nav-menu" class="flyout-menu menu">
+      
+        
+          
+          <a href="/" class="nav link"><i class='fa fa-home'></i> Home</a>
+        
+      
+        
+          
+          <a href="/about" class="nav link"><i class='far fa-id-card'></i> About</a>
+        
+      
+        
+          
+          <a href="/blog" class="nav link"><i class='far fa-newspaper'></i> Blog</a>
+        
+      
+        
+          
+          <a href="/archive" class="nav link"><i class='far fa-calendar-alt'></i> Archive</a>
+        
+      
+        
+          
+          <a href="/categories" class="nav link"><i class='fas fa-sitemap'></i> Categories</a>
+        
+      
+      <a href="#share-menu" class="nav link share-toggle"><i class="fas fa-share-alt">&nbsp;</i>Share</a>
+      <a href="#search-input" class="nav link search-toggle"><i class="fas fa-search">&nbsp;</i>Search</a>
+    </menu>
+    <a href="#search-input" class="nav search-toggle"><i class="fas fa-search fa-2x">&nbsp;</i></a>
+    <a href="#share-menu" class="nav share-toggle"><i class="fas fa-share-alt fa-2x">&nbsp;</i></a>
+    
+    <a href="#site-nav" class="nav nav-toggle"><i class="fas fa-bars fa-2x"></i></a>
+  </nav>
+  <menu id="search" class="menu"><input id="search-input" class="search-input menu"></input><div id="search-results" class="search-results menu"></div></menu>
+  
+  
+    <menu id="share-menu" class="flyout-menu menu">
+      <h1>Share Post</h1>
+      
+
+
+
+
+  
+    
+    <a href="//twitter.com/share?text=Clustered%20SQLite%20in%20ePHPm%2c%20Part%203%3a%20CDC%20Over%20the%20Cluster%20Channel&amp;url=https%3a%2f%2fluth.io%2fblog%2f2026%2f09%2fclustered-sqlite-cdc-cluster-channel%2f" target="_blank" rel="noopener" class="nav share-btn twitter">
+        <p>Twitter</p>
+      </a>
+  
+
+  
+      <a href="//www.facebook.com/sharer/sharer.php?u=https%3a%2f%2fluth.io%2fblog%2f2026%2f09%2fclustered-sqlite-cdc-cluster-channel%2f" target="_blank" rel="noopener" class="nav share-btn facebook">
+        <p>Facebook</p>
+        </a>
+  
+
+  
+    <a href="//www.reddit.com/submit?url=https%3a%2f%2fluth.io%2fblog%2f2026%2f09%2fclustered-sqlite-cdc-cluster-channel%2f&amp;title=Clustered%20SQLite%20in%20ePHPm%2c%20Part%203%3a%20CDC%20Over%20the%20Cluster%20Channel" target="_blank" rel="noopener" class="nav share-btn reddit">
+          <p>Reddit</p>
+        </a>
+  
+
+  
+        <a href="//www.linkedin.com/shareArticle?url=https%3a%2f%2fluth.io%2fblog%2f2026%2f09%2fclustered-sqlite-cdc-cluster-channel%2f&amp;title=Clustered%20SQLite%20in%20ePHPm%2c%20Part%203%3a%20CDC%20Over%20the%20Cluster%20Channel" target="_blank" rel="noopener" class="nav share-btn linkedin">
+            <p>LinkedIn</p>
+          </a>
+  
+
+  
+        <a href="//www.pinterest.com/pin/create/button/?url=https%3a%2f%2fluth.io%2fblog%2f2026%2f09%2fclustered-sqlite-cdc-cluster-channel%2f&amp;description=Clustered%20SQLite%20in%20ePHPm%2c%20Part%203%3a%20CDC%20Over%20the%20Cluster%20Channel" target="_blank" rel="noopener" class="nav share-btn pinterest">
+          <p>Pinterest</p>
+        </a>
+  
+
+  
+        <a href="mailto:?subject=Check%20out%20this%20post%20by Luther%20Monson&amp;body=https%3a%2f%2fluth.io%2fblog%2f2026%2f09%2fclustered-sqlite-cdc-cluster-channel%2f" target="_blank" class="nav share-btn email" data-proofer-ignore>
+          <p>Email</p>
+        </a>
+  
+
+
+    </menu>
+  
+</header>
+
+    <div id="wrapper">
+      <section id="site-intro" class="hidden-single-column">
+  <a href="/"><img src="/img/luther-monson-headshot.jpg" class="circle" width="100" alt="Luther Monson, Staff Software Engineer at SUSE" /></a>
+  <header>
+    <h1>Luther Monson</h1>
+  </header>
+  <main>
+    <p>Go by way of PHP &middot; Containers &middot; VMs &middot; Windows &middot; Kubernetes</p>
+  </main>
+  
+    <footer>
+      <ul class="socnet-icons">
+        
+
+        <li><a href="//github.com/luthermonson" target="_blank" rel="noopener" title="GitHub" class="fab fa-github"></a></li>
+
+
+
+
+
+
+
+
+
+
+
+<li><a href="//www.linkedin.com/in/luthermonson" target="_blank" rel="noopener" title="LinkedIn" class="fab fa-linkedin"></a></li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li><a href="//twitter.com/luthermonson" target="_blank" rel="noopener" title="Twitter" class="fab fa-twitter"></a></li>
+
+
+
+
+
+
+
+
+
+
+
+<li><a href="mailto:luther.monson@gmail.com" target="_blank" title="Email" class="far fa-envelope"></a></li>
+
+      </ul>
+    </footer>
+  
+</section>
+
+      <main id="site-main">
+        
+  <article>
+    <div class="post">
+      <header>
+  <div class="title">
+    
+      <h2><a href="/blog/2026/09/clustered-sqlite-cdc-cluster-channel/">Clustered SQLite in ePHPm, Part 3: CDC Over the Cluster Channel</a></h2>
+    
+    
+      <p>Shipping Turso&#39;s change data capture stream between ePHPm nodes over one authenticated, multiplexed TCP connection, and the two failover bugs that showed up when the e2e suite killed the primary.</p>
+    
+  </div>
+  <div class="meta">
+    <time datetime="2026-09-15 21:08:00 -0700 PDT">September 15, 2026</time>
+    
+    <p>15-Minute Read</p>
+  </div>
+</header>
+
+      <div id="socnet-share">
+        
+
+
+
+
+  
+    
+    <a href="//twitter.com/share?text=Clustered%20SQLite%20in%20ePHPm%2c%20Part%203%3a%20CDC%20Over%20the%20Cluster%20Channel&amp;url=https%3a%2f%2fluth.io%2fblog%2f2026%2f09%2fclustered-sqlite-cdc-cluster-channel%2f" target="_blank" rel="noopener" class="nav share-btn twitter">
+        <p>Twitter</p>
+      </a>
+  
+
+  
+      <a href="//www.facebook.com/sharer/sharer.php?u=https%3a%2f%2fluth.io%2fblog%2f2026%2f09%2fclustered-sqlite-cdc-cluster-channel%2f" target="_blank" rel="noopener" class="nav share-btn facebook">
+        <p>Facebook</p>
+        </a>
+  
+
+  
+    <a href="//www.reddit.com/submit?url=https%3a%2f%2fluth.io%2fblog%2f2026%2f09%2fclustered-sqlite-cdc-cluster-channel%2f&amp;title=Clustered%20SQLite%20in%20ePHPm%2c%20Part%203%3a%20CDC%20Over%20the%20Cluster%20Channel" target="_blank" rel="noopener" class="nav share-btn reddit">
+          <p>Reddit</p>
+        </a>
+  
+
+  
+        <a href="//www.linkedin.com/shareArticle?url=https%3a%2f%2fluth.io%2fblog%2f2026%2f09%2fclustered-sqlite-cdc-cluster-channel%2f&amp;title=Clustered%20SQLite%20in%20ePHPm%2c%20Part%203%3a%20CDC%20Over%20the%20Cluster%20Channel" target="_blank" rel="noopener" class="nav share-btn linkedin">
+            <p>LinkedIn</p>
+          </a>
+  
+
+  
+        <a href="//www.pinterest.com/pin/create/button/?url=https%3a%2f%2fluth.io%2fblog%2f2026%2f09%2fclustered-sqlite-cdc-cluster-channel%2f&amp;description=Clustered%20SQLite%20in%20ePHPm%2c%20Part%203%3a%20CDC%20Over%20the%20Cluster%20Channel" target="_blank" rel="noopener" class="nav share-btn pinterest">
+          <p>Pinterest</p>
+        </a>
+  
+
+  
+        <a href="mailto:?subject=Check%20out%20this%20post%20by Luther%20Monson&amp;body=https%3a%2f%2fluth.io%2fblog%2f2026%2f09%2fclustered-sqlite-cdc-cluster-channel%2f" target="_blank" class="nav share-btn email" data-proofer-ignore>
+          <p>Email</p>
+        </a>
+  
+
+
+      </div>
+      <div class="content">
+        
+        <p>By the end of <a href="/blog/2026/08/clustered-sqlite-adding-turso/">Part 2</a> ePHPm v0.7.0 ran exactly one SQLite engine, Turso, in
+process, for single-node and clustered mode alike. The sidecar was gone. What I skipped over is how a replica actually gets
+the primary&rsquo;s writes, and what happens when the primary dies with data on it. That&rsquo;s this post.</p>
+<ul>
+<li><a href="/blog/2026/08/clustered-sqlite-sqld-sidecar/">Part 1: Replication by sidecar with sqld</a></li>
+<li><a href="/blog/2026/08/clustered-sqlite-adding-turso/">Part 2: Adding Turso</a></li>
+<li>Part 3: CDC over the cluster channel (this post)</li>
+</ul>
+<h3 id="cdc-from-the-engine-itself">CDC from the engine itself</h3>
+<p>Turso has change data capture built in. Turn it on for a connection and every committed change lands in a <code>turso_cdc</code>
+table with a monotonically increasing <code>change_id</code>, the table, the rowid, and before/after images of the record. The
+primary tails that table and ships transaction batches. Replicas apply them. That&rsquo;s the whole design, and it landed as an
+experimental path in <a href="https://github.com/ephpm/ephpm/pull/186">#186</a> at the end of July, with the tailer and applier in
+litewire (<a href="https://github.com/ephpm/litewire/pull/10">litewire#10</a>).</p>
+<p>The best surprise of the whole series came out of the first integration test: <strong>Turso&rsquo;s CDC captures DDL.</strong>
+<code>CREATE TABLE</code>, <code>CREATE INDEX</code>, <code>ALTER TABLE ... ADD COLUMN</code> and <code>DROP TABLE</code> all show up in the same <code>turso_cdc</code> stream as
+the row changes, as mutations on <code>sqlite_schema</code>. The after-image&rsquo;s <code>sql</code> column carries the <code>CREATE</code> text, so the replica
+just runs it. That means replication is one ordered stream with no separate schema sync channel to keep in step with it.
+WordPress creates and alters tables at runtime (plugins do it all the time) and that flows through the normal path.</p>
+<p>That convenience is also an injection point, since the replica runs SQL text a peer sent it. Replayed DDL is parsed and
+allowlisted before it runs (litewire#17, in v0.6.2): exactly one <code>CREATE TABLE</code>, <code>CREATE [UNIQUE] INDEX</code>, <code>CREATE VIEW</code> or
+<code>CREATE TRIGGER</code>, which is everything <code>sqlite_schema.sql</code> can legitimately hold. <code>ATTACH</code> and <code>PRAGMA</code> don&rsquo;t get through.</p>
+<p>The primary side of the stream is a loop per subscriber. Each replica gets its own <code>CdcTailer</code> starting at the watermark
+the replica announced:</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-rust" data-lang="rust"><span class="line"><span class="cl"><span class="kd">let</span><span class="w"> </span><span class="k">mut</span><span class="w"> </span><span class="n">tailer</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">CdcTailer</span>::<span class="n">new</span><span class="p">(</span><span class="n">mgmt</span><span class="p">,</span><span class="w"> </span><span class="n">from</span><span class="p">);</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="k">loop</span><span class="w"> </span><span class="p">{</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="kd">let</span><span class="w"> </span><span class="n">batch</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">match</span><span class="w"> </span><span class="n">tailer</span><span class="p">.</span><span class="n">poll_batch</span><span class="p">().</span><span class="k">await</span><span class="w"> </span><span class="p">{</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">        </span><span class="nb">Ok</span><span class="p">(</span><span class="n">batch</span><span class="p">)</span><span class="w"> </span><span class="o">=&gt;</span><span class="w"> </span><span class="n">batch</span><span class="p">,</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">        </span><span class="nb">Err</span><span class="p">(</span><span class="n">e</span><span class="p">)</span><span class="w"> </span><span class="o">=&gt;</span><span class="w"> </span><span class="p">{</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">            </span><span class="c1">// Drop the stream rather than skip past the failure --
+</span></span></span><span class="line"><span class="cl"><span class="w">            </span><span class="c1">// the replica reconnects with the same watermark and we
+</span></span></span><span class="line"><span class="cl"><span class="w">            </span><span class="c1">// retry from the identical cursor.
+</span></span></span><span class="line"><span class="cl"><span class="w">            </span><span class="n">cdc_metrics</span>::<span class="n">record_tail_poll_error</span><span class="p">();</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">            </span><span class="n">anyhow</span>::<span class="fm">bail!</span><span class="p">(</span><span class="s">&#34;CDC tail poll error: {e:#}&#34;</span><span class="p">);</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">        </span><span class="p">}</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="p">};</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="c1">// ...
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="k">match</span><span class="w"> </span><span class="n">shippable</span><span class="w"> </span><span class="p">{</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">        </span><span class="nb">Some</span><span class="p">((</span><span class="n">batch</span><span class="p">,</span><span class="w"> </span><span class="n">commit_change_id</span><span class="p">))</span><span class="w"> </span><span class="o">=&gt;</span><span class="w"> </span><span class="p">{</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">            </span><span class="kd">let</span><span class="w"> </span><span class="n">frame</span><span class="w"> </span><span class="o">=</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">                </span><span class="n">Frame</span>::<span class="n">Batch</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">rows</span>: <span class="nc">batch</span><span class="p">.</span><span class="n">rows</span><span class="p">.</span><span class="n">iter</span><span class="p">().</span><span class="n">map</span><span class="p">(</span><span class="n">WireCdcRow</span>::<span class="n">from</span><span class="p">).</span><span class="n">collect</span><span class="p">()</span><span class="w"> </span><span class="p">};</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">            </span><span class="n">write_frame</span><span class="p">(</span><span class="o">&amp;</span><span class="k">mut</span><span class="w"> </span><span class="n">stream</span><span class="p">,</span><span class="w"> </span><span class="o">&amp;</span><span class="n">frame</span><span class="p">).</span><span class="k">await</span><span class="o">?</span><span class="p">;</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">            </span><span class="n">subscriber</span><span class="p">.</span><span class="n">record_batch_shipped</span><span class="p">(</span><span class="n">commit_change_id</span><span class="p">,</span><span class="w"> </span><span class="n">rows</span><span class="p">);</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">        </span><span class="p">}</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">        </span><span class="nb">None</span><span class="w"> </span><span class="o">=&gt;</span><span class="w"> </span><span class="p">{</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">            </span><span class="k">if</span><span class="w"> </span><span class="n">idle_since</span><span class="p">.</span><span class="n">elapsed</span><span class="p">()</span><span class="w"> </span><span class="o">&gt;=</span><span class="w"> </span><span class="no">HEARTBEAT_INTERVAL</span><span class="w"> </span><span class="p">{</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">                </span><span class="n">write_frame</span><span class="p">(</span><span class="o">&amp;</span><span class="k">mut</span><span class="w"> </span><span class="n">stream</span><span class="p">,</span><span class="w"> </span><span class="o">&amp;</span><span class="n">Frame</span>::<span class="n">Ping</span><span class="p">).</span><span class="k">await</span><span class="o">?</span><span class="p">;</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">            </span><span class="p">}</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">            </span><span class="n">tokio</span>::<span class="n">time</span>::<span class="n">sleep</span><span class="p">(</span><span class="no">POLL_INTERVAL</span><span class="p">).</span><span class="k">await</span><span class="p">;</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">        </span><span class="p">}</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="p">}</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="p">}</span><span class="w">
+</span></span></span></code></pre></div><p>Turso has no wakeup signal for CDC inserts, so it polls, and <code>POLL_INTERVAL</code> is 25 ms. Keep that number in mind for the
+benchmark below.</p>
+<h3 id="v1-was-a-third-protocol">v1 was a third protocol</h3>
+<p>The first version of #186 had its own port (<code>cdc_listen</code>, 5015), length-prefixed JSON frames, and no encryption. It worked.
+It was also the third separate inter-node protocol after gossip and the KV data plane, and if I was going to need
+snapshot bootstrap next, and probably more after that, each one wasn&rsquo;t going to get its own port. So before #186 merged,
+the transport became the <strong>cluster channel</strong>, and <code>cdc_listen</code> was deleted before it ever shipped in a release
+(<a href="https://github.com/ephpm/ephpm/pull/219">#219</a>).</p>
+<p>The rule the channel makes explicit is: <strong>gossip carries names, the channel carries payloads.</strong></p>
+<ul>
+<li>Gossip (<a href="https://github.com/quickwit-oss/chitchat">chitchat</a>, UDP 7946) is the control plane only. Membership,
+phi-accrual failure detection, elections, small KV values. It has to stay small no matter how many writes you do.</li>
+<li>The cluster channel (TCP 7948) is the data plane for <em>logs</em>: CDC batches and snapshot bootstrap.</li>
+</ul>
+<p>Gossip says &ldquo;node A is primary for <code>sqlite:default</code>&rdquo;. The channel is what moves the transactions from A to its replicas.</p>
+<p><img src="/img/2026/09/clustered-sqlite-cluster-channel-topology.svg" alt="cluster channel topology"></p>
+<p>Why 7948 and not 7947? Because the KV data plane already took gossip + 1:</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-rust" data-lang="rust"><span class="line"><span class="cl"><span class="c1">// gossip_port + 2, NOT + 1: the KV data plane&#39;s default port (7947) is
+</span></span></span><span class="line"><span class="cl"><span class="c1">// already gossip-default (7946) + 1, so deriving +1 would collide with
+</span></span></span><span class="line"><span class="cl"><span class="c1">// it on any default-ported cluster. +2 lands on 7948 with defaults.
+</span></span></span><span class="line"><span class="cl"><span class="kd">let</span><span class="w"> </span><span class="n">port</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">gossip</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="p">.</span><span class="n">port</span><span class="p">()</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="p">.</span><span class="n">checked_add</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="p">.</span><span class="n">context</span><span class="p">(</span><span class="s">&#34;gossip port is &gt;= u16::MAX - 1; cannot derive cluster channel port&#34;</span><span class="p">)</span><span class="o">?</span><span class="p">;</span><span class="w">
+</span></span></span></code></pre></div><h3 id="only-bound-when-something-asks">Only bound when something asks</h3>
+<p>A config that doesn&rsquo;t use a channel feature gets no socket, no task, and no log line above <code>debug!</code>. The only way to
+turn it on is a field in one struct:</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-rust" data-lang="rust"><span class="line"><span class="cl"><span class="cp">#[derive(Debug, Clone, Copy, Default)]</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="k">pub</span><span class="w"> </span><span class="k">struct</span> <span class="nc">FeatureFlags</span><span class="w"> </span><span class="p">{</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="sd">/// Turso CDC replication.
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="k">pub</span><span class="w"> </span><span class="n">cdc</span>: <span class="kt">bool</span><span class="p">,</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="p">}</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="k">impl</span><span class="w"> </span><span class="n">FeatureFlags</span><span class="w"> </span><span class="p">{</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="cp">#[must_use]</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="k">pub</span><span class="w"> </span><span class="k">fn</span> <span class="nf">any_enabled</span><span class="p">(</span><span class="o">&amp;</span><span class="bp">self</span><span class="p">)</span><span class="w"> </span>-&gt; <span class="kt">bool</span> <span class="p">{</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">        </span><span class="kd">let</span><span class="w"> </span><span class="bp">Self</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">cdc</span><span class="w"> </span><span class="p">}</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="o">*</span><span class="bp">self</span><span class="p">;</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">        </span><span class="n">cdc</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="p">}</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="p">}</span><span class="w">
+</span></span></span></code></pre></div><p>The destructuring in <code>any_enabled</code> is on purpose. Add a field and that line stops compiling until you decide whether the
+new feature needs the channel. A feature that forgets its flag gets no channel, rather than a half-wired one. There&rsquo;s a
+unit test that runs with every flag off and then binds the derived port itself to prove nothing else did.</p>
+<h3 id="one-connection-many-streams">One connection, many streams</h3>
+<p>After the handshake (next section) both sides speak <a href="https://github.com/libp2p/rust-yamux">yamux</a> over the encrypted
+socket. Every stream starts with a length-prefixed type string, and that string is the dispatch key: <code>cdc/&lt;site&gt;</code>,
+<code>snapshot/&lt;site&gt;</code>, and later <code>sql/&lt;site&gt;</code>. An unknown type gets a WARN and the stream is closed, while the connection
+stays up. New features can ship without a protocol version bump, because old nodes just refuse the stream they don&rsquo;t know.</p>
+<p>Backpressure was the part I worried about. yamux has per-stream flow control (256 KiB window), and every subscriber owns a
+private <code>CdcTailer</code>, so a stalled replica pauses its own stream and nothing else. The tailer just stops advancing while its
+write is blocked. An earlier design broadcast one shared cursor to everyone, where a slow subscriber got
+<code>RecvError::Lagged</code> and permanently lost batches. Now the failure mode for a slow replica is lag, not loss.</p>
+<p>Snapshot bootstrap rides the same connection: an empty replica pulls a logical dump on <code>snapshot/&lt;site&gt;</code> captured under
+one read view along with its watermark, validated against a <code>CREATE</code>/<code>INSERT</code> allowlist, and then subscribes to the tail
+from exactly that watermark.</p>
+<h3 id="the-handshake">The handshake</h3>
+<p>The first channel handshake was one round trip. The initiator sent a sealed challenge, the responder opened it and echoed
+it back. That proves the responder has the secret. It does not prove anything about the initiator, and the responder only
+ever echoes what it&rsquo;s handed, so anyone who recorded one legitimate setup could replay those bytes verbatim and get through
+the accept path without the secret.</p>
+<p>v2 is a mutual challenge/response, three messages before any yamux frame:</p>
+<p><img src="/img/2026/09/clustered-sqlite-cluster-channel-handshake.svg" alt="cluster channel handshake"></p>
+<p>The important line is in the responder. It mixes in a challenge of its own, which a replayer has never seen and can&rsquo;t
+open:</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-rust" data-lang="rust"><span class="line"><span class="cl"><span class="kd">let</span><span class="w"> </span><span class="n">challenge_r</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">fresh_challenge</span><span class="p">();</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="kd">let</span><span class="w"> </span><span class="n">session_transcript</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">transcript</span><span class="p">(</span><span class="o">&amp;</span><span class="n">challenge_i</span><span class="p">,</span><span class="w"> </span><span class="o">&amp;</span><span class="n">challenge_r</span><span class="p">);</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="c1">// Message 2 seals the transcript itself: the echo of C_i (which
+</span></span></span><span class="line"><span class="cl"><span class="c1">// proves we opened it) followed by our own fresh C_r.
+</span></span></span><span class="line"><span class="cl"><span class="n">tcp</span><span class="p">.</span><span class="n">write_all</span><span class="p">(</span><span class="o">&amp;</span><span class="p">[</span><span class="no">HANDSHAKE_VERSION</span><span class="p">]).</span><span class="k">await</span><span class="o">?</span><span class="p">;</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="kd">let</span><span class="w"> </span><span class="n">sealed</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">keys</span><span class="p">.</span><span class="n">handshake</span><span class="p">.</span><span class="n">seal</span><span class="p">(</span><span class="o">&amp;</span><span class="n">session_transcript</span><span class="p">).</span><span class="n">context</span><span class="p">(</span><span class="s">&#34;seal handshake reply&#34;</span><span class="p">)</span><span class="o">?</span><span class="p">;</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="n">write_handshake_body</span><span class="p">(</span><span class="n">tcp</span><span class="p">,</span><span class="w"> </span><span class="o">&amp;</span><span class="n">sealed</span><span class="p">).</span><span class="k">await</span><span class="o">?</span><span class="p">;</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="c1">// Message 3 must be the responder challenge, sealed by a peer that
+</span></span></span><span class="line"><span class="cl"><span class="c1">// holds the secret. A replayer cannot get here.
+</span></span></span><span class="line"><span class="cl"><span class="kd">let</span><span class="w"> </span><span class="n">confirm</span><span class="w"> </span><span class="o">=</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="n">read_handshake_body</span><span class="p">(</span><span class="n">tcp</span><span class="p">,</span><span class="w"> </span><span class="o">&amp;</span><span class="n">keys</span><span class="p">.</span><span class="n">handshake</span><span class="p">).</span><span class="k">await</span><span class="p">.</span><span class="n">context</span><span class="p">(</span><span class="s">&#34;read handshake confirmation&#34;</span><span class="p">)</span><span class="o">?</span><span class="p">;</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="n">anyhow</span>::<span class="fm">ensure!</span><span class="p">(</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="n">constant_time_eq</span><span class="p">(</span><span class="o">&amp;</span><span class="n">confirm</span><span class="p">,</span><span class="w"> </span><span class="o">&amp;</span><span class="n">challenge_r</span><span class="p">),</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="s">&#34;handshake confirmation did not echo our challenge (replay attempt)&#34;</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="p">);</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="nb">Ok</span><span class="p">(</span><span class="n">keys</span><span class="p">.</span><span class="n">session</span><span class="p">(</span><span class="o">&amp;</span><span class="n">session_transcript</span><span class="p">))</span><span class="w">
+</span></span></span></code></pre></div><p>The rest of it:</p>
+<ul>
+<li>Both echo comparisons are constant time.</li>
+<li>The handshake key comes from its own HKDF domain, so a stray gossip datagram or KV frame can never authenticate here.</li>
+<li>After the handshake, both sides derive a per-connection session key from the secret salted with <code>C_i || C_r</code>, and every
+byte yamux writes goes out as a length-prefixed ChaCha20-Poly1305 frame. Frames can&rsquo;t be spliced between connections,
+and a frame that fails authentication drops the connection.</li>
+<li>The source IP has to be a live gossip member before the handshake even starts. That&rsquo;s coarse (per host, and it trusts
+the TCP source address), but it means a leaked secret alone doesn&rsquo;t let an arbitrary host pull a database snapshot.</li>
+<li>At most 64 concurrent handshakes in flight, a 10 second deadline on each.</li>
+<li>It refuses to bind at all if a channel feature is on and there&rsquo;s no secret. Authenticated or absent.</li>
+</ul>
+<p>There&rsquo;s a test that does exactly what the v1 attack did: record a real initiator&rsquo;s first message, replay it on a new
+connection, echo back whatever the responder says, and assert nothing ever reaches the dispatch table.</p>
+<h3 id="then-the-e2e-suite-killed-the-primary">Then the e2e suite killed the primary</h3>
+<p>Everything above passed its tests. The two-node path had been validated by hand during benchmarking. What hadn&rsquo;t happened
+was a test that started three real <code>ephpm</code> processes, wrote data, and killed the elected primary. <a href="https://github.com/ephpm/ephpm/pull/310">#310</a>
+added that suite, and it found two defects on its first run. Both were filed as <code>#[ignore]</code>d tests carrying the log
+evidence, so the intended behavior was written down and executable before anyone touched the fix.</p>
+<p><strong>1. A joining node stole the primary role.</strong></p>
+<pre tabindex="0"><code>21:41:58  cdc-node-2  elected as SQLite primary          (holds the data)
+21:42:04  cdc-node-3  elected as SQLite primary          (empty, just booted)
+21:42:08  cdc-node-2  role changed Primary -&gt; Replica{ primary: node-3 }
+</code></pre><p>The initial role was decided before gossip converged. A freshly booted node saw a member list containing only itself,
+concluded it was the lowest-ordinal alive node, and published a claim. Gossip KV is last-write-wins, so the incumbent
+demoted. The cluster re-rooted onto an empty database, and the joiner, believing it was primary, never bootstrapped.</p>
+<p><strong>2. Writes after a failover were silently never replicated.</strong></p>
+<pre tabindex="0"><code>cdc-node-1  CDC replica: subscribed  from_change_id=5   (watermark from the dead node-2)
+cdc-node-0  CDC: subscriber attached from_change_id=5   (tailer over node-0&#39;s own log)
+</code></pre><p><code>change_id</code> is a per-database sequence. The subscribe watermark was being treated as cluster-wide. A promoted replica&rsquo;s own
+CDC log starts empty (applied batches bypass capture), so its first new writes landed at <code>change_id</code> 1 and 2, below the
+inherited cursor of 5, and the tailer never yielded them. No error, no metric moved, and the replica reported itself
+connected and caught up. That&rsquo;s unbounded silent write loss after any failover.</p>
+<p>The fixes are in <a href="https://github.com/ephpm/ephpm/pull/346">#346</a>:</p>
+<ul>
+<li><strong>Election:</strong> a fresh node can&rsquo;t publish its first claim until a 15 second startup grace (claim TTL plus one heartbeat)
+has passed. A live incumbent republishes every 5 seconds, so its claim always arrives first. A restarting incumbent
+whose own claim is still unexpired can reclaim right away. And a primary that sees a live foreign claim breaks the tie by
+lowest node id, the documented rule, instead of yielding to whoever wrote last. The cost is that a brand new cluster
+elects its first primary 15-20 seconds after boot.</li>
+<li><strong>Watermarks:</strong> every database file gets a random 128-bit log identity. The first frame on every CDC stream is now a
+<code>Hello</code> naming the log the primary is about to serve, and the replica keeps a cursor per log:</li>
+</ul>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-rust" data-lang="rust"><span class="line"><span class="cl"><span class="k">enum</span> <span class="nc">Frame</span><span class="w"> </span><span class="p">{</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="sd">/// Primary -&gt; replica, first frame on every stream. Identifies
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="sd">/// which CDC log the primary is about to serve.
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="n">Hello</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">log_id</span>: <span class="nb">String</span> <span class="p">},</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="sd">/// Replica -&gt; primary, sent after Hello. The applied watermark
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="sd">/// in the log the Hello named.
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="n">Subscribe</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">from_change_id</span>: <span class="kt">i64</span> <span class="p">},</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="n">Batch</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">rows</span>: <span class="nb">Vec</span><span class="o">&lt;</span><span class="n">WireCdcRow</span><span class="o">&gt;</span><span class="w"> </span><span class="p">},</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="n">Ping</span><span class="p">,</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="p">}</span><span class="w">
+</span></span></span></code></pre></div><p>On a source switch the replica saves the old log&rsquo;s cursor, restores the new log&rsquo;s (0 if it has never followed it) and
+re-seeds litewire&rsquo;s watermark table so the applier&rsquo;s idempotency guard follows along. Primary to replica to primary again
+resolves correctly.</p>
+<p>Removing the <code>#[ignore]</code> was the verification step. Then each fix was verified the other direction: revert just that fix,
+keep the other, and watch its test fail again with the original symptom. The joining-node test failed with the joiner
+taking the role, and the failover test failed with the survivor stuck at its pre-failover rows until a 90 second timeout.
+Then both went back in, and the full e2e run was 55 suites, 236 tests, zero failures. Proving a test fails without the fix
+is the only way I know to be sure it&rsquo;s testing the fix.</p>
+<p>The audit of #346 turned up one more, narrower door (<a href="https://github.com/ephpm/ephpm/pull/353">#353</a>). The fast-restart
+reclaim matched on node id. But &ldquo;same node id&rdquo; isn&rsquo;t &ldquo;same data&rdquo;. A node redeployed onto an empty volume comes back with
+its old id and a fresh log identity, and it could win the reclaim inside the 10 second TTL and re-root the cluster onto
+nothing again. The claim is now <code>node_id|addr|log_id</code>, and the fast path only fires when both match.</p>
+<p>Worth saying plainly: <strong>none of these bugs were Turso&rsquo;s.</strong> All three lived in ePHPm&rsquo;s election and watermark logic layered
+on top. Turso&rsquo;s CDC stream did exactly what it said the whole time, with one ordered stream, monotonic ids, and DDL
+included. If you&rsquo;re wondering whether to trust the beta engine, under failover testing the beta wasn&rsquo;t what broke.</p>
+<h3 id="how-far-behind-is-a-replica">How far behind is a replica?</h3>
+<p>ePHPm doesn&rsquo;t export a replication lag gauge yet, so I measured it from the outside. Two v0.8.7 nodes on one machine, a
+primary on <code>127.0.0.1</code> and a replica on <code>127.0.0.2</code>, real cluster channel between them. A small Go probe inserts a row
+through PHP on the primary, takes the time when the HTTP response comes back (the write is committed at that point), then
+polls a PHP page on the replica every ~2.4 ms until the row shows up. 150 samples per step, with a random pause between
+samples so they don&rsquo;t line up with the tailer&rsquo;s 25 ms poll. In the background, a separate open-loop writer puts a steady
+rate of single-row INSERTs on the primary.</p>
+<p><img src="/img/2026/09/clustered-sqlite-cdc-replication-lag.svg" alt="CDC replication lag by write rate"></p>
+<table>
+  <thead>
+      <tr>
+          <th>background writes</th>
+          <th>p50</th>
+          <th>p90</th>
+          <th>p99</th>
+      </tr>
+  </thead>
+  <tbody>
+      <tr>
+          <td>idle</td>
+          <td>16.2 ms</td>
+          <td>26.5 ms</td>
+          <td>44.9 ms</td>
+      </tr>
+      <tr>
+          <td>100/s</td>
+          <td>17.7 ms</td>
+          <td>30.0 ms</td>
+          <td>34.6 ms</td>
+      </tr>
+      <tr>
+          <td>250/s</td>
+          <td>21.3 ms</td>
+          <td>30.2 ms</td>
+          <td>51.6 ms</td>
+      </tr>
+      <tr>
+          <td>500/s</td>
+          <td>26.9 ms</td>
+          <td>37.1 ms</td>
+          <td>57.9 ms</td>
+      </tr>
+  </tbody>
+</table>
+<p>That&rsquo;s what a 25 ms poll looks like. On an idle primary the median is a bit over half the interval plus the apply, and it
+creeps up as the stream gets busier. For a PHP app, a replica that&rsquo;s 20-30 ms behind is fine.</p>
+<p>At 1,000 writes/s it stopped being fine. The replica fell behind and kept falling: five probes in a row timed out at 5
+seconds, and the ten that did land had a median of 1.7 seconds. So I went looking for the ceiling. I hit the primary with
+closed-loop writers for 17 seconds, didn&rsquo;t touch the replica, and timed how long it took to catch up:</p>
+<table>
+  <thead>
+      <tr>
+          <th>burst</th>
+          <th>primary inserts/s</th>
+          <th>single node inserts/s</th>
+          <th>replica drain rate</th>
+      </tr>
+  </thead>
+  <tbody>
+      <tr>
+          <td>1 writer</td>
+          <td>2,288</td>
+          <td>2,740</td>
+          <td>757 rows/s (25,161 rows in 33.2 s)</td>
+      </tr>
+      <tr>
+          <td>4 writers</td>
+          <td>5,154</td>
+          <td>6,372</td>
+          <td>810 rows/s (76,383 rows in 94.3 s)</td>
+      </tr>
+  </tbody>
+</table>
+<p><img src="/img/2026/09/clustered-sqlite-cdc-replica-catchup.svg" alt="replica catch-up after a burst"></p>
+<p>Two things come out of that. First, capturing CDC on the primary costs 16-19% of write throughput against the same binary
+with no <code>[cluster]</code> at all, in the same range as the 12-13% the lab measured on its podman rig. Second, the replica applies about 750-830
+transactions per second, a straight line, no matter how hard the primary is pushed. The reason is in the tailer:
+<code>poll_batch</code> cuts at the first <code>COMMIT</code> record, so every primary transaction becomes its own poll, its own frame and its own
+transaction on the replica. The 25 ms sleep only happens when there&rsquo;s nothing to send, so it isn&rsquo;t the bottleneck here.
+The per-transaction round trip is. Batching several source transactions per frame and per apply transaction is the obvious
+next step, and now there&rsquo;s a number to beat.</p>
+<p>During those bursts the replica also logged <code>SQLITE_BUSY</code> from <code>apply_batch</code> twice, when an apply collided with my read
+probe on the replica. Both times it dropped the stream, resubscribed two seconds later from its watermark, and carried on.
+The final count on both nodes was 179,369 rows. That&rsquo;s the &ldquo;lag, not loss&rdquo; property from the backpressure section doing
+its job, though a busy timeout on the apply connection would make it a lot less noisy.</p>
+<h4 id="how-i-measured">How I measured</h4>
+<ul>
+<li>AMD Ryzen 9 5950X (16 cores / 32 threads), 128 GB (62 GiB visible to WSL2), Windows 11 with WSL2 (kernel 6.18.33.2), everything on the WSL ext4
+filesystem. No CPU limits on either node, so both ePHPm processes and the load generator share the same 32 threads.</li>
+<li>ePHPm <a href="https://github.com/ephpm/ephpm/releases/tag/v0.8.7">v0.8.7</a>, the <code>php8.4.23-linux-x86_64</code> release build,
+<code>[db.sqlite.replication] role = &quot;primary&quot;</code> / <code>&quot;replica&quot;</code> pinned, <code>[php] mode = &quot;fpm&quot;</code>, rate limiting off, query stats off.</li>
+<li>PHP fixtures use <code>ephpm_db_execute</code> / <code>ephpm_db_query</code>, one statement each. The lag probe and open-loop writer are a
+~150 line Go program; the burst writers are closed loop over keep-alive connections.</li>
+<li>One-machine loopback numbers. They say how the replication path behaves, not what a real network between two hosts adds.
+Absolute inserts/s won&rsquo;t transfer to your hardware; the shape (lag tracks the poll interval, apply has a ceiling around
+one transaction per round trip) should.</li>
+</ul>
+<h3 id="one-database-per-site">One database per site</h3>
+<p>Multi-tenant ePHPm (a <code>sites_dir</code> with a database per vhost) and clustering didn&rsquo;t coexist until
+<a href="https://github.com/ephpm/ephpm/pull/416">#416</a>. Before it, enabling <code>[cluster]</code> collapsed every vhost onto one shared
+clustered database. With <code>[db.sqlite.replication] per_site = true</code>:</p>
+<ul>
+<li>Each vhost gets its own <code>cdc/&lt;site&gt;</code> and <code>snapshot/&lt;site&gt;</code> streams over the same channel connection.</li>
+<li>Ownership is rendezvous-hashed over the alive nodes, so a node death moves only that node&rsquo;s sites, each to a node that
+already has a warm replica.</li>
+<li>A new <code>sql/&lt;site&gt;</code> stream forwards writes from a non-owner to the owner, so they get captured into that site&rsquo;s CDC log.</li>
+</ul>
+<p>A review of the PR listed its own blockers, the worst being data loss when a site got re-homed onto a node that never had
+it (a node <em>joining</em> was enough), and they were closed before merge. Two more silent ones came after: a node that only
+forwarded a site never replicated it (<a href="https://github.com/ephpm/ephpm/pull/429">#429</a>), and stock <code>pdo_mysql</code> writes on a
+non-owner committed locally and were never shipped (<a href="https://github.com/ephpm/ephpm/pull/432">#432</a>). Every health check
+was green in both cases. The <a href="https://github.com/ephpm/lab/blob/main/docs/cluster-persite-v087.md">lab&rsquo;s cluster suite</a>
+puts the forward hop at about 255-275 µs per statement, paid per statement, so a ten-query page on a non-owner pays it ten
+times.</p>
+<h3 id="counting-protocols">Counting protocols</h3>
+<p>Here&rsquo;s the closing argument for the series. In the sqld era, two nodes talked over gossip, the KV data plane, sqld gRPC,
+and Hrana HTTP to a child process on each side. Now it&rsquo;s gossip, the KV data plane, and one multiplexed, authenticated
+cluster channel, all in one process.</p>
+<p>ePHPm&rsquo;s docs still label clustered mode experimental, and I think that&rsquo;s right. That label is about ePHPm&rsquo;s replication
+layer, which is a couple of months old and has had real bugs in its election and watermark logic, not about Turso. The
+fixes for those bugs came with tests that fail without them, which is the best I can offer until it has more time behind
+it.</p>
+<h3 id="links">Links</h3>
+<ul>
+<li><a href="https://github.com/ephpm/ephpm/pull/186">#186 Phase 2 CDC-native replication</a>, <a href="https://github.com/ephpm/litewire/pull/10">litewire#10</a></li>
+<li><a href="https://github.com/ephpm/ephpm/pull/219">#219 cdc_listen removal, cluster channel docs</a></li>
+<li><a href="https://github.com/ephpm/ephpm/pull/310">#310 clustered Turso CDC e2e</a>, <a href="https://github.com/ephpm/ephpm/pull/346">#346 election and log identity fixes</a>, <a href="https://github.com/ephpm/ephpm/pull/353">#353 log id in the claim</a></li>
+<li><a href="https://github.com/ephpm/ephpm/pull/416">#416 per-site clustered replication</a>, <a href="https://github.com/ephpm/ephpm/pull/429">#429</a>, <a href="https://github.com/ephpm/ephpm/pull/432">#432</a></li>
+<li>Cluster channel design: <a href="https://ephpm.dev/roadmap/cluster-channel/">ephpm.dev/roadmap/cluster-channel</a></li>
+<li>Lab cluster suite results: <a href="https://github.com/ephpm/lab/blob/main/docs/cluster-persite-v087.md">cluster-persite-v087.md</a></li>
+</ul>
+
+      </div>
+      <footer>
+        <div class="stats">
+  
+    <ul class="categories">
+      
+        
+          <li><a class="article-terms-link" href="/categories/ephpm/">ephpm</a></li>
+        
+          <li><a class="article-terms-link" href="/categories/databases/">databases</a></li>
+        
+          <li><a class="article-terms-link" href="/categories/rust/">rust</a></li>
+        
+      
+    </ul>
+  
+  
+    <ul class="tags">
+      
+        
+          <li><a class="article-terms-link" href="/tags/ephpm/">ephpm</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/sqlite/">sqlite</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/turso/">turso</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/rust/">rust</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/clustering/">clustering</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/yamux/">yamux</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/cdc/">cdc</a></li>
+        
+      
+    </ul>
+  
+</div>
+
+      </footer>
+    </div>
+    
+      
+  
+  <div class='post giscus-wrap'>
+    <script src='https://giscus.app/client.js'
+            data-repo='luthermonson/luth.io'
+            data-repo-id='R_kgDOGvFBXQ'
+            data-category='Announcements'
+            data-category-id='DIC_kwDOGvFBXc4DH_gv'
+            data-mapping='pathname'
+            data-strict='1'
+            data-reactions-enabled='1'
+            data-emit-metadata='0'
+            data-input-position='top'
+            data-theme='light'
+            data-lang='en'
+            data-loading='lazy'
+            crossorigin='anonymous'
+            async>
+    </script>
+  </div>
+  
+
+
+
+    
+  </article>
+  
+    <nav class="post-nav">
+      
+        <a href="/blog/2026/09/calling-rust-from-php-without-a-socket-part-1/" class="post-nav-link older">
+          <span class="post-nav-label">&larr; Older</span>
+          <span class="post-nav-title">Calling Rust From PHP Without a Socket, Part 1: The Native Functions</span>
+        </a>
+      
+      
+        <a href="/blog/2026/09/php-timeout-linker-wraps/" class="post-nav-link newer">
+          <span class="post-nav-label">Newer &rarr;</span>
+          <span class="post-nav-title">The Bugs Were Our Own Linker Wraps: Making a PHP Timeout Actually Time Out</span>
+        </a>
+      
+    </nav>
+  
+
+      </main>
+      <section id="site-sidebar">
+  
+    <section id="recent-posts">
+      <header>
+        <h1>Recent Posts</h1>
+      </header>
+      
+      <article class="mini-post">
+          <a href="/blog/2026/10/ephpm-worker-mode-performance/" class="image" style="--bg-image: url('/img/2026/10/ephpm-worker-mode-performance-cover.svg');">
+    <img class="" src="/img/2026/10/ephpm-worker-mode-performance-cover.svg" alt="Diagram: before, hyper/tokio hands each request to one shared bounded channel whose waiter list all 20 PHP threads contend on; after, a dispatcher hands the job straight into the mailbox of the most recently idle PHP thread and only queues it in a FIFO overflow queue when every thread is busy">
+  </a>
+        <header>
+          <h2><a href="/blog/2026/10/ephpm-worker-mode-performance/">Fourth Place in Worker Mode, and Why It Wasn&#39;t PHP</a></h2>
+          <time class="published" datetime="2026-10-16 08:10:00 -0700 PDT">October 16, 2026</time>
+        </header>
+      </article>
+      
+      <article class="mini-post">
+          <a href="/blog/2026/10/ephpm-websockets-how-to/" class="image" style="--bg-image: url('/img/2026/10/ephpm-websockets-how-to-cover.svg');">
+    <img class="" src="/img/2026/10/ephpm-websockets-how-to-cover.svg" alt="Diagram: browsers hold sockets to ePHPm&#39;s Rust session tasks and registry; each connect, message and disconnect runs websocket.php once on the PHP thread pool, and ordinary HTTP requests push through ephpm_ws_broadcast">
+  </a>
+        <header>
+          <h2><a href="/blog/2026/10/ephpm-websockets-how-to/">WebSockets in ePHPm, From Zero to a Working Chat</a></h2>
+          <time class="published" datetime="2026-10-11 17:30:00 -0700 PDT">October 11, 2026</time>
+        </header>
+      </article>
+      
+      <article class="mini-post">
+          <a href="/blog/2026/10/webhooks-out-of-order-scheduler/" class="image" style="--bg-image: url('/img/2026/10/webhooks-out-of-order-scheduler-timeline.svg');">
+    <img class="" src="/img/2026/10/webhooks-out-of-order-scheduler-timeline.svg" alt="Timeline of three same-label jobs where a runner executing a build is destroyed 2.3 seconds before its in_progress webhook arrives">
+  </a>
+        <header>
+          <h2><a href="/blog/2026/10/webhooks-out-of-order-scheduler/">Webhooks Arrive Out of Order: How My Scheduler Killed Live Builds</a></h2>
+          <time class="published" datetime="2026-10-07 21:10:00 -0700 PDT">October 7, 2026</time>
+        </header>
+      </article>
+      
+      <article class="mini-post">
+          <a href="/blog/2026/10/go-proxmox-five-years-to-v0-8/" class="image" style="--bg-image: url('/img/2026/10/go-proxmox-five-years-to-v0-8-apidiff.svg');">
+    <img class="" src="/img/2026/10/go-proxmox-five-years-to-v0-8-apidiff.svg" alt="Horizontal bar chart of apidiff incompatible and compatible changes for every go-proxmox release from v0.1.0 to v0.8.2">
+  </a>
+        <header>
+          <h2><a href="/blog/2026/10/go-proxmox-five-years-to-v0-8/">Breaking Changes Without Breaking Trust: Five Years to go-proxmox v0.8</a></h2>
+          <time class="published" datetime="2026-10-04 19:40:00 -0700 PDT">October 4, 2026</time>
+        </header>
+      </article>
+      
+      <article class="mini-post">
+          <a href="/blog/2026/10/windows-sigterm-sparse-files/" class="image" style="--bg-image: url('/img/2026/10/windows-sigterm-sparse-files-connections.svg');">
+    <img class="" src="/img/2026/10/windows-sigterm-sparse-files-connections.svg" alt="Bar chart: 96 Cloudflare edge connections held by orphaned cloudflared processes versus 4 for the live daemon">
+  </a>
+        <header>
+          <h2><a href="/blog/2026/10/windows-sigterm-sparse-files/">Windows Grab-Bag: SIGTERM That Doesn&#39;t Exist and Sparse Files That Break Docker</a></h2>
+          <time class="published" datetime="2026-10-03 14:30:00 -0700 PDT">October 3, 2026</time>
+        </header>
+      </article>
+      
+      
+        <footer>
+          <a href="/blog" class="button">See More</a>
+        </footer>
+      
+    </section>
+  
+
+  
+    
+
+      <section id="categories">
+        <header>
+          <h1><a href="/categories">Categories</a></h1>
+        </header>
+        <ul>
+          
+          
+          <li>
+              <a href="/categories/ephpm/">ephpm<span class="count">33</span></a>
+          
+          <li>
+              <a href="/categories/go/">go<span class="count">30</span></a>
+          
+          <li>
+              <a href="/categories/php/">php<span class="count">23</span></a>
+          
+          <li>
+              <a href="/categories/rust/">rust<span class="count">15</span></a>
+          
+          <li>
+              <a href="/categories/homelab/">homelab<span class="count">14</span></a>
+          
+          <li>
+              <a href="/categories/windows/">windows<span class="count">14</span></a>
+          
+          <li>
+              <a href="/categories/ci/">ci<span class="count">9</span></a>
+          
+          <li>
+              <a href="/categories/databases/">databases<span class="count">9</span></a>
+          
+          <li>
+              <a href="/categories/security/">security<span class="count">9</span></a>
+          
+          <li>
+              <a href="/categories/containers/">containers<span class="count">7</span></a>
+          
+          <li>
+              <a href="/categories/tools/">tools<span class="count">5</span></a>
+          
+          <li>
+              <a href="/categories/ai-agents/">ai-agents<span class="count">4</span></a>
+          
+          </li>
+        </ul>
+      </section>
+    
+  
+
+  
+    <section id="mini-bio">
+      <header>
+        <h1>About</h1>
+      </header>
+      <p>Luther is a 20+ year software veteran specializing in backend APIs and architecting products. Employed at <a href='https://www.suse.com'>SUSE</a> as the Team Lead for the <a href='https://github.com/rancher/windows/issues'>Containers on Windows Team</a> working on <a href='https://rancher.com/'>Rancher</a> + <a href='https://kubernetes.io/'>Kubernetes</a></p>
+      <footer>
+        <a href="/about" class="button">Learn More</a>
+      </footer>
+    </section>
+  
+</section>
+
+      <footer id="site-footer">
+  
+      <ul class="socnet-icons">
+        
+
+        <li><a href="//github.com/luthermonson" target="_blank" rel="noopener" title="GitHub" class="fab fa-github"></a></li>
+
+
+
+
+
+
+
+
+
+
+
+<li><a href="//www.linkedin.com/in/luthermonson" target="_blank" rel="noopener" title="LinkedIn" class="fab fa-linkedin"></a></li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li><a href="//twitter.com/luthermonson" target="_blank" rel="noopener" title="Twitter" class="fab fa-twitter"></a></li>
+
+
+
+
+
+
+
+
+
+
+
+<li><a href="mailto:luther.monson@gmail.com" target="_blank" title="Email" class="far fa-envelope"></a></li>
+
+      </ul>
+  
+  <p class="copyright">
+    © 2026 Luther Monson
+      <br>
+    Theme: <a href='https://github.com/pacollins/hugo-future-imperfect-slim' target='_blank' rel='noopener'>Hugo Future Imperfect Slim</a><br>A <a href='https://html5up.net/future-imperfect' target='_blank' rel='noopener'>HTML5 UP port</a> | Powered by <a href='https://gohugo.io/' title='0.160.1' target='_blank' rel='noopener'>Hugo</a>
+  </p>
+</footer>
+<a id="back-to-top" href="#" class="fas fa-arrow-up fa-2x"></a>
+
+      <script src="/js/bundle.min.241b62ebc4792fe8c7a75879e5f710894f226f2b73342e9916b3a3b0526030cc.js" integrity="sha256-JBti68R5L&#43;jHp1h55fcQiU8ibytzNC6ZFrOjsFJgMMw="></script>
+    <script src="/js/add-on.js"></script>
+    </div>
+  </body>
+</html>

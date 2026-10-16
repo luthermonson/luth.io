@@ -1,0 +1,730 @@
+<!doctype html>
+<html lang="en">
+  <head>
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-MSTSKGFWTX"></script>
+<script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+
+    gtag('config', 'G-MSTSKGFWTX');
+</script><meta charset="utf-8">
+<title>OPcache on Windows: Two Silent Failures - Luther Monson</title>
+<meta name="description" content="An ASLR fatal that looked like a memory-size lottery, and Windows PHP 8.3 builds that never had an opcode cache, with the fix sitting unpicked for three weeks.">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<meta name="twitter:card" content="summary_large_image"><meta name="twitter:site" content="@luthermonson">
+
+<meta property="og:site_name" content="Luther Monson">
+<meta property="og:title" content="OPcache on Windows: Two Silent Failures">
+<meta property="og:description" content="An ASLR fatal that looked like a memory-size lottery, and Windows PHP 8.3 builds that never had an opcode cache, with the fix sitting unpicked for three weeks.">
+<meta property="og:type" content="article">
+<meta property="og:url" content="https://luth.io/blog/2026/08/opcache-on-windows-two-silent-failures/">
+    <meta property="og:image" content="https://luth.io/img/2026/08/opcache-windows-silent-failures-cover.svg">
+    <meta property="og:image:alt" content="Two ePHPm processes computing the same OPcache shared-memory name; the second reattaches and dies on the ASLR check">
+
+
+  <link rel="manifest" href="/favicon/site.webmanifest?v=1">
+  <link rel="apple-touch-icon" sizes="180x180" href="/favicon/apple-touch-icon.png?v=1">
+  <link rel="icon" type="image/png" sizes="32x32" href="/favicon/favicon-32x32.png?v=1">
+  <link rel="icon" type="image/png" sizes="16x16" href="/favicon/favicon-16x16.png?v=1">
+  
+    <link rel="mask-icon" href="/favicon/safari-pinned-tab.svg?v=1" color="#ffffff">
+    <link rel="shortcut icon" href="/favicon/favicon.ico?v=1">
+    <meta name="msapplication-config" content="/favicon/browserconfig.xml?v=1">
+  
+  <meta name="msapplication-TileColor" content="#ffffff">
+  <meta name="theme-color" content="#ffffff">
+
+
+  <meta name="generator" content="Hugo 0.160.1">
+  <link rel="alternate" type="application/rss+xml" href="https://luth.io/index.xml" title="Luther Monson">
+  <link rel="stylesheet" href="/css/bundle.min.e1ffed86714fbb7eff75eab221c0c61b8260be0c7d1c08db0fcb7a2bdb6af7c9.css" integrity="sha256-4f/thnFPu37/deqyIcDGG4Jgvgx9HAjbD8t6K9tq98k="><link rel="stylesheet" href="/css/add-on.css">
+        <link rel="stylesheet" href="/css/code.css">
+        <link rel="stylesheet" href="/css/mobile.css">
+</head>
+
+  <body>
+    
+
+<header id="site-header">
+  <nav id="site-nav">
+    <h1 class="nav-title">
+      <a href="/" class="nav">
+        <img class="nav-avatar" src="/img/luther-monson-headshot.jpg" alt="" width="32" height="32">
+        
+          Blog
+        
+      </a>
+    </h1>
+    <menu id="site-nav-menu" class="flyout-menu menu">
+      
+        
+          
+          <a href="/" class="nav link"><i class='fa fa-home'></i> Home</a>
+        
+      
+        
+          
+          <a href="/about" class="nav link"><i class='far fa-id-card'></i> About</a>
+        
+      
+        
+          
+          <a href="/blog" class="nav link"><i class='far fa-newspaper'></i> Blog</a>
+        
+      
+        
+          
+          <a href="/archive" class="nav link"><i class='far fa-calendar-alt'></i> Archive</a>
+        
+      
+        
+          
+          <a href="/categories" class="nav link"><i class='fas fa-sitemap'></i> Categories</a>
+        
+      
+      <a href="#share-menu" class="nav link share-toggle"><i class="fas fa-share-alt">&nbsp;</i>Share</a>
+      <a href="#search-input" class="nav link search-toggle"><i class="fas fa-search">&nbsp;</i>Search</a>
+    </menu>
+    <a href="#search-input" class="nav search-toggle"><i class="fas fa-search fa-2x">&nbsp;</i></a>
+    <a href="#share-menu" class="nav share-toggle"><i class="fas fa-share-alt fa-2x">&nbsp;</i></a>
+    
+    <a href="#site-nav" class="nav nav-toggle"><i class="fas fa-bars fa-2x"></i></a>
+  </nav>
+  <menu id="search" class="menu"><input id="search-input" class="search-input menu"></input><div id="search-results" class="search-results menu"></div></menu>
+  
+  
+    <menu id="share-menu" class="flyout-menu menu">
+      <h1>Share Post</h1>
+      
+
+
+
+
+  
+    
+    <a href="//twitter.com/share?text=OPcache%20on%20Windows%3a%20Two%20Silent%20Failures&amp;url=https%3a%2f%2fluth.io%2fblog%2f2026%2f08%2fopcache-on-windows-two-silent-failures%2f" target="_blank" rel="noopener" class="nav share-btn twitter">
+        <p>Twitter</p>
+      </a>
+  
+
+  
+      <a href="//www.facebook.com/sharer/sharer.php?u=https%3a%2f%2fluth.io%2fblog%2f2026%2f08%2fopcache-on-windows-two-silent-failures%2f" target="_blank" rel="noopener" class="nav share-btn facebook">
+        <p>Facebook</p>
+        </a>
+  
+
+  
+    <a href="//www.reddit.com/submit?url=https%3a%2f%2fluth.io%2fblog%2f2026%2f08%2fopcache-on-windows-two-silent-failures%2f&amp;title=OPcache%20on%20Windows%3a%20Two%20Silent%20Failures" target="_blank" rel="noopener" class="nav share-btn reddit">
+          <p>Reddit</p>
+        </a>
+  
+
+  
+        <a href="//www.linkedin.com/shareArticle?url=https%3a%2f%2fluth.io%2fblog%2f2026%2f08%2fopcache-on-windows-two-silent-failures%2f&amp;title=OPcache%20on%20Windows%3a%20Two%20Silent%20Failures" target="_blank" rel="noopener" class="nav share-btn linkedin">
+            <p>LinkedIn</p>
+          </a>
+  
+
+  
+        <a href="//www.pinterest.com/pin/create/button/?url=https%3a%2f%2fluth.io%2fblog%2f2026%2f08%2fopcache-on-windows-two-silent-failures%2f&amp;description=OPcache%20on%20Windows%3a%20Two%20Silent%20Failures" target="_blank" rel="noopener" class="nav share-btn pinterest">
+          <p>Pinterest</p>
+        </a>
+  
+
+  
+        <a href="mailto:?subject=Check%20out%20this%20post%20by Luther%20Monson&amp;body=https%3a%2f%2fluth.io%2fblog%2f2026%2f08%2fopcache-on-windows-two-silent-failures%2f" target="_blank" class="nav share-btn email" data-proofer-ignore>
+          <p>Email</p>
+        </a>
+  
+
+
+    </menu>
+  
+</header>
+
+    <div id="wrapper">
+      <section id="site-intro" class="hidden-single-column">
+  <a href="/"><img src="/img/luther-monson-headshot.jpg" class="circle" width="100" alt="Luther Monson, Staff Software Engineer at SUSE" /></a>
+  <header>
+    <h1>Luther Monson</h1>
+  </header>
+  <main>
+    <p>Go by way of PHP &middot; Containers &middot; VMs &middot; Windows &middot; Kubernetes</p>
+  </main>
+  
+    <footer>
+      <ul class="socnet-icons">
+        
+
+        <li><a href="//github.com/luthermonson" target="_blank" rel="noopener" title="GitHub" class="fab fa-github"></a></li>
+
+
+
+
+
+
+
+
+
+
+
+<li><a href="//www.linkedin.com/in/luthermonson" target="_blank" rel="noopener" title="LinkedIn" class="fab fa-linkedin"></a></li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li><a href="//twitter.com/luthermonson" target="_blank" rel="noopener" title="Twitter" class="fab fa-twitter"></a></li>
+
+
+
+
+
+
+
+
+
+
+
+<li><a href="mailto:luther.monson@gmail.com" target="_blank" title="Email" class="far fa-envelope"></a></li>
+
+      </ul>
+    </footer>
+  
+</section>
+
+      <main id="site-main">
+        
+  <article>
+    <div class="post">
+      <header>
+  <div class="title">
+    
+      <h2><a href="/blog/2026/08/opcache-on-windows-two-silent-failures/">OPcache on Windows: Two Silent Failures</a></h2>
+    
+    
+      <p>An ASLR fatal that looked like a memory-size lottery, and Windows PHP 8.3 builds that never had an opcode cache, with the fix sitting unpicked for three weeks.</p>
+    
+  </div>
+  <div class="meta">
+    <time datetime="2026-08-29 16:45:00 -0700 PDT">August 29, 2026</time>
+    
+    <p>8-Minute Read</p>
+  </div>
+</header>
+
+      <div id="socnet-share">
+        
+
+
+
+
+  
+    
+    <a href="//twitter.com/share?text=OPcache%20on%20Windows%3a%20Two%20Silent%20Failures&amp;url=https%3a%2f%2fluth.io%2fblog%2f2026%2f08%2fopcache-on-windows-two-silent-failures%2f" target="_blank" rel="noopener" class="nav share-btn twitter">
+        <p>Twitter</p>
+      </a>
+  
+
+  
+      <a href="//www.facebook.com/sharer/sharer.php?u=https%3a%2f%2fluth.io%2fblog%2f2026%2f08%2fopcache-on-windows-two-silent-failures%2f" target="_blank" rel="noopener" class="nav share-btn facebook">
+        <p>Facebook</p>
+        </a>
+  
+
+  
+    <a href="//www.reddit.com/submit?url=https%3a%2f%2fluth.io%2fblog%2f2026%2f08%2fopcache-on-windows-two-silent-failures%2f&amp;title=OPcache%20on%20Windows%3a%20Two%20Silent%20Failures" target="_blank" rel="noopener" class="nav share-btn reddit">
+          <p>Reddit</p>
+        </a>
+  
+
+  
+        <a href="//www.linkedin.com/shareArticle?url=https%3a%2f%2fluth.io%2fblog%2f2026%2f08%2fopcache-on-windows-two-silent-failures%2f&amp;title=OPcache%20on%20Windows%3a%20Two%20Silent%20Failures" target="_blank" rel="noopener" class="nav share-btn linkedin">
+            <p>LinkedIn</p>
+          </a>
+  
+
+  
+        <a href="//www.pinterest.com/pin/create/button/?url=https%3a%2f%2fluth.io%2fblog%2f2026%2f08%2fopcache-on-windows-two-silent-failures%2f&amp;description=OPcache%20on%20Windows%3a%20Two%20Silent%20Failures" target="_blank" rel="noopener" class="nav share-btn pinterest">
+          <p>Pinterest</p>
+        </a>
+  
+
+  
+        <a href="mailto:?subject=Check%20out%20this%20post%20by Luther%20Monson&amp;body=https%3a%2f%2fluth.io%2fblog%2f2026%2f08%2fopcache-on-windows-two-silent-failures%2f" target="_blank" class="nav share-btn email" data-proofer-ignore>
+          <p>Email</p>
+        </a>
+  
+
+
+      </div>
+      <div class="content">
+        
+        <p>Windows is the platform where <a href="https://github.com/ephpm/ephpm">ePHPm</a> gets the least traffic and the most surprises.
+Last week closed out two OPcache bugs that only exist there, and both were quiet in their own way. One killed the
+server at startup with nothing in our own logs. The other didn&rsquo;t kill anything: it just ran PHP 8.3 with no opcode
+cache at all, and for three weeks after a fixed SDK was published every check stayed green.</p>
+<p>For context, ePHPm is a Rust server with PHP embedded as a static library. On Windows that&rsquo;s a ZTS
+<code>php8embed.lib</code> built by our <a href="https://github.com/ephpm/php-sdk">php-sdk</a> pipeline and linked into <code>ephpm.exe</code>. The
+versions here are PHP 8.5.7 ZTS on Windows 11, plus the 8.3 and 8.4 SDK pins we ship.</p>
+<h3 id="opcode-handlers-are-unusable-due-to-aslr">&ldquo;Opcode handlers are unusable due to ASLR&rdquo;</h3>
+<p>The report: an <code>ephpm.exe</code> sometimes dies at launch with this, written to stderr by PHP (and to the Windows Event
+Log), after which the process calls <code>exit(-2)</code> from inside <code>php_module_startup</code>:</p>
+<pre tabindex="0"><code>Fatal Error Opcode handlers are unusable due to ASLR. Please setup opcache.file_cache
+and opcache.file_cache_fallback directives for more convenient Opcache usage
+</code></pre><p>ePHPm&rsquo;s own log shows the autotune lines and then nothing. And it looked like a size problem, which sent the first
+round of debugging in the wrong direction: <code>opcache.memory_consumption = 512</code> died, 256 worked, 333 and 400 worked,
+and turning the JIT off &ldquo;fixed&rdquo; it too. That reads like &ldquo;512 MB is too big to reserve contiguously once ASLR has
+scattered things around&rdquo;. It isn&rsquo;t.</p>
+<h3 id="the-segment-has-a-name-and-the-size-is-part-of-it">The segment has a name, and the size is part of it</h3>
+<p>On Windows, OPcache&rsquo;s shared memory is a <em>named, session-global section object</em>. The name comes from
+<code>create_name_with_username()</code> in <code>ext/opcache/shared_alloc_win32.c</code>:</p>
+<pre tabindex="0"><code>ZendOPcache.SharedMemoryArea@&lt;md5(username + opcache.cache_id)&gt;@&lt;sapi_name&gt;@&lt;zend_system_id&gt;&lt;requested_size_hex&gt;
+</code></pre><p>A second process that computes the <strong>same name</strong> doesn&rsquo;t create its own segment. It reattaches to the first one&rsquo;s.
+That&rsquo;s how PHP on Windows shares an opcode cache across php-cgi processes. Reattaching is only legal if the VM&rsquo;s
+opcode handlers sit at the same address in both processes, because cached <code>op_array</code>s hold absolute pointers to
+handlers inside the loaded image. <code>zend_shared_alloc_reattach()</code> checks exactly that:</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-c" data-lang="c"><span class="line"><span class="cl"><span class="n">wanted_mapping_base</span> <span class="o">=</span> <span class="p">((</span><span class="kt">void</span><span class="o">**</span><span class="p">)</span><span class="n">mapping_base</span><span class="p">)[</span><span class="mi">0</span><span class="p">];</span>
+</span></span><span class="line"><span class="cl"><span class="n">execute_ex_base</span>     <span class="o">=</span> <span class="p">((</span><span class="kt">void</span><span class="o">**</span><span class="p">)</span><span class="n">mapping_base</span><span class="p">)[</span><span class="mi">1</span><span class="p">];</span>
+</span></span><span class="line"><span class="cl"><span class="p">...</span>
+</span></span><span class="line"><span class="cl"><span class="n">execute_ex_moved</span> <span class="o">=</span> <span class="p">(</span><span class="kt">void</span> <span class="o">*</span><span class="p">)</span><span class="n">execute_ex</span> <span class="o">!=</span> <span class="n">execute_ex_base</span><span class="p">;</span>
+</span></span></code></pre></div><p>When it has moved, it logs at <code>ACCEL_LOG_FATAL</code>, and that isn&rsquo;t a log level, whatever the name suggests.
+<code>zend_accelerator_debug.c</code> handles it outside the verbosity check:</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-c" data-lang="c"><span class="line"><span class="cl"><span class="cm">/* perform error handling even without logging the error */</span>
+</span></span><span class="line"><span class="cl"><span class="k">switch</span> <span class="p">(</span><span class="n">type</span><span class="p">)</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">    <span class="k">case</span> <span class="nl">ACCEL_LOG_ERROR</span><span class="p">:</span> <span class="nf">zend_bailout</span><span class="p">();</span> <span class="k">break</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">    <span class="k">case</span> <span class="nl">ACCEL_LOG_FATAL</span><span class="p">:</span> <span class="nf">exit</span><span class="p">(</span><span class="o">-</span><span class="mi">2</span><span class="p">);</span>       <span class="k">break</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl"><span class="p">}</span>
+</span></span></code></pre></div><p>So <code>opcache.log_verbosity_level</code> can&rsquo;t suppress it, and <code>zend_try</code> can&rsquo;t catch it, because it&rsquo;s <code>exit()</code> rather than
+a bailout. Two details then explain every symptom:</p>
+<ol>
+<li><strong>The requested size is in the name</strong> (<code>memory_consumption</code> plus the page-aligned <code>jit_buffer_size</code>). Whether two
+processes collide depends on configured size, which is why it presented as a size lottery, and why turning the JIT
+off (which removes the JIT buffer from the size) &ldquo;fixed&rdquo; it.</li>
+<li><strong>Windows picks a randomized image base per file and keeps reusing it, in practice until reboot.</strong> Run the same <code>ephpm.exe</code> twice and both processes
+get the same base, so the reattach check passes. Copy the exact same bytes to a different path and the copy gets a
+different base. That&rsquo;s why it was deterministic per binary and not random.</li>
+</ol>
+<p>Autotune derived 512 MB on any host with more than about 2.8 GB of RAM, so in practice every Windows box was one
+renamed binary away from this. The reproduction is three commands, with instance A still running:</p>
+<pre tabindex="0"><code>ephpm.exe serve --config a.toml          # creates the 512 MB-named segment, OK
+ephpm.exe serve --config b.toml          # same binary, same base: reattach OK
+copy ephpm.exe ephpm-call.exe
+ephpm-call.exe serve --config c.toml     # same bytes, new path, new base: dies
+</code></pre><p>The controls that confirmed it, all with instance A holding the segment:</p>
+<table>
+  <thead>
+      <tr>
+          <th>Variant</th>
+          <th>Result</th>
+      </tr>
+  </thead>
+  <tbody>
+      <tr>
+          <td>copy, default 512 MB</td>
+          <td>dies with the ASLR fatal</td>
+      </tr>
+      <tr>
+          <td>copy, <code>opcache_memory_consumption = 256</code></td>
+          <td>starts (different size, different name)</td>
+      </tr>
+      <tr>
+          <td>copy, still 512 MB, <code>opcache.cache_id</code> set via <code>ini_overrides</code></td>
+          <td>starts and serves PHP</td>
+      </tr>
+      <tr>
+          <td>same binary, same path, 512 MB</td>
+          <td>starts (same image base)</td>
+      </tr>
+  </tbody>
+</table>
+<p>The third row is the one that settles it: same bytes, same 512 MB, same concurrent instance, and the only change is
+the namespace.</p>
+<h3 id="the-fix-never-reattach">The fix: never reattach</h3>
+<p>ePHPm is one multi-threaded ZTS process that never forks workers. It has no use for a segment shared with an
+unrelated process, and on Linux and macOS PHP doesn&rsquo;t support cross-process reattachment at all (the
+<code>ZEND_OPCACHE_SHM_REATTACHMENT</code> define in <code>zend_portability.h</code> is literally &ldquo;Currently only possible on Windows.&rdquo;).
+So the fix gives every process its own namespace:</p>
+<pre tabindex="0"><code>opcache.cache_id = ephpm-&lt;pid&gt;
+</code></pre><p>With a private name, ePHPm always takes the <em>create</em> path, which performs no <code>execute_ex</code> check. <code>opcache.cache_id</code>
+only exists on Windows, so it&rsquo;s only emitted there, and it&rsquo;s written before the operator&rsquo;s <code>ini_overrides</code> so anyone
+who really wants a shared segment can still pin their own.</p>
+<p>The options I rejected are worth listing, because each would have looked like a fix:</p>
+<ul>
+<li><strong>Cap the size.</strong> That just moves the collision to a different size. Same lottery, different numbers.</li>
+<li><strong><code>/DYNAMICBASE:NO</code>.</strong> Turning off ASLR in a server process that runs untrusted PHP to work around a startup bug is
+a bad trade.</li>
+<li><strong><code>opcache.file_cache</code> + <code>file_cache_fallback</code>.</strong> Turns the fatal into a warning and a much slower file-cache-only
+mode, plus an on-disk cache with its own multi-tenant questions.</li>
+<li><strong><code>opcache.mmap_base</code>.</strong> Moves the segment, not <code>execute_ex</code>. Doesn&rsquo;t help.</li>
+</ul>
+<p>The PR also caps the <em>derived</em> <code>memory_consumption</code> at 256 MB on Windows, for a separate reason: the Windows section
+is pagefile-backed and charged against the commit limit in full at startup, where Linux commits lazily. To be clear,
+the cap doesn&rsquo;t fix the ASLR abort. The negative control (both binaries forced onto one shared <code>cache_id</code> at 256 MB)
+still dies. An explicit operator value is still honored, with a startup warning. That&rsquo;s
+<a href="https://github.com/ephpm/ephpm/pull/363">ephpm#363</a>.</p>
+<h3 id="php-83-on-windows-ran-with-no-opcache-and-the-fix-sat-unpicked-for-three-weeks">PHP 8.3 on Windows ran with no OPcache, and the fix sat unpicked for three weeks</h3>
+<p>The second one turned up while I was verifying the JIT default on Windows: in serve mode on our PHP 8.3 build,
+<code>opcache_get_status()</code> returned <code>false</code>. The extension was loaded. It just never engaged.</p>
+<p>Up through PHP 8.4, OPcache only activates for SAPIs it knows about. There&rsquo;s a <code>supported_sapis</code> allowlist in
+<code>ZendAccelerator.c</code> (apache2handler, fpm-fcgi, cli-server, litespeed, frankenphp and so on), and an unknown SAPI name
+quietly gets no opcode cache. ePHPm&rsquo;s SAPI is named <code>ephpm</code>, so our SDK builds patch the allowlist. PHP 8.5 removed
+the allowlist upstream, which is why the 8.5 builds were never affected.</p>
+<p>To check whether a static library actually carries the patch, you don&rsquo;t need a debugger. Grep the string table, and
+use SAPI names you know are in the upstream list as controls, so you know you&rsquo;re reading the right table:</p>
+<table>
+  <thead>
+      <tr>
+          <th>Windows SDK</th>
+          <th><code>ephpm</code> in allowlist</th>
+          <th><code>frankenphp</code> / <code>fuzzer</code> controls</th>
+      </tr>
+  </thead>
+  <tbody>
+      <tr>
+          <td>8.3.31 (what we pinned)</td>
+          <td>missing</td>
+          <td>both present</td>
+      </tr>
+      <tr>
+          <td>8.3.33</td>
+          <td>present</td>
+          <td>both present</td>
+      </tr>
+      <tr>
+          <td>8.4.23 (what we pin)</td>
+          <td>present</td>
+          <td>both present</td>
+      </tr>
+      <tr>
+          <td>8.4.24</td>
+          <td>present</td>
+          <td>both present</td>
+      </tr>
+  </tbody>
+</table>
+<p>So the SDK pipeline was fine. 8.3.33 had carried the patch since August 2nd. We were just pinning an older 8.3, one
+that predates the allowlist patch, so our Windows 8.3 builds had gone without OPcache since 8.3 joined the release
+matrix in June. And
+the original report (php-sdk#47) had also blamed 8.4, which was never broken. The fix in
+<a href="https://github.com/ephpm/ephpm/pull/373">ephpm#373</a> moves one pin, 8.3.31 to 8.3.33, and deliberately leaves 8.4 alone
+so an OPcache fix doesn&rsquo;t drag in an unrelated PHP version change.</p>
+<h3 id="why-nobody-noticed-the-bump-pr-that-couldnt-push">Why nobody noticed: the bump PR that couldn&rsquo;t push</h3>
+<p>We have a nightly &ldquo;SDK Bump&rdquo; workflow that opens a PR whenever a newer SDK is published. It had been trying to land
+exactly this 8.3.33 bump every night since it shipped, and failing at the push:</p>
+<pre tabindex="0"><code>! [remote rejected] bump/php-8.3.33 (refusing to allow a GitHub App to create or
+  update workflow `.github/workflows/release.yml` without `workflows` permission)
+</code></pre><p><code>GITHUB_TOKEN</code> can&rsquo;t modify files under <code>.github/workflows/</code>, and <code>release.yml</code> is one of the pin sites. The failure
+was in a scheduled workflow, so nobody saw it. That needs a token with workflow scope, which is its own decision and
+got its own follow-up.</p>
+<p>Using the bump tool by hand then turned up two more bugs in it. Substitutions that targeted the same file each started
+from a fresh read of the file, so the last write won: <code>bump-php-pin 8.3 8.3.33</code> moved three pin sites in <code>release.yml</code>
+and silently dropped the other two, which would have left the two Linux release legs building the old SDK. Its own
+<code>--check</code> flagged the result as drift, which is how I caught it. The nightly run had produced the same incomplete diff.
+Substitutions now compose per file, through a pure function that&rsquo;s unit tested without touching disk. And
+<code>windows-php-check.yml</code> hard-coded the 8.3 SDK path, so it wasn&rsquo;t a known pin site at all. It is now.</p>
+<h3 id="the-pattern">The pattern</h3>
+<p>The same lesson showed up in July, when it turned out SHA-NI had been off in our Linux 8.3 and 8.4 builds for the life of
+the project: a C++-only compiler flag leaked into the C flags, made an autoconf probe fail, and the hardware sha256
+path compiled out. sha256 ran at roughly 2.7x its potential cost
+(<a href="https://ephpm.dev/benchmarking/findings/">benchmarking findings</a>), and the fix added a build guard that greps for
+the <code>SHA256_Transform_shani</code> symbol.</p>
+<p>All three bugs have the same shape. A config field existing, or a feature &ldquo;being enabled&rdquo;, doesn&rsquo;t mean the machine
+code is in the binary, or that the code path runs. On Windows especially, the cheap check is the artifact itself:
+grep the <code>.lib</code> for the string, or <code>nm</code> it for the symbol, with a control you know should be there. For OPcache the
+runtime check is <code>opcache_get_status()</code> returning an array and not <code>false</code>. That&rsquo;s the check worth running on every platform you ship, not just the one CI runs on.</p>
+<h3 id="links">Links</h3>
+<ul>
+<li><a href="https://github.com/ephpm/ephpm/issues/362">ephpm#362</a> / <a href="https://github.com/ephpm/ephpm/pull/363">ephpm#363</a> - the ASLR startup abort and the private <code>opcache.cache_id</code></li>
+<li><a href="https://github.com/ephpm/ephpm/pull/373">ephpm#373</a> - pin 8.3 to 8.3.33; Windows OPcache was silently off</li>
+<li><a href="https://github.com/ephpm/php-sdk/issues/47">ephpm/php-sdk#47</a> - the original allowlist report</li>
+<li><a href="https://github.com/ephpm/php-sdk/pull/36">ephpm/php-sdk#36</a> - re-enabling SHA-NI, PCLMUL and AVX2 in the SDK build</li>
+<li>php-src: <a href="https://github.com/php/php-src/blob/master/ext/opcache/shared_alloc_win32.c"><code>ext/opcache/shared_alloc_win32.c</code></a>, <a href="https://github.com/php/php-src/blob/master/ext/opcache/zend_accelerator_debug.c"><code>ext/opcache/zend_accelerator_debug.c</code></a></li>
+</ul>
+
+      </div>
+      <footer>
+        <div class="stats">
+  
+    <ul class="categories">
+      
+        
+          <li><a class="article-terms-link" href="/categories/php/">php</a></li>
+        
+          <li><a class="article-terms-link" href="/categories/windows/">windows</a></li>
+        
+          <li><a class="article-terms-link" href="/categories/ephpm/">ephpm</a></li>
+        
+      
+    </ul>
+  
+  
+    <ul class="tags">
+      
+        
+          <li><a class="article-terms-link" href="/tags/php/">php</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/opcache/">opcache</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/windows/">windows</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/ephpm/">ephpm</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/debugging/">debugging</a></li>
+        
+      
+    </ul>
+  
+</div>
+
+      </footer>
+    </div>
+    
+      
+  
+  <div class='post giscus-wrap'>
+    <script src='https://giscus.app/client.js'
+            data-repo='luthermonson/luth.io'
+            data-repo-id='R_kgDOGvFBXQ'
+            data-category='Announcements'
+            data-category-id='DIC_kwDOGvFBXc4DH_gv'
+            data-mapping='pathname'
+            data-strict='1'
+            data-reactions-enabled='1'
+            data-emit-metadata='0'
+            data-input-position='top'
+            data-theme='light'
+            data-lang='en'
+            data-loading='lazy'
+            crossorigin='anonymous'
+            async>
+    </script>
+  </div>
+  
+
+
+
+    
+  </article>
+  
+    <nav class="post-nav">
+      
+        <a href="/blog/2026/08/ephpm-ebpf-per-vhost-network-policy/" class="post-nav-link older">
+          <span class="post-nav-label">&larr; Older</span>
+          <span class="post-nav-title">Per-Tenant Network Policy in One Process: ePHPm&#39;s eBPF Thread Tags</span>
+        </a>
+      
+      
+        <a href="/blog/2026/08/php-middleware-elephc/" class="post-nav-link newer">
+          <span class="post-nav-label">Newer &rarr;</span>
+          <span class="post-nav-title">Middleware in PHP: Compiling It With elephc, Then Not Needing To</span>
+        </a>
+      
+    </nav>
+  
+
+      </main>
+      <section id="site-sidebar">
+  
+    <section id="recent-posts">
+      <header>
+        <h1>Recent Posts</h1>
+      </header>
+      
+      <article class="mini-post">
+          <a href="/blog/2026/10/ephpm-worker-mode-performance/" class="image" style="--bg-image: url('/img/2026/10/ephpm-worker-mode-performance-cover.svg');">
+    <img class="" src="/img/2026/10/ephpm-worker-mode-performance-cover.svg" alt="Diagram: before, hyper/tokio hands each request to one shared bounded channel whose waiter list all 20 PHP threads contend on; after, a dispatcher hands the job straight into the mailbox of the most recently idle PHP thread and only queues it in a FIFO overflow queue when every thread is busy">
+  </a>
+        <header>
+          <h2><a href="/blog/2026/10/ephpm-worker-mode-performance/">Fourth Place in Worker Mode, and Why It Wasn&#39;t PHP</a></h2>
+          <time class="published" datetime="2026-10-16 08:10:00 -0700 PDT">October 16, 2026</time>
+        </header>
+      </article>
+      
+      <article class="mini-post">
+          <a href="/blog/2026/10/ephpm-websockets-how-to/" class="image" style="--bg-image: url('/img/2026/10/ephpm-websockets-how-to-cover.svg');">
+    <img class="" src="/img/2026/10/ephpm-websockets-how-to-cover.svg" alt="Diagram: browsers hold sockets to ePHPm&#39;s Rust session tasks and registry; each connect, message and disconnect runs websocket.php once on the PHP thread pool, and ordinary HTTP requests push through ephpm_ws_broadcast">
+  </a>
+        <header>
+          <h2><a href="/blog/2026/10/ephpm-websockets-how-to/">WebSockets in ePHPm, From Zero to a Working Chat</a></h2>
+          <time class="published" datetime="2026-10-11 17:30:00 -0700 PDT">October 11, 2026</time>
+        </header>
+      </article>
+      
+      <article class="mini-post">
+          <a href="/blog/2026/10/webhooks-out-of-order-scheduler/" class="image" style="--bg-image: url('/img/2026/10/webhooks-out-of-order-scheduler-timeline.svg');">
+    <img class="" src="/img/2026/10/webhooks-out-of-order-scheduler-timeline.svg" alt="Timeline of three same-label jobs where a runner executing a build is destroyed 2.3 seconds before its in_progress webhook arrives">
+  </a>
+        <header>
+          <h2><a href="/blog/2026/10/webhooks-out-of-order-scheduler/">Webhooks Arrive Out of Order: How My Scheduler Killed Live Builds</a></h2>
+          <time class="published" datetime="2026-10-07 21:10:00 -0700 PDT">October 7, 2026</time>
+        </header>
+      </article>
+      
+      <article class="mini-post">
+          <a href="/blog/2026/10/go-proxmox-five-years-to-v0-8/" class="image" style="--bg-image: url('/img/2026/10/go-proxmox-five-years-to-v0-8-apidiff.svg');">
+    <img class="" src="/img/2026/10/go-proxmox-five-years-to-v0-8-apidiff.svg" alt="Horizontal bar chart of apidiff incompatible and compatible changes for every go-proxmox release from v0.1.0 to v0.8.2">
+  </a>
+        <header>
+          <h2><a href="/blog/2026/10/go-proxmox-five-years-to-v0-8/">Breaking Changes Without Breaking Trust: Five Years to go-proxmox v0.8</a></h2>
+          <time class="published" datetime="2026-10-04 19:40:00 -0700 PDT">October 4, 2026</time>
+        </header>
+      </article>
+      
+      <article class="mini-post">
+          <a href="/blog/2026/10/windows-sigterm-sparse-files/" class="image" style="--bg-image: url('/img/2026/10/windows-sigterm-sparse-files-connections.svg');">
+    <img class="" src="/img/2026/10/windows-sigterm-sparse-files-connections.svg" alt="Bar chart: 96 Cloudflare edge connections held by orphaned cloudflared processes versus 4 for the live daemon">
+  </a>
+        <header>
+          <h2><a href="/blog/2026/10/windows-sigterm-sparse-files/">Windows Grab-Bag: SIGTERM That Doesn&#39;t Exist and Sparse Files That Break Docker</a></h2>
+          <time class="published" datetime="2026-10-03 14:30:00 -0700 PDT">October 3, 2026</time>
+        </header>
+      </article>
+      
+      
+        <footer>
+          <a href="/blog" class="button">See More</a>
+        </footer>
+      
+    </section>
+  
+
+  
+    
+
+      <section id="categories">
+        <header>
+          <h1><a href="/categories">Categories</a></h1>
+        </header>
+        <ul>
+          
+          
+          <li>
+              <a href="/categories/ephpm/">ephpm<span class="count">33</span></a>
+          
+          <li>
+              <a href="/categories/go/">go<span class="count">30</span></a>
+          
+          <li>
+              <a href="/categories/php/">php<span class="count">23</span></a>
+          
+          <li>
+              <a href="/categories/rust/">rust<span class="count">15</span></a>
+          
+          <li>
+              <a href="/categories/homelab/">homelab<span class="count">14</span></a>
+          
+          <li>
+              <a href="/categories/windows/">windows<span class="count">14</span></a>
+          
+          <li>
+              <a href="/categories/ci/">ci<span class="count">9</span></a>
+          
+          <li>
+              <a href="/categories/databases/">databases<span class="count">9</span></a>
+          
+          <li>
+              <a href="/categories/security/">security<span class="count">9</span></a>
+          
+          <li>
+              <a href="/categories/containers/">containers<span class="count">7</span></a>
+          
+          <li>
+              <a href="/categories/tools/">tools<span class="count">5</span></a>
+          
+          <li>
+              <a href="/categories/ai-agents/">ai-agents<span class="count">4</span></a>
+          
+          </li>
+        </ul>
+      </section>
+    
+  
+
+  
+    <section id="mini-bio">
+      <header>
+        <h1>About</h1>
+      </header>
+      <p>Luther is a 20+ year software veteran specializing in backend APIs and architecting products. Employed at <a href='https://www.suse.com'>SUSE</a> as the Team Lead for the <a href='https://github.com/rancher/windows/issues'>Containers on Windows Team</a> working on <a href='https://rancher.com/'>Rancher</a> + <a href='https://kubernetes.io/'>Kubernetes</a></p>
+      <footer>
+        <a href="/about" class="button">Learn More</a>
+      </footer>
+    </section>
+  
+</section>
+
+      <footer id="site-footer">
+  
+      <ul class="socnet-icons">
+        
+
+        <li><a href="//github.com/luthermonson" target="_blank" rel="noopener" title="GitHub" class="fab fa-github"></a></li>
+
+
+
+
+
+
+
+
+
+
+
+<li><a href="//www.linkedin.com/in/luthermonson" target="_blank" rel="noopener" title="LinkedIn" class="fab fa-linkedin"></a></li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li><a href="//twitter.com/luthermonson" target="_blank" rel="noopener" title="Twitter" class="fab fa-twitter"></a></li>
+
+
+
+
+
+
+
+
+
+
+
+<li><a href="mailto:luther.monson@gmail.com" target="_blank" title="Email" class="far fa-envelope"></a></li>
+
+      </ul>
+  
+  <p class="copyright">
+    © 2026 Luther Monson
+      <br>
+    Theme: <a href='https://github.com/pacollins/hugo-future-imperfect-slim' target='_blank' rel='noopener'>Hugo Future Imperfect Slim</a><br>A <a href='https://html5up.net/future-imperfect' target='_blank' rel='noopener'>HTML5 UP port</a> | Powered by <a href='https://gohugo.io/' title='0.160.1' target='_blank' rel='noopener'>Hugo</a>
+  </p>
+</footer>
+<a id="back-to-top" href="#" class="fas fa-arrow-up fa-2x"></a>
+
+      <script src="/js/bundle.min.241b62ebc4792fe8c7a75879e5f710894f226f2b73342e9916b3a3b0526030cc.js" integrity="sha256-JBti68R5L&#43;jHp1h55fcQiU8ibytzNC6ZFrOjsFJgMMw="></script>
+    <script src="/js/add-on.js"></script>
+    </div>
+  </body>
+</html>

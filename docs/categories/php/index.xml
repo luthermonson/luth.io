@@ -1,0 +1,173 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>PHP on Luther Monson</title>
+    <link>https://luth.io/categories/php/</link>
+    <description>Recent content in PHP on Luther Monson</description>
+    <generator>Hugo</generator>
+    <language>en</language>
+    <lastBuildDate>Fri, 16 Oct 2026 08:10:00 -0700</lastBuildDate>
+    <atom:link href="https://luth.io/categories/php/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>Fourth Place in Worker Mode, and Why It Wasn&#39;t PHP</title>
+      <link>https://luth.io/blog/2026/10/ephpm-worker-mode-performance/</link>
+      <pubDate>Fri, 16 Oct 2026 08:10:00 -0700</pubDate>
+      <guid>https://luth.io/blog/2026/10/ephpm-worker-mode-performance/</guid>
+      <description>&lt;p&gt;We added &lt;a href=&#34;https://github.com/ephpm/ephpm&#34;&gt;ePHPm&lt;/a&gt; to the&#xA;&lt;a href=&#34;https://github.com/Yii3-Benchmarks/app-api&#34;&gt;Yii3 runtime benchmark&lt;/a&gt;, which runs the same Yii3 API app on a bunch of&#xA;PHP runtimes and compares them (our fork with the ePHPm runner is &lt;a href=&#34;https://github.com/ephpm/app-api&#34;&gt;ephpm/app-api&lt;/a&gt;).&#xA;Most of the results were good. ePHPm came first in classic mode, the PHP-FPM style where every request starts fresh,&#xA;and first on the database endpoint in both modes.&lt;/p&gt;&#xA;&lt;p&gt;Worker mode was the surprise. That&amp;rsquo;s the mode where the app boots once and stays in memory, like Octane or&#xA;FrankenPHP&amp;rsquo;s worker mode. We came fourth of ten, at about 50.7k requests a second, behind Workerman (~65k) and&#xA;Swoole (~62k).&lt;/p&gt;</description>
+    </item>
+    <item>
+      <title>WebSockets in ePHPm, From Zero to a Working Chat</title>
+      <link>https://luth.io/blog/2026/10/ephpm-websockets-how-to/</link>
+      <pubDate>Sun, 11 Oct 2026 17:30:00 -0700</pubDate>
+      <guid>https://luth.io/blog/2026/10/ephpm-websockets-how-to/</guid>
+      <description>&lt;p&gt;I covered the design of &lt;a href=&#34;https://github.com/ephpm/ephpm&#34;&gt;ePHPm&lt;/a&gt;&amp;rsquo;s native WebSockets in a few paragraphs of the&#xA;&lt;a href=&#34;https://luth.io/blog/2026/09/ephpm-smaller-angles/&#34;&gt;odds and ends post&lt;/a&gt;: Rust owns the socket, PHP runs once per event, and an idle&#xA;connection never costs you a PHP thread. That was the why. This post is the how. We&amp;rsquo;ll build a small chat app with&#xA;login, per-user push notifications from ordinary HTTP requests, and a browser client. Then we&amp;rsquo;ll serve it over TLS&#xA;and look at the limits, the sharp edges, and how to debug it when the browser only tells you &lt;code&gt;1006&lt;/code&gt;.&lt;/p&gt;</description>
+    </item>
+    <item>
+      <title>An Upstream PHP JIT Use-After-Free, and Why Our Default Flipped Twice</title>
+      <link>https://luth.io/blog/2026/10/php-jit-use-after-free/</link>
+      <pubDate>Thu, 01 Oct 2026 20:10:00 -0700</pubDate>
+      <guid>https://luth.io/blog/2026/10/php-jit-use-after-free/</guid>
+      <description>&lt;p&gt;In August, &lt;a href=&#34;https://github.com/ephpm/ephpm&#34;&gt;ePHPm&lt;/a&gt; turned PHP&amp;rsquo;s tracing JIT on by default in single-site serve mode.&#xA;Three days later it went back off, on every platform, and it&amp;rsquo;s still off. The reason turned out to be a&#xA;use-after-free in PHP&amp;rsquo;s tracing JIT that has nothing to do with ePHPm: stock &lt;code&gt;php -S&lt;/code&gt; with a stock Laravel skeleton&#xA;dies on it in a couple of requests. The fix is now released upstream, so this seemed like the right time to write up&#xA;how we got there, and what still has to happen before the default can flip again.&lt;/p&gt;</description>
+    </item>
+    <item>
+      <title>Calling Rust From PHP Without a Socket, Part 2: Making Existing Code Use It</title>
+      <link>https://luth.io/blog/2026/09/calling-rust-from-php-without-a-socket-part-2/</link>
+      <pubDate>Mon, 21 Sep 2026 19:55:00 -0700</pubDate>
+      <guid>https://luth.io/blog/2026/09/calling-rust-from-php-without-a-socket-part-2/</guid>
+      <description>&lt;p&gt;&lt;a href=&#34;https://luth.io/blog/2026/09/calling-rust-from-php-without-a-socket-part-1/&#34;&gt;Part 1&lt;/a&gt; covered the plumbing: ePHPm registers&#xA;&lt;code&gt;ephpm_kv_*&lt;/code&gt; and &lt;code&gt;ephpm_db_*&lt;/code&gt; functions that call straight into Rust, and a cache read through one costs about a tenth of&#xA;a microsecond instead of a loopback round trip. That&amp;rsquo;s nice and also useless on its own, because nobody is going to rewrite&#xA;their WordPress object cache or their Laravel cache store around a function called &lt;code&gt;ephpm_kv_set()&lt;/code&gt;. Applications talk to&#xA;Redis through phpredis or Predis, to the cache through PSR-6/16 or &lt;code&gt;wp_cache_*&lt;/code&gt;, and to the database through &lt;code&gt;wpdb&lt;/code&gt;,&#xA;mysqli, Eloquent or DBAL.&lt;/p&gt;</description>
+    </item>
+    <item>
+      <title>ePHPm Odds and Ends: OOM-Killed Links, Opcode Scanning, WebSockets and a 44 ms Stall</title>
+      <link>https://luth.io/blog/2026/09/ephpm-smaller-angles/</link>
+      <pubDate>Fri, 18 Sep 2026 20:05:00 -0700</pubDate>
+      <guid>https://luth.io/blog/2026/09/ephpm-smaller-angles/</guid>
+      <description>&lt;p&gt;Not every fix in &lt;a href=&#34;https://github.com/ephpm/ephpm&#34;&gt;ePHPm&lt;/a&gt; earns a full write-up, but a few of the smaller ones have&#xA;stuck with me because the lesson in each was bigger than the diff. Here are four from this summer.&lt;/p&gt;&#xA;&lt;h3 id=&#34;a-release-build-the-oom-killer-kept-eating&#34;&gt;A release build the OOM killer kept eating&lt;/h3&gt;&#xA;&lt;p&gt;ePHPm statically links libphp, ICU and a pile of other C libraries into one Rust binary, and it ships for four targets.&#xA;For the v0.4.2 performance release I set the release profile to &lt;code&gt;lto = &amp;quot;fat&amp;quot;&lt;/code&gt; with &lt;code&gt;codegen-units = 1&lt;/code&gt;&#xA;(&lt;a href=&#34;https://github.com/ephpm/ephpm/pull/171&#34;&gt;#171&lt;/a&gt;). Fat LTO pulls every crate&amp;rsquo;s LLVM IR into one module in one process&#xA;and optimizes it as a unit, and one codegen unit removes the parallelism that would otherwise spread that memory out.&#xA;That&amp;rsquo;s one very large process at the final link.&lt;/p&gt;</description>
+    </item>
+    <item>
+      <title>The Bugs Were Our Own Linker Wraps: Making a PHP Timeout Actually Time Out</title>
+      <link>https://luth.io/blog/2026/09/php-timeout-linker-wraps/</link>
+      <pubDate>Wed, 16 Sep 2026 19:35:00 -0700</pubDate>
+      <guid>https://luth.io/blog/2026/09/php-timeout-linker-wraps/</guid>
+      <description>&lt;p&gt;In &lt;a href=&#34;https://luth.io/blog/2026/09/php-stack-guard-segfault-containment/&#34;&gt;the stack guard post&lt;/a&gt; the villain was a &lt;code&gt;-Wl,--wrap&lt;/code&gt; linker&#xA;flag that turned off PHP&amp;rsquo;s C-stack overflow guard. It wasn&amp;rsquo;t the only one. Until August, &lt;code&gt;max_execution_time&lt;/code&gt; did&#xA;nothing in &lt;a href=&#34;https://github.com/ephpm/ephpm&#34;&gt;ePHPm&lt;/a&gt; on Linux, for the same reason: we had wrapped the function that&#xA;arms it to a no-op. A runaway script ran until the HTTP layer&amp;rsquo;s request timeout gave up on it and sent a 504, and the&#xA;PHP thread kept burning CPU after that.&lt;/p&gt;</description>
+    </item>
+    <item>
+      <title>Calling Rust From PHP Without a Socket, Part 1: The Native Functions</title>
+      <link>https://luth.io/blog/2026/09/calling-rust-from-php-without-a-socket-part-1/</link>
+      <pubDate>Mon, 14 Sep 2026 20:40:00 -0700</pubDate>
+      <guid>https://luth.io/blog/2026/09/calling-rust-from-php-without-a-socket-part-1/</guid>
+      <description>&lt;p&gt;&lt;a href=&#34;https://github.com/ephpm/ephpm&#34;&gt;ePHPm&lt;/a&gt; is a single Rust binary that embeds PHP, and it carries its own KV store and its&#xA;own SQLite-backed database in the same process. For a long time the only way PHP code could reach that KV store was the&#xA;same way it reaches Redis: open a TCP socket to the RESP listener ePHPm runs on localhost, encode a command, wait for the&#xA;reply. That works, and every PHP Redis client in existence already speaks it, but it is a strange thing to do when the&#xA;hash map you&amp;rsquo;re talking to lives a few pointers away in the same address space.&lt;/p&gt;</description>
+    </item>
+    <item>
+      <title>Every Way a Tenant Escaped: A Cross-Tenant Breakout Field Guide</title>
+      <link>https://luth.io/blog/2026/09/cross-tenant-breakout-field-guide/</link>
+      <pubDate>Sun, 13 Sep 2026 16:20:00 -0700</pubDate>
+      <guid>https://luth.io/blog/2026/09/cross-tenant-breakout-field-guide/</guid>
+      <description>&lt;p&gt;&lt;a href=&#34;https://github.com/ephpm/ephpm&#34;&gt;ePHPm&lt;/a&gt; can serve a directory full of sites out of one process. Point &lt;code&gt;sites_dir&lt;/code&gt; at&#xA;a folder, every subdirectory is a virtual host, and the Host header decides which one you get. That&amp;rsquo;s how the PR preview&#xA;environment runs: every pull request gets a subdomain, and the code behind it is whatever somebody pushed. One process&#xA;holding many tenants means every per-tenant boundary is something ePHPm enforces itself, in-process. There&amp;rsquo;s no&#xA;container wall between site A and site B unless you add one.&lt;/p&gt;</description>
+    </item>
+    <item>
+      <title>Making ephpm php Byte-for-Byte Indistinguishable From php-cli</title>
+      <link>https://luth.io/blog/2026/09/ephpm-php-cli-conformance/</link>
+      <pubDate>Thu, 10 Sep 2026 20:25:00 -0700</pubDate>
+      <guid>https://luth.io/blog/2026/09/ephpm-php-cli-conformance/</guid>
+      <description>&lt;p&gt;&lt;a href=&#34;https://github.com/ephpm/ephpm&#34;&gt;ePHPm&lt;/a&gt; embeds PHP into a single Rust binary, and the obvious follow-up question from&#xA;anybody deploying it is &amp;ldquo;do I still need a &lt;code&gt;php&lt;/code&gt; on the box?&amp;rdquo; Composer, WP-CLI, artisan, PHPUnit and every build&#xA;script in the world call &lt;code&gt;php&lt;/code&gt;. If &lt;code&gt;ephpm php&lt;/code&gt; can stand in for it then the answer is no, and the single binary actually&#xA;means a single binary. &amp;ldquo;Mostly works&amp;rdquo; isn&amp;rsquo;t good enough for that though. These tools parse PHP&amp;rsquo;s output, check its exit&#xA;codes and re-invoke it. So the goal was simple to state: &lt;code&gt;ephpm php&lt;/code&gt; should be indistinguishable from php-cli.&lt;/p&gt;</description>
+    </item>
+    <item>
+      <title>Zero-Dependency Deployments - Single Binary for WordPress</title>
+      <link>https://luth.io/blog/2026/09/single-binary-wordpress/</link>
+      <pubDate>Tue, 08 Sep 2026 20:25:00 -0700</pubDate>
+      <guid>https://luth.io/blog/2026/09/single-binary-wordpress/</guid>
+      <description>&lt;p&gt;The standard way to run a WordPress site is four services: nginx for HTTP and TLS, php-fpm to run PHP, MySQL for data,&#xA;and Redis once the site gets slow enough that someone installs an object cache plugin. That&amp;rsquo;s four processes, four&#xA;config files, three sockets between them, and four things to upgrade. For a big site that&amp;rsquo;s fine. For a brochure site, a&#xA;staging copy, a PR preview, a CI job that needs a real WordPress to test a plugin against, or a box at the edge, it&amp;rsquo;s&#xA;absurd.&lt;/p&gt;</description>
+    </item>
+    <item>
+      <title>We Disabled PHP&#39;s Stack Guard Ourselves: Containing Segfaults in a Single-Process PHP Server</title>
+      <link>https://luth.io/blog/2026/09/php-stack-guard-segfault-containment/</link>
+      <pubDate>Sun, 06 Sep 2026 15:05:00 -0700</pubDate>
+      <guid>https://luth.io/blog/2026/09/php-stack-guard-segfault-containment/</guid>
+      <description>&lt;p&gt;php-fpm has a property nobody thinks about until they leave it: when a worker segfaults, you lose one request. The&#xA;master forks a new child and life goes on. &lt;a href=&#34;https://github.com/ephpm/ephpm&#34;&gt;ePHPm&lt;/a&gt; runs every tenant&amp;rsquo;s PHP as threads&#xA;inside one process. That&amp;rsquo;s where the memory and latency wins come from, and it also means one tenant&amp;rsquo;s segfault&#xA;takes down every other tenant on the box.&lt;/p&gt;&#xA;&lt;p&gt;This is the story of closing that gap, in four steps over about two weeks. The last step turned out to be a bug we&amp;rsquo;d&#xA;put there ourselves. It&amp;rsquo;s also the payoff for the thread pool work in&#xA;&lt;a href=&#34;https://luth.io/blog/2026/09/own-your-php-thread-pool/&#34;&gt;the previous post&lt;/a&gt;: everything below that actually shipped depends on&#xA;ePHPm owning its own PHP threads.&lt;/p&gt;</description>
+    </item>
+    <item>
+      <title>Middleware in PHP: Compiling It With elephc, Then Not Needing To</title>
+      <link>https://luth.io/blog/2026/08/php-middleware-elephc/</link>
+      <pubDate>Mon, 31 Aug 2026 20:50:00 -0700</pubDate>
+      <guid>https://luth.io/blog/2026/08/php-middleware-elephc/</guid>
+      <description>&lt;p&gt;&lt;a href=&#34;https://github.com/ephpm/ephpm&#34;&gt;ePHPm&lt;/a&gt; middleware runs &lt;em&gt;before&lt;/em&gt; PHP. It&amp;rsquo;s a small versioned C ABI, loaded with&#xA;&lt;code&gt;dlopen&lt;/code&gt;, that gets to look at a request and reject it before PHP boots or the request body is read. That&amp;rsquo;s the&#xA;right shape for a gateway, and it&amp;rsquo;s the wrong shape for most PHP shops, who want to write their middleware in PHP.&#xA;This is the story of compiling PHP into a native &lt;code&gt;.so&lt;/code&gt; to fit that ABI, finding exactly where it broke, and then&#xA;building the lane that should have existed in the first place.&lt;/p&gt;</description>
+    </item>
+    <item>
+      <title>OPcache on Windows: Two Silent Failures</title>
+      <link>https://luth.io/blog/2026/08/opcache-on-windows-two-silent-failures/</link>
+      <pubDate>Sat, 29 Aug 2026 16:45:00 -0700</pubDate>
+      <guid>https://luth.io/blog/2026/08/opcache-on-windows-two-silent-failures/</guid>
+      <description>&lt;p&gt;Windows is the platform where &lt;a href=&#34;https://github.com/ephpm/ephpm&#34;&gt;ePHPm&lt;/a&gt; gets the least traffic and the most surprises.&#xA;Last week closed out two OPcache bugs that only exist there, and both were quiet in their own way. One killed the&#xA;server at startup with nothing in our own logs. The other didn&amp;rsquo;t kill anything: it just ran PHP 8.3 with no opcode&#xA;cache at all, and for three weeks after a fixed SDK was published every check stayed green.&lt;/p&gt;</description>
+    </item>
+    <item>
+      <title>What Does One More WordPress Site Cost?</title>
+      <link>https://luth.io/blog/2026/08/what-does-one-more-wordpress-site-cost/</link>
+      <pubDate>Tue, 25 Aug 2026 20:20:00 -0700</pubDate>
+      <guid>https://luth.io/blog/2026/08/what-does-one-more-wordpress-site-cost/</guid>
+      <description>&lt;p&gt;ePHPm v0.7.0 shipped per-site multi-tenancy: point &lt;code&gt;[server] sites_dir&lt;/code&gt; at a directory, every &lt;code&gt;Host&lt;/code&gt; maps to its own&#xA;docroot and its own Turso database file, and one process serves all of them. The first question anybody asks about&#xA;that is &amp;ldquo;how many sites fit on a box?&amp;rdquo;, and the honest way to answer it is to turn the question around. What does&#xA;&lt;strong&gt;one more&lt;/strong&gt; site cost? If you know the marginal RAM, file descriptors, CPU and disk for a tenant, the box size falls&#xA;out of arithmetic.&lt;/p&gt;</description>
+    </item>
+    <item>
+      <title>What an Overloaded PHP Server Actually Returns</title>
+      <link>https://luth.io/blog/2026/08/what-an-overloaded-php-server-actually-returns/</link>
+      <pubDate>Mon, 24 Aug 2026 19:40:00 -0700</pubDate>
+      <guid>https://luth.io/blog/2026/08/what-an-overloaded-php-server-actually-returns/</guid>
+      <description>&lt;p&gt;Ask most people what their PHP server does when it&amp;rsquo;s overloaded and you&amp;rsquo;ll hear &amp;ldquo;it returns 503s.&amp;rdquo; Ask them how they&#xA;know and it usually comes down to a config setting they read about. I was in that camp for &lt;a href=&#34;https://github.com/ephpm/ephpm&#34;&gt;ePHPm&lt;/a&gt;.&#xA;We had a &lt;code&gt;[server.limits] max_connections&lt;/code&gt; knob, the docs said it returned 503 at the cap, and every benchmark we had&#xA;ever run reported zero errors under heavy load. Then I wrote a load generator that could actually produce overload,&#xA;and the honest answer was that an overloaded ePHPm returned nothing at all.&lt;/p&gt;</description>
+    </item>
+    <item>
+      <title>Faking MySQL&#39;s Quirks Well Enough to Fool WordPress</title>
+      <link>https://luth.io/blog/2026/08/faking-mysql-quirks-wordpress/</link>
+      <pubDate>Sun, 16 Aug 2026 15:50:00 -0700</pubDate>
+      <guid>https://luth.io/blog/2026/08/faking-mysql-quirks-wordpress/</guid>
+      <description>&lt;p&gt;Last month I wrote about &lt;a href=&#34;https://luth.io/blog/2026/07/sqlite-production-database-protocol-translation/&#34;&gt;running SQLite behind a MySQL socket&lt;/a&gt;&#xA;with &lt;a href=&#34;https://github.com/ephpm/litewire&#34;&gt;litewire&lt;/a&gt;, and ended on &amp;ldquo;passing an install suite is not the same thing as&#xA;behaving like MySQL&amp;rdquo;. That turned out to be accurate. On August 10th a few things happened at once: I put a real&#xA;WordPress 7.0.3 site through a benchmark on ePHPm, A/B tested the new in-process database bridge against the wire path, and started building&#xA;&lt;a href=&#34;https://github.com/ephpm/db-wordpress&#34;&gt;ephpm/db-wordpress&lt;/a&gt;, a &lt;code&gt;wpdb&lt;/code&gt; drop-in that talks to the database in-process&#xA;instead of over a socket. Between them they produced six litewire issues in about three hours. None of them broke&#xA;the install. All of them made WordPress quietly do the wrong thing.&lt;/p&gt;</description>
+    </item>
+    <item>
+      <title>Requests That End Wrong: A 200 That Was Really a Crash</title>
+      <link>https://luth.io/blog/2026/08/requests-that-end-wrong/</link>
+      <pubDate>Thu, 13 Aug 2026 21:14:00 -0700</pubDate>
+      <guid>https://luth.io/blog/2026/08/requests-that-end-wrong/</guid>
+      <description>&lt;p&gt;The scariest response a server can send isn&amp;rsquo;t a 500. It&amp;rsquo;s a 200 that should have been a 500. A crash is loud: the&#xA;pod restarts, an alert fires, somebody looks. A truncated page with a success status code gets cached by your CDN,&#xA;the health check calls the box healthy, and a client parses half a document as if it were the whole thing.&lt;/p&gt;&#xA;&lt;p&gt;&lt;a href=&#34;https://github.com/ephpm/ephpm&#34;&gt;ePHPm&lt;/a&gt; embeds PHP inside a Rust server, so we own the part of PHP that php-fpm&#xA;normally owns: starting a request, running the script, and ending it. Over the last couple of months I&amp;rsquo;ve fixed three&#xA;bugs that all live in that start-and-end code, and none of them were in the SAPI I/O callbacks (&lt;code&gt;ub_write&lt;/code&gt;,&#xA;&lt;code&gt;read_post&lt;/code&gt; and friends) where you&amp;rsquo;d expect to find embed bugs. They were in the Zend request lifecycle and in TSRM&#xA;teardown, which is code you never touch when you run PHP behind php-fpm.&lt;/p&gt;</description>
+    </item>
+    <item>
+      <title>libxml2 2.14 Broke PHP Windows Builds - And Nobody Noticed</title>
+      <link>https://luth.io/blog/2026/08/libxml2-2-14-broke-php-windows-builds/</link>
+      <pubDate>Tue, 11 Aug 2026 20:36:00 -0700</pubDate>
+      <guid>https://luth.io/blog/2026/08/libxml2-2-14-broke-php-windows-builds/</guid>
+      <description>&lt;p&gt;Back in April I was getting the embed SAPI building on Windows through my fork of&#xA;&lt;a href=&#34;https://github.com/crazywhalecc/static-php-cli&#34;&gt;static-php-cli&lt;/a&gt; (SPC) for &lt;a href=&#34;https://github.com/ephpm/ephpm&#34;&gt;ePHPm&lt;/a&gt;, and the&#xA;link step for &lt;code&gt;php8ts.dll&lt;/code&gt; fell over with a wall of errors that all looked like this:&lt;/p&gt;&#xA;&lt;pre tabindex=&#34;0&#34;&gt;&lt;code&gt;php8ts.dll.def : error LNK2001: unresolved external symbol UTF8ToHtml&#xA;php8ts.dll.def : error LNK2001: unresolved external symbol UTF8Toisolat1&#xA;php8ts.dll.def : error LNK2001: unresolved external symbol __htmlDefaultSAXHandler&#xA;...&#xA;php8ts.dll.def : error LNK2001: unresolved external symbol attributeDecl&#xA;...&#xA;&lt;/code&gt;&lt;/pre&gt;&lt;p&gt;(That excerpt is from &lt;a href=&#34;https://github.com/php/php-src/issues/22752&#34;&gt;php/php-src#22752&lt;/a&gt;, which is the same failure someone&#xA;else hit three months later. My log is long gone, theirs is public.)&lt;/p&gt;</description>
+    </item>
+    <item>
+      <title>Building a Custom SAPI - How PHP Actually Talks to the Outside World</title>
+      <link>https://luth.io/blog/2026/07/building-a-custom-php-sapi/</link>
+      <pubDate>Thu, 30 Jul 2026 20:18:00 -0700</pubDate>
+      <guid>https://luth.io/blog/2026/07/building-a-custom-php-sapi/</guid>
+      <description>&lt;p&gt;If you&amp;rsquo;ve only ever run PHP behind nginx you&amp;rsquo;ve probably never had to think about how &lt;code&gt;echo&lt;/code&gt; reaches a socket. When you&#xA;embed PHP, as &lt;a href=&#34;https://github.com/ephpm/ephpm&#34;&gt;ePHPm&lt;/a&gt; does, it&amp;rsquo;s the first thing you have to answer, and the answer is a&#xA;SAPI. There is very little written about implementing one. Most of what I know came from reading &lt;code&gt;sapi/cli&lt;/code&gt;,&#xA;&lt;code&gt;sapi/cgi&lt;/code&gt; and &lt;code&gt;sapi/embed&lt;/code&gt; in php-src and then finding out which parts I&amp;rsquo;d misread. This is the write-up I wanted back&#xA;in March.&lt;/p&gt;</description>
+    </item>
+    <item>
+      <title>Fixing Windows Archive Extraction in SPC</title>
+      <link>https://luth.io/blog/2026/07/spc-windows-archive-extraction/</link>
+      <pubDate>Sat, 18 Jul 2026 16:10:00 -0700</pubDate>
+      <guid>https://luth.io/blog/2026/07/spc-windows-archive-extraction/</guid>
+      <description>&lt;p&gt;One of the first things that broke when I started building PHP on Windows with&#xA;&lt;a href=&#34;https://github.com/crazywhalecc/static-php-cli&#34;&gt;static-php-cli&lt;/a&gt; (SPC) wasn&amp;rsquo;t PHP at all. It was unpacking the source&#xA;tarballs. libxml2, xz, a couple of others would die partway through extraction with:&lt;/p&gt;&#xA;&lt;pre tabindex=&#34;0&#34;&gt;&lt;code&gt;ERROR: The pipe has been ended.&#xA;&lt;/code&gt;&lt;/pre&gt;&lt;p&gt;Over the last few months I&amp;rsquo;ve &amp;ldquo;fixed&amp;rdquo; this two different ways, and the maintainers fixed it a third. It&amp;rsquo;s a small piece&#xA;of code but it&amp;rsquo;s a good example of how much Linux assumption hides in a single shell pipeline, so here&amp;rsquo;s the whole thing.&lt;/p&gt;</description>
+    </item>
+    <item>
+      <title>The Pragmatism of ePHPm - Every Decision Has a &#34;Because&#34; Behind It</title>
+      <link>https://luth.io/blog/2026/06/ephpm-pragmatism/</link>
+      <pubDate>Sun, 21 Jun 2026 19:05:00 -0700</pubDate>
+      <guid>https://luth.io/blog/2026/06/ephpm-pragmatism/</guid>
+      <description>&lt;p&gt;&lt;a href=&#34;https://github.com/ephpm/ephpm&#34;&gt;ePHPm&lt;/a&gt; tagged &lt;a href=&#34;https://github.com/ephpm/ephpm/releases/tag/v0.1.0&#34;&gt;v0.1.0&lt;/a&gt; this&#xA;week, three months after the first commit. Before the feature list grows any further I want to write down how&#xA;decisions get made on it, mostly for myself, because the easiest way to ruin a project like this is to let it turn into&#xA;a checklist of things other projects have.&lt;/p&gt;&#xA;&lt;p&gt;The pitch is simple: one binary that runs a PHP app with fewer moving parts than nginx + php-fpm + Redis + MySQL. Every&#xA;feature has to trace back to that. If I can&amp;rsquo;t finish the sentence &amp;ldquo;this exists because&amp;hellip;&amp;rdquo; with a real problem from&#xA;running PHP in production, it doesn&amp;rsquo;t go in.&lt;/p&gt;</description>
+    </item>
+    <item>
+      <title>PHP Signal Safety - The Init Ordering Bug Nobody Warns You About</title>
+      <link>https://luth.io/blog/2026/04/php-signal-safety-init-ordering/</link>
+      <pubDate>Sun, 12 Apr 2026 20:15:00 -0700</pubDate>
+      <guid>https://luth.io/blog/2026/04/php-signal-safety-init-ordering/</guid>
+      <description>&lt;p&gt;Last week I wrote about &lt;a href=&#34;https://luth.io/blog/2026/04/why-rust-for-php-embedding/&#34;&gt;why ePHPm embeds PHP from Rust&lt;/a&gt; and promised the&#xA;signal bug its own post. Here it is. It&amp;rsquo;s the kind of bug where the fix is about ten lines and the explanation is the&#xA;whole post, because nothing in PHP&amp;rsquo;s embed documentation (there&amp;rsquo;s barely any) tells you that initializing PHP has&#xA;process-wide side effects that assume PHP is the only thing in the process.&lt;/p&gt;&#xA;&lt;h3 id=&#34;the-setup&#34;&gt;The setup&lt;/h3&gt;&#xA;&lt;p&gt;The first working version of &lt;code&gt;ephpm serve&lt;/code&gt; looked like every async Rust program: &lt;code&gt;#[tokio::main]&lt;/code&gt;-style, build the&#xA;runtime, then inside it load config, initialize PHP, start the HTTP server. PHP requests run on &lt;code&gt;spawn_blocking&lt;/code&gt;&#xA;threads. Simplified:&lt;/p&gt;</description>
+    </item>
+    <item>
+      <title>Why Rust for PHP Embedding (Not Go)</title>
+      <link>https://luth.io/blog/2026/04/why-rust-for-php-embedding/</link>
+      <pubDate>Sun, 05 Apr 2026 19:40:00 -0700</pubDate>
+      <guid>https://luth.io/blog/2026/04/why-rust-for-php-embedding/</guid>
+      <description>&lt;p&gt;Go is my primary language and has been for a long time, so when I started building &lt;a href=&#34;https://github.com/ephpm/ephpm&#34;&gt;ePHPm&lt;/a&gt;&#xA;a few weeks ago the obvious move was to write it in Go. ePHPm is a PHP application server: one binary that embeds the&#xA;real PHP interpreter (&lt;code&gt;libphp&lt;/code&gt;, the Zend engine) and puts an HTTP server, TLS, a KV cache and a database proxy around it,&#xA;so a PHP app doesn&amp;rsquo;t need nginx + php-fpm + Redis to run. &lt;a href=&#34;https://frankenphp.dev/&#34;&gt;FrankenPHP&lt;/a&gt; already proved the&#xA;&amp;ldquo;PHP inside a Go web server&amp;rdquo; idea works, and it works well. I wrote it in Rust anyway. This post is the reasoning, the&#xA;part of the design that Rust made easier and the part it didn&amp;rsquo;t, and some numbers I should have measured before I wrote&#xA;the design doc instead of after.&lt;/p&gt;</description>
+    </item>
+  </channel>
+</rss>

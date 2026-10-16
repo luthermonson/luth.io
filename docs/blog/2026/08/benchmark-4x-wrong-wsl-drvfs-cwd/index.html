@@ -1,0 +1,729 @@
+<!doctype html>
+<html lang="en">
+  <head>
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-MSTSKGFWTX"></script>
+<script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+
+    gtag('config', 'G-MSTSKGFWTX');
+</script><meta charset="utf-8">
+<title>My Benchmark Was 4x Wrong Because of WSL - Luther Monson</title>
+<meta name="description" content="Launching the server with its working directory on /mnt/c cost ePHPm about 4x on a light workload, and the report built a wrong explanation on top of it. Here&#39;s the strace that shows why.">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<meta name="twitter:card" content="summary_large_image"><meta name="twitter:site" content="@luthermonson">
+
+<meta property="og:site_name" content="Luther Monson">
+<meta property="og:title" content="My Benchmark Was 4x Wrong Because of WSL">
+<meta property="og:description" content="Launching the server with its working directory on /mnt/c cost ePHPm about 4x on a light workload, and the report built a wrong explanation on top of it. Here&#39;s the strace that shows why.">
+<meta property="og:type" content="article">
+<meta property="og:url" content="https://luth.io/blog/2026/08/benchmark-4x-wrong-wsl-drvfs-cwd/">
+    <meta property="og:image" content="https://luth.io/img/2026/08/benchmark-4x-wrong-wsl-drvfs-cwd-depth.svg">
+    <meta property="og:image:alt" content="Bar chart of ePHPm requests per second by working directory: native ext4 far ahead of DrvFs, with DrvFs throughput falling as the cwd path gets deeper">
+
+
+  <link rel="manifest" href="/favicon/site.webmanifest?v=1">
+  <link rel="apple-touch-icon" sizes="180x180" href="/favicon/apple-touch-icon.png?v=1">
+  <link rel="icon" type="image/png" sizes="32x32" href="/favicon/favicon-32x32.png?v=1">
+  <link rel="icon" type="image/png" sizes="16x16" href="/favicon/favicon-16x16.png?v=1">
+  
+    <link rel="mask-icon" href="/favicon/safari-pinned-tab.svg?v=1" color="#ffffff">
+    <link rel="shortcut icon" href="/favicon/favicon.ico?v=1">
+    <meta name="msapplication-config" content="/favicon/browserconfig.xml?v=1">
+  
+  <meta name="msapplication-TileColor" content="#ffffff">
+  <meta name="theme-color" content="#ffffff">
+
+
+  <meta name="generator" content="Hugo 0.160.1">
+  <link rel="alternate" type="application/rss+xml" href="https://luth.io/index.xml" title="Luther Monson">
+  <link rel="stylesheet" href="/css/bundle.min.e1ffed86714fbb7eff75eab221c0c61b8260be0c7d1c08db0fcb7a2bdb6af7c9.css" integrity="sha256-4f/thnFPu37/deqyIcDGG4Jgvgx9HAjbD8t6K9tq98k="><link rel="stylesheet" href="/css/add-on.css">
+        <link rel="stylesheet" href="/css/code.css">
+        <link rel="stylesheet" href="/css/mobile.css">
+</head>
+
+  <body>
+    
+
+<header id="site-header">
+  <nav id="site-nav">
+    <h1 class="nav-title">
+      <a href="/" class="nav">
+        <img class="nav-avatar" src="/img/luther-monson-headshot.jpg" alt="" width="32" height="32">
+        
+          Blog
+        
+      </a>
+    </h1>
+    <menu id="site-nav-menu" class="flyout-menu menu">
+      
+        
+          
+          <a href="/" class="nav link"><i class='fa fa-home'></i> Home</a>
+        
+      
+        
+          
+          <a href="/about" class="nav link"><i class='far fa-id-card'></i> About</a>
+        
+      
+        
+          
+          <a href="/blog" class="nav link"><i class='far fa-newspaper'></i> Blog</a>
+        
+      
+        
+          
+          <a href="/archive" class="nav link"><i class='far fa-calendar-alt'></i> Archive</a>
+        
+      
+        
+          
+          <a href="/categories" class="nav link"><i class='fas fa-sitemap'></i> Categories</a>
+        
+      
+      <a href="#share-menu" class="nav link share-toggle"><i class="fas fa-share-alt">&nbsp;</i>Share</a>
+      <a href="#search-input" class="nav link search-toggle"><i class="fas fa-search">&nbsp;</i>Search</a>
+    </menu>
+    <a href="#search-input" class="nav search-toggle"><i class="fas fa-search fa-2x">&nbsp;</i></a>
+    <a href="#share-menu" class="nav share-toggle"><i class="fas fa-share-alt fa-2x">&nbsp;</i></a>
+    
+    <a href="#site-nav" class="nav nav-toggle"><i class="fas fa-bars fa-2x"></i></a>
+  </nav>
+  <menu id="search" class="menu"><input id="search-input" class="search-input menu"></input><div id="search-results" class="search-results menu"></div></menu>
+  
+  
+    <menu id="share-menu" class="flyout-menu menu">
+      <h1>Share Post</h1>
+      
+
+
+
+
+  
+    
+    <a href="//twitter.com/share?text=My%20Benchmark%20Was%204x%20Wrong%20Because%20of%20WSL&amp;url=https%3a%2f%2fluth.io%2fblog%2f2026%2f08%2fbenchmark-4x-wrong-wsl-drvfs-cwd%2f" target="_blank" rel="noopener" class="nav share-btn twitter">
+        <p>Twitter</p>
+      </a>
+  
+
+  
+      <a href="//www.facebook.com/sharer/sharer.php?u=https%3a%2f%2fluth.io%2fblog%2f2026%2f08%2fbenchmark-4x-wrong-wsl-drvfs-cwd%2f" target="_blank" rel="noopener" class="nav share-btn facebook">
+        <p>Facebook</p>
+        </a>
+  
+
+  
+    <a href="//www.reddit.com/submit?url=https%3a%2f%2fluth.io%2fblog%2f2026%2f08%2fbenchmark-4x-wrong-wsl-drvfs-cwd%2f&amp;title=My%20Benchmark%20Was%204x%20Wrong%20Because%20of%20WSL" target="_blank" rel="noopener" class="nav share-btn reddit">
+          <p>Reddit</p>
+        </a>
+  
+
+  
+        <a href="//www.linkedin.com/shareArticle?url=https%3a%2f%2fluth.io%2fblog%2f2026%2f08%2fbenchmark-4x-wrong-wsl-drvfs-cwd%2f&amp;title=My%20Benchmark%20Was%204x%20Wrong%20Because%20of%20WSL" target="_blank" rel="noopener" class="nav share-btn linkedin">
+            <p>LinkedIn</p>
+          </a>
+  
+
+  
+        <a href="//www.pinterest.com/pin/create/button/?url=https%3a%2f%2fluth.io%2fblog%2f2026%2f08%2fbenchmark-4x-wrong-wsl-drvfs-cwd%2f&amp;description=My%20Benchmark%20Was%204x%20Wrong%20Because%20of%20WSL" target="_blank" rel="noopener" class="nav share-btn pinterest">
+          <p>Pinterest</p>
+        </a>
+  
+
+  
+        <a href="mailto:?subject=Check%20out%20this%20post%20by Luther%20Monson&amp;body=https%3a%2f%2fluth.io%2fblog%2f2026%2f08%2fbenchmark-4x-wrong-wsl-drvfs-cwd%2f" target="_blank" class="nav share-btn email" data-proofer-ignore>
+          <p>Email</p>
+        </a>
+  
+
+
+    </menu>
+  
+</header>
+
+    <div id="wrapper">
+      <section id="site-intro" class="hidden-single-column">
+  <a href="/"><img src="/img/luther-monson-headshot.jpg" class="circle" width="100" alt="Luther Monson, Staff Software Engineer at SUSE" /></a>
+  <header>
+    <h1>Luther Monson</h1>
+  </header>
+  <main>
+    <p>Go by way of PHP &middot; Containers &middot; VMs &middot; Windows &middot; Kubernetes</p>
+  </main>
+  
+    <footer>
+      <ul class="socnet-icons">
+        
+
+        <li><a href="//github.com/luthermonson" target="_blank" rel="noopener" title="GitHub" class="fab fa-github"></a></li>
+
+
+
+
+
+
+
+
+
+
+
+<li><a href="//www.linkedin.com/in/luthermonson" target="_blank" rel="noopener" title="LinkedIn" class="fab fa-linkedin"></a></li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li><a href="//twitter.com/luthermonson" target="_blank" rel="noopener" title="Twitter" class="fab fa-twitter"></a></li>
+
+
+
+
+
+
+
+
+
+
+
+<li><a href="mailto:luther.monson@gmail.com" target="_blank" title="Email" class="far fa-envelope"></a></li>
+
+      </ul>
+    </footer>
+  
+</section>
+
+      <main id="site-main">
+        
+  <article>
+    <div class="post">
+      <header>
+  <div class="title">
+    
+      <h2><a href="/blog/2026/08/benchmark-4x-wrong-wsl-drvfs-cwd/">My Benchmark Was 4x Wrong Because of WSL</a></h2>
+    
+    
+      <p>Launching the server with its working directory on /mnt/c cost ePHPm about 4x on a light workload, and the report built a wrong explanation on top of it. Here&#39;s the strace that shows why.</p>
+    
+  </div>
+  <div class="meta">
+    <time datetime="2026-08-20 20:45:00 -0700 PDT">August 20, 2026</time>
+    
+    <p>8-Minute Read</p>
+  </div>
+</header>
+
+      <div id="socnet-share">
+        
+
+
+
+
+  
+    
+    <a href="//twitter.com/share?text=My%20Benchmark%20Was%204x%20Wrong%20Because%20of%20WSL&amp;url=https%3a%2f%2fluth.io%2fblog%2f2026%2f08%2fbenchmark-4x-wrong-wsl-drvfs-cwd%2f" target="_blank" rel="noopener" class="nav share-btn twitter">
+        <p>Twitter</p>
+      </a>
+  
+
+  
+      <a href="//www.facebook.com/sharer/sharer.php?u=https%3a%2f%2fluth.io%2fblog%2f2026%2f08%2fbenchmark-4x-wrong-wsl-drvfs-cwd%2f" target="_blank" rel="noopener" class="nav share-btn facebook">
+        <p>Facebook</p>
+        </a>
+  
+
+  
+    <a href="//www.reddit.com/submit?url=https%3a%2f%2fluth.io%2fblog%2f2026%2f08%2fbenchmark-4x-wrong-wsl-drvfs-cwd%2f&amp;title=My%20Benchmark%20Was%204x%20Wrong%20Because%20of%20WSL" target="_blank" rel="noopener" class="nav share-btn reddit">
+          <p>Reddit</p>
+        </a>
+  
+
+  
+        <a href="//www.linkedin.com/shareArticle?url=https%3a%2f%2fluth.io%2fblog%2f2026%2f08%2fbenchmark-4x-wrong-wsl-drvfs-cwd%2f&amp;title=My%20Benchmark%20Was%204x%20Wrong%20Because%20of%20WSL" target="_blank" rel="noopener" class="nav share-btn linkedin">
+            <p>LinkedIn</p>
+          </a>
+  
+
+  
+        <a href="//www.pinterest.com/pin/create/button/?url=https%3a%2f%2fluth.io%2fblog%2f2026%2f08%2fbenchmark-4x-wrong-wsl-drvfs-cwd%2f&amp;description=My%20Benchmark%20Was%204x%20Wrong%20Because%20of%20WSL" target="_blank" rel="noopener" class="nav share-btn pinterest">
+          <p>Pinterest</p>
+        </a>
+  
+
+  
+        <a href="mailto:?subject=Check%20out%20this%20post%20by Luther%20Monson&amp;body=https%3a%2f%2fluth.io%2fblog%2f2026%2f08%2fbenchmark-4x-wrong-wsl-drvfs-cwd%2f" target="_blank" class="nav share-btn email" data-proofer-ignore>
+          <p>Email</p>
+        </a>
+  
+
+
+      </div>
+      <div class="content">
+        
+        <p>I do most of my benchmarking on a Windows box in WSL2, because it&rsquo;s the machine with 32 threads and 62 GB of RAM on
+my desk. Everybody who does that learns the first rule early: don&rsquo;t put your data on <code>/mnt/c</code>. DrvFs, the 9p-backed
+mount that exposes the Windows drives inside WSL, is slow for file-heavy work, so the databases, the docroot and the
+build output all live on the WSL ext4 disk. My scaling harness for <a href="https://github.com/ephpm/ephpm">ePHPm</a> even
+says so in capital letters in its README.</p>
+<p>Then I published a multi-tenant scaling report with a headline number that was off by almost 4x, and the cause was
+one file-system path I hadn&rsquo;t thought of as data at all: the server&rsquo;s <strong>working directory</strong>.</p>
+<h3 id="the-wrong-story">The wrong story</h3>
+<p><a href="https://github.com/ephpm/multitenant-scalebench">multitenant-scalebench</a> measures one ePHPm instance serving N
+WordPress-shaped sites. The light workload (wp-lite) plateaued at about 4.7k RPS with only about 5 of 32 cores busy,
+no matter how many sites I served. Low CPU plus a flat ceiling looks like lock contention, and there was a perfect
+suspect: the per-site database registry was a single <code>tokio::sync::Mutex</code> held across every database open. So the
+report said the registry mutex capped every instance near 4.7k RPS regardless of core count, and the sizing sheet
+repeated it.</p>
+<p>That story was plausible, it fit the data, and it was wrong.</p>
+<h3 id="how-it-fell-apart">How it fell apart</h3>
+<p>The fix for the mutex was <a href="https://github.com/ephpm/ephpm/pull/303">ePHPm #303</a>, which replaced the global map with
+per-site slots each holding their own lock. If the mutex was the ceiling, #303 should have lifted it. Under the
+harness, it didn&rsquo;t: about 4.0k RPS on the warm point before and after. The churn case (more sites than the LRU cap)
+did improve, and a bistable collapse went away, but the warm ceiling sat exactly where it was.</p>
+<p>So I started the server by hand to poke at it, from a shell in <code>/root</code>, and got <strong>15,900 RPS</strong> on the same point.
+Same binary, same config, same provisioned databases. Back in the harness: <strong>4,164 RPS</strong>. The only difference was
+where the process was started from. The harness lived in the repo checkout on <code>/mnt/c/Users/luther/multitenant-scalebench</code>,
+and it launched the server like this:</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl">start_server<span class="o">()</span> <span class="o">{</span>
+</span></span><span class="line"><span class="cl">  : &gt; <span class="s2">&#34;</span><span class="nv">$LOG</span><span class="s2">&#34;</span>
+</span></span><span class="line"><span class="cl">  <span class="s2">&#34;</span><span class="nv">$BIN</span><span class="s2">&#34;</span> serve --config <span class="s2">&#34;</span><span class="nv">$CFG</span><span class="s2">&#34;</span> &gt;&gt;<span class="s2">&#34;</span><span class="nv">$LOG</span><span class="s2">&#34;</span> 2&gt;<span class="p">&amp;</span><span class="m">1</span> <span class="p">&amp;</span>
+</span></span><span class="line"><span class="cl">  <span class="nv">SRV_PID</span><span class="o">=</span><span class="nv">$!</span>
+</span></span></code></pre></div><p>Everything the server <em>read</em> was on ext4. The docroot was staged to the native run dir, the per-site databases lived
+there, the config was rendered there. But the process inherited the shell&rsquo;s working directory, and that was on DrvFs.</p>
+<p>The fix (<a href="https://github.com/ephpm/multitenant-scalebench/commit/e92483e"><code>e92483e</code></a>) is two lines of intent: start
+the server from the native run dir, and refuse to run at all if the run dir itself is on <code>/mnt/*</code>.</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl"><span class="k">case</span> <span class="s2">&#34;</span><span class="nv">$RUN</span><span class="s2">&#34;</span> in
+</span></span><span class="line"><span class="cl">  /mnt/*<span class="o">)</span> <span class="nb">echo</span> <span class="s2">&#34;RUN=</span><span class="nv">$RUN</span><span class="s2"> is on DrvFs (/mnt/*) — use a WSL-native path&#34;</span> &gt;<span class="p">&amp;</span>2<span class="p">;</span> <span class="nb">exit</span> <span class="m">1</span> <span class="p">;;</span>
+</span></span><span class="line"><span class="cl"><span class="k">esac</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">start_server<span class="o">()</span> <span class="o">{</span>
+</span></span><span class="line"><span class="cl">  : &gt; <span class="s2">&#34;</span><span class="nv">$LOG</span><span class="s2">&#34;</span>
+</span></span><span class="line"><span class="cl">  <span class="o">(</span> <span class="nb">cd</span> <span class="s2">&#34;</span><span class="nv">$RUN</span><span class="s2">&#34;</span> <span class="o">&amp;&amp;</span> <span class="nb">exec</span> <span class="s2">&#34;</span><span class="nv">$BIN</span><span class="s2">&#34;</span> serve --config <span class="s2">&#34;</span><span class="nv">$CFG</span><span class="s2">&#34;</span> <span class="o">)</span> &gt;&gt;<span class="s2">&#34;</span><span class="nv">$LOG</span><span class="s2">&#34;</span> 2&gt;<span class="p">&amp;</span><span class="m">1</span> <span class="p">&amp;</span>
+</span></span><span class="line"><span class="cl">  <span class="nv">SRV_PID</span><span class="o">=</span><span class="nv">$!</span>
+</span></span></code></pre></div><h3 id="why-a-working-directory-costs-anything">Why a working directory costs anything</h3>
+<p>I wanted to know why a directory the server never reads from could cost 4x, so I re-ran it under <code>strace</code>. Same
+setup as the report (the v0.7.0 release binary, wp-lite, 50 sites), one instance started from ext4 and one from a
+DrvFs directory, a light 4-worker load for 3 seconds while <code>strace -f</code> recorded every syscall.</p>
+<p>On the DrvFs run, every single request ends with this:</p>
+<pre tabindex="0"><code>lstat(&#34;/mnt/c/Users/luther/AppData/Local/Temp/.../bench/drvfs-cwd&#34;, ...) = 0
+lstat(&#34;/mnt/c/Users/luther/AppData/Local/Temp/.../bench&#34;, ...) = 0
+...
+lstat(&#34;/mnt/c/Users/luther/AppData&#34;, ...) = 0
+lstat(&#34;/mnt/c/Users/luther&#34;, ...) = 0
+lstat(&#34;/mnt/c/Users&#34;, ...) = 0
+lstat(&#34;/mnt/c&#34;, ...) = 0
+lstat(&#34;/mnt&#34;, ...) = 0
+stat(&#34;/mnt/c/Users/luther/AppData/Local/Temp/.../bench/drvfs-cwd&#34;, ...) = 0
+</code></pre><p>One <code>lstat</code> per path component, walking from the leaf up to <code>/</code>, then a <code>stat</code> of the full path. It happened 759
+times for 755 requests: once per request. The same walk happens on the native run too, it&rsquo;s just <code>/root</code> and one
+directory under it, on ext4, and costs nothing.</p>
+<p>That walk is PHP. <code>php_execute_script</code> in <code>main/main.c</code> saves the current directory, <code>chdir</code>s into the script&rsquo;s
+directory so relative includes work, runs the script, and then changes back:</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-c" data-lang="c"><span class="line"><span class="cl"><span class="k">if</span> <span class="p">(</span><span class="n">primary_file</span><span class="o">-&gt;</span><span class="n">filename</span> <span class="o">&amp;&amp;</span> <span class="o">!</span><span class="p">(</span><span class="nf">SG</span><span class="p">(</span><span class="n">options</span><span class="p">)</span> <span class="o">&amp;</span> <span class="n">SAPI_OPTION_NO_CHDIR</span><span class="p">))</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">	<span class="nf">php_ignore_value</span><span class="p">(</span><span class="nf">VCWD_GETCWD</span><span class="p">(</span><span class="n">old_cwd</span><span class="p">,</span> <span class="n">OLD_CWD_SIZE</span><span class="o">-</span><span class="mi">1</span><span class="p">));</span>
+</span></span><span class="line"><span class="cl">	<span class="nf">VCWD_CHDIR_FILE</span><span class="p">(</span><span class="nf">ZSTR_VAL</span><span class="p">(</span><span class="n">primary_file</span><span class="o">-&gt;</span><span class="n">filename</span><span class="p">));</span>
+</span></span><span class="line"><span class="cl"><span class="p">}</span>
+</span></span><span class="line"><span class="cl"><span class="cm">/* ... run the script ... */</span>
+</span></span><span class="line"><span class="cl"><span class="k">if</span> <span class="p">(</span><span class="n">old_cwd</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">!=</span> <span class="sc">&#39;\0&#39;</span><span class="p">)</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">	<span class="nf">php_ignore_value</span><span class="p">(</span><span class="nf">VCWD_CHDIR</span><span class="p">(</span><span class="n">old_cwd</span><span class="p">));</span>
+</span></span><span class="line"><span class="cl"><span class="p">}</span>
+</span></span></code></pre></div><p>In a ZTS build (which ePHPm is, because it runs PHP on many threads in one process) <code>VCWD_CHDIR</code> goes through PHP&rsquo;s
+virtual CWD layer, which resolves the path component by component with <code>lstat</code>, leaf first. In this trace nothing
+cached it; the walk ran on every request. Each of those components below <code>/mnt/c</code> is a round trip over 9p to the
+Windows host. (<code>SAPI_OPTION_NO_CHDIR</code> is the escape hatch, it&rsquo;s what <code>php-cgi -C</code> sets, but PHP apps expect the cwd to be
+the script&rsquo;s directory, so turning it off would be a behavior change, not a perf fix.)</p>
+<p>A handful of extra <code>lstat</code>s per request shouldn&rsquo;t cost 4x on its own. What makes it expensive is that DrvFs behaves
+like a shared, serialized resource under concurrency. CPU on the DrvFs run <em>dropped</em> to about 2 cores, which is the
+signature of threads waiting rather than working, and exactly the signature I had blamed on the mutex.</p>
+<h3 id="it-scales-with-the-depth-of-the-path">It scales with the depth of the path</h3>
+<p>That suggested a test: if the cost is per path component on DrvFs, a deeper working directory should be slower.
+So I ran the same 50-site point from four working directories, interleaved, two runs each.</p>
+<p><img src="/img/2026/08/benchmark-4x-wrong-wsl-drvfs-cwd-depth.svg" alt="Requests per second by server working directory"></p>
+<table>
+  <thead>
+      <tr>
+          <th>server cwd</th>
+          <th style="text-align: right">DrvFs ops per request</th>
+          <th style="text-align: right">RPS (2 runs)</th>
+          <th style="text-align: right">CPU cores</th>
+          <th style="text-align: right">p50</th>
+      </tr>
+  </thead>
+  <tbody>
+      <tr>
+          <td><code>/root/scratch-...</code> (ext4)</td>
+          <td style="text-align: right">0</td>
+          <td style="text-align: right">17,437 / 18,090</td>
+          <td style="text-align: right">21.5-21.9</td>
+          <td style="text-align: right">6.3-6.5 ms</td>
+      </tr>
+      <tr>
+          <td><code>/mnt/c</code></td>
+          <td style="text-align: right">2</td>
+          <td style="text-align: right">8,499 / 8,849</td>
+          <td style="text-align: right">9.9-10.1</td>
+          <td style="text-align: right">14.4-15.0 ms</td>
+      </tr>
+      <tr>
+          <td><code>/mnt/c/Users/luther/multitenant-scalebench</code></td>
+          <td style="text-align: right">5</td>
+          <td style="text-align: right">4,213 / 4,265</td>
+          <td style="text-align: right">4.8</td>
+          <td style="text-align: right">28.9-29.9 ms</td>
+      </tr>
+      <tr>
+          <td><code>/mnt/c/Users/luther/AppData/.../drvfs-cwd</code></td>
+          <td style="text-align: right">15</td>
+          <td style="text-align: right">1,662 / 1,689</td>
+          <td style="text-align: right">2.2-2.3</td>
+          <td style="text-align: right">75.9-76.7 ms</td>
+      </tr>
+  </tbody>
+</table>
+<p>&ldquo;DrvFs ops per request&rdquo; counts the <code>lstat</code>s for path components at or below <code>/mnt/c</code>, plus the final <code>stat</code> (<code>/mnt</code>
+itself isn&rsquo;t DrvFs). Multiply it by RPS and the three DrvFs rows land in the same neighborhood: about 17k, 21k and
+25k metadata operations per second. It looks like this box tops out somewhere around 20k DrvFs path lookups a
+second across all threads, and the server&rsquo;s throughput becomes that number divided by how many lookups each request
+costs. Throughput and CPU fell together, which is what &ldquo;everybody&rsquo;s waiting on the same thing&rdquo; looks like.</p>
+<p>The 4-level row is the path the original harness ran from, and it lands at 4,239 RPS, right on top of the 4,164 from
+the #303 validation. The deep path is just my scratch directory for this re-run, and it&rsquo;s 10x slower than native.
+An earlier session of the same native-vs-deep comparison (three interleaved pairs) gave 15.0-15.4k vs 1.41-1.48k
+RPS, so the absolute numbers move with whatever else the box is doing, but the ratio held.</p>
+<p>So &ldquo;4x&rdquo; was never a property of DrvFs. It was a property of how deep my checkout happened to be.</p>
+<h3 id="what-it-changed">What it changed</h3>
+<p>Re-basing everything on the fixed harness (<a href="https://github.com/ephpm/multitenant-scalebench/blob/main/report/BEFORE-AFTER.md">BEFORE-AFTER.md</a>)
+moved some conclusions and left others alone:</p>
+<ul>
+<li><strong>The warm ceiling wasn&rsquo;t ~4.7k RPS at 5 cores.</strong> It was 14.9k RPS at 16.5 cores on the pre-#303 binary and 18.9k at
+22.8 cores on main with #297, #302 and #303. The &ldquo;registry mutex caps every instance&rdquo; claim was withdrawn from the
+report and the sizing sheet.</li>
+<li><strong>The churn collapse was real.</strong> More active sites than <code>max_open_dbs</code> still cratered to ~1.4k RPS at ~2 cores on
+the fixed harness. That one really was the mutex, and #303 lifted it 2.3x.</li>
+<li><strong>Real WordPress barely moved.</strong> It&rsquo;s CPU-bound at ~105 ms per request, so a fraction of a millisecond of <code>lstat</code>
+was lost in the noise: 243-253 RPS tainted vs 266-272 fixed, about 7%. The ~9.5 req/s per core sizing constant held.</li>
+<li><strong>The cwd bug never touched RSS, fd counts or correctness</strong>, since the sampler reads <code>/proc</code> directly. The re-base
+did replace one wp-real RSS anchor, but that was a low-outlier run, unrelated to the cwd.</li>
+</ul>
+<p>The original report keeps its tables with inline <code>[ERRATUM: ...]</code> annotations instead of being rewritten. I&rsquo;d rather
+leave the wrong numbers visible next to the right ones than pretend they never existed, and the
+<a href="https://github.com/ephpm/lab">ephpm/lab</a> README now has a &ldquo;Traps That Taint A Run&rdquo; section with this as the first
+entry.</p>
+<h3 id="the-rules-i-took-away">The rules I took away</h3>
+<ul>
+<li><strong>The working directory is part of the environment under test.</strong> For a PHP server it&rsquo;s on the hot path of every
+request. Check <code>/proc/&lt;pid&gt;/cwd</code>, not just where your data lives.</li>
+<li><strong>Make the harness refuse bad environments</strong>, don&rsquo;t document them. A <code>case &quot;$RUN&quot; in /mnt/*)</code> guard is worth more
+than a paragraph in a README.</li>
+<li><strong>Low CPU plus a flat ceiling doesn&rsquo;t prove lock contention.</strong> It proves something is waiting. Before you name the
+thing, take the most obvious step and change one variable at a time against the same binary.</li>
+<li><strong>When a fix doesn&rsquo;t move the number it should have moved, believe it.</strong> #303 not lifting the warm ceiling was the
+clue that the ceiling wasn&rsquo;t the mutex.</li>
+</ul>
+<h3 id="how-i-measured">How I measured</h3>
+<ul>
+<li>Host: AMD Ryzen 9 5950X (16 cores / 32 threads), Windows 11, WSL2 kernel <code>6.18.33.2-microsoft-standard-WSL2</code>, 62 GB
+available to WSL.</li>
+<li>Binary: the ePHPm v0.7.0 release (<code>ephpm-v0.7.0+php8.5.7-linux-x86_64.tar.gz</code>, sha256 <code>a79adefa...61fcee</code>).</li>
+<li>Workload: wp-lite from multitenant-scalebench, N=50 sites, <code>max_open_dbs = 4096</code>, per-site Turso DBs re-copied from
+one seeded template before every run, docroot and DBs on ext4. Only the server&rsquo;s cwd changed.</li>
+<li>Load: the multitenant-scalebench loadgen, closed-loop, <code>-c 128</code>, 5 s warmup, 15 s measured, fresh instance per run,
+runs interleaved.</li>
+<li>Trace: <code>strace -f -qq -p &lt;pid&gt;</code> for ~5 s during a <code>-c 4</code> run.</li>
+<li>The original 4,164 vs 15,900 RPS figures are from the #303 validation, quoted in the PR body and in commit <code>e92483e</code>.</li>
+</ul>
+<h3 id="links">Links</h3>
+<ul>
+<li><a href="https://github.com/ephpm/multitenant-scalebench">ephpm/multitenant-scalebench</a>: commit <a href="https://github.com/ephpm/multitenant-scalebench/commit/e92483e"><code>e92483e</code></a> (the fix),
+<a href="https://github.com/ephpm/multitenant-scalebench/commit/8e7e854"><code>8e7e854</code></a> (the re-base), <code>report/REPORT.md</code> erratum</li>
+<li><a href="https://github.com/ephpm/ephpm/pull/303">ePHPm #303</a>, where the harness bug was found</li>
+<li><a href="https://github.com/ephpm/lab#traps-that-taint-a-run">ephpm/lab README, &ldquo;Traps That Taint A Run&rdquo;</a></li>
+</ul>
+
+      </div>
+      <footer>
+        <div class="stats">
+  
+    <ul class="categories">
+      
+        
+          <li><a class="article-terms-link" href="/categories/ephpm/">ephpm</a></li>
+        
+          <li><a class="article-terms-link" href="/categories/windows/">windows</a></li>
+        
+      
+    </ul>
+  
+  
+    <ul class="tags">
+      
+        
+          <li><a class="article-terms-link" href="/tags/wsl/">wsl</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/benchmarking/">benchmarking</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/php/">php</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/ephpm/">ephpm</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/windows/">windows</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/linux/">linux</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/strace/">strace</a></li>
+        
+      
+    </ul>
+  
+</div>
+
+      </footer>
+    </div>
+    
+      
+  
+  <div class='post giscus-wrap'>
+    <script src='https://giscus.app/client.js'
+            data-repo='luthermonson/luth.io'
+            data-repo-id='R_kgDOGvFBXQ'
+            data-category='Announcements'
+            data-category-id='DIC_kwDOGvFBXc4DH_gv'
+            data-mapping='pathname'
+            data-strict='1'
+            data-reactions-enabled='1'
+            data-emit-metadata='0'
+            data-input-position='top'
+            data-theme='light'
+            data-lang='en'
+            data-loading='lazy'
+            crossorigin='anonymous'
+            async>
+    </script>
+  </div>
+  
+
+
+
+    
+  </article>
+  
+    <nav class="post-nav">
+      
+        <a href="/blog/2026/08/clustered-sqlite-adding-turso/" class="post-nav-link older">
+          <span class="post-nav-label">&larr; Older</span>
+          <span class="post-nav-title">Clustered SQLite in ePHPm, Part 2: Adding Turso</span>
+        </a>
+      
+      
+        <a href="/blog/2026/08/shipmates-persona-based-ai-coding-crews/" class="post-nav-link newer">
+          <span class="post-nav-label">Newer &rarr;</span>
+          <span class="post-nav-title">shipmates: Persona-Based AI Coding Crews That Remember</span>
+        </a>
+      
+    </nav>
+  
+
+      </main>
+      <section id="site-sidebar">
+  
+    <section id="recent-posts">
+      <header>
+        <h1>Recent Posts</h1>
+      </header>
+      
+      <article class="mini-post">
+          <a href="/blog/2026/10/ephpm-worker-mode-performance/" class="image" style="--bg-image: url('/img/2026/10/ephpm-worker-mode-performance-cover.svg');">
+    <img class="" src="/img/2026/10/ephpm-worker-mode-performance-cover.svg" alt="Diagram: before, hyper/tokio hands each request to one shared bounded channel whose waiter list all 20 PHP threads contend on; after, a dispatcher hands the job straight into the mailbox of the most recently idle PHP thread and only queues it in a FIFO overflow queue when every thread is busy">
+  </a>
+        <header>
+          <h2><a href="/blog/2026/10/ephpm-worker-mode-performance/">Fourth Place in Worker Mode, and Why It Wasn&#39;t PHP</a></h2>
+          <time class="published" datetime="2026-10-16 08:10:00 -0700 PDT">October 16, 2026</time>
+        </header>
+      </article>
+      
+      <article class="mini-post">
+          <a href="/blog/2026/10/ephpm-websockets-how-to/" class="image" style="--bg-image: url('/img/2026/10/ephpm-websockets-how-to-cover.svg');">
+    <img class="" src="/img/2026/10/ephpm-websockets-how-to-cover.svg" alt="Diagram: browsers hold sockets to ePHPm&#39;s Rust session tasks and registry; each connect, message and disconnect runs websocket.php once on the PHP thread pool, and ordinary HTTP requests push through ephpm_ws_broadcast">
+  </a>
+        <header>
+          <h2><a href="/blog/2026/10/ephpm-websockets-how-to/">WebSockets in ePHPm, From Zero to a Working Chat</a></h2>
+          <time class="published" datetime="2026-10-11 17:30:00 -0700 PDT">October 11, 2026</time>
+        </header>
+      </article>
+      
+      <article class="mini-post">
+          <a href="/blog/2026/10/webhooks-out-of-order-scheduler/" class="image" style="--bg-image: url('/img/2026/10/webhooks-out-of-order-scheduler-timeline.svg');">
+    <img class="" src="/img/2026/10/webhooks-out-of-order-scheduler-timeline.svg" alt="Timeline of three same-label jobs where a runner executing a build is destroyed 2.3 seconds before its in_progress webhook arrives">
+  </a>
+        <header>
+          <h2><a href="/blog/2026/10/webhooks-out-of-order-scheduler/">Webhooks Arrive Out of Order: How My Scheduler Killed Live Builds</a></h2>
+          <time class="published" datetime="2026-10-07 21:10:00 -0700 PDT">October 7, 2026</time>
+        </header>
+      </article>
+      
+      <article class="mini-post">
+          <a href="/blog/2026/10/go-proxmox-five-years-to-v0-8/" class="image" style="--bg-image: url('/img/2026/10/go-proxmox-five-years-to-v0-8-apidiff.svg');">
+    <img class="" src="/img/2026/10/go-proxmox-five-years-to-v0-8-apidiff.svg" alt="Horizontal bar chart of apidiff incompatible and compatible changes for every go-proxmox release from v0.1.0 to v0.8.2">
+  </a>
+        <header>
+          <h2><a href="/blog/2026/10/go-proxmox-five-years-to-v0-8/">Breaking Changes Without Breaking Trust: Five Years to go-proxmox v0.8</a></h2>
+          <time class="published" datetime="2026-10-04 19:40:00 -0700 PDT">October 4, 2026</time>
+        </header>
+      </article>
+      
+      <article class="mini-post">
+          <a href="/blog/2026/10/windows-sigterm-sparse-files/" class="image" style="--bg-image: url('/img/2026/10/windows-sigterm-sparse-files-connections.svg');">
+    <img class="" src="/img/2026/10/windows-sigterm-sparse-files-connections.svg" alt="Bar chart: 96 Cloudflare edge connections held by orphaned cloudflared processes versus 4 for the live daemon">
+  </a>
+        <header>
+          <h2><a href="/blog/2026/10/windows-sigterm-sparse-files/">Windows Grab-Bag: SIGTERM That Doesn&#39;t Exist and Sparse Files That Break Docker</a></h2>
+          <time class="published" datetime="2026-10-03 14:30:00 -0700 PDT">October 3, 2026</time>
+        </header>
+      </article>
+      
+      
+        <footer>
+          <a href="/blog" class="button">See More</a>
+        </footer>
+      
+    </section>
+  
+
+  
+    
+
+      <section id="categories">
+        <header>
+          <h1><a href="/categories">Categories</a></h1>
+        </header>
+        <ul>
+          
+          
+          <li>
+              <a href="/categories/ephpm/">ephpm<span class="count">33</span></a>
+          
+          <li>
+              <a href="/categories/go/">go<span class="count">30</span></a>
+          
+          <li>
+              <a href="/categories/php/">php<span class="count">23</span></a>
+          
+          <li>
+              <a href="/categories/rust/">rust<span class="count">15</span></a>
+          
+          <li>
+              <a href="/categories/homelab/">homelab<span class="count">14</span></a>
+          
+          <li>
+              <a href="/categories/windows/">windows<span class="count">14</span></a>
+          
+          <li>
+              <a href="/categories/ci/">ci<span class="count">9</span></a>
+          
+          <li>
+              <a href="/categories/databases/">databases<span class="count">9</span></a>
+          
+          <li>
+              <a href="/categories/security/">security<span class="count">9</span></a>
+          
+          <li>
+              <a href="/categories/containers/">containers<span class="count">7</span></a>
+          
+          <li>
+              <a href="/categories/tools/">tools<span class="count">5</span></a>
+          
+          <li>
+              <a href="/categories/ai-agents/">ai-agents<span class="count">4</span></a>
+          
+          </li>
+        </ul>
+      </section>
+    
+  
+
+  
+    <section id="mini-bio">
+      <header>
+        <h1>About</h1>
+      </header>
+      <p>Luther is a 20+ year software veteran specializing in backend APIs and architecting products. Employed at <a href='https://www.suse.com'>SUSE</a> as the Team Lead for the <a href='https://github.com/rancher/windows/issues'>Containers on Windows Team</a> working on <a href='https://rancher.com/'>Rancher</a> + <a href='https://kubernetes.io/'>Kubernetes</a></p>
+      <footer>
+        <a href="/about" class="button">Learn More</a>
+      </footer>
+    </section>
+  
+</section>
+
+      <footer id="site-footer">
+  
+      <ul class="socnet-icons">
+        
+
+        <li><a href="//github.com/luthermonson" target="_blank" rel="noopener" title="GitHub" class="fab fa-github"></a></li>
+
+
+
+
+
+
+
+
+
+
+
+<li><a href="//www.linkedin.com/in/luthermonson" target="_blank" rel="noopener" title="LinkedIn" class="fab fa-linkedin"></a></li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li><a href="//twitter.com/luthermonson" target="_blank" rel="noopener" title="Twitter" class="fab fa-twitter"></a></li>
+
+
+
+
+
+
+
+
+
+
+
+<li><a href="mailto:luther.monson@gmail.com" target="_blank" title="Email" class="far fa-envelope"></a></li>
+
+      </ul>
+  
+  <p class="copyright">
+    © 2026 Luther Monson
+      <br>
+    Theme: <a href='https://github.com/pacollins/hugo-future-imperfect-slim' target='_blank' rel='noopener'>Hugo Future Imperfect Slim</a><br>A <a href='https://html5up.net/future-imperfect' target='_blank' rel='noopener'>HTML5 UP port</a> | Powered by <a href='https://gohugo.io/' title='0.160.1' target='_blank' rel='noopener'>Hugo</a>
+  </p>
+</footer>
+<a id="back-to-top" href="#" class="fas fa-arrow-up fa-2x"></a>
+
+      <script src="/js/bundle.min.241b62ebc4792fe8c7a75879e5f710894f226f2b73342e9916b3a3b0526030cc.js" integrity="sha256-JBti68R5L&#43;jHp1h55fcQiU8ibytzNC6ZFrOjsFJgMMw="></script>
+    <script src="/js/add-on.js"></script>
+    </div>
+  </body>
+</html>

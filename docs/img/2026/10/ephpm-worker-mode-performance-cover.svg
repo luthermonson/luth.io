@@ -1,0 +1,80 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 520" font-family="system-ui, -apple-system, Segoe UI, sans-serif">
+  <rect width="900" height="520" fill="#ffffff"/>
+  <defs>
+    <marker id="g" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#6b6b6b"/></marker>
+    <marker id="v" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#D55E00"/></marker>
+    <marker id="o" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#B07800"/></marker>
+  </defs>
+  <text x="450" y="32" text-anchor="middle" font-size="20" font-weight="600" fill="#222">Handing a request to a PHP thread in worker mode</text>
+
+  <!-- BEFORE -->
+  <rect x="15" y="50" width="870" height="215" rx="10" fill="#fafafa" stroke="#cccccc"/>
+  <text x="30" y="75" font-size="15" font-weight="600" fill="#222">Before: one shared dispatch channel</text>
+
+  <rect x="35" y="110" width="150" height="110" rx="8" fill="#e6f1f8" stroke="#0072B2" stroke-width="2"/>
+  <text x="110" y="152" text-anchor="middle" font-size="15" font-weight="600" fill="#0072B2">hyper / tokio</text>
+  <text x="110" y="174" text-anchor="middle" font-size="12" fill="#333">Rust HTTP layer</text>
+  <text x="110" y="192" text-anchor="middle" font-size="12" fill="#333">parses the request</text>
+  <line x1="185" y1="165" x2="233" y2="165" stroke="#6b6b6b" stroke-width="2" marker-end="url(#g)"/>
+
+  <rect x="237" y="92" width="250" height="148" rx="8" fill="#fbeee6" stroke="#D55E00" stroke-width="2"/>
+  <text x="362" y="118" text-anchor="middle" font-size="15" font-weight="600" fill="#D55E00">Shared async_channel</text>
+  <text x="362" y="141" text-anchor="middle" font-size="12" fill="#333">bounded, one waiter list</text>
+  <text x="362" y="159" text-anchor="middle" font-size="12" fill="#333">guarded by one Mutex</text>
+  <text x="362" y="177" text-anchor="middle" font-size="12" fill="#333">every enqueue takes the lock</text>
+  <text x="362" y="195" text-anchor="middle" font-size="12" fill="#333">every idle thread parks on it</text>
+  <text x="362" y="224" text-anchor="middle" font-size="12" font-weight="600" fill="#D55E00">~22% of PHP context switches</text>
+
+  <text x="543" y="88" text-anchor="middle" font-size="12" fill="#D55E00">all 20 contend</text>
+  <line x1="487" y1="165" x2="596" y2="109" stroke="#D55E00" stroke-width="2" marker-end="url(#v)"/>
+  <line x1="487" y1="165" x2="596" y2="146" stroke="#D55E00" stroke-width="2" marker-end="url(#v)"/>
+  <line x1="487" y1="165" x2="596" y2="183" stroke="#D55E00" stroke-width="2" marker-end="url(#v)"/>
+  <line x1="487" y1="165" x2="596" y2="220" stroke="#D55E00" stroke-width="2" marker-end="url(#v)"/>
+
+  <rect x="600" y="95" width="270" height="28" rx="6" fill="#e6f5ef" stroke="#009E73"/>
+  <text x="612" y="114" font-size="12" fill="#333">PHP thread 1 (parked on the list)</text>
+  <rect x="600" y="132" width="270" height="28" rx="6" fill="#e6f5ef" stroke="#009E73"/>
+  <text x="612" y="151" font-size="12" fill="#333">PHP thread 2 (parked on the list)</text>
+  <rect x="600" y="169" width="270" height="28" rx="6" fill="#e6f5ef" stroke="#009E73"/>
+  <text x="612" y="188" font-size="12" fill="#333">PHP thread 3 (parked on the list)</text>
+  <rect x="600" y="206" width="270" height="28" rx="6" fill="#e6f5ef" stroke="#009E73"/>
+  <text x="612" y="225" font-size="12" fill="#333">PHP threads 4 to 20</text>
+  <text x="735" y="254" text-anchor="middle" font-size="12" fill="#555">on-CPU 69% of the time at 60k req/s</text>
+
+  <!-- AFTER -->
+  <rect x="15" y="280" width="870" height="228" rx="10" fill="#fafafa" stroke="#cccccc"/>
+  <text x="30" y="305" font-size="15" font-weight="600" fill="#222">After (#578): a single-job mailbox per PHP thread</text>
+
+  <rect x="35" y="340" width="150" height="110" rx="8" fill="#e6f1f8" stroke="#0072B2" stroke-width="2"/>
+  <text x="110" y="382" text-anchor="middle" font-size="15" font-weight="600" fill="#0072B2">hyper / tokio</text>
+  <text x="110" y="404" text-anchor="middle" font-size="12" fill="#333">Rust HTTP layer</text>
+  <text x="110" y="422" text-anchor="middle" font-size="12" fill="#333">parses the request</text>
+  <line x1="185" y1="395" x2="233" y2="395" stroke="#6b6b6b" stroke-width="2" marker-end="url(#g)"/>
+
+  <rect x="237" y="322" width="250" height="148" rx="8" fill="#fdf5e3" stroke="#B07800" stroke-width="2"/>
+  <text x="362" y="348" text-anchor="middle" font-size="15" font-weight="600" fill="#8a5d00">Dispatcher</text>
+  <text x="362" y="371" text-anchor="middle" font-size="12" fill="#333">one short lock, no waiter list</text>
+  <text x="362" y="392" text-anchor="middle" font-size="12" fill="#333">idle thread? job goes straight</text>
+  <text x="362" y="410" text-anchor="middle" font-size="12" fill="#333">into its mailbox (LIFO idle stack)</text>
+  <text x="362" y="431" text-anchor="middle" font-size="12" fill="#333">all busy? oldest-first FIFO</text>
+  <text x="362" y="449" text-anchor="middle" font-size="12" fill="#333">overflow queue (queue_depth)</text>
+
+  <text x="543" y="324" text-anchor="middle" font-size="12" fill="#8a5d00">direct handoff</text>
+  <line x1="487" y1="380" x2="596" y2="339" stroke="#B07800" stroke-width="2.5" marker-end="url(#o)"/>
+
+  <rect x="600" y="325" width="270" height="28" rx="6" fill="#e6f5ef" stroke="#009E73"/>
+  <text x="612" y="344" font-size="12" fill="#333">PHP thread 1 (most recently idle)</text>
+  <rect x="838" y="331" width="22" height="16" rx="2" fill="#ffffff" stroke="#B07800" stroke-width="1.5"/>
+  <rect x="600" y="362" width="270" height="28" rx="6" fill="#e6f5ef" stroke="#009E73"/>
+  <text x="612" y="381" font-size="12" fill="#333">PHP thread 2</text>
+  <rect x="838" y="368" width="22" height="16" rx="2" fill="#ffffff" stroke="#B07800" stroke-width="1.5"/>
+  <rect x="600" y="399" width="270" height="28" rx="6" fill="#e6f5ef" stroke="#009E73"/>
+  <text x="612" y="418" font-size="12" fill="#333">PHP thread 3</text>
+  <rect x="838" y="405" width="22" height="16" rx="2" fill="#ffffff" stroke="#B07800" stroke-width="1.5"/>
+  <rect x="600" y="436" width="270" height="28" rx="6" fill="#e6f5ef" stroke="#009E73"/>
+  <text x="612" y="455" font-size="12" fill="#333">PHP threads 4 to 20</text>
+  <rect x="838" y="442" width="22" height="16" rx="2" fill="#ffffff" stroke="#B07800" stroke-width="1.5"/>
+  <text x="790" y="316" text-anchor="middle" font-size="12" fill="#8a5d00">mailbox</text>
+  <line x1="820" y1="320" x2="845" y2="329" stroke="#B07800" stroke-width="1.5"/>
+  <text x="450" y="494" text-anchor="middle" font-size="12" fill="#555">on-CPU 80% at 60k req/s; p99 at 55k: 30.5 ms to 15.9 ms</text>
+</svg>

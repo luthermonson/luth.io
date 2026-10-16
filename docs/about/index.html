@@ -13,7 +13,7 @@
 <meta name="description" content="Luther Monson&#39;s Blog about Software Engineering mostly using the Go Programming language. Focusing on Containers and Virtualization with an emphasis on Kubernetes distributions and provisioning.">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:card" content="summary_large_image"><meta name="twitter:site" content="@luthermonson">
 
 <meta property="og:site_name" content="Luther Monson">
 <meta property="og:title" content="About the Blogger">
@@ -37,8 +37,11 @@
   <meta name="theme-color" content="#ffffff">
 
 
-  <meta name="generator" content="Hugo 0.92.0" />
-  <link rel="stylesheet" href="/css/bundle.min.5233f2a4cd515395301b4154f6c1c621695e8cf53faa0935b76ac52fed7f4585.css" integrity="sha256-UjPypM1RU5UwG0FU9sHGIWlejPU/qgk1t2rFL&#43;1/RYU="><link rel="stylesheet" href="/css/add-on.css">
+  <meta name="generator" content="Hugo 0.160.1">
+  <link rel="alternate" type="application/rss+xml" href="https://luth.io/index.xml" title="Luther Monson">
+  <link rel="stylesheet" href="/css/bundle.min.e1ffed86714fbb7eff75eab221c0c61b8260be0c7d1c08db0fcb7a2bdb6af7c9.css" integrity="sha256-4f/thnFPu37/deqyIcDGG4Jgvgx9HAjbD8t6K9tq98k="><link rel="stylesheet" href="/css/add-on.css">
+        <link rel="stylesheet" href="/css/code.css">
+        <link rel="stylesheet" href="/css/mobile.css">
 </head>
 
   <body>
@@ -48,6 +51,7 @@
   <nav id="site-nav">
     <h1 class="nav-title">
       <a href="/" class="nav">
+        <img class="nav-avatar" src="/img/luther-monson-headshot.jpg" alt="" width="32" height="32">
         
           About the Blogger
         
@@ -72,6 +76,11 @@
       
         
           
+          <a href="/archive" class="nav link"><i class='far fa-calendar-alt'></i> Archive</a>
+        
+      
+        
+          
           <a href="/categories" class="nav link"><i class='fas fa-sitemap'></i> Categories</a>
         
       
@@ -80,55 +89,11 @@
     </menu>
     <a href="#search-input" class="nav search-toggle"><i class="fas fa-search fa-2x">&nbsp;</i></a>
     <a href="#share-menu" class="nav share-toggle"><i class="fas fa-share-alt fa-2x">&nbsp;</i></a>
-    <a href="#lang-menu" class="nav lang-toggle" lang="en">en</a>
+    
     <a href="#site-nav" class="nav nav-toggle"><i class="fas fa-bars fa-2x"></i></a>
   </nav>
   <menu id="search" class="menu"><input id="search-input" class="search-input menu"></input><div id="search-results" class="search-results menu"></div></menu>
-  <menu id="lang-menu" class="flyout-menu menu">
-  <a href="#" lang="en" class="nav link active">English (en)</a>
   
-    
-      
-    
-      
-        <a href="/fr" lang="fr" class="nav no-lang link">Français (fr)</a>
-      
-    
-      
-        <a href="/pl" lang="pl" class="nav no-lang link">Polski (pl)</a>
-      
-    
-      
-        <a href="/pt" lang="pt" class="nav no-lang link">Português (pt)</a>
-      
-    
-      
-        <a href="/de" lang="de" class="nav no-lang link">Deutsche (de)</a>
-      
-    
-      
-        <a href="/es" lang="es" class="nav no-lang link">Española (es)</a>
-      
-    
-      
-        <a href="/zh-cn" lang="zh-cn" class="nav no-lang link">中文 (简体) (zh-cn)</a>
-      
-    
-      
-        <a href="/zh-tw" lang="zh-tw" class="nav no-lang link">中文 (正體) (zh-tw)</a>
-      
-    
-      
-        <a href="/ja" lang="ja" class="nav no-lang link">日本語 (ja)</a>
-      
-    
-      
-        <a href="/nl" lang="nl" class="nav no-lang link">Nederlands (nl)</a>
-      
-    
-  
-</menu>
-
   
     <menu id="share-menu" class="flyout-menu menu">
       <h1>Share Post</h1>
@@ -180,7 +145,7 @@
 </header>
 
     <div id="wrapper">
-      <section id="site-intro" >
+      <section id="site-intro" class="hidden-single-column">
   <a href="/"><img src="/img/luther-monson-headshot.jpg" class="circle" width="100" alt="Luther Monson, Staff Software Engineer at SUSE" /></a>
   <header>
     <h1>Luther Monson</h1>
@@ -252,9 +217,9 @@
     
   </div>
   <div class="meta">
-    <time datetime="2022-01-26 08:26:16 -0700 MST">January 26, 2022</time>
+    <time datetime="2022-01-26 08:26:16 -0700 -0700">January 26, 2022</time>
     <p>Luther Monson</p>
-    <p>1-Minute Read</p>
+    <p>3-Minute Read</p>
   </div>
 </header>
 
@@ -305,29 +270,63 @@
       </div>
       <div class="content">
         
-        
         <p>Originally born and raised in the Midwest, Luther moved to the expansive deserts of the American Southwest after
 receiving a Bachelor of the Arts in Computer Science from <a href="https://gustavus.edu/">Gustavus Adolphus College</a> in Southern Minnesota.
 After moving to Arizona, Luther spent his career building web APIs and utilities for various industries in PHP and NodeJS
 before migrating to Open Source DevOps tooling using Containers and Virtualization.</p>
-<p>Luther is an Open Source developer mostly writing <a href="https://go.dev/">Go</a> and working in the Kubernetes space by way of
-his employer <a href="https://suse.com/">SUSE</a> and their Multi-Cluster Management tool <a href="https://rancher.com/">Rancher</a>. As the
-Team Lead for the <a href="https://github.com/rancher/windows">Windows on Rancher</a> he has spent time specializing in Kubernetes
-working on alternative operating systems and architectures including arm64 and s390x. Working in this
-unique space and working from home full time has made him a home lab aficionado and consumer of <a href="https://www.proxmox.com/en/">Proxmox VE</a>.</p>
-<p>Contributions to the Rancher and open source:</p>
+<p>Luther works at <a href="https://www.akamai.com/">Akamai</a> on <a href="https://www.linode.com/products/kubernetes/">LKE Enterprise</a>,
+the enterprise tier of the Linode Kubernetes Engine. Before Akamai he spent years in the Kubernetes space at
+Rancher Labs and <a href="https://suse.com/">SUSE</a> working on the Multi-Cluster Management tool
+<a href="https://rancher.com/">Rancher</a>. As the Team Lead for <a href="https://github.com/rancher/windows">Windows on Rancher</a> he
+specialized in Kubernetes on alternative operating systems and architectures including Windows, arm64 and s390x.
+After Rancher he worked at <a href="https://www.spectrocloud.com/">Spectro Cloud</a> on Cluster API providers for AWS and Azure,
+including OIDC/IRSA support for self-managed clusters on AWS.
+Working in this unique space and working from home full time has made him a home lab aficionado and consumer of
+<a href="https://www.proxmox.com/en/">Proxmox VE</a>.</p>
+<h3 id="ephpm">ePHPm</h3>
+<p><a href="https://github.com/ephpm/ephpm">ePHPm</a> runs the same PHP app the same way from dev to prod as one Rust binary. It
+embeds real PHP through a custom SAPI and bundles a web server with automatic TLS, an embedded SQLite-compatible
+database, a KV cache, a pooling SQL proxy and gossip clustering, so a PHP app runs as a single process with no other
+services to operate.</p>
+<h3 id="ephemerd">ephemerd</h3>
+<p><a href="https://github.com/ephpm/ephemerd">ephemerd</a> is ephemeral GitHub Actions runners in a single binary for every
+platform: containers on Linux, Hyper-V on Windows, VMs on macOS. Every job gets an isolated, disposable environment
+that is thrown away when the job finishes.</p>
+<h3 id="litewire">litewire</h3>
+<p><a href="https://github.com/ephpm/litewire">litewire</a> speaks the MySQL, PostgreSQL and SQL Server wire protocols in front of
+SQLite. Point <code>pdo_mysql</code> at <code>:3306</code> and an unmodified app runs on embedded SQLite, with no database server and no
+code changes. It is the database layer inside ePHPm.</p>
+<h3 id="shipmates">shipmates</h3>
+<p><a href="https://github.com/luthermonson/shipmates">shipmates</a> gives Claude Code subagents that remember: role-specialized
+personas with persistent per-project memory, plus a live lead-and-crew channel for dispatching work, steering an
+agent mid-task and approving actions with a human in the loop.</p>
+<h3 id="go-proxmox">go-proxmox</h3>
+<p><a href="https://github.com/luthermonson/go-proxmox">go-proxmox</a> is a Go client, with types and tests, for the Proxmox VE
+REST API. It started in 2021 as a side project for the home lab and is now used by projects like the
+<a href="https://github.com/ionos-cloud/cluster-api-provider-proxmox">Cluster API provider for Proxmox</a>.</p>
+<h3 id="other-projects">Other Projects</h3>
 <ul>
-<li><a href="https://rancher.com/docs/rancher/v2.5/en/cluster-provisioning/rke-clusters/node-pools/vsphere/">vSphere Node Driver</a></li>
-<li><a href="https://github.com/rancher/machine">Rancher Machine</a></li>
-<li><a href="https://github.com/flannel-io/flannel">Flannel</a></li>
-<li><a href="https://github.com/rancher/rke">RKE1</a> and <a href="https://github.com/rancher/rke2">RKE2</a></li>
-<li><a href="https://github.com/vmware/govmomi">govmomi</a></li>
+<li><a href="https://github.com/luthermonson/tail-gunner">tail-gunner</a>: a drop-in <code>tail</code> that promotes mid-stream into a live-filtering TUI</li>
+<li><a href="https://github.com/luthermonson/linode-tui">linode-tui</a>: a k9s-inspired terminal UI for the Linode API</li>
+<li><a href="https://github.com/goodhosts/cli">goodhosts</a>: hosts file management from a Go CLI, on every OS</li>
+<li><a href="https://github.com/luthermonson/quiso">quiso</a>: QUickISO builder for cloud-init</li>
 </ul>
-<p>Personal Projects:</p>
+<h3 id="open-source-contributions">Open Source Contributions</h3>
 <ul>
-<li><a href="https://github.com/goodhosts/cli">goodhosts</a></li>
-<li><a href="https://github.com/luthermonson/go-proxmox">go-proxmox</a></li>
-<li><a href="https://github.com/luthermonson/quiso">quiso</a></li>
+<li><a href="https://github.com/rancher/machine/pulls?q=is%3Apr&#43;author%3Aluthermonson">Rancher Machine</a> and the <a href="https://github.com/rancher/machine/pulls?q=is%3Apr&#43;author%3Aluthermonson&#43;vsphere">vSphere Node Driver</a></li>
+<li><a href="https://github.com/rancher-archives/rke/commits?author=luthermonson">RKE1</a>, <a href="https://github.com/rancher/rke2/pulls?q=is%3Apr&#43;author%3Aluthermonson">RKE2</a> and <a href="https://github.com/rancher/remotedialer/pulls?q=is%3Apr&#43;author%3Aluthermonson">remotedialer</a></li>
+<li><a href="https://github.com/kubernetes-sigs/cluster-api/pulls?q=is%3Apr&#43;author%3Aluthermonson">Cluster API</a> and its providers for
+<a href="https://github.com/kubernetes-sigs/cluster-api-provider-aws/pulls?q=is%3Apr&#43;author%3Aluthermonson">AWS</a> (OIDC/IRSA support for self-managed clusters)
+and <a href="https://github.com/kubernetes-sigs/cluster-api-provider-azure/pulls?q=is%3Apr&#43;author%3Aluthermonson">Azure</a>,
+plus Spectro Cloud&rsquo;s <a href="https://github.com/spectrocloud-public/cluster-api-provider-aws/pulls?q=is%3Apr&#43;author%3Aluthermonson">AWS</a>
+and <a href="https://github.com/spectrocloud-public/cluster-api-provider-azure/pulls?q=is%3Apr&#43;author%3Aluthermonson">Azure</a> provider forks</li>
+<li><a href="https://github.com/kubernetes-sigs/sig-windows-dev-tools/pulls?q=is%3Apr&#43;author%3Aluthermonson">sig-windows-dev-tools</a></li>
+<li><a href="https://github.com/flannel-io/flannel/pulls?q=is%3Apr&#43;author%3Aluthermonson">Flannel</a></li>
+<li><a href="https://github.com/vmware/govmomi/pulls?q=is%3Apr&#43;author%3Aluthermonson">govmomi</a></li>
+<li><a href="https://github.com/diskfs/go-diskfs/pulls?q=is%3Apr&#43;author%3Aluthermonson">go-diskfs</a></li>
+<li><a href="https://github.com/crazywhalecc/static-php-cli/pulls?q=is%3Apr&#43;author%3Aluthermonson">static-php-cli</a></li>
+<li><a href="https://github.com/php/php-src/pulls?q=is%3Apr&#43;author%3Aluthermonson">php-src</a></li>
+<li><a href="https://github.com/tursodatabase/turso/pulls?q=is%3Apr&#43;author%3Aluthermonson">Turso</a></li>
 </ul>
 
       </div>
@@ -349,10 +348,17 @@ unique space and working from home full time has made him a home lab aficionado 
     </div>
     
   </article>
-  <div class="pagination">
-    
-    
-  </div>
+  
+    <nav class="post-nav">
+      
+        <a href="/archive/" class="post-nav-link older">
+          <span class="post-nav-label">&larr; Older</span>
+          <span class="post-nav-title">Archive</span>
+        </a>
+      
+      
+    </nav>
+  
 
       </main>
       <section id="site-sidebar">
@@ -363,41 +369,59 @@ unique space and working from home full time has made him a home lab aficionado 
       </header>
       
       <article class="mini-post">
-          <a href="/blog/2022/02/recreating-proxmox-ve-xtermjs-in-go/" class="image">
-    <img class="" src="/img/2022/02/proxmox-logo.png" alt="Proxmox VE Logo">
+          <a href="/blog/2026/10/ephpm-worker-mode-performance/" class="image" style="--bg-image: url('/img/2026/10/ephpm-worker-mode-performance-cover.svg');">
+    <img class="" src="/img/2026/10/ephpm-worker-mode-performance-cover.svg" alt="Diagram: before, hyper/tokio hands each request to one shared bounded channel whose waiter list all 20 PHP threads contend on; after, a dispatcher hands the job straight into the mailbox of the most recently idle PHP thread and only queues it in a FIFO overflow queue when every thread is busy">
   </a>
         <header>
-          <h2><a href="/blog/2022/02/recreating-proxmox-ve-xtermjs-in-go/">Recreating Proxmox Ve Xtermjs in Go</a></h2>
-          <time class="published" datetime="2022-02-06 21:54:53 -0700 MST">February 6, 2022</time>
+          <h2><a href="/blog/2026/10/ephpm-worker-mode-performance/">Fourth Place in Worker Mode, and Why It Wasn&#39;t PHP</a></h2>
+          <time class="published" datetime="2026-10-16 08:10:00 -0700 PDT">October 16, 2026</time>
         </header>
       </article>
       
       <article class="mini-post">
-          
-        <header>
-          <h2><a href="/blog/2022/01/practical-cue-example/">Practical Cue Example, Produce YAML Config from Go Types</a></h2>
-          <time class="published" datetime="2022-01-31 09:57:26 -0700 MST">January 31, 2022</time>
-        </header>
-      </article>
-      
-      <article class="mini-post">
-          <a href="/blog/2022/01/free-personal-blog-hugo-github-pages/" class="image" style="--bg-image: url('/img/2022/01/github-pages-logo.png');">
-    <img class="" src="/img/2022/01/github-pages-logo.png" alt="Github Pages Logo">
+          <a href="/blog/2026/10/ephpm-websockets-how-to/" class="image" style="--bg-image: url('/img/2026/10/ephpm-websockets-how-to-cover.svg');">
+    <img class="" src="/img/2026/10/ephpm-websockets-how-to-cover.svg" alt="Diagram: browsers hold sockets to ePHPm&#39;s Rust session tasks and registry; each connect, message and disconnect runs websocket.php once on the PHP thread pool, and ordinary HTTP requests push through ephpm_ws_broadcast">
   </a>
         <header>
-          <h2><a href="/blog/2022/01/free-personal-blog-hugo-github-pages/">Free Blog Hosting Using Hugo &#43; Github Pages</a></h2>
-          <time class="published" datetime="2022-01-27 11:51:20 -0700 MST">January 27, 2022</time>
+          <h2><a href="/blog/2026/10/ephpm-websockets-how-to/">WebSockets in ePHPm, From Zero to a Working Chat</a></h2>
+          <time class="published" datetime="2026-10-11 17:30:00 -0700 PDT">October 11, 2026</time>
         </header>
       </article>
       
       <article class="mini-post">
-          
+          <a href="/blog/2026/10/webhooks-out-of-order-scheduler/" class="image" style="--bg-image: url('/img/2026/10/webhooks-out-of-order-scheduler-timeline.svg');">
+    <img class="" src="/img/2026/10/webhooks-out-of-order-scheduler-timeline.svg" alt="Timeline of three same-label jobs where a runner executing a build is destroyed 2.3 seconds before its in_progress webhook arrives">
+  </a>
         <header>
-          <h2><a href="/blog/introduction/">Introduction</a></h2>
-          <time class="published" datetime="2022-01-27 10:11:05 -0700 MST">January 27, 2022</time>
+          <h2><a href="/blog/2026/10/webhooks-out-of-order-scheduler/">Webhooks Arrive Out of Order: How My Scheduler Killed Live Builds</a></h2>
+          <time class="published" datetime="2026-10-07 21:10:00 -0700 PDT">October 7, 2026</time>
         </header>
       </article>
       
+      <article class="mini-post">
+          <a href="/blog/2026/10/go-proxmox-five-years-to-v0-8/" class="image" style="--bg-image: url('/img/2026/10/go-proxmox-five-years-to-v0-8-apidiff.svg');">
+    <img class="" src="/img/2026/10/go-proxmox-five-years-to-v0-8-apidiff.svg" alt="Horizontal bar chart of apidiff incompatible and compatible changes for every go-proxmox release from v0.1.0 to v0.8.2">
+  </a>
+        <header>
+          <h2><a href="/blog/2026/10/go-proxmox-five-years-to-v0-8/">Breaking Changes Without Breaking Trust: Five Years to go-proxmox v0.8</a></h2>
+          <time class="published" datetime="2026-10-04 19:40:00 -0700 PDT">October 4, 2026</time>
+        </header>
+      </article>
+      
+      <article class="mini-post">
+          <a href="/blog/2026/10/windows-sigterm-sparse-files/" class="image" style="--bg-image: url('/img/2026/10/windows-sigterm-sparse-files-connections.svg');">
+    <img class="" src="/img/2026/10/windows-sigterm-sparse-files-connections.svg" alt="Bar chart: 96 Cloudflare edge connections held by orphaned cloudflared processes versus 4 for the live daemon">
+  </a>
+        <header>
+          <h2><a href="/blog/2026/10/windows-sigterm-sparse-files/">Windows Grab-Bag: SIGTERM That Doesn&#39;t Exist and Sparse Files That Break Docker</a></h2>
+          <time class="published" datetime="2026-10-03 14:30:00 -0700 PDT">October 3, 2026</time>
+        </header>
+      </article>
+      
+      
+        <footer>
+          <a href="/blog" class="button">See More</a>
+        </footer>
       
     </section>
   
@@ -407,13 +431,46 @@ unique space and working from home full time has made him a home lab aficionado 
 
       <section id="categories">
         <header>
-          <h1><a href="/categories">Category</a></h1>
+          <h1><a href="/categories">Categories</a></h1>
         </header>
         <ul>
           
           
           <li>
-              <a href="/categories/programming/">programming<span class="count">2</span></a>
+              <a href="/categories/ephpm/">ephpm<span class="count">33</span></a>
+          
+          <li>
+              <a href="/categories/go/">go<span class="count">30</span></a>
+          
+          <li>
+              <a href="/categories/php/">php<span class="count">23</span></a>
+          
+          <li>
+              <a href="/categories/rust/">rust<span class="count">15</span></a>
+          
+          <li>
+              <a href="/categories/homelab/">homelab<span class="count">14</span></a>
+          
+          <li>
+              <a href="/categories/windows/">windows<span class="count">14</span></a>
+          
+          <li>
+              <a href="/categories/ci/">ci<span class="count">9</span></a>
+          
+          <li>
+              <a href="/categories/databases/">databases<span class="count">9</span></a>
+          
+          <li>
+              <a href="/categories/security/">security<span class="count">9</span></a>
+          
+          <li>
+              <a href="/categories/containers/">containers<span class="count">7</span></a>
+          
+          <li>
+              <a href="/categories/tools/">tools<span class="count">5</span></a>
+          
+          <li>
+              <a href="/categories/ai-agents/">ai-agents<span class="count">4</span></a>
           
           </li>
         </ul>
@@ -484,16 +541,14 @@ unique space and working from home full time has made him a home lab aficionado 
       </ul>
   
   <p class="copyright">
-    © 2022 Luther Monson
+    © 2026 Luther Monson
       <br>
-    Theme: <a href='https://github.com/pacollins/hugo-future-imperfect-slim' target='_blank' rel='noopener'>Hugo Future Imperfect Slim</a><br>A <a href='https://html5up.net/future-imperfect' target='_blank' rel='noopener'>HTML5 UP port</a> | Powered by <a href='https://gohugo.io/' title='0.92.0' target='_blank' rel='noopener'>Hugo</a>
+    Theme: <a href='https://github.com/pacollins/hugo-future-imperfect-slim' target='_blank' rel='noopener'>Hugo Future Imperfect Slim</a><br>A <a href='https://html5up.net/future-imperfect' target='_blank' rel='noopener'>HTML5 UP port</a> | Powered by <a href='https://gohugo.io/' title='0.160.1' target='_blank' rel='noopener'>Hugo</a>
   </p>
 </footer>
 <a id="back-to-top" href="#" class="fas fa-arrow-up fa-2x"></a>
 
-      <script src="/js/highlight.js"></script>
-    
-    <script>hljs.highlightAll();</script><script src="/js/bundle.min.affa21bd64e761fba63c1eb954f76e46e43ca96b1ef71c742f058ed973ec6df2.js" integrity="sha256-r/ohvWTnYfumPB65VPduRuQ8qWse9xx0LwWO2XPsbfI="></script>
+      <script src="/js/bundle.min.241b62ebc4792fe8c7a75879e5f710894f226f2b73342e9916b3a3b0526030cc.js" integrity="sha256-JBti68R5L&#43;jHp1h55fcQiU8ibytzNC6ZFrOjsFJgMMw="></script>
     <script src="/js/add-on.js"></script>
     </div>
   </body>

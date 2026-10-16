@@ -1,0 +1,65 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 600" font-family="system-ui, -apple-system, Segoe UI, sans-serif">
+  <rect width="900" height="600" fill="#ffffff"/>
+  <text x="450" y="34" text-anchor="middle" font-size="20" font-weight="600" fill="#222">A go-diskfs cidata ISO with Rock Ridge + Joliet (2048-byte sectors)</text>
+
+  <!-- sector strip -->
+  <g font-size="13">
+    <rect x="40" y="60" width="300" height="40" fill="#f2f2f2" stroke="#6b6b6b"/>
+    <text x="50" y="85" fill="#6b6b6b">0-15</text><text x="110" y="85" fill="#333">System area (zeros)</text>
+
+    <rect x="40" y="100" width="300" height="40" fill="#eaf1f8" stroke="#2b6cb0"/>
+    <text x="50" y="125" fill="#2b6cb0">16</text><text x="110" y="125" fill="#333">Primary VD: "cidata" (ASCII)</text>
+
+    <rect x="40" y="140" width="300" height="40" fill="#f3eef8" stroke="#7d5ba6"/>
+    <text x="50" y="165" fill="#7d5ba6">17</text><text x="110" y="165" fill="#333">Joliet SVD: escape %/E, UCS-2 label</text>
+
+    <rect x="40" y="180" width="300" height="40" fill="#f2f2f2" stroke="#6b6b6b"/>
+    <text x="50" y="205" fill="#6b6b6b">18</text><text x="110" y="205" fill="#333">VD set terminator</text>
+
+    <rect x="40" y="220" width="300" height="40" fill="#eaf1f8" stroke="#2b6cb0"/>
+    <text x="50" y="245" fill="#2b6cb0">19</text><text x="110" y="245" fill="#333">PVD root dir + SUSP/Rock Ridge</text>
+
+    <rect x="40" y="260" width="300" height="40" fill="#eaf1f8" stroke="#2b6cb0"/>
+    <text x="50" y="285" fill="#2b6cb0">20</text><text x="110" y="285" fill="#333">SUSP continuation: ER "IEEE_P1282"</text>
+
+    <rect x="40" y="300" width="300" height="40" fill="#eaf1f8" stroke="#2b6cb0"/>
+    <text x="50" y="325" fill="#2b6cb0">21-22</text><text x="110" y="325" fill="#333">PVD path tables (L, M)</text>
+
+    <rect x="40" y="340" width="300" height="40" fill="#eaf6ee" stroke="#3a9a5b"/>
+    <text x="50" y="365" fill="#3a9a5b">23</text><text x="110" y="365" fill="#333">file data: meta-data</text>
+    <rect x="40" y="380" width="300" height="40" fill="#eaf6ee" stroke="#3a9a5b"/>
+    <text x="50" y="405" fill="#3a9a5b">24</text><text x="110" y="405" fill="#333">file data: network-config</text>
+    <rect x="40" y="420" width="300" height="40" fill="#eaf6ee" stroke="#3a9a5b"/>
+    <text x="50" y="445" fill="#3a9a5b">25</text><text x="110" y="445" fill="#333">file data: user-data</text>
+
+    <rect x="40" y="460" width="300" height="40" fill="#f3eef8" stroke="#7d5ba6"/>
+    <text x="50" y="485" fill="#7d5ba6">26</text><text x="110" y="485" fill="#333">Joliet root dir (UCS-2 names)</text>
+
+    <rect x="40" y="500" width="300" height="40" fill="#f3eef8" stroke="#7d5ba6"/>
+    <text x="50" y="525" fill="#7d5ba6">27-28</text><text x="110" y="525" fill="#333">Joliet path tables (L, M)</text>
+  </g>
+
+  <!-- PVD tree callout -->
+  <rect x="420" y="190" width="440" height="120" rx="8" fill="#eaf1f8" stroke="#2b6cb0" stroke-width="2"/>
+  <text x="440" y="214" font-size="15" font-weight="600" fill="#2b6cb0">What Linux reads (ISO 9660 + Rock Ridge)</text>
+  <text x="440" y="238" font-size="13" fill="#333" font-family="ui-monospace, Consolas, monospace">META_DAT.;1  PX mode  TF times  NM "meta-data"</text>
+  <text x="440" y="258" font-size="13" fill="#333" font-family="ui-monospace, Consolas, monospace">NETWORK_.;1  PX mode  TF times  NM "network-config"</text>
+  <text x="440" y="278" font-size="13" fill="#333" font-family="ui-monospace, Consolas, monospace">USER_DAT.;1  PX mode  TF times  NM "user-data"</text>
+  <text x="440" y="298" font-size="12" fill="#6b6b6b">Windows ignores the SUSP entries and would only see the 8.3 names</text>
+  <line x1="340" y1="240" x2="420" y2="240" stroke="#2b6cb0" stroke-width="2"/>
+
+  <!-- Joliet callout -->
+  <rect x="420" y="420" width="440" height="110" rx="8" fill="#f3eef8" stroke="#7d5ba6" stroke-width="2"/>
+  <text x="440" y="444" font-size="15" font-weight="600" fill="#7d5ba6">What Windows reads (Joliet)</text>
+  <text x="440" y="468" font-size="13" fill="#333" font-family="ui-monospace, Consolas, monospace">00 6d 00 65 00 74 00 61 ...  "meta-data"</text>
+  <text x="440" y="488" font-size="13" fill="#333">label "cidata" must be UCS-2 here too (go-diskfs#391)</text>
+  <text x="440" y="508" font-size="13" fill="#333">root path-table id must be 0x00, not 0x01 (#391)</text>
+  <line x1="340" y1="480" x2="420" y2="480" stroke="#7d5ba6" stroke-width="2"/>
+
+  <!-- shared extents -->
+  <path d="M600 310 C600 360, 400 360, 345 400" fill="none" stroke="#3a9a5b" stroke-width="2" stroke-dasharray="6 4"/>
+  <path d="M600 420 C600 400, 420 410, 345 405" fill="none" stroke="#3a9a5b" stroke-width="2" stroke-dasharray="6 4"/>
+  <text x="610" y="370" font-size="13" fill="#3a9a5b">both trees point at the same file extents</text>
+
+  <text x="450" y="580" text-anchor="middle" font-size="12" fill="#6b6b6b">Sector numbers read from an ISO built by go-diskfs v1.9.3 with RockRidge: true, Joliet: true, VolumeIdentifier: "cidata".</text>
+</svg>

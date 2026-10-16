@@ -1,0 +1,698 @@
+<!doctype html>
+<html lang="en">
+  <head>
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-MSTSKGFWTX"></script>
+<script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+
+    gtag('config', 'G-MSTSKGFWTX');
+</script><meta charset="utf-8">
+<title>Atomic File Replacement on NTFS Is Not rename &#43; fsync - Luther Monson</title>
+<meta name="description" content="The Unix recipe for durable atomic file replacement doesn&#39;t translate to Windows. What shipmates uses instead, and the delete-pending window that made an 8-way test fail only when the whole suite ran.">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<meta name="twitter:card" content="summary_large_image"><meta name="twitter:site" content="@luthermonson">
+
+<meta property="og:site_name" content="Luther Monson">
+<meta property="og:title" content="Atomic File Replacement on NTFS Is Not rename &#43; fsync">
+<meta property="og:description" content="The Unix recipe for durable atomic file replacement doesn&#39;t translate to Windows. What shipmates uses instead, and the delete-pending window that made an 8-way test fail only when the whole suite ran.">
+<meta property="og:type" content="article">
+<meta property="og:url" content="https://luth.io/blog/2026/08/ntfs-atomic-file-replacement-not-rename-fsync/">
+    <meta property="og:image" content="https://luth.io/img/2026/09/ntfs-atomic-file-replacement-not-rename-fsync-cover.svg">
+    <meta property="og:image:alt" content="How long a losing concurrent replacer waits on NTFS, idle disk vs a disk under fsync load">
+
+
+  <link rel="manifest" href="/favicon/site.webmanifest?v=1">
+  <link rel="apple-touch-icon" sizes="180x180" href="/favicon/apple-touch-icon.png?v=1">
+  <link rel="icon" type="image/png" sizes="32x32" href="/favicon/favicon-32x32.png?v=1">
+  <link rel="icon" type="image/png" sizes="16x16" href="/favicon/favicon-16x16.png?v=1">
+  
+    <link rel="mask-icon" href="/favicon/safari-pinned-tab.svg?v=1" color="#ffffff">
+    <link rel="shortcut icon" href="/favicon/favicon.ico?v=1">
+    <meta name="msapplication-config" content="/favicon/browserconfig.xml?v=1">
+  
+  <meta name="msapplication-TileColor" content="#ffffff">
+  <meta name="theme-color" content="#ffffff">
+
+
+  <meta name="generator" content="Hugo 0.160.1">
+  <link rel="alternate" type="application/rss+xml" href="https://luth.io/index.xml" title="Luther Monson">
+  <link rel="stylesheet" href="/css/bundle.min.e1ffed86714fbb7eff75eab221c0c61b8260be0c7d1c08db0fcb7a2bdb6af7c9.css" integrity="sha256-4f/thnFPu37/deqyIcDGG4Jgvgx9HAjbD8t6K9tq98k="><link rel="stylesheet" href="/css/add-on.css">
+        <link rel="stylesheet" href="/css/code.css">
+        <link rel="stylesheet" href="/css/mobile.css">
+</head>
+
+  <body>
+    
+
+<header id="site-header">
+  <nav id="site-nav">
+    <h1 class="nav-title">
+      <a href="/" class="nav">
+        <img class="nav-avatar" src="/img/luther-monson-headshot.jpg" alt="" width="32" height="32">
+        
+          Blog
+        
+      </a>
+    </h1>
+    <menu id="site-nav-menu" class="flyout-menu menu">
+      
+        
+          
+          <a href="/" class="nav link"><i class='fa fa-home'></i> Home</a>
+        
+      
+        
+          
+          <a href="/about" class="nav link"><i class='far fa-id-card'></i> About</a>
+        
+      
+        
+          
+          <a href="/blog" class="nav link"><i class='far fa-newspaper'></i> Blog</a>
+        
+      
+        
+          
+          <a href="/archive" class="nav link"><i class='far fa-calendar-alt'></i> Archive</a>
+        
+      
+        
+          
+          <a href="/categories" class="nav link"><i class='fas fa-sitemap'></i> Categories</a>
+        
+      
+      <a href="#share-menu" class="nav link share-toggle"><i class="fas fa-share-alt">&nbsp;</i>Share</a>
+      <a href="#search-input" class="nav link search-toggle"><i class="fas fa-search">&nbsp;</i>Search</a>
+    </menu>
+    <a href="#search-input" class="nav search-toggle"><i class="fas fa-search fa-2x">&nbsp;</i></a>
+    <a href="#share-menu" class="nav share-toggle"><i class="fas fa-share-alt fa-2x">&nbsp;</i></a>
+    
+    <a href="#site-nav" class="nav nav-toggle"><i class="fas fa-bars fa-2x"></i></a>
+  </nav>
+  <menu id="search" class="menu"><input id="search-input" class="search-input menu"></input><div id="search-results" class="search-results menu"></div></menu>
+  
+  
+    <menu id="share-menu" class="flyout-menu menu">
+      <h1>Share Post</h1>
+      
+
+
+
+
+  
+    
+    <a href="//twitter.com/share?text=Atomic%20File%20Replacement%20on%20NTFS%20Is%20Not%20rename%20%2b%20fsync&amp;url=https%3a%2f%2fluth.io%2fblog%2f2026%2f08%2fntfs-atomic-file-replacement-not-rename-fsync%2f" target="_blank" rel="noopener" class="nav share-btn twitter">
+        <p>Twitter</p>
+      </a>
+  
+
+  
+      <a href="//www.facebook.com/sharer/sharer.php?u=https%3a%2f%2fluth.io%2fblog%2f2026%2f08%2fntfs-atomic-file-replacement-not-rename-fsync%2f" target="_blank" rel="noopener" class="nav share-btn facebook">
+        <p>Facebook</p>
+        </a>
+  
+
+  
+    <a href="//www.reddit.com/submit?url=https%3a%2f%2fluth.io%2fblog%2f2026%2f08%2fntfs-atomic-file-replacement-not-rename-fsync%2f&amp;title=Atomic%20File%20Replacement%20on%20NTFS%20Is%20Not%20rename%20%2b%20fsync" target="_blank" rel="noopener" class="nav share-btn reddit">
+          <p>Reddit</p>
+        </a>
+  
+
+  
+        <a href="//www.linkedin.com/shareArticle?url=https%3a%2f%2fluth.io%2fblog%2f2026%2f08%2fntfs-atomic-file-replacement-not-rename-fsync%2f&amp;title=Atomic%20File%20Replacement%20on%20NTFS%20Is%20Not%20rename%20%2b%20fsync" target="_blank" rel="noopener" class="nav share-btn linkedin">
+            <p>LinkedIn</p>
+          </a>
+  
+
+  
+        <a href="//www.pinterest.com/pin/create/button/?url=https%3a%2f%2fluth.io%2fblog%2f2026%2f08%2fntfs-atomic-file-replacement-not-rename-fsync%2f&amp;description=Atomic%20File%20Replacement%20on%20NTFS%20Is%20Not%20rename%20%2b%20fsync" target="_blank" rel="noopener" class="nav share-btn pinterest">
+          <p>Pinterest</p>
+        </a>
+  
+
+  
+        <a href="mailto:?subject=Check%20out%20this%20post%20by Luther%20Monson&amp;body=https%3a%2f%2fluth.io%2fblog%2f2026%2f08%2fntfs-atomic-file-replacement-not-rename-fsync%2f" target="_blank" class="nav share-btn email" data-proofer-ignore>
+          <p>Email</p>
+        </a>
+  
+
+
+    </menu>
+  
+</header>
+
+    <div id="wrapper">
+      <section id="site-intro" class="hidden-single-column">
+  <a href="/"><img src="/img/luther-monson-headshot.jpg" class="circle" width="100" alt="Luther Monson, Staff Software Engineer at SUSE" /></a>
+  <header>
+    <h1>Luther Monson</h1>
+  </header>
+  <main>
+    <p>Go by way of PHP &middot; Containers &middot; VMs &middot; Windows &middot; Kubernetes</p>
+  </main>
+  
+    <footer>
+      <ul class="socnet-icons">
+        
+
+        <li><a href="//github.com/luthermonson" target="_blank" rel="noopener" title="GitHub" class="fab fa-github"></a></li>
+
+
+
+
+
+
+
+
+
+
+
+<li><a href="//www.linkedin.com/in/luthermonson" target="_blank" rel="noopener" title="LinkedIn" class="fab fa-linkedin"></a></li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li><a href="//twitter.com/luthermonson" target="_blank" rel="noopener" title="Twitter" class="fab fa-twitter"></a></li>
+
+
+
+
+
+
+
+
+
+
+
+<li><a href="mailto:luther.monson@gmail.com" target="_blank" title="Email" class="far fa-envelope"></a></li>
+
+      </ul>
+    </footer>
+  
+</section>
+
+      <main id="site-main">
+        
+  <article>
+    <div class="post">
+      <header>
+  <div class="title">
+    
+      <h2><a href="/blog/2026/08/ntfs-atomic-file-replacement-not-rename-fsync/">Atomic File Replacement on NTFS Is Not rename &#43; fsync</a></h2>
+    
+    
+      <p>The Unix recipe for durable atomic file replacement doesn&#39;t translate to Windows. What shipmates uses instead, and the delete-pending window that made an 8-way test fail only when the whole suite ran.</p>
+    
+  </div>
+  <div class="meta">
+    <time datetime="2026-08-06 21:27:00 -0700 PDT">August 6, 2026</time>
+    
+    <p>7-Minute Read</p>
+  </div>
+</header>
+
+      <div id="socnet-share">
+        
+
+
+
+
+  
+    
+    <a href="//twitter.com/share?text=Atomic%20File%20Replacement%20on%20NTFS%20Is%20Not%20rename%20%2b%20fsync&amp;url=https%3a%2f%2fluth.io%2fblog%2f2026%2f08%2fntfs-atomic-file-replacement-not-rename-fsync%2f" target="_blank" rel="noopener" class="nav share-btn twitter">
+        <p>Twitter</p>
+      </a>
+  
+
+  
+      <a href="//www.facebook.com/sharer/sharer.php?u=https%3a%2f%2fluth.io%2fblog%2f2026%2f08%2fntfs-atomic-file-replacement-not-rename-fsync%2f" target="_blank" rel="noopener" class="nav share-btn facebook">
+        <p>Facebook</p>
+        </a>
+  
+
+  
+    <a href="//www.reddit.com/submit?url=https%3a%2f%2fluth.io%2fblog%2f2026%2f08%2fntfs-atomic-file-replacement-not-rename-fsync%2f&amp;title=Atomic%20File%20Replacement%20on%20NTFS%20Is%20Not%20rename%20%2b%20fsync" target="_blank" rel="noopener" class="nav share-btn reddit">
+          <p>Reddit</p>
+        </a>
+  
+
+  
+        <a href="//www.linkedin.com/shareArticle?url=https%3a%2f%2fluth.io%2fblog%2f2026%2f08%2fntfs-atomic-file-replacement-not-rename-fsync%2f&amp;title=Atomic%20File%20Replacement%20on%20NTFS%20Is%20Not%20rename%20%2b%20fsync" target="_blank" rel="noopener" class="nav share-btn linkedin">
+            <p>LinkedIn</p>
+          </a>
+  
+
+  
+        <a href="//www.pinterest.com/pin/create/button/?url=https%3a%2f%2fluth.io%2fblog%2f2026%2f08%2fntfs-atomic-file-replacement-not-rename-fsync%2f&amp;description=Atomic%20File%20Replacement%20on%20NTFS%20Is%20Not%20rename%20%2b%20fsync" target="_blank" rel="noopener" class="nav share-btn pinterest">
+          <p>Pinterest</p>
+        </a>
+  
+
+  
+        <a href="mailto:?subject=Check%20out%20this%20post%20by Luther%20Monson&amp;body=https%3a%2f%2fluth.io%2fblog%2f2026%2f08%2fntfs-atomic-file-replacement-not-rename-fsync%2f" target="_blank" class="nav share-btn email" data-proofer-ignore>
+          <p>Email</p>
+        </a>
+  
+
+
+      </div>
+      <div class="content">
+        
+        <p><a href="https://github.com/luthermonson/shipmates">shipmates</a> writes a lot of small state files that other
+processes read: voyage plans and state, tracker files. Each of them has to be replaced atomically (a reader sees
+the old file or the new one, never half of each) and durably (when the function returns success, a power cut doesn&rsquo;t
+take it back). Every Unix programmer knows the recipe for that. It doesn&rsquo;t work on Windows, and the reasons are more
+interesting than &ldquo;Windows is different&rdquo;.</p>
+<h3 id="the-unix-recipe">The Unix recipe</h3>
+<p>Write the new content to a temp file in the same directory, <code>fsync</code> it, <code>rename</code> it over the target, then <code>fsync</code> the
+<em>directory</em>:</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-go" data-lang="go"><span class="line"><span class="cl"><span class="cp">//go:build unix</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="kd">func</span><span class="w"> </span><span class="nf">DurableRename</span><span class="p">(</span><span class="nx">oldpath</span><span class="p">,</span><span class="w"> </span><span class="nx">newpath</span><span class="w"> </span><span class="kt">string</span><span class="p">)</span><span class="w"> </span><span class="kt">error</span><span class="w"> </span><span class="p">{</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">	</span><span class="k">if</span><span class="w"> </span><span class="nx">err</span><span class="w"> </span><span class="o">:=</span><span class="w"> </span><span class="nx">os</span><span class="p">.</span><span class="nf">Rename</span><span class="p">(</span><span class="nx">oldpath</span><span class="p">,</span><span class="w"> </span><span class="nx">newpath</span><span class="p">);</span><span class="w"> </span><span class="nx">err</span><span class="w"> </span><span class="o">!=</span><span class="w"> </span><span class="kc">nil</span><span class="w"> </span><span class="p">{</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">		</span><span class="k">return</span><span class="w"> </span><span class="nx">err</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">	</span><span class="p">}</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">	</span><span class="nx">d</span><span class="p">,</span><span class="w"> </span><span class="nx">err</span><span class="w"> </span><span class="o">:=</span><span class="w"> </span><span class="nx">os</span><span class="p">.</span><span class="nf">Open</span><span class="p">(</span><span class="nx">filepath</span><span class="p">.</span><span class="nf">Clean</span><span class="p">(</span><span class="nx">filepath</span><span class="p">.</span><span class="nf">Dir</span><span class="p">(</span><span class="nx">newpath</span><span class="p">)))</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">	</span><span class="k">if</span><span class="w"> </span><span class="nx">err</span><span class="w"> </span><span class="o">!=</span><span class="w"> </span><span class="kc">nil</span><span class="w"> </span><span class="p">{</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">		</span><span class="k">return</span><span class="w"> </span><span class="nx">err</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">	</span><span class="p">}</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">	</span><span class="k">if</span><span class="w"> </span><span class="nx">err</span><span class="w"> </span><span class="o">:=</span><span class="w"> </span><span class="nx">d</span><span class="p">.</span><span class="nf">Sync</span><span class="p">();</span><span class="w"> </span><span class="nx">err</span><span class="w"> </span><span class="o">!=</span><span class="w"> </span><span class="kc">nil</span><span class="w"> </span><span class="p">{</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">		</span><span class="nx">_</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="nx">d</span><span class="p">.</span><span class="nf">Close</span><span class="p">()</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">		</span><span class="k">return</span><span class="w"> </span><span class="nx">err</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">	</span><span class="p">}</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">	</span><span class="k">return</span><span class="w"> </span><span class="nx">d</span><span class="p">.</span><span class="nf">Close</span><span class="p">()</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="p">}</span><span class="w">
+</span></span></span></code></pre></div><p>The directory fsync is the step people forget. <code>rename(2)</code> is atomic for other observers, but the new directory entry is
+just metadata in the page cache until the directory itself is flushed, and ext4&rsquo;s default <code>data=ordered</code> doesn&rsquo;t promise
+otherwise. Crash between the rename and the flush and you can lose a file you reported as written.</p>
+<h3 id="neither-half-translates">Neither half translates</h3>
+<p>On Windows, <code>os.Rename</code> is <code>MoveFileEx</code> with <code>MOVEFILE_REPLACE_EXISTING</code> and without <code>MOVEFILE_WRITE_THROUGH</code>, so it can
+return before the change reaches the disk. Fine, flush the directory afterwards like on Unix. Except a straight port
+doesn&rsquo;t:</p>
+<pre tabindex="0"><code>1) dir.Sync(): sync .\ntfs-4015850362: Access is denied.
+</code></pre><p>That&rsquo;s <code>os.Open</code> on a directory followed by <code>Sync()</code>, on NTFS, Windows 11, Go 1.26.5. <code>Sync()</code> is <code>FlushFileBuffers</code>,
+which requires a handle with <code>GENERIC_WRITE</code>, and <code>os.Open</code> hands you a read-only one. NTFS itself is fine with flushing
+a directory: open it yourself with <code>CreateFile</code>, <code>GENERIC_READ|GENERIC_WRITE</code> and <code>FILE_FLAG_BACKUP_SEMANTICS</code>, and
+<code>FlushFileBuffers</code> on that handle succeeds. I checked both on this box: the read-only handle gets error 5, the
+read-write one flushes. So the portable code, as written, has two bad options: ignore the error and silently drop the
+durability guarantee, or return it and report failure for a write that actually landed. The working version is
+Windows-only code with its own <code>CreateFile</code> call, and once you&rsquo;re writing Windows-only code there&rsquo;s a better primitive.</p>
+<h3 id="one-call-instead-of-two">One call instead of two</h3>
+<p>Windows has a primitive that covers both halves. <code>MOVEFILE_WRITE_THROUGH</code> is documented to not return until the move
+has been flushed to disk, and on NTFS a rename is a single logged metadata transaction, so flushing it commits the new
+directory entry along with it. From <a href="https://github.com/luthermonson/shipmates/commit/416665e"><code>416665e</code></a>:</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-go" data-lang="go"><span class="line"><span class="cl"><span class="cp">//go:build windows</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="kd">func</span><span class="w"> </span><span class="nf">DurableRename</span><span class="p">(</span><span class="nx">oldpath</span><span class="p">,</span><span class="w"> </span><span class="nx">newpath</span><span class="w"> </span><span class="kt">string</span><span class="p">)</span><span class="w"> </span><span class="kt">error</span><span class="w"> </span><span class="p">{</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">	</span><span class="nx">from</span><span class="p">,</span><span class="w"> </span><span class="nx">err</span><span class="w"> </span><span class="o">:=</span><span class="w"> </span><span class="nx">windows</span><span class="p">.</span><span class="nf">UTF16PtrFromString</span><span class="p">(</span><span class="nx">oldpath</span><span class="p">)</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">	</span><span class="k">if</span><span class="w"> </span><span class="nx">err</span><span class="w"> </span><span class="o">!=</span><span class="w"> </span><span class="kc">nil</span><span class="w"> </span><span class="p">{</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">		</span><span class="k">return</span><span class="w"> </span><span class="nx">err</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">	</span><span class="p">}</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">	</span><span class="nx">to</span><span class="p">,</span><span class="w"> </span><span class="nx">err</span><span class="w"> </span><span class="o">:=</span><span class="w"> </span><span class="nx">windows</span><span class="p">.</span><span class="nf">UTF16PtrFromString</span><span class="p">(</span><span class="nx">newpath</span><span class="p">)</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">	</span><span class="k">if</span><span class="w"> </span><span class="nx">err</span><span class="w"> </span><span class="o">!=</span><span class="w"> </span><span class="kc">nil</span><span class="w"> </span><span class="p">{</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">		</span><span class="k">return</span><span class="w"> </span><span class="nx">err</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">	</span><span class="p">}</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">	</span><span class="nx">deadline</span><span class="w"> </span><span class="o">:=</span><span class="w"> </span><span class="nx">time</span><span class="p">.</span><span class="nf">Now</span><span class="p">().</span><span class="nf">Add</span><span class="p">(</span><span class="mi">2</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="nx">time</span><span class="p">.</span><span class="nx">Second</span><span class="p">)</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">	</span><span class="k">for</span><span class="w"> </span><span class="p">{</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">		</span><span class="nx">err</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="nx">windows</span><span class="p">.</span><span class="nf">MoveFileEx</span><span class="p">(</span><span class="nx">from</span><span class="p">,</span><span class="w"> </span><span class="nx">to</span><span class="p">,</span><span class="w"> </span><span class="nx">windows</span><span class="p">.</span><span class="nx">MOVEFILE_REPLACE_EXISTING</span><span class="p">|</span><span class="nx">windows</span><span class="p">.</span><span class="nx">MOVEFILE_WRITE_THROUGH</span><span class="p">)</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">		</span><span class="k">if</span><span class="w"> </span><span class="nx">err</span><span class="w"> </span><span class="o">==</span><span class="w"> </span><span class="kc">nil</span><span class="w"> </span><span class="p">{</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">			</span><span class="k">return</span><span class="w"> </span><span class="kc">nil</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">		</span><span class="p">}</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">		</span><span class="nx">transient</span><span class="w"> </span><span class="o">:=</span><span class="w"> </span><span class="nx">errors</span><span class="p">.</span><span class="nf">Is</span><span class="p">(</span><span class="nx">err</span><span class="p">,</span><span class="w"> </span><span class="nx">windows</span><span class="p">.</span><span class="nx">ERROR_ACCESS_DENIED</span><span class="p">)</span><span class="w"> </span><span class="o">||</span><span class="w"> </span><span class="nx">errors</span><span class="p">.</span><span class="nf">Is</span><span class="p">(</span><span class="nx">err</span><span class="p">,</span><span class="w"> </span><span class="nx">windows</span><span class="p">.</span><span class="nx">ERROR_SHARING_VIOLATION</span><span class="p">)</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">		</span><span class="k">if</span><span class="w"> </span><span class="p">!</span><span class="nx">transient</span><span class="w"> </span><span class="o">||</span><span class="w"> </span><span class="nx">time</span><span class="p">.</span><span class="nf">Now</span><span class="p">().</span><span class="nf">After</span><span class="p">(</span><span class="nx">deadline</span><span class="p">)</span><span class="w"> </span><span class="p">{</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">			</span><span class="k">return</span><span class="w"> </span><span class="nx">err</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">		</span><span class="p">}</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">		</span><span class="nx">time</span><span class="p">.</span><span class="nf">Sleep</span><span class="p">(</span><span class="mi">5</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="nx">time</span><span class="p">.</span><span class="nx">Millisecond</span><span class="p">)</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">	</span><span class="p">}</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="p">}</span><span class="w">
+</span></span></span></code></pre></div><p>Where Unix needs two ordered operations to make one rename durable, Windows needs one, and no extra handle to the
+directory. Both paths have to be on the same
+volume: across volumes, <code>MoveFileEx</code> degrades to copy-then-delete, which is neither atomic nor what any caller wants.
+Every caller in shipmates stages its temp file in the destination directory, so that holds.</p>
+<p>That retry loop is the second half of the story.</p>
+<h3 id="losing-a-race-on-ntfs">Losing a race on NTFS</h3>
+<p>Voyage state publication in shipmates is deliberately retry-idempotent, so it&rsquo;s legal for several processes to publish
+the same successor state at once. <code>TestMigrateSuccessorConcurrentPublicationAndAtomicRetry</code> does exactly that, eight
+goroutines racing <code>MigrateSuccessor</code> onto the same output path.</p>
+<p>On Unix the losers just replace the winner&rsquo;s file, which is fine, it has the same content. On NTFS the replace-existing
+path has to get rid of the old target, and while the winner&rsquo;s replace is in flight the old file sits in a
+<em>delete-pending</em> state. A loser that shows up during that window doesn&rsquo;t wait, it fails with <code>ERROR_ACCESS_DENIED</code> (or
+<code>ERROR_SHARING_VIOLATION</code>).</p>
+<p>To see how common that is, I wrote a small experiment: 200 rounds of eight goroutines, each with its own staged and
+fsynced 4 KiB temp file, released at once to <code>MoveFileEx(REPLACE_EXISTING|WRITE_THROUGH)</code> onto the same target, no
+retries:</p>
+<pre tabindex="0"><code>3) 200 rounds x 8 concurrent replacers, no retry:
+   ok                           442 (27.6%)
+   ERROR_ACCESS_DENIED         1158 (72.4%)
+</code></pre><p>A second run gave 386 ok and 1214 <code>ERROR_ACCESS_DENIED</code> (75.9%). So with eight concurrent replacers, roughly three out
+of four lose. That&rsquo;s why <code>DurableRename</code> treats exactly those two errors as transient and retries. Anything else, or the
+same errors past the deadline, is a real error and comes back to the caller. A genuine permission problem still surfaces.</p>
+<h3 id="two-seconds-wasnt-enough">Two seconds wasn&rsquo;t enough</h3>
+<p>The original deadline in both <code>DurableRename</code> and voyage&rsquo;s <code>PublishSuccessor</code> was 2 seconds, and the 8-way test passed on its own. It failed with <code>Access is denied</code> only when the whole repository&rsquo;s tests ran at
+once. <a href="https://github.com/luthermonson/shipmates/commit/144af92"><code>144af92</code></a> explains why: the delete-pending window lasts
+as long as the winner&rsquo;s fsync-heavy write takes, and under a fully loaded test suite that was observed above <strong>9
+seconds</strong>. The fix bumped <code>DurableRename</code> to 15 s and <code>PublishSuccessor</code> to 60 s, still only for classified contention
+errors:</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-go" data-lang="go"><span class="line"><span class="cl"><span class="kd">func</span><span class="w"> </span><span class="nf">PublishSuccessor</span><span class="p">(</span><span class="nx">path</span><span class="w"> </span><span class="kt">string</span><span class="p">,</span><span class="w"> </span><span class="nx">state</span><span class="w"> </span><span class="o">*</span><span class="nx">State</span><span class="p">,</span><span class="w"> </span><span class="nx">plan</span><span class="w"> </span><span class="o">*</span><span class="nx">Plan</span><span class="p">,</span><span class="w"> </span><span class="nx">hash</span><span class="w"> </span><span class="kt">string</span><span class="p">)</span><span class="w"> </span><span class="p">(</span><span class="o">*</span><span class="nx">State</span><span class="p">,</span><span class="w"> </span><span class="kt">error</span><span class="p">)</span><span class="w"> </span><span class="p">{</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">	</span><span class="nx">deadline</span><span class="w"> </span><span class="o">:=</span><span class="w"> </span><span class="nx">time</span><span class="p">.</span><span class="nf">Now</span><span class="p">().</span><span class="nf">Add</span><span class="p">(</span><span class="mi">60</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="nx">time</span><span class="p">.</span><span class="nx">Second</span><span class="p">)</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">	</span><span class="k">for</span><span class="w"> </span><span class="p">{</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">		</span><span class="nx">published</span><span class="p">,</span><span class="w"> </span><span class="nx">err</span><span class="w"> </span><span class="o">:=</span><span class="w"> </span><span class="nf">publishSuccessorOnce</span><span class="p">(</span><span class="nx">path</span><span class="p">,</span><span class="w"> </span><span class="nx">state</span><span class="p">,</span><span class="w"> </span><span class="nx">plan</span><span class="p">,</span><span class="w"> </span><span class="nx">hash</span><span class="p">)</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">		</span><span class="k">if</span><span class="w"> </span><span class="nx">err</span><span class="w"> </span><span class="o">==</span><span class="w"> </span><span class="kc">nil</span><span class="w"> </span><span class="o">||</span><span class="w"> </span><span class="p">!</span><span class="nf">transientFSContention</span><span class="p">(</span><span class="nx">err</span><span class="p">)</span><span class="w"> </span><span class="o">||</span><span class="w"> </span><span class="nx">time</span><span class="p">.</span><span class="nf">Now</span><span class="p">().</span><span class="nf">After</span><span class="p">(</span><span class="nx">deadline</span><span class="p">)</span><span class="w"> </span><span class="p">{</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">			</span><span class="c1">// ...</span><span class="w">
+</span></span></span></code></pre></div><p>On Unix <code>transientFSContention</code> is simply <code>return false</code>.</p>
+<p>I wanted to see the window move with disk load on my own box, so the experiment&rsquo;s last part runs the same 8-way race
+with the retry loop (15 s deadline, 5 ms sleep) and records how long each process waited before its replace succeeded.
+Fifty rounds on an idle disk, then fifty more while 16 goroutines write, fsync and delete 1 MiB files in the same
+directory:</p>
+<p><img src="/img/2026/09/ntfs-atomic-file-replacement-not-rename-fsync-cover.svg" alt="Wait for a losing replacer, idle vs loaded disk"></p>
+<pre tabindex="0"><code>4) retry loop,  0 background fsync writers: n=400 failed=0 p50=14.523ms p99=38.7054ms max=39.3047ms
+4) retry loop, 16 background fsync writers: n=400 failed=0 p50=54.2497ms p99=4.4599868s max=5.4956314s
+</code></pre><p>and the second run:</p>
+<pre tabindex="0"><code>4) retry loop,  0 background fsync writers: n=400 failed=0 p50=15.3158ms p99=134.9333ms max=204.3097ms
+4) retry loop, 16 background fsync writers: n=400 failed=0 p50=51.0538ms p99=1.7362467s max=4.486713s
+</code></pre><p>On an idle disk the worst wait was 39 ms in one run and 204 ms in the other. With the disk busy, the tail went past 4
+seconds in both runs, more than double the old 2 second deadline. My 16-writer load is a toy next to a full <code>go test ./...</code>
+on a big repo, so the 9 second observation from the commit doesn&rsquo;t surprise me. The median barely moves, which is exactly
+why this hid: most of the time the window is short, and a deadline sized from &ldquo;most of the time&rdquo; fails under load.</p>
+<h3 id="what-about-the-cost-of-write-through">What about the cost of write-through?</h3>
+<p>I also timed 500 renames each way with the same staging work. At the median I couldn&rsquo;t separate them (about 0.52 ms
+each in the first run; the second run&rsquo;s plain-rename median landed below the timer&rsquo;s resolution). Write-through had
+the fatter tail in both runs (p99 1.05 ms vs 0.67 ms, then 19 ms vs 1 ms), but at this scale and with this timer that&rsquo;s
+not a number I&rsquo;d hang much on. For small state files that are written once per task, write-through isn&rsquo;t the
+thing to optimize.</p>
+<h3 id="takeaways">Takeaways</h3>
+<ul>
+<li>On Windows, durable atomic replace is one call: <code>MoveFileEx(MOVEFILE_REPLACE_EXISTING | MOVEFILE_WRITE_THROUGH)</code>.
+Don&rsquo;t port the directory fsync: <code>os.Open(dir).Sync()</code> fails with <code>Access is denied</code>, and making it work means opening
+the directory for write with <code>FILE_FLAG_BACKUP_SEMANTICS</code>, which you don&rsquo;t need.</li>
+<li>Concurrent replacers of one file on NTFS see <code>ERROR_ACCESS_DENIED</code> / <code>ERROR_SHARING_VIOLATION</code> from the winner&rsquo;s
+delete-pending file. Retry those two specifically, and nothing else.</li>
+<li>Size retry windows for a saturated disk, not an idle one. If a test fails only when the whole suite runs, the suite is
+the load test you didn&rsquo;t know you had.</li>
+</ul>
+<h3 id="how-i-measured">How I measured</h3>
+<p>A standalone Go program (Go 1.26.5, <code>golang.org/x/sys/windows</code>) on Windows 11 Pro, AMD Ryzen 9 5950X, 128 GB RAM, with
+the files on the system NTFS volume (an ADATA LEGEND 860 SSD) under my user temp directory. The program creates a fresh directory, then:
+(1) <code>os.Open(dir).Sync()</code>; (2) 500 staged 4 KiB replacements each with <code>MOVEFILE_REPLACE_EXISTING</code> and with
+<code>|MOVEFILE_WRITE_THROUGH</code>, timing only the <code>MoveFileEx</code> call; (3) 200 rounds of 8 goroutines replacing the same target
+with no retry; (4) 50 rounds of the same race with <code>DurableRename</code>&rsquo;s retry loop, first with no background load and then
+with 16 goroutines continuously writing, fsyncing and deleting 1 MiB files in the same directory. I ran it twice
+back to back; both runs are shown above. Separately, I opened a directory with <code>CreateFileW</code> and
+<code>FILE_FLAG_BACKUP_SEMANTICS</code> twice, once <code>GENERIC_READ</code> and once <code>GENERIC_READ|GENERIC_WRITE</code>, and called
+<code>FlushFileBuffers</code> on each: the first fails with error 5, the second succeeds.</p>
+<h3 id="links">Links</h3>
+<ul>
+<li><a href="https://github.com/luthermonson/shipmates/commit/416665e"><code>416665e</code></a>: <code>DurableRename</code></li>
+<li><a href="https://github.com/luthermonson/shipmates/commit/144af92"><code>144af92</code></a>: sizing the contention windows for a saturated disk</li>
+<li><a href="https://learn.microsoft.com/en-us/windows/win32/api/winbase/nf-winbase-movefileexw">MoveFileExW (Microsoft Learn)</a></li>
+<li><a href="https://learn.microsoft.com/en-us/windows/win32/api/fileapi/nf-fileapi-flushfilebuffers">FlushFileBuffers (Microsoft Learn)</a></li>
+</ul>
+
+      </div>
+      <footer>
+        <div class="stats">
+  
+    <ul class="categories">
+      
+        
+          <li><a class="article-terms-link" href="/categories/go/">go</a></li>
+        
+          <li><a class="article-terms-link" href="/categories/windows/">windows</a></li>
+        
+      
+    </ul>
+  
+  
+    <ul class="tags">
+      
+        
+          <li><a class="article-terms-link" href="/tags/go/">go</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/windows/">windows</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/ntfs/">ntfs</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/filesystems/">filesystems</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/durability/">durability</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/shipmates/">shipmates</a></li>
+        
+      
+    </ul>
+  
+</div>
+
+      </footer>
+    </div>
+    
+      
+  
+  <div class='post giscus-wrap'>
+    <script src='https://giscus.app/client.js'
+            data-repo='luthermonson/luth.io'
+            data-repo-id='R_kgDOGvFBXQ'
+            data-category='Announcements'
+            data-category-id='DIC_kwDOGvFBXc4DH_gv'
+            data-mapping='pathname'
+            data-strict='1'
+            data-reactions-enabled='1'
+            data-emit-metadata='0'
+            data-input-position='top'
+            data-theme='light'
+            data-lang='en'
+            data-loading='lazy'
+            crossorigin='anonymous'
+            async>
+    </script>
+  </div>
+  
+
+
+
+    
+  </article>
+  
+    <nav class="post-nav">
+      
+        <a href="/blog/2026/08/gossip-clustering-for-php/" class="post-nav-link older">
+          <span class="post-nav-label">&larr; Older</span>
+          <span class="post-nav-title">Gossip-Based Clustering for PHP Apps</span>
+        </a>
+      
+      
+        <a href="/blog/2026/08/clustered-sqlite-sqld-sidecar/" class="post-nav-link newer">
+          <span class="post-nav-label">Newer &rarr;</span>
+          <span class="post-nav-title">Clustered SQLite in ePHPm, Part 1: Replication by Sidecar</span>
+        </a>
+      
+    </nav>
+  
+
+      </main>
+      <section id="site-sidebar">
+  
+    <section id="recent-posts">
+      <header>
+        <h1>Recent Posts</h1>
+      </header>
+      
+      <article class="mini-post">
+          <a href="/blog/2026/10/ephpm-worker-mode-performance/" class="image" style="--bg-image: url('/img/2026/10/ephpm-worker-mode-performance-cover.svg');">
+    <img class="" src="/img/2026/10/ephpm-worker-mode-performance-cover.svg" alt="Diagram: before, hyper/tokio hands each request to one shared bounded channel whose waiter list all 20 PHP threads contend on; after, a dispatcher hands the job straight into the mailbox of the most recently idle PHP thread and only queues it in a FIFO overflow queue when every thread is busy">
+  </a>
+        <header>
+          <h2><a href="/blog/2026/10/ephpm-worker-mode-performance/">Fourth Place in Worker Mode, and Why It Wasn&#39;t PHP</a></h2>
+          <time class="published" datetime="2026-10-16 08:10:00 -0700 PDT">October 16, 2026</time>
+        </header>
+      </article>
+      
+      <article class="mini-post">
+          <a href="/blog/2026/10/ephpm-websockets-how-to/" class="image" style="--bg-image: url('/img/2026/10/ephpm-websockets-how-to-cover.svg');">
+    <img class="" src="/img/2026/10/ephpm-websockets-how-to-cover.svg" alt="Diagram: browsers hold sockets to ePHPm&#39;s Rust session tasks and registry; each connect, message and disconnect runs websocket.php once on the PHP thread pool, and ordinary HTTP requests push through ephpm_ws_broadcast">
+  </a>
+        <header>
+          <h2><a href="/blog/2026/10/ephpm-websockets-how-to/">WebSockets in ePHPm, From Zero to a Working Chat</a></h2>
+          <time class="published" datetime="2026-10-11 17:30:00 -0700 PDT">October 11, 2026</time>
+        </header>
+      </article>
+      
+      <article class="mini-post">
+          <a href="/blog/2026/10/webhooks-out-of-order-scheduler/" class="image" style="--bg-image: url('/img/2026/10/webhooks-out-of-order-scheduler-timeline.svg');">
+    <img class="" src="/img/2026/10/webhooks-out-of-order-scheduler-timeline.svg" alt="Timeline of three same-label jobs where a runner executing a build is destroyed 2.3 seconds before its in_progress webhook arrives">
+  </a>
+        <header>
+          <h2><a href="/blog/2026/10/webhooks-out-of-order-scheduler/">Webhooks Arrive Out of Order: How My Scheduler Killed Live Builds</a></h2>
+          <time class="published" datetime="2026-10-07 21:10:00 -0700 PDT">October 7, 2026</time>
+        </header>
+      </article>
+      
+      <article class="mini-post">
+          <a href="/blog/2026/10/go-proxmox-five-years-to-v0-8/" class="image" style="--bg-image: url('/img/2026/10/go-proxmox-five-years-to-v0-8-apidiff.svg');">
+    <img class="" src="/img/2026/10/go-proxmox-five-years-to-v0-8-apidiff.svg" alt="Horizontal bar chart of apidiff incompatible and compatible changes for every go-proxmox release from v0.1.0 to v0.8.2">
+  </a>
+        <header>
+          <h2><a href="/blog/2026/10/go-proxmox-five-years-to-v0-8/">Breaking Changes Without Breaking Trust: Five Years to go-proxmox v0.8</a></h2>
+          <time class="published" datetime="2026-10-04 19:40:00 -0700 PDT">October 4, 2026</time>
+        </header>
+      </article>
+      
+      <article class="mini-post">
+          <a href="/blog/2026/10/windows-sigterm-sparse-files/" class="image" style="--bg-image: url('/img/2026/10/windows-sigterm-sparse-files-connections.svg');">
+    <img class="" src="/img/2026/10/windows-sigterm-sparse-files-connections.svg" alt="Bar chart: 96 Cloudflare edge connections held by orphaned cloudflared processes versus 4 for the live daemon">
+  </a>
+        <header>
+          <h2><a href="/blog/2026/10/windows-sigterm-sparse-files/">Windows Grab-Bag: SIGTERM That Doesn&#39;t Exist and Sparse Files That Break Docker</a></h2>
+          <time class="published" datetime="2026-10-03 14:30:00 -0700 PDT">October 3, 2026</time>
+        </header>
+      </article>
+      
+      
+        <footer>
+          <a href="/blog" class="button">See More</a>
+        </footer>
+      
+    </section>
+  
+
+  
+    
+
+      <section id="categories">
+        <header>
+          <h1><a href="/categories">Categories</a></h1>
+        </header>
+        <ul>
+          
+          
+          <li>
+              <a href="/categories/ephpm/">ephpm<span class="count">33</span></a>
+          
+          <li>
+              <a href="/categories/go/">go<span class="count">30</span></a>
+          
+          <li>
+              <a href="/categories/php/">php<span class="count">23</span></a>
+          
+          <li>
+              <a href="/categories/rust/">rust<span class="count">15</span></a>
+          
+          <li>
+              <a href="/categories/homelab/">homelab<span class="count">14</span></a>
+          
+          <li>
+              <a href="/categories/windows/">windows<span class="count">14</span></a>
+          
+          <li>
+              <a href="/categories/ci/">ci<span class="count">9</span></a>
+          
+          <li>
+              <a href="/categories/databases/">databases<span class="count">9</span></a>
+          
+          <li>
+              <a href="/categories/security/">security<span class="count">9</span></a>
+          
+          <li>
+              <a href="/categories/containers/">containers<span class="count">7</span></a>
+          
+          <li>
+              <a href="/categories/tools/">tools<span class="count">5</span></a>
+          
+          <li>
+              <a href="/categories/ai-agents/">ai-agents<span class="count">4</span></a>
+          
+          </li>
+        </ul>
+      </section>
+    
+  
+
+  
+    <section id="mini-bio">
+      <header>
+        <h1>About</h1>
+      </header>
+      <p>Luther is a 20+ year software veteran specializing in backend APIs and architecting products. Employed at <a href='https://www.suse.com'>SUSE</a> as the Team Lead for the <a href='https://github.com/rancher/windows/issues'>Containers on Windows Team</a> working on <a href='https://rancher.com/'>Rancher</a> + <a href='https://kubernetes.io/'>Kubernetes</a></p>
+      <footer>
+        <a href="/about" class="button">Learn More</a>
+      </footer>
+    </section>
+  
+</section>
+
+      <footer id="site-footer">
+  
+      <ul class="socnet-icons">
+        
+
+        <li><a href="//github.com/luthermonson" target="_blank" rel="noopener" title="GitHub" class="fab fa-github"></a></li>
+
+
+
+
+
+
+
+
+
+
+
+<li><a href="//www.linkedin.com/in/luthermonson" target="_blank" rel="noopener" title="LinkedIn" class="fab fa-linkedin"></a></li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li><a href="//twitter.com/luthermonson" target="_blank" rel="noopener" title="Twitter" class="fab fa-twitter"></a></li>
+
+
+
+
+
+
+
+
+
+
+
+<li><a href="mailto:luther.monson@gmail.com" target="_blank" title="Email" class="far fa-envelope"></a></li>
+
+      </ul>
+  
+  <p class="copyright">
+    © 2026 Luther Monson
+      <br>
+    Theme: <a href='https://github.com/pacollins/hugo-future-imperfect-slim' target='_blank' rel='noopener'>Hugo Future Imperfect Slim</a><br>A <a href='https://html5up.net/future-imperfect' target='_blank' rel='noopener'>HTML5 UP port</a> | Powered by <a href='https://gohugo.io/' title='0.160.1' target='_blank' rel='noopener'>Hugo</a>
+  </p>
+</footer>
+<a id="back-to-top" href="#" class="fas fa-arrow-up fa-2x"></a>
+
+      <script src="/js/bundle.min.241b62ebc4792fe8c7a75879e5f710894f226f2b73342e9916b3a3b0526030cc.js" integrity="sha256-JBti68R5L&#43;jHp1h55fcQiU8ibytzNC6ZFrOjsFJgMMw="></script>
+    <script src="/js/add-on.js"></script>
+    </div>
+  </body>
+</html>

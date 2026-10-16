@@ -1,0 +1,258 @@
+/* Phone-width tweaks for hugo-future-imperfect-slim. Loaded after the theme bundle (params.cssFiles). */
+
+.nav-title a img.nav-avatar {
+  display: none;
+}
+
+/* No hover zoom on cover images in post lists (post pages don't show the cover; see single.html). */
+.image:hover img {
+  -webkit-transform: none;
+  -ms-transform: none;
+  transform: none;
+}
+
+/* Older / newer links under a post (layouts/_default/single.html). */
+.post-nav {
+  display: flex;
+  gap: 1em;
+  margin: 1.5em auto;
+  max-width: 55em;
+}
+.post-nav-link {
+  background: #fff;
+  border: 1px solid rgba(160, 160, 160, 0.3);
+  border-bottom: 1px solid rgba(160, 160, 160, 0.3);
+  display: flex;
+  flex: 1 1 0;
+  flex-direction: column;
+  gap: 0.4em;
+  min-width: 0;
+  padding: 1em 1.25em;
+}
+.post-nav-link.newer {
+  margin-left: auto;
+  text-align: right;
+}
+.post-nav-link:hover {
+  border-color: #2ebaae;
+}
+.post-nav-label {
+  font-family: "Raleway", Helvetica, sans-serif;
+  font-size: 0.6em;
+  font-weight: 800;
+  letter-spacing: 0.25em;
+  text-transform: uppercase;
+}
+.post-nav-title {
+  line-height: 1.35;
+  overflow-wrap: anywhere;
+}
+
+/* Archive page (layouts/_default/archive.html). */
+.archive > header {
+  border-bottom: 0;
+  display: block;
+  padding: 0 1.25em;
+  text-align: left;
+}
+.archive > header h1 {
+  font-size: 1.4em;
+  letter-spacing: 0.15em;
+  margin: 0.5em 0;
+}
+.archive-year {
+  border-top: 1px solid rgba(160, 160, 160, 0.3);
+  font-size: 1.1em;
+  margin: 1em 0 0 0;
+  padding-top: 0.75em;
+}
+.archive-month {
+  font-size: 0.7em;
+  margin: 0.75em 0 0.25em 0;
+  opacity: 0.7;
+}
+.archive ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.archive li {
+  display: flex;
+  gap: 1em;
+  padding: 0.3em 0;
+}
+.archive li time {
+  color: #888;
+  flex-shrink: 0;
+  font-variant-numeric: tabular-nums;
+  width: 3.5em;
+}
+.archive li a {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+/* Categories / tags index (layouts/_default/terms.html): name left, count right, inside the card. */
+.term-list > header {
+  border-bottom: 0;
+  display: block;
+  padding: 0 1.25em;
+  text-align: left;
+}
+.term-list > header h1 {
+  font-size: 1.4em;
+  letter-spacing: 0.15em;
+  margin: 0.5em 0;
+}
+.term-list ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.term-list li {
+  align-items: baseline;
+  border-top: 1px solid rgba(160, 160, 160, 0.3);
+  display: flex;
+  gap: 1em;
+  justify-content: space-between;
+  padding: 0.6em 0;
+}
+.term-list li a {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.term-list .term-count {
+  color: #888;
+  flex-shrink: 0;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Keep wide content (code, tables, images, long URLs) from stretching the page sideways.
+   Grid items default to min-width: auto, so one long code line widened the whole column. */
+#site-main,
+.post,
+.post .content {
+  min-width: 0;
+}
+.post pre {
+  max-width: 100%;
+  overflow-x: auto;
+}
+.post .content img,
+.post .content svg {
+  height: auto;
+  max-width: 100%;
+}
+.post .content p,
+.post .content li {
+  overflow-wrap: anywhere;
+}
+
+@media (max-width: 767px) {
+  /* Small avatar in the nav bar, since the intro block is hidden on post pages. */
+  .nav-title a {
+    align-items: center;
+    display: inline-flex;
+  }
+  .nav-title a img.nav-avatar {
+    border-radius: 50%;
+    display: inline-block;
+    height: 32px;
+    margin-right: 0.75em;
+    object-fit: cover;
+    width: 32px;
+  }
+
+  /* Compact intro on the homepage: photo left, name, tagline and icons right. */
+  #site-intro {
+    column-gap: 1em;
+    display: grid;
+    grid-template-columns: 64px 1fr;
+    margin-top: 0;
+    padding: 0.75em 1.25em;
+    text-align: left;
+  }
+  #site-intro.hidden-single-column {
+    display: none;
+  }
+  #site-intro > a {
+    grid-row: 1 / span 3;
+  }
+  #site-intro > a img {
+    height: 64px;
+    width: 64px;
+    object-fit: cover;
+  }
+  #site-intro header h1 {
+    font-size: 1em;
+    letter-spacing: 0.15em;
+    line-height: 1.3;
+    margin: 0;
+  }
+  #site-intro main p {
+    font-size: 0.6em;
+    letter-spacing: 0.12em;
+    line-height: 1.6;
+    margin: 0.25em 0 0 0;
+  }
+  #site-intro footer .socnet-icons {
+    justify-content: flex-start;
+    margin: 0.4em 0 0 0;
+    padding: 0;
+  }
+
+  /* Phone-only: let a wide table scroll inside its card. On desktop this would shrink the rows
+     to their content inside a full-width box, so tables keep the theme's display: table there. */
+  .post table {
+    display: block;
+    max-width: 100%;
+    overflow-x: auto;
+  }
+
+  /* The big share-button grid repeats the share icon in the nav bar; hide it on phones. */
+  #socnet-share {
+    display: none;
+  }
+
+  /* More room between the text and the screen edges. */
+  .post {
+    margin: 0.75em auto;
+    padding: 1em 1.25em;
+  }
+  .post > header {
+    margin: -1em -1.25em 0 -1.25em;
+  }
+  .post > header div {
+    padding: 1em 1.25em;
+  }
+  .post > header p {
+    margin: 0;
+  }
+  .post > div > p,
+  .post > p {
+    text-align: left;
+  }
+
+  /* Post titles: smaller, tighter tracking so they don't take the whole screen. */
+  .post > header .title h1,
+  .post > header .title h2 {
+    font-size: 1.2em;
+    letter-spacing: 0.08em;
+    line-height: 1.35;
+    margin: 0 0 0.5em 0;
+  }
+  .post > header .title p {
+    font-size: 0.95em;
+    line-height: 1.45;
+  }
+}
+
+@media (max-width: 767px) {
+  .post-nav {
+    flex-direction: column;
+    margin: 0.75em auto;
+  }
+  .post-nav-link.newer {
+    margin-left: 0;
+  }
+}

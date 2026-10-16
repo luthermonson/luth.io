@@ -1,0 +1,48 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 430" font-family="system-ui, -apple-system, Segoe UI, Roboto, sans-serif">
+  <defs>
+    <marker id="a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto">
+      <path d="M0 0 L10 5 L0 10 z" fill="#6b6b6b"/>
+    </marker>
+  </defs>
+  <rect width="900" height="430" fill="#ffffff"/>
+  <text x="450" y="32" text-anchor="middle" font-size="20" font-weight="600" fill="#222">Two ways to wire the Linux arm64 VM</text>
+
+  <!-- left: Default Switch -->
+  <text x="225" y="66" text-anchor="middle" font-size="16" font-weight="600" fill="#2b6cb0">Default Switch (NAT)</text>
+  <rect x="40" y="80" width="370" height="250" rx="10" fill="#ffffff" stroke="#e07a1f" stroke-width="2"/>
+  <text x="56" y="102" font-size="12" fill="#6b6b6b">Dev Kit (Windows 11 Pro arm64)</text>
+  <rect x="70" y="120" width="150" height="56" rx="6" fill="#2b6cb0"/>
+  <text x="145" y="144" text-anchor="middle" font-size="13" fill="#fff" font-weight="600">Linux arm64 VM</text>
+  <text x="145" y="162" text-anchor="middle" font-size="11" fill="#fff">NAT'd private subnet</text>
+  <rect x="250" y="120" width="140" height="56" rx="6" fill="#ffffff" stroke="#2b6cb0" stroke-width="2"/>
+  <text x="320" y="144" text-anchor="middle" font-size="13" fill="#2b6cb0" font-weight="600">NAT + ICS DHCP</text>
+  <text x="320" y="162" text-anchor="middle" font-size="11" fill="#6b6b6b">subnet can change</text>
+  <path d="M220 148 L 248 148" stroke="#6b6b6b" stroke-width="2" marker-end="url(#a)"/>
+  <rect x="250" y="230" width="140" height="44" rx="6" fill="#ffffff" stroke="#6b6b6b" stroke-width="2"/>
+  <text x="320" y="257" text-anchor="middle" font-size="13" fill="#222">Ethernet NIC</text>
+  <path d="M320 176 L 320 228" stroke="#6b6b6b" stroke-width="2" marker-end="url(#a)"/>
+  <path d="M320 274 L 320 360" stroke="#6b6b6b" stroke-width="2" marker-end="url(#a)"/>
+  <text x="225" y="300" text-anchor="middle" font-size="12" fill="#3a9a5b">outbound to GitHub: works</text>
+  <text x="225" y="318" text-anchor="middle" font-size="12" fill="#c0392b">SSH from the LAN: no</text>
+
+  <!-- right: External switch -->
+  <text x="675" y="66" text-anchor="middle" font-size="16" font-weight="600" fill="#2b6cb0">External switch (bridged)</text>
+  <rect x="490" y="80" width="370" height="250" rx="10" fill="#ffffff" stroke="#e07a1f" stroke-width="2"/>
+  <text x="506" y="102" font-size="12" fill="#6b6b6b">Dev Kit (Windows 11 Pro arm64)</text>
+  <rect x="520" y="120" width="150" height="56" rx="6" fill="#2b6cb0"/>
+  <text x="595" y="144" text-anchor="middle" font-size="13" fill="#fff" font-weight="600">Linux arm64 VM</text>
+  <text x="595" y="162" text-anchor="middle" font-size="11" fill="#fff">LAN DHCP lease</text>
+  <rect x="700" y="120" width="140" height="56" rx="6" fill="#ffffff" stroke="#2b6cb0" stroke-width="2"/>
+  <text x="770" y="144" text-anchor="middle" font-size="13" fill="#2b6cb0" font-weight="600">vSwitch</text>
+  <text x="770" y="162" text-anchor="middle" font-size="11" fill="#6b6b6b">shares the NIC</text>
+  <path d="M670 148 L 698 148" stroke="#6b6b6b" stroke-width="2" marker-end="url(#a)"/>
+  <rect x="700" y="230" width="140" height="44" rx="6" fill="#ffffff" stroke="#6b6b6b" stroke-width="2"/>
+  <text x="770" y="257" text-anchor="middle" font-size="13" fill="#222">Ethernet NIC</text>
+  <path d="M770 176 L 770 228" stroke="#6b6b6b" stroke-width="2" marker-end="url(#a)"/>
+  <path d="M770 274 L 770 360" stroke="#6b6b6b" stroke-width="2" marker-end="url(#a)"/>
+  <text x="675" y="300" text-anchor="middle" font-size="12" fill="#3a9a5b">outbound to GitHub: works</text>
+  <text x="675" y="318" text-anchor="middle" font-size="12" fill="#3a9a5b">SSH from the LAN: works</text>
+
+  <rect x="40" y="362" width="820" height="44" rx="8" fill="#6b6b6b"/>
+  <text x="450" y="389" text-anchor="middle" font-size="14" fill="#fff">home router / internet (the runner only ever dials out on 443)</text>
+</svg>

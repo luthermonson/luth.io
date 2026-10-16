@@ -1,0 +1,826 @@
+<!doctype html>
+<html lang="en">
+  <head>
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-MSTSKGFWTX"></script>
+<script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+
+    gtag('config', 'G-MSTSKGFWTX');
+</script><meta charset="utf-8">
+<title>Security and Performance Hardening of a Rust Database Proxy - Luther Monson</title>
+<meta name="description" content="One week of hardening litewire: a memory bug in a dependency, a site that could open its neighbor&#39;s database, a security rule that lived only in a comment, and a needless 1 MB clear on every query.">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<meta name="twitter:card" content="summary_large_image"><meta name="twitter:site" content="@luthermonson">
+
+<meta property="og:site_name" content="Luther Monson">
+<meta property="og:title" content="Security and Performance Hardening of a Rust Database Proxy">
+<meta property="og:description" content="One week of hardening litewire: a memory bug in a dependency, a site that could open its neighbor&#39;s database, a security rule that lived only in a comment, and a needless 1 MB clear on every query.">
+<meta property="og:type" content="article">
+<meta property="og:url" content="https://luth.io/blog/2026/08/hardening-rust-database-proxy/">
+    <meta property="og:image" content="https://luth.io/img/2026/08/hardening-rust-database-proxy-wire.svg">
+    <meta property="og:image:alt" content="Bar chart of point SELECT throughput over the litewire MySQL frontend at three revisions: before the command filter, with the filter, and with the poll_read fix">
+
+
+  <link rel="manifest" href="/favicon/site.webmanifest?v=1">
+  <link rel="apple-touch-icon" sizes="180x180" href="/favicon/apple-touch-icon.png?v=1">
+  <link rel="icon" type="image/png" sizes="32x32" href="/favicon/favicon-32x32.png?v=1">
+  <link rel="icon" type="image/png" sizes="16x16" href="/favicon/favicon-16x16.png?v=1">
+  
+    <link rel="mask-icon" href="/favicon/safari-pinned-tab.svg?v=1" color="#ffffff">
+    <link rel="shortcut icon" href="/favicon/favicon.ico?v=1">
+    <meta name="msapplication-config" content="/favicon/browserconfig.xml?v=1">
+  
+  <meta name="msapplication-TileColor" content="#ffffff">
+  <meta name="theme-color" content="#ffffff">
+
+
+  <meta name="generator" content="Hugo 0.160.1">
+  <link rel="alternate" type="application/rss+xml" href="https://luth.io/index.xml" title="Luther Monson">
+  <link rel="stylesheet" href="/css/bundle.min.e1ffed86714fbb7eff75eab221c0c61b8260be0c7d1c08db0fcb7a2bdb6af7c9.css" integrity="sha256-4f/thnFPu37/deqyIcDGG4Jgvgx9HAjbD8t6K9tq98k="><link rel="stylesheet" href="/css/add-on.css">
+        <link rel="stylesheet" href="/css/code.css">
+        <link rel="stylesheet" href="/css/mobile.css">
+</head>
+
+  <body>
+    
+
+<header id="site-header">
+  <nav id="site-nav">
+    <h1 class="nav-title">
+      <a href="/" class="nav">
+        <img class="nav-avatar" src="/img/luther-monson-headshot.jpg" alt="" width="32" height="32">
+        
+          Blog
+        
+      </a>
+    </h1>
+    <menu id="site-nav-menu" class="flyout-menu menu">
+      
+        
+          
+          <a href="/" class="nav link"><i class='fa fa-home'></i> Home</a>
+        
+      
+        
+          
+          <a href="/about" class="nav link"><i class='far fa-id-card'></i> About</a>
+        
+      
+        
+          
+          <a href="/blog" class="nav link"><i class='far fa-newspaper'></i> Blog</a>
+        
+      
+        
+          
+          <a href="/archive" class="nav link"><i class='far fa-calendar-alt'></i> Archive</a>
+        
+      
+        
+          
+          <a href="/categories" class="nav link"><i class='fas fa-sitemap'></i> Categories</a>
+        
+      
+      <a href="#share-menu" class="nav link share-toggle"><i class="fas fa-share-alt">&nbsp;</i>Share</a>
+      <a href="#search-input" class="nav link search-toggle"><i class="fas fa-search">&nbsp;</i>Search</a>
+    </menu>
+    <a href="#search-input" class="nav search-toggle"><i class="fas fa-search fa-2x">&nbsp;</i></a>
+    <a href="#share-menu" class="nav share-toggle"><i class="fas fa-share-alt fa-2x">&nbsp;</i></a>
+    
+    <a href="#site-nav" class="nav nav-toggle"><i class="fas fa-bars fa-2x"></i></a>
+  </nav>
+  <menu id="search" class="menu"><input id="search-input" class="search-input menu"></input><div id="search-results" class="search-results menu"></div></menu>
+  
+  
+    <menu id="share-menu" class="flyout-menu menu">
+      <h1>Share Post</h1>
+      
+
+
+
+
+  
+    
+    <a href="//twitter.com/share?text=Security%20and%20Performance%20Hardening%20of%20a%20Rust%20Database%20Proxy&amp;url=https%3a%2f%2fluth.io%2fblog%2f2026%2f08%2fhardening-rust-database-proxy%2f" target="_blank" rel="noopener" class="nav share-btn twitter">
+        <p>Twitter</p>
+      </a>
+  
+
+  
+      <a href="//www.facebook.com/sharer/sharer.php?u=https%3a%2f%2fluth.io%2fblog%2f2026%2f08%2fhardening-rust-database-proxy%2f" target="_blank" rel="noopener" class="nav share-btn facebook">
+        <p>Facebook</p>
+        </a>
+  
+
+  
+    <a href="//www.reddit.com/submit?url=https%3a%2f%2fluth.io%2fblog%2f2026%2f08%2fhardening-rust-database-proxy%2f&amp;title=Security%20and%20Performance%20Hardening%20of%20a%20Rust%20Database%20Proxy" target="_blank" rel="noopener" class="nav share-btn reddit">
+          <p>Reddit</p>
+        </a>
+  
+
+  
+        <a href="//www.linkedin.com/shareArticle?url=https%3a%2f%2fluth.io%2fblog%2f2026%2f08%2fhardening-rust-database-proxy%2f&amp;title=Security%20and%20Performance%20Hardening%20of%20a%20Rust%20Database%20Proxy" target="_blank" rel="noopener" class="nav share-btn linkedin">
+            <p>LinkedIn</p>
+          </a>
+  
+
+  
+        <a href="//www.pinterest.com/pin/create/button/?url=https%3a%2f%2fluth.io%2fblog%2f2026%2f08%2fhardening-rust-database-proxy%2f&amp;description=Security%20and%20Performance%20Hardening%20of%20a%20Rust%20Database%20Proxy" target="_blank" rel="noopener" class="nav share-btn pinterest">
+          <p>Pinterest</p>
+        </a>
+  
+
+  
+        <a href="mailto:?subject=Check%20out%20this%20post%20by Luther%20Monson&amp;body=https%3a%2f%2fluth.io%2fblog%2f2026%2f08%2fhardening-rust-database-proxy%2f" target="_blank" class="nav share-btn email" data-proofer-ignore>
+          <p>Email</p>
+        </a>
+  
+
+
+    </menu>
+  
+</header>
+
+    <div id="wrapper">
+      <section id="site-intro" class="hidden-single-column">
+  <a href="/"><img src="/img/luther-monson-headshot.jpg" class="circle" width="100" alt="Luther Monson, Staff Software Engineer at SUSE" /></a>
+  <header>
+    <h1>Luther Monson</h1>
+  </header>
+  <main>
+    <p>Go by way of PHP &middot; Containers &middot; VMs &middot; Windows &middot; Kubernetes</p>
+  </main>
+  
+    <footer>
+      <ul class="socnet-icons">
+        
+
+        <li><a href="//github.com/luthermonson" target="_blank" rel="noopener" title="GitHub" class="fab fa-github"></a></li>
+
+
+
+
+
+
+
+
+
+
+
+<li><a href="//www.linkedin.com/in/luthermonson" target="_blank" rel="noopener" title="LinkedIn" class="fab fa-linkedin"></a></li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li><a href="//twitter.com/luthermonson" target="_blank" rel="noopener" title="Twitter" class="fab fa-twitter"></a></li>
+
+
+
+
+
+
+
+
+
+
+
+<li><a href="mailto:luther.monson@gmail.com" target="_blank" title="Email" class="far fa-envelope"></a></li>
+
+      </ul>
+    </footer>
+  
+</section>
+
+      <main id="site-main">
+        
+  <article>
+    <div class="post">
+      <header>
+  <div class="title">
+    
+      <h2><a href="/blog/2026/08/hardening-rust-database-proxy/">Security and Performance Hardening of a Rust Database Proxy</a></h2>
+    
+    
+      <p>One week of hardening litewire: a memory bug in a dependency, a site that could open its neighbor&#39;s database, a security rule that lived only in a comment, and a needless 1 MB clear on every query.</p>
+    
+  </div>
+  <div class="meta">
+    <time datetime="2026-08-27 20:30:00 -0700 PDT">August 27, 2026</time>
+    
+    <p>11-Minute Read</p>
+  </div>
+</header>
+
+      <div id="socnet-share">
+        
+
+
+
+
+  
+    
+    <a href="//twitter.com/share?text=Security%20and%20Performance%20Hardening%20of%20a%20Rust%20Database%20Proxy&amp;url=https%3a%2f%2fluth.io%2fblog%2f2026%2f08%2fhardening-rust-database-proxy%2f" target="_blank" rel="noopener" class="nav share-btn twitter">
+        <p>Twitter</p>
+      </a>
+  
+
+  
+      <a href="//www.facebook.com/sharer/sharer.php?u=https%3a%2f%2fluth.io%2fblog%2f2026%2f08%2fhardening-rust-database-proxy%2f" target="_blank" rel="noopener" class="nav share-btn facebook">
+        <p>Facebook</p>
+        </a>
+  
+
+  
+    <a href="//www.reddit.com/submit?url=https%3a%2f%2fluth.io%2fblog%2f2026%2f08%2fhardening-rust-database-proxy%2f&amp;title=Security%20and%20Performance%20Hardening%20of%20a%20Rust%20Database%20Proxy" target="_blank" rel="noopener" class="nav share-btn reddit">
+          <p>Reddit</p>
+        </a>
+  
+
+  
+        <a href="//www.linkedin.com/shareArticle?url=https%3a%2f%2fluth.io%2fblog%2f2026%2f08%2fhardening-rust-database-proxy%2f&amp;title=Security%20and%20Performance%20Hardening%20of%20a%20Rust%20Database%20Proxy" target="_blank" rel="noopener" class="nav share-btn linkedin">
+            <p>LinkedIn</p>
+          </a>
+  
+
+  
+        <a href="//www.pinterest.com/pin/create/button/?url=https%3a%2f%2fluth.io%2fblog%2f2026%2f08%2fhardening-rust-database-proxy%2f&amp;description=Security%20and%20Performance%20Hardening%20of%20a%20Rust%20Database%20Proxy" target="_blank" rel="noopener" class="nav share-btn pinterest">
+          <p>Pinterest</p>
+        </a>
+  
+
+  
+        <a href="mailto:?subject=Check%20out%20this%20post%20by Luther%20Monson&amp;body=https%3a%2f%2fluth.io%2fblog%2f2026%2f08%2fhardening-rust-database-proxy%2f" target="_blank" class="nav share-btn email" data-proofer-ignore>
+          <p>Email</p>
+        </a>
+  
+
+
+      </div>
+      <div class="content">
+        
+        <p><a href="https://github.com/ephpm/litewire">litewire</a> is the piece of ePHPm that lets PHP apps talk MySQL to a SQLite file. I
+wrote about <a href="/blog/2026/07/sqlite-production-database-protocol-translation/">how it works</a> and about
+<a href="/blog/2026/08/faking-mysql-quirks-wordpress/">the MySQL quirks WordPress depends on</a>. This one is the less visible
+half of August: an audit pass on litewire, a multi-tenant mode that turned a database proxy into a security boundary,
+and a performance regression I shipped and then had to go find.</p>
+<p>It&rsquo;s written in Rust, so memory safety is supposed to be the part I don&rsquo;t have to think about. It mostly is. The
+use-after-free in this story was in a dependency, and the worst bug wasn&rsquo;t a memory bug at all.</p>
+<h3 id="a-gate-instead-of-a-cleanup">A gate instead of a cleanup</h3>
+<p>The first item from the audit was the RustSec advisory list. litewire had been accumulating them: <code>lru</code> 0.12.5 had
+<a href="https://rustsec.org/advisories/RUSTSEC-2026-0253.html">RUSTSEC-2026-0253</a>, a use-after-free in <code>LruCache::pop</code>, and
+0.12.5 was the version backing the production <code>TranslateCache</code> that sits in front of every translated statement. It
+also had the older <code>IterMut</code> soundness advisory. Bumping to <code>lru</code> 0.18.2 needed no code changes and the cache&rsquo;s tests
+passed as-is. A handful of others went away with <code>cargo update</code> (anyhow, crossbeam-epoch on the Turso path,
+postgres-protocol, rustls-webpki).</p>
+<p>Fixing the list once doesn&rsquo;t stop it from growing back, so <a href="https://github.com/ephpm/litewire/pull/34">litewire#34</a>
+added a <code>deny.toml</code> and a <code>cargo-deny</code> CI job that fails the build on a new advisory. The part I care about is that
+nothing is ignored silently. Every entry in the ignore list says why it&rsquo;s there and when it can go:</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-toml" data-lang="toml"><span class="line"><span class="cl"><span class="c"># time 0.3.45 stack-exhaustion DoS in parsing. The fixed release (0.3.47)</span>
+</span></span><span class="line"><span class="cl"><span class="c"># requires a newer Rust than this workspace&#39;s MSRV (1.85), so the</span>
+</span></span><span class="line"><span class="cl"><span class="c"># MSRV-aware resolver cannot take it. Reached via mysql_common (wire</span>
+</span></span><span class="line"><span class="cl"><span class="c"># date/time types) and turso&#39;s tracing-appender. Drop when the MSRV moves.</span>
+</span></span><span class="line"><span class="cl"><span class="s2">&#34;RUSTSEC-2026-0009&#34;</span><span class="p">,</span>
+</span></span></code></pre></div><p>The ignores are old <code>rustls-webpki</code> copies pinned under opensrv-mysql (server-side TLS, which doesn&rsquo;t exercise the
+name-constraint and CRL paths those advisories are about) and the tiberius test client, two unmaintained crates with no
+runtime exposure, and two fixes blocked by the MSRV. The gate paid for itself two days later: a new advisory landed
+for <code>h2</code> (RUSTSEC-2026-0258, empty DATA frames queued without limit) reaching litewire via axum and hyper, and CI went
+red on an unrelated PR until the lockfile moved to 0.4.16.</p>
+<h3 id="a-tenant-could-attach-its-neighbour">A tenant could ATTACH its neighbour</h3>
+<p>Earlier in August litewire grew per-connection backend selection
+(<a href="https://github.com/ephpm/litewire/pull/27">litewire#27</a>). A <code>ConnectionAuthenticator</code> runs during the MySQL handshake
+and returns the backend that connection is bound to, which is how ePHPm puts many sites behind one listener with a
+SQLite file each. SQLite has no <code>GRANT</code> and no per-schema ACL, so the database file is the only tenant boundary, and
+the authenticator is what&rsquo;s supposed to enforce it.</p>
+<p>The audit asked whether anything screened what an authenticated tenant could send. The answer was worse than &ldquo;no&rdquo;.
+<code>ATTACH DATABASE '&lt;path&gt;'</code> and the path-bearing <code>PRAGMA</code>s pass MySQL-dialect translation verbatim, and every tenant&rsquo;s
+file is opened by the same process as the same user. So on a rusqlite deployment a tenant could attach a neighbouring
+tenant&rsquo;s file and read or write it. The Turso backend happened to refuse the statement, but
+that&rsquo;s not a property litewire owns.</p>
+<p>The fix wraps every authenticator-established session in a <code>BackendConn</code> decorator that refuses <code>ATTACH</code>/<code>DETACH</code>,
+<code>VACUUM INTO '&lt;path&gt;'</code> and the <code>data_store_directory</code>, <code>temp_store_directory</code> and <code>writable_schema</code> pragmas before the
+statement reaches any engine:</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-rust" data-lang="rust"><span class="line"><span class="cl"><span class="sd">/// Statement keywords always rejected on a tenant session: the
+</span></span></span><span class="line"><span class="cl"><span class="sd">/// cross-database primitives.
+</span></span></span><span class="line"><span class="cl"><span class="k">const</span><span class="w"> </span><span class="no">FORBIDDEN_KEYWORDS</span>: <span class="p">[</span><span class="o">&amp;</span><span class="kt">str</span><span class="p">;</span><span class="w"> </span><span class="mi">2</span><span class="p">]</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s">&#34;ATTACH&#34;</span><span class="p">,</span><span class="w"> </span><span class="s">&#34;DETACH&#34;</span><span class="p">];</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="k">const</span><span class="w"> </span><span class="no">FORBIDDEN_PRAGMAS</span>: <span class="p">[</span><span class="o">&amp;</span><span class="kt">str</span><span class="p">;</span><span class="w"> </span><span class="mi">3</span><span class="p">]</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="s">&#34;writable_schema&#34;</span><span class="p">,</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="s">&#34;temp_store_directory&#34;</span><span class="p">,</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="s">&#34;data_store_directory&#34;</span><span class="p">,</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="p">];</span><span class="w">
+</span></span></span></code></pre></div><p>A first-keyword check is easy to get around, so the screen is quote-, comment- and multi-statement-aware, looks through
+<code>EXPLAIN</code> and <code>EXPLAIN QUERY PLAN</code>, matches every dot-separated component of a pragma name so
+<code>PRAGMA main.data_store_directory</code> and <code>PRAGMA &quot;writable_schema&quot;</code> are caught, screens the <code>COM_STMT_PREPARE</code> path too,
+and treats SQL it can&rsquo;t make sense of as forbidden. It keys off the session being tenant-scoped, not off the backend
+type, so a future engine that accepts <code>ATTACH</code> doesn&rsquo;t reopen the hole. Single-tenant use keeps full SQL, <code>ATTACH</code>
+included, because in a one-user embedded setup it&rsquo;s a legitimate thing to do. The wire-level test attaches the other
+tenant&rsquo;s actual file path from a real <code>mysql_async</code> client and asserts it gets the screen&rsquo;s error and the connection
+survives.</p>
+<h3 id="a-security-property-guarded-by-a-comment">A security property guarded by a comment</h3>
+<p>The third one came out of reviewing ePHPm&rsquo;s per-site MySQL auth. opensrv-mysql calls the shim&rsquo;s <code>authenticate()</code> only
+when the parsed handshake has a username, and its parser yields no username on the pre-TLS <code>CLIENT_SSL</code> branch. With
+opensrv&rsquo;s default <code>tls</code> feature on, a re-parse makes that branch unreachable. Turn default features off, which is a
+perfectly normal thing to do to trim a dependency, and the no-username path comes back. On the authenticating path,
+that skips the only tenant boundary there is.</p>
+<p>Nothing was exploitable as shipped. But the only thing protecting it was a comment in a <em>different repository</em>
+(<a href="https://github.com/ephpm/litewire/issues/32">litewire#32</a>). Now the feature is declared explicitly with a <code>SECURITY</code>
+comment in the workspace <code>Cargo.toml</code>, and there&rsquo;s a compile-time fence in <code>litewire-mysql</code>: an import of a re-export
+that only exists when <code>tls</code> is enabled. I verified it by flipping the manifest to <code>default-features = false</code> and
+watching the build fail at the fence, which it wouldn&rsquo;t have done before since litewire&rsquo;s own code only uses ungated
+APIs.</p>
+<h3 id="a-cache-that-doesnt-allocate-on-a-hit">A cache that doesn&rsquo;t allocate on a hit</h3>
+<p>The translate cache from July was a <code>Mutex&lt;LruCache&lt;(Dialect, String), Vec&lt;TranslateResult&gt;&gt;&gt;</code>. Every lookup built an
+owned <code>(Dialect, String)</code> key just to hash it, and every hit deep-cloned the <code>Vec</code> of results for the caller.
+<a href="https://github.com/ephpm/litewire/pull/35">litewire#35</a> gives each dialect its own LRU keyed by <code>Box&lt;str&gt;</code>, which
+implements <code>Borrow&lt;str&gt;</code> so a lookup can use the <code>&amp;str</code> the client sent, and hands back a shared <code>Arc&lt;[TranslateResult]&gt;</code>:</p>
+<table>
+  <thead>
+      <tr>
+          <th>translate-cache hit, single-thread hot key (release, median of 9 x 2M)</th>
+          <th style="text-align: right">ns/op</th>
+      </tr>
+  </thead>
+  <tbody>
+      <tr>
+          <td>before: owned <code>String</code> key + <code>Vec</code> clone</td>
+          <td style="text-align: right">69.8</td>
+      </tr>
+      <tr>
+          <td>after: borrowed <code>&amp;str</code> key + <code>Arc</code> clone</td>
+          <td style="text-align: right">23.8</td>
+      </tr>
+  </tbody>
+</table>
+<p>Those are the PR&rsquo;s numbers. I also tried sharding it and measured it as a net loss. An LRU <code>get</code> is a write, because it
+promotes the entry to most-recently-used, so concurrent hits on a hot statement contend on that entry&rsquo;s list links no
+matter how many locks guard the map. The extra hash to pick a shard cost more than the lookup, and splitting a fixed
+capacity across shards turned a skewed key distribution into thrashing. It didn&rsquo;t go in.</p>
+<h3 id="the-1-mib-memset-on-every-packet">The 1 MiB memset on every packet</h3>
+<p>This is the one I shipped. ePHPm&rsquo;s lab compared v0.7.0 against v0.6.3 and found the <code>pdo_mysql</code> wire path 14-31%
+slower, while the in-process <code>ephpm_db_*</code> bridge, running in the same process against the same backend, was flat
+(<a href="https://github.com/ephpm/ephpm/issues/322">ephpm#322</a>). Bridge flat and wire down puts the cost in the MySQL frontend.</p>
+<p>v0.7.0 had moved two pins at once, litewire and the Turso engine. A microbenchmark of all four combinations showed the
+Turso bump was a no-op, and peeling the new frontend apart layer by layer put the entire regression on the
+<code>CommandFilter</code> from <a href="/blog/2026/08/faking-mysql-quirks-wordpress/">the stray OK packet fix</a>. With the filter removed,
+throughput was back where it started.</p>
+<p>The filter reads the five-byte header (four bytes of length and sequence, plus the command byte), decides what to do,
+and then passes the body through. It returned those five bytes from one <code>poll_read</code> and made the caller poll again for
+the body. That&rsquo;s a perfectly legal <code>AsyncRead</code>. It&rsquo;s also pathological for the one reader that consumes it,
+opensrv-mysql&rsquo;s <code>PacketReader::next_async</code>:</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-rust" data-lang="rust"><span class="line"><span class="cl"><span class="kd">let</span><span class="w"> </span><span class="k">mut</span><span class="w"> </span><span class="n">buffer_size</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="no">PACKET_BUFFER_SIZE</span><span class="p">;</span><span class="w">      </span><span class="c1">// 4 KiB
+</span></span></span><span class="line"><span class="cl"><span class="k">loop</span><span class="w"> </span><span class="p">{</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="o">..</span><span class="p">.</span><span class="w">                                        </span><span class="c1">// parse attempt
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="bp">self</span><span class="p">.</span><span class="n">bytes</span><span class="p">.</span><span class="n">len</span><span class="p">()</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="n">end</span><span class="w"> </span><span class="o">&lt;</span><span class="w"> </span><span class="n">buffer_size</span><span class="w"> </span><span class="p">{</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">        </span><span class="bp">self</span><span class="p">.</span><span class="n">bytes</span><span class="p">.</span><span class="n">resize</span><span class="p">(</span><span class="n">max</span><span class="p">(</span><span class="n">buffer_size</span><span class="p">,</span><span class="w"> </span><span class="n">end</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="mi">2</span><span class="p">),</span><span class="w"> </span><span class="mi">0</span><span class="p">);</span><span class="w">   </span><span class="c1">// &lt;- memset
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="p">}</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="kd">let</span><span class="w"> </span><span class="n">read</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="bp">self</span><span class="p">.</span><span class="n">r</span><span class="p">.</span><span class="n">read</span><span class="p">(</span><span class="o">&amp;</span><span class="k">mut</span><span class="w"> </span><span class="bp">self</span><span class="p">.</span><span class="n">bytes</span><span class="p">[</span><span class="n">end</span><span class="o">..</span><span class="p">]).</span><span class="k">await</span><span class="o">?</span><span class="p">;</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="n">buffer_size</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="no">PACKET_LARGE_BUFFER_SIZE</span><span class="p">;</span><span class="w">    </span><span class="c1">// 1 MiB
+</span></span></span><span class="line"><span class="cl"><span class="p">}</span><span class="w">
+</span></span></span></code></pre></div><p>The scratch buffer escalates from 4 KiB to 1 MiB on the <em>second</em> iteration. A reader that hands back a header with no
+body guarantees that second iteration, and with it a <code>Vec::resize(1_048_576, 0)</code> for every command. From litewire&rsquo;s
+side it looked like a five-byte read. <code>perf</code> on the regressed build put 12.8% of cycles in
+<code>__memset_avx2_unaligned_erms</code>, a symbol that doesn&rsquo;t appear in either the pre-filter build or the fixed one.</p>
+<p>The fix (<a href="https://github.com/ephpm/litewire/pull/37">litewire#37</a>) is to fall through from emitting the header into
+passing the body inside the same <code>poll_read</code>, so opensrv gets the whole packet the way an unfiltered socket delivered
+it. That has a correctness corollary I&rsquo;d missed the first time I thought about it: once <code>poll_read</code> has written into
+the caller&rsquo;s buffer it must not return <code>Pending</code>. The caller keeps the <code>ReadBuf</code>, so those bytes would sit there until
+the next wakeup, and in a half-duplex protocol where the client is waiting on the reply to the command we&rsquo;re holding,
+that wakeup never comes. A small macro enforces it:</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-rust" data-lang="rust"><span class="line"><span class="cl"><span class="n">macro_rules</span><span class="o">!</span><span class="w"> </span><span class="n">poll_io</span><span class="w"> </span><span class="p">{</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="p">(</span><span class="cp">$poll</span>:<span class="nc">expr</span><span class="p">)</span><span class="w"> </span><span class="o">=&gt;</span><span class="w"> </span><span class="p">{</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">        </span><span class="k">match</span><span class="w"> </span><span class="cp">$poll</span><span class="w"> </span><span class="p">{</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">            </span><span class="n">Poll</span>::<span class="n">Ready</span><span class="p">(</span><span class="nb">Ok</span><span class="p">(</span><span class="n">v</span><span class="p">))</span><span class="w"> </span><span class="o">=&gt;</span><span class="w"> </span><span class="n">v</span><span class="p">,</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">            </span><span class="n">Poll</span>::<span class="n">Ready</span><span class="p">(</span><span class="nb">Err</span><span class="p">(</span><span class="n">e</span><span class="p">))</span><span class="w"> </span><span class="o">=&gt;</span><span class="w"> </span><span class="k">return</span><span class="w"> </span><span class="n">Poll</span>::<span class="n">Ready</span><span class="p">(</span><span class="nb">Err</span><span class="p">(</span><span class="n">e</span><span class="p">)),</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">            </span><span class="n">Poll</span>::<span class="n">Pending</span><span class="w"> </span><span class="o">=&gt;</span><span class="w"> </span><span class="p">{</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">                </span><span class="k">return</span><span class="w"> </span><span class="k">if</span><span class="w"> </span><span class="n">out</span><span class="p">.</span><span class="n">filled</span><span class="p">().</span><span class="n">len</span><span class="p">()</span><span class="w"> </span><span class="o">&gt;</span><span class="w"> </span><span class="n">started</span><span class="w"> </span><span class="p">{</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">                    </span><span class="n">Poll</span>::<span class="n">Ready</span><span class="p">(</span><span class="nb">Ok</span><span class="p">(()))</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">                </span><span class="p">}</span><span class="w"> </span><span class="k">else</span><span class="w"> </span><span class="p">{</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">                    </span><span class="n">Poll</span>::<span class="n">Pending</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">                </span><span class="p">};</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">            </span><span class="p">}</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">        </span><span class="p">}</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="p">};</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="p">}</span><span class="w">
+</span></span></span></code></pre></div><p>Both properties have tests: <code>one_poll_read_yields_the_whole_packet</code> and
+<code>partial_packet_returns_what_it_has_instead_of_parking</code>.</p>
+<p>End to end, two ePHPm binaries built from the same commit with the litewire pin as the only difference, server on one
+core, every response body-checked, two passes each (<a href="https://github.com/ephpm/ephpm/pull/323">ephpm#323</a>):</p>
+<table>
+  <thead>
+      <tr>
+          <th>cell</th>
+          <th style="text-align: right">c</th>
+          <th style="text-align: right">before (pass 1 / 2)</th>
+          <th style="text-align: right">after (pass 1 / 2)</th>
+          <th style="text-align: right">change</th>
+      </tr>
+  </thead>
+  <tbody>
+      <tr>
+          <td>wire-point</td>
+          <td style="text-align: right">1</td>
+          <td style="text-align: right">807.5 / 813.8</td>
+          <td style="text-align: right">933.7 / 933.3</td>
+          <td style="text-align: right">+15.1%</td>
+      </tr>
+      <tr>
+          <td>wire-point</td>
+          <td style="text-align: right">16</td>
+          <td style="text-align: right">820.0 / 852.6</td>
+          <td style="text-align: right">1142.1 / 1142.9</td>
+          <td style="text-align: right">+36.7%</td>
+      </tr>
+      <tr>
+          <td>wire-wide</td>
+          <td style="text-align: right">1</td>
+          <td style="text-align: right">1339.5 / 1343.0</td>
+          <td style="text-align: right">1411.7 / 1411.8</td>
+          <td style="text-align: right">+5.3%</td>
+      </tr>
+      <tr>
+          <td>wire-wide</td>
+          <td style="text-align: right">16</td>
+          <td style="text-align: right">1448.0 / 1499.6</td>
+          <td style="text-align: right">1959.9 / 1965.0</td>
+          <td style="text-align: right">+33.1%</td>
+      </tr>
+      <tr>
+          <td>wire-write</td>
+          <td style="text-align: right">1</td>
+          <td style="text-align: right">1702.3 / 1718.5</td>
+          <td style="text-align: right">1815.0 / 1819.2</td>
+          <td style="text-align: right">+6.2%</td>
+      </tr>
+  </tbody>
+</table>
+<p><img src="/img/2026/08/hardening-rust-database-proxy-e2e.svg" alt="ePHPm pdo_mysql wire path before and after the litewire fix, from ephpm#323"></p>
+<p>The biggest wins are at c=16, which makes sense: a 1 MiB memset per command is pure CPU, and the server was pinned to
+one core.</p>
+<h3 id="measuring-it-again-myself">Measuring it again myself</h3>
+<p>Those are lab numbers through PHP and HTTP. I wanted to see the frontend on its own, so I wrote a throwaway
+integration test that starts litewire&rsquo;s MySQL frontend over a file-backed rusqlite database, seeds 100 rows, and then
+runs 20,000 sequential point <code>SELECT</code>s over one <code>mysql_async</code> connection, three times. One persistent connection
+isolates the per-command cost from connect and handshake. I built it at three revisions: <code>e34c639</code> (before the
+filter existed), <code>10345a8</code> (the last revision before the fix, filter in place) and <code>344d2c2</code> (the fix), then ran them interleaved for three rounds.</p>
+<p><img src="/img/2026/08/hardening-rust-database-proxy-wire.svg" alt="Point SELECT throughput over the litewire MySQL frontend at three revisions"></p>
+<table>
+  <thead>
+      <tr>
+          <th>revision</th>
+          <th style="text-align: right">rep 1</th>
+          <th style="text-align: right">rep 2</th>
+          <th style="text-align: right">rep 3</th>
+          <th style="text-align: right">mean of 9 reps</th>
+      </tr>
+  </thead>
+  <tbody>
+      <tr>
+          <td><code>e34c639</code> pre-filter</td>
+          <td style="text-align: right">10,706</td>
+          <td style="text-align: right">8,158</td>
+          <td style="text-align: right">7,972</td>
+          <td style="text-align: right">8,945 q/s</td>
+      </tr>
+      <tr>
+          <td><code>10345a8</code> filter</td>
+          <td style="text-align: right">9,251</td>
+          <td style="text-align: right">6,921</td>
+          <td style="text-align: right">6,959</td>
+          <td style="text-align: right">7,710 q/s</td>
+      </tr>
+      <tr>
+          <td><code>344d2c2</code> fix</td>
+          <td style="text-align: right">10,923</td>
+          <td style="text-align: right">8,476</td>
+          <td style="text-align: right">7,885</td>
+          <td style="text-align: right">9,095 q/s</td>
+      </tr>
+  </tbody>
+</table>
+<p>(Each rep column is the mean of the three rounds.) The filter build is 13.8% slower than the pre-filter build, and the
+fix is 18.0% faster than the filter build and back within 2% of where it started. That lines up with the 15.7% the
+microbenchmark in the PR measured on Linux over the Turso backend. Every arm got slower after its first rep, in the same
+pattern, so I&rsquo;m only comparing like with like and not reading anything into the absolute numbers. One caveat on the
+pre-filter arm: at <code>e34c639</code> the dev-only <code>mysql_async</code> client was still 0.34 (the security batch moved it to 0.37), so
+that bar has a different client. The filter-versus-fix comparison, which is the one that matters, uses the same client
+on both sides.</p>
+<p>How I measured: AMD Ryzen 9 5950X (16 cores / 32 threads), 128 GB RAM, Windows 11 Pro, rustc 1.97.1, release build,
+client and server in one process on a two-worker tokio runtime over loopback. I first tried the PR&rsquo;s shape (a fresh
+connection plus ten <code>SELECT</code>s per iteration), but on Windows that run degraded as it went and eventually failed once
+the loopback connections piled up, so I switched to one long-lived connection. The test was dropped into a temporary
+git worktree at each revision and built against the repo&rsquo;s existing target directory:</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl"><span class="nv">BENCH_MODE</span><span class="o">=</span>persistent <span class="nv">BENCH_Q</span><span class="o">=</span><span class="m">20000</span> <span class="nv">BENCH_REPS</span><span class="o">=</span><span class="m">3</span> <span class="se">\
+</span></span></span><span class="line"><span class="cl">  cargo <span class="nb">test</span> --release -p litewire --test blog_wire_bench -- --ignored --nocapture
+</span></span></code></pre></div><h3 id="what-id-tell-someone-building-one-of-these">What I&rsquo;d tell someone building one of these</h3>
+<p>Being in Rust took care of my own code&rsquo;s memory safety and nothing else. The use-after-free came from a dependency, and
+the fix was making the advisory database a build gate instead of a thing I check sometimes. The <code>ATTACH</code> hole was plain
+logic: the moment a proxy picks a backend per connection it&rsquo;s a security boundary, and every statement the engine
+accepts is part of the attack surface whether the translator thought about it or not. The <code>tls</code> fence was about moving a
+security property out of a comment and into something the compiler checks.</p>
+<p>And the performance bug was a correct <code>AsyncRead</code> meeting a reader with an assumption I didn&rsquo;t know about. I only found
+it because the lab runs the same workload against every release and the bridge path gave me a control in the same
+process.</p>
+<h3 id="links">Links</h3>
+<ul>
+<li><a href="https://github.com/ephpm/litewire">litewire</a></li>
+<li><a href="https://github.com/ephpm/litewire/pull/34">litewire#34: cargo-deny gate, lru UAF fix, tenant SQL screen, tls fence</a></li>
+<li><a href="https://github.com/ephpm/litewire/pull/35">litewire#35: borrowed-key Arc cache</a></li>
+<li><a href="https://github.com/ephpm/litewire/pull/37">litewire#37: a whole command packet per poll_read</a></li>
+<li><a href="https://github.com/ephpm/ephpm/issues/322">ephpm#322: the regression report</a></li>
+<li><a href="https://github.com/ephpm/ephpm/pull/323">ephpm#323: attribution and end-to-end verification</a></li>
+<li><a href="https://rustsec.org/advisories/RUSTSEC-2026-0253.html">RUSTSEC-2026-0253</a></li>
+<li><a href="https://github.com/EmbarkStudios/cargo-deny">cargo-deny</a></li>
+</ul>
+
+      </div>
+      <footer>
+        <div class="stats">
+  
+    <ul class="categories">
+      
+        
+          <li><a class="article-terms-link" href="/categories/databases/">databases</a></li>
+        
+          <li><a class="article-terms-link" href="/categories/rust/">rust</a></li>
+        
+          <li><a class="article-terms-link" href="/categories/security/">security</a></li>
+        
+      
+    </ul>
+  
+  
+    <ul class="tags">
+      
+        
+          <li><a class="article-terms-link" href="/tags/litewire/">litewire</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/ephpm/">ephpm</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/rust/">rust</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/mysql/">mysql</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/sqlite/">sqlite</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/security/">security</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/performance/">performance</a></li>
+        
+      
+    </ul>
+  
+</div>
+
+      </footer>
+    </div>
+    
+      
+  
+  <div class='post giscus-wrap'>
+    <script src='https://giscus.app/client.js'
+            data-repo='luthermonson/luth.io'
+            data-repo-id='R_kgDOGvFBXQ'
+            data-category='Announcements'
+            data-category-id='DIC_kwDOGvFBXc4DH_gv'
+            data-mapping='pathname'
+            data-strict='1'
+            data-reactions-enabled='1'
+            data-emit-metadata='0'
+            data-input-position='top'
+            data-theme='light'
+            data-lang='en'
+            data-loading='lazy'
+            crossorigin='anonymous'
+            async>
+    </script>
+  </div>
+  
+
+
+
+    
+  </article>
+  
+    <nav class="post-nav">
+      
+        <a href="/blog/2026/08/iptables-rule-zero-packets/" class="post-nav-link older">
+          <span class="post-nav-label">&larr; Older</span>
+          <span class="post-nav-title">My iptables Rule Matched 0 Packets in 9.8 GB</span>
+        </a>
+      
+      
+        <a href="/blog/2026/08/ephpm-ebpf-per-vhost-network-policy/" class="post-nav-link newer">
+          <span class="post-nav-label">Newer &rarr;</span>
+          <span class="post-nav-title">Per-Tenant Network Policy in One Process: ePHPm&#39;s eBPF Thread Tags</span>
+        </a>
+      
+    </nav>
+  
+
+      </main>
+      <section id="site-sidebar">
+  
+    <section id="recent-posts">
+      <header>
+        <h1>Recent Posts</h1>
+      </header>
+      
+      <article class="mini-post">
+          <a href="/blog/2026/10/ephpm-worker-mode-performance/" class="image" style="--bg-image: url('/img/2026/10/ephpm-worker-mode-performance-cover.svg');">
+    <img class="" src="/img/2026/10/ephpm-worker-mode-performance-cover.svg" alt="Diagram: before, hyper/tokio hands each request to one shared bounded channel whose waiter list all 20 PHP threads contend on; after, a dispatcher hands the job straight into the mailbox of the most recently idle PHP thread and only queues it in a FIFO overflow queue when every thread is busy">
+  </a>
+        <header>
+          <h2><a href="/blog/2026/10/ephpm-worker-mode-performance/">Fourth Place in Worker Mode, and Why It Wasn&#39;t PHP</a></h2>
+          <time class="published" datetime="2026-10-16 08:10:00 -0700 PDT">October 16, 2026</time>
+        </header>
+      </article>
+      
+      <article class="mini-post">
+          <a href="/blog/2026/10/ephpm-websockets-how-to/" class="image" style="--bg-image: url('/img/2026/10/ephpm-websockets-how-to-cover.svg');">
+    <img class="" src="/img/2026/10/ephpm-websockets-how-to-cover.svg" alt="Diagram: browsers hold sockets to ePHPm&#39;s Rust session tasks and registry; each connect, message and disconnect runs websocket.php once on the PHP thread pool, and ordinary HTTP requests push through ephpm_ws_broadcast">
+  </a>
+        <header>
+          <h2><a href="/blog/2026/10/ephpm-websockets-how-to/">WebSockets in ePHPm, From Zero to a Working Chat</a></h2>
+          <time class="published" datetime="2026-10-11 17:30:00 -0700 PDT">October 11, 2026</time>
+        </header>
+      </article>
+      
+      <article class="mini-post">
+          <a href="/blog/2026/10/webhooks-out-of-order-scheduler/" class="image" style="--bg-image: url('/img/2026/10/webhooks-out-of-order-scheduler-timeline.svg');">
+    <img class="" src="/img/2026/10/webhooks-out-of-order-scheduler-timeline.svg" alt="Timeline of three same-label jobs where a runner executing a build is destroyed 2.3 seconds before its in_progress webhook arrives">
+  </a>
+        <header>
+          <h2><a href="/blog/2026/10/webhooks-out-of-order-scheduler/">Webhooks Arrive Out of Order: How My Scheduler Killed Live Builds</a></h2>
+          <time class="published" datetime="2026-10-07 21:10:00 -0700 PDT">October 7, 2026</time>
+        </header>
+      </article>
+      
+      <article class="mini-post">
+          <a href="/blog/2026/10/go-proxmox-five-years-to-v0-8/" class="image" style="--bg-image: url('/img/2026/10/go-proxmox-five-years-to-v0-8-apidiff.svg');">
+    <img class="" src="/img/2026/10/go-proxmox-five-years-to-v0-8-apidiff.svg" alt="Horizontal bar chart of apidiff incompatible and compatible changes for every go-proxmox release from v0.1.0 to v0.8.2">
+  </a>
+        <header>
+          <h2><a href="/blog/2026/10/go-proxmox-five-years-to-v0-8/">Breaking Changes Without Breaking Trust: Five Years to go-proxmox v0.8</a></h2>
+          <time class="published" datetime="2026-10-04 19:40:00 -0700 PDT">October 4, 2026</time>
+        </header>
+      </article>
+      
+      <article class="mini-post">
+          <a href="/blog/2026/10/windows-sigterm-sparse-files/" class="image" style="--bg-image: url('/img/2026/10/windows-sigterm-sparse-files-connections.svg');">
+    <img class="" src="/img/2026/10/windows-sigterm-sparse-files-connections.svg" alt="Bar chart: 96 Cloudflare edge connections held by orphaned cloudflared processes versus 4 for the live daemon">
+  </a>
+        <header>
+          <h2><a href="/blog/2026/10/windows-sigterm-sparse-files/">Windows Grab-Bag: SIGTERM That Doesn&#39;t Exist and Sparse Files That Break Docker</a></h2>
+          <time class="published" datetime="2026-10-03 14:30:00 -0700 PDT">October 3, 2026</time>
+        </header>
+      </article>
+      
+      
+        <footer>
+          <a href="/blog" class="button">See More</a>
+        </footer>
+      
+    </section>
+  
+
+  
+    
+
+      <section id="categories">
+        <header>
+          <h1><a href="/categories">Categories</a></h1>
+        </header>
+        <ul>
+          
+          
+          <li>
+              <a href="/categories/ephpm/">ephpm<span class="count">33</span></a>
+          
+          <li>
+              <a href="/categories/go/">go<span class="count">30</span></a>
+          
+          <li>
+              <a href="/categories/php/">php<span class="count">23</span></a>
+          
+          <li>
+              <a href="/categories/rust/">rust<span class="count">15</span></a>
+          
+          <li>
+              <a href="/categories/homelab/">homelab<span class="count">14</span></a>
+          
+          <li>
+              <a href="/categories/windows/">windows<span class="count">14</span></a>
+          
+          <li>
+              <a href="/categories/ci/">ci<span class="count">9</span></a>
+          
+          <li>
+              <a href="/categories/databases/">databases<span class="count">9</span></a>
+          
+          <li>
+              <a href="/categories/security/">security<span class="count">9</span></a>
+          
+          <li>
+              <a href="/categories/containers/">containers<span class="count">7</span></a>
+          
+          <li>
+              <a href="/categories/tools/">tools<span class="count">5</span></a>
+          
+          <li>
+              <a href="/categories/ai-agents/">ai-agents<span class="count">4</span></a>
+          
+          </li>
+        </ul>
+      </section>
+    
+  
+
+  
+    <section id="mini-bio">
+      <header>
+        <h1>About</h1>
+      </header>
+      <p>Luther is a 20+ year software veteran specializing in backend APIs and architecting products. Employed at <a href='https://www.suse.com'>SUSE</a> as the Team Lead for the <a href='https://github.com/rancher/windows/issues'>Containers on Windows Team</a> working on <a href='https://rancher.com/'>Rancher</a> + <a href='https://kubernetes.io/'>Kubernetes</a></p>
+      <footer>
+        <a href="/about" class="button">Learn More</a>
+      </footer>
+    </section>
+  
+</section>
+
+      <footer id="site-footer">
+  
+      <ul class="socnet-icons">
+        
+
+        <li><a href="//github.com/luthermonson" target="_blank" rel="noopener" title="GitHub" class="fab fa-github"></a></li>
+
+
+
+
+
+
+
+
+
+
+
+<li><a href="//www.linkedin.com/in/luthermonson" target="_blank" rel="noopener" title="LinkedIn" class="fab fa-linkedin"></a></li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li><a href="//twitter.com/luthermonson" target="_blank" rel="noopener" title="Twitter" class="fab fa-twitter"></a></li>
+
+
+
+
+
+
+
+
+
+
+
+<li><a href="mailto:luther.monson@gmail.com" target="_blank" title="Email" class="far fa-envelope"></a></li>
+
+      </ul>
+  
+  <p class="copyright">
+    © 2026 Luther Monson
+      <br>
+    Theme: <a href='https://github.com/pacollins/hugo-future-imperfect-slim' target='_blank' rel='noopener'>Hugo Future Imperfect Slim</a><br>A <a href='https://html5up.net/future-imperfect' target='_blank' rel='noopener'>HTML5 UP port</a> | Powered by <a href='https://gohugo.io/' title='0.160.1' target='_blank' rel='noopener'>Hugo</a>
+  </p>
+</footer>
+<a id="back-to-top" href="#" class="fas fa-arrow-up fa-2x"></a>
+
+      <script src="/js/bundle.min.241b62ebc4792fe8c7a75879e5f710894f226f2b73342e9916b3a3b0526030cc.js" integrity="sha256-JBti68R5L&#43;jHp1h55fcQiU8ibytzNC6ZFrOjsFJgMMw="></script>
+    <script src="/js/add-on.js"></script>
+    </div>
+  </body>
+</html>

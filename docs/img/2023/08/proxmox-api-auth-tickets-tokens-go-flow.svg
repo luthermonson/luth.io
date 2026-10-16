@@ -1,0 +1,36 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 400" font-family="system-ui, -apple-system, Segoe UI, Roboto, sans-serif">
+  <defs>
+    <marker id="a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#444"/>
+    </marker>
+  </defs>
+  <rect width="960" height="400" fill="#ffffff"/>
+  <text x="480" y="32" text-anchor="middle" font-size="20" font-weight="600" fill="#222">Two ways into the Proxmox VE API</text>
+
+  <!-- ticket lane -->
+  <text x="30" y="72" font-size="15" font-weight="600" fill="#2b6cb0">WithCredentials (ticket)</text>
+  <rect x="30" y="86" width="150" height="54" rx="8" fill="#eef4fb" stroke="#2b6cb0"/>
+  <text x="105" y="118" text-anchor="middle" font-size="14" fill="#222">go-proxmox</text>
+  <rect x="330" y="86" width="270" height="54" rx="8" fill="#eef4fb" stroke="#2b6cb0"/>
+  <text x="465" y="110" text-anchor="middle" font-size="13" fill="#222" font-family="ui-monospace, Menlo, Consolas, monospace">POST /access/ticket</text>
+  <text x="465" y="128" text-anchor="middle" font-size="12" fill="#6b6b6b">username, password, otp?, realm?</text>
+  <line x1="180" y1="113" x2="326" y2="113" stroke="#444" stroke-width="1.5" marker-end="url(#a)"/>
+  <rect x="680" y="86" width="250" height="54" rx="8" fill="#eef4fb" stroke="#2b6cb0"/>
+  <text x="805" y="110" text-anchor="middle" font-size="13" fill="#222">ticket + CSRFPreventionToken</text>
+  <text x="805" y="128" text-anchor="middle" font-size="12" fill="#6b6b6b">ticket good for 2 hours</text>
+  <line x1="600" y1="113" x2="676" y2="113" stroke="#444" stroke-width="1.5" marker-end="url(#a)"/>
+  <rect x="30" y="160" width="900" height="56" rx="8" fill="#f7f7f7" stroke="#bbb"/>
+  <text x="50" y="184" font-size="13" fill="#222" font-family="ui-monospace, Menlo, Consolas, monospace">Cookie: PVEAuthCookie=PVE:root@pam:64E6...</text>
+  <text x="50" y="204" font-size="13" fill="#222" font-family="ui-monospace, Menlo, Consolas, monospace">CSRFPreventionToken: 64E6...:...   (required on POST / PUT / DELETE)</text>
+
+  <!-- token lane -->
+  <text x="30" y="262" font-size="15" font-weight="600" fill="#e07a1f">WithAPIToken (no login round trip)</text>
+  <rect x="30" y="276" width="150" height="54" rx="8" fill="#fdf1e6" stroke="#e07a1f"/>
+  <text x="105" y="308" text-anchor="middle" font-size="14" fill="#222">go-proxmox</text>
+  <rect x="330" y="276" width="600" height="54" rx="8" fill="#fdf1e6" stroke="#e07a1f"/>
+  <text x="350" y="300" font-size="13" fill="#222" font-family="ui-monospace, Menlo, Consolas, monospace">Authorization: PVEAPIToken=root@pam!mytoken=&lt;uuid secret&gt;</text>
+  <text x="350" y="320" font-size="12" fill="#6b6b6b">sent on every request, no CSRF token, permissions from the token (privsep) or the user</text>
+  <line x1="180" y1="303" x2="326" y2="303" stroke="#444" stroke-width="1.5" marker-end="url(#a)"/>
+
+  <text x="480" y="372" text-anchor="middle" font-size="12" fill="#6b6b6b">authHeaders picks one: a token if set, otherwise the session from the last /access/ticket call</text>
+</svg>

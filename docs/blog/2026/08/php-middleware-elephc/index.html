@@ -1,0 +1,773 @@
+<!doctype html>
+<html lang="en">
+  <head>
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-MSTSKGFWTX"></script>
+<script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+
+    gtag('config', 'G-MSTSKGFWTX');
+</script><meta charset="utf-8">
+<title>Middleware in PHP: Compiling It With elephc, Then Not Needing To - Luther Monson</title>
+<meta name="description" content="Fitting PHP into ePHPm&#39;s native middleware ABI with an ahead-of-time compiler, and what that experiment said about where PHP middleware should actually run.">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<meta name="twitter:card" content="summary_large_image"><meta name="twitter:site" content="@luthermonson">
+
+<meta property="og:site_name" content="Luther Monson">
+<meta property="og:title" content="Middleware in PHP: Compiling It With elephc, Then Not Needing To">
+<meta property="og:description" content="Fitting PHP into ePHPm&#39;s native middleware ABI with an ahead-of-time compiler, and what that experiment said about where PHP middleware should actually run.">
+<meta property="og:type" content="article">
+<meta property="og:url" content="https://luth.io/blog/2026/08/php-middleware-elephc/">
+    <meta property="og:image" content="https://luth.io/img/2026/08/php-middleware-elephc-cover.svg">
+    <meta property="og:image:alt" content="Timeline of an ePHPm request showing the native middleware lane before the body read and php: mounts inside the PHP request">
+
+
+  <link rel="manifest" href="/favicon/site.webmanifest?v=1">
+  <link rel="apple-touch-icon" sizes="180x180" href="/favicon/apple-touch-icon.png?v=1">
+  <link rel="icon" type="image/png" sizes="32x32" href="/favicon/favicon-32x32.png?v=1">
+  <link rel="icon" type="image/png" sizes="16x16" href="/favicon/favicon-16x16.png?v=1">
+  
+    <link rel="mask-icon" href="/favicon/safari-pinned-tab.svg?v=1" color="#ffffff">
+    <link rel="shortcut icon" href="/favicon/favicon.ico?v=1">
+    <meta name="msapplication-config" content="/favicon/browserconfig.xml?v=1">
+  
+  <meta name="msapplication-TileColor" content="#ffffff">
+  <meta name="theme-color" content="#ffffff">
+
+
+  <meta name="generator" content="Hugo 0.160.1">
+  <link rel="alternate" type="application/rss+xml" href="https://luth.io/index.xml" title="Luther Monson">
+  <link rel="stylesheet" href="/css/bundle.min.e1ffed86714fbb7eff75eab221c0c61b8260be0c7d1c08db0fcb7a2bdb6af7c9.css" integrity="sha256-4f/thnFPu37/deqyIcDGG4Jgvgx9HAjbD8t6K9tq98k="><link rel="stylesheet" href="/css/add-on.css">
+        <link rel="stylesheet" href="/css/code.css">
+        <link rel="stylesheet" href="/css/mobile.css">
+</head>
+
+  <body>
+    
+
+<header id="site-header">
+  <nav id="site-nav">
+    <h1 class="nav-title">
+      <a href="/" class="nav">
+        <img class="nav-avatar" src="/img/luther-monson-headshot.jpg" alt="" width="32" height="32">
+        
+          Blog
+        
+      </a>
+    </h1>
+    <menu id="site-nav-menu" class="flyout-menu menu">
+      
+        
+          
+          <a href="/" class="nav link"><i class='fa fa-home'></i> Home</a>
+        
+      
+        
+          
+          <a href="/about" class="nav link"><i class='far fa-id-card'></i> About</a>
+        
+      
+        
+          
+          <a href="/blog" class="nav link"><i class='far fa-newspaper'></i> Blog</a>
+        
+      
+        
+          
+          <a href="/archive" class="nav link"><i class='far fa-calendar-alt'></i> Archive</a>
+        
+      
+        
+          
+          <a href="/categories" class="nav link"><i class='fas fa-sitemap'></i> Categories</a>
+        
+      
+      <a href="#share-menu" class="nav link share-toggle"><i class="fas fa-share-alt">&nbsp;</i>Share</a>
+      <a href="#search-input" class="nav link search-toggle"><i class="fas fa-search">&nbsp;</i>Search</a>
+    </menu>
+    <a href="#search-input" class="nav search-toggle"><i class="fas fa-search fa-2x">&nbsp;</i></a>
+    <a href="#share-menu" class="nav share-toggle"><i class="fas fa-share-alt fa-2x">&nbsp;</i></a>
+    
+    <a href="#site-nav" class="nav nav-toggle"><i class="fas fa-bars fa-2x"></i></a>
+  </nav>
+  <menu id="search" class="menu"><input id="search-input" class="search-input menu"></input><div id="search-results" class="search-results menu"></div></menu>
+  
+  
+    <menu id="share-menu" class="flyout-menu menu">
+      <h1>Share Post</h1>
+      
+
+
+
+
+  
+    
+    <a href="//twitter.com/share?text=Middleware%20in%20PHP%3a%20Compiling%20It%20With%20elephc%2c%20Then%20Not%20Needing%20To&amp;url=https%3a%2f%2fluth.io%2fblog%2f2026%2f08%2fphp-middleware-elephc%2f" target="_blank" rel="noopener" class="nav share-btn twitter">
+        <p>Twitter</p>
+      </a>
+  
+
+  
+      <a href="//www.facebook.com/sharer/sharer.php?u=https%3a%2f%2fluth.io%2fblog%2f2026%2f08%2fphp-middleware-elephc%2f" target="_blank" rel="noopener" class="nav share-btn facebook">
+        <p>Facebook</p>
+        </a>
+  
+
+  
+    <a href="//www.reddit.com/submit?url=https%3a%2f%2fluth.io%2fblog%2f2026%2f08%2fphp-middleware-elephc%2f&amp;title=Middleware%20in%20PHP%3a%20Compiling%20It%20With%20elephc%2c%20Then%20Not%20Needing%20To" target="_blank" rel="noopener" class="nav share-btn reddit">
+          <p>Reddit</p>
+        </a>
+  
+
+  
+        <a href="//www.linkedin.com/shareArticle?url=https%3a%2f%2fluth.io%2fblog%2f2026%2f08%2fphp-middleware-elephc%2f&amp;title=Middleware%20in%20PHP%3a%20Compiling%20It%20With%20elephc%2c%20Then%20Not%20Needing%20To" target="_blank" rel="noopener" class="nav share-btn linkedin">
+            <p>LinkedIn</p>
+          </a>
+  
+
+  
+        <a href="//www.pinterest.com/pin/create/button/?url=https%3a%2f%2fluth.io%2fblog%2f2026%2f08%2fphp-middleware-elephc%2f&amp;description=Middleware%20in%20PHP%3a%20Compiling%20It%20With%20elephc%2c%20Then%20Not%20Needing%20To" target="_blank" rel="noopener" class="nav share-btn pinterest">
+          <p>Pinterest</p>
+        </a>
+  
+
+  
+        <a href="mailto:?subject=Check%20out%20this%20post%20by Luther%20Monson&amp;body=https%3a%2f%2fluth.io%2fblog%2f2026%2f08%2fphp-middleware-elephc%2f" target="_blank" class="nav share-btn email" data-proofer-ignore>
+          <p>Email</p>
+        </a>
+  
+
+
+    </menu>
+  
+</header>
+
+    <div id="wrapper">
+      <section id="site-intro" class="hidden-single-column">
+  <a href="/"><img src="/img/luther-monson-headshot.jpg" class="circle" width="100" alt="Luther Monson, Staff Software Engineer at SUSE" /></a>
+  <header>
+    <h1>Luther Monson</h1>
+  </header>
+  <main>
+    <p>Go by way of PHP &middot; Containers &middot; VMs &middot; Windows &middot; Kubernetes</p>
+  </main>
+  
+    <footer>
+      <ul class="socnet-icons">
+        
+
+        <li><a href="//github.com/luthermonson" target="_blank" rel="noopener" title="GitHub" class="fab fa-github"></a></li>
+
+
+
+
+
+
+
+
+
+
+
+<li><a href="//www.linkedin.com/in/luthermonson" target="_blank" rel="noopener" title="LinkedIn" class="fab fa-linkedin"></a></li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li><a href="//twitter.com/luthermonson" target="_blank" rel="noopener" title="Twitter" class="fab fa-twitter"></a></li>
+
+
+
+
+
+
+
+
+
+
+
+<li><a href="mailto:luther.monson@gmail.com" target="_blank" title="Email" class="far fa-envelope"></a></li>
+
+      </ul>
+    </footer>
+  
+</section>
+
+      <main id="site-main">
+        
+  <article>
+    <div class="post">
+      <header>
+  <div class="title">
+    
+      <h2><a href="/blog/2026/08/php-middleware-elephc/">Middleware in PHP: Compiling It With elephc, Then Not Needing To</a></h2>
+    
+    
+      <p>Fitting PHP into ePHPm&#39;s native middleware ABI with an ahead-of-time compiler, and what that experiment said about where PHP middleware should actually run.</p>
+    
+  </div>
+  <div class="meta">
+    <time datetime="2026-08-31 20:50:00 -0700 PDT">August 31, 2026</time>
+    
+    <p>9-Minute Read</p>
+  </div>
+</header>
+
+      <div id="socnet-share">
+        
+
+
+
+
+  
+    
+    <a href="//twitter.com/share?text=Middleware%20in%20PHP%3a%20Compiling%20It%20With%20elephc%2c%20Then%20Not%20Needing%20To&amp;url=https%3a%2f%2fluth.io%2fblog%2f2026%2f08%2fphp-middleware-elephc%2f" target="_blank" rel="noopener" class="nav share-btn twitter">
+        <p>Twitter</p>
+      </a>
+  
+
+  
+      <a href="//www.facebook.com/sharer/sharer.php?u=https%3a%2f%2fluth.io%2fblog%2f2026%2f08%2fphp-middleware-elephc%2f" target="_blank" rel="noopener" class="nav share-btn facebook">
+        <p>Facebook</p>
+        </a>
+  
+
+  
+    <a href="//www.reddit.com/submit?url=https%3a%2f%2fluth.io%2fblog%2f2026%2f08%2fphp-middleware-elephc%2f&amp;title=Middleware%20in%20PHP%3a%20Compiling%20It%20With%20elephc%2c%20Then%20Not%20Needing%20To" target="_blank" rel="noopener" class="nav share-btn reddit">
+          <p>Reddit</p>
+        </a>
+  
+
+  
+        <a href="//www.linkedin.com/shareArticle?url=https%3a%2f%2fluth.io%2fblog%2f2026%2f08%2fphp-middleware-elephc%2f&amp;title=Middleware%20in%20PHP%3a%20Compiling%20It%20With%20elephc%2c%20Then%20Not%20Needing%20To" target="_blank" rel="noopener" class="nav share-btn linkedin">
+            <p>LinkedIn</p>
+          </a>
+  
+
+  
+        <a href="//www.pinterest.com/pin/create/button/?url=https%3a%2f%2fluth.io%2fblog%2f2026%2f08%2fphp-middleware-elephc%2f&amp;description=Middleware%20in%20PHP%3a%20Compiling%20It%20With%20elephc%2c%20Then%20Not%20Needing%20To" target="_blank" rel="noopener" class="nav share-btn pinterest">
+          <p>Pinterest</p>
+        </a>
+  
+
+  
+        <a href="mailto:?subject=Check%20out%20this%20post%20by Luther%20Monson&amp;body=https%3a%2f%2fluth.io%2fblog%2f2026%2f08%2fphp-middleware-elephc%2f" target="_blank" class="nav share-btn email" data-proofer-ignore>
+          <p>Email</p>
+        </a>
+  
+
+
+      </div>
+      <div class="content">
+        
+        <p><a href="https://github.com/ephpm/ephpm">ePHPm</a> middleware runs <em>before</em> PHP. It&rsquo;s a small versioned C ABI, loaded with
+<code>dlopen</code>, that gets to look at a request and reject it before PHP boots or the request body is read. That&rsquo;s the
+right shape for a gateway, and it&rsquo;s the wrong shape for most PHP shops, who want to write their middleware in PHP.
+This is the story of compiling PHP into a native <code>.so</code> to fit that ABI, finding exactly where it broke, and then
+building the lane that should have existed in the first place.</p>
+<h3 id="the-native-middleware-abi">The native middleware ABI</h3>
+<p>A module is a shared library (<code>.so</code>, <code>.dylib</code> or <code>.dll</code>) that exports four symbols (a fifth, optional response-phase hook
+arrived in v0.8.0):</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-c" data-lang="c"><span class="line"><span class="cl"><span class="kt">int32_t</span>     <span class="nf">ephpm_middleware_init</span><span class="p">(</span><span class="kt">uint32_t</span> <span class="n">abi_version</span><span class="p">,</span>
+</span></span><span class="line"><span class="cl">                                  <span class="k">const</span> <span class="kt">char</span> <span class="o">*</span><span class="n">config_json</span><span class="p">,</span>
+</span></span><span class="line"><span class="cl">                                  <span class="k">const</span> <span class="n">ephpm_host_v1</span> <span class="o">*</span><span class="n">host</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl"><span class="kt">int32_t</span>     <span class="nf">ephpm_middleware_invoke</span><span class="p">(</span><span class="k">const</span> <span class="kt">ephpm_request_t</span> <span class="o">*</span><span class="n">req</span><span class="p">,</span>
+</span></span><span class="line"><span class="cl">                                    <span class="kt">ephpm_response_t</span> <span class="o">*</span><span class="n">out</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl"><span class="kt">void</span>        <span class="nf">ephpm_middleware_shutdown</span><span class="p">(</span><span class="kt">void</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl"><span class="k">const</span> <span class="kt">char</span> <span class="o">*</span><span class="nf">ephpm_middleware_describe</span><span class="p">(</span><span class="kt">void</span><span class="p">);</span>   <span class="cm">/* optional */</span>
+</span></span></code></pre></div><p>The host hands the module a callback table at <code>init</code>: request accessors, the <code>tracing</code> logger, and the
+cluster-replicated KV store. The module never <code>dlsym</code>s host symbols, which would need <code>-rdynamic</code> on Linux and has no
+clean equivalent on Windows. The top byte of <code>abi_version</code> is the major and gates compatibility; the lower bytes are a
+minor that only ever grows the table by appending, so a module built against a shorter table stays correct on a newer
+host. It just can&rsquo;t see the slots it didn&rsquo;t declare.</p>
+<p><code>invoke</code> returns one of three verdicts: CONTINUE, RESPOND (short-circuit, PHP never runs) or REWRITE. Because the
+contract is plain C, ePHPm doesn&rsquo;t care what language produced the <code>.so</code>. That&rsquo;s the opening an ahead-of-time PHP
+compiler walks through.</p>
+<h3 id="the-elephc-experiment">The elephc experiment</h3>
+<p><a href="https://github.com/illegalstudio/elephc">elephc</a> is a real, MIT-licensed, ahead-of-time PHP-to-native compiler. It
+parses PHP, type-checks it, lowers it through its own SSA IR and emits assembly. There&rsquo;s no Zend Engine involved, and
+<code>--emit cdylib</code> turns functions marked <code>#[Export]</code> into C exports. So the question was simple: can I write ePHPm
+middleware in PHP, compile it, and load it into a stock ePHPm release?</p>
+<p>The answer, verified on 2026-08-20 against elephc 0.26.4 and the published ePHPm v0.7.3 Linux binary, was yes. This
+PHP ran as native code before PHP dispatch:</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-php" data-lang="php"><span class="line"><span class="cl"><span class="o">&lt;?</span><span class="nx">php</span>
+</span></span><span class="line"><span class="cl"><span class="nx">extern</span> <span class="k">function</span> <span class="nf">mw_set_header</span><span class="p">(</span><span class="nx">string</span> <span class="nv">$name</span><span class="p">,</span> <span class="nx">string</span> <span class="nv">$value</span><span class="p">)</span><span class="o">:</span> <span class="nx">void</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl"><span class="nx">extern</span> <span class="k">function</span> <span class="nf">mw_log</span><span class="p">(</span><span class="nx">string</span> <span class="nv">$msg</span><span class="p">)</span><span class="o">:</span> <span class="nx">void</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="c1">#[Export]
+</span></span></span><span class="line"><span class="cl"><span class="k">function</span> <span class="nf">mw_invoke</span><span class="p">(</span><span class="nx">string</span> <span class="nv">$method</span><span class="p">,</span> <span class="nx">string</span> <span class="nv">$path</span><span class="p">)</span><span class="o">:</span> <span class="nx">int</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">    <span class="nx">mw_log</span><span class="p">(</span><span class="s2">&#34;elephc-mw: &#34;</span> <span class="o">.</span> <span class="nv">$method</span> <span class="o">.</span> <span class="s2">&#34; &#34;</span> <span class="o">.</span> <span class="nv">$path</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">    <span class="nx">mw_set_header</span><span class="p">(</span><span class="s2">&#34;X-Elephc&#34;</span><span class="p">,</span> <span class="s2">&#34;1&#34;</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">    <span class="nx">mw_set_header</span><span class="p">(</span><span class="s2">&#34;X-Route&#34;</span><span class="p">,</span> <span class="nx">classify</span><span class="p">(</span><span class="nv">$path</span><span class="p">));</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">    <span class="k">return</span> <span class="mi">0</span><span class="p">;</span> <span class="c1">// ACTION_CONTINUE
+</span></span></span><span class="line"><span class="cl"><span class="p">}</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="k">function</span> <span class="nf">classify</span><span class="p">(</span><span class="nx">string</span> <span class="nv">$path</span><span class="p">)</span><span class="o">:</span> <span class="nx">string</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">    <span class="k">if</span> <span class="p">(</span><span class="nx">strlen</span><span class="p">(</span><span class="nv">$path</span><span class="p">)</span> <span class="o">&gt;=</span> <span class="mi">5</span> <span class="o">&amp;&amp;</span> <span class="nx">substr</span><span class="p">(</span><span class="nv">$path</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">5</span><span class="p">)</span> <span class="o">===</span> <span class="s2">&#34;/api/&#34;</span><span class="p">)</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">        <span class="k">return</span> <span class="s2">&#34;api&#34;</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">    <span class="p">}</span>
+</span></span><span class="line"><span class="cl">    <span class="k">return</span> <span class="s2">&#34;web&#34;</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl"><span class="p">}</span>
+</span></span></code></pre></div><p>And the headers showed up on live responses, with the log lines landing in ePHPm&rsquo;s own tracing output:</p>
+<pre tabindex="0"><code>$ curl -sS -D- -o /dev/null http://127.0.0.1:8299/api/users.php
+HTTP/1.1 200 OK
+x-elephc: 1
+x-route: api
+
+INFO ephpm_server::middleware: middleware initialised
+     module=/root/mwx/libelephc_mw.so
+     describe=elephc-php-middleware (experimental adapter)
+INFO ephpm_middleware: elephc-mw: GET /api/users.php
+</code></pre><h3 id="the-catch-a-mandatory-c-shim">The catch: a mandatory C shim</h3>
+<p>elephc&rsquo;s cdylib marshaller only handles <code>int</code>, <code>float</code>, <code>bool</code> and <code>string</code> in exported signatures. ePHPm&rsquo;s ABI is
+built on struct pointers. Trying to export the entry points straight from PHP fails at compile time:</p>
+<pre tabindex="0"><code>$ elephc --emit cdylib abi_probe.php
+error[abi_probe.php:11:1]: exported function &#39;ephpm_middleware_init&#39;
+  parameter #3 has unsupported type for --emit cdylib v1;
+  supported: int, float, bool, string
+</code></pre><p>So there&rsquo;s a ~180 line C shim that&rsquo;s not optional. It exports the four ABI symbols, dereferences the host table and
+request struct, flattens the request into strings, calls the PHP <code>mw_invoke</code>, and provides <code>mw_set_header</code> and
+<code>mw_log</code>. The PHP side&rsquo;s <code>extern</code> declarations are left as undefined symbols in the elephc output and get resolved
+against the shim at <code>dlopen</code>:</p>
+<pre tabindex="0"><code>ePHPm  --dlopen--&gt;  libelephc_mw.so (C shim, exports ephpm_middleware_*)
+                          |
+                          +--NEEDED--&gt; libmw_php.so (elephc output, exports mw_invoke)
+
+$ nm -D libmw_php.so | grep -E &#39; T | U &#39;
+T mw_invoke
+U mw_log            &lt;-- resolved from the shim at dlopen
+U mw_set_header
+</code></pre><p>A couple of small gotchas along the way: the shim needs <code>-Wl,-rpath,'$ORIGIN'</code> or ePHPm fails at startup with
+<code>cannot open shared object file</code>, and since elephc exports can&rsquo;t return strings, headers go out through callbacks
+instead of return values.</p>
+<h3 id="do-your-composer-libraries-work-no">Do your Composer libraries work? No.</h3>
+<p>This was the claim most worth being careful about, so I tested it instead of assuming it. Three real packages,
+installed with Composer and fed to the compiler:</p>
+<table>
+  <thead>
+      <tr>
+          <th>Package</th>
+          <th>Result</th>
+          <th>Root cause</th>
+      </tr>
+  </thead>
+  <tbody>
+      <tr>
+          <td>Composer&rsquo;s own <code>vendor/autoload.php</code></td>
+          <td>fails</td>
+          <td>assignment inside a <code>while</code> condition, typed static properties</td>
+      </tr>
+      <tr>
+          <td><code>nikic/fast-route</code></td>
+          <td>fails</td>
+          <td><code>new $options['routeCollector']</code> (dynamic class name after <code>new</code>)</td>
+      </tr>
+      <tr>
+          <td><code>firebase/php-jwt</code></td>
+          <td>fails</td>
+          <td><code>(object)</code> cast, <code>#[\SensitiveParameter]</code> parameter attribute</td>
+      </tr>
+  </tbody>
+</table>
+<p>The first row is the important one. Composer&rsquo;s generated class loader doesn&rsquo;t compile, so <code>require 'vendor/autoload.php'</code> is a hard stop for basically every modern PHP project. The failing files are kept in the repo
+as regression tests for when elephc&rsquo;s coverage improves. elephc&rsquo;s own README is candid about this (&ldquo;not a drop-in
+replacement for an entire dynamic framework today&rdquo;) and its stdlib coverage is broad. The gap is parser and feature
+coverage on real-world library code. What works today is first-party PHP: functions, string and array builtins, control
+flow, regex. That&rsquo;s a useful subset for middleware, but it&rsquo;s <em>your</em> code, not your dependency tree.</p>
+<p>More hard limits came out of the run:</p>
+<ul>
+<li>elephc&rsquo;s cdylib runtime has no locking around its heap, and ePHPm invokes middleware concurrently. So the shim wraps
+every call in a global mutex, and every middleware call runs one at a time.</li>
+<li>No Windows target, even though ePHPm&rsquo;s middleware lane loads <code>.dll</code>s fine.</li>
+<li>A PHP fatal inside the cdylib terminates the process.</li>
+<li>The headline RESPOND path, rejecting a request before PHP boots, was never exercised. Only CONTINUE was.</li>
+</ul>
+<h3 id="the-contrast-case-the-same-abi-from-rust">The contrast case: the same ABI from Rust</h3>
+<p>After publishing the elephc repo it bothered me that our only worked example of the ABI needed a hand-written C
+shim. That makes the ABI look harder than it is. So I added an in-tree Rust example
+(<a href="https://github.com/ephpm/ephpm/pull/375">#375</a>): <code>api-gate</code>, an API key check with a fixed-window rate limit on
+<code>kv_incr_ttl</code> and runtime revocation through KV. It&rsquo;s ~200 lines of ordinary safe Rust with zero <code>unsafe</code> in the module itself. The
+<code>declare!</code> macro supplies the four exports, the version handshake, config parsing, panic containment and response
+marshaling:</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-rust" data-lang="rust"><span class="line"><span class="cl"><span class="k">fn</span> <span class="nf">invoke</span><span class="p">(</span><span class="o">&amp;</span><span class="bp">self</span><span class="p">,</span><span class="w"> </span><span class="n">req</span>: <span class="kp">&amp;</span><span class="nc">Request</span><span class="o">&lt;</span><span class="nb">&#39;_</span><span class="o">&gt;</span><span class="p">)</span><span class="w"> </span>-&gt; <span class="nc">Response</span><span class="w"> </span><span class="p">{</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="o">!</span><span class="n">req</span><span class="p">.</span><span class="n">path</span><span class="p">().</span><span class="n">starts_with</span><span class="p">(</span><span class="o">&amp;</span><span class="bp">self</span><span class="p">.</span><span class="n">prefix</span><span class="p">)</span><span class="w"> </span><span class="p">{</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">        </span><span class="k">return</span><span class="w"> </span><span class="n">Response</span>::<span class="n">cont</span><span class="p">().</span><span class="n">response_header</span><span class="p">(</span><span class="s">&#34;X-Api-Gate&#34;</span><span class="p">,</span><span class="w"> </span><span class="s">&#34;bypass&#34;</span><span class="p">);</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="p">}</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="kd">let</span><span class="w"> </span><span class="n">host</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">req</span><span class="p">.</span><span class="n">host</span><span class="p">();</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="kd">let</span><span class="w"> </span><span class="nb">Some</span><span class="p">(</span><span class="n">tenant</span><span class="p">)</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">req</span><span class="p">.</span><span class="n">header</span><span class="p">(</span><span class="s">&#34;X-Api-Key&#34;</span><span class="p">).</span><span class="n">and_then</span><span class="p">(</span><span class="o">|</span><span class="n">key</span><span class="o">|</span><span class="w"> </span><span class="bp">self</span><span class="p">.</span><span class="n">keys</span><span class="p">.</span><span class="n">get</span><span class="p">(</span><span class="n">key</span><span class="p">))</span><span class="w"> </span><span class="k">else</span><span class="w"> </span><span class="p">{</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">        </span><span class="k">return</span><span class="w"> </span><span class="bp">Self</span>::<span class="n">reject</span><span class="p">(</span><span class="mi">401</span><span class="p">,</span><span class="w"> </span><span class="s">&#34;missing or unknown X-Api-Key&#34;</span><span class="p">)</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">            </span><span class="p">.</span><span class="n">header</span><span class="p">(</span><span class="s">&#34;WWW-Authenticate&#34;</span><span class="p">,</span><span class="w"> </span><span class="s">&#34;ApiKey realm=</span><span class="se">\&#34;</span><span class="s">api-gate</span><span class="se">\&#34;</span><span class="s">&#34;</span><span class="p">);</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="p">};</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="c1">// ... revocation via host.kv_get(), rate limit via host.kv_incr_ttl() ...
+</span></span></span><span class="line"><span class="cl"><span class="p">}</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="n">ephpm_middleware</span>::<span class="fm">declare!</span><span class="p">(</span><span class="n">ApiGate</span><span class="p">);</span><span class="w">
+</span></span></span></code></pre></div><p>It exercises RESPOND three ways (401, 403, 429), and the missing <code>x-powered-by</code> header on those responses proves PHP
+never ran:</p>
+<pre tabindex="0"><code>HTTP/1.1 401 Unauthorized
+www-authenticate: ApiKey realm=&#34;api-gate&#34;
+{&#34;error&#34;:&#34;missing or unknown X-Api-Key&#34;}
+</code></pre><p>The shim was elephc&rsquo;s limitation, not the ABI&rsquo;s. Don&rsquo;t let your first example make your ABI look harder than it is.</p>
+<h3 id="what-php-developers-actually-wanted-the-php-lane">What PHP developers actually wanted: the <code>php:</code> lane</h3>
+<p>Here&rsquo;s the thing the elephc run made obvious. Nobody asking for &ldquo;middleware in PHP&rdquo; was asking for PHP compiled to
+native code. They wanted to write a PHP file, point config at it, and have it run before their app. So that&rsquo;s what
+<a href="https://github.com/ephpm/ephpm/pull/382">#382</a> built:</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-toml" data-lang="toml"><span class="line"><span class="cl"><span class="p">[[</span><span class="nx">middleware</span><span class="p">]]</span>
+</span></span><span class="line"><span class="cl"><span class="nx">library</span> <span class="p">=</span> <span class="s2">&#34;php:middleware.php&#34;</span>   <span class="c"># relative to the request&#39;s document root</span>
+</span></span><span class="line"><span class="cl"><span class="nx">match</span>   <span class="p">=</span> <span class="s2">&#34;/api/*&#34;</span>
+</span></span><span class="line"><span class="cl"><span class="nx">order</span>   <span class="p">=</span> <span class="mi">30</span>
+</span></span><span class="line"><span class="cl"><span class="nx">config</span>  <span class="p">=</span> <span class="p">{</span> <span class="nx">realm</span> <span class="p">=</span> <span class="s2">&#34;admin&#34;</span> <span class="p">}</span>
+</span></span></code></pre></div><div class="highlight"><pre tabindex="0" class="chroma"><code class="language-php" data-lang="php"><span class="line"><span class="cl"><span class="o">&lt;?</span><span class="nx">php</span>
+</span></span><span class="line"><span class="cl"><span class="nv">$cfg</span>  <span class="o">=</span> <span class="nx">json_decode</span><span class="p">(</span><span class="nx">ephpm_middleware_config</span><span class="p">()</span> <span class="o">??</span> <span class="s1">&#39;{}&#39;</span><span class="p">,</span> <span class="k">true</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl"><span class="nv">$auth</span> <span class="o">=</span> <span class="nv">$_SERVER</span><span class="p">[</span><span class="s1">&#39;HTTP_AUTHORIZATION&#39;</span><span class="p">]</span> <span class="o">??</span> <span class="s1">&#39;&#39;</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl"><span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="nx">str_starts_with</span><span class="p">(</span><span class="nv">$auth</span><span class="p">,</span> <span class="s1">&#39;Bearer &#39;</span><span class="p">))</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">    <span class="nx">http_response_code</span><span class="p">(</span><span class="mi">401</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">    <span class="nx">header</span><span class="p">(</span><span class="s1">&#39;WWW-Authenticate: Bearer realm=&#34;&#39;</span> <span class="o">.</span> <span class="nv">$cfg</span><span class="p">[</span><span class="s1">&#39;realm&#39;</span><span class="p">]</span> <span class="o">.</span> <span class="s1">&#39;&#34;&#39;</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">    <span class="k">echo</span> <span class="s1">&#39;missing bearer token&#39;</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">    <span class="k">exit</span><span class="p">;</span>                                     <span class="c1">// RESPOND, the app never runs
+</span></span></span><span class="line"><span class="cl"><span class="p">}</span>
+</span></span><span class="line"><span class="cl"><span class="nv">$_SERVER</span><span class="p">[</span><span class="s1">&#39;HTTP_X_TOKEN&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="nx">substr</span><span class="p">(</span><span class="nv">$auth</span><span class="p">,</span> <span class="mi">7</span><span class="p">);</span>  <span class="c1">// REWRITE
+</span></span></span><span class="line"><span class="cl"><span class="nx">header</span><span class="p">(</span><span class="s1">&#39;X-Auth-Checked: 1&#39;</span><span class="p">);</span>                  <span class="c1">// response header
+</span></span></span><span class="line"><span class="cl"><span class="c1">// falling off the end = CONTINUE
+</span></span></span></code></pre></div><p><img src="/img/2026/08/php-middleware-elephc-cover.svg" alt="Two middleware lanes in ePHPm"></p>
+<p>A <code>php:</code> mount runs in the same PHP request as the application, immediately before it. That&rsquo;s where
+<code>auto_prepend_file</code> runs, except it&rsquo;s scoped by path pattern, supports multiple files and carries config. That position
+is the whole design. The middleware inherits the superglobals, <code>open_basedir</code>, the OPcache vhost, the per-site DB
+session, the KV keyspace, the execution timer and the crash guard <em>because it&rsquo;s the same request</em>. There&rsquo;s no second
+PHP context to configure, so there&rsquo;s none to get wrong.</p>
+<h3 id="three-things-only-running-it-revealed">Three things only running it revealed</h3>
+<p><strong>You can&rsquo;t use <code>php_execute_script()</code>.</strong> PHP 8 implements <code>exit()</code> as an unwind-exit exception, and both
+<code>php_execute_script()</code> and <code>zend_execute_scripts()</code> hand every pending exception to <code>zend_exception_error()</code>, which
+clears <code>EG(exception)</code> and returns FAILURE whether the script called <code>exit()</code>, threw, or failed to parse. On return
+there&rsquo;s nothing left to tell &ldquo;called <code>exit()</code>&rdquo; apart from &ldquo;blew up&rdquo;, and the first cut didn&rsquo;t look at the return value
+at all, so the short-circuit tests failed with the app&rsquo;s output appended after the middleware&rsquo;s 401. The chain now runs
+PHP&rsquo;s own loop body inline with that one case split out.</p>
+<p><strong>An uncaught <code>Throwable</code> fails open.</strong> <code>zend_exception_error</code> reports it with <code>E_DONT_BAIL</code>, so execution returns
+normally; inside the inline loop, <code>PG(last_error_type)</code> is what&rsquo;s left to record it. Without an explicit check the app runs anyway, which for an auth
+middleware is an auth bypass. It&rsquo;s checked after every mount now, and every failure mode (missing file, parse error,
+uncaught exception, fatal) is a 500 where the application script does not run.</p>
+<p><strong>The <code>chdir</code> had to go.</strong> Matching <code>auto_prepend_file</code> exactly meant a getcwd, chdir and restore around the chain.
+That measured ~55 µs per request on Windows, about 5x everything else the lane does. I removed it and the docs say to
+use <code>__DIR__</code>.</p>
+<h3 id="what-it-costs">What it costs</h3>
+<p>From the PR&rsquo;s benchmark: release build, OPcache on, 1000 sequential keep-alive requests to <code>&lt;?php echo 'ok';</code>, best of
+11, each middleware setting three response headers. The baseline with no middleware was 365.7 µs per request.</p>
+<p><img src="/img/2026/08/php-middleware-elephc-cost.svg" alt="Added latency per middleware lane"></p>
+<p>In isolation the Rust builtin&rsquo;s marginal cost is 476 ns, so a <code>php:</code> mount is ~25x a Rust builtin&rsquo;s isolated cost
+(over HTTP the gap shrinks to ~3x, see the chart) and also ~3% of a trivial PHP request. Both framings are true, so pick the honest one for your audience. An empty middleware file costs
+the same as a working one; the cost is engaging the lane, not your PHP.</p>
+<h3 id="the-tradeoff-to-own">The tradeoff to own</h3>
+<p>Native modules run before the body is read, unless you opt into buffering a bounded body for them with
+<code>middleware_body_limit</code>. <code>php:</code> mounts run after. A PHP middleware can&rsquo;t reject an upload before
+it&rsquo;s transferred, and no <code>order</code> value changes that, so startup logs the resolved plan and it&rsquo;s never a surprise.</p>
+<p>For multi-tenancy, mount paths resolve against the <em>request&rsquo;s</em> document root, so each tenant brings their own file and
+it has no more reach than their <code>index.php</code>. Absolute paths are rejected at startup in every mode, since sharing one operator
+file across tenants would need a hole in every vhost&rsquo;s <code>open_basedir</code>. Worker mode is a startup error rather than a
+warning: there&rsquo;s no per-request point to run a mount, so it would silently never run.</p>
+<h3 id="takeaway">Takeaway</h3>
+<p>The elephc run answered the feasibility question. A stale tracking note in the ePHPm repo still listed &ldquo;native
+middleware via elephc cdylib&rdquo; as planned, spec only, no code; it&rsquo;s now verified working with known limits. It also showed what the real request was. So both lanes stay:
+native for &ldquo;reject before the body&rdquo;, PHP for everything else.</p>
+<p>The other thing I&rsquo;d repeat is how that README was written. Every claim is marked <strong>Verified</strong> or <strong>Not verified</strong>, and
+that&rsquo;s what made the follow-up decision easy. It&rsquo;s very tempting to write up a prototype as if everything you designed
+also ran. It&rsquo;s much more useful to write down exactly which parts did.</p>
+<h3 id="links">Links</h3>
+<ul>
+<li><a href="https://github.com/ephpm/elephc-middleware-example">ephpm/elephc-middleware-example</a></li>
+<li><a href="https://github.com/illegalstudio/elephc">elephc</a> and its <a href="https://elephc.dev/docs/beyond-php/cdylib/">cdylib docs</a></li>
+<li>Rust <code>api-gate</code> example: <a href="https://github.com/ephpm/ephpm/pull/375">ephpm #375</a></li>
+<li><code>php:</code> middleware lane: <a href="https://github.com/ephpm/ephpm/pull/382">ephpm #382</a></li>
+<li>Guide: <code>site/content/guides/native-middleware.md</code> in the <a href="https://github.com/ephpm/ephpm">ePHPm repo</a></li>
+</ul>
+
+      </div>
+      <footer>
+        <div class="stats">
+  
+    <ul class="categories">
+      
+        
+          <li><a class="article-terms-link" href="/categories/ephpm/">ephpm</a></li>
+        
+          <li><a class="article-terms-link" href="/categories/php/">php</a></li>
+        
+          <li><a class="article-terms-link" href="/categories/rust/">rust</a></li>
+        
+      
+    </ul>
+  
+  
+    <ul class="tags">
+      
+        
+          <li><a class="article-terms-link" href="/tags/php/">php</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/rust/">rust</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/ephpm/">ephpm</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/elephc/">elephc</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/middleware/">middleware</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/ffi/">ffi</a></li>
+        
+      
+    </ul>
+  
+</div>
+
+      </footer>
+    </div>
+    
+      
+  
+  <div class='post giscus-wrap'>
+    <script src='https://giscus.app/client.js'
+            data-repo='luthermonson/luth.io'
+            data-repo-id='R_kgDOGvFBXQ'
+            data-category='Announcements'
+            data-category-id='DIC_kwDOGvFBXc4DH_gv'
+            data-mapping='pathname'
+            data-strict='1'
+            data-reactions-enabled='1'
+            data-emit-metadata='0'
+            data-input-position='top'
+            data-theme='light'
+            data-lang='en'
+            data-loading='lazy'
+            crossorigin='anonymous'
+            async>
+    </script>
+  </div>
+  
+
+
+
+    
+  </article>
+  
+    <nav class="post-nav">
+      
+        <a href="/blog/2026/08/opcache-on-windows-two-silent-failures/" class="post-nav-link older">
+          <span class="post-nav-label">&larr; Older</span>
+          <span class="post-nav-title">OPcache on Windows: Two Silent Failures</span>
+        </a>
+      
+      
+        <a href="/blog/2026/09/remotedialer-data-race-two-thirds-fix/" class="post-nav-link newer">
+          <span class="post-nav-label">Newer &rarr;</span>
+          <span class="post-nav-title">Finding a Data Race in rancher/remotedialer, Then Pinning Only Two-Thirds of the Fix</span>
+        </a>
+      
+    </nav>
+  
+
+      </main>
+      <section id="site-sidebar">
+  
+    <section id="recent-posts">
+      <header>
+        <h1>Recent Posts</h1>
+      </header>
+      
+      <article class="mini-post">
+          <a href="/blog/2026/10/ephpm-worker-mode-performance/" class="image" style="--bg-image: url('/img/2026/10/ephpm-worker-mode-performance-cover.svg');">
+    <img class="" src="/img/2026/10/ephpm-worker-mode-performance-cover.svg" alt="Diagram: before, hyper/tokio hands each request to one shared bounded channel whose waiter list all 20 PHP threads contend on; after, a dispatcher hands the job straight into the mailbox of the most recently idle PHP thread and only queues it in a FIFO overflow queue when every thread is busy">
+  </a>
+        <header>
+          <h2><a href="/blog/2026/10/ephpm-worker-mode-performance/">Fourth Place in Worker Mode, and Why It Wasn&#39;t PHP</a></h2>
+          <time class="published" datetime="2026-10-16 08:10:00 -0700 PDT">October 16, 2026</time>
+        </header>
+      </article>
+      
+      <article class="mini-post">
+          <a href="/blog/2026/10/ephpm-websockets-how-to/" class="image" style="--bg-image: url('/img/2026/10/ephpm-websockets-how-to-cover.svg');">
+    <img class="" src="/img/2026/10/ephpm-websockets-how-to-cover.svg" alt="Diagram: browsers hold sockets to ePHPm&#39;s Rust session tasks and registry; each connect, message and disconnect runs websocket.php once on the PHP thread pool, and ordinary HTTP requests push through ephpm_ws_broadcast">
+  </a>
+        <header>
+          <h2><a href="/blog/2026/10/ephpm-websockets-how-to/">WebSockets in ePHPm, From Zero to a Working Chat</a></h2>
+          <time class="published" datetime="2026-10-11 17:30:00 -0700 PDT">October 11, 2026</time>
+        </header>
+      </article>
+      
+      <article class="mini-post">
+          <a href="/blog/2026/10/webhooks-out-of-order-scheduler/" class="image" style="--bg-image: url('/img/2026/10/webhooks-out-of-order-scheduler-timeline.svg');">
+    <img class="" src="/img/2026/10/webhooks-out-of-order-scheduler-timeline.svg" alt="Timeline of three same-label jobs where a runner executing a build is destroyed 2.3 seconds before its in_progress webhook arrives">
+  </a>
+        <header>
+          <h2><a href="/blog/2026/10/webhooks-out-of-order-scheduler/">Webhooks Arrive Out of Order: How My Scheduler Killed Live Builds</a></h2>
+          <time class="published" datetime="2026-10-07 21:10:00 -0700 PDT">October 7, 2026</time>
+        </header>
+      </article>
+      
+      <article class="mini-post">
+          <a href="/blog/2026/10/go-proxmox-five-years-to-v0-8/" class="image" style="--bg-image: url('/img/2026/10/go-proxmox-five-years-to-v0-8-apidiff.svg');">
+    <img class="" src="/img/2026/10/go-proxmox-five-years-to-v0-8-apidiff.svg" alt="Horizontal bar chart of apidiff incompatible and compatible changes for every go-proxmox release from v0.1.0 to v0.8.2">
+  </a>
+        <header>
+          <h2><a href="/blog/2026/10/go-proxmox-five-years-to-v0-8/">Breaking Changes Without Breaking Trust: Five Years to go-proxmox v0.8</a></h2>
+          <time class="published" datetime="2026-10-04 19:40:00 -0700 PDT">October 4, 2026</time>
+        </header>
+      </article>
+      
+      <article class="mini-post">
+          <a href="/blog/2026/10/windows-sigterm-sparse-files/" class="image" style="--bg-image: url('/img/2026/10/windows-sigterm-sparse-files-connections.svg');">
+    <img class="" src="/img/2026/10/windows-sigterm-sparse-files-connections.svg" alt="Bar chart: 96 Cloudflare edge connections held by orphaned cloudflared processes versus 4 for the live daemon">
+  </a>
+        <header>
+          <h2><a href="/blog/2026/10/windows-sigterm-sparse-files/">Windows Grab-Bag: SIGTERM That Doesn&#39;t Exist and Sparse Files That Break Docker</a></h2>
+          <time class="published" datetime="2026-10-03 14:30:00 -0700 PDT">October 3, 2026</time>
+        </header>
+      </article>
+      
+      
+        <footer>
+          <a href="/blog" class="button">See More</a>
+        </footer>
+      
+    </section>
+  
+
+  
+    
+
+      <section id="categories">
+        <header>
+          <h1><a href="/categories">Categories</a></h1>
+        </header>
+        <ul>
+          
+          
+          <li>
+              <a href="/categories/ephpm/">ephpm<span class="count">33</span></a>
+          
+          <li>
+              <a href="/categories/go/">go<span class="count">30</span></a>
+          
+          <li>
+              <a href="/categories/php/">php<span class="count">23</span></a>
+          
+          <li>
+              <a href="/categories/rust/">rust<span class="count">15</span></a>
+          
+          <li>
+              <a href="/categories/homelab/">homelab<span class="count">14</span></a>
+          
+          <li>
+              <a href="/categories/windows/">windows<span class="count">14</span></a>
+          
+          <li>
+              <a href="/categories/ci/">ci<span class="count">9</span></a>
+          
+          <li>
+              <a href="/categories/databases/">databases<span class="count">9</span></a>
+          
+          <li>
+              <a href="/categories/security/">security<span class="count">9</span></a>
+          
+          <li>
+              <a href="/categories/containers/">containers<span class="count">7</span></a>
+          
+          <li>
+              <a href="/categories/tools/">tools<span class="count">5</span></a>
+          
+          <li>
+              <a href="/categories/ai-agents/">ai-agents<span class="count">4</span></a>
+          
+          </li>
+        </ul>
+      </section>
+    
+  
+
+  
+    <section id="mini-bio">
+      <header>
+        <h1>About</h1>
+      </header>
+      <p>Luther is a 20+ year software veteran specializing in backend APIs and architecting products. Employed at <a href='https://www.suse.com'>SUSE</a> as the Team Lead for the <a href='https://github.com/rancher/windows/issues'>Containers on Windows Team</a> working on <a href='https://rancher.com/'>Rancher</a> + <a href='https://kubernetes.io/'>Kubernetes</a></p>
+      <footer>
+        <a href="/about" class="button">Learn More</a>
+      </footer>
+    </section>
+  
+</section>
+
+      <footer id="site-footer">
+  
+      <ul class="socnet-icons">
+        
+
+        <li><a href="//github.com/luthermonson" target="_blank" rel="noopener" title="GitHub" class="fab fa-github"></a></li>
+
+
+
+
+
+
+
+
+
+
+
+<li><a href="//www.linkedin.com/in/luthermonson" target="_blank" rel="noopener" title="LinkedIn" class="fab fa-linkedin"></a></li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li><a href="//twitter.com/luthermonson" target="_blank" rel="noopener" title="Twitter" class="fab fa-twitter"></a></li>
+
+
+
+
+
+
+
+
+
+
+
+<li><a href="mailto:luther.monson@gmail.com" target="_blank" title="Email" class="far fa-envelope"></a></li>
+
+      </ul>
+  
+  <p class="copyright">
+    © 2026 Luther Monson
+      <br>
+    Theme: <a href='https://github.com/pacollins/hugo-future-imperfect-slim' target='_blank' rel='noopener'>Hugo Future Imperfect Slim</a><br>A <a href='https://html5up.net/future-imperfect' target='_blank' rel='noopener'>HTML5 UP port</a> | Powered by <a href='https://gohugo.io/' title='0.160.1' target='_blank' rel='noopener'>Hugo</a>
+  </p>
+</footer>
+<a id="back-to-top" href="#" class="fas fa-arrow-up fa-2x"></a>
+
+      <script src="/js/bundle.min.241b62ebc4792fe8c7a75879e5f710894f226f2b73342e9916b3a3b0526030cc.js" integrity="sha256-JBti68R5L&#43;jHp1h55fcQiU8ibytzNC6ZFrOjsFJgMMw="></script>
+    <script src="/js/add-on.js"></script>
+    </div>
+  </body>
+</html>

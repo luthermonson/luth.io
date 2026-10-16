@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>Distributed Systems on Luther Monson</title>
+    <link>https://luth.io/tags/distributed-systems/</link>
+    <description>Recent content in Distributed Systems on Luther Monson</description>
+    <generator>Hugo</generator>
+    <language>en</language>
+    <lastBuildDate>Wed, 07 Oct 2026 21:10:00 -0700</lastBuildDate>
+    <atom:link href="https://luth.io/tags/distributed-systems/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>Webhooks Arrive Out of Order: How My Scheduler Killed Live Builds</title>
+      <link>https://luth.io/blog/2026/10/webhooks-out-of-order-scheduler/</link>
+      <pubDate>Wed, 07 Oct 2026 21:10:00 -0700</pubDate>
+      <guid>https://luth.io/blog/2026/10/webhooks-out-of-order-scheduler/</guid>
+      <description>&lt;p&gt;The scheduler in &lt;a href=&#34;https://luth.io/blog/2026/08/ephemerd-one-daemon-every-os/&#34;&gt;ephemerd&lt;/a&gt; is event-driven. GitHub sends a &lt;code&gt;workflow_job&lt;/code&gt;&#xA;webhook when a job is queued, when it starts and when it completes, and ephemerd creates and destroys runners to match.&#xA;For a while that worked well enough that I stopped thinking about it. Then a &lt;code&gt;docker-build&lt;/code&gt; job failed with &amp;ldquo;The&#xA;self-hosted runner lost communication with the server&amp;rdquo;, and when I pulled the node&amp;rsquo;s journal, ephemerd had destroyed that&#xA;runner itself, on purpose, while it was running the build.&lt;/p&gt;</description>
+    </item>
+    <item>
+      <title>Gossip-Based Clustering for PHP Apps</title>
+      <link>https://luth.io/blog/2026/08/gossip-clustering-for-php/</link>
+      <pubDate>Tue, 04 Aug 2026 20:52:00 -0700</pubDate>
+      <guid>https://luth.io/blog/2026/08/gossip-clustering-for-php/</guid>
+      <description>&lt;p&gt;Most PHP developers never touch clustering primitives, and that&amp;rsquo;s by design. PHP is share-nothing: each request starts&#xA;from zero, and anything shared lives somewhere else. Sessions go in Redis, cache goes in Redis or Memcached, locks go in&#xA;Redis, and when you run two app servers the &amp;ldquo;cluster&amp;rdquo; is really two stateless boxes pointed at the same Redis. That works&#xA;until Redis is the thing you&amp;rsquo;re trying not to run.&lt;/p&gt;</description>
+    </item>
+  </channel>
+</rss>

@@ -1,0 +1,30 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 868 480" width="868" height="480" font-family="ui-monospace,SFMono-Regular,Menlo,Consolas,monospace" font-size="14">
+<rect width="868" height="480" rx="8" fill="#1e1e1e"/>
+<rect width="868" height="26" rx="8" fill="#323233"/><rect y="18" width="868" height="8" fill="#323233"/>
+<circle cx="16" cy="13" r="5" fill="#ff5f56"/><circle cx="32" cy="13" r="5" fill="#ffbd2e"/><circle cx="48" cy="13" r="5" fill="#27c93f"/>
+<text x="434.0" y="17" fill="#9d9d9d" font-size="12" text-anchor="middle" font-family="system-ui,sans-serif">tail-gunner -f -n 200 app.log</text>
+<text x="14.0" y="47" fill="#7a7a7a" xml:space="preserve" textLength="436.8" lengthAdjust="spacingAndGlyphs">22:22:37 DEBUG req id=248 path=/api/orders dur=107ms</text>
+<text x="14.0" y="65" fill="#d4d4d4" xml:space="preserve" textLength="436.8" lengthAdjust="spacingAndGlyphs">22:22:37 INFO  req id=249 path=/api/orders dur=254ms</text>
+<text x="14.0" y="83" fill="#f14c4c" xml:space="preserve" textLength="420.0" lengthAdjust="spacingAndGlyphs">22:22:37 ERROR req id=250 path=/api/cart dur=730ms</text>
+<text x="14.0" y="101" fill="#7a7a7a" xml:space="preserve" textLength="411.6" lengthAdjust="spacingAndGlyphs">22:22:37 DEBUG req id=251 path=/healthz dur=501ms</text>
+<text x="14.0" y="119" fill="#d4d4d4" xml:space="preserve" textLength="420.0" lengthAdjust="spacingAndGlyphs">22:22:37 INFO  req id=252 path=/api/cart dur=483ms</text>
+<text x="14.0" y="137" fill="#f5f543" xml:space="preserve" textLength="436.8" lengthAdjust="spacingAndGlyphs">22:22:37 WARN  req id=253 path=/api/orders dur=575ms</text>
+<text x="14.0" y="155" fill="#7a7a7a" xml:space="preserve" textLength="411.6" lengthAdjust="spacingAndGlyphs">22:22:37 DEBUG req id=254 path=/healthz dur=260ms</text>
+<text x="14.0" y="173" fill="#d4d4d4" xml:space="preserve" textLength="411.6" lengthAdjust="spacingAndGlyphs">22:22:37 INFO  req id=255 path=/healthz dur=783ms</text>
+<text x="14.0" y="191" fill="#7a7a7a" xml:space="preserve" textLength="411.6" lengthAdjust="spacingAndGlyphs">22:22:37 DEBUG req id=256 path=/healthz dur=685ms</text>
+<text x="14.0" y="209" fill="#d4d4d4" xml:space="preserve" textLength="436.8" lengthAdjust="spacingAndGlyphs">22:22:37 INFO  req id=257 path=/api/orders dur=784ms</text>
+<text x="14.0" y="227" fill="#d4d4d4" xml:space="preserve" textLength="436.8" lengthAdjust="spacingAndGlyphs">22:22:37 INFO  req id=258 path=/api/orders dur=555ms</text>
+<text x="14.0" y="245" fill="#7a7a7a" xml:space="preserve" textLength="420.0" lengthAdjust="spacingAndGlyphs">22:22:37 DEBUG req id=259 path=/api/cart dur=324ms</text>
+<text x="14.0" y="263" fill="#7a7a7a" xml:space="preserve" textLength="411.6" lengthAdjust="spacingAndGlyphs">22:22:37 DEBUG req id=260 path=/healthz dur=205ms</text>
+<text x="14.0" y="281" fill="#7a7a7a" xml:space="preserve" textLength="436.8" lengthAdjust="spacingAndGlyphs">22:22:38 DEBUG req id=261 path=/api/orders dur=136ms</text>
+<text x="14.0" y="299" fill="#7a7a7a" xml:space="preserve" textLength="411.6" lengthAdjust="spacingAndGlyphs">22:22:38 DEBUG req id=262 path=/healthz dur=120ms</text>
+<text x="14.0" y="317" fill="#7a7a7a" xml:space="preserve" textLength="428.4" lengthAdjust="spacingAndGlyphs">22:22:38 DEBUG req id=263 path=/api/users dur=777ms</text>
+<text x="14.0" y="335" fill="#d4d4d4" xml:space="preserve" textLength="411.6" lengthAdjust="spacingAndGlyphs">22:22:38 INFO  req id=264 path=/healthz dur=536ms</text>
+<text x="14.0" y="353" fill="#d4d4d4" xml:space="preserve" textLength="420.0" lengthAdjust="spacingAndGlyphs">22:22:38 INFO  req id=265 path=/api/users dur=76ms</text>
+<text x="14.0" y="371" fill="#7a7a7a" xml:space="preserve" textLength="411.6" lengthAdjust="spacingAndGlyphs">22:22:38 DEBUG req id=266 path=/healthz dur=276ms</text>
+<text x="14.0" y="389" fill="#7a7a7a" xml:space="preserve" textLength="428.4" lengthAdjust="spacingAndGlyphs">22:22:38 DEBUG req id=267 path=/api/users dur=894ms</text>
+<text x="14.0" y="407" fill="#7a7a7a" xml:space="preserve" textLength="411.6" lengthAdjust="spacingAndGlyphs">22:22:38 DEBUG req id=268 path=/healthz dur=807ms</text>
+<text x="14.0" y="425" fill="#d4d4d4" xml:space="preserve" textLength="428.4" lengthAdjust="spacingAndGlyphs">22:22:38 INFO  req id=269 path=/api/orders dur=61ms</text>
+<text x="14.0" y="443" fill="#7a7a7a" xml:space="preserve" textLength="394.8" lengthAdjust="spacingAndGlyphs">22:22:38 DEBUG req id=270 path=/healthz dur=3ms</text>
+<text x="14.0" y="461" fill="#d4d4d4" xml:space="preserve" textLength="75.6" lengthAdjust="spacingAndGlyphs">:in ERROR</text>
+</svg>

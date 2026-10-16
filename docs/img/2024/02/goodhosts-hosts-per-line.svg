@@ -1,0 +1,29 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 470" width="900" height="470" font-family="system-ui, -apple-system, Segoe UI, sans-serif">
+  <rect width="900" height="470" fill="#ffffff"/>
+  <text x="450" y="32" text-anchor="middle" font-size="19" font-weight="600" fill="#222">15 calls of Add + HostsPerLine(8) + Flush</text>
+  <text x="450" y="54" text-anchor="middle" font-size="13" fill="#6b6b6b">real output of the hostsfile#51 repro, hosts file reloaded for every add (v0.1.5 run: two comment lines on top)</text>
+
+  <rect x="24" y="74" width="852" height="178" rx="6" fill="#fdf1f0" stroke="#c0392b"/>
+  <text x="40" y="98" font-size="14" font-weight="600" fill="#c0392b">hostsfile v0.1.4</text>
+  <g font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="12.5" fill="#222">
+    <text x="40" y="122">127.0.0.1 localhost junk.ddev.site a1.ddev.site a2.ddev.site a3.ddev.site a4.ddev.site a5.ddev.site a6.ddev.site</text>
+    <text x="40" y="140">127.0.0.1 a15.ddev.site</text>
+    <text x="40" y="158">127.0.0.1 a14.ddev.site</text>
+    <text x="40" y="176">127.0.0.1 a13.ddev.site</text>
+    <text x="40" y="194">127.0.0.1 a12.ddev.site</text>
+    <text x="40" y="212">127.0.0.1 a11.ddev.site</text>
+    <text x="40" y="230" fill="#6b6b6b">... a10, a9, a8, a7 each on their own line, newest first</text>
+  </g>
+
+  <rect x="24" y="270" width="852" height="96" rx="6" fill="#eef7f1" stroke="#3a9a5b"/>
+  <text x="40" y="294" font-size="14" font-weight="600" fill="#3a9a5b">hostsfile v0.1.6</text>
+  <g font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="12.5" fill="#222">
+    <text x="40" y="318">127.0.0.1 localhost junk.ddev.site a1.ddev.site a2.ddev.site a3.ddev.site a4.ddev.site a5.ddev.site a6.ddev.site</text>
+    <text x="40" y="336">127.0.0.1 a7.ddev.site a8.ddev.site a9.ddev.site a10.ddev.site a11.ddev.site a12.ddev.site a13.ddev.site a14.ddev.site</text>
+    <text x="40" y="354">127.0.0.1 a15.ddev.site</text>
+  </g>
+
+  <rect x="24" y="384" width="852" height="66" rx="6" fill="#fdf5ec" stroke="#e07a1f"/>
+  <text x="40" y="408" font-size="14" font-weight="600" fill="#e07a1f">hostsfile v0.1.5 (tagged and replaced within the hour)</text>
+  <text x="40" y="432" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="12.5" fill="#222">add a1: panic: runtime error: index out of range [2] with length 1   (file with two comment lines on top)</text>
+</svg>

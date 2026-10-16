@@ -4,7 +4,8 @@
     <title>Tags on Hugo Future Imperfect Slim em português</title>
     <link>https://luth.io/pt/tags/</link>
     <description>Recent content in Tags on Hugo Future Imperfect Slim em português</description>
-    <generator>Hugo -- gohugo.io</generator>
-    <language>pt</language><atom:link href="https://luth.io/pt/tags/index.xml" rel="self" type="application/rss+xml" />
+    <generator>Hugo</generator>
+    <language>pt</language>
+    <atom:link href="https://luth.io/pt/tags/index.xml" rel="self" type="application/rss+xml" />
   </channel>
 </rss>

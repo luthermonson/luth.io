@@ -1,0 +1,45 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 400" font-family="system-ui, -apple-system, Segoe UI, sans-serif">
+  <rect width="900" height="400" fill="#ffffff"/>
+  <text x="450" y="32" text-anchor="middle" font-size="18" font-weight="600" fill="#222">What the hooks add, in nanoseconds (p50, mean of 5 rounds x 20,000)</text>
+  <text x="450" y="54" text-anchor="middle" font-size="13" fill="#6b6b6b">Baseline loopback TCP connect() with no programs attached: 35,408 ns. WSL2, kernel 6.18, ePHPm v0.8.5.</text>
+
+  <!-- scale: 0..2000 ns over x=300..840 (540px) => 0.27 px/ns -->
+  <g stroke="#e3e3e3" stroke-width="1">
+    <path d="M300,80 L300,320"/>
+    <path d="M435,80 L435,320"/>
+    <path d="M570,80 L570,320"/>
+    <path d="M705,80 L705,320"/>
+    <path d="M840,80 L840,320"/>
+  </g>
+  <g font-size="12" fill="#6b6b6b" text-anchor="middle">
+    <text x="300" y="340">0</text>
+    <text x="435" y="340">500</text>
+    <text x="570" y="340">1,000</text>
+    <text x="705" y="340">1,500</text>
+    <text x="840" y="340">2,000 ns</text>
+  </g>
+
+  <g font-size="13" fill="#333" text-anchor="end">
+    <text x="288" y="109">connect(), attached, untagged thread</text>
+    <text x="288" y="163">connect(), tagged, infra port allowed</text>
+    <text x="288" y="217">connect(), tagged, own :8080 rewritten</text>
+    <text x="288" y="281">tag write + clear, once per request</text>
+  </g>
+
+  <!-- 685, 833, 865 ns (delta over baseline); 1644 ns (absolute) -->
+  <path d="M300,92 H481 a4,4 0 0 1 4,4 V112 a4,4 0 0 1 -4,4 H300 Z" fill="#2b6cb0"/>
+  <path d="M300,146 H520.9 a4,4 0 0 1 4,4 V166 a4,4 0 0 1 -4,4 H300 Z" fill="#2b6cb0"/>
+  <path d="M300,200 H529.6 a4,4 0 0 1 4,4 V220 a4,4 0 0 1 -4,4 H300 Z" fill="#2b6cb0"/>
+  <path d="M300,264 H739.9 a4,4 0 0 1 4,4 V284 a4,4 0 0 1 -4,4 H300 Z" fill="#2b6cb0"/>
+
+  <g font-size="13" fill="#222">
+    <text x="497" y="109">+685 (1.9%)</text>
+    <text x="537" y="163">+833 (2.4%)</text>
+    <text x="546" y="217">+865 (2.4%)</text>
+    <text x="756" y="281">1,644</text>
+  </g>
+
+  <path d="M300,240 L840,240" stroke="#cfcfcf" stroke-dasharray="4 4"/>
+  <text x="30" y="372" font-size="12" fill="#6b6b6b">Top three: added latency vs. the no-programs baseline. Bottom: the two bpf() syscalls TagGuard makes per PHP request.</text>
+  <text x="30" y="390" font-size="12" fill="#6b6b6b">p99 (53-59 us) did not separate from baseline run to run. vhostnet.bpf.o built from v0.8.5 (d7b1898), loaded with bpftool.</text>
+</svg>

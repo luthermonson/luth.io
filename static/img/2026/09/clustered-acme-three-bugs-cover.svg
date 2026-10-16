@@ -1,0 +1,41 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 430" font-family="system-ui, -apple-system, Segoe UI, sans-serif">
+  <rect width="900" height="430" fill="#ffffff"/>
+  <defs>
+    <marker id="g" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#3a9a5b"/></marker>
+    <marker id="r" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#c0392b"/></marker>
+  </defs>
+  <text x="450" y="32" text-anchor="middle" font-size="20" font-weight="600" fill="#222">Where the 5140-byte certificate went</text>
+  <!-- left panel -->
+  <text x="225" y="66" text-anchor="middle" font-size="15" font-weight="600" fill="#c0392b">Before: sharded tier (replication_factor 2)</text>
+  <rect x="150" y="85" width="150" height="70" rx="8" fill="#fdf2e8" stroke="#e07a1f" stroke-width="2"/>
+  <text x="225" y="113" text-anchor="middle" font-size="14" font-weight="600" fill="#222">node-1 (leader)</text>
+  <text x="225" y="135" text-anchor="middle" font-size="12" fill="#333">issues cert, Store::set</text>
+  <rect x="40" y="250" width="150" height="80" rx="8" fill="#edf7f0" stroke="#3a9a5b" stroke-width="2"/>
+  <text x="115" y="280" text-anchor="middle" font-size="14" font-weight="600" fill="#222">node-2</text>
+  <text x="115" y="302" text-anchor="middle" font-size="12" fill="#3a9a5b">replica: has cert</text>
+  <rect x="260" y="250" width="150" height="80" rx="8" fill="#fbeaea" stroke="#c0392b" stroke-width="2"/>
+  <text x="335" y="280" text-anchor="middle" font-size="14" font-weight="600" fill="#222">node-3</text>
+  <text x="335" y="302" text-anchor="middle" font-size="12" fill="#c0392b">not a replica</text>
+  <text x="335" y="318" text-anchor="middle" font-size="12" fill="#c0392b">local get: None</text>
+  <line x1="200" y1="155" x2="130" y2="245" stroke="#3a9a5b" stroke-width="2" marker-end="url(#g)"/>
+  <line x1="250" y1="155" x2="320" y2="245" stroke="#c0392b" stroke-width="2" stroke-dasharray="6,5" marker-end="url(#r)"/>
+  <text x="335" y="200" font-size="12" fill="#c0392b">no write</text>
+  <text x="225" y="370" text-anchor="middle" font-size="13" fill="#333">4096-byte small_key_threshold: too big for</text>
+  <text x="225" y="388" text-anchor="middle" font-size="13" fill="#333">UDP gossip, so it got sharded like a cache entry</text>
+  <line x1="450" y1="60" x2="450" y2="400" stroke="#ddd" stroke-width="2"/>
+  <!-- right panel -->
+  <text x="675" y="66" text-anchor="middle" font-size="15" font-weight="600" fill="#3a9a5b">After: broadcast tier + fetch-through read</text>
+  <rect x="600" y="85" width="150" height="70" rx="8" fill="#fdf2e8" stroke="#e07a1f" stroke-width="2"/>
+  <text x="675" y="113" text-anchor="middle" font-size="14" font-weight="600" fill="#222">node-1 (leader)</text>
+  <text x="675" y="135" text-anchor="middle" font-size="12" fill="#333">Store::set_broadcast</text>
+  <rect x="490" y="250" width="150" height="80" rx="8" fill="#edf7f0" stroke="#3a9a5b" stroke-width="2"/>
+  <text x="565" y="280" text-anchor="middle" font-size="14" font-weight="600" fill="#222">node-2</text>
+  <text x="565" y="302" text-anchor="middle" font-size="12" fill="#3a9a5b">has cert</text>
+  <rect x="710" y="250" width="150" height="80" rx="8" fill="#edf7f0" stroke="#3a9a5b" stroke-width="2"/>
+  <text x="785" y="280" text-anchor="middle" font-size="14" font-weight="600" fill="#222">node-3</text>
+  <text x="785" y="302" text-anchor="middle" font-size="12" fill="#3a9a5b">has cert</text>
+  <line x1="650" y1="155" x2="580" y2="245" stroke="#3a9a5b" stroke-width="2" marker-end="url(#g)"/>
+  <line x1="700" y1="155" x2="770" y2="245" stroke="#3a9a5b" stroke-width="2" marker-end="url(#g)"/>
+  <text x="675" y="370" text-anchor="middle" font-size="13" fill="#333">every alive node at write time, awaited;</text>
+  <text x="675" y="388" text-anchor="middle" font-size="13" fill="#333">late joiners fetch from the replica set on a miss</text>
+</svg>

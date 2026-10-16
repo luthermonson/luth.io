@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>Homelab on Luther Monson</title>
+    <link>https://luth.io/tags/homelab/</link>
+    <description>Recent content in Homelab on Luther Monson</description>
+    <generator>Hugo</generator>
+    <language>en</language>
+    <lastBuildDate>Sat, 01 Aug 2026 13:15:00 -0700</lastBuildDate>
+    <atom:link href="https://luth.io/tags/homelab/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>Rescuing a Windows Dynamic Disk Over USB with WSL2 and USB/IP</title>
+      <link>https://luth.io/blog/2026/08/windows-dynamic-disk-usb-wsl2-usbip/</link>
+      <pubDate>Sat, 01 Aug 2026 13:15:00 -0700</pubDate>
+      <guid>https://luth.io/blog/2026/08/windows-dynamic-disk-usb-wsl2-usbip/</guid>
+      <description>&lt;p&gt;I pulled a 1 TB NVMe out of an old Windows box, dropped it in a USB enclosure, plugged it in, and Windows showed nothing.&#xA;No drive letter, no &amp;ldquo;initialize this disk&amp;rdquo; prompt, nothing in Explorer. Disk Management listed it as &lt;code&gt;Invalid&lt;/code&gt;, and the&#xA;enclosure&amp;rsquo;s booklet said to &amp;ldquo;bring the disk online&amp;rdquo;, which silently did nothing. The data was completely intact. Windows was&#xA;refusing on &lt;strong&gt;policy&lt;/strong&gt; grounds, not because anything was broken, and getting it back meant going around the Windows storage&#xA;stack entirely and handing the raw USB device to a Linux kernel that doesn&amp;rsquo;t share Windows&amp;rsquo; opinions.&lt;/p&gt;</description>
+    </item>
+    <item>
+      <title>Cloud-Init ISOs in Pure Go with go-proxmox</title>
+      <link>https://luth.io/blog/2026/06/cloud-init-isos-pure-go-proxmox/</link>
+      <pubDate>Sat, 06 Jun 2026 15:20:00 -0700</pubDate>
+      <guid>https://luth.io/blog/2026/06/cloud-init-isos-pure-go-proxmox/</guid>
+      <description>&lt;p&gt;Proxmox&amp;rsquo;s built-in cloud-init support is fine for the basics: a user, an SSH key, an IP config. It falls apart the second you&#xA;want your own &lt;code&gt;user-data&lt;/code&gt;, &lt;code&gt;vendor-data&lt;/code&gt; or a real &lt;code&gt;network-config&lt;/code&gt;, because the GUI and the &lt;code&gt;ci*&lt;/code&gt; options only expose a&#xA;handful of fields, and the escape hatch (&lt;code&gt;cicustom&lt;/code&gt; pointing at snippet files) means getting files onto the Proxmox host&amp;rsquo;s&#xA;filesystem first. The usual alternative is building a nocloud ISO yourself with &lt;code&gt;genisoimage&lt;/code&gt; or &lt;code&gt;mkisofs&lt;/code&gt;, which means a&#xA;system dependency on whatever machine runs your automation, a different package name on every OS, and a subprocess to babysit.&lt;/p&gt;</description>
+    </item>
+    <item>
+      <title>Waiting on Proxmox: UPIDs, Tasks and WaitFor in Go</title>
+      <link>https://luth.io/blog/2022/03/proxmox-tasks-upid-wait-go/</link>
+      <pubDate>Sun, 20 Mar 2022 16:42:00 -0700</pubDate>
+      <guid>https://luth.io/blog/2022/03/proxmox-tasks-upid-wait-go/</guid>
+      <description>&lt;p&gt;If you start automating &lt;a href=&#34;https://www.proxmox.com/en/&#34;&gt;Proxmox VE&lt;/a&gt; through the API, the first thing that trips you up is&#xA;that almost nothing you ask it to do is finished when the HTTP call returns. Start a VM, clone a template, download an&#xA;ISO to storage, delete a disk&amp;hellip; the response is a single string that looks like a typo and the actual work is happening&#xA;in a worker process on the node. If your next call depends on that work being done you have to go find out when it&amp;rsquo;s done.&lt;/p&gt;</description>
+    </item>
+  </channel>
+</rss>

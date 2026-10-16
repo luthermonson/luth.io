@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>Libsql on Luther Monson</title>
+    <link>https://luth.io/tags/libsql/</link>
+    <description>Recent content in Libsql on Luther Monson</description>
+    <generator>Hugo</generator>
+    <language>en</language>
+    <lastBuildDate>Sat, 08 Aug 2026 20:14:00 -0700</lastBuildDate>
+    <atom:link href="https://luth.io/tags/libsql/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>Clustered SQLite in ePHPm, Part 1: Replication by Sidecar</title>
+      <link>https://luth.io/blog/2026/08/clustered-sqlite-sqld-sidecar/</link>
+      <pubDate>Sat, 08 Aug 2026 20:14:00 -0700</pubDate>
+      <guid>https://luth.io/blog/2026/08/clustered-sqlite-sqld-sidecar/</guid>
+      <description>&lt;p&gt;Most PHP sites I have run in the last twenty years did not need a MySQL server. They needed &lt;em&gt;a&lt;/em&gt; database, and MySQL was the&#xA;one every framework spoke. With &lt;a href=&#34;https://github.com/ephpm/ephpm&#34;&gt;ePHPm&lt;/a&gt; I have been trying to get rid of that server for&#xA;the common case, and the piece that makes it possible is &lt;a href=&#34;https://github.com/ephpm/litewire&#34;&gt;litewire&lt;/a&gt;: PHP connects with&#xA;plain &lt;code&gt;pdo_mysql&lt;/code&gt;, litewire speaks the MySQL wire protocol, and the queries land in a SQLite file. WordPress and Laravel&#xA;don&amp;rsquo;t know the difference. No &lt;code&gt;mysqld&lt;/code&gt;, no child processes, just &lt;code&gt;ephpm&lt;/code&gt; and a &lt;code&gt;.db&lt;/code&gt; file.&lt;/p&gt;</description>
+    </item>
+  </channel>
+</rss>

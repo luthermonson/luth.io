@@ -10,6 +10,8 @@ images:
  - src: img/2022/01/github-pages-logo.png
    alt: "Github Pages Logo"
    stretch: "none"
+categories: [ tools ]
+aliases: [ /blog/free-personal-blog-hugo-github-pages/ ]
 ---
 
 Since I just rode this merry-go-round here is a quick overview of how you can achieve a professional

@@ -1,0 +1,87 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1019 336" width="1019" height="336" font-family="ui-monospace,SFMono-Regular,Menlo,Consolas,monospace" font-size="14">
+<rect width="1019" height="336" rx="8" fill="#1e1e1e"/>
+<rect width="1019" height="26" rx="8" fill="#323233"/><rect y="18" width="1019" height="8" fill="#323233"/>
+<circle cx="16" cy="13" r="5" fill="#ff5f56"/><circle cx="32" cy="13" r="5" fill="#ffbd2e"/><circle cx="48" cy="13" r="5" fill="#27c93f"/>
+<text x="509.5" y="17" fill="#9d9d9d" font-size="12" text-anchor="middle" font-family="system-ui,sans-serif">linode-tui</text>
+<text x="22.4" y="47" fill="#00add8" xml:space="preserve" textLength="84.0" lengthAdjust="spacingAndGlyphs" font-weight="bold">linode-tui</text>
+<text x="114.8" y="47" fill="#6e6e6e" xml:space="preserve" textLength="8.4" lengthAdjust="spacingAndGlyphs">·</text>
+<text x="131.6" y="47" fill="#f39e4c" xml:space="preserve" textLength="84.0" lengthAdjust="spacingAndGlyphs" font-weight="bold">@demo-user</text>
+<text x="224.0" y="47" fill="#6e6e6e" xml:space="preserve" textLength="8.4" lengthAdjust="spacingAndGlyphs">·</text>
+<text x="240.8" y="47" fill="#00add8" xml:space="preserve" textLength="58.8" lengthAdjust="spacingAndGlyphs" font-weight="bold">Linodes</text>
+<text x="308.0" y="47" fill="#6e6e6e" xml:space="preserve" textLength="25.2" lengthAdjust="spacingAndGlyphs">(9)</text>
+<text x="64.4" y="65" fill="#00add8" xml:space="preserve" textLength="16.8" lengthAdjust="spacingAndGlyphs" font-weight="bold">ID</text>
+<text x="165.2" y="65" fill="#00add8" xml:space="preserve" textLength="42.0" lengthAdjust="spacingAndGlyphs" font-weight="bold">LABEL</text>
+<text x="375.2" y="65" fill="#00add8" xml:space="preserve" textLength="50.4" lengthAdjust="spacingAndGlyphs" font-weight="bold">REGION</text>
+<text x="484.4" y="65" fill="#00add8" xml:space="preserve" textLength="33.6" lengthAdjust="spacingAndGlyphs" font-weight="bold">TYPE</text>
+<text x="618.8" y="65" fill="#00add8" xml:space="preserve" textLength="50.4" lengthAdjust="spacingAndGlyphs" font-weight="bold">STATUS</text>
+<text x="719.6" y="65" fill="#00add8" xml:space="preserve" textLength="33.6" lengthAdjust="spacingAndGlyphs" font-weight="bold">IPv4</text>
+<text x="854.0" y="65" fill="#00add8" xml:space="preserve" textLength="33.6" lengthAdjust="spacingAndGlyphs" font-weight="bold">TAGS</text>
+<rect x="14.0" y="70" width="8.4" height="18" fill="#00add8"/>
+<rect x="22.4" y="70" width="25.2" height="18" fill="#00add8"/>
+<text x="64.4" y="83" fill="#e5e5e5" xml:space="preserve" textLength="67.2" lengthAdjust="spacingAndGlyphs">70110231</text>
+<text x="165.2" y="83" fill="#e5e5e5" xml:space="preserve" textLength="84.0" lengthAdjust="spacingAndGlyphs">bastion-01</text>
+<text x="375.2" y="83" fill="#e5e5e5" xml:space="preserve" textLength="50.4" lengthAdjust="spacingAndGlyphs">us-sea</text>
+<text x="484.4" y="83" fill="#e5e5e5" xml:space="preserve" textLength="92.4" lengthAdjust="spacingAndGlyphs">g6-nanode-1</text>
+<text x="618.8" y="83" fill="#e5e5e5" xml:space="preserve" textLength="58.8" lengthAdjust="spacingAndGlyphs">running</text>
+<text x="719.6" y="83" fill="#e5e5e5" xml:space="preserve" textLength="84.0" lengthAdjust="spacingAndGlyphs">192.0.2.10</text>
+<text x="854.0" y="83" fill="#e5e5e5" xml:space="preserve" textLength="42.0" lengthAdjust="spacingAndGlyphs">infra</text>
+<text x="64.4" y="101" fill="#e5e5e5" xml:space="preserve" textLength="67.2" lengthAdjust="spacingAndGlyphs">70110232</text>
+<text x="165.2" y="101" fill="#e5e5e5" xml:space="preserve" textLength="151.2" lengthAdjust="spacingAndGlyphs">build-runner-amd64</text>
+<text x="375.2" y="101" fill="#e5e5e5" xml:space="preserve" textLength="50.4" lengthAdjust="spacingAndGlyphs">us-sea</text>
+<text x="484.4" y="101" fill="#e5e5e5" xml:space="preserve" textLength="117.6" lengthAdjust="spacingAndGlyphs">g6-dedicated-4</text>
+<text x="618.8" y="101" fill="#e5e5e5" xml:space="preserve" textLength="58.8" lengthAdjust="spacingAndGlyphs">running</text>
+<text x="719.6" y="101" fill="#e5e5e5" xml:space="preserve" textLength="84.0" lengthAdjust="spacingAndGlyphs">192.0.2.21</text>
+<text x="854.0" y="101" fill="#e5e5e5" xml:space="preserve" textLength="16.8" lengthAdjust="spacingAndGlyphs">ci</text>
+<text x="64.4" y="119" fill="#e5e5e5" xml:space="preserve" textLength="67.2" lengthAdjust="spacingAndGlyphs">70110233</text>
+<text x="165.2" y="119" fill="#e5e5e5" xml:space="preserve" textLength="151.2" lengthAdjust="spacingAndGlyphs">build-runner-arm64</text>
+<text x="375.2" y="119" fill="#e5e5e5" xml:space="preserve" textLength="50.4" lengthAdjust="spacingAndGlyphs">us-ord</text>
+<text x="484.4" y="119" fill="#e5e5e5" xml:space="preserve" textLength="117.6" lengthAdjust="spacingAndGlyphs">g6-dedicated-4</text>
+<text x="618.8" y="119" fill="#e5e5e5" xml:space="preserve" textLength="58.8" lengthAdjust="spacingAndGlyphs">offline</text>
+<text x="719.6" y="119" fill="#e5e5e5" xml:space="preserve" textLength="84.0" lengthAdjust="spacingAndGlyphs">192.0.2.22</text>
+<text x="854.0" y="119" fill="#e5e5e5" xml:space="preserve" textLength="16.8" lengthAdjust="spacingAndGlyphs">ci</text>
+<text x="64.4" y="137" fill="#e5e5e5" xml:space="preserve" textLength="67.2" lengthAdjust="spacingAndGlyphs">70110234</text>
+<text x="165.2" y="137" fill="#e5e5e5" xml:space="preserve" textLength="126.0" lengthAdjust="spacingAndGlyphs">lke-pool-a-7f3c</text>
+<text x="375.2" y="137" fill="#e5e5e5" xml:space="preserve" textLength="50.4" lengthAdjust="spacingAndGlyphs">us-ord</text>
+<text x="484.4" y="137" fill="#e5e5e5" xml:space="preserve" textLength="109.2" lengthAdjust="spacingAndGlyphs">g6-standard-4</text>
+<text x="618.8" y="137" fill="#e5e5e5" xml:space="preserve" textLength="58.8" lengthAdjust="spacingAndGlyphs">running</text>
+<text x="719.6" y="137" fill="#e5e5e5" xml:space="preserve" textLength="109.2" lengthAdjust="spacingAndGlyphs">198.51.100.31</text>
+<text x="854.0" y="137" fill="#e5e5e5" xml:space="preserve" textLength="25.2" lengthAdjust="spacingAndGlyphs">lke</text>
+<text x="64.4" y="155" fill="#e5e5e5" xml:space="preserve" textLength="67.2" lengthAdjust="spacingAndGlyphs">70110235</text>
+<text x="165.2" y="155" fill="#e5e5e5" xml:space="preserve" textLength="126.0" lengthAdjust="spacingAndGlyphs">lke-pool-a-91be</text>
+<text x="375.2" y="155" fill="#e5e5e5" xml:space="preserve" textLength="50.4" lengthAdjust="spacingAndGlyphs">us-ord</text>
+<text x="484.4" y="155" fill="#e5e5e5" xml:space="preserve" textLength="109.2" lengthAdjust="spacingAndGlyphs">g6-standard-4</text>
+<text x="618.8" y="155" fill="#e5e5e5" xml:space="preserve" textLength="58.8" lengthAdjust="spacingAndGlyphs">running</text>
+<text x="719.6" y="155" fill="#e5e5e5" xml:space="preserve" textLength="109.2" lengthAdjust="spacingAndGlyphs">198.51.100.32</text>
+<text x="854.0" y="155" fill="#e5e5e5" xml:space="preserve" textLength="25.2" lengthAdjust="spacingAndGlyphs">lke</text>
+<text x="64.4" y="173" fill="#e5e5e5" xml:space="preserve" textLength="67.2" lengthAdjust="spacingAndGlyphs">70110236</text>
+<text x="165.2" y="173" fill="#e5e5e5" xml:space="preserve" textLength="126.0" lengthAdjust="spacingAndGlyphs">lke-pool-a-c04d</text>
+<text x="375.2" y="173" fill="#e5e5e5" xml:space="preserve" textLength="50.4" lengthAdjust="spacingAndGlyphs">us-ord</text>
+<text x="484.4" y="173" fill="#e5e5e5" xml:space="preserve" textLength="109.2" lengthAdjust="spacingAndGlyphs">g6-standard-4</text>
+<text x="618.8" y="173" fill="#e5e5e5" xml:space="preserve" textLength="84.0" lengthAdjust="spacingAndGlyphs">provision…</text>
+<text x="719.6" y="173" fill="#e5e5e5" xml:space="preserve" textLength="109.2" lengthAdjust="spacingAndGlyphs">198.51.100.33</text>
+<text x="854.0" y="173" fill="#e5e5e5" xml:space="preserve" textLength="25.2" lengthAdjust="spacingAndGlyphs">lke</text>
+<text x="64.4" y="191" fill="#e5e5e5" xml:space="preserve" textLength="67.2" lengthAdjust="spacingAndGlyphs">70110237</text>
+<text x="165.2" y="191" fill="#e5e5e5" xml:space="preserve" textLength="126.0" lengthAdjust="spacingAndGlyphs">pg-replica-test</text>
+<text x="375.2" y="191" fill="#e5e5e5" xml:space="preserve" textLength="50.4" lengthAdjust="spacingAndGlyphs">us-iad</text>
+<text x="484.4" y="191" fill="#e5e5e5" xml:space="preserve" textLength="109.2" lengthAdjust="spacingAndGlyphs">g6-standard-2</text>
+<text x="618.8" y="191" fill="#e5e5e5" xml:space="preserve" textLength="75.6" lengthAdjust="spacingAndGlyphs">rebooting</text>
+<text x="719.6" y="191" fill="#e5e5e5" xml:space="preserve" textLength="100.8" lengthAdjust="spacingAndGlyphs">203.0.113.40</text>
+<text x="854.0" y="191" fill="#e5e5e5" xml:space="preserve" textLength="84.0" lengthAdjust="spacingAndGlyphs">db,scratch</text>
+<text x="64.4" y="209" fill="#e5e5e5" xml:space="preserve" textLength="67.2" lengthAdjust="spacingAndGlyphs">70110239</text>
+<text x="165.2" y="209" fill="#e5e5e5" xml:space="preserve" textLength="142.8" lengthAdjust="spacingAndGlyphs">windows-2022-eval</text>
+<text x="375.2" y="209" fill="#e5e5e5" xml:space="preserve" textLength="50.4" lengthAdjust="spacingAndGlyphs">us-lax</text>
+<text x="484.4" y="209" fill="#e5e5e5" xml:space="preserve" textLength="117.6" lengthAdjust="spacingAndGlyphs">g6-dedicated-8</text>
+<text x="618.8" y="209" fill="#e5e5e5" xml:space="preserve" textLength="58.8" lengthAdjust="spacingAndGlyphs">stopped</text>
+<text x="719.6" y="209" fill="#e5e5e5" xml:space="preserve" textLength="100.8" lengthAdjust="spacingAndGlyphs">203.0.113.50</text>
+<text x="854.0" y="209" fill="#e5e5e5" xml:space="preserve" textLength="58.8" lengthAdjust="spacingAndGlyphs">scratch</text>
+<text x="64.4" y="227" fill="#e5e5e5" xml:space="preserve" textLength="67.2" lengthAdjust="spacingAndGlyphs">70110238</text>
+<text x="165.2" y="227" fill="#e5e5e5" xml:space="preserve" textLength="142.8" lengthAdjust="spacingAndGlyphs">wordpress-staging</text>
+<text x="375.2" y="227" fill="#e5e5e5" xml:space="preserve" textLength="50.4" lengthAdjust="spacingAndGlyphs">us-iad</text>
+<text x="484.4" y="227" fill="#e5e5e5" xml:space="preserve" textLength="109.2" lengthAdjust="spacingAndGlyphs">g6-standard-1</text>
+<text x="618.8" y="227" fill="#e5e5e5" xml:space="preserve" textLength="58.8" lengthAdjust="spacingAndGlyphs">running</text>
+<text x="719.6" y="227" fill="#e5e5e5" xml:space="preserve" textLength="100.8" lengthAdjust="spacingAndGlyphs">203.0.113.41</text>
+<text x="854.0" y="227" fill="#e5e5e5" xml:space="preserve" textLength="25.2" lengthAdjust="spacingAndGlyphs">web</text>
+<text x="14.0" y="281" fill="#6e6e6e" xml:space="preserve" textLength="235.2" lengthAdjust="spacingAndGlyphs">9 linodes · refreshed 0s ago</text>
+<text x="14.0" y="299" fill="#00add8" xml:space="preserve" textLength="25.2" lengthAdjust="spacingAndGlyphs">:lk</text>
+<text x="30.8" y="317" fill="#6e6e6e" xml:space="preserve" textLength="67.2" lengthAdjust="spacingAndGlyphs">tab: lke</text>
+</svg>

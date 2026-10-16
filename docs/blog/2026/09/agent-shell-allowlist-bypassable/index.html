@@ -1,0 +1,836 @@
+<!doctype html>
+<html lang="en">
+  <head>
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-MSTSKGFWTX"></script>
+<script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+
+    gtag('config', 'G-MSTSKGFWTX');
+</script><meta charset="utf-8">
+<title>Your Agent&#39;s Shell Allowlist Is Bypassable - Luther Monson</title>
+<meta name="description" content="A permission gate for AI agents&#39; shell commands judged spellings instead of commands. The classes of bypass I found in shipmates&#39; own gate, and the one idea that fixes most of them.">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<meta name="twitter:card" content="summary_large_image"><meta name="twitter:site" content="@luthermonson">
+
+<meta property="og:site_name" content="Luther Monson">
+<meta property="og:title" content="Your Agent&#39;s Shell Allowlist Is Bypassable">
+<meta property="og:description" content="A permission gate for AI agents&#39; shell commands judged spellings instead of commands. The classes of bypass I found in shipmates&#39; own gate, and the one idea that fixes most of them.">
+<meta property="og:type" content="article">
+<meta property="og:url" content="https://luth.io/blog/2026/09/agent-shell-allowlist-bypassable/">
+    <meta property="og:image" content="https://luth.io/img/2026/09/agent-shell-allowlist-bypassable-cover.svg">
+    <meta property="og:image:alt" content="A shell command decomposed into the nested command lines the permission gate has to judge">
+
+
+  <link rel="manifest" href="/favicon/site.webmanifest?v=1">
+  <link rel="apple-touch-icon" sizes="180x180" href="/favicon/apple-touch-icon.png?v=1">
+  <link rel="icon" type="image/png" sizes="32x32" href="/favicon/favicon-32x32.png?v=1">
+  <link rel="icon" type="image/png" sizes="16x16" href="/favicon/favicon-16x16.png?v=1">
+  
+    <link rel="mask-icon" href="/favicon/safari-pinned-tab.svg?v=1" color="#ffffff">
+    <link rel="shortcut icon" href="/favicon/favicon.ico?v=1">
+    <meta name="msapplication-config" content="/favicon/browserconfig.xml?v=1">
+  
+  <meta name="msapplication-TileColor" content="#ffffff">
+  <meta name="theme-color" content="#ffffff">
+
+
+  <meta name="generator" content="Hugo 0.160.1">
+  <link rel="alternate" type="application/rss+xml" href="https://luth.io/index.xml" title="Luther Monson">
+  <link rel="stylesheet" href="/css/bundle.min.e1ffed86714fbb7eff75eab221c0c61b8260be0c7d1c08db0fcb7a2bdb6af7c9.css" integrity="sha256-4f/thnFPu37/deqyIcDGG4Jgvgx9HAjbD8t6K9tq98k="><link rel="stylesheet" href="/css/add-on.css">
+        <link rel="stylesheet" href="/css/code.css">
+        <link rel="stylesheet" href="/css/mobile.css">
+</head>
+
+  <body>
+    
+
+<header id="site-header">
+  <nav id="site-nav">
+    <h1 class="nav-title">
+      <a href="/" class="nav">
+        <img class="nav-avatar" src="/img/luther-monson-headshot.jpg" alt="" width="32" height="32">
+        
+          Blog
+        
+      </a>
+    </h1>
+    <menu id="site-nav-menu" class="flyout-menu menu">
+      
+        
+          
+          <a href="/" class="nav link"><i class='fa fa-home'></i> Home</a>
+        
+      
+        
+          
+          <a href="/about" class="nav link"><i class='far fa-id-card'></i> About</a>
+        
+      
+        
+          
+          <a href="/blog" class="nav link"><i class='far fa-newspaper'></i> Blog</a>
+        
+      
+        
+          
+          <a href="/archive" class="nav link"><i class='far fa-calendar-alt'></i> Archive</a>
+        
+      
+        
+          
+          <a href="/categories" class="nav link"><i class='fas fa-sitemap'></i> Categories</a>
+        
+      
+      <a href="#share-menu" class="nav link share-toggle"><i class="fas fa-share-alt">&nbsp;</i>Share</a>
+      <a href="#search-input" class="nav link search-toggle"><i class="fas fa-search">&nbsp;</i>Search</a>
+    </menu>
+    <a href="#search-input" class="nav search-toggle"><i class="fas fa-search fa-2x">&nbsp;</i></a>
+    <a href="#share-menu" class="nav share-toggle"><i class="fas fa-share-alt fa-2x">&nbsp;</i></a>
+    
+    <a href="#site-nav" class="nav nav-toggle"><i class="fas fa-bars fa-2x"></i></a>
+  </nav>
+  <menu id="search" class="menu"><input id="search-input" class="search-input menu"></input><div id="search-results" class="search-results menu"></div></menu>
+  
+  
+    <menu id="share-menu" class="flyout-menu menu">
+      <h1>Share Post</h1>
+      
+
+
+
+
+  
+    
+    <a href="//twitter.com/share?text=Your%20Agent%27s%20Shell%20Allowlist%20Is%20Bypassable&amp;url=https%3a%2f%2fluth.io%2fblog%2f2026%2f09%2fagent-shell-allowlist-bypassable%2f" target="_blank" rel="noopener" class="nav share-btn twitter">
+        <p>Twitter</p>
+      </a>
+  
+
+  
+      <a href="//www.facebook.com/sharer/sharer.php?u=https%3a%2f%2fluth.io%2fblog%2f2026%2f09%2fagent-shell-allowlist-bypassable%2f" target="_blank" rel="noopener" class="nav share-btn facebook">
+        <p>Facebook</p>
+        </a>
+  
+
+  
+    <a href="//www.reddit.com/submit?url=https%3a%2f%2fluth.io%2fblog%2f2026%2f09%2fagent-shell-allowlist-bypassable%2f&amp;title=Your%20Agent%27s%20Shell%20Allowlist%20Is%20Bypassable" target="_blank" rel="noopener" class="nav share-btn reddit">
+          <p>Reddit</p>
+        </a>
+  
+
+  
+        <a href="//www.linkedin.com/shareArticle?url=https%3a%2f%2fluth.io%2fblog%2f2026%2f09%2fagent-shell-allowlist-bypassable%2f&amp;title=Your%20Agent%27s%20Shell%20Allowlist%20Is%20Bypassable" target="_blank" rel="noopener" class="nav share-btn linkedin">
+            <p>LinkedIn</p>
+          </a>
+  
+
+  
+        <a href="//www.pinterest.com/pin/create/button/?url=https%3a%2f%2fluth.io%2fblog%2f2026%2f09%2fagent-shell-allowlist-bypassable%2f&amp;description=Your%20Agent%27s%20Shell%20Allowlist%20Is%20Bypassable" target="_blank" rel="noopener" class="nav share-btn pinterest">
+          <p>Pinterest</p>
+        </a>
+  
+
+  
+        <a href="mailto:?subject=Check%20out%20this%20post%20by Luther%20Monson&amp;body=https%3a%2f%2fluth.io%2fblog%2f2026%2f09%2fagent-shell-allowlist-bypassable%2f" target="_blank" class="nav share-btn email" data-proofer-ignore>
+          <p>Email</p>
+        </a>
+  
+
+
+    </menu>
+  
+</header>
+
+    <div id="wrapper">
+      <section id="site-intro" class="hidden-single-column">
+  <a href="/"><img src="/img/luther-monson-headshot.jpg" class="circle" width="100" alt="Luther Monson, Staff Software Engineer at SUSE" /></a>
+  <header>
+    <h1>Luther Monson</h1>
+  </header>
+  <main>
+    <p>Go by way of PHP &middot; Containers &middot; VMs &middot; Windows &middot; Kubernetes</p>
+  </main>
+  
+    <footer>
+      <ul class="socnet-icons">
+        
+
+        <li><a href="//github.com/luthermonson" target="_blank" rel="noopener" title="GitHub" class="fab fa-github"></a></li>
+
+
+
+
+
+
+
+
+
+
+
+<li><a href="//www.linkedin.com/in/luthermonson" target="_blank" rel="noopener" title="LinkedIn" class="fab fa-linkedin"></a></li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li><a href="//twitter.com/luthermonson" target="_blank" rel="noopener" title="Twitter" class="fab fa-twitter"></a></li>
+
+
+
+
+
+
+
+
+
+
+
+<li><a href="mailto:luther.monson@gmail.com" target="_blank" title="Email" class="far fa-envelope"></a></li>
+
+      </ul>
+    </footer>
+  
+</section>
+
+      <main id="site-main">
+        
+  <article>
+    <div class="post">
+      <header>
+  <div class="title">
+    
+      <h2><a href="/blog/2026/09/agent-shell-allowlist-bypassable/">Your Agent&#39;s Shell Allowlist Is Bypassable</a></h2>
+    
+    
+      <p>A permission gate for AI agents&#39; shell commands judged spellings instead of commands. The classes of bypass I found in shipmates&#39; own gate, and the one idea that fixes most of them.</p>
+    
+  </div>
+  <div class="meta">
+    <time datetime="2026-09-29 20:30:00 -0700 PDT">September 29, 2026</time>
+    
+    <p>9-Minute Read</p>
+  </div>
+</header>
+
+      <div id="socnet-share">
+        
+
+
+
+
+  
+    
+    <a href="//twitter.com/share?text=Your%20Agent%27s%20Shell%20Allowlist%20Is%20Bypassable&amp;url=https%3a%2f%2fluth.io%2fblog%2f2026%2f09%2fagent-shell-allowlist-bypassable%2f" target="_blank" rel="noopener" class="nav share-btn twitter">
+        <p>Twitter</p>
+      </a>
+  
+
+  
+      <a href="//www.facebook.com/sharer/sharer.php?u=https%3a%2f%2fluth.io%2fblog%2f2026%2f09%2fagent-shell-allowlist-bypassable%2f" target="_blank" rel="noopener" class="nav share-btn facebook">
+        <p>Facebook</p>
+        </a>
+  
+
+  
+    <a href="//www.reddit.com/submit?url=https%3a%2f%2fluth.io%2fblog%2f2026%2f09%2fagent-shell-allowlist-bypassable%2f&amp;title=Your%20Agent%27s%20Shell%20Allowlist%20Is%20Bypassable" target="_blank" rel="noopener" class="nav share-btn reddit">
+          <p>Reddit</p>
+        </a>
+  
+
+  
+        <a href="//www.linkedin.com/shareArticle?url=https%3a%2f%2fluth.io%2fblog%2f2026%2f09%2fagent-shell-allowlist-bypassable%2f&amp;title=Your%20Agent%27s%20Shell%20Allowlist%20Is%20Bypassable" target="_blank" rel="noopener" class="nav share-btn linkedin">
+            <p>LinkedIn</p>
+          </a>
+  
+
+  
+        <a href="//www.pinterest.com/pin/create/button/?url=https%3a%2f%2fluth.io%2fblog%2f2026%2f09%2fagent-shell-allowlist-bypassable%2f&amp;description=Your%20Agent%27s%20Shell%20Allowlist%20Is%20Bypassable" target="_blank" rel="noopener" class="nav share-btn pinterest">
+          <p>Pinterest</p>
+        </a>
+  
+
+  
+        <a href="mailto:?subject=Check%20out%20this%20post%20by Luther%20Monson&amp;body=https%3a%2f%2fluth.io%2fblog%2f2026%2f09%2fagent-shell-allowlist-bypassable%2f" target="_blank" class="nav share-btn email" data-proofer-ignore>
+          <p>Email</p>
+        </a>
+  
+
+
+      </div>
+      <div class="content">
+        
+        <p>Every <a href="/blog/2026/08/shipmates-persona-based-ai-coding-crews/">shipmates</a> crew member runs shell commands, and before any
+of them runs it goes through a permission gate. The gate uses the same rule syntax as Claude Code settings,
+<code>Bash(git status)</code>, <code>Bash(rm *)</code>, <code>Write(**/.claude/settings.json)</code>, merged from several layers: a fleet-wide deny list
+pushed from Fleet Command, per-persona policy files, project settings, and the Brig, which compiles shipmates&rsquo; fifteen
+&ldquo;Ship&rsquo;s Articles&rdquo; into deny and ask rules. Deny beats ask, ask beats allow.</p>
+<p>That sounds solid until you remember the rule is matched against a <em>string</em>, and the agent chooses the string. Between
+mid-August and mid-September I closed a long list of ways to say the same command so the gate didn&rsquo;t recognize it. Some
+came out of a pre-release security review of shipmates (<a href="https://github.com/luthermonson/shipmates/issues/34">#34</a>,
+<a href="https://github.com/luthermonson/shipmates/issues/37">#37</a>, <a href="https://github.com/luthermonson/shipmates/issues/42">#42</a>),
+some from an adversarial review of the fix for the previous batch. This post is about the <em>classes</em>, because if you&rsquo;re
+building a gate like this they will apply to yours. Everything here is about shipmates&rsquo; own evaluator, all of it is
+fixed, and the examples use a placeholder URL.</p>
+<h3 id="the-one-idea">The one idea</h3>
+<p>Every bypass below is the same mistake: <strong>the gate judged a spelling, not the command</strong>. A rule that names a command
+has to be matched against every command the line will actually run, in every spelling the shell will accept, and when
+the gate can&rsquo;t see what will run it has to fail closed to &ldquo;ask&rdquo;.</p>
+<h3 id="class-1-trusting-the-first-word">Class 1: trusting the first word</h3>
+<p>The gate has a list of read-only builtins (<code>ls</code>, <code>cat</code>, <code>git status</code>, <code>grep</code>&hellip;) that are allowed without a prompt, so
+crews aren&rsquo;t asking permission to read files all day. The check looked at the first token and nothing else, and the
+compound splitter didn&rsquo;t treat a newline as a separator. So:</p>
+<table>
+  <thead>
+      <tr>
+          <th>command</th>
+          <th>head token</th>
+          <th>what actually runs</th>
+      </tr>
+  </thead>
+  <tbody>
+      <tr>
+          <td><code>cat notes &gt; ~/.ssh/authorized_keys</code></td>
+          <td><code>cat</code></td>
+          <td>a file write</td>
+      </tr>
+      <tr>
+          <td><code>echo ok</code>⏎<code>curl … -o ~/.bashrc</code></td>
+          <td><code>echo</code></td>
+          <td>a download over your shell profile</td>
+      </tr>
+      <tr>
+          <td><code>echo $(curl … | sh)</code></td>
+          <td><code>echo</code></td>
+          <td>arbitrary execution</td>
+      </tr>
+      <tr>
+          <td><code>env sh -c '…'</code></td>
+          <td><code>env</code></td>
+          <td>arbitrary execution</td>
+      </tr>
+      <tr>
+          <td><code>find . -exec sh -c '…' \;</code></td>
+          <td><code>find</code></td>
+          <td>arbitrary execution</td>
+      </tr>
+  </tbody>
+</table>
+<p><a href="https://github.com/luthermonson/shipmates/pull/36">PR #36</a> did three things. <code>SplitCompound</code> splits on <code>\n</code> (while
+treating backslash-newline as the continuation it is). The auto-allow requires a genuinely simple command: a quote-aware
+<code>hasShellControl</code> scan rejects unquoted redirection, <code>$(…)</code>, backticks, process substitution and leftover chaining, and
+an <em>unbalanced</em> quote counts as control, because we can&rsquo;t read the line the way the shell will. And <code>env</code> and <code>find</code>
+came off the read-only list for good, with a comment saying why, because both run a program named in their own arguments.</p>
+<p>Quoted metacharacters are still just arguments. <code>grep 'a|b' file</code> and <code>echo &quot;a &gt; b&quot;</code> still auto-allow, and there are
+tests asserting that, because a gate that prompts on everything gets turned off.</p>
+<h3 id="class-2-command-lines-hidden-inside-command-lines">Class 2: command lines hidden inside command lines</h3>
+<p>Not getting an <em>auto</em>-allow isn&rsquo;t the same as being judged. An operator allow rule like <code>Bash(echo *)</code> still matched
+<code>echo $(curl … | sh)</code> as a whole, and the <code>sh</code> at the end of the pipe never met a rule. Same for <code>eval '…'</code>, <code>sh -c '…'</code>,
+<code>bash &lt;&lt;&lt; '…'</code>, <code>pwsh -Command …</code>, and <code>pwsh -EncodedCommand &lt;base64&gt;</code>, which is a blob no glob can read at all.</p>
+<p>The fix (<a href="https://github.com/luthermonson/shipmates/pull/43">PR #43</a>, <a href="https://github.com/luthermonson/shipmates/commit/d7b7262"><code>d7b7262</code></a>,
+<a href="https://github.com/luthermonson/shipmates/pull/55">PR #55</a>) was to extract every nested command line and judge it
+exactly like a top-level one:</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-go" data-lang="go"><span class="line"><span class="cl"><span class="kd">func</span><span class="w"> </span><span class="nf">NestedCommandLines</span><span class="p">(</span><span class="nx">sub</span><span class="w"> </span><span class="kt">string</span><span class="p">)</span><span class="w"> </span><span class="p">[]</span><span class="kt">string</span><span class="w"> </span><span class="p">{</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">	</span><span class="nx">out</span><span class="w"> </span><span class="o">:=</span><span class="w"> </span><span class="nf">SubstitutionBodies</span><span class="p">(</span><span class="nx">sub</span><span class="p">)</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">	</span><span class="nx">out</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="nb">append</span><span class="p">(</span><span class="nx">out</span><span class="p">,</span><span class="w"> </span><span class="nf">shellScriptArgs</span><span class="p">(</span><span class="nx">sub</span><span class="p">)</span><span class="o">...</span><span class="p">)</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">	</span><span class="nx">out</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="nb">append</span><span class="p">(</span><span class="nx">out</span><span class="p">,</span><span class="w"> </span><span class="nf">hereStringArgs</span><span class="p">(</span><span class="nx">sub</span><span class="p">)</span><span class="o">...</span><span class="p">)</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">	</span><span class="nx">out</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="nb">append</span><span class="p">(</span><span class="nx">out</span><span class="p">,</span><span class="w"> </span><span class="nf">powerShellCommandArgs</span><span class="p">(</span><span class="nx">sub</span><span class="p">)</span><span class="o">...</span><span class="p">)</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">	</span><span class="k">return</span><span class="w"> </span><span class="nb">append</span><span class="p">(</span><span class="nx">out</span><span class="p">,</span><span class="w"> </span><span class="nf">evalArgs</span><span class="p">(</span><span class="nx">sub</span><span class="p">)</span><span class="o">...</span><span class="p">)</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="p">}</span><span class="w">
+</span></span></span></code></pre></div><p>and recurse, so the compound is allowed only if everything it will run is allowed:</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-go" data-lang="go"><span class="line"><span class="cl"><span class="k">for</span><span class="w"> </span><span class="nx">_</span><span class="p">,</span><span class="w"> </span><span class="nx">nested</span><span class="w"> </span><span class="o">:=</span><span class="w"> </span><span class="k">range</span><span class="w"> </span><span class="nf">NestedCommandLines</span><span class="p">(</span><span class="nx">sub</span><span class="p">)</span><span class="w"> </span><span class="p">{</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">	</span><span class="nx">nd</span><span class="w"> </span><span class="o">:=</span><span class="w"> </span><span class="nf">evaluateBashLine</span><span class="p">(</span><span class="nx">tool</span><span class="p">,</span><span class="w"> </span><span class="nx">nested</span><span class="p">,</span><span class="w"> </span><span class="nx">rules</span><span class="p">,</span><span class="w"> </span><span class="nx">depth</span><span class="o">+</span><span class="mi">1</span><span class="p">)</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">	</span><span class="k">if</span><span class="w"> </span><span class="nx">nd</span><span class="p">.</span><span class="nx">Effect</span><span class="w"> </span><span class="o">==</span><span class="w"> </span><span class="nx">EffectDeny</span><span class="w"> </span><span class="p">{</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">		</span><span class="k">return</span><span class="w"> </span><span class="nx">Decision</span><span class="p">{</span><span class="nx">Effect</span><span class="p">:</span><span class="w"> </span><span class="nx">EffectDeny</span><span class="p">,</span><span class="w"> </span><span class="nx">Reason</span><span class="p">:</span><span class="w"> </span><span class="nx">nd</span><span class="p">.</span><span class="nx">Reason</span><span class="p">}</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">	</span><span class="p">}</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">	</span><span class="k">if</span><span class="w"> </span><span class="nx">nd</span><span class="p">.</span><span class="nx">Effect</span><span class="w"> </span><span class="o">==</span><span class="w"> </span><span class="nx">EffectAsk</span><span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span><span class="nx">worst</span><span class="w"> </span><span class="o">==</span><span class="w"> </span><span class="nx">EffectAllow</span><span class="w"> </span><span class="p">{</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">		</span><span class="nx">worst</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="nx">EffectAsk</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">	</span><span class="p">}</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="p">}</span><span class="w">
+</span></span></span></code></pre></div><p>Each level is strictly shorter than its parent so the walk ends on its own; <code>maxNestedShellDepth = 8</code> is insurance.</p>
+<p>A few details that mattered:</p>
+<ul>
+<li><code>sh -c</code> is <em>not</em> blanket-denied. Shell one-liners are ordinary work, and denying them would make the &ldquo;no piped
+execution&rdquo; Article mean &ldquo;no shell scripting&rdquo;. Instead the script gets split, and the inner bare <code>sh</code> lands on the
+existing deny.</li>
+<li>Here-strings are only treated as scripts when the head is a shell interpreter. <code>&lt;&lt;&lt;</code> fed to <code>grep</code> is data.</li>
+<li>PowerShell resolves parameters by any unambiguous prefix, so <code>-Command</code> arrives as <code>-c</code>, <code>-com</code>&hellip;, and
+<code>-EncodedCommand</code> as <code>-e</code>, <code>-enc</code>, plus the documented <code>-ec</code>. It also accepts <code>-Command:'…'</code>. And an unquoted
+<code>-Command</code> takes <em>the rest of the line</em> as the script, not just the next token. An adversarial review of PR #55 found
+the colon form and the rest-of-line form both getting past my first version.</li>
+<li><code>-EncodedCommand</code> is base64 of UTF-16LE. If it decodes, judge the script. If it doesn&rsquo;t, hand back the raw blob, which
+matches no allow rule and no read-only builtin, so it falls through to ask instead of riding in on the <code>pwsh</code> head
+token.</li>
+</ul>
+<h3 id="class-3-respelling-the-program">Class 3: respelling the program</h3>
+<p>Against a plain <code>Bash(rm *)</code> deny, all of these used to be an ask (or an allow, with a broad allow rule in force):
+<code>\rm</code>, <code>command rm</code>, <code>command -p rm</code>, <code>exec rm</code>, <code>exec -a ls rm</code>, <code>/bin/rm</code>, <code>FOO=bar rm</code>, and <code>timeout 5s rm</code>
+(because <code>5s</code> wasn&rsquo;t recognized as the duration argument, the &ldquo;command&rdquo; became <code>5s</code>). On Windows, a backslash path to
+<code>powershell.exe</code> didn&rsquo;t reduce to <code>powershell</code>, so none of the PowerShell extraction even ran.</p>
+<p><code>normalizeHeadToken</code> resolves those to the program that will actually run, and the important design choice is that the
+normalized form is an <strong>additional</strong> match candidate, never a replacement, and only for deny and ask. <code>sudo</code> and <code>doas</code>
+fold too, but only for deny and ask. Folding them for allow would let a rule written for the unprivileged spelling
+approve a privileged run. Widening what earns a <em>silent</em> allow is the one direction worth being stingy in. The cost of
+leaving <code>/bin/ls</code> off the read-only list is a prompt.</p>
+<h3 id="class-4-respelling-the-path">Class 4: respelling the path</h3>
+<p>Path rules have the same problem with a different alphabet:</p>
+<ul>
+<li><code>..</code> segments: <code>.claude/foo/../settings.json</code> against <code>Write(**/.claude/settings.json)</code>. Paths are now lexically
+cleaned, and relative paths are resolved against the project root so <code>../../../etc/cron.d/x</code> lands on an absolute rule.</li>
+<li>Case on Windows. NTFS folds case, the glob compared bytes, so <code>c:\windows\…</code> missed <code>C:/Windows/**</code>. Matching now
+lower-cases both sides when the path is volume-rooted, and leaves Unix paths case-sensitive (<code>/etc</code> and <code>/ETC</code> are
+different files there).</li>
+<li>UNC paths. The fold only fired for drive letters, so <code>\\srv\share\repo\.CLAUDE\settings.json</code> on a network-share
+checkout dodged the rule (<a href="https://github.com/luthermonson/shipmates/pull/59">PR #59</a>). The fun part of that one is
+that <code>path.Clean</code> collapses the leading <code>//</code> to <code>/</code>, erasing the very signal the fold keys on, so the cleaner has to
+notice and put it back.</li>
+<li>Separator handling is deliberately asymmetric. A backslash is a separator only where it is one, so
+<code>.claude\foo\..\settings.json</code> cleans on Windows and stays one strange filename on Linux.</li>
+</ul>
+<h3 id="watching-it-close">Watching it close</h3>
+<p>To write this up I put a small probe test into a throwaway worktree and ran it against five points in shipmates&rsquo; history.
+The rules are <code>Bash(echo *)</code>, <code>Bash(bash *)</code> and <code>Bash(pwsh *)</code> allowed, <code>Bash(sh)</code>, <code>Bash(rm *)</code> and
+<code>Bash(Remove-Item *)</code> denied, and <code>Write(**/.claude/settings.json)</code> denied for the path rows. The first row uses no rules
+at all, to show the read-only auto-allow on its own.</p>
+<table>
+  <thead>
+      <tr>
+          <th>command</th>
+          <th>Aug 15, before</th>
+          <th>after #36</th>
+          <th>after #43</th>
+          <th>after #55</th>
+          <th>after #59</th>
+      </tr>
+  </thead>
+  <tbody>
+      <tr>
+          <td><code>cat notes &gt; ~/.ssh/authorized_keys</code> (no rules)</td>
+          <td><strong>allow</strong></td>
+          <td>ask</td>
+          <td>ask</td>
+          <td>ask</td>
+          <td>ask</td>
+      </tr>
+      <tr>
+          <td><code>echo $(curl … | sh)</code></td>
+          <td><strong>allow</strong></td>
+          <td><strong>allow</strong></td>
+          <td>deny</td>
+          <td>deny</td>
+          <td>deny</td>
+      </tr>
+      <tr>
+          <td><code>eval 'curl … | sh'</code></td>
+          <td>ask</td>
+          <td>ask</td>
+          <td>deny</td>
+          <td>deny</td>
+          <td>deny</td>
+      </tr>
+      <tr>
+          <td><code>\rm -rf build</code></td>
+          <td>ask</td>
+          <td>ask</td>
+          <td>deny</td>
+          <td>deny</td>
+          <td>deny</td>
+      </tr>
+      <tr>
+          <td><code>timeout 5s rm -rf build</code></td>
+          <td>ask</td>
+          <td>deny</td>
+          <td>deny</td>
+          <td>deny</td>
+          <td>deny</td>
+      </tr>
+      <tr>
+          <td><code>bash &lt;&lt;&lt; 'curl … | sh'</code></td>
+          <td><strong>allow</strong></td>
+          <td><strong>allow</strong></td>
+          <td><strong>allow</strong></td>
+          <td>deny</td>
+          <td>deny</td>
+      </tr>
+      <tr>
+          <td><code>pwsh -Command Remove-Item -Recurse C:/src</code></td>
+          <td><strong>allow</strong></td>
+          <td><strong>allow</strong></td>
+          <td><strong>allow</strong></td>
+          <td>deny</td>
+          <td>deny</td>
+      </tr>
+      <tr>
+          <td><code>pwsh -EncodedCommand &lt;same, encoded&gt;</code></td>
+          <td><strong>allow</strong></td>
+          <td><strong>allow</strong></td>
+          <td><strong>allow</strong></td>
+          <td>deny</td>
+          <td>deny</td>
+      </tr>
+      <tr>
+          <td><code>pwsh -EncodedCommand not-base64!!</code></td>
+          <td><strong>allow</strong></td>
+          <td><strong>allow</strong></td>
+          <td><strong>allow</strong></td>
+          <td>ask</td>
+          <td>ask</td>
+      </tr>
+      <tr>
+          <td>Write <code>.claude/foo/../settings.json</code></td>
+          <td><strong>allow</strong></td>
+          <td><strong>allow</strong></td>
+          <td>deny</td>
+          <td>deny</td>
+          <td>deny</td>
+      </tr>
+      <tr>
+          <td>Write <code>C:\repo\.CLAUDE\settings.json</code></td>
+          <td><strong>allow</strong></td>
+          <td><strong>allow</strong></td>
+          <td><strong>allow</strong></td>
+          <td>deny</td>
+          <td>deny</td>
+      </tr>
+      <tr>
+          <td>Write <code>\\srv\share\repo\.CLAUDE\settings.json</code></td>
+          <td><strong>allow</strong></td>
+          <td><strong>allow</strong></td>
+          <td><strong>allow</strong></td>
+          <td><strong>allow</strong></td>
+          <td>deny</td>
+      </tr>
+  </tbody>
+</table>
+<p>&ldquo;Ask&rdquo; rows in the first columns aren&rsquo;t safe either. An ask means a human sees <code>eval '…'</code> in an approval prompt at the end
+of a long day and has to read it correctly. The point of a deny rule is that nobody has to.</p>
+<h3 id="the-discipline">The discipline</h3>
+<p>Every bypass got a test that fails first. Not &ldquo;I wrote a test and it passes&rdquo;, but: write the case, watch it fail against
+<code>main</code>, fix, watch it pass, and for the review-driven ones revert the fix in place and confirm the test goes red again.
+The four Windows bypasses in <a href="https://github.com/luthermonson/shipmates/commit/96049fc"><code>96049fc</code></a> were found <em>after</em> the
+first version of PR #55 had green tests, which is the whole argument for having someone (or something) attack your fix
+specifically.</p>
+<p>Equally important are the negative tests. <code>ls</code>, <code>cat foo</code>, <code>git status</code>, <code>grep 'a|b' file</code> and
+<code>pwsh -Command 'Get-ChildItem'</code> all have to stay quiet, or the gate just becomes the thing people disable.</p>
+<h3 id="whats-still-open">What&rsquo;s still open</h3>
+<ul>
+<li><strong>Cross-interpreter nesting.</strong> A nested command line is judged under the <em>outer</em> tool&rsquo;s name. A PowerShell payload
+sent through the Bash tool is matched against <code>Bash(…)</code> rules, so a <code>PowerShell(iex …)</code> deny wouldn&rsquo;t fire. shipmates
+dispatches pwsh through the PowerShell tool on Windows, and the commit that documents it notes it degrades to ask rather than
+allow, but the right fix is to key nested evaluation off the interpreter.</li>
+<li><strong>Things the gate can&rsquo;t see.</strong> <code>sh script.sh</code>, <code>pwsh -File x.ps1</code>, <code>&lt; file</code>, and arguments that <code>xargs</code> reads from stdin
+all point at content that isn&rsquo;t in the command string. These are documented blind spots. <code>xargs</code> stays a wrapper on
+purpose: stripping it means <code>… | xargs rm -rf</code> gets judged as <code>rm -rf</code>.</li>
+<li><strong>Bypass mode.</strong> A persona running with <code>bypassPermissions</code> skips the ship-side layers by design. The question I had
+to answer early was whether that should also skip the Admiral&rsquo;s fleet-wide deny list. It doesn&rsquo;t. Article 14 makes the
+fleet deny bind bypass-mode personas, and the Brig&rsquo;s freeze still blocks Write-class tools even in bypass mode.</li>
+</ul>
+<p>A shell allowlist matched against strings will never be a sandbox. It&rsquo;s a seatbelt that keeps an agent from doing the
+obvious dangerous thing because it got confused or because a hostile issue body told it to. Containment (see
+<a href="/blog/2026/09/process-containment-job-objects-process-groups-cgroups/">Job Objects vs process groups</a>) and running the
+ship as an unprivileged user are the walls. But a seatbelt that comes undone when you spell <code>rm</code> with a backslash isn&rsquo;t
+doing its job either.</p>
+<h3 id="how-i-measured">How I measured</h3>
+<p>The table comes from a probe test (<code>NewEvaluatorWithRules</code> plus the package&rsquo;s own <code>rules()</code> and <code>bashInput()</code> test helpers)
+copied into a detached git worktree of shipmates and run with <code>go test -v -run TestBlogProbe ./internal/permissions/</code> at
+<code>970a958^1</code> (main just before #36), <code>970a958</code> (#36 merged), <code>14e01ef</code> (#43), <code>c1c4a25</code> (#55) and <code>977ad4c</code> (main after
+#59). Go 1.26 on Windows 11, so the drive-letter and UNC rows reflect Windows path handling. The worktree was removed
+afterward. The <code>curl</code> URL in the probe is <code>https://example.invalid/x.sh</code>.</p>
+<h3 id="links">Links</h3>
+<ul>
+<li><a href="https://github.com/luthermonson/shipmates/pull/36">PR #36</a>: read-only builtin auto-allow bypass</li>
+<li><a href="https://github.com/luthermonson/shipmates/pull/43">PR #43</a>: substitution bodies, head-token respelling, path normalization</li>
+<li><a href="https://github.com/luthermonson/shipmates/pull/55">PR #55</a>: here-strings, PowerShell <code>-Command</code>/<code>-EncodedCommand</code>, Windows Brig parity</li>
+<li><a href="https://github.com/luthermonson/shipmates/pull/59">PR #59</a>: case-folding UNC paths</li>
+<li><a href="https://github.com/luthermonson/shipmates/blob/main/docs/brig.md"><code>docs/brig.md</code></a> and <a href="https://github.com/luthermonson/shipmates/blob/main/docs/security.md"><code>docs/security.md</code></a></li>
+<li><a href="https://learn.microsoft.com/en-us/powershell/module/microsoft.powershell.core/about/about_powershell_exe">about_PowerShell_exe: -EncodedCommand</a></li>
+</ul>
+
+      </div>
+      <footer>
+        <div class="stats">
+  
+    <ul class="categories">
+      
+        
+          <li><a class="article-terms-link" href="/categories/ai-agents/">ai-agents</a></li>
+        
+          <li><a class="article-terms-link" href="/categories/security/">security</a></li>
+        
+          <li><a class="article-terms-link" href="/categories/go/">go</a></li>
+        
+      
+    </ul>
+  
+  
+    <ul class="tags">
+      
+        
+          <li><a class="article-terms-link" href="/tags/go/">go</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/security/">security</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/ai-agents/">ai-agents</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/shell/">shell</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/powershell/">powershell</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/shipmates/">shipmates</a></li>
+        
+      
+    </ul>
+  
+</div>
+
+      </footer>
+    </div>
+    
+      
+  
+  <div class='post giscus-wrap'>
+    <script src='https://giscus.app/client.js'
+            data-repo='luthermonson/luth.io'
+            data-repo-id='R_kgDOGvFBXQ'
+            data-category='Announcements'
+            data-category-id='DIC_kwDOGvFBXc4DH_gv'
+            data-mapping='pathname'
+            data-strict='1'
+            data-reactions-enabled='1'
+            data-emit-metadata='0'
+            data-input-position='top'
+            data-theme='light'
+            data-lang='en'
+            data-loading='lazy'
+            crossorigin='anonymous'
+            async>
+    </script>
+  </div>
+  
+
+
+
+    
+  </article>
+  
+    <nav class="post-nav">
+      
+        <a href="/blog/2026/09/process-containment-job-objects-process-groups-cgroups/" class="post-nav-link older">
+          <span class="post-nav-label">&larr; Older</span>
+          <span class="post-nav-title">Cross-Platform Process Containment: Job Objects vs Process Groups vs cgroups</span>
+        </a>
+      
+      
+        <a href="/blog/2026/10/php-jit-use-after-free/" class="post-nav-link newer">
+          <span class="post-nav-label">Newer &rarr;</span>
+          <span class="post-nav-title">An Upstream PHP JIT Use-After-Free, and Why Our Default Flipped Twice</span>
+        </a>
+      
+    </nav>
+  
+
+      </main>
+      <section id="site-sidebar">
+  
+    <section id="recent-posts">
+      <header>
+        <h1>Recent Posts</h1>
+      </header>
+      
+      <article class="mini-post">
+          <a href="/blog/2026/10/ephpm-worker-mode-performance/" class="image" style="--bg-image: url('/img/2026/10/ephpm-worker-mode-performance-cover.svg');">
+    <img class="" src="/img/2026/10/ephpm-worker-mode-performance-cover.svg" alt="Diagram: before, hyper/tokio hands each request to one shared bounded channel whose waiter list all 20 PHP threads contend on; after, a dispatcher hands the job straight into the mailbox of the most recently idle PHP thread and only queues it in a FIFO overflow queue when every thread is busy">
+  </a>
+        <header>
+          <h2><a href="/blog/2026/10/ephpm-worker-mode-performance/">Fourth Place in Worker Mode, and Why It Wasn&#39;t PHP</a></h2>
+          <time class="published" datetime="2026-10-16 08:10:00 -0700 PDT">October 16, 2026</time>
+        </header>
+      </article>
+      
+      <article class="mini-post">
+          <a href="/blog/2026/10/ephpm-websockets-how-to/" class="image" style="--bg-image: url('/img/2026/10/ephpm-websockets-how-to-cover.svg');">
+    <img class="" src="/img/2026/10/ephpm-websockets-how-to-cover.svg" alt="Diagram: browsers hold sockets to ePHPm&#39;s Rust session tasks and registry; each connect, message and disconnect runs websocket.php once on the PHP thread pool, and ordinary HTTP requests push through ephpm_ws_broadcast">
+  </a>
+        <header>
+          <h2><a href="/blog/2026/10/ephpm-websockets-how-to/">WebSockets in ePHPm, From Zero to a Working Chat</a></h2>
+          <time class="published" datetime="2026-10-11 17:30:00 -0700 PDT">October 11, 2026</time>
+        </header>
+      </article>
+      
+      <article class="mini-post">
+          <a href="/blog/2026/10/webhooks-out-of-order-scheduler/" class="image" style="--bg-image: url('/img/2026/10/webhooks-out-of-order-scheduler-timeline.svg');">
+    <img class="" src="/img/2026/10/webhooks-out-of-order-scheduler-timeline.svg" alt="Timeline of three same-label jobs where a runner executing a build is destroyed 2.3 seconds before its in_progress webhook arrives">
+  </a>
+        <header>
+          <h2><a href="/blog/2026/10/webhooks-out-of-order-scheduler/">Webhooks Arrive Out of Order: How My Scheduler Killed Live Builds</a></h2>
+          <time class="published" datetime="2026-10-07 21:10:00 -0700 PDT">October 7, 2026</time>
+        </header>
+      </article>
+      
+      <article class="mini-post">
+          <a href="/blog/2026/10/go-proxmox-five-years-to-v0-8/" class="image" style="--bg-image: url('/img/2026/10/go-proxmox-five-years-to-v0-8-apidiff.svg');">
+    <img class="" src="/img/2026/10/go-proxmox-five-years-to-v0-8-apidiff.svg" alt="Horizontal bar chart of apidiff incompatible and compatible changes for every go-proxmox release from v0.1.0 to v0.8.2">
+  </a>
+        <header>
+          <h2><a href="/blog/2026/10/go-proxmox-five-years-to-v0-8/">Breaking Changes Without Breaking Trust: Five Years to go-proxmox v0.8</a></h2>
+          <time class="published" datetime="2026-10-04 19:40:00 -0700 PDT">October 4, 2026</time>
+        </header>
+      </article>
+      
+      <article class="mini-post">
+          <a href="/blog/2026/10/windows-sigterm-sparse-files/" class="image" style="--bg-image: url('/img/2026/10/windows-sigterm-sparse-files-connections.svg');">
+    <img class="" src="/img/2026/10/windows-sigterm-sparse-files-connections.svg" alt="Bar chart: 96 Cloudflare edge connections held by orphaned cloudflared processes versus 4 for the live daemon">
+  </a>
+        <header>
+          <h2><a href="/blog/2026/10/windows-sigterm-sparse-files/">Windows Grab-Bag: SIGTERM That Doesn&#39;t Exist and Sparse Files That Break Docker</a></h2>
+          <time class="published" datetime="2026-10-03 14:30:00 -0700 PDT">October 3, 2026</time>
+        </header>
+      </article>
+      
+      
+        <footer>
+          <a href="/blog" class="button">See More</a>
+        </footer>
+      
+    </section>
+  
+
+  
+    
+
+      <section id="categories">
+        <header>
+          <h1><a href="/categories">Categories</a></h1>
+        </header>
+        <ul>
+          
+          
+          <li>
+              <a href="/categories/ephpm/">ephpm<span class="count">33</span></a>
+          
+          <li>
+              <a href="/categories/go/">go<span class="count">30</span></a>
+          
+          <li>
+              <a href="/categories/php/">php<span class="count">23</span></a>
+          
+          <li>
+              <a href="/categories/rust/">rust<span class="count">15</span></a>
+          
+          <li>
+              <a href="/categories/homelab/">homelab<span class="count">14</span></a>
+          
+          <li>
+              <a href="/categories/windows/">windows<span class="count">14</span></a>
+          
+          <li>
+              <a href="/categories/ci/">ci<span class="count">9</span></a>
+          
+          <li>
+              <a href="/categories/databases/">databases<span class="count">9</span></a>
+          
+          <li>
+              <a href="/categories/security/">security<span class="count">9</span></a>
+          
+          <li>
+              <a href="/categories/containers/">containers<span class="count">7</span></a>
+          
+          <li>
+              <a href="/categories/tools/">tools<span class="count">5</span></a>
+          
+          <li>
+              <a href="/categories/ai-agents/">ai-agents<span class="count">4</span></a>
+          
+          </li>
+        </ul>
+      </section>
+    
+  
+
+  
+    <section id="mini-bio">
+      <header>
+        <h1>About</h1>
+      </header>
+      <p>Luther is a 20+ year software veteran specializing in backend APIs and architecting products. Employed at <a href='https://www.suse.com'>SUSE</a> as the Team Lead for the <a href='https://github.com/rancher/windows/issues'>Containers on Windows Team</a> working on <a href='https://rancher.com/'>Rancher</a> + <a href='https://kubernetes.io/'>Kubernetes</a></p>
+      <footer>
+        <a href="/about" class="button">Learn More</a>
+      </footer>
+    </section>
+  
+</section>
+
+      <footer id="site-footer">
+  
+      <ul class="socnet-icons">
+        
+
+        <li><a href="//github.com/luthermonson" target="_blank" rel="noopener" title="GitHub" class="fab fa-github"></a></li>
+
+
+
+
+
+
+
+
+
+
+
+<li><a href="//www.linkedin.com/in/luthermonson" target="_blank" rel="noopener" title="LinkedIn" class="fab fa-linkedin"></a></li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li><a href="//twitter.com/luthermonson" target="_blank" rel="noopener" title="Twitter" class="fab fa-twitter"></a></li>
+
+
+
+
+
+
+
+
+
+
+
+<li><a href="mailto:luther.monson@gmail.com" target="_blank" title="Email" class="far fa-envelope"></a></li>
+
+      </ul>
+  
+  <p class="copyright">
+    © 2026 Luther Monson
+      <br>
+    Theme: <a href='https://github.com/pacollins/hugo-future-imperfect-slim' target='_blank' rel='noopener'>Hugo Future Imperfect Slim</a><br>A <a href='https://html5up.net/future-imperfect' target='_blank' rel='noopener'>HTML5 UP port</a> | Powered by <a href='https://gohugo.io/' title='0.160.1' target='_blank' rel='noopener'>Hugo</a>
+  </p>
+</footer>
+<a id="back-to-top" href="#" class="fas fa-arrow-up fa-2x"></a>
+
+      <script src="/js/bundle.min.241b62ebc4792fe8c7a75879e5f710894f226f2b73342e9916b3a3b0526030cc.js" integrity="sha256-JBti68R5L&#43;jHp1h55fcQiU8ibytzNC6ZFrOjsFJgMMw="></script>
+    <script src="/js/add-on.js"></script>
+    </div>
+  </body>
+</html>

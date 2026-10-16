@@ -1,0 +1,776 @@
+<!doctype html>
+<html lang="en">
+  <head>
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-MSTSKGFWTX"></script>
+<script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+
+    gtag('config', 'G-MSTSKGFWTX');
+</script><meta charset="utf-8">
+<title>An Upstream PHP JIT Use-After-Free, and Why Our Default Flipped Twice - Luther Monson</title>
+<meta name="description" content="ePHPm turned PHP&#39;s tracing JIT on by default, then off three days later when stock Laravel died after three requests. The bug was upstream; here is the bisect, the root cause and where the fix landed.">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<meta name="twitter:card" content="summary_large_image"><meta name="twitter:site" content="@luthermonson">
+
+<meta property="og:site_name" content="Luther Monson">
+<meta property="og:title" content="An Upstream PHP JIT Use-After-Free, and Why Our Default Flipped Twice">
+<meta property="og:description" content="ePHPm turned PHP&#39;s tracing JIT on by default, then off three days later when stock Laravel died after three requests. The bug was upstream; here is the bisect, the root cause and where the fix landed.">
+<meta property="og:type" content="article">
+<meta property="og:url" content="https://luth.io/blog/2026/10/php-jit-use-after-free/">
+    <meta property="og:image" content="https://luth.io/img/2026/10/php-jit-use-after-free-bisect.svg">
+    <meta property="og:image:alt" content="Bar chart of requests served before a crash per PHP version: 8.4.14, 8.5.0 and 8.5.4 never crash; 8.4.24 dies at 7, 8.5.5 at 1, 8.5.7 and 8.5.9 at 2">
+
+
+  <link rel="manifest" href="/favicon/site.webmanifest?v=1">
+  <link rel="apple-touch-icon" sizes="180x180" href="/favicon/apple-touch-icon.png?v=1">
+  <link rel="icon" type="image/png" sizes="32x32" href="/favicon/favicon-32x32.png?v=1">
+  <link rel="icon" type="image/png" sizes="16x16" href="/favicon/favicon-16x16.png?v=1">
+  
+    <link rel="mask-icon" href="/favicon/safari-pinned-tab.svg?v=1" color="#ffffff">
+    <link rel="shortcut icon" href="/favicon/favicon.ico?v=1">
+    <meta name="msapplication-config" content="/favicon/browserconfig.xml?v=1">
+  
+  <meta name="msapplication-TileColor" content="#ffffff">
+  <meta name="theme-color" content="#ffffff">
+
+
+  <meta name="generator" content="Hugo 0.160.1">
+  <link rel="alternate" type="application/rss+xml" href="https://luth.io/index.xml" title="Luther Monson">
+  <link rel="stylesheet" href="/css/bundle.min.e1ffed86714fbb7eff75eab221c0c61b8260be0c7d1c08db0fcb7a2bdb6af7c9.css" integrity="sha256-4f/thnFPu37/deqyIcDGG4Jgvgx9HAjbD8t6K9tq98k="><link rel="stylesheet" href="/css/add-on.css">
+        <link rel="stylesheet" href="/css/code.css">
+        <link rel="stylesheet" href="/css/mobile.css">
+</head>
+
+  <body>
+    
+
+<header id="site-header">
+  <nav id="site-nav">
+    <h1 class="nav-title">
+      <a href="/" class="nav">
+        <img class="nav-avatar" src="/img/luther-monson-headshot.jpg" alt="" width="32" height="32">
+        
+          Blog
+        
+      </a>
+    </h1>
+    <menu id="site-nav-menu" class="flyout-menu menu">
+      
+        
+          
+          <a href="/" class="nav link"><i class='fa fa-home'></i> Home</a>
+        
+      
+        
+          
+          <a href="/about" class="nav link"><i class='far fa-id-card'></i> About</a>
+        
+      
+        
+          
+          <a href="/blog" class="nav link"><i class='far fa-newspaper'></i> Blog</a>
+        
+      
+        
+          
+          <a href="/archive" class="nav link"><i class='far fa-calendar-alt'></i> Archive</a>
+        
+      
+        
+          
+          <a href="/categories" class="nav link"><i class='fas fa-sitemap'></i> Categories</a>
+        
+      
+      <a href="#share-menu" class="nav link share-toggle"><i class="fas fa-share-alt">&nbsp;</i>Share</a>
+      <a href="#search-input" class="nav link search-toggle"><i class="fas fa-search">&nbsp;</i>Search</a>
+    </menu>
+    <a href="#search-input" class="nav search-toggle"><i class="fas fa-search fa-2x">&nbsp;</i></a>
+    <a href="#share-menu" class="nav share-toggle"><i class="fas fa-share-alt fa-2x">&nbsp;</i></a>
+    
+    <a href="#site-nav" class="nav nav-toggle"><i class="fas fa-bars fa-2x"></i></a>
+  </nav>
+  <menu id="search" class="menu"><input id="search-input" class="search-input menu"></input><div id="search-results" class="search-results menu"></div></menu>
+  
+  
+    <menu id="share-menu" class="flyout-menu menu">
+      <h1>Share Post</h1>
+      
+
+
+
+
+  
+    
+    <a href="//twitter.com/share?text=An%20Upstream%20PHP%20JIT%20Use-After-Free%2c%20and%20Why%20Our%20Default%20Flipped%20Twice&amp;url=https%3a%2f%2fluth.io%2fblog%2f2026%2f10%2fphp-jit-use-after-free%2f" target="_blank" rel="noopener" class="nav share-btn twitter">
+        <p>Twitter</p>
+      </a>
+  
+
+  
+      <a href="//www.facebook.com/sharer/sharer.php?u=https%3a%2f%2fluth.io%2fblog%2f2026%2f10%2fphp-jit-use-after-free%2f" target="_blank" rel="noopener" class="nav share-btn facebook">
+        <p>Facebook</p>
+        </a>
+  
+
+  
+    <a href="//www.reddit.com/submit?url=https%3a%2f%2fluth.io%2fblog%2f2026%2f10%2fphp-jit-use-after-free%2f&amp;title=An%20Upstream%20PHP%20JIT%20Use-After-Free%2c%20and%20Why%20Our%20Default%20Flipped%20Twice" target="_blank" rel="noopener" class="nav share-btn reddit">
+          <p>Reddit</p>
+        </a>
+  
+
+  
+        <a href="//www.linkedin.com/shareArticle?url=https%3a%2f%2fluth.io%2fblog%2f2026%2f10%2fphp-jit-use-after-free%2f&amp;title=An%20Upstream%20PHP%20JIT%20Use-After-Free%2c%20and%20Why%20Our%20Default%20Flipped%20Twice" target="_blank" rel="noopener" class="nav share-btn linkedin">
+            <p>LinkedIn</p>
+          </a>
+  
+
+  
+        <a href="//www.pinterest.com/pin/create/button/?url=https%3a%2f%2fluth.io%2fblog%2f2026%2f10%2fphp-jit-use-after-free%2f&amp;description=An%20Upstream%20PHP%20JIT%20Use-After-Free%2c%20and%20Why%20Our%20Default%20Flipped%20Twice" target="_blank" rel="noopener" class="nav share-btn pinterest">
+          <p>Pinterest</p>
+        </a>
+  
+
+  
+        <a href="mailto:?subject=Check%20out%20this%20post%20by Luther%20Monson&amp;body=https%3a%2f%2fluth.io%2fblog%2f2026%2f10%2fphp-jit-use-after-free%2f" target="_blank" class="nav share-btn email" data-proofer-ignore>
+          <p>Email</p>
+        </a>
+  
+
+
+    </menu>
+  
+</header>
+
+    <div id="wrapper">
+      <section id="site-intro" class="hidden-single-column">
+  <a href="/"><img src="/img/luther-monson-headshot.jpg" class="circle" width="100" alt="Luther Monson, Staff Software Engineer at SUSE" /></a>
+  <header>
+    <h1>Luther Monson</h1>
+  </header>
+  <main>
+    <p>Go by way of PHP &middot; Containers &middot; VMs &middot; Windows &middot; Kubernetes</p>
+  </main>
+  
+    <footer>
+      <ul class="socnet-icons">
+        
+
+        <li><a href="//github.com/luthermonson" target="_blank" rel="noopener" title="GitHub" class="fab fa-github"></a></li>
+
+
+
+
+
+
+
+
+
+
+
+<li><a href="//www.linkedin.com/in/luthermonson" target="_blank" rel="noopener" title="LinkedIn" class="fab fa-linkedin"></a></li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li><a href="//twitter.com/luthermonson" target="_blank" rel="noopener" title="Twitter" class="fab fa-twitter"></a></li>
+
+
+
+
+
+
+
+
+
+
+
+<li><a href="mailto:luther.monson@gmail.com" target="_blank" title="Email" class="far fa-envelope"></a></li>
+
+      </ul>
+    </footer>
+  
+</section>
+
+      <main id="site-main">
+        
+  <article>
+    <div class="post">
+      <header>
+  <div class="title">
+    
+      <h2><a href="/blog/2026/10/php-jit-use-after-free/">An Upstream PHP JIT Use-After-Free, and Why Our Default Flipped Twice</a></h2>
+    
+    
+      <p>ePHPm turned PHP&#39;s tracing JIT on by default, then off three days later when stock Laravel died after three requests. The bug was upstream; here is the bisect, the root cause and where the fix landed.</p>
+    
+  </div>
+  <div class="meta">
+    <time datetime="2026-10-01 20:10:00 -0700 PDT">October 1, 2026</time>
+    
+    <p>9-Minute Read</p>
+  </div>
+</header>
+
+      <div id="socnet-share">
+        
+
+
+
+
+  
+    
+    <a href="//twitter.com/share?text=An%20Upstream%20PHP%20JIT%20Use-After-Free%2c%20and%20Why%20Our%20Default%20Flipped%20Twice&amp;url=https%3a%2f%2fluth.io%2fblog%2f2026%2f10%2fphp-jit-use-after-free%2f" target="_blank" rel="noopener" class="nav share-btn twitter">
+        <p>Twitter</p>
+      </a>
+  
+
+  
+      <a href="//www.facebook.com/sharer/sharer.php?u=https%3a%2f%2fluth.io%2fblog%2f2026%2f10%2fphp-jit-use-after-free%2f" target="_blank" rel="noopener" class="nav share-btn facebook">
+        <p>Facebook</p>
+        </a>
+  
+
+  
+    <a href="//www.reddit.com/submit?url=https%3a%2f%2fluth.io%2fblog%2f2026%2f10%2fphp-jit-use-after-free%2f&amp;title=An%20Upstream%20PHP%20JIT%20Use-After-Free%2c%20and%20Why%20Our%20Default%20Flipped%20Twice" target="_blank" rel="noopener" class="nav share-btn reddit">
+          <p>Reddit</p>
+        </a>
+  
+
+  
+        <a href="//www.linkedin.com/shareArticle?url=https%3a%2f%2fluth.io%2fblog%2f2026%2f10%2fphp-jit-use-after-free%2f&amp;title=An%20Upstream%20PHP%20JIT%20Use-After-Free%2c%20and%20Why%20Our%20Default%20Flipped%20Twice" target="_blank" rel="noopener" class="nav share-btn linkedin">
+            <p>LinkedIn</p>
+          </a>
+  
+
+  
+        <a href="//www.pinterest.com/pin/create/button/?url=https%3a%2f%2fluth.io%2fblog%2f2026%2f10%2fphp-jit-use-after-free%2f&amp;description=An%20Upstream%20PHP%20JIT%20Use-After-Free%2c%20and%20Why%20Our%20Default%20Flipped%20Twice" target="_blank" rel="noopener" class="nav share-btn pinterest">
+          <p>Pinterest</p>
+        </a>
+  
+
+  
+        <a href="mailto:?subject=Check%20out%20this%20post%20by Luther%20Monson&amp;body=https%3a%2f%2fluth.io%2fblog%2f2026%2f10%2fphp-jit-use-after-free%2f" target="_blank" class="nav share-btn email" data-proofer-ignore>
+          <p>Email</p>
+        </a>
+  
+
+
+      </div>
+      <div class="content">
+        
+        <p>In August, <a href="https://github.com/ephpm/ephpm">ePHPm</a> turned PHP&rsquo;s tracing JIT on by default in single-site serve mode.
+Three days later it went back off, on every platform, and it&rsquo;s still off. The reason turned out to be a
+use-after-free in PHP&rsquo;s tracing JIT that has nothing to do with ePHPm: stock <code>php -S</code> with a stock Laravel skeleton
+dies on it in a couple of requests. The fix is now released upstream, so this seemed like the right time to write up
+how we got there, and what still has to happen before the default can flip again.</p>
+<h3 id="flip-one-on-because-the-numbers-said-so">Flip one: on, because the numbers said so</h3>
+<p>ePHPm had kept the JIT off since July for a measured reason: on our <code>cpu.php</code> benchmark, which spends most of its time
+in the <code>hash()</code> builtin, <code>opcache.jit=tracing</code> cost 17% RPS. JIT compiles PHP bytecode, and when the hot code is a C
+builtin there&rsquo;s nothing for it to compile, so the tracing overhead is pure cost.</p>
+<p>Then the Windows performance work happened. MSVC-built PHP gets the slowest VM dispatch mode, and on a pure-PHP CPU
+loop on my Ryzen 9 5950X, the JIT took a request from 5.56 ms to 2.33 ms. So
+<a href="https://github.com/ephpm/ephpm/pull/350">ephpm#350</a> shipped a <em>shaped</em> default and not a global one:</p>
+<table>
+  <thead>
+      <tr>
+          <th>Mode</th>
+          <th>default</th>
+      </tr>
+  </thead>
+  <tbody>
+      <tr>
+          <td>single-site <code>ephpm serve</code></td>
+          <td><code>tracing</code></td>
+      </tr>
+      <tr>
+          <td>multi-tenant (<code>sites_dir</code>)</td>
+          <td><code>disable</code></td>
+      </tr>
+      <tr>
+          <td>worker mode</td>
+          <td><code>disable</code> (pending a soak)</td>
+      </tr>
+      <tr>
+          <td><code>ephpm dev</code></td>
+          <td>off</td>
+      </tr>
+  </tbody>
+</table>
+<p>Multi-tenant stayed off because of a second measurement: per-site <code>opcache_invalidate()</code> never reclaims JIT buffer
+(<code>buffer_free</code> doesn&rsquo;t move, only a full <code>opcache_reset</code> gets it back, and the hardening preset disables that). In a
+host where tenants deploy all day, the buffer would fill and the JIT would quietly stop compiling. There&rsquo;s a knob
+(<code>[php] opcache_jit = &quot;tracing&quot; | &quot;function&quot; | &quot;disable&quot;</code>), a startup line that says what the JIT is doing and why, and
+two gauges for buffer size and free space.</p>
+<p>The PR&rsquo;s own risk section named the worst case of turning it on: &ldquo;a JIT miscompile&hellip; a process-level SIGSEGV/access
+violation with no crash containment&rdquo;. That&rsquo;s what happened.</p>
+<h3 id="flip-two-off-because-laravel-died-after-three-requests">Flip two: off, because Laravel died after three requests</h3>
+<p><a href="https://github.com/ephpm/ephpm/issues/365">ephpm#365</a>: a Windows release build serving a <strong>stock Laravel 13 app with
+the default config</strong> died with <code>0xC0000005</code> after exactly three requests. Deterministic. ePHPm logged nothing, because
+there&rsquo;s no fatal-signal handler on Windows; the process just vanished.</p>
+<p>It was found during an experiment with an in-memory code bundle, and it got blamed on that experiment twice before the
+right control was run: with the bundle feature switched entirely off, it still crashed 3 out of 3. The controls that
+pinned it on the JIT:</p>
+<ul>
+<li><code>opcache.jit=disable</code> survived 150 requests every time.</li>
+<li>A unique <code>opcache.cache_id</code> didn&rsquo;t help, so it wasn&rsquo;t the
+<a href="/blog/2026/08/opcache-on-windows-two-silent-failures/">OPcache ASLR collision</a> from earlier that same day,
+despite looking a lot like it.</li>
+<li>None of the ePHPm-side levers helped either: one worker, the dedicated pool (that only delayed it to request 35),
+a smaller JIT buffer.</li>
+</ul>
+<p>A crash dump symbolized to the same frames every time:</p>
+<pre tabindex="0"><code>php8ts!zend_jit_escape_if_undef+0x103        &lt;- mov rcx,qword ptr [rax+rcx*8+0D0h]
+php8ts!zend_jit_trace_deoptimization+0x500
+php8ts!zend_jit_trace+0x961
+php8ts!zend_jit_compile_side_trace+0x1c3
+php8ts!zend_jit_trace_hot_side+0x47f
+php8ts!zend_jit_trace_exit+0x7fb
+0x00001000`10000644                          &lt;- side exit out of JIT&#39;d code
+</code></pre><p>Read bottom-up: JIT-compiled code took a side exit, the exit got hot, so the JIT started compiling a <em>side trace</em> for
+it, and while doing that it read through a pointer into an unmapped heap region. The faulting read is
+<code>op_array-&gt;reserved[0]</code>, which is <code>ZEND_FUNC_INFO(exit_info-&gt;op_array)</code> in <code>zend_jit_ir.c</code>.</p>
+<h3 id="bisecting-it-without-ephpm">Bisecting it without ePHPm</h3>
+<p>The fastest way to stop arguing about whose bug it is: take your own code out of the picture. Same Laravel app,
+official Windows x64 TS builds from php.net, plain <code>php -S</code>, an ini with OPcache and <code>opcache.jit = tracing</code>,
+150 requests per cell, one process per cell. Every cell checked that <code>opcache_get_status()['jit']['on']</code> was really
+<code>true</code>. My first pass had a false negative on 8.4 because OPcache is a separate DLL there and I hadn&rsquo;t loaded it.</p>
+<p><img src="/img/2026/10/php-jit-use-after-free-bisect.svg" alt="Bar chart of requests served before a crash per PHP version"></p>
+<table>
+  <thead>
+      <tr>
+          <th>PHP (Win x64 TS)</th>
+          <th>requests served</th>
+      </tr>
+  </thead>
+  <tbody>
+      <tr>
+          <td>8.4.14</td>
+          <td>150, clean</td>
+      </tr>
+      <tr>
+          <td>8.4.24</td>
+          <td>7, then <code>0xC0000005</code></td>
+      </tr>
+      <tr>
+          <td>8.5.0</td>
+          <td>150, clean</td>
+      </tr>
+      <tr>
+          <td>8.5.4</td>
+          <td>150, clean</td>
+      </tr>
+      <tr>
+          <td>8.5.5</td>
+          <td>1, then <code>0xC0000005</code></td>
+      </tr>
+      <tr>
+          <td>8.5.7 (our pinned SDK)</td>
+          <td>2, then <code>0xC0000005</code></td>
+      </tr>
+      <tr>
+          <td>8.5.9 (latest at the time)</td>
+          <td>2, then <code>0xC0000005</code></td>
+      </tr>
+  </tbody>
+</table>
+<p>That window brackets one change on both branches: <a href="https://github.com/php/php-src/pull/21368">php-src#21368</a>, a
+fix for a JIT infinite loop, merged to PHP-8.4 on March 16th and first released in 8.4.20 and 8.5.5. There was
+already an open upstream fix attempt, <a href="https://github.com/php/php-src/pull/21710">php-src#21710</a> from Ilia Alshanetsky,
+chasing a crash another user had hit under IIS with FastCGI, and Arnaud Le Blanc had posted the root cause there the week before.</p>
+<h3 id="the-root-cause">The root cause</h3>
+<p>When the tracing JIT creates an exit point, it records the <code>op_array</code> the trace was in, so it can find the function&rsquo;s
+metadata later. It took that pointer from the current call frame. Usually that&rsquo;s the <code>op_array</code> in OPcache shared
+memory, which lives as long as the cache. But for <strong>methods of a class whose parent isn&rsquo;t in shared memory</strong>, class
+linking copies the method&rsquo;s <code>op_array</code> header to the request heap, and that copy is what&rsquo;s on the frame. The copy is
+freed at request shutdown. The trace metadata lives on in shared memory.</p>
+<p>So: request 1 records a trace through such a method and the exit point keeps a pointer to the heap copy. Request 2
+takes that exit often enough to make it hot, the JIT compiles a side trace, follows <code>exit_info-&gt;op_array</code>, and reads
+freed memory. Whether that crashes depends on what the allocator did with the memory in between, which is why the
+request count varies by version and app.</p>
+<p>Why Windows first? Upstream&rsquo;s guess, which matches what I saw, is that on Windows linked classes miss the inheritance
+cache more often. But it&rsquo;s not Windows-only. On Linux under ePHPm, 20,000 requests of stock Laravel were clean, and
+then one route linking a class whose parent wasn&rsquo;t in shared memory died at <strong>request 2</strong>, five runs out of five. The
+same route under stock <code>php -S</code> on Linux died at request 2 too, on 8.5.7 and 8.4.23. And <code>eval</code> is just one way to
+get an uncached parent:</p>
+<table>
+  <thead>
+      <tr>
+          <th>how the parent class is provided (stock <code>php -S</code> 8.5.7)</th>
+          <th>result</th>
+      </tr>
+  </thead>
+  <tbody>
+      <tr>
+          <td><code>eval(&quot;class P {}&quot;)</code></td>
+          <td>dies at request 2</td>
+      </tr>
+      <tr>
+          <td>ordinary file, OPcache-blacklisted</td>
+          <td>dies at request 2</td>
+      </tr>
+      <tr>
+          <td>ordinary cached file</td>
+          <td>200/200 clean</td>
+      </tr>
+      <tr>
+          <td>cached file, declared under <code>if (!class_exists(...))</code></td>
+          <td>200/200 clean</td>
+      </tr>
+  </tbody>
+</table>
+<p>Mock and proxy generators (PHPUnit, Mockery, ProxyManager) generate exactly this kind of class, and so does an
+oversized or blacklisted parent file. So the exposure isn&rsquo;t &ldquo;apps that use <code>eval</code>&rdquo;. It&rsquo;s any app where some class
+extends a parent OPcache didn&rsquo;t cache.</p>
+<h3 id="the-default-goes-off-everywhere">The default goes off everywhere</h3>
+<p><a href="https://github.com/ephpm/ephpm/pull/372">ephpm#372</a> started as a Windows-only change. Re-testing the &ldquo;Linux is an
+accepted risk&rdquo; assumption is what produced the Linux numbers above, and by the time it merged the default was
+<code>disable</code> on every platform. The startup line says why:</p>
+<pre tabindex="0"><code>INFO ephpm: opcache JIT OFF — default since #365: PHP&#39;s tracing JIT (8.5.5+, and 8.4.24+)
+reads a freed op_array when it compiles a side trace in a later request and kills the
+process — no PHP error, no log line (php-src PR 21710, still open; reproduces on stock php
+too, on Linux and Windows alike). Set [php] opcache_jit = &#34;function&#34; for the unaffected JIT
+mode, or &#34;tracing&#34; to accept the risk
+</code></pre><p>The &ldquo;8.4.24+&rdquo; in that line undersells it: on the 8.4 branch the regression first shipped in 8.4.20.</p>
+<p>Two other workarounds held in testing: <code>opcache.jit=function</code> (never builds traces, so it can&rsquo;t get to this code) and
+<code>opcache.jit_hot_side_exit=0</code> (keeps root traces, never compiles a side trace). I didn&rsquo;t make the side-exit setting
+the default. The other reporter saw a <em>different</em> faulting site after changing JIT flags, which says the stale pointer
+can bite in more than one place, and turning off side traces removes most of what the tracing JIT is worth anyway.
+<code>&quot;function&quot;</code> is documented as the middle setting for anyone who wants some JIT.</p>
+<p>What it cost us is small. On the real Laravel app, the tracing JIT used about 0.3 MB of its 64 MB buffer over 20,000
+requests. There&rsquo;s just not much for it to compile in a request/response app. The big wins were on synthetic CPU loops,
+and the failure mode is a silent process kill that takes every in-flight request with it. Easy call.</p>
+<h3 id="upstream">Upstream</h3>
+<p>The Laravel reproduction and the bisect went onto php-src#21710 on August 22nd, mostly because it was a simpler repro
+than the existing ones: no IIS, no FastCGI, no <code>pcntl_fork</code>, just <code>php.exe -S</code> and a skeleton app dying in seconds.
+Ilia Alshanetsky committed the fix two hours later, &ldquo;JIT: persist the SHM op_array in trace exit_info&rdquo;:</p>
+<blockquote>
+<p>exit_info.op_array was taken from the current frame. Methods of linked classes that miss the inheritance cache use
+a heap copy of the op_array header, so that pointer is invalid in other processes and later requests. Store the
+original from the JIT extension, as root traces already do.</p>
+</blockquote>
+<p>The PR was closed as landed on August 24th, and the fix shipped in <strong>PHP 8.4.26 and 8.5.11</strong>, tagged September 22nd and
+released on the 24th. I checked the release tags against the fix commit, and both contain it. Our <a href="https://github.com/ephpm/php-sdk">php-sdk</a>
+pipeline published 8.5.11 and 8.4.26 builds at the end of September.</p>
+<p>For this post I also tried to build a toy reproducer (an <code>eval</code>&rsquo;d parent, a child class with a method that sees a
+different type each request) to show 8.5.9 crashing and 8.5.11 not. I couldn&rsquo;t get the toy to crash on 8.5.9, even
+though the JIT debug output showed it compiling a side trace off the method&rsquo;s root trace. My best guess is that the
+stale read happens but lands on memory that&rsquo;s still mapped, and the real apps crashed because their allocation
+pattern had reused or released that memory by the time the side trace compiled. That&rsquo;s the nature of a
+use-after-free, and
+it&rsquo;s also why I&rsquo;m not going to call the fix verified on our side until the Laravel cell from the table above runs
+clean on 8.5.11.</p>
+<h3 id="what-has-to-happen-before-it-flips-a-third-time">What has to happen before it flips a third time</h3>
+<p>As of today ePHPm&rsquo;s SDK pins are still 8.4.23 and 8.5.7, both affected, so the default stays <code>disable</code>. The comment on
+the reason enum already says to revisit &ldquo;when php-src PR 21710 merges and the pinned SDK is bumped past it&rdquo;. The first
+half is done. For the second half the bar is:</p>
+<ol>
+<li>Bump the pins to 8.4.26 and 8.5.11 or later.</li>
+<li>Re-run both bisect fixtures on the new SDKs: the Windows Laravel skeleton and the Linux uncached-parent route,
+with <code>opcache_jit = &quot;tracing&quot;</code> forced on.</li>
+<li>Only then reconsider the single-site default, and only there. The multi-tenant reason for keeping it off (buffer
+that never comes back) has nothing to do with this bug.</li>
+</ol>
+<p>The broader lesson for me is about which default to pick when the upside is a benchmark and the downside is a crash
+with no log line. The JIT made a synthetic loop 2.4x faster, did roughly nothing for a real Laravel app, and had a
+known-unknown failure mode that our own risk section called out. A default like that should be something you opt in
+to, at least until the upstream bug class has been quiet for a while.</p>
+<h3 id="links">Links</h3>
+<ul>
+<li><a href="https://github.com/ephpm/ephpm/pull/350">ephpm#350</a> - shaped JIT default (on in single-site serve)</li>
+<li><a href="https://github.com/ephpm/ephpm/issues/365">ephpm#365</a> / <a href="https://github.com/ephpm/ephpm/pull/372">ephpm#372</a> - stock Laravel dies after 3 requests; JIT default off everywhere</li>
+<li><a href="https://github.com/php/php-src/pull/21368">php-src#21368</a> - the change that introduced the regression</li>
+<li><a href="https://github.com/php/php-src/pull/21710">php-src#21710</a> - root cause, reproducers and the fix discussion</li>
+<li><a href="https://github.com/php/php-src/commit/7873640e08e707c2cfbdf72daa10c592244a1cda">php-src commit 7873640</a> - &ldquo;JIT: persist the SHM op_array in trace exit_info&rdquo;</li>
+<li><a href="https://ephpm.dev/benchmarking/findings/">ePHPm benchmarking findings</a> - the JIT that made <code>cpu.php</code> 17% slower</li>
+</ul>
+
+      </div>
+      <footer>
+        <div class="stats">
+  
+    <ul class="categories">
+      
+        
+          <li><a class="article-terms-link" href="/categories/php/">php</a></li>
+        
+          <li><a class="article-terms-link" href="/categories/ephpm/">ephpm</a></li>
+        
+          <li><a class="article-terms-link" href="/categories/windows/">windows</a></li>
+        
+      
+    </ul>
+  
+  
+    <ul class="tags">
+      
+        
+          <li><a class="article-terms-link" href="/tags/php/">php</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/opcache/">opcache</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/jit/">jit</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/ephpm/">ephpm</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/windows/">windows</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/debugging/">debugging</a></li>
+        
+      
+    </ul>
+  
+</div>
+
+      </footer>
+    </div>
+    
+      
+  
+  <div class='post giscus-wrap'>
+    <script src='https://giscus.app/client.js'
+            data-repo='luthermonson/luth.io'
+            data-repo-id='R_kgDOGvFBXQ'
+            data-category='Announcements'
+            data-category-id='DIC_kwDOGvFBXc4DH_gv'
+            data-mapping='pathname'
+            data-strict='1'
+            data-reactions-enabled='1'
+            data-emit-metadata='0'
+            data-input-position='top'
+            data-theme='light'
+            data-lang='en'
+            data-loading='lazy'
+            crossorigin='anonymous'
+            async>
+    </script>
+  </div>
+  
+
+
+
+    
+  </article>
+  
+    <nav class="post-nav">
+      
+        <a href="/blog/2026/09/agent-shell-allowlist-bypassable/" class="post-nav-link older">
+          <span class="post-nav-label">&larr; Older</span>
+          <span class="post-nav-title">Your Agent&#39;s Shell Allowlist Is Bypassable</span>
+        </a>
+      
+      
+        <a href="/blog/2026/10/windows-sigterm-sparse-files/" class="post-nav-link newer">
+          <span class="post-nav-label">Newer &rarr;</span>
+          <span class="post-nav-title">Windows Grab-Bag: SIGTERM That Doesn&#39;t Exist and Sparse Files That Break Docker</span>
+        </a>
+      
+    </nav>
+  
+
+      </main>
+      <section id="site-sidebar">
+  
+    <section id="recent-posts">
+      <header>
+        <h1>Recent Posts</h1>
+      </header>
+      
+      <article class="mini-post">
+          <a href="/blog/2026/10/ephpm-worker-mode-performance/" class="image" style="--bg-image: url('/img/2026/10/ephpm-worker-mode-performance-cover.svg');">
+    <img class="" src="/img/2026/10/ephpm-worker-mode-performance-cover.svg" alt="Diagram: before, hyper/tokio hands each request to one shared bounded channel whose waiter list all 20 PHP threads contend on; after, a dispatcher hands the job straight into the mailbox of the most recently idle PHP thread and only queues it in a FIFO overflow queue when every thread is busy">
+  </a>
+        <header>
+          <h2><a href="/blog/2026/10/ephpm-worker-mode-performance/">Fourth Place in Worker Mode, and Why It Wasn&#39;t PHP</a></h2>
+          <time class="published" datetime="2026-10-16 08:10:00 -0700 PDT">October 16, 2026</time>
+        </header>
+      </article>
+      
+      <article class="mini-post">
+          <a href="/blog/2026/10/ephpm-websockets-how-to/" class="image" style="--bg-image: url('/img/2026/10/ephpm-websockets-how-to-cover.svg');">
+    <img class="" src="/img/2026/10/ephpm-websockets-how-to-cover.svg" alt="Diagram: browsers hold sockets to ePHPm&#39;s Rust session tasks and registry; each connect, message and disconnect runs websocket.php once on the PHP thread pool, and ordinary HTTP requests push through ephpm_ws_broadcast">
+  </a>
+        <header>
+          <h2><a href="/blog/2026/10/ephpm-websockets-how-to/">WebSockets in ePHPm, From Zero to a Working Chat</a></h2>
+          <time class="published" datetime="2026-10-11 17:30:00 -0700 PDT">October 11, 2026</time>
+        </header>
+      </article>
+      
+      <article class="mini-post">
+          <a href="/blog/2026/10/webhooks-out-of-order-scheduler/" class="image" style="--bg-image: url('/img/2026/10/webhooks-out-of-order-scheduler-timeline.svg');">
+    <img class="" src="/img/2026/10/webhooks-out-of-order-scheduler-timeline.svg" alt="Timeline of three same-label jobs where a runner executing a build is destroyed 2.3 seconds before its in_progress webhook arrives">
+  </a>
+        <header>
+          <h2><a href="/blog/2026/10/webhooks-out-of-order-scheduler/">Webhooks Arrive Out of Order: How My Scheduler Killed Live Builds</a></h2>
+          <time class="published" datetime="2026-10-07 21:10:00 -0700 PDT">October 7, 2026</time>
+        </header>
+      </article>
+      
+      <article class="mini-post">
+          <a href="/blog/2026/10/go-proxmox-five-years-to-v0-8/" class="image" style="--bg-image: url('/img/2026/10/go-proxmox-five-years-to-v0-8-apidiff.svg');">
+    <img class="" src="/img/2026/10/go-proxmox-five-years-to-v0-8-apidiff.svg" alt="Horizontal bar chart of apidiff incompatible and compatible changes for every go-proxmox release from v0.1.0 to v0.8.2">
+  </a>
+        <header>
+          <h2><a href="/blog/2026/10/go-proxmox-five-years-to-v0-8/">Breaking Changes Without Breaking Trust: Five Years to go-proxmox v0.8</a></h2>
+          <time class="published" datetime="2026-10-04 19:40:00 -0700 PDT">October 4, 2026</time>
+        </header>
+      </article>
+      
+      <article class="mini-post">
+          <a href="/blog/2026/10/windows-sigterm-sparse-files/" class="image" style="--bg-image: url('/img/2026/10/windows-sigterm-sparse-files-connections.svg');">
+    <img class="" src="/img/2026/10/windows-sigterm-sparse-files-connections.svg" alt="Bar chart: 96 Cloudflare edge connections held by orphaned cloudflared processes versus 4 for the live daemon">
+  </a>
+        <header>
+          <h2><a href="/blog/2026/10/windows-sigterm-sparse-files/">Windows Grab-Bag: SIGTERM That Doesn&#39;t Exist and Sparse Files That Break Docker</a></h2>
+          <time class="published" datetime="2026-10-03 14:30:00 -0700 PDT">October 3, 2026</time>
+        </header>
+      </article>
+      
+      
+        <footer>
+          <a href="/blog" class="button">See More</a>
+        </footer>
+      
+    </section>
+  
+
+  
+    
+
+      <section id="categories">
+        <header>
+          <h1><a href="/categories">Categories</a></h1>
+        </header>
+        <ul>
+          
+          
+          <li>
+              <a href="/categories/ephpm/">ephpm<span class="count">33</span></a>
+          
+          <li>
+              <a href="/categories/go/">go<span class="count">30</span></a>
+          
+          <li>
+              <a href="/categories/php/">php<span class="count">23</span></a>
+          
+          <li>
+              <a href="/categories/rust/">rust<span class="count">15</span></a>
+          
+          <li>
+              <a href="/categories/homelab/">homelab<span class="count">14</span></a>
+          
+          <li>
+              <a href="/categories/windows/">windows<span class="count">14</span></a>
+          
+          <li>
+              <a href="/categories/ci/">ci<span class="count">9</span></a>
+          
+          <li>
+              <a href="/categories/databases/">databases<span class="count">9</span></a>
+          
+          <li>
+              <a href="/categories/security/">security<span class="count">9</span></a>
+          
+          <li>
+              <a href="/categories/containers/">containers<span class="count">7</span></a>
+          
+          <li>
+              <a href="/categories/tools/">tools<span class="count">5</span></a>
+          
+          <li>
+              <a href="/categories/ai-agents/">ai-agents<span class="count">4</span></a>
+          
+          </li>
+        </ul>
+      </section>
+    
+  
+
+  
+    <section id="mini-bio">
+      <header>
+        <h1>About</h1>
+      </header>
+      <p>Luther is a 20+ year software veteran specializing in backend APIs and architecting products. Employed at <a href='https://www.suse.com'>SUSE</a> as the Team Lead for the <a href='https://github.com/rancher/windows/issues'>Containers on Windows Team</a> working on <a href='https://rancher.com/'>Rancher</a> + <a href='https://kubernetes.io/'>Kubernetes</a></p>
+      <footer>
+        <a href="/about" class="button">Learn More</a>
+      </footer>
+    </section>
+  
+</section>
+
+      <footer id="site-footer">
+  
+      <ul class="socnet-icons">
+        
+
+        <li><a href="//github.com/luthermonson" target="_blank" rel="noopener" title="GitHub" class="fab fa-github"></a></li>
+
+
+
+
+
+
+
+
+
+
+
+<li><a href="//www.linkedin.com/in/luthermonson" target="_blank" rel="noopener" title="LinkedIn" class="fab fa-linkedin"></a></li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li><a href="//twitter.com/luthermonson" target="_blank" rel="noopener" title="Twitter" class="fab fa-twitter"></a></li>
+
+
+
+
+
+
+
+
+
+
+
+<li><a href="mailto:luther.monson@gmail.com" target="_blank" title="Email" class="far fa-envelope"></a></li>
+
+      </ul>
+  
+  <p class="copyright">
+    © 2026 Luther Monson
+      <br>
+    Theme: <a href='https://github.com/pacollins/hugo-future-imperfect-slim' target='_blank' rel='noopener'>Hugo Future Imperfect Slim</a><br>A <a href='https://html5up.net/future-imperfect' target='_blank' rel='noopener'>HTML5 UP port</a> | Powered by <a href='https://gohugo.io/' title='0.160.1' target='_blank' rel='noopener'>Hugo</a>
+  </p>
+</footer>
+<a id="back-to-top" href="#" class="fas fa-arrow-up fa-2x"></a>
+
+      <script src="/js/bundle.min.241b62ebc4792fe8c7a75879e5f710894f226f2b73342e9916b3a3b0526030cc.js" integrity="sha256-JBti68R5L&#43;jHp1h55fcQiU8ibytzNC6ZFrOjsFJgMMw="></script>
+    <script src="/js/add-on.js"></script>
+    </div>
+  </body>
+</html>

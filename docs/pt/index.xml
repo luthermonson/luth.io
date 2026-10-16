@@ -4,7 +4,8 @@
     <title>Hugo Future Imperfect Slim em português</title>
     <link>https://luth.io/pt/</link>
     <description>Recent content on Hugo Future Imperfect Slim em português</description>
-    <generator>Hugo -- gohugo.io</generator>
-    <language>pt</language><atom:link href="https://luth.io/pt/index.xml" rel="self" type="application/rss+xml" />
+    <generator>Hugo</generator>
+    <language>pt</language>
+    <atom:link href="https://luth.io/pt/index.xml" rel="self" type="application/rss+xml" />
   </channel>
 </rss>

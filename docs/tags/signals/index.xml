@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>Signals on Luther Monson</title>
+    <link>https://luth.io/tags/signals/</link>
+    <description>Recent content in Signals on Luther Monson</description>
+    <generator>Hugo</generator>
+    <language>en</language>
+    <lastBuildDate>Wed, 16 Sep 2026 19:35:00 -0700</lastBuildDate>
+    <atom:link href="https://luth.io/tags/signals/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>The Bugs Were Our Own Linker Wraps: Making a PHP Timeout Actually Time Out</title>
+      <link>https://luth.io/blog/2026/09/php-timeout-linker-wraps/</link>
+      <pubDate>Wed, 16 Sep 2026 19:35:00 -0700</pubDate>
+      <guid>https://luth.io/blog/2026/09/php-timeout-linker-wraps/</guid>
+      <description>&lt;p&gt;In &lt;a href=&#34;https://luth.io/blog/2026/09/php-stack-guard-segfault-containment/&#34;&gt;the stack guard post&lt;/a&gt; the villain was a &lt;code&gt;-Wl,--wrap&lt;/code&gt; linker&#xA;flag that turned off PHP&amp;rsquo;s C-stack overflow guard. It wasn&amp;rsquo;t the only one. Until August, &lt;code&gt;max_execution_time&lt;/code&gt; did&#xA;nothing in &lt;a href=&#34;https://github.com/ephpm/ephpm&#34;&gt;ePHPm&lt;/a&gt; on Linux, for the same reason: we had wrapped the function that&#xA;arms it to a no-op. A runaway script ran until the HTTP layer&amp;rsquo;s request timeout gave up on it and sent a 504, and the&#xA;PHP thread kept burning CPU after that.&lt;/p&gt;</description>
+    </item>
+    <item>
+      <title>We Disabled PHP&#39;s Stack Guard Ourselves: Containing Segfaults in a Single-Process PHP Server</title>
+      <link>https://luth.io/blog/2026/09/php-stack-guard-segfault-containment/</link>
+      <pubDate>Sun, 06 Sep 2026 15:05:00 -0700</pubDate>
+      <guid>https://luth.io/blog/2026/09/php-stack-guard-segfault-containment/</guid>
+      <description>&lt;p&gt;php-fpm has a property nobody thinks about until they leave it: when a worker segfaults, you lose one request. The&#xA;master forks a new child and life goes on. &lt;a href=&#34;https://github.com/ephpm/ephpm&#34;&gt;ePHPm&lt;/a&gt; runs every tenant&amp;rsquo;s PHP as threads&#xA;inside one process. That&amp;rsquo;s where the memory and latency wins come from, and it also means one tenant&amp;rsquo;s segfault&#xA;takes down every other tenant on the box.&lt;/p&gt;&#xA;&lt;p&gt;This is the story of closing that gap, in four steps over about two weeks. The last step turned out to be a bug we&amp;rsquo;d&#xA;put there ourselves. It&amp;rsquo;s also the payoff for the thread pool work in&#xA;&lt;a href=&#34;https://luth.io/blog/2026/09/own-your-php-thread-pool/&#34;&gt;the previous post&lt;/a&gt;: everything below that actually shipped depends on&#xA;ePHPm owning its own PHP threads.&lt;/p&gt;</description>
+    </item>
+    <item>
+      <title>PHP Signal Safety - The Init Ordering Bug Nobody Warns You About</title>
+      <link>https://luth.io/blog/2026/04/php-signal-safety-init-ordering/</link>
+      <pubDate>Sun, 12 Apr 2026 20:15:00 -0700</pubDate>
+      <guid>https://luth.io/blog/2026/04/php-signal-safety-init-ordering/</guid>
+      <description>&lt;p&gt;Last week I wrote about &lt;a href=&#34;https://luth.io/blog/2026/04/why-rust-for-php-embedding/&#34;&gt;why ePHPm embeds PHP from Rust&lt;/a&gt; and promised the&#xA;signal bug its own post. Here it is. It&amp;rsquo;s the kind of bug where the fix is about ten lines and the explanation is the&#xA;whole post, because nothing in PHP&amp;rsquo;s embed documentation (there&amp;rsquo;s barely any) tells you that initializing PHP has&#xA;process-wide side effects that assume PHP is the only thing in the process.&lt;/p&gt;&#xA;&lt;h3 id=&#34;the-setup&#34;&gt;The setup&lt;/h3&gt;&#xA;&lt;p&gt;The first working version of &lt;code&gt;ephpm serve&lt;/code&gt; looked like every async Rust program: &lt;code&gt;#[tokio::main]&lt;/code&gt;-style, build the&#xA;runtime, then inside it load config, initialize PHP, start the HTTP server. PHP requests run on &lt;code&gt;spawn_blocking&lt;/code&gt;&#xA;threads. Simplified:&lt;/p&gt;</description>
+    </item>
+  </channel>
+</rss>
