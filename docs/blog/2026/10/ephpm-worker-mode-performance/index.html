@@ -10,14 +10,14 @@
     gtag('config', 'G-MSTSKGFWTX');
 </script><meta charset="utf-8">
 <title>Fourth Place in Worker Mode, and Why It Wasn&#39;t PHP - Luther Monson</title>
-<meta name="description" content="ePHPm placed fourth in worker mode on the Yii3 benchmark. The slow part was the Rust layer, not PHP, and three fixes cut most of the gap.">
+<meta name="description" content="ePHPm placed fourth in worker mode on the Yii3 benchmark. The slow part was the Rust layer, not PHP. Six changes in v0.12.0 made it 13% faster on 57% less memory.">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
 <meta name="twitter:card" content="summary_large_image"><meta name="twitter:site" content="@luthermonson">
 
 <meta property="og:site_name" content="Luther Monson">
 <meta property="og:title" content="Fourth Place in Worker Mode, and Why It Wasn&#39;t PHP">
-<meta property="og:description" content="ePHPm placed fourth in worker mode on the Yii3 benchmark. The slow part was the Rust layer, not PHP, and three fixes cut most of the gap.">
+<meta property="og:description" content="ePHPm placed fourth in worker mode on the Yii3 benchmark. The slow part was the Rust layer, not PHP. Six changes in v0.12.0 made it 13% faster on 57% less memory.">
 <meta property="og:type" content="article">
 <meta property="og:url" content="https://luth.io/blog/2026/10/ephpm-worker-mode-performance/">
     <meta property="og:image" content="https://luth.io/img/2026/10/ephpm-worker-mode-performance-cover.svg">
@@ -215,13 +215,13 @@
       <h2><a href="/blog/2026/10/ephpm-worker-mode-performance/">Fourth Place in Worker Mode, and Why It Wasn&#39;t PHP</a></h2>
     
     
-      <p>ePHPm placed fourth in worker mode on the Yii3 benchmark. The slow part was the Rust layer, not PHP, and three fixes cut most of the gap.</p>
+      <p>ePHPm placed fourth in worker mode on the Yii3 benchmark. The slow part was the Rust layer, not PHP. Six changes in v0.12.0 made it 13% faster on 57% less memory.</p>
     
   </div>
   <div class="meta">
     <time datetime="2026-10-15 19:45:00 -0700 PDT">October 15, 2026</time>
     
-    <p>5-Minute Read</p>
+    <p>10-Minute Read</p>
   </div>
 </header>
 
@@ -281,7 +281,13 @@ Classic mode is the PHP-FPM style, where every request starts fresh.</p>
 worker mode. We came fourth of ten at about 50.7k requests a second. Workerman (~65k) and Swoole (~62k) were ahead.</p>
 <p>First I checked that the numbers were worth trusting. Our ranking of the other runtimes closely matched the suite
 maintainer&rsquo;s published results. Repeat runs were within 1.5% of each other. So the gap was real.</p>
-<p>None of this is released yet. The fixes are merged and will ship in the upcoming v0.12.0 release.</p>
+<blockquote>
+<p><strong>Updated October 16.</strong> Everything here shipped in
+<a href="https://github.com/ephpm/ephpm/releases/tag/v0.12.0">ePHPm v0.12.0</a>. That&rsquo;s the three fixes from the first version
+of this post plus three more. I reran the whole comparison on the release image, with every runtime on PHP 8.5.11
+and five runs each. The results section uses those numbers. It also corrects two claims the first version got
+wrong: the memory comparison with Swoole, and why Workerman had errors.</p>
+</blockquote>
 <h3 id="it-wasnt-php">It wasn&rsquo;t PHP</h3>
 <p>My first guess was PHP itself. It wasn&rsquo;t. Per request, ePHPm&rsquo;s PHP threads did almost exactly as much work as
 Workerman&rsquo;s. The difference was that ePHPm&rsquo;s PHP threads spent a lot of time <em>waiting</em>. Under full load they were only
@@ -289,11 +295,14 @@ busy about 70% of the time.</p>
 <p>If PHP is waiting while requests pile up, the problem is in ePHPm&rsquo;s Rust code. That means the HTTP server and the step
 that hands each request to a PHP thread. The <a href="/blog/2026/09/own-your-php-thread-pool/">thread pool post</a> explains why
 ePHPm runs PHP on its own threads.</p>
-<h3 id="the-fixes">The fixes</h3>
+<p><img src="/img/2026/10/ephpm-worker-mode-performance-thread-time.svg" alt="Stacked bars of PHP thread time at 65k requests/sec offered: v0.11.3 runs PHP 69% of the time, waits for a CPU 13% and is idle or blocked 18%; v0.12.0 runs PHP 77%, waits 16% and is idle or blocked 7%"></p>
+<p>That&rsquo;s the whole story in one picture. The idle slice shrank from 18% to 7%. The time went to running PHP.</p>
+<h3 id="round-one-getting-requests-to-php-faster">Round one: getting requests to PHP faster</h3>
 <p><strong>A batch of small fixes (<a href="https://github.com/ephpm/ephpm/pull/575">#575</a>).</strong> Profiling pointed straight at a few
 things. Simple GET requests were handled as if they might have an upload attached. That cost an extra round trip for
-nothing. Finding the file for each request checked the disk more often than it needed to. And idle PHP threads went
-to sleep the instant they ran out of work. The next request was usually a fraction of a millisecond away.</p>
+nothing. Finding the file for each request checked the disk more often than it needed to: <code>/</code> took seven <code>stat</code> calls
+and now takes three. And idle PHP threads went to sleep the instant they ran out of work. The next request was usually
+a fraction of a millisecond away. Now they wait up to 200 µs for it first.</p>
 <p>The same runs also turned up a leak. Since PHP 8.4, persistent connections weren&rsquo;t cleaned up when a worker thread was
 replaced. A long-running server slowly piled up open connections to its cache. After about 10 million requests there
 were 979 of them. That&rsquo;s fixed too.</p>
@@ -306,8 +315,7 @@ it&rsquo;s still served in order.</p>
 That looked high. Most of it was memory the standard Linux allocator holds on to after worker threads are replaced.
 ePHPm&rsquo;s Rust code already used mimalloc, a faster allocator. Now PHP and its extensions use it too. This is on for
 Linux only. macOS and Windows stay as they were.</p>
-<h3 id="results">Results</h3>
-<p>Every runtime ran the same app on the same machine under the same load. Each number is the average of three runs.</p>
+<p>Development builds, three runs each:</p>
 <table>
   <thead>
       <tr>
@@ -342,65 +350,279 @@ Linux only. macOS and Windows stay as they were.</p>
           <td style="text-align: right">14.2 ms</td>
           <td style="text-align: right">170 MiB</td>
       </tr>
-      <tr>
-          <td>Swoole</td>
-          <td style="text-align: right">61,580</td>
-          <td style="text-align: right">35.5 ms</td>
-          <td style="text-align: right">838 MiB</td>
-      </tr>
-      <tr>
-          <td>Workerman</td>
-          <td style="text-align: right">64,521</td>
-          <td style="text-align: right">198.7 ms</td>
-          <td style="text-align: right">not measured the same way</td>
-      </tr>
   </tbody>
 </table>
 <p>* Before the fixes, ePHPm was already past its limit at this load. Requests kept piling up.</p>
-<p><img src="/img/2026/10/ephpm-worker-mode-performance-results.svg" alt="Bar charts of requests/sec and peak memory: ePHPm rises from 50,855 to 58,122 requests/sec with all three fixes, below Swoole’s 61,580 and Workerman’s 64,521, while peak memory drops from 307 MiB to 170 MiB against Swoole’s 838 MiB"></p>
+<p>The queue change alone is about 1% faster than the queue plus mimalloc. I&rsquo;d rather give back that 1% for half the
+memory, so both shipped.</p>
+<h3 id="round-two-fewer-syscalls-smarter-waiting-more-php-threads">Round two: fewer syscalls, smarter waiting, more PHP threads</h3>
+<p>After round one the PHP threads were busy about 80% of the time. The rest of the gap was the cost of each request. So
+the next round went after smaller things.</p>
+<p><strong>One timer per request instead of four (<a href="https://github.com/ephpm/ephpm/pull/581">#581</a>).</strong> PHP enforces
+<code>max_execution_time</code> with a timer on each thread. Every worker request was setting that timer four times, plus two
+more signal syscalls along the way. Now a busy thread sets it once per request. It&rsquo;s only switched off when the thread
+actually goes idle. Under load that&rsquo;s 6 syscalls per request down to about 1.</p>
+<p><strong>Adaptive spinning (<a href="https://github.com/ephpm/ephpm/pull/582">#582</a>).</strong> The 200 µs wait from #575 is great under load.
+On a quiet server it&rsquo;s waste: the thread burns CPU waiting for a request that isn&rsquo;t coming. Now each thread learns. If
+the next request usually shows up inside its budget, it keeps spinning. If not, it halves its budget, down to zero. New
+requests go to a thread that&rsquo;s still spinning before one that&rsquo;s asleep.</p>
+<p><img src="/img/2026/10/ephpm-worker-mode-performance-adaptive-spin.svg" alt="Grouped bars of CPU per request at 1k, 5k and 20k requests/sec: the fixed 200 µs spin costs 524, 467 and 412 µs; adaptive spin costs 423, 384 and 393 µs; no spin at all costs 362, 329 and 363 µs"></p>
+<p>At full load it changes nothing, which is the point. At 1k–5k requests a second it uses 18–19% less CPU per request,
+with the same latency. That&rsquo;s where most real servers spend most of their time. Dropping the spin entirely is cheaper
+still when the server is quiet, but it costs 3–4% of throughput at full load.</p>
+<p><strong>Splitting the cores (<a href="https://github.com/ephpm/ephpm/pull/580">#580</a>).</strong> ePHPm&rsquo;s HTTP side runs on tokio, which by
+default starts one I/O thread per CPU. That&rsquo;s 32 threads on this machine, competing with 20 PHP threads for 32 cores.
+The new <code>[server] io_threads</code> setting lets you shift that balance:</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-toml" data-lang="toml"><span class="line"><span class="cl"><span class="p">[</span><span class="nx">server</span><span class="p">]</span>
+</span></span><span class="line"><span class="cl"><span class="nx">io_threads</span> <span class="p">=</span> <span class="mi">16</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="p">[</span><span class="nx">php</span><span class="p">]</span>
+</span></span><span class="line"><span class="cl"><span class="nx">concurrency</span> <span class="p">=</span> <span class="mi">24</span>
+</span></span></code></pre></div><p>That&rsquo;s 24 PHP threads and 16 I/O threads. Fewer PHP threads went the wrong way: 16 cost 6% on the home page and 11% on
+the database route.</p>
+<p>Each change alone on top of round one, three to five runs each:</p>
+<table>
+  <thead>
+      <tr>
+          <th>Change</th>
+          <th style="text-align: right">Requests/sec</th>
+          <th style="text-align: right">vs round one</th>
+          <th style="text-align: right">Slowest 1% at 60k</th>
+      </tr>
+  </thead>
+  <tbody>
+      <tr>
+          <td>Round one</td>
+          <td style="text-align: right">58,520</td>
+          <td style="text-align: right">—</td>
+          <td style="text-align: right">706 ms</td>
+      </tr>
+      <tr>
+          <td>One timer (#581)</td>
+          <td style="text-align: right">59,529</td>
+          <td style="text-align: right">+1.7%</td>
+          <td style="text-align: right">411 ms</td>
+      </tr>
+      <tr>
+          <td>Adaptive spin (#582)</td>
+          <td style="text-align: right">58,805</td>
+          <td style="text-align: right">+0.5%</td>
+          <td style="text-align: right">694 ms</td>
+      </tr>
+      <tr>
+          <td>24 PHP / 16 I/O threads (#580)</td>
+          <td style="text-align: right">60,674</td>
+          <td style="text-align: right">+3.7%</td>
+          <td style="text-align: right">99 ms</td>
+      </tr>
+      <tr>
+          <td>All three</td>
+          <td style="text-align: right">60,796</td>
+          <td style="text-align: right">+3.9%</td>
+          <td style="text-align: right">78 ms</td>
+      </tr>
+  </tbody>
+</table>
+<p>The timer and the spin are on by default. The thread split isn&rsquo;t, yet. The right numbers depend on the machine and
+the app, and 16 I/O threads hasn&rsquo;t been tested alone with the default PHP thread count. So v0.12.0 ships the setting
+and leaves tokio&rsquo;s default in place.</p>
+<h3 id="results-v0120">Results: v0.12.0</h3>
+<p>Every runtime ran the same app on the same machine under the same load. That&rsquo;s a Ryzen 9 5950X with 32 threads under
+WSL2, with the load generator, Postgres and Valkey on the same host. Each test is 30 seconds at a fixed request rate.
+The six fastest runtimes got five runs each and the slower two got three, interleaved. Every runtime used PHP 8.5.11
+and its config from the benchmark repo, which runs 20 PHP workers for everyone.</p>
+<table>
+  <thead>
+      <tr>
+          <th>Runtime</th>
+          <th style="text-align: right">Requests/sec at 65k offered</th>
+          <th style="text-align: right">Errors</th>
+          <th style="text-align: right">Slowest 1% at 55k</th>
+          <th style="text-align: right">Database route</th>
+          <th style="text-align: right">CPU per request</th>
+          <th style="text-align: right">Peak memory</th>
+      </tr>
+  </thead>
+  <tbody>
+      <tr>
+          <td>ePHPm v0.11.3</td>
+          <td style="text-align: right">51,417</td>
+          <td style="text-align: right">0</td>
+          <td style="text-align: right">1,493 ms</td>
+          <td style="text-align: right">5,855</td>
+          <td style="text-align: right">354 µs</td>
+          <td style="text-align: right">358 MiB</td>
+      </tr>
+      <tr>
+          <td><strong>ePHPm v0.12.0</strong></td>
+          <td style="text-align: right"><strong>58,101</strong></td>
+          <td style="text-align: right"><strong>0</strong></td>
+          <td style="text-align: right"><strong>22 ms</strong></td>
+          <td style="text-align: right"><strong>5,842</strong></td>
+          <td style="text-align: right"><strong>337 µs</strong></td>
+          <td style="text-align: right"><strong>153 MiB</strong></td>
+      </tr>
+      <tr>
+          <td>ePHPm v0.12.0, 24/16 threads</td>
+          <td style="text-align: right">60,492</td>
+          <td style="text-align: right">0</td>
+          <td style="text-align: right">14 ms</td>
+          <td style="text-align: right">6,004</td>
+          <td style="text-align: right">336 µs</td>
+          <td style="text-align: right">152 MiB</td>
+      </tr>
+      <tr>
+          <td>Swoole</td>
+          <td style="text-align: right">61,279</td>
+          <td style="text-align: right">0</td>
+          <td style="text-align: right">36 ms</td>
+          <td style="text-align: right">5,685</td>
+          <td style="text-align: right">297 µs</td>
+          <td style="text-align: right">99 MiB</td>
+      </tr>
+      <tr>
+          <td>Workerman, as shipped</td>
+          <td style="text-align: right">64,510</td>
+          <td style="text-align: right">~3,100 per test</td>
+          <td style="text-align: right">173 ms</td>
+          <td style="text-align: right">5,586</td>
+          <td style="text-align: right">272 µs</td>
+          <td style="text-align: right">92 MiB</td>
+      </tr>
+      <tr>
+          <td>Workerman, recycle removed</td>
+          <td style="text-align: right">63,021</td>
+          <td style="text-align: right">0</td>
+          <td style="text-align: right">1,116 ms</td>
+          <td style="text-align: right">5,663</td>
+          <td style="text-align: right">272 µs</td>
+          <td style="text-align: right">112 MiB</td>
+      </tr>
+      <tr>
+          <td>FrankenPHP worker</td>
+          <td style="text-align: right">34,667</td>
+          <td style="text-align: right">0</td>
+          <td style="text-align: right">10.2 s</td>
+          <td style="text-align: right">5,353</td>
+          <td style="text-align: right">517 µs</td>
+          <td style="text-align: right">130 MiB</td>
+      </tr>
+      <tr>
+          <td>RoadRunner</td>
+          <td style="text-align: right">19,430</td>
+          <td style="text-align: right">0</td>
+          <td style="text-align: right">19.1 s</td>
+          <td style="text-align: right">4,461</td>
+          <td style="text-align: right">879 µs</td>
+          <td style="text-align: right">649 MiB</td>
+      </tr>
+  </tbody>
+</table>
+<p>Requests/sec counts only successful requests. &ldquo;Slowest 1%&rdquo; is the median p99 across runs. The database route is
+<code>/postgres/orders</code> at 6k requests a second offered. Memory is the whole container.</p>
+<p><img src="/img/2026/10/ephpm-worker-mode-performance-results.svg" alt="Three bar charts. Requests/sec at 65k offered: ePHPm v0.11.3 51,417; v0.12.0 58,101; v0.12.0 with 24/16 threads 60,492; Swoole 61,279; Workerman with no recycle 63,021; Workerman as shipped 64,510 with about 3,100 errors per test. CPU per request: 354, 337, 336, 297, 272 and 272 µs. Peak container memory: 358, 153, 152, 99, 112 and 92 MiB"></p>
 <p>In short:</p>
 <ul>
-<li><strong>About 15% faster</strong> than before. The slowest requests are answered far sooner.</li>
-<li><strong>About 45% less memory.</strong> That&rsquo;s roughly one fifth of what Swoole uses.</li>
-<li><strong>No errors</strong> from ePHPm at any load we tried, up to 200k requests a second. Workerman dropped requests to reach its
-numbers. It had 9,427 errors in the main test.</li>
-<li><strong>The database endpoint and classic mode</strong> didn&rsquo;t get faster, because other limits apply there. Classic mode does
-use less memory.</li>
+<li><strong>13% faster than v0.11.3</strong> at full load: 51.4k to 58.1k requests a second.</li>
+<li><strong>The slowest requests are back under control.</strong> At 55k a second, v0.11.3&rsquo;s slowest 1% took 1.5 seconds because
+it couldn&rsquo;t keep up. v0.12.0&rsquo;s took 22 ms.</li>
+<li><strong>57% less memory</strong> than v0.11.3: 358 MiB down to 153 MiB.</li>
+<li><strong>No errors from ePHPm</strong> in any test. Each run replaced about 600 worker threads under full load without failing a
+request.</li>
+<li><strong>First on the database route.</strong> With 24 PHP threads it was the only runtime that served the full 6k a second, with
+its slowest 1% at 27 ms.</li>
 </ul>
-<p>The queue change alone is about 1% faster than the queue plus mimalloc. I&rsquo;d rather give back that 1% for half the
-memory. The plan is to ship both.</p>
-<h3 id="why-workerman-is-still-faster">Why Workerman is still faster</h3>
+<p><img src="/img/2026/10/ephpm-worker-mode-performance-latency.svg" alt="Slowest 1% of requests at 55k and 60k requests/sec offered, log scale: ePHPm v0.11.3 1.5 s and 4.3 s; v0.12.0 22 ms and 544 ms; v0.12.0 with 24/16 threads 14 ms and 103 ms; Swoole 36 ms and 80 ms; Workerman as shipped 173 ms and 560 ms; Workerman with no recycle 1.1 s and 5.9 s"></p>
+<p>Classic mode didn&rsquo;t get faster, and it didn&rsquo;t need to. ePHPm was already first. It still is, on less memory:</p>
+<table>
+  <thead>
+      <tr>
+          <th>Classic mode</th>
+          <th style="text-align: right">Requests/sec (limit)</th>
+          <th style="text-align: right">vs PHP-FPM</th>
+          <th style="text-align: right">Peak memory</th>
+      </tr>
+  </thead>
+  <tbody>
+      <tr>
+          <td><strong>ePHPm v0.12.0</strong></td>
+          <td style="text-align: right"><strong>5,496</strong></td>
+          <td style="text-align: right"><strong>+9.6%</strong></td>
+          <td style="text-align: right"><strong>84 MiB</strong></td>
+      </tr>
+      <tr>
+          <td>ePHPm v0.11.3</td>
+          <td style="text-align: right">5,455</td>
+          <td style="text-align: right">+8.8%</td>
+          <td style="text-align: right">136 MiB</td>
+      </tr>
+      <tr>
+          <td>PHP-FPM + nginx</td>
+          <td style="text-align: right">5,015</td>
+          <td style="text-align: right">—</td>
+          <td style="text-align: right">96 MiB</td>
+      </tr>
+      <tr>
+          <td>FrankenPHP classic</td>
+          <td style="text-align: right">4,911</td>
+          <td style="text-align: right">−2.1%</td>
+          <td style="text-align: right">107 MiB</td>
+      </tr>
+  </tbody>
+</table>
+<p><strong>Two corrections to the first version of this post.</strong> It said ePHPm used about a fifth of Swoole&rsquo;s memory. That was
+wrong. The old method added up the memory of every process. Swoole and Workerman each run 20 worker processes that
+share most of their memory, so the same pages were counted many times. Measured per container, Swoole uses 99 MiB and
+Workerman 92 MiB, against ePHPm&rsquo;s 153 MiB. ePHPm&rsquo;s own number barely moves either way.</p>
+<p>It also said Workerman dropped requests to reach its numbers. That&rsquo;s not quite fair, as the next section explains.</p>
+<h3 id="about-workermans-errors">About Workerman&rsquo;s errors</h3>
+<p>The benchmark&rsquo;s Workerman script restarts each worker process after 10,000 requests. Swoole, FrankenPHP and ePHPm use
+the same limit, so that part is fair. The difference is what a restart does. When a Workerman worker stops, it closes its idle
+keep-alive connections on the spot, and the load generator counts each one as an error. That&rsquo;s about 3,100 errors
+in every 30-second test, every time.</p>
+<p>ePHPm, Swoole and RoadRunner hold the connections outside the PHP worker, so replacing a worker drops nothing.</p>
+<p>With the restart removed, Workerman still does 63.0k a second with zero errors. That&rsquo;s 8% ahead of v0.12.0, so its
+speed is real. But its slowest requests get much worse: about 6 seconds at 60k. Without restarts, each connection
+stays stuck to whichever of the 20 processes accepted it, and the busy ones fall behind. The restarts were quietly
+rebalancing them.</p>
+<h3 id="why-swoole-and-workerman-are-still-faster">Why Swoole and Workerman are still faster</h3>
+<p>ePHPm&rsquo;s PHP threads aren&rsquo;t waiting much any more. What&rsquo;s left is CPU: ePHPm spends 337 µs per request, Swoole 297
+and Workerman 272.</p>
 <p>Workerman is written in PHP. It reads and handles each request in the same process that runs the app. Nothing is
-handed over between threads.</p>
+handed over between threads. Swoole is a C extension with its own lean HTTP server built for exactly this.</p>
 <p>That&rsquo;s a different trade-off, not cheating. ePHPm puts a Rust HTTP server in front of PHP. That server handles TLS,
 HTTP/2 and HTTP/3, static files, middleware and clustering. Handing each request from it to a PHP thread is the price
-of those features. This work makes that price smaller without dropping any of them. At a slightly lighter load of 60k
-requests a second, all three were within about 1% of each other.</p>
+of those features. This work made that price a lot smaller without dropping any of them. Just below the limit, at 60k
+requests a second, ePHPm, Swoole and Workerman were within about 1% of each other.</p>
 <h3 id="whats-next">What&rsquo;s next</h3>
-<p>ePHPm is now 4–7% behind Swoole and 9–12% behind Workerman. PHP threads are busy about 80% of the time. What&rsquo;s left
-is the cost of each request, not waiting.</p>
-<p>Next up:</p>
 <ul>
-<li>Trim per-request overhead in the HTTP layer.</li>
-<li>Wake threads less often.</li>
-<li>Tune how many PHP threads to run.</li>
-<li>Rerun the comparison on PHP 8.5.11, now that <a href="https://github.com/ephpm/ephpm/pull/574">#574</a> has landed.</li>
+<li><strong>Profile the CPU cost per request.</strong> That&rsquo;s the 40 µs between us and Swoole. The likely places are building the
+request object PHP sees, header handling, and copying the response back out.</li>
+<li><strong>Pick a better default thread split</strong> once it&rsquo;s been measured on more than one machine.</li>
+<li><strong>Get ePHPm into the upstream benchmark</strong>, and suggest 24 PHP threads for it in this app.</li>
 </ul>
 <h3 id="caveats">Caveats</h3>
 <ul>
 <li><strong>One benchmark machine.</strong> Your absolute numbers will differ. The relative gains are the point.</li>
-<li><strong>PHP versions.</strong> In this run ePHPm used PHP 8.5.7 and the others used 8.5.11. The upgrade (#574) has since been
-merged.</li>
-<li><strong>Not released yet.</strong> #575, #577 and #578 are merged and will ship in the upcoming v0.12.0 release. The current
-v0.11.3 doesn&rsquo;t have them.</li>
+<li><strong>A shared host.</strong> The load generator and databases run beside the server. For about an hour, a few runs of several
+runtimes came in low, probably from something on the Windows side. I kept them. Medians, and a cut with only the
+cleaner runs, give the same ranking.</li>
+<li><strong>Same settings for everyone.</strong> Every runtime used the benchmark&rsquo;s own config with 20 workers. The 24/16 row is my
+tuning for ePHPm. Nobody tuned the others.</li>
+<li><strong>Different runs.</strong> The round one and round two tables come from development builds and earlier runs. Compare rows
+within a table, not across tables.</li>
 </ul>
 <h3 id="links">Links</h3>
 <ul>
+<li><a href="https://github.com/ephpm/ephpm/releases/tag/v0.12.0">ePHPm v0.12.0</a>: the release with all of this</li>
 <li><a href="https://github.com/Yii3-Benchmarks/app-api">Yii3-Benchmarks/app-api</a>: the benchmark suite</li>
 <li><a href="https://github.com/ephpm/app-api">ephpm/app-api</a>: our fork with the ePHPm runner</li>
 <li><a href="https://github.com/ephpm/ephpm/pull/575">#575</a>: the small fixes and the connection leak</li>
 <li><a href="https://github.com/ephpm/ephpm/pull/578">#578</a>: one queue per PHP thread</li>
 <li><a href="https://github.com/ephpm/ephpm/pull/577">#577</a>: mimalloc for the whole process on Linux</li>
+<li><a href="https://github.com/ephpm/ephpm/pull/581">#581</a>: one execution timer per request</li>
+<li><a href="https://github.com/ephpm/ephpm/pull/582">#582</a>: adaptive spinning before a PHP thread sleeps</li>
+<li><a href="https://github.com/ephpm/ephpm/pull/580">#580</a>: the <code>[server] io_threads</code> setting</li>
 <li><a href="https://github.com/ephpm/ephpm/pull/574">#574</a>: PHP 8.5.11</li>
 </ul>
 
@@ -433,6 +655,10 @@ v0.11.3 doesn&rsquo;t have them.</li>
           <li><a class="article-terms-link" href="/tags/benchmarking/">benchmarking</a></li>
         
           <li><a class="article-terms-link" href="/tags/mimalloc/">mimalloc</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/swoole/">swoole</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/workerman/">workerman</a></li>
         
       
     </ul>

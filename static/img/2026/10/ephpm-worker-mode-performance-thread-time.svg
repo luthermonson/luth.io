@@ -1,0 +1,37 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 820 250" role="img" aria-labelledby="t d" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif">
+  <title id="t">Where ePHPm's PHP threads spend their time at full load</title>
+  <desc id="d">Stacked bars at 65k requests/sec offered. v0.11.3: running PHP 69%, waiting for a CPU 13%, idle or blocked 18%. v0.12.0: running PHP 77%, waiting for a CPU 16%, idle or blocked 7%.</desc>
+  <defs>
+    <pattern id="hatch" width="8" height="8" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
+      <rect width="8" height="8" fill="#e3e3e3"/>
+      <line x1="0" y1="0" x2="0" y2="8" stroke="#6b6b6b" stroke-width="3"/>
+    </pattern>
+    <pattern id="hatch2" width="8" height="8" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
+      <rect width="8" height="8" fill="#f2f2f2"/>
+      <line x1="0" y1="0" x2="0" y2="8" stroke="#a8a8a8" stroke-width="3"/>
+    </pattern>
+  </defs>
+  <rect width="820" height="250" fill="#ffffff"/>
+  <text x="410.0" y="34" text-anchor="middle" font-size="20" font-weight="600" fill="#222">Where the 20 PHP threads spend their time at full load</text>
+  <text x="410.0" y="58" text-anchor="middle" font-size="15" fill="#555">Share of wall-clock time per thread, 65k requests/sec offered</text>
+  <text x="118" y="109" font-size="16" fill="#222" text-anchor="end" font-weight="600">v0.11.3</text>
+  <rect x="130.0" y="84" width="441.6" height="36" fill="#0550ae"/>
+  <text x="350.8" y="108" font-size="15" fill="#fff" text-anchor="middle" font-weight="600">69%</text>
+  <rect x="571.6" y="84" width="83.2" height="36" fill="#7aa6e0"/>
+  <text x="613.2" y="108" font-size="15" fill="#fff" text-anchor="middle" font-weight="600">13%</text>
+  <rect x="654.8" y="84" width="115.2" height="36" fill="url(#hatch2)" stroke="#777" stroke-width="1"/>
+  <text x="712.4" y="108" font-size="15" fill="#222" text-anchor="middle" font-weight="600">18%</text>
+  <text x="118" y="165" font-size="16" fill="#222" text-anchor="end" font-weight="600">v0.12.0</text>
+  <rect x="130.0" y="140" width="492.8" height="36" fill="#0550ae"/>
+  <text x="376.4" y="164" font-size="15" fill="#fff" text-anchor="middle" font-weight="600">77%</text>
+  <rect x="622.8" y="140" width="102.4" height="36" fill="#7aa6e0"/>
+  <text x="674.0" y="164" font-size="15" fill="#fff" text-anchor="middle" font-weight="600">16%</text>
+  <rect x="725.2" y="140" width="44.8" height="36" fill="url(#hatch2)" stroke="#777" stroke-width="1"/>
+  <text x="747.6" y="164" font-size="15" fill="#222" text-anchor="middle" font-weight="600">7%</text>
+  <rect x="130" y="201" width="16" height="16" fill="#0550ae"/>
+  <text x="154" y="214" font-size="15" fill="#222">Running PHP</text>
+  <rect x="340" y="201" width="16" height="16" fill="#7aa6e0"/>
+  <text x="364" y="214" font-size="15" fill="#222">Waiting for a CPU</text>
+  <rect x="550" y="201" width="16" height="16" fill="url(#hatch2)" stroke="#777" stroke-width="1"/>
+  <text x="574" y="214" font-size="15" fill="#222">Idle or blocked</text>
+</svg>

@@ -1,0 +1,53 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 820 400" role="img" aria-labelledby="t d" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif">
+  <title id="t">CPU per request at low load: fixed vs adaptive spin</title>
+  <desc id="d">Grouped bars, CPU microseconds per request, lower is better. Fixed 200 µs spin (#575): 524 at 1k req/s, 467 at 5k req/s, 412 at 20k req/s; Adaptive spin (#582, default): 423 at 1k req/s, 384 at 5k req/s, 393 at 20k req/s; No spin at all: 362 at 1k req/s, 329 at 5k req/s, 363 at 20k req/s. No spin is cheapest at low load but costs 3 to 4% of throughput at full load.</desc>
+  <defs>
+    <pattern id="hatch" width="8" height="8" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
+      <rect width="8" height="8" fill="#e3e3e3"/>
+      <line x1="0" y1="0" x2="0" y2="8" stroke="#6b6b6b" stroke-width="3"/>
+    </pattern>
+    <pattern id="hatch2" width="8" height="8" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
+      <rect width="8" height="8" fill="#f2f2f2"/>
+      <line x1="0" y1="0" x2="0" y2="8" stroke="#a8a8a8" stroke-width="3"/>
+    </pattern>
+  </defs>
+  <rect width="820" height="400" fill="#ffffff"/>
+  <text x="410.0" y="34" text-anchor="middle" font-size="20" font-weight="600" fill="#222">CPU per request on a lightly loaded server</text>
+  <text x="410.0" y="58" text-anchor="middle" font-size="15" fill="#555">Worker mode, µs of CPU per request (lower is better); n=2 per point</text>
+  <line x1="90" y1="320.0" x2="790" y2="320.0" stroke="#e2e2e2" stroke-width="1"/>
+  <text x="80" y="325.0" font-size="13" fill="#555" text-anchor="end">0</text>
+  <line x1="90" y1="246.7" x2="790" y2="246.7" stroke="#e2e2e2" stroke-width="1"/>
+  <text x="80" y="251.7" font-size="13" fill="#555" text-anchor="end">200</text>
+  <line x1="90" y1="173.3" x2="790" y2="173.3" stroke="#e2e2e2" stroke-width="1"/>
+  <text x="80" y="178.3" font-size="13" fill="#555" text-anchor="end">400</text>
+  <line x1="90" y1="100.0" x2="790" y2="100.0" stroke="#e2e2e2" stroke-width="1"/>
+  <text x="80" y="105.0" font-size="13" fill="#555" text-anchor="end">600</text>
+  <rect x="122.3" y="127.9" width="62" height="192.1" fill="#9db8dc"/>
+  <text x="153.3" y="120.9" font-size="14" fill="#222" text-anchor="middle">524</text>
+  <rect x="192.3" y="164.9" width="62" height="155.1" fill="#0550ae"/>
+  <text x="223.3" y="157.9" font-size="14" fill="#222" text-anchor="middle" font-weight="600">423</text>
+  <rect x="262.3" y="187.3" width="62" height="132.7" fill="url(#hatch2)" stroke="#777" stroke-width="1"/>
+  <text x="293.3" y="180.3" font-size="14" fill="#222" text-anchor="middle">362</text>
+  <text x="223.3" y="344" font-size="15" fill="#222" text-anchor="middle" font-weight="600">1k req/s</text>
+  <rect x="349.0" y="148.8" width="62" height="171.2" fill="#9db8dc"/>
+  <text x="380.0" y="141.8" font-size="14" fill="#222" text-anchor="middle">467</text>
+  <rect x="419.0" y="179.2" width="62" height="140.8" fill="#0550ae"/>
+  <text x="450.0" y="172.2" font-size="14" fill="#222" text-anchor="middle" font-weight="600">384</text>
+  <rect x="489.0" y="199.4" width="62" height="120.6" fill="url(#hatch2)" stroke="#777" stroke-width="1"/>
+  <text x="520.0" y="192.4" font-size="14" fill="#222" text-anchor="middle">329</text>
+  <text x="450.0" y="344" font-size="15" fill="#222" text-anchor="middle" font-weight="600">5k req/s</text>
+  <rect x="575.7" y="168.9" width="62" height="151.1" fill="#9db8dc"/>
+  <text x="606.7" y="161.9" font-size="14" fill="#222" text-anchor="middle">412</text>
+  <rect x="645.7" y="175.9" width="62" height="144.1" fill="#0550ae"/>
+  <text x="676.7" y="168.9" font-size="14" fill="#222" text-anchor="middle" font-weight="600">393</text>
+  <rect x="715.7" y="186.9" width="62" height="133.1" fill="url(#hatch2)" stroke="#777" stroke-width="1"/>
+  <text x="746.7" y="179.9" font-size="14" fill="#222" text-anchor="middle">363</text>
+  <text x="676.7" y="344" font-size="15" fill="#222" text-anchor="middle" font-weight="600">20k req/s</text>
+  <line x1="90" y1="320" x2="790" y2="320" stroke="#333" stroke-width="1.5"/>
+  <rect x="110" y="366" width="16" height="16" fill="#9db8dc"/>
+  <text x="134" y="379" font-size="14" fill="#222">Fixed 200 µs spin (#575)</text>
+  <rect x="340" y="366" width="16" height="16" fill="#0550ae"/>
+  <text x="364" y="379" font-size="14" fill="#222">Adaptive spin (#582, default)</text>
+  <rect x="570" y="366" width="16" height="16" fill="url(#hatch2)" stroke="#777" stroke-width="1"/>
+  <text x="594" y="379" font-size="14" fill="#222">No spin at all</text>
+</svg>
