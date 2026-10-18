@@ -1,6 +1,6 @@
 ---
 title: "Thirty-Two Connections and an Empty File: A Race in Turso's Page-1 Allocation"
-description: "Why concurrent first writes to an empty database could panic Turso, and how to fix it."
+description: "Why concurrent first writes to an empty database could panic Turso, and the fix."
 date: 2026-10-18T12:30:00-07:00
 tags: [ ephpm, turso, sqlite, rust, concurrency, debugging ]
 categories: [ ephpm, databases, rust ]
@@ -15,7 +15,8 @@ draft: true
 [Turso](https://github.com/tursodatabase/turso), a rewrite of SQLite in Rust that is still labeled beta. It sits behind
 [litewire](https://github.com/ephpm/litewire). I recently hammered the per-site mode with fresh sites. A burst of first
 requests to a brand-new site could panic inside the engine. This post is about where that panic came from and how to
-fix it.
+fix it. How Turso got into ePHPm is in
+[Clustered SQLite, Part 2](/blog/2026/08/clustered-sqlite-adding-turso/).
 
 ### Every site gets its own empty file
 
@@ -24,8 +25,7 @@ Every PHP worker thread has its own connection to it. litewire sets a 5 second b
 
 Put those together and think about a new site's first burst of traffic. Many connections make their very first write
 to the same 0-byte file at the same moment. The first write to an empty SQLite file has to create page 1. That's the
-header page that every later read depends on. Exactly one connection should write it. How Turso got into ePHPm is in
-[Clustered SQLite, Part 2](/blog/2026/08/clustered-sqlite-adding-turso/).
+header page that every later read depends on. Exactly one connection should write it.
 
 ### The panic
 
@@ -79,8 +79,8 @@ Say connection B checks and sees an empty file. Then connection A finishes. It p
 Now B's `try_lock` succeeds. B enters `allocate_page1` with its own state still at `Start`. The assert fires, because
 the file isn't empty any more.
 
-That's the panic. The window between the check and the `try_lock` is tiny, though. The second problem is what keeps
-it busy.
+That's the panic. The window between the check and the `try_lock` is tiny, though. The second problem is what makes
+it easy to hit.
 
 ### Race 2: the lock isn't held across IO
 
@@ -97,8 +97,8 @@ The duplicate writes are identical bytes, so the file ends up fine. The losers a
 still in `Writing` or `Syncing` when someone else publishes page 1 never finishes its state machine. Its pinned copy of
 page 1 is leaked.
 
-More importantly, this is why race 1 gets hit at all. With up to 26 of 32 connections allocating at once, the lock
-changes hands constantly. Someone is always sitting in the gap between the check and the lock when the winner finishes.
+More importantly, this is why race 1 gets hit at all. With as many as 26 of 32 connections writing page 1 for one file, the
+lock changes hands constantly. Someone is always sitting in the gap between the check and the lock when the winner finishes.
 
 ### Why ePHPm finds this
 
@@ -119,8 +119,8 @@ connections". Its log shows two connections inside `maybe_allocate_page1` and `a
 closed in 2025 as "seems fixed now" without a change to this code. Its main symptom may well have had another cause,
 so I won't claim it's the same bug.
 
-The same harness found something else earlier. On Turso 0.8.2 an MVCC journal-mode switch inside a transaction
-destroyed a database. That one is fixed in 0.8.3.
+The same harness found something else earlier. On Turso 0.8.2, switching to MVCC journal mode inside a transaction
+destroyed the database. 0.8.3 refuses that switch, and ePHPm now blocks the rest.
 
 ### Reproducing it without ePHPm
 
@@ -132,7 +132,8 @@ tokio worker threads. Each task connects, sets a busy timeout and waits at a bar
 The stock crate panicked on 2 of 200 files. Each panic cost that connection's row. Integrity was fine everywhere.
 
 Then I made a probe build of `turso_core` 0.8.3. It counts entries into the `Start` state per file. That's every time
-a connection starts building page 1. A runtime switch picks the logic:
+a connection starts building page 1. A runtime switch picks the logic. The table is from a separate run on that probe build, so its stock row doesn't
+match the 2 panics above:
 
 | Build | Page-1 allocations | Files with >1 writer | Panics |
 |---|--:|--:|--:|
@@ -148,7 +149,8 @@ In short:
 - **A re-check alone stops the panic.** It does nothing about the duplicate writes.
 - **Holding the lock across the IO** gives exactly one allocation per file and no panics.
 
-The panic rate here is lower than in ePHPm. That's 1 to 2% of files, against about a quarter in the ePHPm rounds. It's
+The panic rate here is lower than in ePHPm. That's 1 to 2 panics per 100 files, against 23 to 30 in the ePHPm
+rounds. It's
 the same assert. My guess is the wider IO window inside ePHPm keeps the lock free for longer.
 
 ### The fix
@@ -190,7 +192,7 @@ Holding a lock across IO has a cost, so two more changes came with it:
   lock across IO, blocking there could stall the thread that has to drive that IO. A held lock is treated like an
   initialized database, since the page size is already fixed at that point.
 
-Upstream already uses this lock-then-recheck pattern in `set_initial_page_size`. It came in with
+Upstream already uses a blocking lock-then-recheck in `set_initial_page_size`. It came in with
 [#9315](https://github.com/tursodatabase/turso/pull/9315). It just never made it to `maybe_allocate_page1`.
 
 ### Tests that fail first
@@ -211,7 +213,7 @@ cargo test -p turso_core --features io_memory_yield allocate_page1_tests
 The first test is race 2. Turso's `MemoryYieldIO` holds every IO completion until the test steps it, which parks A
 right after its page-1 write. B must never start its own allocation. The second is race 1. A `#[cfg(test)]` hook runs
 in B's gap between the check and the lock, and lets A allocate page 1 and commit. B must then see an initialized
-database instead of panicking. The third puts 16 connections on each of 10 fresh files with real IO. Both branches
+database instead of panicking. The third puts 16 connections on each of 10 fresh files with real IO. The fix branches for main and for 0.8.3
 give the same results.
 
 ### Back in ePHPm
