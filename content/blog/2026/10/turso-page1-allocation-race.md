@@ -237,7 +237,7 @@ On stock logic, 100 files with that one awaited write gave 0 panics and exactly 
 
 ### What's next
 
-- **Send the fix upstream.** TODO(upstream PR link)
+- **Get the fix merged upstream.** It's up as [turso#10117](https://github.com/tursodatabase/turso/pull/10117).
 - **Move ePHPm onto a Turso release with the fix** once there is one. Until then #586 keeps a panic from taking the
   server down.
 
@@ -246,14 +246,14 @@ On stock logic, 100 files with that one awaited write gave 0 panics and exactly 
 - **The panic counts depend on timing.** The isolated repro ran on Windows. The ePHPm rounds ran a Linux build.
   Different IO gives a different window, so compare rows within a table.
 - **Versions.** The race is in Turso 0.7.2, 0.8.2 and 0.8.3. It's also on upstream main at `f5090d05a` as I write
-  this. The fix is on my fork only.
+  this. The fix isn't merged yet.
 - **#586 is unreleased.** It's merged on ePHPm main and coming in the next release.
 
 ### Links
 
 - [luthermonson/turso `fix/page1-allocation-race`](https://github.com/luthermonson/turso/tree/fix/page1-allocation-race): the fix and its tests, on main
 - [luthermonson/turso `fix/page1-allocation-race-0.8.3`](https://github.com/luthermonson/turso/tree/fix/page1-allocation-race-0.8.3): the same fix on 0.8.3
-- Upstream PR: TODO(upstream PR link)
+- [turso#10117](https://github.com/tursodatabase/turso/pull/10117): the upstream PR
 - [ephpm#586](https://github.com/ephpm/ephpm/pull/586): containing engine panics in the bridge
 - [turso#2062](https://github.com/tursodatabase/turso/issues/2062): the closest earlier report
 - [turso#9315](https://github.com/tursodatabase/turso/pull/9315): lock-then-recheck in `set_initial_page_size`
