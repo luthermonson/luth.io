@@ -1,7 +1,7 @@
 ---
 title: "Thirty-Two Connections and an Empty File: A Race in Turso's Page-1 Allocation"
 description: "Why concurrent first writes to an empty database could panic Turso, and the fix."
-date: 2026-10-18T12:30:00-07:00
+date: 2026-10-18T14:30:00-07:00
 tags: [ ephpm, turso, sqlite, rust, concurrency, debugging ]
 categories: [ ephpm, databases, rust ]
 images:
@@ -184,21 +184,25 @@ fast path in front of `allocate_page1`.
 
 ![Sequence diagram with the fix: A takes the lock and re-checks, writes page 1 and keeps holding the lock through the IO; B sees an empty file but finds the lock held and yields; A fsyncs, publishes page 1 and only then releases the lock; B takes the lock, re-checks and finds the database already initialized](/img/2026/10/turso-page1-allocation-race-fix.svg)
 
-Holding a lock across IO has a cost, so two more changes came with it:
+Holding a lock across IO has a cost, so three more changes came with it:
 
 - **An IO error resets the state to `Start`.** That drops the guard. Otherwise a failed write would leave the lock
   held in a state nothing drives again.
+- **An abandoned allocation releases the lock.** A statement can be reset or dropped mid-write. A connection can be
+  closed. Either way `Pager::reset_internal_states` now resets the allocation, which drops the guard. Without that,
+  every other connection would yield forever.
 - **`set_initial_page_size` uses `try_lock`.** On main it did a blocking `lock()`. Now that an allocation can hold the
   lock across IO, blocking there could stall the thread that has to drive that IO. A held lock is treated like an
-  initialized database, since the page size is already fixed at that point.
+  initialized database, since the page size is already fixed at that point. It also reports whether it applied the
+  size, so `PRAGMA page_size` doesn't push a size that wasn't used.
 
 Upstream already uses a blocking lock-then-recheck in `set_initial_page_size`. It came in with
 [#9315](https://github.com/tursodatabase/turso/pull/9315). It just never made it to `maybe_allocate_page1`.
 
 ### Tests that fail first
 
-The second commit adds the tests and nothing else. The third adds the fix. So you can check out the middle commit and
-watch them fail:
+The PR is two commits. The first adds the tests and a small `cfg` fix so the test feature builds on its own. The
+second adds the fix. So you can check out the first commit and watch the race tests fail:
 
 ```bash
 cargo test -p turso_core --features io_memory_yield allocate_page1_tests
@@ -208,13 +212,16 @@ cargo test -p turso_core --features io_memory_yield allocate_page1_tests
 |---|--:|--:|
 | Second writer waits while page 1 is in flight | 50 / 50 fail | 50 / 50 pass |
 | Writer that loses the check-then-lock gap | 50 / 50 fail | 50 / 50 pass |
-| Concurrent first writes allocate page 1 once | 5 / 5 fail | 5 / 5 pass |
 
 The first test is race 2. Turso's `MemoryYieldIO` holds every IO completion until the test steps it, which parks A
 right after its page-1 write. B must never start its own allocation. The second is race 1. A `#[cfg(test)]` hook runs
 in B's gap between the check and the lock, and lets A allocate page 1 and commit. B must then see an initialized
-database instead of panicking. The third puts 16 connections on each of 10 fresh files with real IO. The fix branches for main and for 0.8.3
-give the same results.
+database instead of panicking.
+
+Two more tests cover the new lock handling. One drops a statement in the middle of its page-1 write. The other closes
+the connection. In both cases another connection must still be able to allocate page 1. The same commits are on the
+0.8.3 branch.
+
 
 ### Back in ePHPm
 
@@ -246,7 +253,9 @@ On stock logic, 100 files with that one awaited write gave 0 panics and exactly 
 - **The panic counts depend on timing.** The isolated repro ran on Windows. The ePHPm rounds ran a Linux build.
   Different IO gives a different window, so compare rows within a table.
 - **Versions.** The race is in Turso 0.7.2, 0.8.2 and 0.8.3. It's also on upstream main at `f5090d05a` as I write
-  this. The fix isn't merged yet.
+  this. The fix is up as turso#10117 and isn't merged yet.
+- **The numbers came from an earlier revision of the fix.** The repro and the ePHPm rounds ran before I cleaned the
+  branch up for the PR. That cleanup added the abandoned-allocation reset and the `PRAGMA page_size` change.
 - **#586 is unreleased.** It's merged on ePHPm main and coming in the next release.
 
 ### Links
