@@ -1,0 +1,46 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 570" role="img" aria-labelledby="t d" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif">
+  <title id="t">Isolated repro: page-1 allocations and panics per build</title>
+  <desc id="d">200 fresh files with 32 connections each, on a probe build of turso_core 0.8.3. Page-1 allocations (Start entries): stock logic 2,477; re-check only 2,398; re-check plus lock held 200, which is one per file. Files where more than one connection allocated page 1: stock 200 of 200; re-check only 199 of 200; re-check plus lock held 0 of 200. Panics on the assert: stock 4; re-check only 0; re-check plus lock held 0.</desc>
+  <defs>
+    <pattern id="hatch" width="8" height="8" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
+      <rect width="8" height="8" fill="#e3e3e3"/>
+      <line x1="0" y1="0" x2="0" y2="8" stroke="#6b6b6b" stroke-width="3"/>
+    </pattern>
+  </defs>
+  <rect width="900" height="570" fill="#ffffff"/>
+  <text x="450.0" y="36" text-anchor="middle" font-size="20" font-weight="600" fill="#222">Isolated repro: 200 fresh files, 32 connections each</text>
+  <text x="450.0" y="62" text-anchor="middle" font-size="15" fill="#555">Probe build of turso_core 0.8.3 on Windows; one row per build mode</text>
+
+  <text x="20" y="108" font-size="17" font-weight="600" fill="#222">Page-1 allocations (lower is better, 200 is one per file)</text>
+  <text x="238" y="143" font-size="15" fill="#222" text-anchor="end">Stock logic</text>
+  <rect x="250" y="126" width="420.0" height="22" fill="url(#hatch)" stroke="#555" stroke-width="1"/>
+  <text x="678.0" y="143" font-size="15" fill="#222">2,477</text>
+  <text x="238" y="177" font-size="15" fill="#222" text-anchor="end">Re-check only</text>
+  <rect x="250" y="160" width="406.6" height="22" fill="#9db8dc"/>
+  <text x="664.6" y="177" font-size="15" fill="#222">2,398</text>
+  <text x="238" y="211" font-size="15" fill="#222" text-anchor="end" font-weight="600">Re-check + lock held</text>
+  <rect x="250" y="194" width="33.9" height="22" fill="#0550ae"/>
+  <text x="291.9" y="211" font-size="15" fill="#222" font-weight="600">200, one per file</text>
+  <line x1="250" y1="120" x2="250" y2="224" stroke="#333" stroke-width="1.5"/>
+
+  <text x="20" y="268" font-size="17" font-weight="600" fill="#222">Files where more than one connection wrote page 1</text>
+  <text x="238" y="303" font-size="15" fill="#222" text-anchor="end">Stock logic</text>
+  <rect x="250" y="286" width="420.0" height="22" fill="url(#hatch)" stroke="#555" stroke-width="1"/>
+  <text x="678.0" y="303" font-size="15" fill="#222">200 of 200</text>
+  <text x="238" y="337" font-size="15" fill="#222" text-anchor="end">Re-check only</text>
+  <rect x="250" y="320" width="417.9" height="22" fill="#9db8dc"/>
+  <text x="675.9" y="337" font-size="15" fill="#222">199 of 200</text>
+  <text x="238" y="371" font-size="15" fill="#222" text-anchor="end" font-weight="600">Re-check + lock held</text>
+  <text x="258" y="371" font-size="15" fill="#222" font-weight="600">0 of 200</text>
+  <line x1="250" y1="280" x2="250" y2="384" stroke="#333" stroke-width="1.5"/>
+
+  <text x="20" y="428" font-size="17" font-weight="600" fill="#222">Panics on the assert in allocate_page1</text>
+  <text x="238" y="463" font-size="15" fill="#222" text-anchor="end">Stock logic</text>
+  <rect x="250" y="446" width="200.0" height="22" fill="url(#hatch)" stroke="#555" stroke-width="1"/>
+  <text x="458.0" y="463" font-size="15" fill="#222">4</text>
+  <text x="238" y="497" font-size="15" fill="#222" text-anchor="end">Re-check only</text>
+  <text x="258" y="497" font-size="15" fill="#222">0</text>
+  <text x="238" y="531" font-size="15" fill="#222" text-anchor="end" font-weight="600">Re-check + lock held</text>
+  <text x="258" y="531" font-size="15" fill="#222" font-weight="600">0</text>
+  <line x1="250" y1="440" x2="250" y2="544" stroke="#333" stroke-width="1.5"/>
+</svg>

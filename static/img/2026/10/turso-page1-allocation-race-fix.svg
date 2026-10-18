@@ -1,0 +1,59 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 680 516" role="img" aria-labelledby="t d" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif">
+  <title id="t">Page-1 allocation with the fix</title>
+  <desc id="d">Sequence diagram with three columns: connection A, init_lock, connection B. A sees an empty file, takes the lock and re-checks, writes page 1 and waits on IO while still holding the lock. B sees an empty file, finds the lock held and yields. A fsyncs, publishes page 1 and only then releases the lock. B takes the lock, re-checks, finds the database already initialized and is done without writing page 1.</desc>
+  <rect width="680" height="516" fill="#ffffff"/>
+  <text x="340" y="34" text-anchor="middle" font-size="20" font-weight="600" fill="#222">With the fix: one writer, re-check under the lock</text>
+  <text x="145" y="72" text-anchor="middle" font-size="15" font-weight="600" fill="#0550ae">Connection A</text>
+  <text x="340" y="72" text-anchor="middle" font-size="15" font-weight="600" fill="#222">init_lock</text>
+  <text x="535" y="72" text-anchor="middle" font-size="15" font-weight="600" fill="#a34700">Connection B</text>
+  <line x1="145" y1="82" x2="145" y2="480" stroke="#dddddd" stroke-width="2"/>
+  <line x1="340" y1="82" x2="340" y2="480" stroke="#dddddd" stroke-width="2"/>
+  <line x1="535" y1="82" x2="535" y2="480" stroke="#dddddd" stroke-width="2"/>
+
+  <rect x="20" y="96" width="250" height="30" rx="4" fill="#dbe7f5" stroke="#0550ae"/>
+  <text x="145" y="116" text-anchor="middle" font-size="14" fill="#222">sees an empty file</text>
+  <rect x="290" y="99" width="100" height="24" rx="12" fill="#ffffff" stroke="#6b6b6b" stroke-dasharray="4 3"/>
+  <text x="340" y="116" text-anchor="middle" font-size="14" fill="#444">free</text>
+
+  <rect x="20" y="136" width="250" height="30" rx="4" fill="#dbe7f5" stroke="#0550ae"/>
+  <text x="145" y="156" text-anchor="middle" font-size="14" fill="#222">takes the lock, re-checks</text>
+  <rect x="290" y="139" width="100" height="24" rx="12" fill="#0550ae"/>
+  <text x="340" y="156" text-anchor="middle" font-size="14" fill="#ffffff">A holds</text>
+
+  <rect x="20" y="176" width="250" height="30" rx="4" fill="#dbe7f5" stroke="#0550ae"/>
+  <text x="145" y="196" text-anchor="middle" font-size="14" fill="#222">writes page 1, waits on IO</text>
+  <rect x="290" y="179" width="100" height="24" rx="12" fill="#0550ae"/>
+  <text x="340" y="196" text-anchor="middle" font-size="14" fill="#ffffff">A holds</text>
+
+  <rect x="410" y="216" width="250" height="30" rx="4" fill="#f6e3d4" stroke="#a34700" stroke-dasharray="6 3"/>
+  <text x="535" y="236" text-anchor="middle" font-size="14" fill="#222">sees an empty file</text>
+  <rect x="290" y="219" width="100" height="24" rx="12" fill="#0550ae"/>
+  <text x="340" y="236" text-anchor="middle" font-size="14" fill="#ffffff">A holds</text>
+
+  <rect x="410" y="256" width="250" height="30" rx="4" fill="#f6e3d4" stroke="#a34700" stroke-dasharray="6 3"/>
+  <text x="535" y="276" text-anchor="middle" font-size="14" fill="#222">lock is held: yields</text>
+  <rect x="290" y="259" width="100" height="24" rx="12" fill="#0550ae"/>
+  <text x="340" y="276" text-anchor="middle" font-size="14" fill="#ffffff">A holds</text>
+
+  <rect x="20" y="296" width="250" height="30" rx="4" fill="#dbe7f5" stroke="#0550ae"/>
+  <text x="145" y="316" text-anchor="middle" font-size="14" fill="#222">fsyncs, publishes page 1</text>
+  <rect x="290" y="299" width="100" height="24" rx="12" fill="#0550ae"/>
+  <text x="340" y="316" text-anchor="middle" font-size="14" fill="#ffffff">A holds</text>
+
+  <rect x="20" y="336" width="250" height="30" rx="4" fill="#dbe7f5" stroke="#0550ae"/>
+  <text x="145" y="356" text-anchor="middle" font-size="14" fill="#222">releases the lock</text>
+  <rect x="290" y="339" width="100" height="24" rx="12" fill="#ffffff" stroke="#6b6b6b" stroke-dasharray="4 3"/>
+  <text x="340" y="356" text-anchor="middle" font-size="14" fill="#444">free</text>
+
+  <rect x="410" y="376" width="250" height="30" rx="4" fill="#f6e3d4" stroke="#a34700" stroke-dasharray="6 3"/>
+  <text x="535" y="396" text-anchor="middle" font-size="14" fill="#222">takes the lock, re-checks</text>
+  <rect x="290" y="379" width="100" height="24" rx="12" fill="#a34700"/>
+  <text x="340" y="396" text-anchor="middle" font-size="14" fill="#ffffff">B holds</text>
+
+  <rect x="410" y="416" width="250" height="30" rx="4" fill="#00707a" stroke="#00707a"/>
+  <text x="535" y="436" text-anchor="middle" font-size="14" font-weight="600" fill="#ffffff">already initialized: done</text>
+  <rect x="290" y="419" width="100" height="24" rx="12" fill="#ffffff" stroke="#6b6b6b" stroke-dasharray="4 3"/>
+  <text x="340" y="436" text-anchor="middle" font-size="14" fill="#444">free</text>
+
+  <text x="340" y="496" text-anchor="middle" font-size="15" fill="#555">Page 1 is written once. Nobody hits the assert.</text>
+</svg>
