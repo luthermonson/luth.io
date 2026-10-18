@@ -8,7 +8,7 @@ images:
  - src: img/2026/10/turso-page1-allocation-race-races.svg
    alt: "Sequence diagram of two connections and init_lock: in race 1, B checks for an empty file, A publishes page 1 and releases the lock, then B takes the lock and panics on its assert; in race 2, A's lock is dropped while page 1 is being written, so B takes it and writes page 1 again"
    stretch: "none"
-draft: true
+draft: false
 ---
 
 [ePHPm](https://github.com/ephpm/ephpm) runs PHP inside a Rust server. For SQLite-style databases it uses
