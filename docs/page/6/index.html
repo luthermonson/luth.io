@@ -215,6 +215,72 @@
   <header>
   <div class="title">
     
+      <h2><a href="/blog/2026/08/gossip-clustering-for-php/">Gossip-Based Clustering for PHP Apps</a></h2>
+    
+    
+      <p>How ePHPm servers find each other, share data and handle a server joining or leaving. It also measures how fast a write reaches the other servers and covers a bug I found while measuring it.</p>
+    
+  </div>
+  <div class="meta">
+    <time datetime="2026-08-04 20:52:00 -0700 PDT">August 4, 2026</time>
+    
+    <p>11-Minute Read</p>
+  </div>
+</header>
+
+  <div class="content">
+    <a href="/blog/2026/08/gossip-clustering-for-php/" class="image" style="--bg-image: url('/img/2026/08/gossip-clustering-php-cover.svg');">
+    <img class="" src="/img/2026/08/gossip-clustering-php-cover.svg" alt="Three ePHPm nodes: small values replicated to every node over gossip, a large value stored on its owner and one replica over a TCP data plane">
+  </a>
+    
+    <p>Most PHP developers never touch clustering primitives. That&rsquo;s by design. PHP is share-nothing. Each request starts
+from zero, and anything shared lives somewhere else. Sessions go in Redis. Cache goes in Redis or Memcached. Locks go
+in Redis. When you run two app servers, the &ldquo;cluster&rdquo; is really two stateless boxes pointed at the same Redis. That
+works until Redis is the thing you&rsquo;re trying not to run.</p>
+  </div>
+  <footer>
+    <a href="/blog/2026/08/gossip-clustering-for-php/" class="button big">Read More</a>
+    <div class="stats">
+  
+    <ul class="categories">
+      
+        
+          <li><a class="article-terms-link" href="/categories/ephpm/">ephpm</a></li>
+        
+          <li><a class="article-terms-link" href="/categories/rust/">rust</a></li>
+        
+      
+    </ul>
+  
+  
+    <ul class="tags">
+      
+        
+          <li><a class="article-terms-link" href="/tags/ephpm/">ephpm</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/rust/">rust</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/php/">php</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/clustering/">clustering</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/gossip/">gossip</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/distributed-systems/">distributed systems</a></li>
+        
+      
+    </ul>
+  
+</div>
+
+  </footer>
+</article>
+
+  
+    <article class="post">
+  <header>
+  <div class="title">
+    
       <h2><a href="/blog/2026/08/windows-dynamic-disk-usb-wsl2-usbip/">Rescuing a Windows Dynamic Disk Over USB with WSL2 and USB/IP</a></h2>
     
     
@@ -809,69 +875,6 @@ into a checklist of things other projects have.</p>
 </article>
 
   
-    <article class="post">
-  <header>
-  <div class="title">
-    
-      <h2><a href="/blog/2026/06/tail-gunner/">Stop Ctrl-C-ing Your tail -f | grep</a></h2>
-    
-    
-      <p>tail-gunner is a drop-in tail that promotes itself mid-stream into a live-filtering Bubble Tea TUI without restarting the stream.</p>
-    
-  </div>
-  <div class="meta">
-    <time datetime="2026-06-20 20:31:00 -0700 PDT">June 20, 2026</time>
-    
-    <p>8-Minute Read</p>
-  </div>
-</header>
-
-  <div class="content">
-    <a href="/blog/2026/06/tail-gunner/" class="image" style="--bg-image: url('/img/2026/06/tail-gunner-filtered.svg');">
-    <img class="" src="/img/2026/06/tail-gunner-filtered.svg" alt="tail-gunner in gunner mode showing only ERROR lines with a highlight on request durations">
-  </a>
-    
-    <p>Here&rsquo;s a loop I end up in all the time:</p>
-  </div>
-  <footer>
-    <a href="/blog/2026/06/tail-gunner/" class="button big">Read More</a>
-    <div class="stats">
-  
-    <ul class="categories">
-      
-        
-          <li><a class="article-terms-link" href="/categories/go/">go</a></li>
-        
-          <li><a class="article-terms-link" href="/categories/tools/">tools</a></li>
-        
-      
-    </ul>
-  
-  
-    <ul class="tags">
-      
-        
-          <li><a class="article-terms-link" href="/tags/go/">go</a></li>
-        
-          <li><a class="article-terms-link" href="/tags/bubbletea/">bubbletea</a></li>
-        
-          <li><a class="article-terms-link" href="/tags/tui/">tui</a></li>
-        
-          <li><a class="article-terms-link" href="/tags/cli/">cli</a></li>
-        
-          <li><a class="article-terms-link" href="/tags/kubernetes/">kubernetes</a></li>
-        
-          <li><a class="article-terms-link" href="/tags/k9s/">k9s</a></li>
-        
-      
-    </ul>
-  
-</div>
-
-  </footer>
-</article>
-
-  
   <div class="pagination">
     
       <a href="/page/5/" class="button left"><span>Previous Page</span></a>
@@ -888,6 +891,16 @@ into a checklist of things other projects have.</p>
       <header>
         <h1>Recent Posts</h1>
       </header>
+      
+      <article class="mini-post">
+          <a href="/blog/2026/10/turso-page1-allocation-race/" class="image" style="--bg-image: url('/img/2026/10/turso-page1-allocation-race-races.svg');">
+    <img class="" src="/img/2026/10/turso-page1-allocation-race-races.svg" alt="Sequence diagram of two connections and init_lock: in race 1, B checks for an empty file, A publishes page 1 and releases the lock, then B takes the lock and panics on its assert; in race 2, A&#39;s lock is dropped while page 1 is being written, so B takes it and writes page 1 again">
+  </a>
+        <header>
+          <h2><a href="/blog/2026/10/turso-page1-allocation-race/">Thirty-Two Connections and an Empty File: A Race in Turso&#39;s Page-1 Allocation</a></h2>
+          <time class="published" datetime="2026-10-18 14:30:00 -0700 PDT">October 18, 2026</time>
+        </header>
+      </article>
       
       <article class="mini-post">
           <a href="/blog/2026/10/ephpm-worker-mode-performance/" class="image" style="--bg-image: url('/img/2026/10/ephpm-worker-mode-performance-cover.svg');">
@@ -929,16 +942,6 @@ into a checklist of things other projects have.</p>
         </header>
       </article>
       
-      <article class="mini-post">
-          <a href="/blog/2026/10/ephpm-websockets-how-to/" class="image" style="--bg-image: url('/img/2026/10/ephpm-websockets-how-to-cover.svg');">
-    <img class="" src="/img/2026/10/ephpm-websockets-how-to-cover.svg" alt="Diagram: browsers hold sockets to ePHPm&#39;s Rust session tasks and registry; each connect, message and disconnect runs websocket.php once on the PHP thread pool, and ordinary HTTP requests push through ephpm_ws_broadcast">
-  </a>
-        <header>
-          <h2><a href="/blog/2026/10/ephpm-websockets-how-to/">WebSockets in ePHPm, From Zero to a Working Chat</a></h2>
-          <time class="published" datetime="2026-10-11 17:30:00 -0700 PDT">October 11, 2026</time>
-        </header>
-      </article>
-      
       
         <footer>
           <a href="/blog" class="button">See More</a>
@@ -958,7 +961,7 @@ into a checklist of things other projects have.</p>
           
           
           <li>
-              <a href="/categories/ephpm/">ephpm<span class="count">36</span></a>
+              <a href="/categories/ephpm/">ephpm<span class="count">37</span></a>
           
           <li>
               <a href="/categories/go/">go<span class="count">30</span></a>
@@ -967,7 +970,7 @@ into a checklist of things other projects have.</p>
               <a href="/categories/php/">php<span class="count">26</span></a>
           
           <li>
-              <a href="/categories/rust/">rust<span class="count">16</span></a>
+              <a href="/categories/rust/">rust<span class="count">17</span></a>
           
           <li>
               <a href="/categories/homelab/">homelab<span class="count">14</span></a>
@@ -976,10 +979,10 @@ into a checklist of things other projects have.</p>
               <a href="/categories/windows/">windows<span class="count">14</span></a>
           
           <li>
-              <a href="/categories/ci/">ci<span class="count">9</span></a>
+              <a href="/categories/databases/">databases<span class="count">10</span></a>
           
           <li>
-              <a href="/categories/databases/">databases<span class="count">9</span></a>
+              <a href="/categories/ci/">ci<span class="count">9</span></a>
           
           <li>
               <a href="/categories/security/">security<span class="count">9</span></a>

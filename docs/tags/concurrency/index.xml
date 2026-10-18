@@ -6,8 +6,15 @@
     <description>Recent content in Concurrency on Luther Monson</description>
     <generator>Hugo</generator>
     <language>en</language>
-    <lastBuildDate>Thu, 17 Sep 2026 20:12:00 -0700</lastBuildDate>
+    <lastBuildDate>Sun, 18 Oct 2026 14:30:00 -0700</lastBuildDate>
     <atom:link href="https://luth.io/tags/concurrency/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>Thirty-Two Connections and an Empty File: A Race in Turso&#39;s Page-1 Allocation</title>
+      <link>https://luth.io/blog/2026/10/turso-page1-allocation-race/</link>
+      <pubDate>Sun, 18 Oct 2026 14:30:00 -0700</pubDate>
+      <guid>https://luth.io/blog/2026/10/turso-page1-allocation-race/</guid>
+      <description>&lt;p&gt;&lt;a href=&#34;https://github.com/ephpm/ephpm&#34;&gt;ePHPm&lt;/a&gt; runs PHP inside a Rust server. For SQLite-style databases it uses&#xA;&lt;a href=&#34;https://github.com/tursodatabase/turso&#34;&gt;Turso&lt;/a&gt;, a rewrite of SQLite in Rust that is still labeled beta. I recently&#xA;hammered ePHPm&amp;rsquo;s per-site mode with brand-new sites. A burst of first requests to a new site could panic inside the&#xA;engine. This post is about where that panic came from and how to fix it. How Turso got into ePHPm is in&#xA;&lt;a href=&#34;https://luth.io/blog/2026/08/clustered-sqlite-adding-turso/&#34;&gt;Clustered SQLite, Part 2&lt;/a&gt;.&lt;/p&gt;</description>
+    </item>
     <item>
       <title>os/exec&#39;s StdoutPipe Footgun: How cmd.Wait() Ate My Last Frame (Twice)</title>
       <link>https://luth.io/blog/2026/09/os-exec-stdoutpipe-wait-footgun/</link>

@@ -215,6 +215,75 @@
   <header>
   <div class="title">
     
+      <h2><a href="/blog/2026/10/turso-page1-allocation-race/">Thirty-Two Connections and an Empty File: A Race in Turso&#39;s Page-1 Allocation</a></h2>
+    
+    
+      <p>Why concurrent first writes to an empty database could panic Turso, and the fix.</p>
+    
+  </div>
+  <div class="meta">
+    <time datetime="2026-10-18 14:30:00 -0700 PDT">October 18, 2026</time>
+    
+    <p>6-Minute Read</p>
+  </div>
+</header>
+
+  <div class="content">
+    <a href="/blog/2026/10/turso-page1-allocation-race/" class="image" style="--bg-image: url('/img/2026/10/turso-page1-allocation-race-races.svg');">
+    <img class="" src="/img/2026/10/turso-page1-allocation-race-races.svg" alt="Sequence diagram of two connections and init_lock: in race 1, B checks for an empty file, A publishes page 1 and releases the lock, then B takes the lock and panics on its assert; in race 2, A&#39;s lock is dropped while page 1 is being written, so B takes it and writes page 1 again">
+  </a>
+    
+    <p><a href="https://github.com/ephpm/ephpm">ePHPm</a> runs PHP inside a Rust server. For SQLite-style databases it uses
+<a href="https://github.com/tursodatabase/turso">Turso</a>, a rewrite of SQLite in Rust that is still labeled beta. I recently
+hammered ePHPm&rsquo;s per-site mode with brand-new sites. A burst of first requests to a new site could panic inside the
+engine. This post is about where that panic came from and how to fix it. How Turso got into ePHPm is in
+<a href="/blog/2026/08/clustered-sqlite-adding-turso/">Clustered SQLite, Part 2</a>.</p>
+  </div>
+  <footer>
+    <a href="/blog/2026/10/turso-page1-allocation-race/" class="button big">Read More</a>
+    <div class="stats">
+  
+    <ul class="categories">
+      
+        
+          <li><a class="article-terms-link" href="/categories/ephpm/">ephpm</a></li>
+        
+          <li><a class="article-terms-link" href="/categories/databases/">databases</a></li>
+        
+          <li><a class="article-terms-link" href="/categories/rust/">rust</a></li>
+        
+      
+    </ul>
+  
+  
+    <ul class="tags">
+      
+        
+          <li><a class="article-terms-link" href="/tags/ephpm/">ephpm</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/turso/">turso</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/sqlite/">sqlite</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/rust/">rust</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/concurrency/">concurrency</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/debugging/">debugging</a></li>
+        
+      
+    </ul>
+  
+</div>
+
+  </footer>
+</article>
+
+  
+    <article class="post">
+  <header>
+  <div class="title">
+    
       <h2><a href="/blog/2026/10/ephpm-worker-mode-performance/">Fourth Place in Worker Mode, and Why It Wasn&#39;t PHP</a></h2>
     
     
@@ -813,73 +882,6 @@ and what still has to happen before the default&hellip;</p>
 </article>
 
   
-    <article class="post">
-  <header>
-  <div class="title">
-    
-      <h2><a href="/blog/2026/09/agent-shell-allowlist-bypassable/">Your Agent&#39;s Shell Allowlist Is Bypassable</a></h2>
-    
-    
-      <p>A permission gate for AI agents&#39; shell commands judged spellings instead of commands. I found several classes of bypass in shipmates&#39; own gate, and one idea fixes most of them.</p>
-    
-  </div>
-  <div class="meta">
-    <time datetime="2026-09-29 20:30:00 -0700 PDT">September 29, 2026</time>
-    
-    <p>9-Minute Read</p>
-  </div>
-</header>
-
-  <div class="content">
-    <a href="/blog/2026/09/agent-shell-allowlist-bypassable/" class="image" style="--bg-image: url('/img/2026/09/agent-shell-allowlist-bypassable-cover.svg');">
-    <img class="" src="/img/2026/09/agent-shell-allowlist-bypassable-cover.svg" alt="A shell command decomposed into the nested command lines the permission gate has to judge">
-  </a>
-    
-    <p>Every <a href="/blog/2026/08/shipmates-persona-based-ai-coding-crews/">shipmates</a> crew member runs shell commands. Before any of
-them runs, it goes through a permission gate. The gate uses the same rule syntax as Claude Code settings:
-<code>Bash(git status)</code>, <code>Bash(rm *)</code>, <code>Write(**/.claude/settings.json)</code>. The rules are merged from several layers:</p>
-  </div>
-  <footer>
-    <a href="/blog/2026/09/agent-shell-allowlist-bypassable/" class="button big">Read More</a>
-    <div class="stats">
-  
-    <ul class="categories">
-      
-        
-          <li><a class="article-terms-link" href="/categories/ai-agents/">ai-agents</a></li>
-        
-          <li><a class="article-terms-link" href="/categories/security/">security</a></li>
-        
-          <li><a class="article-terms-link" href="/categories/go/">go</a></li>
-        
-      
-    </ul>
-  
-  
-    <ul class="tags">
-      
-        
-          <li><a class="article-terms-link" href="/tags/go/">go</a></li>
-        
-          <li><a class="article-terms-link" href="/tags/security/">security</a></li>
-        
-          <li><a class="article-terms-link" href="/tags/ai-agents/">ai-agents</a></li>
-        
-          <li><a class="article-terms-link" href="/tags/shell/">shell</a></li>
-        
-          <li><a class="article-terms-link" href="/tags/powershell/">powershell</a></li>
-        
-          <li><a class="article-terms-link" href="/tags/shipmates/">shipmates</a></li>
-        
-      
-    </ul>
-  
-</div>
-
-  </footer>
-</article>
-
-  
   <div class="pagination">
     
     
@@ -894,6 +896,16 @@ them runs, it goes through a permission gate. The gate uses the same rule syntax
       <header>
         <h1>Recent Posts</h1>
       </header>
+      
+      <article class="mini-post">
+          <a href="/blog/2026/10/turso-page1-allocation-race/" class="image" style="--bg-image: url('/img/2026/10/turso-page1-allocation-race-races.svg');">
+    <img class="" src="/img/2026/10/turso-page1-allocation-race-races.svg" alt="Sequence diagram of two connections and init_lock: in race 1, B checks for an empty file, A publishes page 1 and releases the lock, then B takes the lock and panics on its assert; in race 2, A&#39;s lock is dropped while page 1 is being written, so B takes it and writes page 1 again">
+  </a>
+        <header>
+          <h2><a href="/blog/2026/10/turso-page1-allocation-race/">Thirty-Two Connections and an Empty File: A Race in Turso&#39;s Page-1 Allocation</a></h2>
+          <time class="published" datetime="2026-10-18 14:30:00 -0700 PDT">October 18, 2026</time>
+        </header>
+      </article>
       
       <article class="mini-post">
           <a href="/blog/2026/10/ephpm-worker-mode-performance/" class="image" style="--bg-image: url('/img/2026/10/ephpm-worker-mode-performance-cover.svg');">
@@ -935,16 +947,6 @@ them runs, it goes through a permission gate. The gate uses the same rule syntax
         </header>
       </article>
       
-      <article class="mini-post">
-          <a href="/blog/2026/10/ephpm-websockets-how-to/" class="image" style="--bg-image: url('/img/2026/10/ephpm-websockets-how-to-cover.svg');">
-    <img class="" src="/img/2026/10/ephpm-websockets-how-to-cover.svg" alt="Diagram: browsers hold sockets to ePHPm&#39;s Rust session tasks and registry; each connect, message and disconnect runs websocket.php once on the PHP thread pool, and ordinary HTTP requests push through ephpm_ws_broadcast">
-  </a>
-        <header>
-          <h2><a href="/blog/2026/10/ephpm-websockets-how-to/">WebSockets in ePHPm, From Zero to a Working Chat</a></h2>
-          <time class="published" datetime="2026-10-11 17:30:00 -0700 PDT">October 11, 2026</time>
-        </header>
-      </article>
-      
       
         <footer>
           <a href="/blog" class="button">See More</a>
@@ -964,7 +966,7 @@ them runs, it goes through a permission gate. The gate uses the same rule syntax
           
           
           <li>
-              <a href="/categories/ephpm/">ephpm<span class="count">36</span></a>
+              <a href="/categories/ephpm/">ephpm<span class="count">37</span></a>
           
           <li>
               <a href="/categories/go/">go<span class="count">30</span></a>
@@ -973,7 +975,7 @@ them runs, it goes through a permission gate. The gate uses the same rule syntax
               <a href="/categories/php/">php<span class="count">26</span></a>
           
           <li>
-              <a href="/categories/rust/">rust<span class="count">16</span></a>
+              <a href="/categories/rust/">rust<span class="count">17</span></a>
           
           <li>
               <a href="/categories/homelab/">homelab<span class="count">14</span></a>
@@ -982,10 +984,10 @@ them runs, it goes through a permission gate. The gate uses the same rule syntax
               <a href="/categories/windows/">windows<span class="count">14</span></a>
           
           <li>
-              <a href="/categories/ci/">ci<span class="count">9</span></a>
+              <a href="/categories/databases/">databases<span class="count">10</span></a>
           
           <li>
-              <a href="/categories/databases/">databases<span class="count">9</span></a>
+              <a href="/categories/ci/">ci<span class="count">9</span></a>
           
           <li>
               <a href="/categories/security/">security<span class="count">9</span></a>

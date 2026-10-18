@@ -215,6 +215,75 @@
   <header>
   <div class="title">
     
+      <h2><a href="/blog/2026/08/clustered-sqlite-sqld-sidecar/">Clustered SQLite in ePHPm, Part 1: Replication by Sidecar</a></h2>
+    
+    
+      <p>ePHPm first made SQLite highly available by embedding sqld as a child process. This is how that worked and the list of things that went wrong with it.</p>
+    
+  </div>
+  <div class="meta">
+    <time datetime="2026-08-08 20:14:00 -0700 PDT">August 8, 2026</time>
+    
+    <p>9-Minute Read</p>
+  </div>
+</header>
+
+  <div class="content">
+    <a href="/blog/2026/08/clustered-sqlite-sqld-sidecar/" class="image" style="--bg-image: url('/img/2026/08/clustered-sqlite-sqld-sidecar-topology.svg');">
+    <img class="" src="/img/2026/08/clustered-sqlite-sqld-sidecar-topology.svg" alt="Two ePHPm nodes, each running an embedded sqld child process, connected by gossip, a KV data plane and sqld gRPC">
+  </a>
+    
+    <p>Most PHP sites I have run in the last twenty years did not need a MySQL server. They needed <em>a</em> database, and MySQL was the
+one every framework spoke. With <a href="https://github.com/ephpm/ephpm">ePHPm</a> I have been trying to get rid of that server for
+the common case. The piece that makes it possible is <a href="https://github.com/ephpm/litewire">litewire</a>. PHP connects with
+plain <code>pdo_mysql</code>. litewire speaks the MySQL wire protocol, and the queries land in a SQLite file. WordPress and Laravel
+don&rsquo;t know the difference. No <code>mysqld</code>, no child processes, just <code>ephpm</code> and a <code>.db</code> file.</p>
+  </div>
+  <footer>
+    <a href="/blog/2026/08/clustered-sqlite-sqld-sidecar/" class="button big">Read More</a>
+    <div class="stats">
+  
+    <ul class="categories">
+      
+        
+          <li><a class="article-terms-link" href="/categories/ephpm/">ephpm</a></li>
+        
+          <li><a class="article-terms-link" href="/categories/databases/">databases</a></li>
+        
+      
+    </ul>
+  
+  
+    <ul class="tags">
+      
+        
+          <li><a class="article-terms-link" href="/tags/ephpm/">ephpm</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/sqlite/">sqlite</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/sqld/">sqld</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/libsql/">libsql</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/rust/">rust</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/clustering/">clustering</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/php/">php</a></li>
+        
+      
+    </ul>
+  
+</div>
+
+  </footer>
+</article>
+
+  
+    <article class="post">
+  <header>
+  <div class="title">
+    
       <h2><a href="/blog/2026/08/gossip-clustering-for-php/">Gossip-Based Clustering for PHP Apps</a></h2>
     
     
@@ -638,6 +707,16 @@ the &ldquo;PHP inside a Go web server&rdquo; idea works, and it works well. I&he
       </header>
       
       <article class="mini-post">
+          <a href="/blog/2026/10/turso-page1-allocation-race/" class="image" style="--bg-image: url('/img/2026/10/turso-page1-allocation-race-races.svg');">
+    <img class="" src="/img/2026/10/turso-page1-allocation-race-races.svg" alt="Sequence diagram of two connections and init_lock: in race 1, B checks for an empty file, A publishes page 1 and releases the lock, then B takes the lock and panics on its assert; in race 2, A&#39;s lock is dropped while page 1 is being written, so B takes it and writes page 1 again">
+  </a>
+        <header>
+          <h2><a href="/blog/2026/10/turso-page1-allocation-race/">Thirty-Two Connections and an Empty File: A Race in Turso&#39;s Page-1 Allocation</a></h2>
+          <time class="published" datetime="2026-10-18 14:30:00 -0700 PDT">October 18, 2026</time>
+        </header>
+      </article>
+      
+      <article class="mini-post">
           <a href="/blog/2026/10/ephpm-worker-mode-performance/" class="image" style="--bg-image: url('/img/2026/10/ephpm-worker-mode-performance-cover.svg');">
     <img class="" src="/img/2026/10/ephpm-worker-mode-performance-cover.svg" alt="Diagram: before, hyper/tokio hands each request to one shared bounded channel whose waiter list all 20 PHP threads contend on; after, a dispatcher hands the job straight into the mailbox of the most recently idle PHP thread and only queues it in a FIFO overflow queue when every thread is busy">
   </a>
@@ -677,16 +756,6 @@ the &ldquo;PHP inside a Go web server&rdquo; idea works, and it works well. I&he
         </header>
       </article>
       
-      <article class="mini-post">
-          <a href="/blog/2026/10/ephpm-websockets-how-to/" class="image" style="--bg-image: url('/img/2026/10/ephpm-websockets-how-to-cover.svg');">
-    <img class="" src="/img/2026/10/ephpm-websockets-how-to-cover.svg" alt="Diagram: browsers hold sockets to ePHPm&#39;s Rust session tasks and registry; each connect, message and disconnect runs websocket.php once on the PHP thread pool, and ordinary HTTP requests push through ephpm_ws_broadcast">
-  </a>
-        <header>
-          <h2><a href="/blog/2026/10/ephpm-websockets-how-to/">WebSockets in ePHPm, From Zero to a Working Chat</a></h2>
-          <time class="published" datetime="2026-10-11 17:30:00 -0700 PDT">October 11, 2026</time>
-        </header>
-      </article>
-      
       
         <footer>
           <a href="/blog" class="button">See More</a>
@@ -706,7 +775,7 @@ the &ldquo;PHP inside a Go web server&rdquo; idea works, and it works well. I&he
           
           
           <li>
-              <a href="/categories/ephpm/">ephpm<span class="count">36</span></a>
+              <a href="/categories/ephpm/">ephpm<span class="count">37</span></a>
           
           <li>
               <a href="/categories/go/">go<span class="count">30</span></a>
@@ -715,7 +784,7 @@ the &ldquo;PHP inside a Go web server&rdquo; idea works, and it works well. I&he
               <a href="/categories/php/">php<span class="count">26</span></a>
           
           <li>
-              <a href="/categories/rust/">rust<span class="count">16</span></a>
+              <a href="/categories/rust/">rust<span class="count">17</span></a>
           
           <li>
               <a href="/categories/homelab/">homelab<span class="count">14</span></a>
@@ -724,10 +793,10 @@ the &ldquo;PHP inside a Go web server&rdquo; idea works, and it works well. I&he
               <a href="/categories/windows/">windows<span class="count">14</span></a>
           
           <li>
-              <a href="/categories/ci/">ci<span class="count">9</span></a>
+              <a href="/categories/databases/">databases<span class="count">10</span></a>
           
           <li>
-              <a href="/categories/databases/">databases<span class="count">9</span></a>
+              <a href="/categories/ci/">ci<span class="count">9</span></a>
           
           <li>
               <a href="/categories/security/">security<span class="count">9</span></a>

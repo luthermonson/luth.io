@@ -6,13 +6,27 @@
     <description>Recent content in Categories on Luther Monson</description>
     <generator>Hugo</generator>
     <language>en</language>
-    <lastBuildDate>Fri, 16 Oct 2026 18:00:00 -0700</lastBuildDate>
+    <lastBuildDate>Sun, 18 Oct 2026 14:30:00 -0700</lastBuildDate>
     <atom:link href="https://luth.io/categories/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>Databases</title>
+      <link>https://luth.io/categories/databases/</link>
+      <pubDate>Sun, 18 Oct 2026 14:30:00 -0700</pubDate>
+      <guid>https://luth.io/categories/databases/</guid>
+      <description></description>
+    </item>
     <item>
       <title>ePHPm</title>
       <link>https://luth.io/categories/ephpm/</link>
-      <pubDate>Thu, 15 Oct 2026 19:45:00 -0700</pubDate>
+      <pubDate>Sun, 18 Oct 2026 14:30:00 -0700</pubDate>
       <guid>https://luth.io/categories/ephpm/</guid>
+      <description></description>
+    </item>
+    <item>
+      <title>Rust</title>
+      <link>https://luth.io/categories/rust/</link>
+      <pubDate>Sun, 18 Oct 2026 14:30:00 -0700</pubDate>
+      <guid>https://luth.io/categories/rust/</guid>
       <description></description>
     </item>
     <item>
@@ -20,13 +34,6 @@
       <link>https://luth.io/categories/php/</link>
       <pubDate>Thu, 15 Oct 2026 19:45:00 -0700</pubDate>
       <guid>https://luth.io/categories/php/</guid>
-      <description></description>
-    </item>
-    <item>
-      <title>Rust</title>
-      <link>https://luth.io/categories/rust/</link>
-      <pubDate>Wed, 14 Oct 2026 23:20:00 -0700</pubDate>
-      <guid>https://luth.io/categories/rust/</guid>
       <description></description>
     </item>
     <item>
@@ -76,13 +83,6 @@
       <link>https://luth.io/categories/containers/</link>
       <pubDate>Sat, 26 Sep 2026 16:20:00 -0700</pubDate>
       <guid>https://luth.io/categories/containers/</guid>
-      <description></description>
-    </item>
-    <item>
-      <title>Databases</title>
-      <link>https://luth.io/categories/databases/</link>
-      <pubDate>Tue, 15 Sep 2026 21:08:00 -0700</pubDate>
-      <guid>https://luth.io/categories/databases/</guid>
       <description></description>
     </item>
     <item>

@@ -217,7 +217,7 @@
       
         <li>
           <a href="/categories/ephpm/">ePHPm</a>
-          <span class="term-count">36</span>
+          <span class="term-count">37</span>
         </li>
       
         <li>
@@ -232,7 +232,7 @@
       
         <li>
           <a href="/categories/rust/">Rust</a>
-          <span class="term-count">16</span>
+          <span class="term-count">17</span>
         </li>
       
         <li>
@@ -246,12 +246,12 @@
         </li>
       
         <li>
-          <a href="/categories/ci/">CI &amp; Runners</a>
-          <span class="term-count">9</span>
+          <a href="/categories/databases/">Databases</a>
+          <span class="term-count">10</span>
         </li>
       
         <li>
-          <a href="/categories/databases/">Databases</a>
+          <a href="/categories/ci/">CI &amp; Runners</a>
           <span class="term-count">9</span>
         </li>
       
@@ -286,6 +286,16 @@
       <header>
         <h1>Recent Posts</h1>
       </header>
+      
+      <article class="mini-post">
+          <a href="/blog/2026/10/turso-page1-allocation-race/" class="image" style="--bg-image: url('/img/2026/10/turso-page1-allocation-race-races.svg');">
+    <img class="" src="/img/2026/10/turso-page1-allocation-race-races.svg" alt="Sequence diagram of two connections and init_lock: in race 1, B checks for an empty file, A publishes page 1 and releases the lock, then B takes the lock and panics on its assert; in race 2, A&#39;s lock is dropped while page 1 is being written, so B takes it and writes page 1 again">
+  </a>
+        <header>
+          <h2><a href="/blog/2026/10/turso-page1-allocation-race/">Thirty-Two Connections and an Empty File: A Race in Turso&#39;s Page-1 Allocation</a></h2>
+          <time class="published" datetime="2026-10-18 14:30:00 -0700 PDT">October 18, 2026</time>
+        </header>
+      </article>
       
       <article class="mini-post">
           <a href="/blog/2026/10/ephpm-worker-mode-performance/" class="image" style="--bg-image: url('/img/2026/10/ephpm-worker-mode-performance-cover.svg');">
@@ -324,16 +334,6 @@
         <header>
           <h2><a href="/blog/2026/10/xdebug-worker-mode/">Step Debugging a Worker That Never Ends</a></h2>
           <time class="published" datetime="2026-10-12 21:10:00 -0700 PDT">October 12, 2026</time>
-        </header>
-      </article>
-      
-      <article class="mini-post">
-          <a href="/blog/2026/10/ephpm-websockets-how-to/" class="image" style="--bg-image: url('/img/2026/10/ephpm-websockets-how-to-cover.svg');">
-    <img class="" src="/img/2026/10/ephpm-websockets-how-to-cover.svg" alt="Diagram: browsers hold sockets to ePHPm&#39;s Rust session tasks and registry; each connect, message and disconnect runs websocket.php once on the PHP thread pool, and ordinary HTTP requests push through ephpm_ws_broadcast">
-  </a>
-        <header>
-          <h2><a href="/blog/2026/10/ephpm-websockets-how-to/">WebSockets in ePHPm, From Zero to a Working Chat</a></h2>
-          <time class="published" datetime="2026-10-11 17:30:00 -0700 PDT">October 11, 2026</time>
         </header>
       </article>
       

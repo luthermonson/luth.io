@@ -215,6 +215,73 @@
   <header>
   <div class="title">
     
+      <h2><a href="/blog/2026/09/cross-tenant-breakout-field-guide/">Every Way a Tenant Escaped: A Cross-Tenant Breakout Field Guide</a></h2>
+    
+    
+      <p>Eight ways one site broke out of its sandbox on a multi-tenant PHP server, all found by attacking it on purpose, all fixed.</p>
+    
+  </div>
+  <div class="meta">
+    <time datetime="2026-09-13 16:20:00 -0700 PDT">September 13, 2026</time>
+    
+    <p>10-Minute Read</p>
+  </div>
+</header>
+
+  <div class="content">
+    <a href="/blog/2026/09/cross-tenant-breakout-field-guide/" class="image" style="--bg-image: url('/img/2026/09/cross-tenant-breakout-field-guide-cover.svg');">
+    <img class="" src="/img/2026/09/cross-tenant-breakout-field-guide-cover.svg" alt="Table of tenant isolation boundaries in ePHPm, how each was crossed, and the PR that fixed it">
+  </a>
+    
+    <p><a href="https://github.com/ephpm/ephpm">ePHPm</a> can serve a directory full of sites out of one process. Point <code>sites_dir</code> at
+a folder and every subdirectory is a virtual host. The Host header decides which one you get. That&rsquo;s how the PR preview
+environment runs. Every pull request gets a subdomain, and the code behind it is whatever somebody pushed. One process
+holding many tenants means ePHPm enforces every per-tenant boundary itself, in-process. There&rsquo;s no container wall
+between site A and site B unless you add one.</p>
+  </div>
+  <footer>
+    <a href="/blog/2026/09/cross-tenant-breakout-field-guide/" class="button big">Read More</a>
+    <div class="stats">
+  
+    <ul class="categories">
+      
+        
+          <li><a class="article-terms-link" href="/categories/security/">security</a></li>
+        
+          <li><a class="article-terms-link" href="/categories/ephpm/">ephpm</a></li>
+        
+          <li><a class="article-terms-link" href="/categories/php/">php</a></li>
+        
+      
+    </ul>
+  
+  
+    <ul class="tags">
+      
+        
+          <li><a class="article-terms-link" href="/tags/php/">php</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/rust/">rust</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/ephpm/">ephpm</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/security/">security</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/multi-tenant/">multi-tenant</a></li>
+        
+      
+    </ul>
+  
+</div>
+
+  </footer>
+</article>
+
+  
+    <article class="post">
+  <header>
+  <div class="title">
+    
       <h2><a href="/blog/2026/09/shipmates-short-ones-setup-go-and-voice/">shipmates Short Ones: 8 Minutes Extracting Go, and Three Voice-Loop Bugs</a></h2>
     
     
@@ -819,71 +886,6 @@ two days it found three separate bugs that each took&hellip;</p>
 </article>
 
   
-    <article class="post">
-  <header>
-  <div class="title">
-    
-      <h2><a href="/blog/2026/09/remotedialer-data-race-two-thirds-fix/">Finding a Data Race in rancher/remotedialer, Then Pinning Only Two-Thirds of the Fix</a></h2>
-    
-    
-      <p>Two data races in remotedialer v0.6.1 that upstream&#39;s tests never ran with -race, and how my replace directive ended up pinned to the middle commit of my own fix.</p>
-    
-  </div>
-  <div class="meta">
-    <time datetime="2026-09-01 21:05:00 -0700 PDT">September 1, 2026</time>
-    
-    <p>7-Minute Read</p>
-  </div>
-</header>
-
-  <div class="content">
-    <a href="/blog/2026/09/remotedialer-data-race-two-thirds-fix/" class="image" style="--bg-image: url('/img/2026/09/remotedialer-data-race-two-thirds-fix-cover.svg');">
-    <img class="" src="/img/2026/09/remotedialer-data-race-two-thirds-fix-cover.svg" alt="Three commits of remotedialer PR 265 and which one the replace directive pointed at">
-  </a>
-    
-    <p><a href="/blog/2026/08/shipmates-persona-based-ai-coding-crews/">shipmates</a> ships connect to Fleet Command over outbound
-websocket tunnels. That way nothing on the ship side has to be exposed to the internet. I didn&rsquo;t write that tunnel
-layer. I used <a href="https://github.com/rancher/remotedialer">rancher/remotedialer</a>, the same library Rancher uses to reach
-downstream cluster agents. I spent years around that code at Rancher, so it was the obvious pick. What I didn&rsquo;t
-expect was for my CI&rsquo;s race job to find two data races in it in the first week.</p>
-  </div>
-  <footer>
-    <a href="/blog/2026/09/remotedialer-data-race-two-thirds-fix/" class="button big">Read More</a>
-    <div class="stats">
-  
-    <ul class="categories">
-      
-        
-          <li><a class="article-terms-link" href="/categories/go/">go</a></li>
-        
-      
-    </ul>
-  
-  
-    <ul class="tags">
-      
-        
-          <li><a class="article-terms-link" href="/tags/go/">go</a></li>
-        
-          <li><a class="article-terms-link" href="/tags/race-detector/">race-detector</a></li>
-        
-          <li><a class="article-terms-link" href="/tags/remotedialer/">remotedialer</a></li>
-        
-          <li><a class="article-terms-link" href="/tags/rancher/">rancher</a></li>
-        
-          <li><a class="article-terms-link" href="/tags/go-modules/">go-modules</a></li>
-        
-          <li><a class="article-terms-link" href="/tags/shipmates/">shipmates</a></li>
-        
-      
-    </ul>
-  
-</div>
-
-  </footer>
-</article>
-
-  
   <div class="pagination">
     
       <a href="/page/2/" class="button left"><span>Previous Page</span></a>
@@ -900,6 +902,16 @@ expect was for my CI&rsquo;s race job to find two data races in it in the first 
       <header>
         <h1>Recent Posts</h1>
       </header>
+      
+      <article class="mini-post">
+          <a href="/blog/2026/10/turso-page1-allocation-race/" class="image" style="--bg-image: url('/img/2026/10/turso-page1-allocation-race-races.svg');">
+    <img class="" src="/img/2026/10/turso-page1-allocation-race-races.svg" alt="Sequence diagram of two connections and init_lock: in race 1, B checks for an empty file, A publishes page 1 and releases the lock, then B takes the lock and panics on its assert; in race 2, A&#39;s lock is dropped while page 1 is being written, so B takes it and writes page 1 again">
+  </a>
+        <header>
+          <h2><a href="/blog/2026/10/turso-page1-allocation-race/">Thirty-Two Connections and an Empty File: A Race in Turso&#39;s Page-1 Allocation</a></h2>
+          <time class="published" datetime="2026-10-18 14:30:00 -0700 PDT">October 18, 2026</time>
+        </header>
+      </article>
       
       <article class="mini-post">
           <a href="/blog/2026/10/ephpm-worker-mode-performance/" class="image" style="--bg-image: url('/img/2026/10/ephpm-worker-mode-performance-cover.svg');">
@@ -941,16 +953,6 @@ expect was for my CI&rsquo;s race job to find two data races in it in the first 
         </header>
       </article>
       
-      <article class="mini-post">
-          <a href="/blog/2026/10/ephpm-websockets-how-to/" class="image" style="--bg-image: url('/img/2026/10/ephpm-websockets-how-to-cover.svg');">
-    <img class="" src="/img/2026/10/ephpm-websockets-how-to-cover.svg" alt="Diagram: browsers hold sockets to ePHPm&#39;s Rust session tasks and registry; each connect, message and disconnect runs websocket.php once on the PHP thread pool, and ordinary HTTP requests push through ephpm_ws_broadcast">
-  </a>
-        <header>
-          <h2><a href="/blog/2026/10/ephpm-websockets-how-to/">WebSockets in ePHPm, From Zero to a Working Chat</a></h2>
-          <time class="published" datetime="2026-10-11 17:30:00 -0700 PDT">October 11, 2026</time>
-        </header>
-      </article>
-      
       
         <footer>
           <a href="/blog" class="button">See More</a>
@@ -970,7 +972,7 @@ expect was for my CI&rsquo;s race job to find two data races in it in the first 
           
           
           <li>
-              <a href="/categories/ephpm/">ephpm<span class="count">36</span></a>
+              <a href="/categories/ephpm/">ephpm<span class="count">37</span></a>
           
           <li>
               <a href="/categories/go/">go<span class="count">30</span></a>
@@ -979,7 +981,7 @@ expect was for my CI&rsquo;s race job to find two data races in it in the first 
               <a href="/categories/php/">php<span class="count">26</span></a>
           
           <li>
-              <a href="/categories/rust/">rust<span class="count">16</span></a>
+              <a href="/categories/rust/">rust<span class="count">17</span></a>
           
           <li>
               <a href="/categories/homelab/">homelab<span class="count">14</span></a>
@@ -988,10 +990,10 @@ expect was for my CI&rsquo;s race job to find two data races in it in the first 
               <a href="/categories/windows/">windows<span class="count">14</span></a>
           
           <li>
-              <a href="/categories/ci/">ci<span class="count">9</span></a>
+              <a href="/categories/databases/">databases<span class="count">10</span></a>
           
           <li>
-              <a href="/categories/databases/">databases<span class="count">9</span></a>
+              <a href="/categories/ci/">ci<span class="count">9</span></a>
           
           <li>
               <a href="/categories/security/">security<span class="count">9</span></a>

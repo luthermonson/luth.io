@@ -1,0 +1,67 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 680 712" role="img" aria-labelledby="t d" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif">
+  <title id="t">Two races on the first write to an empty Turso database</title>
+  <desc id="d">Sequence diagram with three columns: connection A, the shared init_lock, and connection B. Race 1: B sees an empty file while A holds the lock; A publishes page 1 and releases the lock; B takes the free lock and asserts the file is still empty, which fails and panics. Race 2: A sees an empty file, takes the lock, writes page 1 and waits on IO, and the lock is dropped while it waits; B sees an empty file, takes the free lock and writes page 1 again; A later fsyncs and publishes page 1. With 32 connections up to 26 allocated page 1 for one file.</desc>
+  <rect width="680" height="712" fill="#ffffff"/>
+  <text x="340" y="34" text-anchor="middle" font-size="20" font-weight="600" fill="#222">First write to an empty file, two races</text>
+  <text x="145" y="72" text-anchor="middle" font-size="15" font-weight="600" fill="#0550ae">Connection A</text>
+  <text x="340" y="72" text-anchor="middle" font-size="15" font-weight="600" fill="#222">init_lock</text>
+  <text x="535" y="72" text-anchor="middle" font-size="15" font-weight="600" fill="#a34700">Connection B</text>
+  <line x1="145" y1="82" x2="145" y2="660" stroke="#dddddd" stroke-width="2"/>
+  <line x1="340" y1="82" x2="340" y2="660" stroke="#dddddd" stroke-width="2"/>
+  <line x1="535" y1="82" x2="535" y2="660" stroke="#dddddd" stroke-width="2"/>
+
+  <!-- Race 1 -->
+  <rect x="10" y="90" width="660" height="26" fill="#ffffff"/>
+  <text x="20" y="110" font-size="17" font-weight="600" fill="#222">Race 1: check, then lock, no re-check</text>
+  <rect x="410" y="128" width="250" height="30" rx="4" fill="#f6e3d4" stroke="#a34700" stroke-dasharray="6 3"/>
+  <text x="535" y="148" text-anchor="middle" font-size="14" fill="#222">sees an empty file</text>
+  <rect x="290" y="131" width="100" height="24" rx="12" fill="#0550ae"/>
+  <text x="340" y="148" text-anchor="middle" font-size="14" fill="#ffffff">A holds</text>
+  <rect x="20" y="168" width="250" height="30" rx="4" fill="#dbe7f5" stroke="#0550ae"/>
+  <text x="145" y="188" text-anchor="middle" font-size="14" fill="#222">publishes page 1</text>
+  <rect x="290" y="171" width="100" height="24" rx="12" fill="#0550ae"/>
+  <text x="340" y="188" text-anchor="middle" font-size="14" fill="#ffffff">A holds</text>
+  <rect x="20" y="208" width="250" height="30" rx="4" fill="#dbe7f5" stroke="#0550ae"/>
+  <text x="145" y="228" text-anchor="middle" font-size="14" fill="#222">releases the lock</text>
+  <rect x="290" y="211" width="100" height="24" rx="12" fill="#ffffff" stroke="#6b6b6b" stroke-dasharray="4 3"/>
+  <text x="340" y="228" text-anchor="middle" font-size="14" fill="#444">free</text>
+  <rect x="410" y="248" width="250" height="30" rx="4" fill="#f6e3d4" stroke="#a34700" stroke-dasharray="6 3"/>
+  <text x="535" y="268" text-anchor="middle" font-size="14" fill="#222">takes the lock</text>
+  <rect x="290" y="251" width="100" height="24" rx="12" fill="#a34700"/>
+  <text x="340" y="268" text-anchor="middle" font-size="14" fill="#ffffff">B holds</text>
+  <rect x="410" y="288" width="250" height="30" rx="4" fill="#a34700" stroke="#a34700"/>
+  <text x="535" y="308" text-anchor="middle" font-size="14" font-weight="600" fill="#ffffff">asserts "still empty": panic</text>
+
+  <!-- Race 2 -->
+  <rect x="10" y="342" width="660" height="26" fill="#ffffff"/>
+  <text x="20" y="362" font-size="17" font-weight="600" fill="#222">Race 2: the lock is dropped during IO</text>
+  <rect x="20" y="380" width="250" height="30" rx="4" fill="#dbe7f5" stroke="#0550ae"/>
+  <text x="145" y="400" text-anchor="middle" font-size="14" fill="#222">sees an empty file</text>
+  <rect x="290" y="383" width="100" height="24" rx="12" fill="#ffffff" stroke="#6b6b6b" stroke-dasharray="4 3"/>
+  <text x="340" y="400" text-anchor="middle" font-size="14" fill="#444">free</text>
+  <rect x="20" y="420" width="250" height="30" rx="4" fill="#dbe7f5" stroke="#0550ae"/>
+  <text x="145" y="440" text-anchor="middle" font-size="14" fill="#222">takes the lock</text>
+  <rect x="290" y="423" width="100" height="24" rx="12" fill="#0550ae"/>
+  <text x="340" y="440" text-anchor="middle" font-size="14" fill="#ffffff">A holds</text>
+  <rect x="20" y="460" width="250" height="30" rx="4" fill="#dbe7f5" stroke="#0550ae"/>
+  <text x="145" y="480" text-anchor="middle" font-size="14" fill="#222">writes page 1, waits on IO</text>
+  <rect x="290" y="463" width="100" height="24" rx="12" fill="#ffffff" stroke="#6b6b6b" stroke-dasharray="4 3"/>
+  <text x="340" y="480" text-anchor="middle" font-size="14" fill="#444">free</text>
+  <rect x="410" y="500" width="250" height="30" rx="4" fill="#f6e3d4" stroke="#a34700" stroke-dasharray="6 3"/>
+  <text x="535" y="520" text-anchor="middle" font-size="14" fill="#222">sees an empty file</text>
+  <rect x="290" y="503" width="100" height="24" rx="12" fill="#ffffff" stroke="#6b6b6b" stroke-dasharray="4 3"/>
+  <text x="340" y="520" text-anchor="middle" font-size="14" fill="#444">free</text>
+  <rect x="410" y="540" width="250" height="30" rx="4" fill="#f6e3d4" stroke="#a34700" stroke-dasharray="6 3"/>
+  <text x="535" y="560" text-anchor="middle" font-size="14" fill="#222">takes the lock</text>
+  <rect x="290" y="543" width="100" height="24" rx="12" fill="#a34700"/>
+  <text x="340" y="560" text-anchor="middle" font-size="14" fill="#ffffff">B holds</text>
+  <rect x="410" y="580" width="250" height="30" rx="4" fill="#f6e3d4" stroke="#a34700" stroke-width="2.5" stroke-dasharray="6 3"/>
+  <text x="535" y="600" text-anchor="middle" font-size="14" font-weight="600" fill="#222">writes page 1 again</text>
+  <rect x="290" y="583" width="100" height="24" rx="12" fill="#ffffff" stroke="#6b6b6b" stroke-dasharray="4 3"/>
+  <text x="340" y="600" text-anchor="middle" font-size="14" fill="#444">free</text>
+  <rect x="20" y="620" width="250" height="30" rx="4" fill="#dbe7f5" stroke="#0550ae"/>
+  <text x="145" y="640" text-anchor="middle" font-size="14" fill="#222">fsyncs, publishes page 1</text>
+  <rect x="290" y="623" width="100" height="24" rx="12" fill="#ffffff" stroke="#6b6b6b" stroke-dasharray="4 3"/>
+  <text x="340" y="640" text-anchor="middle" font-size="14" fill="#444">free</text>
+  <text x="340" y="692" text-anchor="middle" font-size="15" fill="#555">With 32 connections, up to 26 wrote page 1 for one file.</text>
+</svg>

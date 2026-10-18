@@ -215,6 +215,72 @@
   <header>
   <div class="title">
     
+      <h2><a href="/blog/2026/08/opcache-on-windows-two-silent-failures/">OPcache on Windows: Two Silent Failures</a></h2>
+    
+    
+      <p>An ASLR fatal on Windows looked like a memory-size lottery. Separately, Windows PHP 8.3 builds never had an opcode cache, and the fix sat unpicked for three weeks.</p>
+    
+  </div>
+  <div class="meta">
+    <time datetime="2026-08-29 16:45:00 -0700 PDT">August 29, 2026</time>
+    
+    <p>8-Minute Read</p>
+  </div>
+</header>
+
+  <div class="content">
+    <a href="/blog/2026/08/opcache-on-windows-two-silent-failures/" class="image" style="--bg-image: url('/img/2026/08/opcache-windows-silent-failures-cover.svg');">
+    <img class="" src="/img/2026/08/opcache-windows-silent-failures-cover.svg" alt="Two ePHPm processes computing the same OPcache shared-memory name; the second reattaches and dies on the ASLR check">
+  </a>
+    
+    <p>Windows is the platform where <a href="https://github.com/ephpm/ephpm">ePHPm</a> gets the least traffic and the most surprises.
+Last week closed out two OPcache bugs that only exist there. Both were quiet in their own way. One killed the server
+at startup with nothing in our own logs. The other didn&rsquo;t kill anything. It just ran PHP 8.3 with no opcode cache at
+all. For three weeks after a fixed SDK was published, every check stayed green.</p>
+  </div>
+  <footer>
+    <a href="/blog/2026/08/opcache-on-windows-two-silent-failures/" class="button big">Read More</a>
+    <div class="stats">
+  
+    <ul class="categories">
+      
+        
+          <li><a class="article-terms-link" href="/categories/php/">php</a></li>
+        
+          <li><a class="article-terms-link" href="/categories/windows/">windows</a></li>
+        
+          <li><a class="article-terms-link" href="/categories/ephpm/">ephpm</a></li>
+        
+      
+    </ul>
+  
+  
+    <ul class="tags">
+      
+        
+          <li><a class="article-terms-link" href="/tags/php/">php</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/opcache/">opcache</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/windows/">windows</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/ephpm/">ephpm</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/debugging/">debugging</a></li>
+        
+      
+    </ul>
+  
+</div>
+
+  </footer>
+</article>
+
+  
+    <article class="post">
+  <header>
+  <div class="title">
+    
       <h2><a href="/blog/2026/08/ephpm-ebpf-per-vhost-network-policy/">Per-Tenant Network Policy in One Process: ePHPm&#39;s eBPF Thread Tags</a></h2>
     
     
@@ -821,75 +887,6 @@ TCP connect, a MySQL&hellip;</p>
 </article>
 
   
-    <article class="post">
-  <header>
-  <div class="title">
-    
-      <h2><a href="/blog/2026/08/clustered-sqlite-sqld-sidecar/">Clustered SQLite in ePHPm, Part 1: Replication by Sidecar</a></h2>
-    
-    
-      <p>ePHPm first made SQLite highly available by embedding sqld as a child process. This is how that worked and the list of things that went wrong with it.</p>
-    
-  </div>
-  <div class="meta">
-    <time datetime="2026-08-08 20:14:00 -0700 PDT">August 8, 2026</time>
-    
-    <p>9-Minute Read</p>
-  </div>
-</header>
-
-  <div class="content">
-    <a href="/blog/2026/08/clustered-sqlite-sqld-sidecar/" class="image" style="--bg-image: url('/img/2026/08/clustered-sqlite-sqld-sidecar-topology.svg');">
-    <img class="" src="/img/2026/08/clustered-sqlite-sqld-sidecar-topology.svg" alt="Two ePHPm nodes, each running an embedded sqld child process, connected by gossip, a KV data plane and sqld gRPC">
-  </a>
-    
-    <p>Most PHP sites I have run in the last twenty years did not need a MySQL server. They needed <em>a</em> database, and MySQL was the
-one every framework spoke. With <a href="https://github.com/ephpm/ephpm">ePHPm</a> I have been trying to get rid of that server for
-the common case. The piece that makes it possible is <a href="https://github.com/ephpm/litewire">litewire</a>. PHP connects with
-plain <code>pdo_mysql</code>. litewire speaks the MySQL wire protocol, and the queries land in a SQLite file. WordPress and Laravel
-don&rsquo;t know the difference. No <code>mysqld</code>, no child processes, just <code>ephpm</code> and a <code>.db</code> file.</p>
-  </div>
-  <footer>
-    <a href="/blog/2026/08/clustered-sqlite-sqld-sidecar/" class="button big">Read More</a>
-    <div class="stats">
-  
-    <ul class="categories">
-      
-        
-          <li><a class="article-terms-link" href="/categories/ephpm/">ephpm</a></li>
-        
-          <li><a class="article-terms-link" href="/categories/databases/">databases</a></li>
-        
-      
-    </ul>
-  
-  
-    <ul class="tags">
-      
-        
-          <li><a class="article-terms-link" href="/tags/ephpm/">ephpm</a></li>
-        
-          <li><a class="article-terms-link" href="/tags/sqlite/">sqlite</a></li>
-        
-          <li><a class="article-terms-link" href="/tags/sqld/">sqld</a></li>
-        
-          <li><a class="article-terms-link" href="/tags/libsql/">libsql</a></li>
-        
-          <li><a class="article-terms-link" href="/tags/rust/">rust</a></li>
-        
-          <li><a class="article-terms-link" href="/tags/clustering/">clustering</a></li>
-        
-          <li><a class="article-terms-link" href="/tags/php/">php</a></li>
-        
-      
-    </ul>
-  
-</div>
-
-  </footer>
-</article>
-
-  
   <div class="pagination">
     
       <a href="/categories/ephpm/page/2/" class="button left"><span>Previous Page</span></a>
@@ -906,6 +903,16 @@ don&rsquo;t know the difference. No <code>mysqld</code>, no child processes, jus
       <header>
         <h1>Recent Posts</h1>
       </header>
+      
+      <article class="mini-post">
+          <a href="/blog/2026/10/turso-page1-allocation-race/" class="image" style="--bg-image: url('/img/2026/10/turso-page1-allocation-race-races.svg');">
+    <img class="" src="/img/2026/10/turso-page1-allocation-race-races.svg" alt="Sequence diagram of two connections and init_lock: in race 1, B checks for an empty file, A publishes page 1 and releases the lock, then B takes the lock and panics on its assert; in race 2, A&#39;s lock is dropped while page 1 is being written, so B takes it and writes page 1 again">
+  </a>
+        <header>
+          <h2><a href="/blog/2026/10/turso-page1-allocation-race/">Thirty-Two Connections and an Empty File: A Race in Turso&#39;s Page-1 Allocation</a></h2>
+          <time class="published" datetime="2026-10-18 14:30:00 -0700 PDT">October 18, 2026</time>
+        </header>
+      </article>
       
       <article class="mini-post">
           <a href="/blog/2026/10/ephpm-worker-mode-performance/" class="image" style="--bg-image: url('/img/2026/10/ephpm-worker-mode-performance-cover.svg');">
@@ -947,16 +954,6 @@ don&rsquo;t know the difference. No <code>mysqld</code>, no child processes, jus
         </header>
       </article>
       
-      <article class="mini-post">
-          <a href="/blog/2026/10/ephpm-websockets-how-to/" class="image" style="--bg-image: url('/img/2026/10/ephpm-websockets-how-to-cover.svg');">
-    <img class="" src="/img/2026/10/ephpm-websockets-how-to-cover.svg" alt="Diagram: browsers hold sockets to ePHPm&#39;s Rust session tasks and registry; each connect, message and disconnect runs websocket.php once on the PHP thread pool, and ordinary HTTP requests push through ephpm_ws_broadcast">
-  </a>
-        <header>
-          <h2><a href="/blog/2026/10/ephpm-websockets-how-to/">WebSockets in ePHPm, From Zero to a Working Chat</a></h2>
-          <time class="published" datetime="2026-10-11 17:30:00 -0700 PDT">October 11, 2026</time>
-        </header>
-      </article>
-      
       
         <footer>
           <a href="/blog" class="button">See More</a>
@@ -976,7 +973,7 @@ don&rsquo;t know the difference. No <code>mysqld</code>, no child processes, jus
           
           
           <li>
-              <a href="/categories/ephpm/">ephpm<span class="count">36</span></a>
+              <a href="/categories/ephpm/">ephpm<span class="count">37</span></a>
           
           <li>
               <a href="/categories/go/">go<span class="count">30</span></a>
@@ -985,7 +982,7 @@ don&rsquo;t know the difference. No <code>mysqld</code>, no child processes, jus
               <a href="/categories/php/">php<span class="count">26</span></a>
           
           <li>
-              <a href="/categories/rust/">rust<span class="count">16</span></a>
+              <a href="/categories/rust/">rust<span class="count">17</span></a>
           
           <li>
               <a href="/categories/homelab/">homelab<span class="count">14</span></a>
@@ -994,10 +991,10 @@ don&rsquo;t know the difference. No <code>mysqld</code>, no child processes, jus
               <a href="/categories/windows/">windows<span class="count">14</span></a>
           
           <li>
-              <a href="/categories/ci/">ci<span class="count">9</span></a>
+              <a href="/categories/databases/">databases<span class="count">10</span></a>
           
           <li>
-              <a href="/categories/databases/">databases<span class="count">9</span></a>
+              <a href="/categories/ci/">ci<span class="count">9</span></a>
           
           <li>
               <a href="/categories/security/">security<span class="count">9</span></a>

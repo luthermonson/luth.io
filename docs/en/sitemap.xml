@@ -2,14 +2,11 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"
   xmlns:xhtml="http://www.w3.org/1999/xhtml">
   <url>
-    <loc>https://luth.io/tags/benchmarking/</loc>
-    <lastmod>2026-10-16T18:00:00-07:00</lastmod>
-  </url><url>
     <loc>https://luth.io/blog/</loc>
-    <lastmod>2026-10-16T18:00:00-07:00</lastmod>
+    <lastmod>2026-10-18T14:30:00-07:00</lastmod>
   </url><url>
     <loc>https://luth.io/categories/</loc>
-    <lastmod>2026-10-16T18:00:00-07:00</lastmod>
+    <lastmod>2026-10-18T14:30:00-07:00</lastmod>
     <xhtml:link
                 rel="alternate"
                 hreflang="fr"
@@ -61,17 +58,23 @@
                 href="https://luth.io/categories/"
                 />
   </url><url>
+    <loc>https://luth.io/tags/concurrency/</loc>
+    <lastmod>2026-10-18T14:30:00-07:00</lastmod>
+  </url><url>
+    <loc>https://luth.io/categories/databases/</loc>
+    <lastmod>2026-10-18T14:30:00-07:00</lastmod>
+  </url><url>
+    <loc>https://luth.io/tags/debugging/</loc>
+    <lastmod>2026-10-18T14:30:00-07:00</lastmod>
+  </url><url>
     <loc>https://luth.io/categories/ephpm/</loc>
-    <lastmod>2026-10-16T18:00:00-07:00</lastmod>
+    <lastmod>2026-10-18T14:30:00-07:00</lastmod>
   </url><url>
     <loc>https://luth.io/tags/ephpm/</loc>
-    <lastmod>2026-10-16T18:00:00-07:00</lastmod>
-  </url><url>
-    <loc>https://luth.io/blog/2026/10/ephpm-worker-mode-performance/</loc>
-    <lastmod>2026-10-16T18:00:00-07:00</lastmod>
+    <lastmod>2026-10-18T14:30:00-07:00</lastmod>
   </url><url>
     <loc>https://luth.io/</loc>
-    <lastmod>2026-10-16T18:00:00-07:00</lastmod>
+    <lastmod>2026-10-18T14:30:00-07:00</lastmod>
     <xhtml:link
                 rel="alternate"
                 hreflang="fr"
@@ -123,26 +126,17 @@
                 href="https://luth.io/"
                 />
   </url><url>
-    <loc>https://luth.io/tags/mimalloc/</loc>
-    <lastmod>2026-10-16T18:00:00-07:00</lastmod>
-  </url><url>
-    <loc>https://luth.io/tags/performance/</loc>
-    <lastmod>2026-10-16T18:00:00-07:00</lastmod>
-  </url><url>
-    <loc>https://luth.io/tags/php/</loc>
-    <lastmod>2026-10-16T18:00:00-07:00</lastmod>
-  </url><url>
-    <loc>https://luth.io/categories/php/</loc>
-    <lastmod>2026-10-16T18:00:00-07:00</lastmod>
+    <loc>https://luth.io/categories/rust/</loc>
+    <lastmod>2026-10-18T14:30:00-07:00</lastmod>
   </url><url>
     <loc>https://luth.io/tags/rust/</loc>
-    <lastmod>2026-10-16T18:00:00-07:00</lastmod>
+    <lastmod>2026-10-18T14:30:00-07:00</lastmod>
   </url><url>
-    <loc>https://luth.io/tags/swoole/</loc>
-    <lastmod>2026-10-16T18:00:00-07:00</lastmod>
+    <loc>https://luth.io/tags/sqlite/</loc>
+    <lastmod>2026-10-18T14:30:00-07:00</lastmod>
   </url><url>
     <loc>https://luth.io/tags/</loc>
-    <lastmod>2026-10-16T18:00:00-07:00</lastmod>
+    <lastmod>2026-10-18T14:30:00-07:00</lastmod>
     <xhtml:link
                 rel="alternate"
                 hreflang="fr"
@@ -194,6 +188,33 @@
                 href="https://luth.io/tags/"
                 />
   </url><url>
+    <loc>https://luth.io/blog/2026/10/turso-page1-allocation-race/</loc>
+    <lastmod>2026-10-18T14:30:00-07:00</lastmod>
+  </url><url>
+    <loc>https://luth.io/tags/turso/</loc>
+    <lastmod>2026-10-18T14:30:00-07:00</lastmod>
+  </url><url>
+    <loc>https://luth.io/tags/benchmarking/</loc>
+    <lastmod>2026-10-16T18:00:00-07:00</lastmod>
+  </url><url>
+    <loc>https://luth.io/blog/2026/10/ephpm-worker-mode-performance/</loc>
+    <lastmod>2026-10-16T18:00:00-07:00</lastmod>
+  </url><url>
+    <loc>https://luth.io/tags/mimalloc/</loc>
+    <lastmod>2026-10-16T18:00:00-07:00</lastmod>
+  </url><url>
+    <loc>https://luth.io/tags/performance/</loc>
+    <lastmod>2026-10-16T18:00:00-07:00</lastmod>
+  </url><url>
+    <loc>https://luth.io/tags/php/</loc>
+    <lastmod>2026-10-16T18:00:00-07:00</lastmod>
+  </url><url>
+    <loc>https://luth.io/categories/php/</loc>
+    <lastmod>2026-10-16T18:00:00-07:00</lastmod>
+  </url><url>
+    <loc>https://luth.io/tags/swoole/</loc>
+    <lastmod>2026-10-16T18:00:00-07:00</lastmod>
+  </url><url>
     <loc>https://luth.io/tags/workerman/</loc>
     <lastmod>2026-10-16T18:00:00-07:00</lastmod>
   </url><url>
@@ -201,9 +222,6 @@
     <lastmod>2026-10-14T23:20:00-07:00</lastmod>
   </url><url>
     <loc>https://luth.io/blog/2026/10/composer-without-php-vivacity/</loc>
-    <lastmod>2026-10-14T23:20:00-07:00</lastmod>
-  </url><url>
-    <loc>https://luth.io/categories/rust/</loc>
     <lastmod>2026-10-14T23:20:00-07:00</lastmod>
   </url><url>
     <loc>https://luth.io/tags/vivacity/</loc>
@@ -223,9 +241,6 @@
   </url><url>
     <loc>https://luth.io/tags/redis/</loc>
     <lastmod>2026-10-13T20:40:00-07:00</lastmod>
-  </url><url>
-    <loc>https://luth.io/tags/debugging/</loc>
-    <lastmod>2026-10-12T21:10:00-07:00</lastmod>
   </url><url>
     <loc>https://luth.io/blog/2026/10/xdebug-worker-mode/</loc>
     <lastmod>2026-10-12T21:10:00-07:00</lastmod>
@@ -389,9 +404,6 @@
     <loc>https://luth.io/tags/tcp/</loc>
     <lastmod>2026-09-18T20:05:00-07:00</lastmod>
   </url><url>
-    <loc>https://luth.io/tags/concurrency/</loc>
-    <lastmod>2026-09-17T20:12:00-07:00</lastmod>
-  </url><url>
     <loc>https://luth.io/tags/os-exec/</loc>
     <lastmod>2026-09-17T20:12:00-07:00</lastmod>
   </url><url>
@@ -414,15 +426,6 @@
     <lastmod>2026-09-15T21:08:00-07:00</lastmod>
   </url><url>
     <loc>https://luth.io/blog/2026/09/clustered-sqlite-cdc-cluster-channel/</loc>
-    <lastmod>2026-09-15T21:08:00-07:00</lastmod>
-  </url><url>
-    <loc>https://luth.io/categories/databases/</loc>
-    <lastmod>2026-09-15T21:08:00-07:00</lastmod>
-  </url><url>
-    <loc>https://luth.io/tags/sqlite/</loc>
-    <lastmod>2026-09-15T21:08:00-07:00</lastmod>
-  </url><url>
-    <loc>https://luth.io/tags/turso/</loc>
     <lastmod>2026-09-15T21:08:00-07:00</lastmod>
   </url><url>
     <loc>https://luth.io/tags/yamux/</loc>

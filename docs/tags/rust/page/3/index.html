@@ -215,6 +215,72 @@
   <header>
   <div class="title">
     
+      <h2><a href="/blog/2026/08/clustered-sqlite-adding-turso/">Clustered SQLite in ePHPm, Part 2: Adding Turso</a></h2>
+    
+    
+      <p>How I decided a beta database engine was ready by testing it instead of reading its version number. ePHPm v0.7.0 replaces both rusqlite and sqld with Turso.</p>
+    
+  </div>
+  <div class="meta">
+    <time datetime="2026-08-19 20:37:00 -0700 PDT">August 19, 2026</time>
+    
+    <p>9-Minute Read</p>
+  </div>
+</header>
+
+  <div class="content">
+    <a href="/blog/2026/08/clustered-sqlite-adding-turso/" class="image" style="--bg-image: url('/img/2026/08/clustered-sqlite-adding-turso-four-lanes.svg');">
+    <img class="" src="/img/2026/08/clustered-sqlite-adding-turso-four-lanes.svg" alt="Bar chart of four SQLite lanes at 16 concurrent connections: rusqlite and Turso single node, sqld and Turso CDC clustered">
+  </a>
+    
+    <p><a href="/blog/2026/08/clustered-sqlite-sqld-sidecar/">Part 1</a> ended with ePHPm running two SQLite engines. rusqlite ran
+in-process for a single node, and an embedded sqld child process ran for a cluster. The sidecar fell off a cliff past
+four concurrent writers. The best fix I could ship was a semaphore set to 1. This post is about replacing both engines
+with one, and about how I decided that engine was ready.</p>
+  </div>
+  <footer>
+    <a href="/blog/2026/08/clustered-sqlite-adding-turso/" class="button big">Read More</a>
+    <div class="stats">
+  
+    <ul class="categories">
+      
+        
+          <li><a class="article-terms-link" href="/categories/ephpm/">ephpm</a></li>
+        
+          <li><a class="article-terms-link" href="/categories/databases/">databases</a></li>
+        
+      
+    </ul>
+  
+  
+    <ul class="tags">
+      
+        
+          <li><a class="article-terms-link" href="/tags/ephpm/">ephpm</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/sqlite/">sqlite</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/turso/">turso</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/rust/">rust</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/benchmarks/">benchmarks</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/php/">php</a></li>
+        
+      
+    </ul>
+  
+</div>
+
+  </footer>
+</article>
+
+  
+    <article class="post">
+  <header>
+  <div class="title">
+    
       <h2><a href="/blog/2026/08/rolling-your-own-kv-store/">Rolling Your Own KV Store Instead of Embedding Redis</a></h2>
     
     
@@ -822,76 +888,6 @@ into a checklist of things other projects have.</p>
 </article>
 
   
-    <article class="post">
-  <header>
-  <div class="title">
-    
-      <h2><a href="/blog/2026/04/php-signal-safety-init-ordering/">PHP Signal Safety - The Init Ordering Bug Nobody Warns You About</a></h2>
-    
-    
-      <p>Embedding PHP in a multithreaded server means PHP&#39;s timeout signals can land on any thread. How ePHPm got that under control.</p>
-    
-  </div>
-  <div class="meta">
-    <time datetime="2026-04-12 20:15:00 -0700 PDT">April 12, 2026</time>
-    
-    <p>11-Minute Read</p>
-  </div>
-</header>
-
-  <div class="content">
-    <a href="/blog/2026/04/php-signal-safety-init-ordering/" class="image" style="--bg-image: url('/img/2026/04/php-signal-safety-init-ordering-cover.svg');">
-    <img class="" src="/img/2026/04/php-signal-safety-init-ordering-cover.svg" alt="Thread timeline: the main thread installs PHP&#39;s signal handlers during php_embed_init, a PHP thread later arms ITIMER_PROF, and SIGPROF is delivered to a tokio worker that has no PHP state">
-  </a>
-    
-    <p>Last week I wrote about <a href="/blog/2026/04/why-rust-for-php-embedding/">why ePHPm embeds PHP from Rust</a> and promised the
-signal bug its own post. Here it is. It&rsquo;s the kind of bug where the fix is about ten lines and the explanation is the
-whole post. Nothing in PHP&rsquo;s embed documentation (there&rsquo;s barely any) tells you that initializing PHP has
-process-wide side effects. Those side effects assume PHP is the only thing in the process.</p>
-  </div>
-  <footer>
-    <a href="/blog/2026/04/php-signal-safety-init-ordering/" class="button big">Read More</a>
-    <div class="stats">
-  
-    <ul class="categories">
-      
-        
-          <li><a class="article-terms-link" href="/categories/ephpm/">ephpm</a></li>
-        
-          <li><a class="article-terms-link" href="/categories/php/">php</a></li>
-        
-          <li><a class="article-terms-link" href="/categories/rust/">rust</a></li>
-        
-      
-    </ul>
-  
-  
-    <ul class="tags">
-      
-        
-          <li><a class="article-terms-link" href="/tags/ephpm/">ephpm</a></li>
-        
-          <li><a class="article-terms-link" href="/tags/php/">php</a></li>
-        
-          <li><a class="article-terms-link" href="/tags/rust/">rust</a></li>
-        
-          <li><a class="article-terms-link" href="/tags/signals/">signals</a></li>
-        
-          <li><a class="article-terms-link" href="/tags/linux/">linux</a></li>
-        
-          <li><a class="article-terms-link" href="/tags/tokio/">tokio</a></li>
-        
-          <li><a class="article-terms-link" href="/tags/debugging/">debugging</a></li>
-        
-      
-    </ul>
-  
-</div>
-
-  </footer>
-</article>
-
-  
   <div class="pagination">
     
       <a href="/tags/rust/page/2/" class="button left"><span>Previous Page</span></a>
@@ -908,6 +904,16 @@ process-wide side effects. Those side effects assume PHP is the only thing in th
       <header>
         <h1>Recent Posts</h1>
       </header>
+      
+      <article class="mini-post">
+          <a href="/blog/2026/10/turso-page1-allocation-race/" class="image" style="--bg-image: url('/img/2026/10/turso-page1-allocation-race-races.svg');">
+    <img class="" src="/img/2026/10/turso-page1-allocation-race-races.svg" alt="Sequence diagram of two connections and init_lock: in race 1, B checks for an empty file, A publishes page 1 and releases the lock, then B takes the lock and panics on its assert; in race 2, A&#39;s lock is dropped while page 1 is being written, so B takes it and writes page 1 again">
+  </a>
+        <header>
+          <h2><a href="/blog/2026/10/turso-page1-allocation-race/">Thirty-Two Connections and an Empty File: A Race in Turso&#39;s Page-1 Allocation</a></h2>
+          <time class="published" datetime="2026-10-18 14:30:00 -0700 PDT">October 18, 2026</time>
+        </header>
+      </article>
       
       <article class="mini-post">
           <a href="/blog/2026/10/ephpm-worker-mode-performance/" class="image" style="--bg-image: url('/img/2026/10/ephpm-worker-mode-performance-cover.svg');">
@@ -949,16 +955,6 @@ process-wide side effects. Those side effects assume PHP is the only thing in th
         </header>
       </article>
       
-      <article class="mini-post">
-          <a href="/blog/2026/10/ephpm-websockets-how-to/" class="image" style="--bg-image: url('/img/2026/10/ephpm-websockets-how-to-cover.svg');">
-    <img class="" src="/img/2026/10/ephpm-websockets-how-to-cover.svg" alt="Diagram: browsers hold sockets to ePHPm&#39;s Rust session tasks and registry; each connect, message and disconnect runs websocket.php once on the PHP thread pool, and ordinary HTTP requests push through ephpm_ws_broadcast">
-  </a>
-        <header>
-          <h2><a href="/blog/2026/10/ephpm-websockets-how-to/">WebSockets in ePHPm, From Zero to a Working Chat</a></h2>
-          <time class="published" datetime="2026-10-11 17:30:00 -0700 PDT">October 11, 2026</time>
-        </header>
-      </article>
-      
       
         <footer>
           <a href="/blog" class="button">See More</a>
@@ -978,7 +974,7 @@ process-wide side effects. Those side effects assume PHP is the only thing in th
           
           
           <li>
-              <a href="/categories/ephpm/">ephpm<span class="count">36</span></a>
+              <a href="/categories/ephpm/">ephpm<span class="count">37</span></a>
           
           <li>
               <a href="/categories/go/">go<span class="count">30</span></a>
@@ -987,7 +983,7 @@ process-wide side effects. Those side effects assume PHP is the only thing in th
               <a href="/categories/php/">php<span class="count">26</span></a>
           
           <li>
-              <a href="/categories/rust/">rust<span class="count">16</span></a>
+              <a href="/categories/rust/">rust<span class="count">17</span></a>
           
           <li>
               <a href="/categories/homelab/">homelab<span class="count">14</span></a>
@@ -996,10 +992,10 @@ process-wide side effects. Those side effects assume PHP is the only thing in th
               <a href="/categories/windows/">windows<span class="count">14</span></a>
           
           <li>
-              <a href="/categories/ci/">ci<span class="count">9</span></a>
+              <a href="/categories/databases/">databases<span class="count">10</span></a>
           
           <li>
-              <a href="/categories/databases/">databases<span class="count">9</span></a>
+              <a href="/categories/ci/">ci<span class="count">9</span></a>
           
           <li>
               <a href="/categories/security/">security<span class="count">9</span></a>

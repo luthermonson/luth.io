@@ -215,6 +215,69 @@
   <header>
   <div class="title">
     
+      <h2><a href="/blog/2023/11/proxmox-doesnt-know-what-type-a-number-is/">Proxmox Doesn&#39;t Know What Type a Number Is</a></h2>
+    
+    
+      <p>The Proxmox VE API returns the same field as 1234 in one place and &#34;1234&#34; in another. This is why go-proxmox has StringOrInt, StringOrUint64, StringOrFloat64 and IntOrBool instead of plain Go types.</p>
+    
+  </div>
+  <div class="meta">
+    <time datetime="2023-11-25 20:05:00 -0700 -0700">November 25, 2023</time>
+    
+    <p>5-Minute Read</p>
+  </div>
+</header>
+
+  <div class="content">
+    <a href="/blog/2023/11/proxmox-doesnt-know-what-type-a-number-is/" class="image">
+    <img class="" src="/img/2022/02/proxmox-logo.png" alt="Proxmox VE Logo">
+  </a>
+    
+    <p>Every couple of months somebody opens an issue on <a href="https://github.com/luthermonson/go-proxmox">go-proxmox</a> with a
+title that starts with <code>json: cannot unmarshal string into Go struct field</code>. The most recent one was fixed last week.
+It&rsquo;s the same root cause every time. The Proxmox VE API is backed by Perl, and Perl doesn&rsquo;t really care whether a
+scalar is a number or a string. The JSON encoder on the other end writes whatever the scalar happens to be at the time.
+So a field that is documented as an integer comes back as <code>2048</code> from&hellip;</p>
+  </div>
+  <footer>
+    <a href="/blog/2023/11/proxmox-doesnt-know-what-type-a-number-is/" class="button big">Read More</a>
+    <div class="stats">
+  
+    <ul class="categories">
+      
+        
+          <li><a class="article-terms-link" href="/categories/go/">go</a></li>
+        
+          <li><a class="article-terms-link" href="/categories/homelab/">homelab</a></li>
+        
+      
+    </ul>
+  
+  
+    <ul class="tags">
+      
+        
+          <li><a class="article-terms-link" href="/tags/proxmox/">proxmox</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/go/">go</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/go-proxmox/">go-proxmox</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/json/">json</a></li>
+        
+      
+    </ul>
+  
+</div>
+
+  </footer>
+</article>
+
+  
+    <article class="post">
+  <header>
+  <div class="title">
+    
       <h2><a href="/blog/2023/08/proxmox-api-auth-tickets-tokens-go/">Logging In to Proxmox From Go: Tickets, CSRF Tokens and API Tokens</a></h2>
     
     
@@ -566,6 +629,16 @@ who I am please check out the <a href="/about/">about</a> section. Stay tuned fo
       </header>
       
       <article class="mini-post">
+          <a href="/blog/2026/10/turso-page1-allocation-race/" class="image" style="--bg-image: url('/img/2026/10/turso-page1-allocation-race-races.svg');">
+    <img class="" src="/img/2026/10/turso-page1-allocation-race-races.svg" alt="Sequence diagram of two connections and init_lock: in race 1, B checks for an empty file, A publishes page 1 and releases the lock, then B takes the lock and panics on its assert; in race 2, A&#39;s lock is dropped while page 1 is being written, so B takes it and writes page 1 again">
+  </a>
+        <header>
+          <h2><a href="/blog/2026/10/turso-page1-allocation-race/">Thirty-Two Connections and an Empty File: A Race in Turso&#39;s Page-1 Allocation</a></h2>
+          <time class="published" datetime="2026-10-18 14:30:00 -0700 PDT">October 18, 2026</time>
+        </header>
+      </article>
+      
+      <article class="mini-post">
           <a href="/blog/2026/10/ephpm-worker-mode-performance/" class="image" style="--bg-image: url('/img/2026/10/ephpm-worker-mode-performance-cover.svg');">
     <img class="" src="/img/2026/10/ephpm-worker-mode-performance-cover.svg" alt="Diagram: before, hyper/tokio hands each request to one shared bounded channel whose waiter list all 20 PHP threads contend on; after, a dispatcher hands the job straight into the mailbox of the most recently idle PHP thread and only queues it in a FIFO overflow queue when every thread is busy">
   </a>
@@ -605,16 +678,6 @@ who I am please check out the <a href="/about/">about</a> section. Stay tuned fo
         </header>
       </article>
       
-      <article class="mini-post">
-          <a href="/blog/2026/10/ephpm-websockets-how-to/" class="image" style="--bg-image: url('/img/2026/10/ephpm-websockets-how-to-cover.svg');">
-    <img class="" src="/img/2026/10/ephpm-websockets-how-to-cover.svg" alt="Diagram: browsers hold sockets to ePHPm&#39;s Rust session tasks and registry; each connect, message and disconnect runs websocket.php once on the PHP thread pool, and ordinary HTTP requests push through ephpm_ws_broadcast">
-  </a>
-        <header>
-          <h2><a href="/blog/2026/10/ephpm-websockets-how-to/">WebSockets in ePHPm, From Zero to a Working Chat</a></h2>
-          <time class="published" datetime="2026-10-11 17:30:00 -0700 PDT">October 11, 2026</time>
-        </header>
-      </article>
-      
       
         <footer>
           <a href="/blog" class="button">See More</a>
@@ -634,7 +697,7 @@ who I am please check out the <a href="/about/">about</a> section. Stay tuned fo
           
           
           <li>
-              <a href="/categories/ephpm/">ephpm<span class="count">36</span></a>
+              <a href="/categories/ephpm/">ephpm<span class="count">37</span></a>
           
           <li>
               <a href="/categories/go/">go<span class="count">30</span></a>
@@ -643,7 +706,7 @@ who I am please check out the <a href="/about/">about</a> section. Stay tuned fo
               <a href="/categories/php/">php<span class="count">26</span></a>
           
           <li>
-              <a href="/categories/rust/">rust<span class="count">16</span></a>
+              <a href="/categories/rust/">rust<span class="count">17</span></a>
           
           <li>
               <a href="/categories/homelab/">homelab<span class="count">14</span></a>
@@ -652,10 +715,10 @@ who I am please check out the <a href="/about/">about</a> section. Stay tuned fo
               <a href="/categories/windows/">windows<span class="count">14</span></a>
           
           <li>
-              <a href="/categories/ci/">ci<span class="count">9</span></a>
+              <a href="/categories/databases/">databases<span class="count">10</span></a>
           
           <li>
-              <a href="/categories/databases/">databases<span class="count">9</span></a>
+              <a href="/categories/ci/">ci<span class="count">9</span></a>
           
           <li>
               <a href="/categories/security/">security<span class="count">9</span></a>
