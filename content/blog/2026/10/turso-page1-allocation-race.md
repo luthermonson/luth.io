@@ -153,10 +153,6 @@ the same assert. My guess is the wider IO window inside ePHPm keeps the lock fre
 
 ### The fix
 
-The fix is on my fork in
-[`fix/page1-allocation-race`](https://github.com/luthermonson/turso/tree/fix/page1-allocation-race). It's three
-commits on top of main `f5090d05a`. There's a matching branch on 0.8.3 for ePHPm to test with.
-
 The lock moves into `allocate_page1`'s `Start` state. It's taken with `try_lock_arc`, which returns an owned guard.
 The code re-checks `db_initialized()` under the lock. Then the guard is stored inside the `Writing` and `Syncing`
 states:
