@@ -1,6 +1,6 @@
 ---
 title: "Thirty-Two Connections and an Empty File: A Race in Turso's Page-1 Allocation"
-description: "A burst of first requests to a new ePHPm site could panic inside the Turso database engine. This is how I traced it to two races in the code that writes page 1 of an empty database, and how the fix holds one lock for the whole allocation."
+description: "Why concurrent first writes to an empty database could panic Turso, and how to fix it."
 date: 2026-10-18T12:30:00-07:00
 tags: [ ephpm, turso, sqlite, rust, concurrency, debugging ]
 categories: [ ephpm, databases, rust ]
@@ -14,8 +14,8 @@ draft: true
 [ePHPm](https://github.com/ephpm/ephpm) runs PHP inside a Rust server. For SQLite-style databases it uses
 [Turso](https://github.com/tursodatabase/turso), a rewrite of SQLite in Rust that is still labeled beta. It sits behind
 [litewire](https://github.com/ephpm/litewire). I recently hammered the per-site mode with fresh sites. A burst of first
-requests to a brand-new site could panic inside the engine. This post is about where that panic came from, and the fix
-I have on a fork of Turso.
+requests to a brand-new site could panic inside the engine. This post is about where that panic came from and how to
+fix it.
 
 ### Every site gets its own empty file
 
