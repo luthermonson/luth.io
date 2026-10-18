@@ -1,6 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 570" role="img" aria-labelledby="t d" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif">
   <title id="t">Isolated repro: page-1 allocations and panics per build</title>
-  <desc id="d">200 fresh files with 32 connections each, on a probe build of turso_core 0.8.3. Page-1 allocations (Start entries): stock logic 2,477; re-check only 2,398; re-check plus lock held 200, which is one per file. Files where more than one connection allocated page 1: stock 200 of 200; re-check only 199 of 200; re-check plus lock held 0 of 200. Panics on the assert: stock 4; re-check only 0; re-check plus lock held 0.</desc>
+  <desc id="d">200 fresh files with 32 connections each, on a test build of Turso. Page-1 allocations (Start entries): stock logic 2,477; re-check only 2,398; re-check plus lock held 200, which is one per file. Files where more than one connection allocated page 1: stock 200 of 200; re-check only 199 of 200; re-check plus lock held 0 of 200. Panics on the assert: stock 4; re-check only 0; re-check plus lock held 0.</desc>
   <defs>
     <pattern id="hatch" width="8" height="8" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
       <rect width="8" height="8" fill="#e3e3e3"/>
@@ -9,7 +9,7 @@
   </defs>
   <rect width="900" height="570" fill="#ffffff"/>
   <text x="450.0" y="36" text-anchor="middle" font-size="20" font-weight="600" fill="#222">Isolated repro: 200 fresh files, 32 connections each</text>
-  <text x="450.0" y="62" text-anchor="middle" font-size="15" fill="#555">Probe build of turso_core 0.8.3 on Windows; one row per build mode</text>
+  <text x="450.0" y="62" text-anchor="middle" font-size="15" fill="#555">Test build of Turso; one row per version of the code</text>
 
   <text x="20" y="108" font-size="17" font-weight="600" fill="#222">Page-1 allocations (lower is better, 200 is one per file)</text>
   <text x="238" y="143" font-size="15" fill="#222" text-anchor="end">Stock logic</text>
