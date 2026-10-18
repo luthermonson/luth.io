@@ -132,8 +132,8 @@ tokio worker threads. Each task connects, sets a busy timeout and waits at a bar
 The stock crate panicked on 2 of 200 files. Each panic cost that connection's row. Integrity was fine everywhere.
 
 Then I made a probe build of `turso_core` 0.8.3. It counts entries into the `Start` state per file. That's every time
-a connection starts building page 1. A runtime switch picks the logic. The table is from a separate run on that probe build, so its stock row doesn't
-match the 2 panics above:
+a connection starts building page 1. A runtime switch picks the logic. The table is from a separate run on that probe build. That's why its
+stock row shows 4 panics, not 2:
 
 | Build | Page-1 allocations | Files with >1 writer | Panics |
 |---|--:|--:|--:|
