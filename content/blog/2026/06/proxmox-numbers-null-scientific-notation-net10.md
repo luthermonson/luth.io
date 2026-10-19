@@ -1,6 +1,6 @@
 ---
-title: "Proxmox JSON, Part 2: null PIDs, 1.12589990684262e+15 and net10"
-description: "The Proxmox VE API found three more ways for its JSON not to fit Go's encoding/json. There's a null I fixed and then broke, petabyte storage in scientific notation, and devices past index 9 that were silently dropped."
+title: "Proxmox JSON, Part 2: Three More Surprises"
+description: "The Proxmox API found three more ways to trip up Go's JSON decoding. Here's what broke and how I fixed it."
 date: 2026-06-23T20:31:00-07:00
 tags: [ proxmox, go, go-proxmox, json ]
 categories: [ go, homelab ]

@@ -751,10 +751,10 @@ a lot of it by several at once. This is what that looked like from the maintaine
   <header>
   <div class="title">
     
-      <h2><a href="/blog/2026/06/proxmox-numbers-null-scientific-notation-net10/">Proxmox JSON, Part 2: null PIDs, 1.12589990684262e&#43;15 and net10</a></h2>
+      <h2><a href="/blog/2026/06/proxmox-numbers-null-scientific-notation-net10/">Proxmox JSON, Part 2: Three More Surprises</a></h2>
     
     
-      <p>The Proxmox VE API found three more ways for its JSON not to fit Go&#39;s encoding/json. There&#39;s a null I fixed and then broke, petabyte storage in scientific notation, and devices past index 9 that were silently dropped.</p>
+      <p>The Proxmox API found three more ways to trip up Go&#39;s JSON decoding. Here&#39;s what broke and how I fixed it.</p>
     
   </div>
   <div class="meta">

@@ -9,15 +9,15 @@
 
     gtag('config', 'G-MSTSKGFWTX');
 </script><meta charset="utf-8">
-<title>Proxmox JSON, Part 2: null PIDs, 1.12589990684262e&#43;15 and net10 - Luther Monson</title>
-<meta name="description" content="The Proxmox VE API found three more ways for its JSON not to fit Go&#39;s encoding/json. There&#39;s a null I fixed and then broke, petabyte storage in scientific notation, and devices past index 9 that were silently dropped.">
+<title>Proxmox JSON, Part 2: Three More Surprises - Luther Monson</title>
+<meta name="description" content="The Proxmox API found three more ways to trip up Go&#39;s JSON decoding. Here&#39;s what broke and how I fixed it.">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
 <meta name="twitter:card" content="summary_large_image"><meta name="twitter:site" content="@luthermonson">
 
 <meta property="og:site_name" content="Luther Monson">
-<meta property="og:title" content="Proxmox JSON, Part 2: null PIDs, 1.12589990684262e&#43;15 and net10">
-<meta property="og:description" content="The Proxmox VE API found three more ways for its JSON not to fit Go&#39;s encoding/json. There&#39;s a null I fixed and then broke, petabyte storage in scientific notation, and devices past index 9 that were silently dropped.">
+<meta property="og:title" content="Proxmox JSON, Part 2: Three More Surprises">
+<meta property="og:description" content="The Proxmox API found three more ways to trip up Go&#39;s JSON decoding. Here&#39;s what broke and how I fixed it.">
 <meta property="og:type" content="article">
 <meta property="og:url" content="https://luth.io/blog/2026/06/proxmox-numbers-null-scientific-notation-net10/">
     <meta property="og:image" content="https://luth.io/img/2022/02/proxmox-logo.png">
@@ -104,7 +104,7 @@
 
   
     
-    <a href="//twitter.com/share?text=Proxmox%20JSON%2c%20Part%202%3a%20null%20PIDs%2c%201.12589990684262e%2b15%20and%20net10&amp;url=https%3a%2f%2fluth.io%2fblog%2f2026%2f06%2fproxmox-numbers-null-scientific-notation-net10%2f" target="_blank" rel="noopener" class="nav share-btn twitter">
+    <a href="//twitter.com/share?text=Proxmox%20JSON%2c%20Part%202%3a%20Three%20More%20Surprises&amp;url=https%3a%2f%2fluth.io%2fblog%2f2026%2f06%2fproxmox-numbers-null-scientific-notation-net10%2f" target="_blank" rel="noopener" class="nav share-btn twitter">
         <p>Twitter</p>
       </a>
   
@@ -116,19 +116,19 @@
   
 
   
-    <a href="//www.reddit.com/submit?url=https%3a%2f%2fluth.io%2fblog%2f2026%2f06%2fproxmox-numbers-null-scientific-notation-net10%2f&amp;title=Proxmox%20JSON%2c%20Part%202%3a%20null%20PIDs%2c%201.12589990684262e%2b15%20and%20net10" target="_blank" rel="noopener" class="nav share-btn reddit">
+    <a href="//www.reddit.com/submit?url=https%3a%2f%2fluth.io%2fblog%2f2026%2f06%2fproxmox-numbers-null-scientific-notation-net10%2f&amp;title=Proxmox%20JSON%2c%20Part%202%3a%20Three%20More%20Surprises" target="_blank" rel="noopener" class="nav share-btn reddit">
           <p>Reddit</p>
         </a>
   
 
   
-        <a href="//www.linkedin.com/shareArticle?url=https%3a%2f%2fluth.io%2fblog%2f2026%2f06%2fproxmox-numbers-null-scientific-notation-net10%2f&amp;title=Proxmox%20JSON%2c%20Part%202%3a%20null%20PIDs%2c%201.12589990684262e%2b15%20and%20net10" target="_blank" rel="noopener" class="nav share-btn linkedin">
+        <a href="//www.linkedin.com/shareArticle?url=https%3a%2f%2fluth.io%2fblog%2f2026%2f06%2fproxmox-numbers-null-scientific-notation-net10%2f&amp;title=Proxmox%20JSON%2c%20Part%202%3a%20Three%20More%20Surprises" target="_blank" rel="noopener" class="nav share-btn linkedin">
             <p>LinkedIn</p>
           </a>
   
 
   
-        <a href="//www.pinterest.com/pin/create/button/?url=https%3a%2f%2fluth.io%2fblog%2f2026%2f06%2fproxmox-numbers-null-scientific-notation-net10%2f&amp;description=Proxmox%20JSON%2c%20Part%202%3a%20null%20PIDs%2c%201.12589990684262e%2b15%20and%20net10" target="_blank" rel="noopener" class="nav share-btn pinterest">
+        <a href="//www.pinterest.com/pin/create/button/?url=https%3a%2f%2fluth.io%2fblog%2f2026%2f06%2fproxmox-numbers-null-scientific-notation-net10%2f&amp;description=Proxmox%20JSON%2c%20Part%202%3a%20Three%20More%20Surprises" target="_blank" rel="noopener" class="nav share-btn pinterest">
           <p>Pinterest</p>
         </a>
   
@@ -212,10 +212,10 @@
       <header>
   <div class="title">
     
-      <h2><a href="/blog/2026/06/proxmox-numbers-null-scientific-notation-net10/">Proxmox JSON, Part 2: null PIDs, 1.12589990684262e&#43;15 and net10</a></h2>
+      <h2><a href="/blog/2026/06/proxmox-numbers-null-scientific-notation-net10/">Proxmox JSON, Part 2: Three More Surprises</a></h2>
     
     
-      <p>The Proxmox VE API found three more ways for its JSON not to fit Go&#39;s encoding/json. There&#39;s a null I fixed and then broke, petabyte storage in scientific notation, and devices past index 9 that were silently dropped.</p>
+      <p>The Proxmox API found three more ways to trip up Go&#39;s JSON decoding. Here&#39;s what broke and how I fixed it.</p>
     
   </div>
   <div class="meta">
@@ -233,7 +233,7 @@
 
   
     
-    <a href="//twitter.com/share?text=Proxmox%20JSON%2c%20Part%202%3a%20null%20PIDs%2c%201.12589990684262e%2b15%20and%20net10&amp;url=https%3a%2f%2fluth.io%2fblog%2f2026%2f06%2fproxmox-numbers-null-scientific-notation-net10%2f" target="_blank" rel="noopener" class="nav share-btn twitter">
+    <a href="//twitter.com/share?text=Proxmox%20JSON%2c%20Part%202%3a%20Three%20More%20Surprises&amp;url=https%3a%2f%2fluth.io%2fblog%2f2026%2f06%2fproxmox-numbers-null-scientific-notation-net10%2f" target="_blank" rel="noopener" class="nav share-btn twitter">
         <p>Twitter</p>
       </a>
   
@@ -245,19 +245,19 @@
   
 
   
-    <a href="//www.reddit.com/submit?url=https%3a%2f%2fluth.io%2fblog%2f2026%2f06%2fproxmox-numbers-null-scientific-notation-net10%2f&amp;title=Proxmox%20JSON%2c%20Part%202%3a%20null%20PIDs%2c%201.12589990684262e%2b15%20and%20net10" target="_blank" rel="noopener" class="nav share-btn reddit">
+    <a href="//www.reddit.com/submit?url=https%3a%2f%2fluth.io%2fblog%2f2026%2f06%2fproxmox-numbers-null-scientific-notation-net10%2f&amp;title=Proxmox%20JSON%2c%20Part%202%3a%20Three%20More%20Surprises" target="_blank" rel="noopener" class="nav share-btn reddit">
           <p>Reddit</p>
         </a>
   
 
   
-        <a href="//www.linkedin.com/shareArticle?url=https%3a%2f%2fluth.io%2fblog%2f2026%2f06%2fproxmox-numbers-null-scientific-notation-net10%2f&amp;title=Proxmox%20JSON%2c%20Part%202%3a%20null%20PIDs%2c%201.12589990684262e%2b15%20and%20net10" target="_blank" rel="noopener" class="nav share-btn linkedin">
+        <a href="//www.linkedin.com/shareArticle?url=https%3a%2f%2fluth.io%2fblog%2f2026%2f06%2fproxmox-numbers-null-scientific-notation-net10%2f&amp;title=Proxmox%20JSON%2c%20Part%202%3a%20Three%20More%20Surprises" target="_blank" rel="noopener" class="nav share-btn linkedin">
             <p>LinkedIn</p>
           </a>
   
 
   
-        <a href="//www.pinterest.com/pin/create/button/?url=https%3a%2f%2fluth.io%2fblog%2f2026%2f06%2fproxmox-numbers-null-scientific-notation-net10%2f&amp;description=Proxmox%20JSON%2c%20Part%202%3a%20null%20PIDs%2c%201.12589990684262e%2b15%20and%20net10" target="_blank" rel="noopener" class="nav share-btn pinterest">
+        <a href="//www.pinterest.com/pin/create/button/?url=https%3a%2f%2fluth.io%2fblog%2f2026%2f06%2fproxmox-numbers-null-scientific-notation-net10%2f&amp;description=Proxmox%20JSON%2c%20Part%202%3a%20Three%20More%20Surprises" target="_blank" rel="noopener" class="nav share-btn pinterest">
           <p>Pinterest</p>
         </a>
   

@@ -30,7 +30,7 @@
       <description>&lt;p&gt;Here are two changes from the v0.5 to v0.7 stretch of &lt;a href=&#34;https://github.com/luthermonson/go-proxmox&#34;&gt;go-proxmox&lt;/a&gt;. They&amp;rsquo;re&#xA;too small for a post each. They&amp;rsquo;re worth knowing about if you write long-running tooling against Proxmox. One is a bug&#xA;in code I wrote about in 2022. The other is a feature that replaces a retry loop everybody was writing for themselves.&lt;/p&gt;&#xA;&lt;h3 id=&#34;the-channel-that-only-closed-when-things-went-well&#34;&gt;The channel that only closed when things went well&lt;/h3&gt;&#xA;&lt;p&gt;In 2022 I wrote up &lt;a href=&#34;https://luth.io/blog/2022/03/proxmox-tasks-upid-wait-go/&#34;&gt;how tasks and &lt;code&gt;Watch&lt;/code&gt; work&lt;/a&gt;. &lt;code&gt;Watch&lt;/code&gt; returns a channel of&#xA;log lines. A goroutine tails the task log until the task stops. Then it closes the channel so you can &lt;code&gt;range&lt;/code&gt; over it.&#xA;Here is the tail loop from that post:&lt;/p&gt;</description>
     </item>
     <item>
-      <title>Proxmox JSON, Part 2: null PIDs, 1.12589990684262e&#43;15 and net10</title>
+      <title>Proxmox JSON, Part 2: Three More Surprises</title>
       <link>https://luth.io/blog/2026/06/proxmox-numbers-null-scientific-notation-net10/</link>
       <pubDate>Tue, 23 Jun 2026 20:31:00 -0700</pubDate>
       <guid>https://luth.io/blog/2026/06/proxmox-numbers-null-scientific-notation-net10/</guid>
