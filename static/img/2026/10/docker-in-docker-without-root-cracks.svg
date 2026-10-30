@@ -1,0 +1,58 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 760 724" font-family="system-ui, -apple-system, Segoe UI, Roboto, sans-serif" font-size="14">
+  <title>Four dind sandbox cracks and the ephemerd fix for each</title>
+  <desc>A container job runs as root in its own container, which is host uid 0, so only the sandbox separates it from the host. Four cards each name a crack a job could reach through and the pull request that closed it: re-walking a job-controlled bind path (PR 173, shipped in v0.2.4), stripping its own seccomp sandbox (PR 174, shipped in v0.2.4), poisoning the shared runner tree (PR 176, shipped in v0.2.5), and starving the neighbours (PR 219, merged but not yet released).</desc>
+
+  <rect width="760" height="724" fill="#ffffff"/>
+
+  <text x="380" y="34" text-anchor="middle" font-size="20" font-weight="700" fill="#222">dind without host root: four cracks, four fixes</text>
+  <text x="380" y="58" text-anchor="middle" font-size="13" fill="#444">A container: job is root in its own container, and that root is host uid 0.</text>
+  <text x="380" y="76" text-anchor="middle" font-size="13" fill="#444">The sandbox is all that stands between it and the host.</text>
+
+  <rect x="150" y="96" width="460" height="42" rx="8" fill="#f1edf5" stroke="#a0287f" stroke-width="1.6"/>
+  <text x="380" y="122" text-anchor="middle" font-size="14" font-weight="600" fill="#222">the job: root in its container, mapped to host uid 0</text>
+
+  <!-- card template -->
+  <g>
+    <!-- card 1 -->
+    <rect x="20" y="158" width="720" height="118" rx="8" fill="#ffffff" stroke="#cccccc"/>
+    <rect x="20" y="158" width="9" height="118" fill="#a34700"/>
+    <circle cx="56" cy="190" r="15" fill="#a0287f"/>
+    <text x="56" y="195" text-anchor="middle" font-size="15" font-weight="700" fill="#ffffff">1</text>
+    <text x="84" y="184" font-size="15" font-weight="700" fill="#222">Re-walking a job-controlled bind path</text>
+    <text x="84" y="210" font-size="13" fill="#444"><tspan font-weight="700" fill="#a34700">Reach </tspan>rename a validated dir, drop a symlink to /, runc mounts host root</text>
+    <text x="84" y="234" font-size="13" fill="#444"><tspan font-weight="700" fill="#00707a">Fix </tspan>resolve once with openat2, stage the bind in ephemerd's own namespace</text>
+    <text x="84" y="258" font-size="12.5" font-weight="600" fill="#0550ae">#173 &#183; shipped in v0.2.4</text>
+
+    <!-- card 2 -->
+    <rect x="20" y="288" width="720" height="118" rx="8" fill="#ffffff" stroke="#cccccc"/>
+    <rect x="20" y="288" width="9" height="118" fill="#a34700"/>
+    <circle cx="56" cy="320" r="15" fill="#a0287f"/>
+    <text x="56" y="325" text-anchor="middle" font-size="15" font-weight="700" fill="#ffffff">2</text>
+    <text x="84" y="314" font-size="15" font-weight="700" fill="#222">Stripping its own seccomp sandbox</text>
+    <text x="84" y="340" font-size="13" fill="#444"><tspan font-weight="700" fill="#a34700">Reach </tspan>--security-opt seccomp=unconfined slipped past the privileged gate</text>
+    <text x="84" y="364" font-size="13" fill="#444"><tspan font-weight="700" fill="#00707a">Fix </tspan>one predicate gates it behind dind.allow_privileged</text>
+    <text x="84" y="388" font-size="12.5" font-weight="600" fill="#0550ae">#174 &#183; shipped in v0.2.4</text>
+
+    <!-- card 3 -->
+    <rect x="20" y="418" width="720" height="118" rx="8" fill="#ffffff" stroke="#cccccc"/>
+    <rect x="20" y="418" width="9" height="118" fill="#a34700"/>
+    <circle cx="56" cy="450" r="15" fill="#a0287f"/>
+    <text x="56" y="455" text-anchor="middle" font-size="15" font-weight="700" fill="#ffffff">3</text>
+    <text x="84" y="444" font-size="15" font-weight="700" fill="#222">Poisoning the shared runner tree</text>
+    <text x="84" y="470" font-size="13" fill="#444"><tspan font-weight="700" fill="#a34700">Reach </tspan>an in-place write to a hardlinked file hit every other job</text>
+    <text x="84" y="494" font-size="13" fill="#444"><tspan font-weight="700" fill="#00707a">Fix </tspan>shared tree is a read-only overlay lower; each job writes its own upper</text>
+    <text x="84" y="518" font-size="12.5" font-weight="600" fill="#0550ae">#176 &#183; shipped in v0.2.5</text>
+
+    <!-- card 4 -->
+    <rect x="20" y="548" width="720" height="118" rx="8" fill="#ffffff" stroke="#cccccc"/>
+    <rect x="20" y="548" width="9" height="118" fill="#a34700"/>
+    <circle cx="56" cy="580" r="15" fill="#a0287f"/>
+    <text x="56" y="585" text-anchor="middle" font-size="15" font-weight="700" fill="#ffffff">4</text>
+    <text x="84" y="574" font-size="15" font-weight="700" fill="#222">Starving the neighbours</text>
+    <text x="84" y="600" font-size="13" fill="#444"><tspan font-weight="700" fill="#a34700">Reach </tspan>one job's OOM killed three others; empty cgroups piled up</text>
+    <text x="84" y="624" font-size="13" fill="#444"><tspan font-weight="700" fill="#00707a">Fix </tspan>opt-in per-job memory.max and memory.high; teardown and sweep the leaks</text>
+    <text x="84" y="648" font-size="12.5" font-weight="600" fill="#0550ae">#219 &#183; merged, not yet released</text>
+  </g>
+
+  <text x="380" y="696" text-anchor="middle" font-size="12" fill="#666">Each fix is Linux-only; Windows and macOS jobs use different isolation.</text>
+</svg>

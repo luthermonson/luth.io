@@ -6,8 +6,15 @@
     <description>Recent content in Caching on Luther Monson</description>
     <generator>Hugo</generator>
     <language>en</language>
-    <lastBuildDate>Mon, 17 Aug 2026 20:44:00 -0700</lastBuildDate>
+    <lastBuildDate>Fri, 23 Oct 2026 15:00:00 -0700</lastBuildDate>
     <atom:link href="https://luth.io/tags/caching/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>Cache Proxies for Ephemeral CI Runners</title>
+      <link>https://luth.io/blog/2026/10/ci-cache-proxies-ephemeral-runners/</link>
+      <pubDate>Fri, 23 Oct 2026 15:00:00 -0700</pubDate>
+      <guid>https://luth.io/blog/2026/10/ci-cache-proxies-ephemeral-runners/</guid>
+      <description>&lt;p&gt;&lt;a href=&#34;https://luth.io/blog/2026/08/ephemerd-one-daemon-every-os/&#34;&gt;ephemerd&lt;/a&gt; gives every CI job a brand new runner. A new container on&#xA;Linux, a new VM on macOS and Windows. The job runs, the runner is thrown away, and the next job starts from a clean&#xA;image. That is the whole point. Nothing a job does can leak into the next one.&lt;/p&gt;&#xA;&lt;p&gt;Clean has a cost. A fresh runner has an empty cache. So every job downloads the world again. Go modules, crates, the&#xA;Rust toolchain, Composer packages, release tarballs. On a busy repo that is gigabytes a day, pulled over and over,&#xA;most of it byte-for-byte identical to what the last job pulled.&lt;/p&gt;</description>
+    </item>
     <item>
       <title>Rolling Your Own KV Store Instead of Embedding Redis</title>
       <link>https://luth.io/blog/2026/08/rolling-your-own-kv-store/</link>

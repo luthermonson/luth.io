@@ -1,0 +1,79 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 760 460" font-family="system-ui, -apple-system, Segoe UI, Roboto, sans-serif" role="img" aria-labelledby="t d">
+  <title id="t">Cache proxies sit on the node, not in the job</title>
+  <desc id="d">A fresh runner per job points its package tools at cache proxies running on the ephemerd node. The proxies hold caches that outlive every job and only reach the internet on a miss. The job is thrown away after it runs; the caches are not.</desc>
+  <style>
+    .box { fill: #ffffff; stroke: #333333; stroke-width: 2; }
+    .lbl { fill: #222222; font-size: 15px; }
+    .lblb { fill: #222222; font-size: 16px; font-weight: 600; }
+    .sub { fill: #555555; font-size: 13px; }
+    .arr { stroke: #555555; stroke-width: 2.5; fill: none; }
+    .arrmiss { stroke: #a34700; stroke-width: 2.5; fill: none; stroke-dasharray: 6 5; }
+  </style>
+  <defs>
+    <marker id="a" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto">
+      <path d="M0,0 L9,3 L0,6 Z" fill="#555555"/>
+    </marker>
+    <marker id="am" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto">
+      <path d="M0,0 L9,3 L0,6 Z" fill="#a34700"/>
+    </marker>
+  </defs>
+
+  <!-- Column 1: ephemeral job -->
+  <rect class="box" x="16" y="40" width="210" height="380" rx="10" stroke="#0550ae" stroke-dasharray="7 5"/>
+  <text class="lblb" x="121" y="68" text-anchor="middle" fill="#0550ae">Fresh runner per job</text>
+  <text class="sub" x="121" y="88" text-anchor="middle">container or VM, thrown away</text>
+  <g>
+    <rect class="box" x="36" y="108" width="170" height="40" rx="6"/>
+    <text class="lbl" x="48" y="133">go mod download</text>
+    <rect class="box" x="36" y="156" width="170" height="40" rx="6"/>
+    <text class="lbl" x="48" y="181">cargo / rustup</text>
+    <rect class="box" x="36" y="204" width="170" height="40" rx="6"/>
+    <text class="lbl" x="48" y="229">composer install</text>
+    <rect class="box" x="36" y="252" width="170" height="40" rx="6"/>
+    <text class="lbl" x="48" y="277">release downloads</text>
+    <rect class="box" x="36" y="300" width="170" height="40" rx="6"/>
+    <text class="lbl" x="48" y="325">actions/cache</text>
+  </g>
+  <text class="sub" x="121" y="372" text-anchor="middle">each points at an</text>
+  <text class="sub" x="121" y="390" text-anchor="middle">env var the node sets</text>
+
+  <!-- Column 2: node proxies -->
+  <rect class="box" x="276" y="40" width="210" height="380" rx="10" stroke="#00707a"/>
+  <text class="lblb" x="381" y="68" text-anchor="middle" fill="#00707a">ephemerd on the node</text>
+  <text class="sub" x="381" y="88" text-anchor="middle">one daemon, outlives jobs</text>
+  <g>
+    <rect class="box" x="296" y="108" width="170" height="40" rx="6"/>
+    <text class="lbl" x="308" y="133">GOPROXY</text>
+    <rect class="box" x="296" y="156" width="170" height="40" rx="6"/>
+    <text class="lbl" x="308" y="181">cargo + rustup</text>
+    <rect class="box" x="296" y="204" width="170" height="40" rx="6"/>
+    <text class="lbl" x="308" y="229">Packagist</text>
+    <rect class="box" x="296" y="252" width="170" height="40" rx="6"/>
+    <text class="lbl" x="308" y="277">GHREL</text>
+    <rect class="box" x="296" y="300" width="170" height="40" rx="6"/>
+    <text class="lbl" x="308" y="325">Actions cache</text>
+  </g>
+  <!-- persistent cache cylinder -->
+  <g transform="translate(296,356)">
+    <path d="M0,10 a85,9 0 0 1 170,0 l0,24 a85,9 0 0 1 -170,0 Z" fill="#e8eef6" stroke="#0550ae" stroke-width="2"/>
+    <path d="M0,10 a85,9 0 0 0 170,0" fill="none" stroke="#0550ae" stroke-width="2"/>
+    <text class="lbl" x="85" y="30" text-anchor="middle" fill="#0550ae">caches persist</text>
+  </g>
+
+  <!-- Column 3: internet -->
+  <rect class="box" x="596" y="150" width="150" height="160" rx="10" stroke="#a0287f"/>
+  <text class="lblb" x="671" y="212" text-anchor="middle" fill="#a0287f">Internet</text>
+  <text class="sub" x="671" y="236" text-anchor="middle">upstream</text>
+  <text class="sub" x="671" y="254" text-anchor="middle">registries</text>
+
+  <!-- arrows job -> proxies -->
+  <path class="arr" d="M206,128 H294" marker-end="url(#a)"/>
+  <path class="arr" d="M206,176 H294" marker-end="url(#a)"/>
+  <path class="arr" d="M206,224 H294" marker-end="url(#a)"/>
+  <path class="arr" d="M206,272 H294" marker-end="url(#a)"/>
+  <path class="arr" d="M206,320 H294" marker-end="url(#a)"/>
+
+  <!-- arrow proxies -> internet (miss only) -->
+  <path class="arrmiss" d="M466,230 H594" marker-end="url(#am)"/>
+  <text class="sub" x="530" y="222" text-anchor="middle" fill="#a34700">on a miss</text>
+</svg>

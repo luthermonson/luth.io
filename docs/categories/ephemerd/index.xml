@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>ephemerd on Luther Monson</title>
+    <link>https://luth.io/categories/ephemerd/</link>
+    <description>Recent content in ephemerd on Luther Monson</description>
+    <generator>Hugo</generator>
+    <language>en</language>
+    <lastBuildDate>Sat, 24 Oct 2026 10:00:00 -0700</lastBuildDate>
+    <atom:link href="https://luth.io/categories/ephemerd/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>Docker-in-Docker in CI Without Handing Jobs Root</title>
+      <link>https://luth.io/blog/2026/10/docker-in-docker-without-root/</link>
+      <pubDate>Sat, 24 Oct 2026 10:00:00 -0700</pubDate>
+      <guid>https://luth.io/blog/2026/10/docker-in-docker-without-root/</guid>
+      <description>&lt;p&gt;&lt;a href=&#34;https://luth.io/blog/2026/08/ephemerd-one-daemon-every-os/&#34;&gt;ephemerd&lt;/a&gt; runs a fresh GitHub Actions runner per job. Some of those&#xA;jobs need Docker. A workflow builds an image, runs a service container, or uses the &lt;code&gt;container:&lt;/code&gt; key. The usual way to&#xA;give a self-hosted job Docker is Docker-in-Docker, or dind.&lt;/p&gt;&#xA;&lt;p&gt;The catch is what dind normally costs you. The standard recipe is a &lt;code&gt;--privileged&lt;/code&gt; container. Privileged hands the job&#xA;most of root on the host. For CI that runs fork pull requests, that is a non-starter. A fork PR is a stranger&amp;rsquo;s code.&lt;/p&gt;</description>
+    </item>
+    <item>
+      <title>Cache Proxies for Ephemeral CI Runners</title>
+      <link>https://luth.io/blog/2026/10/ci-cache-proxies-ephemeral-runners/</link>
+      <pubDate>Fri, 23 Oct 2026 15:00:00 -0700</pubDate>
+      <guid>https://luth.io/blog/2026/10/ci-cache-proxies-ephemeral-runners/</guid>
+      <description>&lt;p&gt;&lt;a href=&#34;https://luth.io/blog/2026/08/ephemerd-one-daemon-every-os/&#34;&gt;ephemerd&lt;/a&gt; gives every CI job a brand new runner. A new container on&#xA;Linux, a new VM on macOS and Windows. The job runs, the runner is thrown away, and the next job starts from a clean&#xA;image. That is the whole point. Nothing a job does can leak into the next one.&lt;/p&gt;&#xA;&lt;p&gt;Clean has a cost. A fresh runner has an empty cache. So every job downloads the world again. Go modules, crates, the&#xA;Rust toolchain, Composer packages, release tarballs. On a busy repo that is gigabytes a day, pulled over and over,&#xA;most of it byte-for-byte identical to what the last job pulled.&lt;/p&gt;</description>
+    </item>
+    <item>
+      <title>Ephemeral macOS Runners: A Fresh VM Per Job on Apple Silicon</title>
+      <link>https://luth.io/blog/2026/10/ephemeral-macos-runners-vm-clones/</link>
+      <pubDate>Fri, 23 Oct 2026 11:00:00 -0700</pubDate>
+      <guid>https://luth.io/blog/2026/10/ephemeral-macos-runners-vm-clones/</guid>
+      <description>&lt;p&gt;&lt;a href=&#34;https://github.com/ephpm/ephemerd&#34;&gt;ephemerd&lt;/a&gt; gives every CI job a brand new environment and throws it away after.&#xA;On Linux and Windows that environment is a container. On macOS it can&amp;rsquo;t be. Apple&amp;rsquo;s license wants macOS running on&#xA;Apple hardware, so the Mac in my rack is the real thing. The isolation comes from a VM instead.&lt;/p&gt;&#xA;&lt;p&gt;Each macOS job gets a fresh &lt;a href=&#34;https://developer.apple.com/documentation/virtualization&#34;&gt;Virtualization.framework&lt;/a&gt; VM&#xA;cloned from a base image. The job runs inside it. The VM is destroyed when the job finishes. That&amp;rsquo;s the same contract&#xA;as the container path. Getting there took four fixes that I only found by running the fleet. This post walks the VM&#xA;lifecycle and the three ways it bit me:&lt;/p&gt;</description>
+    </item>
+    <item>
+      <title>Webhooks Arrive Out of Order: How My Scheduler Killed Live Builds</title>
+      <link>https://luth.io/blog/2026/10/webhooks-out-of-order-scheduler/</link>
+      <pubDate>Wed, 07 Oct 2026 21:10:00 -0700</pubDate>
+      <guid>https://luth.io/blog/2026/10/webhooks-out-of-order-scheduler/</guid>
+      <description>&lt;p&gt;The scheduler in &lt;a href=&#34;https://luth.io/blog/2026/08/ephemerd-one-daemon-every-os/&#34;&gt;ephemerd&lt;/a&gt; is event-driven. GitHub sends a&#xA;&lt;code&gt;workflow_job&lt;/code&gt; webhook when a job is queued, when it starts and when it completes. ephemerd creates and destroys runners&#xA;to match. For a while that worked well enough that I stopped thinking about it. Then a &lt;code&gt;docker-build&lt;/code&gt; job failed with&#xA;&amp;ldquo;The self-hosted runner lost communication with the server&amp;rdquo;. I pulled the node&amp;rsquo;s journal. ephemerd had destroyed that&#xA;runner itself, on purpose, while it was running the build.&lt;/p&gt;</description>
+    </item>
+    <item>
+      <title>Bind Mounts Across Mount Namespaces: Four PRs and a Container Escape</title>
+      <link>https://luth.io/blog/2026/09/bind-mounts-across-mount-namespaces/</link>
+      <pubDate>Thu, 24 Sep 2026 21:02:00 -0700</pubDate>
+      <guid>https://luth.io/blog/2026/09/bind-mounts-across-mount-namespaces/</guid>
+      <description>&lt;p&gt;GitHub Actions has a &lt;code&gt;container:&lt;/code&gt; key that runs a job&amp;rsquo;s steps inside an image of your choosing. It&amp;rsquo;s popular because&#xA;it gives you a reproducible toolchain without building a custom runner image. On a self-hosted runner it works by&#xA;having the runner drive Docker. On &lt;a href=&#34;https://luth.io/blog/2026/08/ephemerd-one-daemon-every-os/&#34;&gt;ephemerd&lt;/a&gt;, &amp;ldquo;Docker&amp;rdquo; is a shim that&#xA;speaks the Docker API and creates containers in containerd. Getting bind mounts right through that shim took four PRs&#xA;in a week. A couple of months later the version that worked turned out to be an escape.&lt;/p&gt;</description>
+    </item>
+    <item>
+      <title>Kata Containers for CI: Boot Cost Isn&#39;t the Problem, File I/O Is</title>
+      <link>https://luth.io/blog/2026/09/kata-containers-for-ci/</link>
+      <pubDate>Thu, 03 Sep 2026 21:35:00 -0700</pubDate>
+      <guid>https://luth.io/blog/2026/09/kata-containers-for-ci/</guid>
+      <description>&lt;p&gt;Of the three platforms &lt;a href=&#34;https://luth.io/blog/2026/08/ephemerd-one-daemon-every-os/&#34;&gt;ephemerd&lt;/a&gt; runs jobs on, Linux has the weakest&#xA;isolation. Windows jobs get a Hyper-V isolated container with its own kernel. macOS jobs get a whole VM. A Linux job is&#xA;an ordinary runc container sharing the host kernel. A kernel escape from a Linux job is a host compromise.&#xA;&lt;a href=&#34;https://katacontainers.io/&#34;&gt;Kata Containers&lt;/a&gt; fixes that by putting each container in a lightweight VM with its own&#xA;kernel. It plugs into containerd as just another runtime handler. So I added it in&#xA;&lt;a href=&#34;https://github.com/ephpm/ephemerd/pull/155&#34;&gt;#155&lt;/a&gt;, measured it, and left it off by default. This post is why.&lt;/p&gt;</description>
+    </item>
+    <item>
+      <title>My iptables Rule Matched 0 Packets in 9.8 GB</title>
+      <link>https://luth.io/blog/2026/08/iptables-rule-zero-packets/</link>
+      <pubDate>Wed, 26 Aug 2026 20:30:00 -0700</pubDate>
+      <guid>https://luth.io/blog/2026/08/iptables-rule-zero-packets/</guid>
+      <description>&lt;p&gt;After a week of Windows firewall rules that &lt;a href=&#34;https://luth.io/blog/2026/08/windows-container-egress-firewall/&#34;&gt;listed fine and enforced nothing&lt;/a&gt;,&#xA;I went back to the Linux side of &lt;a href=&#34;https://github.com/ephpm/ephemerd&#34;&gt;ephemerd&lt;/a&gt; feeling pretty good about it. iptables is&#xA;the boring, well-understood one. Then I looked at the packet counters on a live node. I found a rule that had never&#xA;matched a packet in its life. That node had pushed 9.8 GB through the same chain.&lt;/p&gt;&#xA;&lt;h3 id=&#34;the-rules-i-thought-i-had&#34;&gt;The rules I thought I had&lt;/h3&gt;&#xA;&lt;p&gt;Job containers sit on a CNI bridge, &lt;code&gt;10.88.0.0/16&lt;/code&gt;, with the host on &lt;code&gt;10.88.0.1&lt;/code&gt;. ephemerd puts its egress policy in its&#xA;own chain, &lt;code&gt;EPHEMERD-FORWARD&lt;/code&gt;. &lt;code&gt;FORWARD&lt;/code&gt; jumps to it for anything to or from the container subnet. From a live node:&lt;/p&gt;</description>
+    </item>
+    <item>
+      <title>ephemerd: One Daemon, a Fresh Runner Per Job, Every OS</title>
+      <link>https://luth.io/blog/2026/08/ephemerd-one-daemon-every-os/</link>
+      <pubDate>Tue, 18 Aug 2026 21:05:00 -0700</pubDate>
+      <guid>https://luth.io/blog/2026/08/ephemerd-one-daemon-every-os/</guid>
+      <description>&lt;p&gt;I have CI that needs Linux amd64, Linux arm64, Windows and macOS. GitHub-hosted runners for all four get expensive fast,&#xA;especially the arm64 and Mac minutes. Self-hosted runners fix the bill and create a different problem. A stock&#xA;&lt;code&gt;actions/runner&lt;/code&gt; on a box you own runs whatever the workflow says. It keeps whatever the last job left behind. And it&amp;rsquo;s&#xA;one fork PR away from somebody running code on your LAN.&lt;/p&gt;</description>
+    </item>
+    <item>
+      <title>Escaping WSL: Booting My Own Linux VM Through Hyper-V&#39;s HCS API</title>
+      <link>https://luth.io/blog/2026/06/escaping-wsl-hcs-linux-vm/</link>
+      <pubDate>Sun, 14 Jun 2026 20:12:00 -0700</pubDate>
+      <guid>https://luth.io/blog/2026/06/escaping-wsl-hcs-linux-vm/</guid>
+      <description>&lt;p&gt;I&amp;rsquo;ve been building &lt;a href=&#34;https://github.com/ephpm/ephemerd&#34;&gt;ephemerd&lt;/a&gt;, a daemon that runs self-hosted GitHub Actions runners&#xA;with a fresh environment per job. On a Windows host, Windows jobs run in Hyper-V isolated containers. Linux jobs still&#xA;need a Linux kernel from somewhere. The obvious answer on Windows in 2026 is WSL2, and that&amp;rsquo;s what I used first. It worked&#xA;great from my terminal and fell over the moment ephemerd became a real Windows service.&lt;/p&gt;&#xA;&lt;h3 id=&#34;wsl2-doesnt-do-localsystem&#34;&gt;WSL2 doesn&amp;rsquo;t do LocalSystem&lt;/h3&gt;&#xA;&lt;p&gt;A Windows service that wants to create containers and Hyper-V VMs runs as &lt;code&gt;LocalSystem&lt;/code&gt;. WSL2 doesn&amp;rsquo;t support that context&#xA;at all. You get &lt;code&gt;WSL_E_LOCAL_SYSTEM_NOT_SUPPORTED&lt;/code&gt; and that&amp;rsquo;s the end of the conversation. There&amp;rsquo;s no flag for it. WSL is a&#xA;per-user feature and a service account isn&amp;rsquo;t a user.&lt;/p&gt;</description>
+    </item>
+  </channel>
+</rss>

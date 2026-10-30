@@ -1,0 +1,785 @@
+<!doctype html>
+<html lang="en">
+  <head>
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-MSTSKGFWTX"></script>
+<script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+
+    gtag('config', 'G-MSTSKGFWTX');
+</script><meta charset="utf-8">
+<title>Surviving a Node Rebuild: A Durable ePHPm Blog on Single-Node k3s - Luther Monson</title>
+<meta name="description" content="A compact ePHPm WordPress blog on one k3s node, with its SQLite file and uploads on a dedicated EBS volume. Rebuild the whole node and the data comes back.">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<meta name="twitter:card" content="summary_large_image"><meta name="twitter:site" content="@luthermonson">
+
+<meta property="og:site_name" content="Luther Monson">
+<meta property="og:title" content="Surviving a Node Rebuild: A Durable ePHPm Blog on Single-Node k3s">
+<meta property="og:description" content="A compact ePHPm WordPress blog on one k3s node, with its SQLite file and uploads on a dedicated EBS volume. Rebuild the whole node and the data comes back.">
+<meta property="og:type" content="article">
+<meta property="og:url" content="https://luth.io/blog/2026/10/durable-data-single-node-k3s-ebs-rebuild/">
+    <meta property="og:image" content="https://luth.io/img/2026/10/durable-data-single-node-k3s-ebs-rebuild.svg">
+    <meta property="og:image:alt" content="A node rebuild: Node A is replaced by Node B, each root EBS volume is disposable, and the separate labeled EBS data volume detaches from the old node and re-attaches to the new one so the ePHPm blog&#39;s SQLite file and uploads survive">
+
+
+  <link rel="manifest" href="/favicon/site.webmanifest?v=1">
+  <link rel="apple-touch-icon" sizes="180x180" href="/favicon/apple-touch-icon.png?v=1">
+  <link rel="icon" type="image/png" sizes="32x32" href="/favicon/favicon-32x32.png?v=1">
+  <link rel="icon" type="image/png" sizes="16x16" href="/favicon/favicon-16x16.png?v=1">
+  
+    <link rel="mask-icon" href="/favicon/safari-pinned-tab.svg?v=1" color="#ffffff">
+    <link rel="shortcut icon" href="/favicon/favicon.ico?v=1">
+    <meta name="msapplication-config" content="/favicon/browserconfig.xml?v=1">
+  
+  <meta name="msapplication-TileColor" content="#ffffff">
+  <meta name="theme-color" content="#ffffff">
+
+
+  <meta name="generator" content="Hugo 0.160.1">
+  <link rel="alternate" type="application/rss+xml" href="https://luth.io/index.xml" title="Luther Monson">
+  <link rel="stylesheet" href="/css/bundle.min.e1ffed86714fbb7eff75eab221c0c61b8260be0c7d1c08db0fcb7a2bdb6af7c9.css" integrity="sha256-4f/thnFPu37/deqyIcDGG4Jgvgx9HAjbD8t6K9tq98k="><link rel="stylesheet" href="/css/add-on.css">
+        <link rel="stylesheet" href="/css/code.css">
+        <link rel="stylesheet" href="/css/mobile.css">
+</head>
+
+  <body>
+    
+
+<header id="site-header">
+  <nav id="site-nav">
+    <h1 class="nav-title">
+      <a href="/" class="nav">
+        <img class="nav-avatar" src="/img/luther-monson-headshot.jpg" alt="" width="32" height="32">
+        
+          Blog
+        
+      </a>
+    </h1>
+    <menu id="site-nav-menu" class="flyout-menu menu">
+      
+        
+          
+          <a href="/" class="nav link"><i class='fa fa-home'></i> Home</a>
+        
+      
+        
+          
+          <a href="/about" class="nav link"><i class='far fa-id-card'></i> About</a>
+        
+      
+        
+          
+          <a href="/blog" class="nav link"><i class='far fa-newspaper'></i> Blog</a>
+        
+      
+        
+          
+          <a href="/archive" class="nav link"><i class='far fa-calendar-alt'></i> Archive</a>
+        
+      
+        
+          
+          <a href="/categories" class="nav link"><i class='fas fa-sitemap'></i> Categories</a>
+        
+      
+      <a href="#share-menu" class="nav link share-toggle"><i class="fas fa-share-alt">&nbsp;</i>Share</a>
+      <a href="#search-input" class="nav link search-toggle"><i class="fas fa-search">&nbsp;</i>Search</a>
+    </menu>
+    <a href="#search-input" class="nav search-toggle"><i class="fas fa-search fa-2x">&nbsp;</i></a>
+    <a href="#share-menu" class="nav share-toggle"><i class="fas fa-share-alt fa-2x">&nbsp;</i></a>
+    
+    <a href="#site-nav" class="nav nav-toggle"><i class="fas fa-bars fa-2x"></i></a>
+  </nav>
+  <menu id="search" class="menu"><input id="search-input" class="search-input menu"></input><div id="search-results" class="search-results menu"></div></menu>
+  
+  
+    <menu id="share-menu" class="flyout-menu menu">
+      <h1>Share Post</h1>
+      
+
+
+
+
+  
+    
+    <a href="//twitter.com/share?text=Surviving%20a%20Node%20Rebuild%3a%20A%20Durable%20ePHPm%20Blog%20on%20Single-Node%20k3s&amp;url=https%3a%2f%2fluth.io%2fblog%2f2026%2f10%2fdurable-data-single-node-k3s-ebs-rebuild%2f" target="_blank" rel="noopener" class="nav share-btn twitter">
+        <p>Twitter</p>
+      </a>
+  
+
+  
+      <a href="//www.facebook.com/sharer/sharer.php?u=https%3a%2f%2fluth.io%2fblog%2f2026%2f10%2fdurable-data-single-node-k3s-ebs-rebuild%2f" target="_blank" rel="noopener" class="nav share-btn facebook">
+        <p>Facebook</p>
+        </a>
+  
+
+  
+    <a href="//www.reddit.com/submit?url=https%3a%2f%2fluth.io%2fblog%2f2026%2f10%2fdurable-data-single-node-k3s-ebs-rebuild%2f&amp;title=Surviving%20a%20Node%20Rebuild%3a%20A%20Durable%20ePHPm%20Blog%20on%20Single-Node%20k3s" target="_blank" rel="noopener" class="nav share-btn reddit">
+          <p>Reddit</p>
+        </a>
+  
+
+  
+        <a href="//www.linkedin.com/shareArticle?url=https%3a%2f%2fluth.io%2fblog%2f2026%2f10%2fdurable-data-single-node-k3s-ebs-rebuild%2f&amp;title=Surviving%20a%20Node%20Rebuild%3a%20A%20Durable%20ePHPm%20Blog%20on%20Single-Node%20k3s" target="_blank" rel="noopener" class="nav share-btn linkedin">
+            <p>LinkedIn</p>
+          </a>
+  
+
+  
+        <a href="//www.pinterest.com/pin/create/button/?url=https%3a%2f%2fluth.io%2fblog%2f2026%2f10%2fdurable-data-single-node-k3s-ebs-rebuild%2f&amp;description=Surviving%20a%20Node%20Rebuild%3a%20A%20Durable%20ePHPm%20Blog%20on%20Single-Node%20k3s" target="_blank" rel="noopener" class="nav share-btn pinterest">
+          <p>Pinterest</p>
+        </a>
+  
+
+  
+        <a href="mailto:?subject=Check%20out%20this%20post%20by Luther%20Monson&amp;body=https%3a%2f%2fluth.io%2fblog%2f2026%2f10%2fdurable-data-single-node-k3s-ebs-rebuild%2f" target="_blank" class="nav share-btn email" data-proofer-ignore>
+          <p>Email</p>
+        </a>
+  
+
+
+    </menu>
+  
+</header>
+
+    <div id="wrapper">
+      <section id="site-intro" class="hidden-single-column">
+  <a href="/"><img src="/img/luther-monson-headshot.jpg" class="circle" width="100" alt="Luther Monson, Staff Software Engineer at SUSE" /></a>
+  <header>
+    <h1>Luther Monson</h1>
+  </header>
+  <main>
+    <p>Go by way of PHP &middot; Containers &middot; VMs &middot; Windows &middot; Kubernetes</p>
+  </main>
+  
+    <footer>
+      <ul class="socnet-icons">
+        
+
+        <li><a href="//github.com/luthermonson" target="_blank" rel="noopener" title="GitHub" class="fab fa-github"></a></li>
+
+
+
+
+
+
+
+
+
+
+
+<li><a href="//www.linkedin.com/in/luthermonson" target="_blank" rel="noopener" title="LinkedIn" class="fab fa-linkedin"></a></li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li><a href="//twitter.com/luthermonson" target="_blank" rel="noopener" title="Twitter" class="fab fa-twitter"></a></li>
+
+
+
+
+
+
+
+
+
+
+
+<li><a href="mailto:luther.monson@gmail.com" target="_blank" title="Email" class="far fa-envelope"></a></li>
+
+      </ul>
+    </footer>
+  
+</section>
+
+      <main id="site-main">
+        
+  <article>
+    <div class="post">
+      <header>
+  <div class="title">
+    
+      <h2><a href="/blog/2026/10/durable-data-single-node-k3s-ebs-rebuild/">Surviving a Node Rebuild: A Durable ePHPm Blog on Single-Node k3s</a></h2>
+    
+    
+      <p>A compact ePHPm WordPress blog on one k3s node, with its SQLite file and uploads on a dedicated EBS volume. Rebuild the whole node and the data comes back.</p>
+    
+  </div>
+  <div class="meta">
+    <time datetime="2026-10-28 10:00:00 -0700 PDT">October 28, 2026</time>
+    
+    <p>11-Minute Read</p>
+  </div>
+</header>
+
+      <div id="socnet-share">
+        
+
+
+
+
+  
+    
+    <a href="//twitter.com/share?text=Surviving%20a%20Node%20Rebuild%3a%20A%20Durable%20ePHPm%20Blog%20on%20Single-Node%20k3s&amp;url=https%3a%2f%2fluth.io%2fblog%2f2026%2f10%2fdurable-data-single-node-k3s-ebs-rebuild%2f" target="_blank" rel="noopener" class="nav share-btn twitter">
+        <p>Twitter</p>
+      </a>
+  
+
+  
+      <a href="//www.facebook.com/sharer/sharer.php?u=https%3a%2f%2fluth.io%2fblog%2f2026%2f10%2fdurable-data-single-node-k3s-ebs-rebuild%2f" target="_blank" rel="noopener" class="nav share-btn facebook">
+        <p>Facebook</p>
+        </a>
+  
+
+  
+    <a href="//www.reddit.com/submit?url=https%3a%2f%2fluth.io%2fblog%2f2026%2f10%2fdurable-data-single-node-k3s-ebs-rebuild%2f&amp;title=Surviving%20a%20Node%20Rebuild%3a%20A%20Durable%20ePHPm%20Blog%20on%20Single-Node%20k3s" target="_blank" rel="noopener" class="nav share-btn reddit">
+          <p>Reddit</p>
+        </a>
+  
+
+  
+        <a href="//www.linkedin.com/shareArticle?url=https%3a%2f%2fluth.io%2fblog%2f2026%2f10%2fdurable-data-single-node-k3s-ebs-rebuild%2f&amp;title=Surviving%20a%20Node%20Rebuild%3a%20A%20Durable%20ePHPm%20Blog%20on%20Single-Node%20k3s" target="_blank" rel="noopener" class="nav share-btn linkedin">
+            <p>LinkedIn</p>
+          </a>
+  
+
+  
+        <a href="//www.pinterest.com/pin/create/button/?url=https%3a%2f%2fluth.io%2fblog%2f2026%2f10%2fdurable-data-single-node-k3s-ebs-rebuild%2f&amp;description=Surviving%20a%20Node%20Rebuild%3a%20A%20Durable%20ePHPm%20Blog%20on%20Single-Node%20k3s" target="_blank" rel="noopener" class="nav share-btn pinterest">
+          <p>Pinterest</p>
+        </a>
+  
+
+  
+        <a href="mailto:?subject=Check%20out%20this%20post%20by Luther%20Monson&amp;body=https%3a%2f%2fluth.io%2fblog%2f2026%2f10%2fdurable-data-single-node-k3s-ebs-rebuild%2f" target="_blank" class="nav share-btn email" data-proofer-ignore>
+          <p>Email</p>
+        </a>
+  
+
+
+      </div>
+      <div class="content">
+        
+        <p>A single ePHPm binary runs a whole WordPress site. No php-fpm, no Redis, no MySQL. The database is a SQLite file. I
+covered that setup in <a href="/blog/2026/09/single-binary-wordpress/">Zero-Dependency Deployments</a>. It makes for a tiny blog:
+one process, one file, a distroless image around 270 MB. That fits a micro VM with room to spare.</p>
+<p>So I put one on a micro EC2 instance with single-node k3s. One box, one <code>kubectl</code>, no control-plane sprawl. You create a
+PersistentVolumeClaim, the blog binds to it, and it looks like your data is safe.</p>
+<p>It is not. Not the way you think.</p>
+<p>The default k3s storage class is <code>local-path</code>. It writes its volumes under <code>/var/lib/rancher/k3s/storage</code> on the node.
+That path is on the instance&rsquo;s <strong>root</strong> EBS volume. The root volume is <code>delete_on_termination = true</code>. So the first time
+you replace the node, the root volume goes with it, and your SQLite file goes with it. Not detached. Gone.</p>
+<p>You replace the node more often than you think. An AMI bump. An instance resize. A <code>terraform apply</code> that decides the
+instance needs recreating. Plenty of people meet this in production, right after a routine change, with the only copy of
+their data on the other end of it.</p>
+<p>This post is the fix. Put the stateful bytes on a dedicated EBS volume that outlives the node. Then prove it by rebuilding
+the whole node and watching the blog come back untouched. The app is the single-binary ePHPm blog from that earlier post,
+so every value here is one you can copy.</p>
+<p>One thing up front. This is about <strong>durability, not availability</strong>. It is a single node. If the node is down, the blog is
+down. There is no failover here. What this buys you is that your data survives the node, not that your readers never see an
+error page. Those are different problems. This post is the data one.</p>
+<h3 id="root-is-cattle-data-is-a-pet">Root is cattle, data is a pet</h3>
+<p>The mental model is the whole trick. Treat the root volume as disposable. It holds the OS, the k3s binary and the
+container images. You can throw it away and rebuild it from Terraform and cloud-init in a few minutes. Nothing on it is
+precious.</p>
+<p>The data volume is the opposite. It is a separate EBS volume that Terraform is told never to delete. It carries every
+stateful byte. For this blog that is two things. The WordPress SQLite database. The uploads directory. Everything else,
+the ePHPm binary and the WordPress code, lives in the image. The data volume detaches from a dying node and re-attaches to
+the next one. The node is cattle. The data volume is a pet.</p>
+<p>Keep those two apart and a node rebuild stops being scary.</p>
+<h3 id="prerequisites">Prerequisites</h3>
+<ul>
+<li>One EC2 instance running k3s, provisioned with Terraform.</li>
+<li>Terraform 1.5+ and <code>kubectl</code> pointed at the cluster.</li>
+<li>AWS credentials that can manage EC2 and EBS.</li>
+<li>The ePHPm WordPress image from <a href="/blog/2026/09/single-binary-wordpress/">the single-binary post</a>, pushed to a registry
+your node can pull.</li>
+<li>A willingness to destroy and recreate the instance on purpose. That is the whole point.</li>
+</ul>
+<h3 id="the-data-volume-in-terraform">The data volume in Terraform</h3>
+<p>The important detail is that this is a standalone <code>aws_ebs_volume</code>, not a <code>root_block_device</code> on the instance. A root
+block device shares the instance&rsquo;s lifecycle. A standalone volume has its own.</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-hcl" data-lang="hcl"><span class="line"><span class="cl"><span class="k">resource</span> <span class="s2">&#34;aws_ebs_volume&#34; &#34;data&#34;</span> {
+</span></span><span class="line"><span class="cl"><span class="n">  availability_zone</span> <span class="o">=</span> <span class="k">aws_subnet</span><span class="p">.</span><span class="k">a</span><span class="p">.</span><span class="k">availability_zone</span>
+</span></span><span class="line"><span class="cl"><span class="n">  size</span>              <span class="o">=</span> <span class="k">var</span><span class="p">.</span><span class="k">data_volume_size</span><span class="c1"> # e.g. 20
+</span></span></span><span class="line"><span class="cl"><span class="n">  type</span>              <span class="o">=</span> <span class="s2">&#34;gp3&#34;</span>
+</span></span><span class="line"><span class="cl"><span class="n">  encrypted</span>         <span class="o">=</span> <span class="kt">true</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="n">  tags</span> <span class="o">=</span> {
+</span></span><span class="line"><span class="cl"><span class="n">    Name</span>   <span class="o">=</span> <span class="s2">&#34;k3s-data&#34;</span>
+</span></span><span class="line"><span class="cl"><span class="n">    Backup</span> <span class="o">=</span> <span class="s2">&#34;k3s-data&#34;</span><span class="c1"> # matched by a DLM snapshot policy later
+</span></span></span><span class="line"><span class="cl">  }
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">  <span class="k">lifecycle</span> {
+</span></span><span class="line"><span class="cl"><span class="n">    prevent_destroy</span> <span class="o">=</span> <span class="kt">true</span><span class="c1"> # Terraform refuses to delete the one stateful thing
+</span></span></span><span class="line"><span class="cl">  }
+</span></span><span class="line"><span class="cl">}
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="k">resource</span> <span class="s2">&#34;aws_volume_attachment&#34; &#34;data&#34;</span> {
+</span></span><span class="line"><span class="cl"><span class="n">  device_name</span>  <span class="o">=</span> <span class="s2">&#34;/dev/sdf&#34;</span><span class="c1"> # Nitro surfaces this as /dev/nvme1n1; we mount by label, not this
+</span></span></span><span class="line"><span class="cl"><span class="n">  volume_id</span>    <span class="o">=</span> <span class="k">aws_ebs_volume</span><span class="p">.</span><span class="k">data</span><span class="p">.</span><span class="k">id</span>
+</span></span><span class="line"><span class="cl"><span class="n">  instance_id</span>  <span class="o">=</span> <span class="k">aws_instance</span><span class="p">.</span><span class="k">k3s</span><span class="p">.</span><span class="k">id</span>
+</span></span><span class="line"><span class="cl"><span class="n">  skip_destroy</span> <span class="o">=</span> <span class="kt">true</span><span class="c1"> # replacing the instance detaches the volume, never destroys it
+</span></span></span><span class="line"><span class="cl">}
+</span></span></code></pre></div><p>Two lines do the heavy lifting. <code>prevent_destroy = true</code> on the volume means Terraform errors out rather than delete it.
+If you ever write a plan that would take the volume with it, Terraform stops you. <code>skip_destroy = true</code> on the attachment
+means that when the instance is replaced, Terraform tears down the attachment without trying to detach the busy volume
+first. AWS releases the volume cleanly when the old instance terminates. Without these two, a <code>-replace</code> of the instance
+can reach down and destroy the volume as a dependency. With them, the volume is untouchable.</p>
+<p>One constraint comes with the volume. It lives in one Availability Zone. The replacement instance has to come back in that
+same AZ, or the attach fails. Keep the instance pinned to the same subnet and you are fine.</p>
+<p>The root volume stays disposable, and you say so out loud:</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-hcl" data-lang="hcl"><span class="line"><span class="cl"><span class="k">root_block_device</span> {
+</span></span><span class="line"><span class="cl"><span class="n">  volume_type</span>           <span class="o">=</span> <span class="s2">&#34;gp3&#34;</span>
+</span></span><span class="line"><span class="cl"><span class="n">  volume_size</span>           <span class="o">=</span> <span class="m">20</span>
+</span></span><span class="line"><span class="cl"><span class="n">  delete_on_termination</span> <span class="o">=</span> <span class="kt">true</span><span class="c1"> # cattle, nothing stateful lives here
+</span></span></span><span class="line"><span class="cl">}
+</span></span></code></pre></div><h3 id="mount-it-by-label-not-by-device">Mount it by label, not by device</h3>
+<p>This is where people get burned. On Nitro instances the device name you asked for is not the device name you get. You
+attach at <code>/dev/sdf</code> and the kernel surfaces it as <code>/dev/nvme1n1</code>. The NVMe enumeration order is not guaranteed to stay
+put across reboots either. So you never mount by device path. You format the volume with a filesystem <strong>label</strong> once, and
+you mount by that label forever.</p>
+<p>Here is the cloud-init that runs on first boot:</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl"><span class="c1"># Resolve the disk by its EBS volume ID, never a device number. AWS exposes the</span>
+</span></span><span class="line"><span class="cl"><span class="c1"># volume as its NVMe serial: the volume ID with the dashes stripped. Terraform</span>
+</span></span><span class="line"><span class="cl"><span class="c1"># templates the ID into this cloud-init.</span>
+</span></span><span class="line"><span class="cl"><span class="nv">DATA_DEV</span><span class="o">=</span><span class="s2">&#34;/dev/disk/by-id/nvme-Amazon_Elastic_Block_Store_</span><span class="k">$(</span><span class="nb">echo</span> <span class="s2">&#34;</span><span class="si">${</span><span class="nv">aws_ebs_volume</span><span class="p">.data.id</span><span class="si">}</span><span class="s2">&#34;</span> <span class="p">|</span> tr -d <span class="s1">&#39;-&#39;</span><span class="k">)</span><span class="s2">&#34;</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="c1"># Format only if it has no filesystem yet. A volume with data already on it is skipped.</span>
+</span></span><span class="line"><span class="cl">blkid <span class="s2">&#34;</span><span class="nv">$DATA_DEV</span><span class="s2">&#34;</span> &gt;/dev/null 2&gt;<span class="p">&amp;</span><span class="m">1</span> <span class="o">||</span> mkfs.ext4 -L k3s-data <span class="s2">&#34;</span><span class="nv">$DATA_DEV</span><span class="s2">&#34;</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">mkdir -p /data
+</span></span><span class="line"><span class="cl">grep -q <span class="s1">&#39;LABEL=k3s-data&#39;</span> /etc/fstab <span class="o">||</span> <span class="se">\
+</span></span></span><span class="line"><span class="cl">  <span class="nb">echo</span> <span class="s1">&#39;LABEL=k3s-data /data ext4 defaults,nofail 0 2&#39;</span> &gt;&gt; /etc/fstab
+</span></span><span class="line"><span class="cl">mount -a
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="c1"># The distroless image runs as the nonroot user 65532. Give it the data dirs.</span>
+</span></span><span class="line"><span class="cl">mkdir -p /data/wordpress/database /data/wordpress/uploads
+</span></span><span class="line"><span class="cl">chown -R 65532:65532 /data/wordpress
+</span></span></code></pre></div><p>Three things matter here. The <code>blkid</code> guard means the format only happens on a blank volume. On a rebuild the volume
+already has a filesystem, so <code>mkfs</code> is skipped and your data is left alone. The <code>LABEL=k3s-data</code> entry in <code>/etc/fstab</code>
+mounts the right volume no matter what device letter it landed on. And <code>nofail</code> means that if the volume is ever absent,
+the node still boots instead of dropping into an emergency shell.</p>
+<p>The <code>chown</code> is easy to forget. ePHPm&rsquo;s distroless image runs as the nonroot user 65532. The SQLite file and the uploads
+dir have to be writable by that user, or the first request fails. The data dirs are created and owned here on the host,
+once.</p>
+<p>One cloud-init nuance is worth knowing. On a fast boot the <code>/dev/disk/by-id/</code> symlink may not exist yet when this runs. In
+production you wait for udev to settle before formatting. A short retry loop does it. If the by-id path never appears, you
+fall back to the single extra unmounted disk. The principle is the thing. You key off the volume&rsquo;s identity, never the
+NVMe enumeration order.</p>
+<h3 id="back-the-pvcs-with-the-mount">Back the PVCs with the mount</h3>
+<p>Now k3s needs PersistentVolumes that point at <code>/data</code>. I use static <code>hostPath</code> PVs with a <code>manual</code> storage class. One PV
+and one PVC per data directory. Here is the database pair:</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-yaml" data-lang="yaml"><span class="line"><span class="cl"><span class="nt">apiVersion</span><span class="p">:</span><span class="w"> </span><span class="l">v1</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="nt">kind</span><span class="p">:</span><span class="w"> </span><span class="l">PersistentVolume</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="nt">metadata</span><span class="p">:</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">  </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l">wp-sqlite</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="nt">spec</span><span class="p">:</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">  </span><span class="nt">storageClassName</span><span class="p">:</span><span class="w"> </span><span class="l">manual</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">  </span><span class="nt">capacity</span><span class="p">:</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="nt">storage</span><span class="p">:</span><span class="w"> </span><span class="l">5Gi</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">  </span><span class="nt">accessModes</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="s2">&#34;ReadWriteOnce&#34;</span><span class="p">]</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">  </span><span class="nt">persistentVolumeReclaimPolicy</span><span class="p">:</span><span class="w"> </span><span class="l">Retain</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">  </span><span class="nt">hostPath</span><span class="p">:</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="nt">path</span><span class="p">:</span><span class="w"> </span><span class="l">/data/wordpress/database</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="nn">---</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="nt">apiVersion</span><span class="p">:</span><span class="w"> </span><span class="l">v1</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="nt">kind</span><span class="p">:</span><span class="w"> </span><span class="l">PersistentVolumeClaim</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="nt">metadata</span><span class="p">:</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">  </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l">wp-sqlite</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="nt">spec</span><span class="p">:</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">  </span><span class="nt">storageClassName</span><span class="p">:</span><span class="w"> </span><span class="l">manual</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">  </span><span class="nt">accessModes</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="s2">&#34;ReadWriteOnce&#34;</span><span class="p">]</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">  </span><span class="nt">resources</span><span class="p">:</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="nt">requests</span><span class="p">:</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">      </span><span class="nt">storage</span><span class="p">:</span><span class="w"> </span><span class="l">5Gi</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">  </span><span class="nt">volumeName</span><span class="p">:</span><span class="w"> </span><span class="l">wp-sqlite</span><span class="w">
+</span></span></span></code></pre></div><p>Make a second identical pair for <code>/data/wordpress/uploads</code>, named <code>wp-uploads</code>. The <code>storageClassName: manual</code> setting
+opts these out of the default <code>local-path</code> provisioner. <code>Retain</code> means that if you ever delete the PVC, k3s leaves the
+data on disk rather than wiping it. And <code>volumeName</code> binds the claim to exactly the PV you made, so there is no guessing.</p>
+<p>You might ask why static <code>hostPath</code> and not the EBS CSI driver. The CSI driver is the right answer when you need dynamic
+provisioning or multi-node attach. Neither applies here. There is one node, the mount is always in the same place, and the
+volume lifecycle is handled in Terraform where I can see it. Static <code>hostPath</code> means no CSI controller, no extra IAM role
+and no moving parts. The CSI driver earns its keep on a real cluster. On one static node it is weight you do not need.</p>
+<h3 id="the-blog-on-those-pvcs">The blog on those PVCs</h3>
+<p>The app is one Deployment. The ePHPm image already carries the WordPress code, the SQLite drop-in and the binary. All it
+needs from us is a home for the two stateful directories. There is no database pod, no database Service and no database
+password, because the database is a file.</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-yaml" data-lang="yaml"><span class="line"><span class="cl"><span class="nt">apiVersion</span><span class="p">:</span><span class="w"> </span><span class="l">apps/v1</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="nt">kind</span><span class="p">:</span><span class="w"> </span><span class="l">Deployment</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="nt">metadata</span><span class="p">:</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">  </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l">blog</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="nt">spec</span><span class="p">:</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">  </span><span class="nt">replicas</span><span class="p">:</span><span class="w"> </span><span class="m">1</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">  </span><span class="nt">strategy</span><span class="p">:</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="nt">type</span><span class="p">:</span><span class="w"> </span><span class="l">Recreate</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">  </span><span class="nt">selector</span><span class="p">:</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="nt">matchLabels</span><span class="p">:</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">      </span><span class="nt">app</span><span class="p">:</span><span class="w"> </span><span class="l">blog</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">  </span><span class="nt">template</span><span class="p">:</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="nt">metadata</span><span class="p">:</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">      </span><span class="nt">labels</span><span class="p">:</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">        </span><span class="nt">app</span><span class="p">:</span><span class="w"> </span><span class="l">blog</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="nt">spec</span><span class="p">:</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">      </span><span class="nt">containers</span><span class="p">:</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">        </span>- <span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l">ephpm</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">          </span><span class="nt">image</span><span class="p">:</span><span class="w"> </span><span class="l">registry.example/ephpm-wordpress:latest</span><span class="w"> </span><span class="c"># the image you built and pushed</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">          </span><span class="nt">ports</span><span class="p">:</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">            </span>- <span class="nt">containerPort</span><span class="p">:</span><span class="w"> </span><span class="m">8080</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">          </span><span class="nt">volumeMounts</span><span class="p">:</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">            </span>- <span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l">sqlite</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">              </span><span class="nt">mountPath</span><span class="p">:</span><span class="w"> </span><span class="l">/srv/www/wp-content/database</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">            </span>- <span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l">uploads</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">              </span><span class="nt">mountPath</span><span class="p">:</span><span class="w"> </span><span class="l">/srv/www/wp-content/uploads</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">      </span><span class="nt">volumes</span><span class="p">:</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">        </span>- <span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l">sqlite</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">          </span><span class="nt">persistentVolumeClaim</span><span class="p">:</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">            </span><span class="nt">claimName</span><span class="p">:</span><span class="w"> </span><span class="l">wp-sqlite</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">        </span>- <span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l">uploads</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">          </span><span class="nt">persistentVolumeClaim</span><span class="p">:</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">            </span><span class="nt">claimName</span><span class="p">:</span><span class="w"> </span><span class="l">wp-uploads</span><span class="w">
+</span></span></span></code></pre></div><p>The SQLite drop-in keeps its database at <code>wp-content/database/.ht.sqlite</code>. WordPress keeps uploads at
+<code>wp-content/uploads</code>. Mounting a PVC over each of those two directories is the whole persistence story. The rest of the
+site, the code and plugins, stays in the image and is rebuilt from it every time. That is deliberate. Only the bytes you
+actually generate live on the volume.</p>
+<p>Note <code>strategy: Recreate</code>. The volumes are <code>ReadWriteOnce</code> and SQLite is a single writer. A rolling update would try to
+start a second pod holding the same volume, and it would wedge. <code>Recreate</code> tears the old pod down before the new one comes
+up. One replica, one writer, no fight over the disk.</p>
+<p>To reach it, put a Service on port 8080 in front of the pod. On a single k3s node a <code>LoadBalancer</code> Service through the
+built-in klipper load balancer, or a <code>NodePort</code>, sends traffic straight to the pod. There is no ingress and no reverse
+proxy here. ePHPm is the HTTP server. It terminates TLS itself through its own <code>[server.tls]</code> config, so nothing sits in
+front of it.</p>
+<h3 id="the-proof-rebuild-the-node">The proof: rebuild the node</h3>
+<p>This is the part that matters. Everything above is setup. Now we break it on purpose.</p>
+<p>First, make some state you will recognize. Open the blog, write a post, and upload an image to it. The post text lands in
+the SQLite file on <code>/data/wordpress/database</code>. The image lands on <code>/data/wordpress/uploads</code>. Both are on the data volume
+now.</p>
+<p>Start small. Kill the pod and watch it come back:</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl">kubectl delete pod -l <span class="nv">app</span><span class="o">=</span>blog
+</span></span><span class="line"><span class="cl"><span class="c1"># it reschedules, remounts the same PVCs, and the post and image are still there</span>
+</span></span></code></pre></div><p>That proves the PVCs survive a pod restart. Expected, but worth seeing. Now the real test. Replace the entire EC2
+instance:</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl">terraform apply -replace<span class="o">=</span><span class="s2">&#34;aws_instance.k3s&#34;</span>
+</span></span></code></pre></div><p>Watch what happens. Terraform destroys the old instance. Its root volume is deleted with it, exactly as designed. The data
+volume is not touched, because <code>prevent_destroy</code> guards it and <code>skip_destroy</code> kept the attachment from dragging it down. A
+new instance boots from the Terraform config. Its cloud-init runs, finds the data volume already carries a filesystem, so
+it skips the format and mounts <code>/data</code> by label. k3s comes up, the static PVs rebind to the same <code>hostPath</code> directories,
+and the pod schedules onto them.</p>
+<p><img src="/img/2026/10/durable-data-single-node-k3s-ebs-rebuild.svg" alt="A node rebuild: the root volume is disposable, the labeled EBS data volume detaches from the old node and re-attaches to the new one, so the blog’s SQLite file and uploads survive"></p>
+<p>Then open the blog again. The post is there. The image is there. You rebuilt the machine from scratch and the data did not
+notice. That is the whole payoff. A fresh instance, a fresh root volume, and the same bytes.</p>
+<h3 id="a-volume-is-not-a-backup">A volume is not a backup</h3>
+<p>Be honest about what you have and what you do not. A dedicated EBS volume survives a node rebuild. It does not survive an
+Availability Zone going away, a corrupted filesystem, or a <code>DROP TABLE</code> you ran against the wrong site. It is one copy in
+one place. Two things turn it into a real recovery story.</p>
+<p>The first is scheduled EBS snapshots through AWS Data Lifecycle Manager, matched by that <code>Backup = &quot;k3s-data&quot;</code> tag. Those
+give you point-in-time copies in S3-backed storage.</p>
+<p>The second is shipping the database itself off the box. SQLite has a clean way to do this. The <code>sqlite3 .backup</code> command
+copies a live database safely. Run it on a schedule and send the file to a bucket. Now you have something to restore from
+when the last snapshot is hours stale.</p>
+<p>Durability against node loss is the floor, not the ceiling.</p>
+<h3 id="whats-next">What&rsquo;s next</h3>
+<p>The natural follow-up is making the single node less of a single point of failure without pretending it is a cluster.
+Scheduled snapshots and an automated restore drill are the first step. After that, the honest upgrade is a second node and
+a real CSI driver. At that point the trade-offs in this post flip. The simple <code>hostPath</code> approach gives way to dynamic
+provisioning. And a single SQLite file gives way to ePHPm&rsquo;s clustered mode, which I covered in the
+<a href="/blog/2026/08/clustered-sqlite-adding-turso/">clustered SQLite series</a>. I will cover the snapshot and restore drill in a
+follow-up. For now, go rebuild a node on purpose and watch your blog not care.</p>
+<h3 id="links">Links</h3>
+<ul>
+<li><a href="/blog/2026/09/single-binary-wordpress/">Zero-Dependency Deployments: Single Binary for WordPress</a></li>
+<li><a href="https://docs.k3s.io/storage">k3s local-path storage</a></li>
+<li><a href="https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/ebs_volume">aws_ebs_volume (Terraform)</a></li>
+<li><a href="https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/volume_attachment">aws_volume_attachment skip_destroy</a></li>
+<li><a href="https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/device_naming.html">Device names on Nitro instances</a></li>
+<li><a href="https://docs.aws.amazon.com/ebs/latest/userguide/snapshot-lifecycle.html">AWS Data Lifecycle Manager</a></li>
+</ul>
+
+      </div>
+      <footer>
+        <div class="stats">
+  
+    <ul class="categories">
+      
+        
+          <li><a class="article-terms-link" href="/categories/containers/">containers</a></li>
+        
+          <li><a class="article-terms-link" href="/categories/ephpm/">ephpm</a></li>
+        
+      
+    </ul>
+  
+  
+    <ul class="tags">
+      
+        
+          <li><a class="article-terms-link" href="/tags/kubernetes/">kubernetes</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/k3s/">k3s</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/aws/">aws</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/ebs/">ebs</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/terraform/">terraform</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/ephpm/">ephpm</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/wordpress/">wordpress</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/sqlite/">sqlite</a></li>
+        
+      
+    </ul>
+  
+</div>
+
+      </footer>
+    </div>
+    
+      
+  
+  <div class='post giscus-wrap'>
+    <script src='https://giscus.app/client.js'
+            data-repo='luthermonson/luth.io'
+            data-repo-id='R_kgDOGvFBXQ'
+            data-category='Announcements'
+            data-category-id='DIC_kwDOGvFBXc4DH_gv'
+            data-mapping='pathname'
+            data-strict='1'
+            data-reactions-enabled='1'
+            data-emit-metadata='0'
+            data-input-position='top'
+            data-theme='light'
+            data-lang='en'
+            data-loading='lazy'
+            crossorigin='anonymous'
+            async>
+    </script>
+  </div>
+  
+
+
+
+    
+  </article>
+  
+    <nav class="post-nav">
+      
+        <a href="/blog/2026/10/docker-in-docker-without-root/" class="post-nav-link older">
+          <span class="post-nav-label">&larr; Older</span>
+          <span class="post-nav-title">Docker-in-Docker in CI Without Handing Jobs Root</span>
+        </a>
+      
+      
+    </nav>
+  
+
+      </main>
+      <section id="site-sidebar">
+  
+    <section id="recent-posts">
+      <header>
+        <h1>Recent Posts</h1>
+      </header>
+      
+      <article class="mini-post">
+          <a href="/blog/2026/10/durable-data-single-node-k3s-ebs-rebuild/" class="image" style="--bg-image: url('/img/2026/10/durable-data-single-node-k3s-ebs-rebuild.svg');">
+    <img class="" src="/img/2026/10/durable-data-single-node-k3s-ebs-rebuild.svg" alt="A node rebuild: Node A is replaced by Node B, each root EBS volume is disposable, and the separate labeled EBS data volume detaches from the old node and re-attaches to the new one so the ePHPm blog&#39;s SQLite file and uploads survive">
+  </a>
+        <header>
+          <h2><a href="/blog/2026/10/durable-data-single-node-k3s-ebs-rebuild/">Surviving a Node Rebuild: A Durable ePHPm Blog on Single-Node k3s</a></h2>
+          <time class="published" datetime="2026-10-28 10:00:00 -0700 PDT">October 28, 2026</time>
+        </header>
+      </article>
+      
+      <article class="mini-post">
+          <a href="/blog/2026/10/docker-in-docker-without-root/" class="image" style="--bg-image: url('/img/2026/10/docker-in-docker-without-root-cracks.svg');">
+    <img class="" src="/img/2026/10/docker-in-docker-without-root-cracks.svg" alt="Four dind sandbox cracks and the ephemerd PR that closed each one">
+  </a>
+        <header>
+          <h2><a href="/blog/2026/10/docker-in-docker-without-root/">Docker-in-Docker in CI Without Handing Jobs Root</a></h2>
+          <time class="published" datetime="2026-10-24 10:00:00 -0700 PDT">October 24, 2026</time>
+        </header>
+      </article>
+      
+      <article class="mini-post">
+          <a href="/blog/2026/10/ci-cache-proxies-ephemeral-runners/" class="image" style="--bg-image: url('/img/2026/10/ci-cache-proxies-ephemeral-runners-flow.svg');">
+    <img class="" src="/img/2026/10/ci-cache-proxies-ephemeral-runners-flow.svg" alt="A fresh runner per job points go mod, cargo, composer, release downloads and actions/cache at matching cache proxies on the ephemerd node, where the caches persist and only reach the internet on a miss">
+  </a>
+        <header>
+          <h2><a href="/blog/2026/10/ci-cache-proxies-ephemeral-runners/">Cache Proxies for Ephemeral CI Runners</a></h2>
+          <time class="published" datetime="2026-10-23 15:00:00 -0700 PDT">October 23, 2026</time>
+        </header>
+      </article>
+      
+      <article class="mini-post">
+          <a href="/blog/2026/10/ephemeral-macos-runners-vm-clones/" class="image" style="--bg-image: url('/img/2026/10/ephemeral-macos-runners-vm-clones-lifecycle.svg');">
+    <img class="" src="/img/2026/10/ephemeral-macos-runners-vm-clones-lifecycle.svg" alt="A macOS CI job lifecycle: clone the base image, boot and grow the disk, set up over SSH, run the job, then stop and sweep, with a band showing the single slot held the whole time">
+  </a>
+        <header>
+          <h2><a href="/blog/2026/10/ephemeral-macos-runners-vm-clones/">Ephemeral macOS Runners: A Fresh VM Per Job on Apple Silicon</a></h2>
+          <time class="published" datetime="2026-10-23 11:00:00 -0700 PDT">October 23, 2026</time>
+        </header>
+      </article>
+      
+      <article class="mini-post">
+          <a href="/blog/2026/10/turso-page1-allocation-race/" class="image" style="--bg-image: url('/img/2026/10/turso-page1-allocation-race-races.svg');">
+    <img class="" src="/img/2026/10/turso-page1-allocation-race-races.svg" alt="Sequence diagram of two connections and init_lock: in race 1, B checks for an empty file, A publishes page 1 and releases the lock, then B takes the lock and panics on its assert; in race 2, A&#39;s lock is dropped while page 1 is being written, so B takes it and writes page 1 again">
+  </a>
+        <header>
+          <h2><a href="/blog/2026/10/turso-page1-allocation-race/">Thirty-Two Connections and an Empty File: A Race in Turso&#39;s Page-1 Allocation</a></h2>
+          <time class="published" datetime="2026-10-18 14:30:00 -0700 PDT">October 18, 2026</time>
+        </header>
+      </article>
+      
+      
+        <footer>
+          <a href="/blog" class="button">See More</a>
+        </footer>
+      
+    </section>
+  
+
+  
+    
+
+      <section id="categories">
+        <header>
+          <h1><a href="/categories">Categories</a></h1>
+        </header>
+        <ul>
+          
+          
+          <li>
+              <a href="/categories/ephpm/">ephpm<span class="count">38</span></a>
+          
+          <li>
+              <a href="/categories/go/">go<span class="count">32</span></a>
+          
+          <li>
+              <a href="/categories/php/">php<span class="count">26</span></a>
+          
+          <li>
+              <a href="/categories/rust/">rust<span class="count">17</span></a>
+          
+          <li>
+              <a href="/categories/homelab/">homelab<span class="count">14</span></a>
+          
+          <li>
+              <a href="/categories/windows/">windows<span class="count">14</span></a>
+          
+          <li>
+              <a href="/categories/ci/">ci<span class="count">12</span></a>
+          
+          <li>
+              <a href="/categories/containers/">containers<span class="count">10</span></a>
+          
+          <li>
+              <a href="/categories/databases/">databases<span class="count">10</span></a>
+          
+          <li>
+              <a href="/categories/security/">security<span class="count">10</span></a>
+          
+          <li>
+              <a href="/categories/ephemerd/">ephemerd<span class="count">9</span></a>
+          
+          <li>
+              <a href="/categories/tools/">tools<span class="count">5</span></a>
+          
+          <li>
+              <a href="/categories/ai-agents/">ai-agents<span class="count">4</span></a>
+          
+          </li>
+        </ul>
+      </section>
+    
+  
+
+  
+    <section id="mini-bio">
+      <header>
+        <h1>About</h1>
+      </header>
+      <p>Luther is a 20+ year software veteran specializing in backend APIs and architecting products. Employed at <a href='https://www.suse.com'>SUSE</a> as the Team Lead for the <a href='https://github.com/rancher/windows/issues'>Containers on Windows Team</a> working on <a href='https://rancher.com/'>Rancher</a> + <a href='https://kubernetes.io/'>Kubernetes</a></p>
+      <footer>
+        <a href="/about" class="button">Learn More</a>
+      </footer>
+    </section>
+  
+</section>
+
+      <footer id="site-footer">
+  
+      <ul class="socnet-icons">
+        
+
+        <li><a href="//github.com/luthermonson" target="_blank" rel="noopener" title="GitHub" class="fab fa-github"></a></li>
+
+
+
+
+
+
+
+
+
+
+
+<li><a href="//www.linkedin.com/in/luthermonson" target="_blank" rel="noopener" title="LinkedIn" class="fab fa-linkedin"></a></li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li><a href="//twitter.com/luthermonson" target="_blank" rel="noopener" title="Twitter" class="fab fa-twitter"></a></li>
+
+
+
+
+
+
+
+
+
+
+
+<li><a href="mailto:luther.monson@gmail.com" target="_blank" title="Email" class="far fa-envelope"></a></li>
+
+      </ul>
+  
+  <p class="copyright">
+    © 2026 Luther Monson
+      <br>
+    Theme: <a href='https://github.com/pacollins/hugo-future-imperfect-slim' target='_blank' rel='noopener'>Hugo Future Imperfect Slim</a><br>A <a href='https://html5up.net/future-imperfect' target='_blank' rel='noopener'>HTML5 UP port</a> | Powered by <a href='https://gohugo.io/' title='0.160.1' target='_blank' rel='noopener'>Hugo</a>
+  </p>
+</footer>
+<a id="back-to-top" href="#" class="fas fa-arrow-up fa-2x"></a>
+
+      <script src="/js/bundle.min.241b62ebc4792fe8c7a75879e5f710894f226f2b73342e9916b3a3b0526030cc.js" integrity="sha256-JBti68R5L&#43;jHp1h55fcQiU8ibytzNC6ZFrOjsFJgMMw="></script>
+    <script src="/js/add-on.js"></script>
+    </div>
+  </body>
+</html>

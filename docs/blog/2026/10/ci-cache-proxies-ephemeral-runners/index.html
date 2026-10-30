@@ -1,0 +1,685 @@
+<!doctype html>
+<html lang="en">
+  <head>
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-MSTSKGFWTX"></script>
+<script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+
+    gtag('config', 'G-MSTSKGFWTX');
+</script><meta charset="utf-8">
+<title>Cache Proxies for Ephemeral CI Runners - Luther Monson</title>
+<meta name="description" content="A fresh runner per job starts with an empty cache. Here is how ephemerd caches Go modules, Packagist, GitHub releases and the Actions cache on the node instead of re-downloading them every job.">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<meta name="twitter:card" content="summary_large_image"><meta name="twitter:site" content="@luthermonson">
+
+<meta property="og:site_name" content="Luther Monson">
+<meta property="og:title" content="Cache Proxies for Ephemeral CI Runners">
+<meta property="og:description" content="A fresh runner per job starts with an empty cache. Here is how ephemerd caches Go modules, Packagist, GitHub releases and the Actions cache on the node instead of re-downloading them every job.">
+<meta property="og:type" content="article">
+<meta property="og:url" content="https://luth.io/blog/2026/10/ci-cache-proxies-ephemeral-runners/">
+    <meta property="og:image" content="https://luth.io/img/2026/10/ci-cache-proxies-ephemeral-runners-flow.svg">
+    <meta property="og:image:alt" content="A fresh runner per job points go mod, cargo, composer, release downloads and actions/cache at matching cache proxies on the ephemerd node, where the caches persist and only reach the internet on a miss">
+
+
+  <link rel="manifest" href="/favicon/site.webmanifest?v=1">
+  <link rel="apple-touch-icon" sizes="180x180" href="/favicon/apple-touch-icon.png?v=1">
+  <link rel="icon" type="image/png" sizes="32x32" href="/favicon/favicon-32x32.png?v=1">
+  <link rel="icon" type="image/png" sizes="16x16" href="/favicon/favicon-16x16.png?v=1">
+  
+    <link rel="mask-icon" href="/favicon/safari-pinned-tab.svg?v=1" color="#ffffff">
+    <link rel="shortcut icon" href="/favicon/favicon.ico?v=1">
+    <meta name="msapplication-config" content="/favicon/browserconfig.xml?v=1">
+  
+  <meta name="msapplication-TileColor" content="#ffffff">
+  <meta name="theme-color" content="#ffffff">
+
+
+  <meta name="generator" content="Hugo 0.160.1">
+  <link rel="alternate" type="application/rss+xml" href="https://luth.io/index.xml" title="Luther Monson">
+  <link rel="stylesheet" href="/css/bundle.min.e1ffed86714fbb7eff75eab221c0c61b8260be0c7d1c08db0fcb7a2bdb6af7c9.css" integrity="sha256-4f/thnFPu37/deqyIcDGG4Jgvgx9HAjbD8t6K9tq98k="><link rel="stylesheet" href="/css/add-on.css">
+        <link rel="stylesheet" href="/css/code.css">
+        <link rel="stylesheet" href="/css/mobile.css">
+</head>
+
+  <body>
+    
+
+<header id="site-header">
+  <nav id="site-nav">
+    <h1 class="nav-title">
+      <a href="/" class="nav">
+        <img class="nav-avatar" src="/img/luther-monson-headshot.jpg" alt="" width="32" height="32">
+        
+          Blog
+        
+      </a>
+    </h1>
+    <menu id="site-nav-menu" class="flyout-menu menu">
+      
+        
+          
+          <a href="/" class="nav link"><i class='fa fa-home'></i> Home</a>
+        
+      
+        
+          
+          <a href="/about" class="nav link"><i class='far fa-id-card'></i> About</a>
+        
+      
+        
+          
+          <a href="/blog" class="nav link"><i class='far fa-newspaper'></i> Blog</a>
+        
+      
+        
+          
+          <a href="/archive" class="nav link"><i class='far fa-calendar-alt'></i> Archive</a>
+        
+      
+        
+          
+          <a href="/categories" class="nav link"><i class='fas fa-sitemap'></i> Categories</a>
+        
+      
+      <a href="#share-menu" class="nav link share-toggle"><i class="fas fa-share-alt">&nbsp;</i>Share</a>
+      <a href="#search-input" class="nav link search-toggle"><i class="fas fa-search">&nbsp;</i>Search</a>
+    </menu>
+    <a href="#search-input" class="nav search-toggle"><i class="fas fa-search fa-2x">&nbsp;</i></a>
+    <a href="#share-menu" class="nav share-toggle"><i class="fas fa-share-alt fa-2x">&nbsp;</i></a>
+    
+    <a href="#site-nav" class="nav nav-toggle"><i class="fas fa-bars fa-2x"></i></a>
+  </nav>
+  <menu id="search" class="menu"><input id="search-input" class="search-input menu"></input><div id="search-results" class="search-results menu"></div></menu>
+  
+  
+    <menu id="share-menu" class="flyout-menu menu">
+      <h1>Share Post</h1>
+      
+
+
+
+
+  
+    
+    <a href="//twitter.com/share?text=Cache%20Proxies%20for%20Ephemeral%20CI%20Runners&amp;url=https%3a%2f%2fluth.io%2fblog%2f2026%2f10%2fci-cache-proxies-ephemeral-runners%2f" target="_blank" rel="noopener" class="nav share-btn twitter">
+        <p>Twitter</p>
+      </a>
+  
+
+  
+      <a href="//www.facebook.com/sharer/sharer.php?u=https%3a%2f%2fluth.io%2fblog%2f2026%2f10%2fci-cache-proxies-ephemeral-runners%2f" target="_blank" rel="noopener" class="nav share-btn facebook">
+        <p>Facebook</p>
+        </a>
+  
+
+  
+    <a href="//www.reddit.com/submit?url=https%3a%2f%2fluth.io%2fblog%2f2026%2f10%2fci-cache-proxies-ephemeral-runners%2f&amp;title=Cache%20Proxies%20for%20Ephemeral%20CI%20Runners" target="_blank" rel="noopener" class="nav share-btn reddit">
+          <p>Reddit</p>
+        </a>
+  
+
+  
+        <a href="//www.linkedin.com/shareArticle?url=https%3a%2f%2fluth.io%2fblog%2f2026%2f10%2fci-cache-proxies-ephemeral-runners%2f&amp;title=Cache%20Proxies%20for%20Ephemeral%20CI%20Runners" target="_blank" rel="noopener" class="nav share-btn linkedin">
+            <p>LinkedIn</p>
+          </a>
+  
+
+  
+        <a href="//www.pinterest.com/pin/create/button/?url=https%3a%2f%2fluth.io%2fblog%2f2026%2f10%2fci-cache-proxies-ephemeral-runners%2f&amp;description=Cache%20Proxies%20for%20Ephemeral%20CI%20Runners" target="_blank" rel="noopener" class="nav share-btn pinterest">
+          <p>Pinterest</p>
+        </a>
+  
+
+  
+        <a href="mailto:?subject=Check%20out%20this%20post%20by Luther%20Monson&amp;body=https%3a%2f%2fluth.io%2fblog%2f2026%2f10%2fci-cache-proxies-ephemeral-runners%2f" target="_blank" class="nav share-btn email" data-proofer-ignore>
+          <p>Email</p>
+        </a>
+  
+
+
+    </menu>
+  
+</header>
+
+    <div id="wrapper">
+      <section id="site-intro" class="hidden-single-column">
+  <a href="/"><img src="/img/luther-monson-headshot.jpg" class="circle" width="100" alt="Luther Monson, Staff Software Engineer at SUSE" /></a>
+  <header>
+    <h1>Luther Monson</h1>
+  </header>
+  <main>
+    <p>Go by way of PHP &middot; Containers &middot; VMs &middot; Windows &middot; Kubernetes</p>
+  </main>
+  
+    <footer>
+      <ul class="socnet-icons">
+        
+
+        <li><a href="//github.com/luthermonson" target="_blank" rel="noopener" title="GitHub" class="fab fa-github"></a></li>
+
+
+
+
+
+
+
+
+
+
+
+<li><a href="//www.linkedin.com/in/luthermonson" target="_blank" rel="noopener" title="LinkedIn" class="fab fa-linkedin"></a></li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li><a href="//twitter.com/luthermonson" target="_blank" rel="noopener" title="Twitter" class="fab fa-twitter"></a></li>
+
+
+
+
+
+
+
+
+
+
+
+<li><a href="mailto:luther.monson@gmail.com" target="_blank" title="Email" class="far fa-envelope"></a></li>
+
+      </ul>
+    </footer>
+  
+</section>
+
+      <main id="site-main">
+        
+  <article>
+    <div class="post">
+      <header>
+  <div class="title">
+    
+      <h2><a href="/blog/2026/10/ci-cache-proxies-ephemeral-runners/">Cache Proxies for Ephemeral CI Runners</a></h2>
+    
+    
+      <p>A fresh runner per job starts with an empty cache. Here is how ephemerd caches Go modules, Packagist, GitHub releases and the Actions cache on the node instead of re-downloading them every job.</p>
+    
+  </div>
+  <div class="meta">
+    <time datetime="2026-10-23 15:00:00 -0700 PDT">October 23, 2026</time>
+    
+    <p>10-Minute Read</p>
+  </div>
+</header>
+
+      <div id="socnet-share">
+        
+
+
+
+
+  
+    
+    <a href="//twitter.com/share?text=Cache%20Proxies%20for%20Ephemeral%20CI%20Runners&amp;url=https%3a%2f%2fluth.io%2fblog%2f2026%2f10%2fci-cache-proxies-ephemeral-runners%2f" target="_blank" rel="noopener" class="nav share-btn twitter">
+        <p>Twitter</p>
+      </a>
+  
+
+  
+      <a href="//www.facebook.com/sharer/sharer.php?u=https%3a%2f%2fluth.io%2fblog%2f2026%2f10%2fci-cache-proxies-ephemeral-runners%2f" target="_blank" rel="noopener" class="nav share-btn facebook">
+        <p>Facebook</p>
+        </a>
+  
+
+  
+    <a href="//www.reddit.com/submit?url=https%3a%2f%2fluth.io%2fblog%2f2026%2f10%2fci-cache-proxies-ephemeral-runners%2f&amp;title=Cache%20Proxies%20for%20Ephemeral%20CI%20Runners" target="_blank" rel="noopener" class="nav share-btn reddit">
+          <p>Reddit</p>
+        </a>
+  
+
+  
+        <a href="//www.linkedin.com/shareArticle?url=https%3a%2f%2fluth.io%2fblog%2f2026%2f10%2fci-cache-proxies-ephemeral-runners%2f&amp;title=Cache%20Proxies%20for%20Ephemeral%20CI%20Runners" target="_blank" rel="noopener" class="nav share-btn linkedin">
+            <p>LinkedIn</p>
+          </a>
+  
+
+  
+        <a href="//www.pinterest.com/pin/create/button/?url=https%3a%2f%2fluth.io%2fblog%2f2026%2f10%2fci-cache-proxies-ephemeral-runners%2f&amp;description=Cache%20Proxies%20for%20Ephemeral%20CI%20Runners" target="_blank" rel="noopener" class="nav share-btn pinterest">
+          <p>Pinterest</p>
+        </a>
+  
+
+  
+        <a href="mailto:?subject=Check%20out%20this%20post%20by Luther%20Monson&amp;body=https%3a%2f%2fluth.io%2fblog%2f2026%2f10%2fci-cache-proxies-ephemeral-runners%2f" target="_blank" class="nav share-btn email" data-proofer-ignore>
+          <p>Email</p>
+        </a>
+  
+
+
+      </div>
+      <div class="content">
+        
+        <p><a href="/blog/2026/08/ephemerd-one-daemon-every-os/">ephemerd</a> gives every CI job a brand new runner. A new container on
+Linux, a new VM on macOS and Windows. The job runs, the runner is thrown away, and the next job starts from a clean
+image. That is the whole point. Nothing a job does can leak into the next one.</p>
+<p>Clean has a cost. A fresh runner has an empty cache. So every job downloads the world again. Go modules, crates, the
+Rust toolchain, Composer packages, release tarballs. On a busy repo that is gigabytes a day, pulled over and over,
+most of it byte-for-byte identical to what the last job pulled.</p>
+<p>The fix is to put the cache somewhere the job can&rsquo;t throw away. That means the node. ephemerd runs a set of cache
+proxies on the host. The caches outlive every job. The job only has to be told where to look.</p>
+<p><img src="/img/2026/10/ci-cache-proxies-ephemeral-runners-flow.svg" alt="A fresh runner per job points go mod, cargo, composer, release downloads and actions/cache at matching cache proxies on the ephemerd node. The caches persist on the node and only reach the internet on a miss."></p>
+<h3 id="how-the-proxies-reach-a-job">How the proxies reach a job</h3>
+<p>Each proxy is a small HTTP server bound to the node. It speaks the protocol one package tool already expects. The Go
+module proxy speaks the <code>GOPROXY</code> protocol. The Packagist proxy speaks the Composer repository protocol. And so on.</p>
+<p>ephemerd does not intercept traffic transparently. It sets an environment variable in the job that points the tool at
+the proxy. <code>GOPROXY</code> for Go. <code>CARGO_*</code> and <code>RUSTUP_DIST_SERVER</code> for Rust. <code>COMPOSER_REPO_PACKAGIST</code> for Composer. The
+tool opts in because its own config tells it to. Unset the variable and the job goes straight upstream, exactly as it
+would on a GitHub-hosted runner or a laptop. That matters. It keeps a build correct in places where the proxy does not
+exist.</p>
+<h3 id="the-surprise-was-which-ecosystems-cost-the-most">The surprise was which ecosystems cost the most</h3>
+<p>Before adding more proxies I wanted to know what actually burned bandwidth. An inventory of the org&rsquo;s workflows
+(<a href="https://github.com/ephpm/ephemerd/pull/202">PR #202</a>) found the answer was not where the caches were.</p>
+<p><img src="/img/2026/10/ci-cache-proxies-ephemeral-runners-inventory.svg" alt="Bar chart of workflow files per ecosystem. cargo build 39 with its proxy switched off, composer install 22 with no cache, releases download 19 with no cache, rust-toolchain 11 via the cargo proxy, and go mod download 4, the only one that already had a cache."></p>
+<p>Go modules had a working cache. It was also the smallest consumer, at 4 workflow files. The cargo proxy existed but
+was switched off, across 39 files. Composer had no cache at all, across 22 files. GitHub release downloads had no
+cache, across 19 files. On one real build of our PHP SDK, 40 of the fetched artifacts were cacheable source. They
+accounted for 87 seconds of a 591 second build.</p>
+<p>So PR #202 added two proxies. One for Packagist, one for GitHub release assets. It shipped in <strong>v0.2.14</strong>.</p>
+<h3 id="github-releases-have-no-registry">GitHub releases have no registry</h3>
+<p>A release download is a plain <code>github.com</code> URL. There is no registry in front of it and no <code>GOPROXY</code>-style redirect
+to hook. The URL is baked into whatever tool fetches it.</p>
+<p>I did not want to intercept it transparently. Doing that means terminating TLS for job containers. That means a CA in
+every image and a real change to what untrusted job code is exposed to. So the release proxy advertises a
+<code>GHREL_PROXY</code> variable and lets tools opt in. Unset, every release download goes upstream unchanged.</p>
+<p>There is one trap here. GitHub lets you delete an asset and re-upload a different one under the same URL. A plain
+&ldquo;cache forever&rdquo; would serve the old bytes. The proxy caches release metadata with a TTL and revalidates a stale entry
+with a conditional GET before serving it.</p>
+<p>That revalidation exposed a latent bug worth calling out. The internal <code>ServeArtifact</code> helper served any cached entry
+unconditionally. It never consulted the TTL. That was fine for npm, PyPI and pub. Those registries
+never re-publish a file. Their proxies mark entries immutable. GitHub does not. PR #202 made <code>ServeArtifact</code> honour the
+TTL, gated so the immutable callers are untouched.</p>
+<h3 id="packagist-is-almost-all-immutable">Packagist is almost all immutable</h3>
+<p>Composer splits into metadata and distribution archives. The metadata changes. The dist URLs name an exact commit, so
+they are genuinely immutable. The proxy fronts the metadata with a TTL and caches dist archives permanently.</p>
+<p>The archive route re-checks the host allowlist on every request. Without that check a job could hand the proxy an
+arbitrary URL and use ephemerd as an open proxy on the LAN. The check keeps it closed.</p>
+<h3 id="the-cache-was-healthy-and-nobody-could-reach-it">The cache was healthy and nobody could reach it</h3>
+<p>Here is where it got humbling. The proxies worked. The caches stayed at zero bytes anyway. It took three fixes to
+understand why, and all three were the same mistake wearing different clothes.</p>
+<p>Every proxy advertised the address it was asked to bind. That address is the CNI bridge gateway. It is correct only
+where job containers share the host&rsquo;s bridge, which is Linux. On a macOS or Windows host the job runs inside a VM. From
+in there, that gateway is the VM&rsquo;s own bridge, where nothing listens. The proxies are out on the host.</p>
+<p><a href="https://github.com/ephpm/ephemerd/pull/208">PR #208</a> taught the proxies to rewrite the advertised address per
+platform. On Linux the bridge gateway is right, so it is left alone. On macOS the daemon finds the host&rsquo;s address on
+the guest NAT and rewrites the env to it. Then it probes every advertised address. If any probe fails, it advertises
+nothing. On Windows it still advertises nothing. An unreachable <code>GOPROXY</code> hangs a Windows build rather than failing over, so
+that stays suppressed until the host address is confirmed on metal. It shipped in <strong>v0.2.17</strong>.</p>
+<p>Minutes after rolling v0.2.17 I read the env on a live M1 Mac mini node. Three of the four variables were correct. Go
+was still pointing at an address that does not exist. <code>GOPROXY</code> is not a URL. It is a fallback list. Go accepts
+elements separated by a comma or a pipe, mixed with the literals <code>direct</code> and <code>off</code>. Production emits something like
+<code>http://…|direct</code>. Parsing that whole string as a URL yields no usable host, so the single-URL rewrite passed it
+straight through.</p>
+<p><a href="https://github.com/ephpm/ephemerd/pull/209">PR #209</a> rewrites each element of the list and leaves the literals alone.
+The old test used a fixture I had invented, <code>GOPROXY=http://host:port</code>, which hid the bug. The new fixture is copied
+verbatim off a real node, with a comment telling the next person not to tidy it. It shipped the same evening, in the
+<strong>v0.2.18 through v0.2.20</strong> run of releases.</p>
+<p>Even then the Mac&rsquo;s caches stayed empty. The macOS Mac mini was pulling on the order of 130 GB a day. The reason was
+the third version of the same mistake. Cache-proxy env was only ever applied to containers. A macOS VM job has no
+container. Its runner is started over SSH inside a fresh macOS VM, and nothing passed it any proxy env. Every job on
+that Mac fetched straight from the internet.</p>
+<p><a href="https://github.com/ephpm/ephemerd/pull/211">PR #211</a> threads the env into the VM through the runner&rsquo;s <code>.env</code> file. The
+GitHub runner loads that file into every job. Before the runner starts, one bounded SSH command probes every proxy
+address from inside the guest. It stages the env only if all of them answer. Any failure leaves nothing staged, and the
+job runs exactly as before, just uncached. The all-or-nothing matters. Go falls back on <code>direct</code>. Cargo and rustup do
+not fall back on an unreachable proxy. So a partial env could fail a build that would otherwise pass.</p>
+<h3 id="two-fixes-from-a-week-of-logs">Two fixes from a week of logs</h3>
+<p>A performance review of seven days of CI logs turned up two more problems. <a href="https://github.com/ephpm/ephemerd/pull/214">PR
+#214</a> fixed both. It shipped in <strong>v0.2.21</strong>.</p>
+<p>The per-repo image cache for Docker-in-Docker never engaged on webhook-dispatched jobs. The main dispatch path built
+its config without the provider and repo, so the cache namespace came out empty and the image cache was skipped. On one
+node <code>mysql:8.0</code> was pulled 78 times in three days, at 7 to 45 seconds per database job. The fix passes the event&rsquo;s
+provider and repo through.</p>
+<p>The other was uglier. Cargo git dependencies bypass the crate cache, and libgit2 does not bound a silent TLS
+connection. In one job a git dependency stalled for 13 minutes, then another 5.5, before failing with an SSL syscall
+error. Both container configs now set <code>net.git-fetch-with-cli = true</code>. The proxy exports a low-speed limit and a 30
+second window, so git drops a stalled transfer after 30 seconds and cargo&rsquo;s retry reconnects. Windows containers are
+excluded, because their images ship no git.</p>
+<h3 id="a-lan-cache-for-actionscache">A LAN cache for actions/cache</h3>
+<p>The last piece is the biggest. It is also the one I am most careful about. <a href="https://github.com/ephpm/ephemerd/pull/217">PR
+#217</a> serves GitHub Actions&rsquo; own cache service from the node. That is the
+service <code>actions/cache</code>, <code>Swatinem/rust-cache</code> and the caching <code>setup-*</code> actions talk to. Entries are stored in a
+writable OCI registry on the LAN. The baseline from the design work: 26% of a Rust job&rsquo;s time went to moving cache
+archives over the WAN, and those archives run 0.4 to 1.6 GB.</p>
+<p>Three parts of this were harder than they looked.</p>
+<p>The Actions toolkit builds its request URLs in a way that discards the path, so a per-job secret in the URL does not
+survive. Requests are attributed by source address instead, reusing the per-job network membership ephemerd already
+tracks. The signed upload and download URLs still carry an unguessable token, so the attribution is a second gate, not
+the only one.</p>
+<p>The cache scope cannot come from the job a runner was dispatched for. JIT runners are fungible. A runner started for a
+<code>main</code> push can be handed a fork PR. So a runner is tracked at create, where every lookup misses and every save is
+refused, and bound only when GitHub reports the job as in progress. Nothing a PR saves is ever visible to a branch. A
+fork whose branch is named <code>main</code> cannot write the <code>main</code> cache, and there is a test for exactly that.</p>
+<p>Every failure is a cache miss, never an error. The server answers &ldquo;not found&rdquo; in three cases:</p>
+<ul>
+<li>the registry is down</li>
+<li>the runner isn&rsquo;t bound to a repo yet</li>
+<li>the entry is missing</li>
+</ul>
+<p>The client treats each as a miss or a refused save. The server never returns a 5xx, because the client would retry
+that five times and then log an error. If the runner patch can&rsquo;t be applied, the job just uses GitHub&rsquo;s cache.</p>
+<p>This one is <strong>off by default</strong>. With the <code>[actions_cache]</code> config block absent, nothing about a job changes. It is also
+<strong>merged but not in a release yet</strong>. The latest tag as I write this is v0.2.22, which was cut a couple of hours before
+PR #217 landed. And it needs the other half, on the mayfly side, to
+provision the writable registry before it can be switched on. It is Linux only. I have driven the wire format with Go
+tests against a fake registry. I have not yet run the real Node client or the Azure SDK against it. The first job on
+metal is that test.</p>
+<h3 id="whats-next">What&rsquo;s next</h3>
+<p>The macOS fixes recovered Go modules, cargo, rustup, release assets and Packagist on the Mac. What they did not recover
+is Homebrew, Xcode and the macOS system downloads, which may be most of that daily pull. I would rather measure what the
+node actually fetches than guess at a proxy for it.</p>
+<p>The LAN Actions cache needs its first real client. Once the registry is provisioned I roll it to one node. I will watch
+whether the Azure SDK accepts the registry&rsquo;s responses. Then I compare against the baseline before it goes any wider.</p>
+<h3 id="links">Links</h3>
+<ul>
+<li><a href="https://github.com/ephpm/ephemerd/pull/202">PR #202 — cache GitHub release artifacts and Packagist</a></li>
+<li><a href="https://github.com/ephpm/ephemerd/pull/208">PR #208 — advertise an address jobs can actually reach</a></li>
+<li><a href="https://github.com/ephpm/ephemerd/pull/209">PR #209 — rewrite GOPROXY&rsquo;s fallback list</a></li>
+<li><a href="https://github.com/ephpm/ephemerd/pull/211">PR #211 — give macOS VM jobs the cache proxies</a></li>
+<li><a href="https://github.com/ephpm/ephemerd/pull/214">PR #214 — dind image cache on webhook jobs; bound stalled cargo git fetches</a></li>
+<li><a href="https://github.com/ephpm/ephemerd/pull/217">PR #217 — LAN GitHub Actions cache backed by a writable registry</a></li>
+<li><a href="/blog/2026/08/ephemerd-one-daemon-every-os/">ephemerd: one daemon, a fresh runner per job, every OS</a></li>
+<li><a href="/blog/2026/09/kata-containers-for-ci/">Kata Containers for CI: boot cost isn&rsquo;t the problem, file I/O is</a></li>
+</ul>
+
+      </div>
+      <footer>
+        <div class="stats">
+  
+    <ul class="categories">
+      
+        
+          <li><a class="article-terms-link" href="/categories/ephemerd/">ephemerd</a></li>
+        
+          <li><a class="article-terms-link" href="/categories/ci/">ci</a></li>
+        
+          <li><a class="article-terms-link" href="/categories/go/">go</a></li>
+        
+          <li><a class="article-terms-link" href="/categories/containers/">containers</a></li>
+        
+      
+    </ul>
+  
+  
+    <ul class="tags">
+      
+        
+          <li><a class="article-terms-link" href="/tags/go/">go</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/github-actions/">github-actions</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/ci/">ci</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/caching/">caching</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/ephemerd/">ephemerd</a></li>
+        
+      
+    </ul>
+  
+</div>
+
+      </footer>
+    </div>
+    
+      
+  
+  <div class='post giscus-wrap'>
+    <script src='https://giscus.app/client.js'
+            data-repo='luthermonson/luth.io'
+            data-repo-id='R_kgDOGvFBXQ'
+            data-category='Announcements'
+            data-category-id='DIC_kwDOGvFBXc4DH_gv'
+            data-mapping='pathname'
+            data-strict='1'
+            data-reactions-enabled='1'
+            data-emit-metadata='0'
+            data-input-position='top'
+            data-theme='light'
+            data-lang='en'
+            data-loading='lazy'
+            crossorigin='anonymous'
+            async>
+    </script>
+  </div>
+  
+
+
+
+    
+  </article>
+  
+    <nav class="post-nav">
+      
+        <a href="/blog/2026/10/ephemeral-macos-runners-vm-clones/" class="post-nav-link older">
+          <span class="post-nav-label">&larr; Older</span>
+          <span class="post-nav-title">Ephemeral macOS Runners: A Fresh VM Per Job on Apple Silicon</span>
+        </a>
+      
+      
+        <a href="/blog/2026/10/docker-in-docker-without-root/" class="post-nav-link newer">
+          <span class="post-nav-label">Newer &rarr;</span>
+          <span class="post-nav-title">Docker-in-Docker in CI Without Handing Jobs Root</span>
+        </a>
+      
+    </nav>
+  
+
+      </main>
+      <section id="site-sidebar">
+  
+    <section id="recent-posts">
+      <header>
+        <h1>Recent Posts</h1>
+      </header>
+      
+      <article class="mini-post">
+          <a href="/blog/2026/10/durable-data-single-node-k3s-ebs-rebuild/" class="image" style="--bg-image: url('/img/2026/10/durable-data-single-node-k3s-ebs-rebuild.svg');">
+    <img class="" src="/img/2026/10/durable-data-single-node-k3s-ebs-rebuild.svg" alt="A node rebuild: Node A is replaced by Node B, each root EBS volume is disposable, and the separate labeled EBS data volume detaches from the old node and re-attaches to the new one so the ePHPm blog&#39;s SQLite file and uploads survive">
+  </a>
+        <header>
+          <h2><a href="/blog/2026/10/durable-data-single-node-k3s-ebs-rebuild/">Surviving a Node Rebuild: A Durable ePHPm Blog on Single-Node k3s</a></h2>
+          <time class="published" datetime="2026-10-28 10:00:00 -0700 PDT">October 28, 2026</time>
+        </header>
+      </article>
+      
+      <article class="mini-post">
+          <a href="/blog/2026/10/docker-in-docker-without-root/" class="image" style="--bg-image: url('/img/2026/10/docker-in-docker-without-root-cracks.svg');">
+    <img class="" src="/img/2026/10/docker-in-docker-without-root-cracks.svg" alt="Four dind sandbox cracks and the ephemerd PR that closed each one">
+  </a>
+        <header>
+          <h2><a href="/blog/2026/10/docker-in-docker-without-root/">Docker-in-Docker in CI Without Handing Jobs Root</a></h2>
+          <time class="published" datetime="2026-10-24 10:00:00 -0700 PDT">October 24, 2026</time>
+        </header>
+      </article>
+      
+      <article class="mini-post">
+          <a href="/blog/2026/10/ci-cache-proxies-ephemeral-runners/" class="image" style="--bg-image: url('/img/2026/10/ci-cache-proxies-ephemeral-runners-flow.svg');">
+    <img class="" src="/img/2026/10/ci-cache-proxies-ephemeral-runners-flow.svg" alt="A fresh runner per job points go mod, cargo, composer, release downloads and actions/cache at matching cache proxies on the ephemerd node, where the caches persist and only reach the internet on a miss">
+  </a>
+        <header>
+          <h2><a href="/blog/2026/10/ci-cache-proxies-ephemeral-runners/">Cache Proxies for Ephemeral CI Runners</a></h2>
+          <time class="published" datetime="2026-10-23 15:00:00 -0700 PDT">October 23, 2026</time>
+        </header>
+      </article>
+      
+      <article class="mini-post">
+          <a href="/blog/2026/10/ephemeral-macos-runners-vm-clones/" class="image" style="--bg-image: url('/img/2026/10/ephemeral-macos-runners-vm-clones-lifecycle.svg');">
+    <img class="" src="/img/2026/10/ephemeral-macos-runners-vm-clones-lifecycle.svg" alt="A macOS CI job lifecycle: clone the base image, boot and grow the disk, set up over SSH, run the job, then stop and sweep, with a band showing the single slot held the whole time">
+  </a>
+        <header>
+          <h2><a href="/blog/2026/10/ephemeral-macos-runners-vm-clones/">Ephemeral macOS Runners: A Fresh VM Per Job on Apple Silicon</a></h2>
+          <time class="published" datetime="2026-10-23 11:00:00 -0700 PDT">October 23, 2026</time>
+        </header>
+      </article>
+      
+      <article class="mini-post">
+          <a href="/blog/2026/10/turso-page1-allocation-race/" class="image" style="--bg-image: url('/img/2026/10/turso-page1-allocation-race-races.svg');">
+    <img class="" src="/img/2026/10/turso-page1-allocation-race-races.svg" alt="Sequence diagram of two connections and init_lock: in race 1, B checks for an empty file, A publishes page 1 and releases the lock, then B takes the lock and panics on its assert; in race 2, A&#39;s lock is dropped while page 1 is being written, so B takes it and writes page 1 again">
+  </a>
+        <header>
+          <h2><a href="/blog/2026/10/turso-page1-allocation-race/">Thirty-Two Connections and an Empty File: A Race in Turso&#39;s Page-1 Allocation</a></h2>
+          <time class="published" datetime="2026-10-18 14:30:00 -0700 PDT">October 18, 2026</time>
+        </header>
+      </article>
+      
+      
+        <footer>
+          <a href="/blog" class="button">See More</a>
+        </footer>
+      
+    </section>
+  
+
+  
+    
+
+      <section id="categories">
+        <header>
+          <h1><a href="/categories">Categories</a></h1>
+        </header>
+        <ul>
+          
+          
+          <li>
+              <a href="/categories/ephpm/">ephpm<span class="count">38</span></a>
+          
+          <li>
+              <a href="/categories/go/">go<span class="count">32</span></a>
+          
+          <li>
+              <a href="/categories/php/">php<span class="count">26</span></a>
+          
+          <li>
+              <a href="/categories/rust/">rust<span class="count">17</span></a>
+          
+          <li>
+              <a href="/categories/homelab/">homelab<span class="count">14</span></a>
+          
+          <li>
+              <a href="/categories/windows/">windows<span class="count">14</span></a>
+          
+          <li>
+              <a href="/categories/ci/">ci<span class="count">12</span></a>
+          
+          <li>
+              <a href="/categories/containers/">containers<span class="count">10</span></a>
+          
+          <li>
+              <a href="/categories/databases/">databases<span class="count">10</span></a>
+          
+          <li>
+              <a href="/categories/security/">security<span class="count">10</span></a>
+          
+          <li>
+              <a href="/categories/ephemerd/">ephemerd<span class="count">9</span></a>
+          
+          <li>
+              <a href="/categories/tools/">tools<span class="count">5</span></a>
+          
+          <li>
+              <a href="/categories/ai-agents/">ai-agents<span class="count">4</span></a>
+          
+          </li>
+        </ul>
+      </section>
+    
+  
+
+  
+    <section id="mini-bio">
+      <header>
+        <h1>About</h1>
+      </header>
+      <p>Luther is a 20+ year software veteran specializing in backend APIs and architecting products. Employed at <a href='https://www.suse.com'>SUSE</a> as the Team Lead for the <a href='https://github.com/rancher/windows/issues'>Containers on Windows Team</a> working on <a href='https://rancher.com/'>Rancher</a> + <a href='https://kubernetes.io/'>Kubernetes</a></p>
+      <footer>
+        <a href="/about" class="button">Learn More</a>
+      </footer>
+    </section>
+  
+</section>
+
+      <footer id="site-footer">
+  
+      <ul class="socnet-icons">
+        
+
+        <li><a href="//github.com/luthermonson" target="_blank" rel="noopener" title="GitHub" class="fab fa-github"></a></li>
+
+
+
+
+
+
+
+
+
+
+
+<li><a href="//www.linkedin.com/in/luthermonson" target="_blank" rel="noopener" title="LinkedIn" class="fab fa-linkedin"></a></li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li><a href="//twitter.com/luthermonson" target="_blank" rel="noopener" title="Twitter" class="fab fa-twitter"></a></li>
+
+
+
+
+
+
+
+
+
+
+
+<li><a href="mailto:luther.monson@gmail.com" target="_blank" title="Email" class="far fa-envelope"></a></li>
+
+      </ul>
+  
+  <p class="copyright">
+    © 2026 Luther Monson
+      <br>
+    Theme: <a href='https://github.com/pacollins/hugo-future-imperfect-slim' target='_blank' rel='noopener'>Hugo Future Imperfect Slim</a><br>A <a href='https://html5up.net/future-imperfect' target='_blank' rel='noopener'>HTML5 UP port</a> | Powered by <a href='https://gohugo.io/' title='0.160.1' target='_blank' rel='noopener'>Hugo</a>
+  </p>
+</footer>
+<a id="back-to-top" href="#" class="fas fa-arrow-up fa-2x"></a>
+
+      <script src="/js/bundle.min.241b62ebc4792fe8c7a75879e5f710894f226f2b73342e9916b3a3b0526030cc.js" integrity="sha256-JBti68R5L&#43;jHp1h55fcQiU8ibytzNC6ZFrOjsFJgMMw="></script>
+    <script src="/js/add-on.js"></script>
+    </div>
+  </body>
+</html>

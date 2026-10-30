@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>Aws on Luther Monson</title>
+    <link>https://luth.io/tags/aws/</link>
+    <description>Recent content in Aws on Luther Monson</description>
+    <generator>Hugo</generator>
+    <language>en</language>
+    <lastBuildDate>Wed, 28 Oct 2026 10:00:00 -0700</lastBuildDate>
+    <atom:link href="https://luth.io/tags/aws/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>Surviving a Node Rebuild: A Durable ePHPm Blog on Single-Node k3s</title>
+      <link>https://luth.io/blog/2026/10/durable-data-single-node-k3s-ebs-rebuild/</link>
+      <pubDate>Wed, 28 Oct 2026 10:00:00 -0700</pubDate>
+      <guid>https://luth.io/blog/2026/10/durable-data-single-node-k3s-ebs-rebuild/</guid>
+      <description>&lt;p&gt;A single ePHPm binary runs a whole WordPress site. No php-fpm, no Redis, no MySQL. The database is a SQLite file. I&#xA;covered that setup in &lt;a href=&#34;https://luth.io/blog/2026/09/single-binary-wordpress/&#34;&gt;Zero-Dependency Deployments&lt;/a&gt;. It makes for a tiny blog:&#xA;one process, one file, a distroless image around 270 MB. That fits a micro VM with room to spare.&lt;/p&gt;&#xA;&lt;p&gt;So I put one on a micro EC2 instance with single-node k3s. One box, one &lt;code&gt;kubectl&lt;/code&gt;, no control-plane sprawl. You create a&#xA;PersistentVolumeClaim, the blog binds to it, and it looks like your data is safe.&lt;/p&gt;</description>
+    </item>
+  </channel>
+</rss>

@@ -486,52 +486,52 @@ write it down is the second time you see the mistake.</p>
       </header>
       
       <article class="mini-post">
+          <a href="/blog/2026/10/durable-data-single-node-k3s-ebs-rebuild/" class="image" style="--bg-image: url('/img/2026/10/durable-data-single-node-k3s-ebs-rebuild.svg');">
+    <img class="" src="/img/2026/10/durable-data-single-node-k3s-ebs-rebuild.svg" alt="A node rebuild: Node A is replaced by Node B, each root EBS volume is disposable, and the separate labeled EBS data volume detaches from the old node and re-attaches to the new one so the ePHPm blog&#39;s SQLite file and uploads survive">
+  </a>
+        <header>
+          <h2><a href="/blog/2026/10/durable-data-single-node-k3s-ebs-rebuild/">Surviving a Node Rebuild: A Durable ePHPm Blog on Single-Node k3s</a></h2>
+          <time class="published" datetime="2026-10-28 10:00:00 -0700 PDT">October 28, 2026</time>
+        </header>
+      </article>
+      
+      <article class="mini-post">
+          <a href="/blog/2026/10/docker-in-docker-without-root/" class="image" style="--bg-image: url('/img/2026/10/docker-in-docker-without-root-cracks.svg');">
+    <img class="" src="/img/2026/10/docker-in-docker-without-root-cracks.svg" alt="Four dind sandbox cracks and the ephemerd PR that closed each one">
+  </a>
+        <header>
+          <h2><a href="/blog/2026/10/docker-in-docker-without-root/">Docker-in-Docker in CI Without Handing Jobs Root</a></h2>
+          <time class="published" datetime="2026-10-24 10:00:00 -0700 PDT">October 24, 2026</time>
+        </header>
+      </article>
+      
+      <article class="mini-post">
+          <a href="/blog/2026/10/ci-cache-proxies-ephemeral-runners/" class="image" style="--bg-image: url('/img/2026/10/ci-cache-proxies-ephemeral-runners-flow.svg');">
+    <img class="" src="/img/2026/10/ci-cache-proxies-ephemeral-runners-flow.svg" alt="A fresh runner per job points go mod, cargo, composer, release downloads and actions/cache at matching cache proxies on the ephemerd node, where the caches persist and only reach the internet on a miss">
+  </a>
+        <header>
+          <h2><a href="/blog/2026/10/ci-cache-proxies-ephemeral-runners/">Cache Proxies for Ephemeral CI Runners</a></h2>
+          <time class="published" datetime="2026-10-23 15:00:00 -0700 PDT">October 23, 2026</time>
+        </header>
+      </article>
+      
+      <article class="mini-post">
+          <a href="/blog/2026/10/ephemeral-macos-runners-vm-clones/" class="image" style="--bg-image: url('/img/2026/10/ephemeral-macos-runners-vm-clones-lifecycle.svg');">
+    <img class="" src="/img/2026/10/ephemeral-macos-runners-vm-clones-lifecycle.svg" alt="A macOS CI job lifecycle: clone the base image, boot and grow the disk, set up over SSH, run the job, then stop and sweep, with a band showing the single slot held the whole time">
+  </a>
+        <header>
+          <h2><a href="/blog/2026/10/ephemeral-macos-runners-vm-clones/">Ephemeral macOS Runners: A Fresh VM Per Job on Apple Silicon</a></h2>
+          <time class="published" datetime="2026-10-23 11:00:00 -0700 PDT">October 23, 2026</time>
+        </header>
+      </article>
+      
+      <article class="mini-post">
           <a href="/blog/2026/10/turso-page1-allocation-race/" class="image" style="--bg-image: url('/img/2026/10/turso-page1-allocation-race-races.svg');">
     <img class="" src="/img/2026/10/turso-page1-allocation-race-races.svg" alt="Sequence diagram of two connections and init_lock: in race 1, B checks for an empty file, A publishes page 1 and releases the lock, then B takes the lock and panics on its assert; in race 2, A&#39;s lock is dropped while page 1 is being written, so B takes it and writes page 1 again">
   </a>
         <header>
           <h2><a href="/blog/2026/10/turso-page1-allocation-race/">Thirty-Two Connections and an Empty File: A Race in Turso&#39;s Page-1 Allocation</a></h2>
           <time class="published" datetime="2026-10-18 14:30:00 -0700 PDT">October 18, 2026</time>
-        </header>
-      </article>
-      
-      <article class="mini-post">
-          <a href="/blog/2026/10/ephpm-worker-mode-performance/" class="image" style="--bg-image: url('/img/2026/10/ephpm-worker-mode-performance-cover.svg');">
-    <img class="" src="/img/2026/10/ephpm-worker-mode-performance-cover.svg" alt="Diagram: before, hyper/tokio hands each request to one shared bounded channel whose waiter list all 20 PHP threads contend on; after, a dispatcher hands the job straight into the mailbox of the most recently idle PHP thread and only queues it in a FIFO overflow queue when every thread is busy">
-  </a>
-        <header>
-          <h2><a href="/blog/2026/10/ephpm-worker-mode-performance/">Fourth Place in Worker Mode, and Why It Wasn&#39;t PHP</a></h2>
-          <time class="published" datetime="2026-10-15 19:45:00 -0700 PDT">October 15, 2026</time>
-        </header>
-      </article>
-      
-      <article class="mini-post">
-          <a href="/blog/2026/10/composer-without-php-vivacity/" class="image" style="--bg-image: url('/img/2026/10/composer-without-php-vivacity-bench.svg');">
-    <img class="" src="/img/2026/10/composer-without-php-vivacity-bench.svg" alt="Bar chart comparing Composer 2.10.3 and ephpm composer on a Laravel install on native Windows">
-  </a>
-        <header>
-          <h2><a href="/blog/2026/10/composer-without-php-vivacity/">Composer Without PHP: Embedding vivacity in ePHPm</a></h2>
-          <time class="published" datetime="2026-10-14 23:20:00 -0700 PDT">October 14, 2026</time>
-        </header>
-      </article>
-      
-      <article class="mini-post">
-          <a href="/blog/2026/10/a-lock-is-only-as-good-as-its-release/" class="image" style="--bg-image: url('/img/2026/10/a-lock-is-only-as-good-as-its-release-cover.svg');">
-    <img class="" src="/img/2026/10/a-lock-is-only-as-good-as-its-release-cover.svg" alt="Timeline: request A&#39;s lock expires, B acquires it, A&#39;s blind DEL frees B&#39;s lock and C gets in">
-  </a>
-        <header>
-          <h2><a href="/blog/2026/10/a-lock-is-only-as-good-as-its-release/">A Lock Is Only as Good as Its Release</a></h2>
-          <time class="published" datetime="2026-10-13 20:40:00 -0700 PDT">October 13, 2026</time>
-        </header>
-      </article>
-      
-      <article class="mini-post">
-          <a href="/blog/2026/10/xdebug-worker-mode/" class="image" style="--bg-image: url('/img/2026/10/xdebug-worker-mode-cover.svg');">
-    <img class="" src="/img/2026/10/xdebug-worker-mode-cover.svg" alt="Diagram of the ePHPm router sending untriggered requests to the warm worker pool and Xdebug-triggered requests to a one-request debug lane">
-  </a>
-        <header>
-          <h2><a href="/blog/2026/10/xdebug-worker-mode/">Step Debugging a Worker That Never Ends</a></h2>
-          <time class="published" datetime="2026-10-12 21:10:00 -0700 PDT">October 12, 2026</time>
         </header>
       </article>
       
@@ -554,10 +554,10 @@ write it down is the second time you see the mistake.</p>
           
           
           <li>
-              <a href="/categories/ephpm/">ephpm<span class="count">37</span></a>
+              <a href="/categories/ephpm/">ephpm<span class="count">38</span></a>
           
           <li>
-              <a href="/categories/go/">go<span class="count">30</span></a>
+              <a href="/categories/go/">go<span class="count">32</span></a>
           
           <li>
               <a href="/categories/php/">php<span class="count">26</span></a>
@@ -572,16 +572,19 @@ write it down is the second time you see the mistake.</p>
               <a href="/categories/windows/">windows<span class="count">14</span></a>
           
           <li>
+              <a href="/categories/ci/">ci<span class="count">12</span></a>
+          
+          <li>
+              <a href="/categories/containers/">containers<span class="count">10</span></a>
+          
+          <li>
               <a href="/categories/databases/">databases<span class="count">10</span></a>
           
           <li>
-              <a href="/categories/ci/">ci<span class="count">9</span></a>
+              <a href="/categories/security/">security<span class="count">10</span></a>
           
           <li>
-              <a href="/categories/security/">security<span class="count">9</span></a>
-          
-          <li>
-              <a href="/categories/containers/">containers<span class="count">7</span></a>
+              <a href="/categories/ephemerd/">ephemerd<span class="count">9</span></a>
           
           <li>
               <a href="/categories/tools/">tools<span class="count">5</span></a>

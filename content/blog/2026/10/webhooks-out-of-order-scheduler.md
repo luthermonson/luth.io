@@ -3,7 +3,7 @@ title: "Webhooks Arrive Out of Order: How My Scheduler Killed Live Builds"
 description: "ephemerd's orphan sweep trusted webhook history over reality and destroyed a runner mid-build. Now the rules only nominate, and a live busy check gets a veto."
 date: 2026-10-07T21:10:00-07:00
 tags: [ go, github-actions, webhooks, distributed-systems, scheduling, ephemerd ]
-categories: [ ci, go ]
+categories: [ ephemerd, ci, go ]
 series: [ "ephemerd" ]
 images:
  - src: img/2026/10/webhooks-out-of-order-scheduler-timeline.svg

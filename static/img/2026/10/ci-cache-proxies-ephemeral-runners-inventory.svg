@@ -1,0 +1,45 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 760 340" font-family="system-ui, -apple-system, Segoe UI, Roboto, sans-serif" role="img" aria-labelledby="t d">
+  <title id="t">Workflow files per ecosystem, and whether it had a cache</title>
+  <desc id="d">A bar chart of how many workflow files fetched from each ecosystem in an inventory of the org's CI. cargo build 39 files with its proxy switched off, composer install 22 with no cache, releases download 19 with no cache, rust-toolchain 11 served via the cargo proxy, and go mod download 4, the only one that already had a cache.</desc>
+  <style>
+    .name { fill: #222222; font-size: 15px; }
+    .val { fill: #222222; font-size: 15px; font-weight: 600; }
+    .tag { font-size: 12.5px; }
+    .axis { stroke: #888888; stroke-width: 1.5; }
+    .ttl { fill: #222222; font-size: 16px; font-weight: 600; }
+  </style>
+  <text class="ttl" x="20" y="28">Workflow files pulling from each ecosystem</text>
+
+  <!-- axis baseline -->
+  <line class="axis" x1="200" y1="56" x2="200" y2="296"/>
+
+  <!-- cargo 39, proxy off -->
+  <text class="name" x="188" y="79" text-anchor="end">cargo build</text>
+  <rect x="200" y="62" width="480" height="30" fill="#a34700"/>
+  <text class="val" x="690" y="82">39</text>
+  <text class="tag" x="212" y="82" fill="#ffffff">proxy existed, switched off</text>
+
+  <!-- composer 22, no cache -->
+  <text class="name" x="188" y="129" text-anchor="end">composer install</text>
+  <rect x="200" y="112" width="271" height="30" fill="#a0287f"/>
+  <text class="val" x="481" y="132">22</text>
+  <text class="tag" x="212" y="132" fill="#ffffff">no cache</text>
+
+  <!-- releases 19, no cache -->
+  <text class="name" x="188" y="179" text-anchor="end">releases/download</text>
+  <rect x="200" y="162" width="234" height="30" fill="#a0287f"/>
+  <text class="val" x="444" y="182">19</text>
+  <text class="tag" x="212" y="182" fill="#ffffff">no cache</text>
+
+  <!-- rust-toolchain 11, via cargo -->
+  <text class="name" x="188" y="229" text-anchor="end">rust-toolchain</text>
+  <rect x="200" y="212" width="135" height="30" fill="#00707a"/>
+  <text class="val" x="345" y="232">11</text>
+  <text class="tag" x="212" y="232" fill="#ffffff">via cargo proxy</text>
+
+  <!-- go mod 4, had a cache -->
+  <text class="name" x="188" y="279" text-anchor="end">go mod download</text>
+  <rect x="200" y="262" width="49" height="30" fill="#0550ae"/>
+  <text class="val" x="259" y="282">4</text>
+  <text class="tag" x="300" y="282" fill="#0550ae">the only one that had a cache</text>
+</svg>

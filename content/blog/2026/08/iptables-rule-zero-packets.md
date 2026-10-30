@@ -3,7 +3,7 @@ title: "My iptables Rule Matched 0 Packets in 9.8 GB"
 description: "Container-to-host traffic goes through INPUT, not FORWARD, so ephemerd's carefully written allow-list never matched a single packet."
 date: 2026-08-26T20:30:00-07:00
 tags: [ linux, iptables, netfilter, containers, security, ephemerd ]
-categories: [ containers, security, ci ]
+categories: [ ephemerd, containers, security, ci ]
 series: [ "ephemerd" ]
 images:
  - src: img/2026/08/iptables-rule-zero-packets-flow.svg

@@ -3,7 +3,7 @@ title: "Escaping WSL: Booting My Own Linux VM Through Hyper-V's HCS API"
 description: "WSL2 refuses to run under LocalSystem, so ephemerd boots an Alpine kernel directly through vmcompute.dll instead."
 date: 2026-06-14T20:12:00-07:00
 tags: [ go, windows, hyper-v, hcs, linux, ephemerd, github-actions ]
-categories: [ windows, ci, go ]
+categories: [ ephemerd, windows, ci, go ]
 series: [ "ephemerd" ]
 images:
  - src: img/2026/06/escaping-wsl-hcs-linux-vm-boot.svg

@@ -6,8 +6,29 @@
     <description>Recent content in CI &amp; Runners on Luther Monson</description>
     <generator>Hugo</generator>
     <language>en</language>
-    <lastBuildDate>Wed, 07 Oct 2026 21:10:00 -0700</lastBuildDate>
+    <lastBuildDate>Sat, 24 Oct 2026 10:00:00 -0700</lastBuildDate>
     <atom:link href="https://luth.io/categories/ci/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>Docker-in-Docker in CI Without Handing Jobs Root</title>
+      <link>https://luth.io/blog/2026/10/docker-in-docker-without-root/</link>
+      <pubDate>Sat, 24 Oct 2026 10:00:00 -0700</pubDate>
+      <guid>https://luth.io/blog/2026/10/docker-in-docker-without-root/</guid>
+      <description>&lt;p&gt;&lt;a href=&#34;https://luth.io/blog/2026/08/ephemerd-one-daemon-every-os/&#34;&gt;ephemerd&lt;/a&gt; runs a fresh GitHub Actions runner per job. Some of those&#xA;jobs need Docker. A workflow builds an image, runs a service container, or uses the &lt;code&gt;container:&lt;/code&gt; key. The usual way to&#xA;give a self-hosted job Docker is Docker-in-Docker, or dind.&lt;/p&gt;&#xA;&lt;p&gt;The catch is what dind normally costs you. The standard recipe is a &lt;code&gt;--privileged&lt;/code&gt; container. Privileged hands the job&#xA;most of root on the host. For CI that runs fork pull requests, that is a non-starter. A fork PR is a stranger&amp;rsquo;s code.&lt;/p&gt;</description>
+    </item>
+    <item>
+      <title>Cache Proxies for Ephemeral CI Runners</title>
+      <link>https://luth.io/blog/2026/10/ci-cache-proxies-ephemeral-runners/</link>
+      <pubDate>Fri, 23 Oct 2026 15:00:00 -0700</pubDate>
+      <guid>https://luth.io/blog/2026/10/ci-cache-proxies-ephemeral-runners/</guid>
+      <description>&lt;p&gt;&lt;a href=&#34;https://luth.io/blog/2026/08/ephemerd-one-daemon-every-os/&#34;&gt;ephemerd&lt;/a&gt; gives every CI job a brand new runner. A new container on&#xA;Linux, a new VM on macOS and Windows. The job runs, the runner is thrown away, and the next job starts from a clean&#xA;image. That is the whole point. Nothing a job does can leak into the next one.&lt;/p&gt;&#xA;&lt;p&gt;Clean has a cost. A fresh runner has an empty cache. So every job downloads the world again. Go modules, crates, the&#xA;Rust toolchain, Composer packages, release tarballs. On a busy repo that is gigabytes a day, pulled over and over,&#xA;most of it byte-for-byte identical to what the last job pulled.&lt;/p&gt;</description>
+    </item>
+    <item>
+      <title>Ephemeral macOS Runners: A Fresh VM Per Job on Apple Silicon</title>
+      <link>https://luth.io/blog/2026/10/ephemeral-macos-runners-vm-clones/</link>
+      <pubDate>Fri, 23 Oct 2026 11:00:00 -0700</pubDate>
+      <guid>https://luth.io/blog/2026/10/ephemeral-macos-runners-vm-clones/</guid>
+      <description>&lt;p&gt;&lt;a href=&#34;https://github.com/ephpm/ephemerd&#34;&gt;ephemerd&lt;/a&gt; gives every CI job a brand new environment and throws it away after.&#xA;On Linux and Windows that environment is a container. On macOS it can&amp;rsquo;t be. Apple&amp;rsquo;s license wants macOS running on&#xA;Apple hardware, so the Mac in my rack is the real thing. The isolation comes from a VM instead.&lt;/p&gt;&#xA;&lt;p&gt;Each macOS job gets a fresh &lt;a href=&#34;https://developer.apple.com/documentation/virtualization&#34;&gt;Virtualization.framework&lt;/a&gt; VM&#xA;cloned from a base image. The job runs inside it. The VM is destroyed when the job finishes. That&amp;rsquo;s the same contract&#xA;as the container path. Getting there took four fixes that I only found by running the fleet. This post walks the VM&#xA;lifecycle and the three ways it bit me:&lt;/p&gt;</description>
+    </item>
     <item>
       <title>Webhooks Arrive Out of Order: How My Scheduler Killed Live Builds</title>
       <link>https://luth.io/blog/2026/10/webhooks-out-of-order-scheduler/</link>

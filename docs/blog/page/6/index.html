@@ -215,6 +215,274 @@
   <header>
   <div class="title">
     
+      <h2><a href="/blog/2026/08/libxml2-2-14-broke-php-windows-builds/">libxml2 2.14 Broke PHP Windows Builds - And Nobody Noticed</a></h2>
+    
+    
+      <p>Why a static PHP build on Windows dies with hundreds of LNK2001 errors against modern libxml2, and why Linux never sees it.</p>
+    
+  </div>
+  <div class="meta">
+    <time datetime="2026-08-11 20:36:00 -0700 PDT">August 11, 2026</time>
+    
+    <p>9-Minute Read</p>
+  </div>
+</header>
+
+  <div class="content">
+    <a href="/blog/2026/08/libxml2-2-14-broke-php-windows-builds/" class="image" style="--bg-image: url('/img/2026/08/libxml2-214-php-windows-def-missing-symbols.svg');">
+    <img class="" src="/img/2026/08/libxml2-214-php-windows-def-missing-symbols.svg" alt="Bar chart: legacy php_libxml2.def entries missing from libxml2 headers - 0 for 2.11.9 and 2.13.0, 294 for 2.14.0 and 2.15.0">
+  </a>
+    
+    <p>Back in April I was getting the embed SAPI building on Windows for <a href="https://github.com/ephpm/ephpm">ePHPm</a>. I was
+using my fork of <a href="https://github.com/crazywhalecc/static-php-cli">static-php-cli</a> (SPC). The link step for
+<code>php8ts.dll</code> fell over with a wall of errors that all looked like this:</p>
+  </div>
+  <footer>
+    <a href="/blog/2026/08/libxml2-2-14-broke-php-windows-builds/" class="button big">Read More</a>
+    <div class="stats">
+  
+    <ul class="categories">
+      
+        
+          <li><a class="article-terms-link" href="/categories/php/">php</a></li>
+        
+          <li><a class="article-terms-link" href="/categories/windows/">windows</a></li>
+        
+      
+    </ul>
+  
+  
+    <ul class="tags">
+      
+        
+          <li><a class="article-terms-link" href="/tags/php/">php</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/windows/">windows</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/libxml2/">libxml2</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/msvc/">msvc</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/static-php-cli/">static-php-cli</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/linker/">linker</a></li>
+        
+      
+    </ul>
+  
+</div>
+
+  </footer>
+</article>
+
+  
+    <article class="post">
+  <header>
+  <div class="title">
+    
+      <h2><a href="/blog/2026/08/db-connection-pooling-smart-reset/">Database Connection Pooling with Smart Reset</a></h2>
+    
+    
+      <p>PHP opens a new MySQL connection on every request, but ePHPm reuses them and cleans up only the ones that need it. Here&#39;s how that works, two bugs it had and how much load it takes off MySQL.</p>
+    
+  </div>
+  <div class="meta">
+    <time datetime="2026-08-09 16:25:00 -0700 PDT">August 9, 2026</time>
+    
+    <p>10-Minute Read</p>
+  </div>
+</header>
+
+  <div class="content">
+    <a href="/blog/2026/08/db-connection-pooling-smart-reset/" class="image" style="--bg-image: url('/img/2026/08/db-connection-pooling-smart-reset-cover.svg');">
+    <img class="" src="/img/2026/08/db-connection-pooling-smart-reset-cover.svg" alt="PHP request connecting to the ePHPm MySQL proxy, which lends it a pooled backend connection and resets it only if the session was dirtied">
+  </a>
+    
+    <p>PHP&rsquo;s share-nothing model is one of its best properties. It has one expensive side effect: a request can&rsquo;t keep a
+database connection for the next request. php-fpm gives you <code>PDO::ATTR_PERSISTENT</code> and <code>mysqli</code>&rsquo;s <code>p:</code> hosts. But
+those are per-worker-process. PDO&rsquo;s keep whatever session state the last request left behind. mysqli at least resets
+the session with <code>COM_CHANGE_USER</code> on reuse. And almost nobody turns them on. So in practice every PHP request does a
+TCP connect, a MySQL&hellip;</p>
+  </div>
+  <footer>
+    <a href="/blog/2026/08/db-connection-pooling-smart-reset/" class="button big">Read More</a>
+    <div class="stats">
+  
+    <ul class="categories">
+      
+        
+          <li><a class="article-terms-link" href="/categories/ephpm/">ephpm</a></li>
+        
+          <li><a class="article-terms-link" href="/categories/databases/">databases</a></li>
+        
+      
+    </ul>
+  
+  
+    <ul class="tags">
+      
+        
+          <li><a class="article-terms-link" href="/tags/ephpm/">ephpm</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/mysql/">mysql</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/php/">php</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/rust/">rust</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/connection-pooling/">connection pooling</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/performance/">performance</a></li>
+        
+      
+    </ul>
+  
+</div>
+
+  </footer>
+</article>
+
+  
+    <article class="post">
+  <header>
+  <div class="title">
+    
+      <h2><a href="/blog/2026/08/clustered-sqlite-sqld-sidecar/">Clustered SQLite in ePHPm, Part 1: Replication by Sidecar</a></h2>
+    
+    
+      <p>ePHPm first made SQLite highly available by embedding sqld as a child process. This is how that worked and the list of things that went wrong with it.</p>
+    
+  </div>
+  <div class="meta">
+    <time datetime="2026-08-08 20:14:00 -0700 PDT">August 8, 2026</time>
+    
+    <p>9-Minute Read</p>
+  </div>
+</header>
+
+  <div class="content">
+    <a href="/blog/2026/08/clustered-sqlite-sqld-sidecar/" class="image" style="--bg-image: url('/img/2026/08/clustered-sqlite-sqld-sidecar-topology.svg');">
+    <img class="" src="/img/2026/08/clustered-sqlite-sqld-sidecar-topology.svg" alt="Two ePHPm nodes, each running an embedded sqld child process, connected by gossip, a KV data plane and sqld gRPC">
+  </a>
+    
+    <p>Most PHP sites I have run in the last twenty years did not need a MySQL server. They needed <em>a</em> database, and MySQL was the
+one every framework spoke. With <a href="https://github.com/ephpm/ephpm">ePHPm</a> I have been trying to get rid of that server for
+the common case. The piece that makes it possible is <a href="https://github.com/ephpm/litewire">litewire</a>. PHP connects with
+plain <code>pdo_mysql</code>. litewire speaks the MySQL wire protocol, and the queries land in a SQLite file. WordPress and Laravel
+don&rsquo;t know the difference. No <code>mysqld</code>, no child processes, just <code>ephpm</code> and a <code>.db</code> file.</p>
+  </div>
+  <footer>
+    <a href="/blog/2026/08/clustered-sqlite-sqld-sidecar/" class="button big">Read More</a>
+    <div class="stats">
+  
+    <ul class="categories">
+      
+        
+          <li><a class="article-terms-link" href="/categories/ephpm/">ephpm</a></li>
+        
+          <li><a class="article-terms-link" href="/categories/databases/">databases</a></li>
+        
+      
+    </ul>
+  
+  
+    <ul class="tags">
+      
+        
+          <li><a class="article-terms-link" href="/tags/ephpm/">ephpm</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/sqlite/">sqlite</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/sqld/">sqld</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/libsql/">libsql</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/rust/">rust</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/clustering/">clustering</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/php/">php</a></li>
+        
+      
+    </ul>
+  
+</div>
+
+  </footer>
+</article>
+
+  
+    <article class="post">
+  <header>
+  <div class="title">
+    
+      <h2><a href="/blog/2026/08/ntfs-atomic-file-replacement-not-rename-fsync/">Atomic File Replacement on NTFS Is Not rename &#43; fsync</a></h2>
+    
+    
+      <p>The Unix recipe for durable atomic file replacement doesn&#39;t translate to Windows. This is what shipmates uses instead, plus the delete-pending window that made an 8-way test fail only when the whole suite ran.</p>
+    
+  </div>
+  <div class="meta">
+    <time datetime="2026-08-06 21:27:00 -0700 PDT">August 6, 2026</time>
+    
+    <p>7-Minute Read</p>
+  </div>
+</header>
+
+  <div class="content">
+    <a href="/blog/2026/08/ntfs-atomic-file-replacement-not-rename-fsync/" class="image" style="--bg-image: url('/img/2026/09/ntfs-atomic-file-replacement-not-rename-fsync-cover.svg');">
+    <img class="" src="/img/2026/09/ntfs-atomic-file-replacement-not-rename-fsync-cover.svg" alt="How long a losing concurrent replacer waits on NTFS, idle disk vs a disk under fsync load">
+  </a>
+    
+    <p><a href="https://github.com/luthermonson/shipmates">shipmates</a> writes a lot of small state files that other processes read.
+Voyage plans and state, tracker files. Each of them has to be replaced atomically, so a reader sees the old file or the
+new one and never half of each. Each also has to be replaced durably. When the function returns success, a power cut
+doesn&rsquo;t take it back. Every Unix programmer knows the recipe for that. It doesn&rsquo;t work on Windows, and the reasons are
+more interesting than &ldquo;Windows is different&rdquo;.</p>
+  </div>
+  <footer>
+    <a href="/blog/2026/08/ntfs-atomic-file-replacement-not-rename-fsync/" class="button big">Read More</a>
+    <div class="stats">
+  
+    <ul class="categories">
+      
+        
+          <li><a class="article-terms-link" href="/categories/go/">go</a></li>
+        
+          <li><a class="article-terms-link" href="/categories/windows/">windows</a></li>
+        
+      
+    </ul>
+  
+  
+    <ul class="tags">
+      
+        
+          <li><a class="article-terms-link" href="/tags/go/">go</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/windows/">windows</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/ntfs/">ntfs</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/filesystems/">filesystems</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/durability/">durability</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/shipmates/">shipmates</a></li>
+        
+      
+    </ul>
+  
+</div>
+
+  </footer>
+</article>
+
+  
+    <article class="post">
+  <header>
+  <div class="title">
+    
       <h2><a href="/blog/2026/08/gossip-clustering-for-php/">Gossip-Based Clustering for PHP Apps</a></h2>
     
     
@@ -616,265 +884,6 @@ tarballs. libxml2, xz and a couple of others would die partway through extractio
 </article>
 
   
-    <article class="post">
-  <header>
-  <div class="title">
-    
-      <h2><a href="/blog/2026/07/go-proxmox-watch-close-withretry/">Two Small go-proxmox Fixes: A Watch Channel That Never Closed, and WithRetry</a></h2>
-    
-    
-      <p>go-proxmox had a task log channel that only closed on the happy path. It also gained a composable RoundTripper that retries the 502s and 503s Proxmox throws during cluster transitions.</p>
-    
-  </div>
-  <div class="meta">
-    <time datetime="2026-07-11 17:26:00 -0700 PDT">July 11, 2026</time>
-    
-    <p>6-Minute Read</p>
-  </div>
-</header>
-
-  <div class="content">
-    <a href="/blog/2026/07/go-proxmox-watch-close-withretry/" class="image">
-    <img class="" src="/img/2022/02/proxmox-logo.png" alt="Proxmox VE Logo">
-  </a>
-    
-    <p>Here are two changes from the v0.5 to v0.7 stretch of <a href="https://github.com/luthermonson/go-proxmox">go-proxmox</a>. They&rsquo;re
-too small for a post each. They&rsquo;re worth knowing about if you write long-running tooling against Proxmox. One is a bug
-in code I wrote about in 2022. The other is a feature that replaces a retry loop everybody was writing for themselves.</p>
-  </div>
-  <footer>
-    <a href="/blog/2026/07/go-proxmox-watch-close-withretry/" class="button big">Read More</a>
-    <div class="stats">
-  
-    <ul class="categories">
-      
-        
-          <li><a class="article-terms-link" href="/categories/go/">go</a></li>
-        
-          <li><a class="article-terms-link" href="/categories/homelab/">homelab</a></li>
-        
-      
-    </ul>
-  
-  
-    <ul class="tags">
-      
-        
-          <li><a class="article-terms-link" href="/tags/proxmox/">proxmox</a></li>
-        
-          <li><a class="article-terms-link" href="/tags/go/">go</a></li>
-        
-          <li><a class="article-terms-link" href="/tags/go-proxmox/">go-proxmox</a></li>
-        
-          <li><a class="article-terms-link" href="/tags/concurrency/">concurrency</a></li>
-        
-          <li><a class="article-terms-link" href="/tags/http/">http</a></li>
-        
-      
-    </ul>
-  
-</div>
-
-  </footer>
-</article>
-
-  
-    <article class="post">
-  <header>
-  <div class="title">
-    
-      <h2><a href="/blog/2026/06/go-proxmox-agents-md/">Maintaining an Open-Source Library With AI Agents: AGENTS.md and the Rule They Kept Breaking</a></h2>
-    
-    
-      <p>Six weeks of go-proxmox with coding agents doing most of the typing taught me what belongs in AGENTS.md. Five parallel agents got the same API shape wrong, and a coverage metric bent the code around it.</p>
-    
-  </div>
-  <div class="meta">
-    <time datetime="2026-06-27 18:47:00 -0700 PDT">June 27, 2026</time>
-    
-    <p>7-Minute Read</p>
-  </div>
-</header>
-
-  <div class="content">
-    <a href="/blog/2026/06/go-proxmox-agents-md/" class="image" style="--bg-image: url('/img/2026/06/go-proxmox-agents-md-rule.svg');">
-    <img class="" src="/img/2026/06/go-proxmox-agents-md-rule.svg" alt="Decision diagram: endpoints without an id in the path become methods on the parent, endpoints with an id get a handle type">
-  </a>
-    
-    <p>On May 9th I merged <a href="https://github.com/luthermonson/go-proxmox/pull/264">#264</a>. It added an <code>AGENTS.md</code> to
-<a href="https://github.com/luthermonson/go-proxmox">go-proxmox</a> and a stub <code>CLAUDE.md</code> that just points at it. The next six
-weeks ran through the v0.8.0 migration guide on June 15th. In that time <code>main</code> took 77 commits and +31,794 / -1,144
-lines. The repo went from 84 to 186 <code>.go</code> files. Endpoint coverage went from 30% to
-<a href="/blog/2026/06/go-proxmox-endpoint-coverage/">100% of the Proxmox API</a>. Most of that code was typed by coding agents,
-a lot of it by several at once. This is what that looked like from the maintainer&rsquo;s chair. It&rsquo;s&hellip;</p>
-  </div>
-  <footer>
-    <a href="/blog/2026/06/go-proxmox-agents-md/" class="button big">Read More</a>
-    <div class="stats">
-  
-    <ul class="categories">
-      
-        
-          <li><a class="article-terms-link" href="/categories/go/">go</a></li>
-        
-          <li><a class="article-terms-link" href="/categories/ai-agents/">ai-agents</a></li>
-        
-          <li><a class="article-terms-link" href="/categories/homelab/">homelab</a></li>
-        
-      
-    </ul>
-  
-  
-    <ul class="tags">
-      
-        
-          <li><a class="article-terms-link" href="/tags/go/">go</a></li>
-        
-          <li><a class="article-terms-link" href="/tags/go-proxmox/">go-proxmox</a></li>
-        
-          <li><a class="article-terms-link" href="/tags/ai/">ai</a></li>
-        
-          <li><a class="article-terms-link" href="/tags/agents/">agents</a></li>
-        
-          <li><a class="article-terms-link" href="/tags/open-source/">open-source</a></li>
-        
-      
-    </ul>
-  
-</div>
-
-  </footer>
-</article>
-
-  
-    <article class="post">
-  <header>
-  <div class="title">
-    
-      <h2><a href="/blog/2026/06/proxmox-numbers-null-scientific-notation-net10/">Proxmox JSON, Part 2: Three More Surprises</a></h2>
-    
-    
-      <p>The Proxmox API found three more ways to trip up Go&#39;s JSON decoding. Here&#39;s what broke and how I fixed it.</p>
-    
-  </div>
-  <div class="meta">
-    <time datetime="2026-06-23 20:31:00 -0700 PDT">June 23, 2026</time>
-    
-    <p>7-Minute Read</p>
-  </div>
-</header>
-
-  <div class="content">
-    <a href="/blog/2026/06/proxmox-numbers-null-scientific-notation-net10/" class="image">
-    <img class="" src="/img/2022/02/proxmox-logo.png" alt="Proxmox VE Logo">
-  </a>
-    
-    <p>In 2023 I wrote about <a href="/blog/2023/11/proxmox-doesnt-know-what-type-a-number-is/">why go-proxmox has <code>StringOrInt</code> and friends</a>.
-Proxmox sends the same number quoted in one place and bare in another, so the client has types that accept both. That
-post ended on a pretty confident note. Since then three more shapes of &ldquo;the JSON is valid and Go still won&rsquo;t take it&rdquo;
-have come in. One of them is a bug I&rsquo;d already fixed once and then reintroduced myself.</p>
-  </div>
-  <footer>
-    <a href="/blog/2026/06/proxmox-numbers-null-scientific-notation-net10/" class="button big">Read More</a>
-    <div class="stats">
-  
-    <ul class="categories">
-      
-        
-          <li><a class="article-terms-link" href="/categories/go/">go</a></li>
-        
-          <li><a class="article-terms-link" href="/categories/homelab/">homelab</a></li>
-        
-      
-    </ul>
-  
-  
-    <ul class="tags">
-      
-        
-          <li><a class="article-terms-link" href="/tags/proxmox/">proxmox</a></li>
-        
-          <li><a class="article-terms-link" href="/tags/go/">go</a></li>
-        
-          <li><a class="article-terms-link" href="/tags/go-proxmox/">go-proxmox</a></li>
-        
-          <li><a class="article-terms-link" href="/tags/json/">json</a></li>
-        
-      
-    </ul>
-  
-</div>
-
-  </footer>
-</article>
-
-  
-    <article class="post">
-  <header>
-  <div class="title">
-    
-      <h2><a href="/blog/2026/06/ephpm-pragmatism/">The Pragmatism of ePHPm - Every Decision Has a &#34;Because&#34; Behind It</a></h2>
-    
-    
-      <p>ePHPm hit v0.1.0 this week. It isn&#39;t a rewrite-it-in-Rust project. Here&#39;s what I built, what I borrowed, what I sent upstream, and what I deliberately haven&#39;t built.</p>
-    
-  </div>
-  <div class="meta">
-    <time datetime="2026-06-21 19:05:00 -0700 PDT">June 21, 2026</time>
-    
-    <p>7-Minute Read</p>
-  </div>
-</header>
-
-  <div class="content">
-    <a href="/blog/2026/06/ephpm-pragmatism/" class="image" style="--bg-image: url('/img/2026/06/ephpm-pragmatism-cover.svg');">
-    <img class="" src="/img/2026/06/ephpm-pragmatism-cover.svg" alt="ePHPm in the center with six boxes: Rust and C wrapper, KV store, chitchat gossip, static-php-cli upstream fixes, litewire, and a dashed box of features not built yet">
-  </a>
-    
-    <p><a href="https://github.com/ephpm/ephpm">ePHPm</a> tagged <a href="https://github.com/ephpm/ephpm/releases/tag/v0.1.0">v0.1.0</a> this
-week, three months after the first commit. Before the feature list grows any further I want to write down how
-decisions get made on it. This is mostly for myself. The easiest way to ruin a project like this is to let it turn
-into a checklist of things other projects have.</p>
-  </div>
-  <footer>
-    <a href="/blog/2026/06/ephpm-pragmatism/" class="button big">Read More</a>
-    <div class="stats">
-  
-    <ul class="categories">
-      
-        
-          <li><a class="article-terms-link" href="/categories/ephpm/">ephpm</a></li>
-        
-          <li><a class="article-terms-link" href="/categories/php/">php</a></li>
-        
-          <li><a class="article-terms-link" href="/categories/rust/">rust</a></li>
-        
-      
-    </ul>
-  
-  
-    <ul class="tags">
-      
-        
-          <li><a class="article-terms-link" href="/tags/ephpm/">ephpm</a></li>
-        
-          <li><a class="article-terms-link" href="/tags/php/">php</a></li>
-        
-          <li><a class="article-terms-link" href="/tags/rust/">rust</a></li>
-        
-          <li><a class="article-terms-link" href="/tags/open-source/">open source</a></li>
-        
-          <li><a class="article-terms-link" href="/tags/architecture/">architecture</a></li>
-        
-      
-    </ul>
-  
-</div>
-
-  </footer>
-</article>
-
-  
   <div class="pagination">
     
       <a href="/blog/page/5/" class="button left"><span>Previous Page</span></a>
@@ -893,52 +902,52 @@ into a checklist of things other projects have.</p>
       </header>
       
       <article class="mini-post">
+          <a href="/blog/2026/10/durable-data-single-node-k3s-ebs-rebuild/" class="image" style="--bg-image: url('/img/2026/10/durable-data-single-node-k3s-ebs-rebuild.svg');">
+    <img class="" src="/img/2026/10/durable-data-single-node-k3s-ebs-rebuild.svg" alt="A node rebuild: Node A is replaced by Node B, each root EBS volume is disposable, and the separate labeled EBS data volume detaches from the old node and re-attaches to the new one so the ePHPm blog&#39;s SQLite file and uploads survive">
+  </a>
+        <header>
+          <h2><a href="/blog/2026/10/durable-data-single-node-k3s-ebs-rebuild/">Surviving a Node Rebuild: A Durable ePHPm Blog on Single-Node k3s</a></h2>
+          <time class="published" datetime="2026-10-28 10:00:00 -0700 PDT">October 28, 2026</time>
+        </header>
+      </article>
+      
+      <article class="mini-post">
+          <a href="/blog/2026/10/docker-in-docker-without-root/" class="image" style="--bg-image: url('/img/2026/10/docker-in-docker-without-root-cracks.svg');">
+    <img class="" src="/img/2026/10/docker-in-docker-without-root-cracks.svg" alt="Four dind sandbox cracks and the ephemerd PR that closed each one">
+  </a>
+        <header>
+          <h2><a href="/blog/2026/10/docker-in-docker-without-root/">Docker-in-Docker in CI Without Handing Jobs Root</a></h2>
+          <time class="published" datetime="2026-10-24 10:00:00 -0700 PDT">October 24, 2026</time>
+        </header>
+      </article>
+      
+      <article class="mini-post">
+          <a href="/blog/2026/10/ci-cache-proxies-ephemeral-runners/" class="image" style="--bg-image: url('/img/2026/10/ci-cache-proxies-ephemeral-runners-flow.svg');">
+    <img class="" src="/img/2026/10/ci-cache-proxies-ephemeral-runners-flow.svg" alt="A fresh runner per job points go mod, cargo, composer, release downloads and actions/cache at matching cache proxies on the ephemerd node, where the caches persist and only reach the internet on a miss">
+  </a>
+        <header>
+          <h2><a href="/blog/2026/10/ci-cache-proxies-ephemeral-runners/">Cache Proxies for Ephemeral CI Runners</a></h2>
+          <time class="published" datetime="2026-10-23 15:00:00 -0700 PDT">October 23, 2026</time>
+        </header>
+      </article>
+      
+      <article class="mini-post">
+          <a href="/blog/2026/10/ephemeral-macos-runners-vm-clones/" class="image" style="--bg-image: url('/img/2026/10/ephemeral-macos-runners-vm-clones-lifecycle.svg');">
+    <img class="" src="/img/2026/10/ephemeral-macos-runners-vm-clones-lifecycle.svg" alt="A macOS CI job lifecycle: clone the base image, boot and grow the disk, set up over SSH, run the job, then stop and sweep, with a band showing the single slot held the whole time">
+  </a>
+        <header>
+          <h2><a href="/blog/2026/10/ephemeral-macos-runners-vm-clones/">Ephemeral macOS Runners: A Fresh VM Per Job on Apple Silicon</a></h2>
+          <time class="published" datetime="2026-10-23 11:00:00 -0700 PDT">October 23, 2026</time>
+        </header>
+      </article>
+      
+      <article class="mini-post">
           <a href="/blog/2026/10/turso-page1-allocation-race/" class="image" style="--bg-image: url('/img/2026/10/turso-page1-allocation-race-races.svg');">
     <img class="" src="/img/2026/10/turso-page1-allocation-race-races.svg" alt="Sequence diagram of two connections and init_lock: in race 1, B checks for an empty file, A publishes page 1 and releases the lock, then B takes the lock and panics on its assert; in race 2, A&#39;s lock is dropped while page 1 is being written, so B takes it and writes page 1 again">
   </a>
         <header>
           <h2><a href="/blog/2026/10/turso-page1-allocation-race/">Thirty-Two Connections and an Empty File: A Race in Turso&#39;s Page-1 Allocation</a></h2>
           <time class="published" datetime="2026-10-18 14:30:00 -0700 PDT">October 18, 2026</time>
-        </header>
-      </article>
-      
-      <article class="mini-post">
-          <a href="/blog/2026/10/ephpm-worker-mode-performance/" class="image" style="--bg-image: url('/img/2026/10/ephpm-worker-mode-performance-cover.svg');">
-    <img class="" src="/img/2026/10/ephpm-worker-mode-performance-cover.svg" alt="Diagram: before, hyper/tokio hands each request to one shared bounded channel whose waiter list all 20 PHP threads contend on; after, a dispatcher hands the job straight into the mailbox of the most recently idle PHP thread and only queues it in a FIFO overflow queue when every thread is busy">
-  </a>
-        <header>
-          <h2><a href="/blog/2026/10/ephpm-worker-mode-performance/">Fourth Place in Worker Mode, and Why It Wasn&#39;t PHP</a></h2>
-          <time class="published" datetime="2026-10-15 19:45:00 -0700 PDT">October 15, 2026</time>
-        </header>
-      </article>
-      
-      <article class="mini-post">
-          <a href="/blog/2026/10/composer-without-php-vivacity/" class="image" style="--bg-image: url('/img/2026/10/composer-without-php-vivacity-bench.svg');">
-    <img class="" src="/img/2026/10/composer-without-php-vivacity-bench.svg" alt="Bar chart comparing Composer 2.10.3 and ephpm composer on a Laravel install on native Windows">
-  </a>
-        <header>
-          <h2><a href="/blog/2026/10/composer-without-php-vivacity/">Composer Without PHP: Embedding vivacity in ePHPm</a></h2>
-          <time class="published" datetime="2026-10-14 23:20:00 -0700 PDT">October 14, 2026</time>
-        </header>
-      </article>
-      
-      <article class="mini-post">
-          <a href="/blog/2026/10/a-lock-is-only-as-good-as-its-release/" class="image" style="--bg-image: url('/img/2026/10/a-lock-is-only-as-good-as-its-release-cover.svg');">
-    <img class="" src="/img/2026/10/a-lock-is-only-as-good-as-its-release-cover.svg" alt="Timeline: request A&#39;s lock expires, B acquires it, A&#39;s blind DEL frees B&#39;s lock and C gets in">
-  </a>
-        <header>
-          <h2><a href="/blog/2026/10/a-lock-is-only-as-good-as-its-release/">A Lock Is Only as Good as Its Release</a></h2>
-          <time class="published" datetime="2026-10-13 20:40:00 -0700 PDT">October 13, 2026</time>
-        </header>
-      </article>
-      
-      <article class="mini-post">
-          <a href="/blog/2026/10/xdebug-worker-mode/" class="image" style="--bg-image: url('/img/2026/10/xdebug-worker-mode-cover.svg');">
-    <img class="" src="/img/2026/10/xdebug-worker-mode-cover.svg" alt="Diagram of the ePHPm router sending untriggered requests to the warm worker pool and Xdebug-triggered requests to a one-request debug lane">
-  </a>
-        <header>
-          <h2><a href="/blog/2026/10/xdebug-worker-mode/">Step Debugging a Worker That Never Ends</a></h2>
-          <time class="published" datetime="2026-10-12 21:10:00 -0700 PDT">October 12, 2026</time>
         </header>
       </article>
       
@@ -961,10 +970,10 @@ into a checklist of things other projects have.</p>
           
           
           <li>
-              <a href="/categories/ephpm/">ephpm<span class="count">37</span></a>
+              <a href="/categories/ephpm/">ephpm<span class="count">38</span></a>
           
           <li>
-              <a href="/categories/go/">go<span class="count">30</span></a>
+              <a href="/categories/go/">go<span class="count">32</span></a>
           
           <li>
               <a href="/categories/php/">php<span class="count">26</span></a>
@@ -979,16 +988,19 @@ into a checklist of things other projects have.</p>
               <a href="/categories/windows/">windows<span class="count">14</span></a>
           
           <li>
+              <a href="/categories/ci/">ci<span class="count">12</span></a>
+          
+          <li>
+              <a href="/categories/containers/">containers<span class="count">10</span></a>
+          
+          <li>
               <a href="/categories/databases/">databases<span class="count">10</span></a>
           
           <li>
-              <a href="/categories/ci/">ci<span class="count">9</span></a>
+              <a href="/categories/security/">security<span class="count">10</span></a>
           
           <li>
-              <a href="/categories/security/">security<span class="count">9</span></a>
-          
-          <li>
-              <a href="/categories/containers/">containers<span class="count">7</span></a>
+              <a href="/categories/ephemerd/">ephemerd<span class="count">9</span></a>
           
           <li>
               <a href="/categories/tools/">tools<span class="count">5</span></a>

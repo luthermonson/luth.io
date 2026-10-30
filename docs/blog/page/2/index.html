@@ -215,6 +215,277 @@
   <header>
   <div class="title">
     
+      <h2><a href="/blog/2026/10/webhooks-out-of-order-scheduler/">Webhooks Arrive Out of Order: How My Scheduler Killed Live Builds</a></h2>
+    
+    
+      <p>ephemerd&#39;s orphan sweep trusted webhook history over reality and destroyed a runner mid-build. Now the rules only nominate, and a live busy check gets a veto.</p>
+    
+  </div>
+  <div class="meta">
+    <time datetime="2026-10-07 21:10:00 -0700 PDT">October 7, 2026</time>
+    
+    <p>9-Minute Read</p>
+  </div>
+</header>
+
+  <div class="content">
+    <a href="/blog/2026/10/webhooks-out-of-order-scheduler/" class="image" style="--bg-image: url('/img/2026/10/webhooks-out-of-order-scheduler-timeline.svg');">
+    <img class="" src="/img/2026/10/webhooks-out-of-order-scheduler-timeline.svg" alt="Timeline of three same-label jobs where a runner executing a build is destroyed 2.3 seconds before its in_progress webhook arrives">
+  </a>
+    
+    <p>The scheduler in <a href="/blog/2026/08/ephemerd-one-daemon-every-os/">ephemerd</a> is event-driven. GitHub sends a
+<code>workflow_job</code> webhook when a job is queued, when it starts and when it completes. ephemerd creates and destroys runners
+to match. For a while that worked well enough that I stopped thinking about it. Then a <code>docker-build</code> job failed with
+&ldquo;The self-hosted runner lost communication with the server&rdquo;. I pulled the node&rsquo;s journal. ephemerd had destroyed that
+runner itself, on purpose, while it was running the build.</p>
+  </div>
+  <footer>
+    <a href="/blog/2026/10/webhooks-out-of-order-scheduler/" class="button big">Read More</a>
+    <div class="stats">
+  
+    <ul class="categories">
+      
+        
+          <li><a class="article-terms-link" href="/categories/ephemerd/">ephemerd</a></li>
+        
+          <li><a class="article-terms-link" href="/categories/ci/">ci</a></li>
+        
+          <li><a class="article-terms-link" href="/categories/go/">go</a></li>
+        
+      
+    </ul>
+  
+  
+    <ul class="tags">
+      
+        
+          <li><a class="article-terms-link" href="/tags/go/">go</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/github-actions/">github-actions</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/webhooks/">webhooks</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/distributed-systems/">distributed-systems</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/scheduling/">scheduling</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/ephemerd/">ephemerd</a></li>
+        
+      
+    </ul>
+  
+</div>
+
+  </footer>
+</article>
+
+  
+    <article class="post">
+  <header>
+  <div class="title">
+    
+      <h2><a href="/blog/2026/10/go-proxmox-five-years-to-v0-8/">Breaking Changes Without Breaking Trust: Five Years to go-proxmox v0.8</a></h2>
+    
+    
+      <p>I measured five years of go-proxmox releases and found a broken tag that can never be deleted, a release that didn&#39;t compile and 285 breaking changes in v0.7.0. This is that history and the rule I follow now.</p>
+    
+  </div>
+  <div class="meta">
+    <time datetime="2026-10-04 19:40:00 -0700 PDT">October 4, 2026</time>
+    
+    <p>9-Minute Read</p>
+  </div>
+</header>
+
+  <div class="content">
+    <a href="/blog/2026/10/go-proxmox-five-years-to-v0-8/" class="image" style="--bg-image: url('/img/2026/10/go-proxmox-five-years-to-v0-8-apidiff.svg');">
+    <img class="" src="/img/2026/10/go-proxmox-five-years-to-v0-8-apidiff.svg" alt="Horizontal bar chart of apidiff incompatible and compatible changes for every go-proxmox release from v0.1.0 to v0.8.2">
+  </a>
+    
+    <p><a href="https://github.com/luthermonson/go-proxmox">go-proxmox</a> had its first commit in June 2021 and v0.8.2 went out on
+September 30th. In between there were 366 commits and 43 people besides me with a merged PR. More to the point of this
+post, there are downstream projects that I don&rsquo;t control pinning it in their <code>go.mod</code>. IONOS&rsquo;s
+<a href="https://github.com/ionos-cloud/cluster-api-provider-proxmox">Cluster API provider</a> and Sidero&rsquo;s
+<a href="https://github.com/siderolabs/omni-infra-provider-proxmox">Omni Proxmox provider</a> are both on v0.8.1 today. A library
+with users like that gets judged less on its API. It gets judged more on what happens to their build when they&hellip;</p>
+  </div>
+  <footer>
+    <a href="/blog/2026/10/go-proxmox-five-years-to-v0-8/" class="button big">Read More</a>
+    <div class="stats">
+  
+    <ul class="categories">
+      
+        
+          <li><a class="article-terms-link" href="/categories/go/">go</a></li>
+        
+          <li><a class="article-terms-link" href="/categories/homelab/">homelab</a></li>
+        
+      
+    </ul>
+  
+  
+    <ul class="tags">
+      
+        
+          <li><a class="article-terms-link" href="/tags/go/">go</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/go-proxmox/">go-proxmox</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/proxmox/">proxmox</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/semver/">semver</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/open-source/">open-source</a></li>
+        
+      
+    </ul>
+  
+</div>
+
+  </footer>
+</article>
+
+  
+    <article class="post">
+  <header>
+  <div class="title">
+    
+      <h2><a href="/blog/2026/10/windows-sigterm-sparse-files/">Windows Grab-Bag: SIGTERM That Doesn&#39;t Exist and Sparse Files That Break Docker</a></h2>
+    
+    
+      <p>Go can&#39;t SIGTERM a child on Windows, so ephemerd&#39;s cloudflared processes piled up. Separately, Delivery Optimization&#39;s sparse temp files broke its Windows image layer commits.</p>
+    
+  </div>
+  <div class="meta">
+    <time datetime="2026-10-03 14:30:00 -0700 PDT">October 3, 2026</time>
+    
+    <p>7-Minute Read</p>
+  </div>
+</header>
+
+  <div class="content">
+    <a href="/blog/2026/10/windows-sigterm-sparse-files/" class="image" style="--bg-image: url('/img/2026/10/windows-sigterm-sparse-files-connections.svg');">
+    <img class="" src="/img/2026/10/windows-sigterm-sparse-files-connections.svg" alt="Bar chart: 96 Cloudflare edge connections held by orphaned cloudflared processes versus 4 for the live daemon">
+  </a>
+    
+    <p>Two short ones from the Windows node of <a href="/blog/2026/08/ephemerd-one-daemon-every-os/">ephemerd</a> from the last few weeks. Neither is
+complicated once you know what&rsquo;s going on. Both took longer than they should have to find, because the failure showed up a
+long way from the cause.</p>
+  </div>
+  <footer>
+    <a href="/blog/2026/10/windows-sigterm-sparse-files/" class="button big">Read More</a>
+    <div class="stats">
+  
+    <ul class="categories">
+      
+        
+          <li><a class="article-terms-link" href="/categories/windows/">windows</a></li>
+        
+          <li><a class="article-terms-link" href="/categories/ci/">ci</a></li>
+        
+          <li><a class="article-terms-link" href="/categories/go/">go</a></li>
+        
+      
+    </ul>
+  
+  
+    <ul class="tags">
+      
+        
+          <li><a class="article-terms-link" href="/tags/go/">go</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/windows/">windows</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/cloudflare/">cloudflare</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/containers/">containers</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/docker/">docker</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/ephemerd/">ephemerd</a></li>
+        
+      
+    </ul>
+  
+</div>
+
+  </footer>
+</article>
+
+  
+    <article class="post">
+  <header>
+  <div class="title">
+    
+      <h2><a href="/blog/2026/10/php-jit-use-after-free/">An Upstream PHP JIT Use-After-Free, and Why Our Default Flipped Twice</a></h2>
+    
+    
+      <p>ePHPm turned PHP&#39;s tracing JIT on by default, then off three days later when stock Laravel died after three requests. The bug was upstream, and this is the bisect, the root cause and where the fix landed.</p>
+    
+  </div>
+  <div class="meta">
+    <time datetime="2026-10-01 20:10:00 -0700 PDT">October 1, 2026</time>
+    
+    <p>10-Minute Read</p>
+  </div>
+</header>
+
+  <div class="content">
+    <a href="/blog/2026/10/php-jit-use-after-free/" class="image" style="--bg-image: url('/img/2026/10/php-jit-use-after-free-bisect.svg');">
+    <img class="" src="/img/2026/10/php-jit-use-after-free-bisect.svg" alt="Bar chart of requests served before a crash per PHP version: 8.4.14, 8.5.0 and 8.5.4 never crash; 8.4.24 dies at 7, 8.5.5 at 1, 8.5.7 and 8.5.9 at 2">
+  </a>
+    
+    <p>In August, <a href="https://github.com/ephpm/ephpm">ePHPm</a> turned PHP&rsquo;s tracing JIT on by default in single-site serve mode.
+Three days later it went back off on every platform, and it&rsquo;s still off. The reason turned out to be a use-after-free
+in PHP&rsquo;s tracing JIT that has nothing to do with ePHPm. Stock <code>php -S</code> with a stock Laravel skeleton dies on it in a
+couple of requests. The fix is now released upstream. So this seemed like the right time to write up how we got there,
+and what still has to happen before the default&hellip;</p>
+  </div>
+  <footer>
+    <a href="/blog/2026/10/php-jit-use-after-free/" class="button big">Read More</a>
+    <div class="stats">
+  
+    <ul class="categories">
+      
+        
+          <li><a class="article-terms-link" href="/categories/php/">php</a></li>
+        
+          <li><a class="article-terms-link" href="/categories/ephpm/">ephpm</a></li>
+        
+          <li><a class="article-terms-link" href="/categories/windows/">windows</a></li>
+        
+      
+    </ul>
+  
+  
+    <ul class="tags">
+      
+        
+          <li><a class="article-terms-link" href="/tags/php/">php</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/opcache/">opcache</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/jit/">jit</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/ephpm/">ephpm</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/windows/">windows</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/debugging/">debugging</a></li>
+        
+      
+    </ul>
+  
+</div>
+
+  </footer>
+</article>
+
+  
+    <article class="post">
+  <header>
+  <div class="title">
+    
       <h2><a href="/blog/2026/09/agent-shell-allowlist-bypassable/">Your Agent&#39;s Shell Allowlist Is Bypassable</a></h2>
     
     
@@ -385,6 +656,8 @@ in a week. A couple of months later the version that worked&hellip;</p>
   
     <ul class="categories">
       
+        
+          <li><a class="article-terms-link" href="/categories/ephemerd/">ephemerd</a></li>
         
           <li><a class="article-terms-link" href="/categories/containers/">containers</a></li>
         
@@ -621,276 +894,6 @@ with me because the lesson in each was bigger than the diff. Here are four from 
 </article>
 
   
-    <article class="post">
-  <header>
-  <div class="title">
-    
-      <h2><a href="/blog/2026/09/os-exec-stdoutpipe-wait-footgun/">os/exec&#39;s StdoutPipe Footgun: How cmd.Wait() Ate My Last Frame (Twice)</a></h2>
-    
-    
-      <p>Calling Wait while a StdoutPipe reader is still draining throws away the child&#39;s last output. I shipped this bug twice in shipmates.</p>
-    
-  </div>
-  <div class="meta">
-    <time datetime="2026-09-17 20:12:00 -0700 PDT">September 17, 2026</time>
-    
-    <p>9-Minute Read</p>
-  </div>
-</header>
-
-  <div class="content">
-    <a href="/blog/2026/09/os-exec-stdoutpipe-wait-footgun/" class="image" style="--bg-image: url('/img/2026/09/os-exec-stdoutpipe-wait-footgun-cover.svg');">
-    <img class="" src="/img/2026/09/os-exec-stdoutpipe-wait-footgun-cover.svg" alt="Timeline of a child process exiting, Wait closing the pipe, and the reader losing buffered frames">
-  </a>
-    
-    <p><a href="/blog/2026/08/shipmates-persona-based-ai-coding-crews/">shipmates</a> spends most of its life spawning <code>claude</code> (and
-<code>codex</code>) processes and reading newline-delimited JSON off their stdout. The last frame of a turn is the important one.
-It&rsquo;s a <code>result</code> frame with the cost, the model and the final text. Stderr matters too, because that&rsquo;s where Claude Code
-tells you <code>Invalid API key · Please run /login</code>. For a while I was throwing both away under load. The cause is
-documented right there in the <code>os/exec</code> godoc. I fixed it in one package and then found the&hellip;</p>
-  </div>
-  <footer>
-    <a href="/blog/2026/09/os-exec-stdoutpipe-wait-footgun/" class="button big">Read More</a>
-    <div class="stats">
-  
-    <ul class="categories">
-      
-        
-          <li><a class="article-terms-link" href="/categories/go/">go</a></li>
-        
-      
-    </ul>
-  
-  
-    <ul class="tags">
-      
-        
-          <li><a class="article-terms-link" href="/tags/go/">go</a></li>
-        
-          <li><a class="article-terms-link" href="/tags/os-exec/">os-exec</a></li>
-        
-          <li><a class="article-terms-link" href="/tags/concurrency/">concurrency</a></li>
-        
-          <li><a class="article-terms-link" href="/tags/shipmates/">shipmates</a></li>
-        
-          <li><a class="article-terms-link" href="/tags/debugging/">debugging</a></li>
-        
-      
-    </ul>
-  
-</div>
-
-  </footer>
-</article>
-
-  
-    <article class="post">
-  <header>
-  <div class="title">
-    
-      <h2><a href="/blog/2026/09/php-timeout-linker-wraps/">The Bugs Were Our Own Linker Wraps: Making a PHP Timeout Actually Time Out</a></h2>
-    
-    
-      <p>max_execution_time did nothing in ePHPm because we had wrapped zend_set_timeout to a no-op. The SDK already had per-thread timers. We just had to stop switching them off.</p>
-    
-  </div>
-  <div class="meta">
-    <time datetime="2026-09-16 19:35:00 -0700 PDT">September 16, 2026</time>
-    
-    <p>8-Minute Read</p>
-  </div>
-</header>
-
-  <div class="content">
-    <a href="/blog/2026/09/php-timeout-linker-wraps/" class="image" style="--bg-image: url('/img/2026/09/php-timeout-linker-wraps-cover.svg');">
-    <img class="" src="/img/2026/09/php-timeout-linker-wraps-cover.svg" alt="Side by side: a process-wide SIGPROF timer that can land on the wrong thread, versus a per-thread POSIX timer that delivers SIGRTMIN to the PHP thread that armed it">
-  </a>
-    
-    <p>In <a href="/blog/2026/09/php-stack-guard-segfault-containment/">the stack guard post</a> the villain was a <code>-Wl,--wrap</code> linker
-flag that turned off PHP&rsquo;s C-stack overflow guard. It wasn&rsquo;t the only one. Until August, <code>max_execution_time</code> did
-nothing in <a href="https://github.com/ephpm/ephpm">ePHPm</a> on Linux, for the same reason. We had wrapped the function that arms
-it to a no-op. A runaway script ran until the HTTP layer&rsquo;s request timeout gave up on it and sent a 504. The PHP thread
-kept burning CPU after that.</p>
-  </div>
-  <footer>
-    <a href="/blog/2026/09/php-timeout-linker-wraps/" class="button big">Read More</a>
-    <div class="stats">
-  
-    <ul class="categories">
-      
-        
-          <li><a class="article-terms-link" href="/categories/ephpm/">ephpm</a></li>
-        
-          <li><a class="article-terms-link" href="/categories/php/">php</a></li>
-        
-      
-    </ul>
-  
-  
-    <ul class="tags">
-      
-        
-          <li><a class="article-terms-link" href="/tags/php/">php</a></li>
-        
-          <li><a class="article-terms-link" href="/tags/rust/">rust</a></li>
-        
-          <li><a class="article-terms-link" href="/tags/ephpm/">ephpm</a></li>
-        
-          <li><a class="article-terms-link" href="/tags/linker/">linker</a></li>
-        
-          <li><a class="article-terms-link" href="/tags/signals/">signals</a></li>
-        
-          <li><a class="article-terms-link" href="/tags/config/">config</a></li>
-        
-      
-    </ul>
-  
-</div>
-
-  </footer>
-</article>
-
-  
-    <article class="post">
-  <header>
-  <div class="title">
-    
-      <h2><a href="/blog/2026/09/clustered-sqlite-cdc-cluster-channel/">Clustered SQLite in ePHPm, Part 3: CDC Over the Cluster Channel</a></h2>
-    
-    
-      <p>ePHPm ships Turso&#39;s change data capture stream between nodes over one authenticated, multiplexed TCP connection. This covers how that works and the two failover bugs that showed up when the e2e suite killed the primary.</p>
-    
-  </div>
-  <div class="meta">
-    <time datetime="2026-09-15 21:08:00 -0700 PDT">September 15, 2026</time>
-    
-    <p>15-Minute Read</p>
-  </div>
-</header>
-
-  <div class="content">
-    <a href="/blog/2026/09/clustered-sqlite-cdc-cluster-channel/" class="image" style="--bg-image: url('/img/2026/09/clustered-sqlite-cluster-channel-topology.svg');">
-    <img class="" src="/img/2026/09/clustered-sqlite-cluster-channel-topology.svg" alt="Two ePHPm nodes connected by gossip on UDP 7946, the KV data plane on TCP 7947 and the cluster channel on TCP 7948 carrying cdc, snapshot and sql streams">
-  </a>
-    
-    <p>By the end of <a href="/blog/2026/08/clustered-sqlite-adding-turso/">Part 2</a> ePHPm v0.7.0 ran exactly one SQLite engine in
-process. That was Turso, for single-node and clustered mode alike. The sidecar was gone. What I skipped over is how a
-replica actually gets the primary&rsquo;s writes, and what happens when the primary dies with data on it. That&rsquo;s this post.</p>
-  </div>
-  <footer>
-    <a href="/blog/2026/09/clustered-sqlite-cdc-cluster-channel/" class="button big">Read More</a>
-    <div class="stats">
-  
-    <ul class="categories">
-      
-        
-          <li><a class="article-terms-link" href="/categories/ephpm/">ephpm</a></li>
-        
-          <li><a class="article-terms-link" href="/categories/databases/">databases</a></li>
-        
-          <li><a class="article-terms-link" href="/categories/rust/">rust</a></li>
-        
-      
-    </ul>
-  
-  
-    <ul class="tags">
-      
-        
-          <li><a class="article-terms-link" href="/tags/ephpm/">ephpm</a></li>
-        
-          <li><a class="article-terms-link" href="/tags/sqlite/">sqlite</a></li>
-        
-          <li><a class="article-terms-link" href="/tags/turso/">turso</a></li>
-        
-          <li><a class="article-terms-link" href="/tags/rust/">rust</a></li>
-        
-          <li><a class="article-terms-link" href="/tags/clustering/">clustering</a></li>
-        
-          <li><a class="article-terms-link" href="/tags/yamux/">yamux</a></li>
-        
-          <li><a class="article-terms-link" href="/tags/cdc/">cdc</a></li>
-        
-      
-    </ul>
-  
-</div>
-
-  </footer>
-</article>
-
-  
-    <article class="post">
-  <header>
-  <div class="title">
-    
-      <h2><a href="/blog/2026/09/calling-rust-from-php-without-a-socket-part-1/">Calling Rust From PHP Without a Socket, Part 1: The Native Functions</a></h2>
-    
-    
-      <p>How ePHPm exposes its in-process KV store and SQLite bridge to PHP as plain functions, and what it took to make that safe under ZTS.</p>
-    
-  </div>
-  <div class="meta">
-    <time datetime="2026-09-14 20:40:00 -0700 PDT">September 14, 2026</time>
-    
-    <p>14-Minute Read</p>
-  </div>
-</header>
-
-  <div class="content">
-    <a href="/blog/2026/09/calling-rust-from-php-without-a-socket-part-1/" class="image" style="--bg-image: url('/img/2026/09/calling-rust-from-php-without-a-socket-part-1-cover.svg');">
-    <img class="" src="/img/2026/09/calling-rust-from-php-without-a-socket-part-1-cover.svg" alt="Two paths from PHP to the ePHPm KV store: over a RESP socket, or through a native function and a function pointer table">
-  </a>
-    
-    <p><a href="https://github.com/ephpm/ephpm">ePHPm</a> is a single Rust binary that embeds PHP. It carries its own KV store and its own
-SQLite-backed database in the same process. For a long time PHP code could only reach that KV store the same way it
-reaches Redis. It opened a TCP socket to the RESP listener ePHPm runs on localhost, encoded a command and waited for the
-reply. That works, and every PHP Redis client in existence already speaks it. But it is a strange thing to do when the
-hash map you&rsquo;re talking to lives a few pointers&hellip;</p>
-  </div>
-  <footer>
-    <a href="/blog/2026/09/calling-rust-from-php-without-a-socket-part-1/" class="button big">Read More</a>
-    <div class="stats">
-  
-    <ul class="categories">
-      
-        
-          <li><a class="article-terms-link" href="/categories/ephpm/">ephpm</a></li>
-        
-          <li><a class="article-terms-link" href="/categories/rust/">rust</a></li>
-        
-          <li><a class="article-terms-link" href="/categories/php/">php</a></li>
-        
-      
-    </ul>
-  
-  
-    <ul class="tags">
-      
-        
-          <li><a class="article-terms-link" href="/tags/ephpm/">ephpm</a></li>
-        
-          <li><a class="article-terms-link" href="/tags/php/">php</a></li>
-        
-          <li><a class="article-terms-link" href="/tags/rust/">rust</a></li>
-        
-          <li><a class="article-terms-link" href="/tags/ffi/">ffi</a></li>
-        
-          <li><a class="article-terms-link" href="/tags/redis/">redis</a></li>
-        
-          <li><a class="article-terms-link" href="/tags/sqlite/">sqlite</a></li>
-        
-          <li><a class="article-terms-link" href="/tags/zts/">zts</a></li>
-        
-      
-    </ul>
-  
-</div>
-
-  </footer>
-</article>
-
-  
   <div class="pagination">
     
       <a href="/blog/" class="button left"><span>Previous Page</span></a>
@@ -909,52 +912,52 @@ hash map you&rsquo;re talking to lives a few pointers&hellip;</p>
       </header>
       
       <article class="mini-post">
+          <a href="/blog/2026/10/durable-data-single-node-k3s-ebs-rebuild/" class="image" style="--bg-image: url('/img/2026/10/durable-data-single-node-k3s-ebs-rebuild.svg');">
+    <img class="" src="/img/2026/10/durable-data-single-node-k3s-ebs-rebuild.svg" alt="A node rebuild: Node A is replaced by Node B, each root EBS volume is disposable, and the separate labeled EBS data volume detaches from the old node and re-attaches to the new one so the ePHPm blog&#39;s SQLite file and uploads survive">
+  </a>
+        <header>
+          <h2><a href="/blog/2026/10/durable-data-single-node-k3s-ebs-rebuild/">Surviving a Node Rebuild: A Durable ePHPm Blog on Single-Node k3s</a></h2>
+          <time class="published" datetime="2026-10-28 10:00:00 -0700 PDT">October 28, 2026</time>
+        </header>
+      </article>
+      
+      <article class="mini-post">
+          <a href="/blog/2026/10/docker-in-docker-without-root/" class="image" style="--bg-image: url('/img/2026/10/docker-in-docker-without-root-cracks.svg');">
+    <img class="" src="/img/2026/10/docker-in-docker-without-root-cracks.svg" alt="Four dind sandbox cracks and the ephemerd PR that closed each one">
+  </a>
+        <header>
+          <h2><a href="/blog/2026/10/docker-in-docker-without-root/">Docker-in-Docker in CI Without Handing Jobs Root</a></h2>
+          <time class="published" datetime="2026-10-24 10:00:00 -0700 PDT">October 24, 2026</time>
+        </header>
+      </article>
+      
+      <article class="mini-post">
+          <a href="/blog/2026/10/ci-cache-proxies-ephemeral-runners/" class="image" style="--bg-image: url('/img/2026/10/ci-cache-proxies-ephemeral-runners-flow.svg');">
+    <img class="" src="/img/2026/10/ci-cache-proxies-ephemeral-runners-flow.svg" alt="A fresh runner per job points go mod, cargo, composer, release downloads and actions/cache at matching cache proxies on the ephemerd node, where the caches persist and only reach the internet on a miss">
+  </a>
+        <header>
+          <h2><a href="/blog/2026/10/ci-cache-proxies-ephemeral-runners/">Cache Proxies for Ephemeral CI Runners</a></h2>
+          <time class="published" datetime="2026-10-23 15:00:00 -0700 PDT">October 23, 2026</time>
+        </header>
+      </article>
+      
+      <article class="mini-post">
+          <a href="/blog/2026/10/ephemeral-macos-runners-vm-clones/" class="image" style="--bg-image: url('/img/2026/10/ephemeral-macos-runners-vm-clones-lifecycle.svg');">
+    <img class="" src="/img/2026/10/ephemeral-macos-runners-vm-clones-lifecycle.svg" alt="A macOS CI job lifecycle: clone the base image, boot and grow the disk, set up over SSH, run the job, then stop and sweep, with a band showing the single slot held the whole time">
+  </a>
+        <header>
+          <h2><a href="/blog/2026/10/ephemeral-macos-runners-vm-clones/">Ephemeral macOS Runners: A Fresh VM Per Job on Apple Silicon</a></h2>
+          <time class="published" datetime="2026-10-23 11:00:00 -0700 PDT">October 23, 2026</time>
+        </header>
+      </article>
+      
+      <article class="mini-post">
           <a href="/blog/2026/10/turso-page1-allocation-race/" class="image" style="--bg-image: url('/img/2026/10/turso-page1-allocation-race-races.svg');">
     <img class="" src="/img/2026/10/turso-page1-allocation-race-races.svg" alt="Sequence diagram of two connections and init_lock: in race 1, B checks for an empty file, A publishes page 1 and releases the lock, then B takes the lock and panics on its assert; in race 2, A&#39;s lock is dropped while page 1 is being written, so B takes it and writes page 1 again">
   </a>
         <header>
           <h2><a href="/blog/2026/10/turso-page1-allocation-race/">Thirty-Two Connections and an Empty File: A Race in Turso&#39;s Page-1 Allocation</a></h2>
           <time class="published" datetime="2026-10-18 14:30:00 -0700 PDT">October 18, 2026</time>
-        </header>
-      </article>
-      
-      <article class="mini-post">
-          <a href="/blog/2026/10/ephpm-worker-mode-performance/" class="image" style="--bg-image: url('/img/2026/10/ephpm-worker-mode-performance-cover.svg');">
-    <img class="" src="/img/2026/10/ephpm-worker-mode-performance-cover.svg" alt="Diagram: before, hyper/tokio hands each request to one shared bounded channel whose waiter list all 20 PHP threads contend on; after, a dispatcher hands the job straight into the mailbox of the most recently idle PHP thread and only queues it in a FIFO overflow queue when every thread is busy">
-  </a>
-        <header>
-          <h2><a href="/blog/2026/10/ephpm-worker-mode-performance/">Fourth Place in Worker Mode, and Why It Wasn&#39;t PHP</a></h2>
-          <time class="published" datetime="2026-10-15 19:45:00 -0700 PDT">October 15, 2026</time>
-        </header>
-      </article>
-      
-      <article class="mini-post">
-          <a href="/blog/2026/10/composer-without-php-vivacity/" class="image" style="--bg-image: url('/img/2026/10/composer-without-php-vivacity-bench.svg');">
-    <img class="" src="/img/2026/10/composer-without-php-vivacity-bench.svg" alt="Bar chart comparing Composer 2.10.3 and ephpm composer on a Laravel install on native Windows">
-  </a>
-        <header>
-          <h2><a href="/blog/2026/10/composer-without-php-vivacity/">Composer Without PHP: Embedding vivacity in ePHPm</a></h2>
-          <time class="published" datetime="2026-10-14 23:20:00 -0700 PDT">October 14, 2026</time>
-        </header>
-      </article>
-      
-      <article class="mini-post">
-          <a href="/blog/2026/10/a-lock-is-only-as-good-as-its-release/" class="image" style="--bg-image: url('/img/2026/10/a-lock-is-only-as-good-as-its-release-cover.svg');">
-    <img class="" src="/img/2026/10/a-lock-is-only-as-good-as-its-release-cover.svg" alt="Timeline: request A&#39;s lock expires, B acquires it, A&#39;s blind DEL frees B&#39;s lock and C gets in">
-  </a>
-        <header>
-          <h2><a href="/blog/2026/10/a-lock-is-only-as-good-as-its-release/">A Lock Is Only as Good as Its Release</a></h2>
-          <time class="published" datetime="2026-10-13 20:40:00 -0700 PDT">October 13, 2026</time>
-        </header>
-      </article>
-      
-      <article class="mini-post">
-          <a href="/blog/2026/10/xdebug-worker-mode/" class="image" style="--bg-image: url('/img/2026/10/xdebug-worker-mode-cover.svg');">
-    <img class="" src="/img/2026/10/xdebug-worker-mode-cover.svg" alt="Diagram of the ePHPm router sending untriggered requests to the warm worker pool and Xdebug-triggered requests to a one-request debug lane">
-  </a>
-        <header>
-          <h2><a href="/blog/2026/10/xdebug-worker-mode/">Step Debugging a Worker That Never Ends</a></h2>
-          <time class="published" datetime="2026-10-12 21:10:00 -0700 PDT">October 12, 2026</time>
         </header>
       </article>
       
@@ -977,10 +980,10 @@ hash map you&rsquo;re talking to lives a few pointers&hellip;</p>
           
           
           <li>
-              <a href="/categories/ephpm/">ephpm<span class="count">37</span></a>
+              <a href="/categories/ephpm/">ephpm<span class="count">38</span></a>
           
           <li>
-              <a href="/categories/go/">go<span class="count">30</span></a>
+              <a href="/categories/go/">go<span class="count">32</span></a>
           
           <li>
               <a href="/categories/php/">php<span class="count">26</span></a>
@@ -995,16 +998,19 @@ hash map you&rsquo;re talking to lives a few pointers&hellip;</p>
               <a href="/categories/windows/">windows<span class="count">14</span></a>
           
           <li>
+              <a href="/categories/ci/">ci<span class="count">12</span></a>
+          
+          <li>
+              <a href="/categories/containers/">containers<span class="count">10</span></a>
+          
+          <li>
               <a href="/categories/databases/">databases<span class="count">10</span></a>
           
           <li>
-              <a href="/categories/ci/">ci<span class="count">9</span></a>
+              <a href="/categories/security/">security<span class="count">10</span></a>
           
           <li>
-              <a href="/categories/security/">security<span class="count">9</span></a>
-          
-          <li>
-              <a href="/categories/containers/">containers<span class="count">7</span></a>
+              <a href="/categories/ephemerd/">ephemerd<span class="count">9</span></a>
           
           <li>
               <a href="/categories/tools/">tools<span class="count">5</span></a>

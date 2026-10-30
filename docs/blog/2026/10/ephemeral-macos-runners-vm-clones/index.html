@@ -1,0 +1,684 @@
+<!doctype html>
+<html lang="en">
+  <head>
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-MSTSKGFWTX"></script>
+<script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+
+    gtag('config', 'G-MSTSKGFWTX');
+</script><meta charset="utf-8">
+<title>Ephemeral macOS Runners: A Fresh VM Per Job on Apple Silicon - Luther Monson</title>
+<meta name="description" content="How ephemerd runs each macOS CI job in a throwaway Virtualization.framework VM, and the slot leaks and disk limits I had to fix to make it reliable.">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<meta name="twitter:card" content="summary_large_image"><meta name="twitter:site" content="@luthermonson">
+
+<meta property="og:site_name" content="Luther Monson">
+<meta property="og:title" content="Ephemeral macOS Runners: A Fresh VM Per Job on Apple Silicon">
+<meta property="og:description" content="How ephemerd runs each macOS CI job in a throwaway Virtualization.framework VM, and the slot leaks and disk limits I had to fix to make it reliable.">
+<meta property="og:type" content="article">
+<meta property="og:url" content="https://luth.io/blog/2026/10/ephemeral-macos-runners-vm-clones/">
+    <meta property="og:image" content="https://luth.io/img/2026/10/ephemeral-macos-runners-vm-clones-lifecycle.svg">
+    <meta property="og:image:alt" content="A macOS CI job lifecycle: clone the base image, boot and grow the disk, set up over SSH, run the job, then stop and sweep, with a band showing the single slot held the whole time">
+
+
+  <link rel="manifest" href="/favicon/site.webmanifest?v=1">
+  <link rel="apple-touch-icon" sizes="180x180" href="/favicon/apple-touch-icon.png?v=1">
+  <link rel="icon" type="image/png" sizes="32x32" href="/favicon/favicon-32x32.png?v=1">
+  <link rel="icon" type="image/png" sizes="16x16" href="/favicon/favicon-16x16.png?v=1">
+  
+    <link rel="mask-icon" href="/favicon/safari-pinned-tab.svg?v=1" color="#ffffff">
+    <link rel="shortcut icon" href="/favicon/favicon.ico?v=1">
+    <meta name="msapplication-config" content="/favicon/browserconfig.xml?v=1">
+  
+  <meta name="msapplication-TileColor" content="#ffffff">
+  <meta name="theme-color" content="#ffffff">
+
+
+  <meta name="generator" content="Hugo 0.160.1">
+  <link rel="alternate" type="application/rss+xml" href="https://luth.io/index.xml" title="Luther Monson">
+  <link rel="stylesheet" href="/css/bundle.min.e1ffed86714fbb7eff75eab221c0c61b8260be0c7d1c08db0fcb7a2bdb6af7c9.css" integrity="sha256-4f/thnFPu37/deqyIcDGG4Jgvgx9HAjbD8t6K9tq98k="><link rel="stylesheet" href="/css/add-on.css">
+        <link rel="stylesheet" href="/css/code.css">
+        <link rel="stylesheet" href="/css/mobile.css">
+</head>
+
+  <body>
+    
+
+<header id="site-header">
+  <nav id="site-nav">
+    <h1 class="nav-title">
+      <a href="/" class="nav">
+        <img class="nav-avatar" src="/img/luther-monson-headshot.jpg" alt="" width="32" height="32">
+        
+          Blog
+        
+      </a>
+    </h1>
+    <menu id="site-nav-menu" class="flyout-menu menu">
+      
+        
+          
+          <a href="/" class="nav link"><i class='fa fa-home'></i> Home</a>
+        
+      
+        
+          
+          <a href="/about" class="nav link"><i class='far fa-id-card'></i> About</a>
+        
+      
+        
+          
+          <a href="/blog" class="nav link"><i class='far fa-newspaper'></i> Blog</a>
+        
+      
+        
+          
+          <a href="/archive" class="nav link"><i class='far fa-calendar-alt'></i> Archive</a>
+        
+      
+        
+          
+          <a href="/categories" class="nav link"><i class='fas fa-sitemap'></i> Categories</a>
+        
+      
+      <a href="#share-menu" class="nav link share-toggle"><i class="fas fa-share-alt">&nbsp;</i>Share</a>
+      <a href="#search-input" class="nav link search-toggle"><i class="fas fa-search">&nbsp;</i>Search</a>
+    </menu>
+    <a href="#search-input" class="nav search-toggle"><i class="fas fa-search fa-2x">&nbsp;</i></a>
+    <a href="#share-menu" class="nav share-toggle"><i class="fas fa-share-alt fa-2x">&nbsp;</i></a>
+    
+    <a href="#site-nav" class="nav nav-toggle"><i class="fas fa-bars fa-2x"></i></a>
+  </nav>
+  <menu id="search" class="menu"><input id="search-input" class="search-input menu"></input><div id="search-results" class="search-results menu"></div></menu>
+  
+  
+    <menu id="share-menu" class="flyout-menu menu">
+      <h1>Share Post</h1>
+      
+
+
+
+
+  
+    
+    <a href="//twitter.com/share?text=Ephemeral%20macOS%20Runners%3a%20A%20Fresh%20VM%20Per%20Job%20on%20Apple%20Silicon&amp;url=https%3a%2f%2fluth.io%2fblog%2f2026%2f10%2fephemeral-macos-runners-vm-clones%2f" target="_blank" rel="noopener" class="nav share-btn twitter">
+        <p>Twitter</p>
+      </a>
+  
+
+  
+      <a href="//www.facebook.com/sharer/sharer.php?u=https%3a%2f%2fluth.io%2fblog%2f2026%2f10%2fephemeral-macos-runners-vm-clones%2f" target="_blank" rel="noopener" class="nav share-btn facebook">
+        <p>Facebook</p>
+        </a>
+  
+
+  
+    <a href="//www.reddit.com/submit?url=https%3a%2f%2fluth.io%2fblog%2f2026%2f10%2fephemeral-macos-runners-vm-clones%2f&amp;title=Ephemeral%20macOS%20Runners%3a%20A%20Fresh%20VM%20Per%20Job%20on%20Apple%20Silicon" target="_blank" rel="noopener" class="nav share-btn reddit">
+          <p>Reddit</p>
+        </a>
+  
+
+  
+        <a href="//www.linkedin.com/shareArticle?url=https%3a%2f%2fluth.io%2fblog%2f2026%2f10%2fephemeral-macos-runners-vm-clones%2f&amp;title=Ephemeral%20macOS%20Runners%3a%20A%20Fresh%20VM%20Per%20Job%20on%20Apple%20Silicon" target="_blank" rel="noopener" class="nav share-btn linkedin">
+            <p>LinkedIn</p>
+          </a>
+  
+
+  
+        <a href="//www.pinterest.com/pin/create/button/?url=https%3a%2f%2fluth.io%2fblog%2f2026%2f10%2fephemeral-macos-runners-vm-clones%2f&amp;description=Ephemeral%20macOS%20Runners%3a%20A%20Fresh%20VM%20Per%20Job%20on%20Apple%20Silicon" target="_blank" rel="noopener" class="nav share-btn pinterest">
+          <p>Pinterest</p>
+        </a>
+  
+
+  
+        <a href="mailto:?subject=Check%20out%20this%20post%20by Luther%20Monson&amp;body=https%3a%2f%2fluth.io%2fblog%2f2026%2f10%2fephemeral-macos-runners-vm-clones%2f" target="_blank" class="nav share-btn email" data-proofer-ignore>
+          <p>Email</p>
+        </a>
+  
+
+
+    </menu>
+  
+</header>
+
+    <div id="wrapper">
+      <section id="site-intro" class="hidden-single-column">
+  <a href="/"><img src="/img/luther-monson-headshot.jpg" class="circle" width="100" alt="Luther Monson, Staff Software Engineer at SUSE" /></a>
+  <header>
+    <h1>Luther Monson</h1>
+  </header>
+  <main>
+    <p>Go by way of PHP &middot; Containers &middot; VMs &middot; Windows &middot; Kubernetes</p>
+  </main>
+  
+    <footer>
+      <ul class="socnet-icons">
+        
+
+        <li><a href="//github.com/luthermonson" target="_blank" rel="noopener" title="GitHub" class="fab fa-github"></a></li>
+
+
+
+
+
+
+
+
+
+
+
+<li><a href="//www.linkedin.com/in/luthermonson" target="_blank" rel="noopener" title="LinkedIn" class="fab fa-linkedin"></a></li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li><a href="//twitter.com/luthermonson" target="_blank" rel="noopener" title="Twitter" class="fab fa-twitter"></a></li>
+
+
+
+
+
+
+
+
+
+
+
+<li><a href="mailto:luther.monson@gmail.com" target="_blank" title="Email" class="far fa-envelope"></a></li>
+
+      </ul>
+    </footer>
+  
+</section>
+
+      <main id="site-main">
+        
+  <article>
+    <div class="post">
+      <header>
+  <div class="title">
+    
+      <h2><a href="/blog/2026/10/ephemeral-macos-runners-vm-clones/">Ephemeral macOS Runners: A Fresh VM Per Job on Apple Silicon</a></h2>
+    
+    
+      <p>How ephemerd runs each macOS CI job in a throwaway Virtualization.framework VM, and the slot leaks and disk limits I had to fix to make it reliable.</p>
+    
+  </div>
+  <div class="meta">
+    <time datetime="2026-10-23 11:00:00 -0700 PDT">October 23, 2026</time>
+    
+    <p>9-Minute Read</p>
+  </div>
+</header>
+
+      <div id="socnet-share">
+        
+
+
+
+
+  
+    
+    <a href="//twitter.com/share?text=Ephemeral%20macOS%20Runners%3a%20A%20Fresh%20VM%20Per%20Job%20on%20Apple%20Silicon&amp;url=https%3a%2f%2fluth.io%2fblog%2f2026%2f10%2fephemeral-macos-runners-vm-clones%2f" target="_blank" rel="noopener" class="nav share-btn twitter">
+        <p>Twitter</p>
+      </a>
+  
+
+  
+      <a href="//www.facebook.com/sharer/sharer.php?u=https%3a%2f%2fluth.io%2fblog%2f2026%2f10%2fephemeral-macos-runners-vm-clones%2f" target="_blank" rel="noopener" class="nav share-btn facebook">
+        <p>Facebook</p>
+        </a>
+  
+
+  
+    <a href="//www.reddit.com/submit?url=https%3a%2f%2fluth.io%2fblog%2f2026%2f10%2fephemeral-macos-runners-vm-clones%2f&amp;title=Ephemeral%20macOS%20Runners%3a%20A%20Fresh%20VM%20Per%20Job%20on%20Apple%20Silicon" target="_blank" rel="noopener" class="nav share-btn reddit">
+          <p>Reddit</p>
+        </a>
+  
+
+  
+        <a href="//www.linkedin.com/shareArticle?url=https%3a%2f%2fluth.io%2fblog%2f2026%2f10%2fephemeral-macos-runners-vm-clones%2f&amp;title=Ephemeral%20macOS%20Runners%3a%20A%20Fresh%20VM%20Per%20Job%20on%20Apple%20Silicon" target="_blank" rel="noopener" class="nav share-btn linkedin">
+            <p>LinkedIn</p>
+          </a>
+  
+
+  
+        <a href="//www.pinterest.com/pin/create/button/?url=https%3a%2f%2fluth.io%2fblog%2f2026%2f10%2fephemeral-macos-runners-vm-clones%2f&amp;description=Ephemeral%20macOS%20Runners%3a%20A%20Fresh%20VM%20Per%20Job%20on%20Apple%20Silicon" target="_blank" rel="noopener" class="nav share-btn pinterest">
+          <p>Pinterest</p>
+        </a>
+  
+
+  
+        <a href="mailto:?subject=Check%20out%20this%20post%20by Luther%20Monson&amp;body=https%3a%2f%2fluth.io%2fblog%2f2026%2f10%2fephemeral-macos-runners-vm-clones%2f" target="_blank" class="nav share-btn email" data-proofer-ignore>
+          <p>Email</p>
+        </a>
+  
+
+
+      </div>
+      <div class="content">
+        
+        <p><a href="https://github.com/ephpm/ephemerd">ephemerd</a> gives every CI job a brand new environment and throws it away after.
+On Linux and Windows that environment is a container. On macOS it can&rsquo;t be. Apple&rsquo;s license wants macOS running on
+Apple hardware, so the Mac in my rack is the real thing. The isolation comes from a VM instead.</p>
+<p>Each macOS job gets a fresh <a href="https://developer.apple.com/documentation/virtualization">Virtualization.framework</a> VM
+cloned from a base image. The job runs inside it. The VM is destroyed when the job finishes. That&rsquo;s the same contract
+as the container path. Getting there took four fixes that I only found by running the fleet. This post walks the VM
+lifecycle and the three ways it bit me:</p>
+<ul>
+<li>a wedged VM that held the only slot</li>
+<li>jobs that fetched straight from the internet</li>
+<li>job disks that ran out mid-build</li>
+</ul>
+<p>If you want the background on ephemerd itself, I wrote that up in
+<a href="/blog/2026/08/ephemerd-one-daemon-every-os/">One Daemon, a Fresh Runner Per Job, Every OS</a>.</p>
+<h3 id="the-vm-clone-lifecycle">The VM-clone lifecycle</h3>
+<p>The Mac holds one base image. ephemerd never boots it. For each job it makes an APFS clone of <code>base.img</code>. APFS clones
+are copy-on-write. The clone starts out sharing every block with the base. The guest only consumes host disk for the
+blocks it writes. So a clone is cheap to make and cheap to throw away.</p>
+<p><img src="/img/2026/10/ephemeral-macos-runners-vm-clones-lifecycle.svg" alt="macOS VM job lifecycle and the single concurrency slot"></p>
+<p>The steps are:</p>
+<ol>
+<li>clone <code>base.img</code> for this job</li>
+<li>boot the VM from the clone</li>
+<li>set the runner up over SSH inside the guest</li>
+<li>start the embedded Actions runner with a just-in-time config good for one job</li>
+<li>stop the VM and remove the clone</li>
+</ol>
+<p>The container paths reach &ldquo;tracked and running&rdquo; almost immediately. The macOS path has a slow provisioning phase in
+between. It boots a whole OS. Then it waits for the guest&rsquo;s SSH port to open. Then it runs setup commands over SSH.
+That gap is where the trouble lived.</p>
+<p>The Mac pool runs with <code>max_concurrent = 1</code>. One VM at a time. So there is exactly one concurrency slot. A job takes
+the slot the moment it starts cloning. It gives the slot back when the VM is gone. Hold that fact. It&rsquo;s the whole
+story of the first two fixes.</p>
+<p>One slot is my choice. Two is the hard limit. Apple&rsquo;s licensing lets a single Mac run at most two macOS VMs at once.
+A faster Mac doesn&rsquo;t change that. So the ceiling here is two, not the core count. I run one job VM at a time. That
+leaves the second slot free. It matters during teardown. The old job&rsquo;s VM can still be stopping while the next one
+boots, and both stay under the cap.</p>
+<h3 id="a-wedged-vm-that-never-let-go">A wedged VM that never let go</h3>
+<p>The first failure took out macOS CI fleet-wide. One job logged <code>provisioning macOS VM runner</code>, then <code>booting macOS VM</code>, then <code>waiting for macOS VM runner to become reachable</code>. Then it went silent for about ten hours. The VM kept
+running the whole time at 57% CPU. Because the pool holds one slot, that one stuck VM pinned it. Every later macOS job
+just logged its queued webhook and sat there. macOS CI was dead for about twelve hours. The worst part: <code>ephemerd jobs</code>
+reported no running jobs the entire time. Recovery needed a human to kill the VM and restart the daemon.</p>
+<p>The root cause was an unbounded wait inside SSH. The provisioning step opens an SSH session to the guest and runs
+setup commands. The Go SSH client&rsquo;s <code>Timeout</code> bounds connection setup only. It does not bound command execution. Those
+command calls took no context either. So a guest command that never returned blocked the whole provisioning wait
+forever. The job hung before it was ever tracked as running. That&rsquo;s why it was invisible to <code>ephemerd jobs</code> and to the
+orphan sweep. It already held the slot, though.</p>
+<p><a href="https://github.com/ephpm/ephemerd/pull/178">PR #178</a> bounded the whole thing. The scheduler now wraps the
+reachability wait in a provisioning deadline. The default is five minutes. It&rsquo;s a config knob, <code>provision_timeout</code>
+under <code>[vm.macos]</code>. On the deadline it force-stops the VM. Force-stopping drops the guest connection, which unblocks
+the stuck SSH call. Then the normal failure path releases the slot and deregisters the runner. Each remote SSH command
+also got its own hard deadline. The VM&rsquo;s <code>Stop()</code> became idempotent, because a watchdog and a normal teardown can both
+call it.</p>
+<h3 id="the-deadline-path-leaked-too">The deadline path leaked too</h3>
+<p>I thought #178 closed it. It didn&rsquo;t. A few weeks later the Mac served zero macOS jobs for about twenty-eight hours
+while reporting itself healthy. Status was <code>ok</code>. Active jobs read zero. <code>/healthz</code> returned 200. Every queued macOS
+job sat until GitHub cancelled it at the 24-hour timeout.</p>
+<p>The deadline path had its own bug. After the force-stop, the code waited for the provisioning goroutine to unwind.
+That wait was unbounded. It assumed the force-stop would always drop the guest connection and let the wait return. On
+metal the guest ignored the stop. The log even showed <code>macOS VM did not stop gracefully, forcing</code>. So the wait parked
+forever, still holding the slot. The decisive evidence was a log line that never appeared. The error branch logs
+<code>macOS VM runner not reachable</code>. That line was nowhere in the twenty-eight-hour window. There was a second,
+independent leak on the retry path for the same reason.</p>
+<p><a href="https://github.com/ephpm/ephemerd/pull/197">PR #197</a> stopped coupling the slot release to teardown. The VM stop runs
+off-thread now. The unwind is bounded. The slot is released before teardown on every macOS path. If a wedged stop
+never returns, that one goroutine is leaked on purpose and logged. Leaking one goroutine is the correct trade against
+pinning a pool&rsquo;s only slot.</p>
+<p>The reason this hid for a day straight was observability. So that got fixed in the same PR. <code>/healthz</code>, the status RPC
+and <code>ephemerd status</code> now report <code>held_slots</code> and <code>slot_capacity</code> per pool. Held equal to capacity with zero active
+jobs is the outage, visible at a glance. A blocked slot acquire now logs too. It warns at thirty seconds and
+repeats every five minutes. After fifteen minutes blocked, with slots held and nothing tracked, it escalates to an
+error named <code>suspected slot leak</code>.</p>
+<h3 id="jobs-were-fetching-straight-from-the-internet">Jobs were fetching straight from the internet</h3>
+<p>The next one wasn&rsquo;t an outage. It was a bandwidth bill. The Mac was pulling around 130 GB a day of WAN traffic. ephemerd
+runs local caching proxies for gomod, cargo, GitHub releases and Composer. Those caches were still at zero bytes.</p>
+<p>The cause was structural. The cache-proxy environment is injected into containers. A macOS VM job has no container. Its
+runner starts over SSH inside the guest, and nothing was passing it any proxy env. So every macOS job fetched
+dependencies straight from the internet.</p>
+<p><a href="https://github.com/ephpm/ephemerd/pull/211">PR #211</a> routes the env in through the runner&rsquo;s <code>.env</code> file, which the
+GitHub runner loads into every job. The proxy addresses point at the host&rsquo;s NAT gateway as seen from inside the guest.
+Before the runner starts, one bounded SSH command probes every proxy address from inside the VM. It only stages the
+env if all of them answer. The log says either <code>cache proxies reachable from the macOS VM; advertised to the job</code> or a
+warning naming the unreachable address.</p>
+<p>The all-or-nothing rule matters. Go falls back to <code>|direct</code> on an unreachable proxy. Cargo and rustup do not. A partial
+env could fail a build that would have succeeded uncached. So any failure stages nothing, and the job runs exactly as
+before, just over the open internet.</p>
+<h3 id="the-disks-had-to-grow">The disks had to grow</h3>
+<p>The last one showed up as a hard failure. ePHPm&rsquo;s nightly <code>Build (PHP x, macos-aarch64)</code> builds PHP-linked debug test
+binaries. Each one embeds libphp and ICU. That filled the job VM to 98-99% during the link step. It failed with <code>No space left on device</code> every night from mid-October on.</p>
+<p>Here&rsquo;s the math. The base image is 50 GB. Every job boots from a clone of it, so the guest sees about 41 GiB usable.
+A debug build of that test suite doesn&rsquo;t fit.</p>
+<p><a href="https://github.com/ephpm/ephemerd/pull/216">PR #216</a> added <code>disk_size_gb</code> under <code>[vm.macos]</code>. The default is 0, which
+keeps today&rsquo;s behavior. When set, two things happen. On the host, before boot, a truncate extends the job&rsquo;s clone. The
+clone is sparse on APFS, so no host disk is spent until the guest writes, and the blocks shared with the base stay
+shared. In the guest, during the SSH setup step, two <code>diskutil</code> calls finish the job. <code>diskutil repairDisk</code> moves the GPT
+backup header to the new end of the disk. <code>diskutil apfs resizeContainer</code> grows the container into the new space. The physical store isn&rsquo;t
+hard-coded. It&rsquo;s read from <code>diskutil info</code> and validated before it goes anywhere near a command. Every failure is a
+warning, and the job falls back to the base-size disk. On my Mac I set it to 100.</p>
+<p>That PR came with a bonus bug. The Mac&rsquo;s jobs directory held a 38 GB clone from the start of October that was never
+removed. A VM deleted its clones in exactly one place: at the end of <code>Stop</code>, after the Virtualization.framework stop
+returned. When that stop hangs, the scheduler abandons the VM and the deletion never runs. A daemon crash mid-job
+leaks the same files.</p>
+<p>So #216 closed every path. <code>Stop</code> now runs the guest stop on its own goroutine and removes the files when it returns
+or after 45 seconds, whichever comes first. Unlinking under a wedged guest is safe, because the guest keeps its open
+descriptor. <code>Start</code> removes the clones on any error before the VM exists. A live-VM registry tracks VMs that are
+provisioning or stuck stopping, which the running set doesn&rsquo;t cover. And a periodic sweep runs at startup and every
+thirty minutes. It removes only job clones that no live VM owns and that haven&rsquo;t been written for two hours. It never
+touches the base image. It reports <code>macos_clones_swept</code> and <code>macos_clone_bytes_swept</code> in status.</p>
+<h3 id="release-status">Release status</h3>
+<p>All four of these are merged and shipped as I write this on 2026-10-23. The slot-leak bound landed in v0.2.5. The
+deadline-path release landed in v0.2.11. The cache proxies for macOS jobs landed in v0.2.19. The bigger disks and the
+clone sweep landed in v0.2.22, which is the current release.</p>
+<p>One honest caveat. The darwin VM file needs cgo and Virtualization.framework, so it only compiles on a macOS builder.
+The scheduler and slot logic are cross-platform and heavily tested. The guest-side <code>diskutil</code> resize is not. Neither is
+the 45-second file removal under a truly wedged stop. Those two are covered by a canary job on the Mac and by fakes,
+not by a unit test on every platform.</p>
+<h3 id="whats-next">What&rsquo;s next</h3>
+<p>The cache proxies cover gomod, cargo, GitHub releases and Composer. Homebrew, Xcode and the Actions downloads still go
+over the open internet from the Mac. Those are the next slice of that 130 GB a day. I also want the slot observability
+from #197 wired into mayfly so a pinned pool pages me instead of waiting for me to notice the graph.</p>
+<h3 id="links">Links</h3>
+<ul>
+<li><a href="https://github.com/ephpm/ephemerd">ephemerd</a></li>
+<li><a href="https://github.com/ephpm/ephemerd/pull/178">PR #178: bound macOS VM provisioning so a wedged VM frees its slot</a></li>
+<li><a href="https://github.com/ephpm/ephemerd/pull/197">PR #197: release the macOS slot on the provisioning-deadline path</a></li>
+<li><a href="https://github.com/ephpm/ephemerd/pull/211">PR #211: give macOS VM jobs the cache proxies</a></li>
+<li><a href="https://github.com/ephpm/ephemerd/pull/216">PR #216: bigger macOS job disks and a sweep for leaked clones</a></li>
+<li><a href="/blog/2026/08/ephemerd-one-daemon-every-os/">ephemerd: One Daemon, a Fresh Runner Per Job, Every OS</a></li>
+<li><a href="/blog/2026/09/kata-containers-for-ci/">Kata Containers for CI: Boot Cost Isn&rsquo;t the Problem, File I/O Is</a></li>
+</ul>
+
+      </div>
+      <footer>
+        <div class="stats">
+  
+    <ul class="categories">
+      
+        
+          <li><a class="article-terms-link" href="/categories/ephemerd/">ephemerd</a></li>
+        
+          <li><a class="article-terms-link" href="/categories/ci/">ci</a></li>
+        
+          <li><a class="article-terms-link" href="/categories/go/">go</a></li>
+        
+      
+    </ul>
+  
+  
+    <ul class="tags">
+      
+        
+          <li><a class="article-terms-link" href="/tags/go/">go</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/macos/">macos</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/github-actions/">github-actions</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/virtualization/">virtualization</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/ci/">ci</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/ephemerd/">ephemerd</a></li>
+        
+      
+    </ul>
+  
+</div>
+
+      </footer>
+    </div>
+    
+      
+  
+  <div class='post giscus-wrap'>
+    <script src='https://giscus.app/client.js'
+            data-repo='luthermonson/luth.io'
+            data-repo-id='R_kgDOGvFBXQ'
+            data-category='Announcements'
+            data-category-id='DIC_kwDOGvFBXc4DH_gv'
+            data-mapping='pathname'
+            data-strict='1'
+            data-reactions-enabled='1'
+            data-emit-metadata='0'
+            data-input-position='top'
+            data-theme='light'
+            data-lang='en'
+            data-loading='lazy'
+            crossorigin='anonymous'
+            async>
+    </script>
+  </div>
+  
+
+
+
+    
+  </article>
+  
+    <nav class="post-nav">
+      
+        <a href="/blog/2026/10/turso-page1-allocation-race/" class="post-nav-link older">
+          <span class="post-nav-label">&larr; Older</span>
+          <span class="post-nav-title">Thirty-Two Connections and an Empty File: A Race in Turso&#39;s Page-1 Allocation</span>
+        </a>
+      
+      
+        <a href="/blog/2026/10/ci-cache-proxies-ephemeral-runners/" class="post-nav-link newer">
+          <span class="post-nav-label">Newer &rarr;</span>
+          <span class="post-nav-title">Cache Proxies for Ephemeral CI Runners</span>
+        </a>
+      
+    </nav>
+  
+
+      </main>
+      <section id="site-sidebar">
+  
+    <section id="recent-posts">
+      <header>
+        <h1>Recent Posts</h1>
+      </header>
+      
+      <article class="mini-post">
+          <a href="/blog/2026/10/durable-data-single-node-k3s-ebs-rebuild/" class="image" style="--bg-image: url('/img/2026/10/durable-data-single-node-k3s-ebs-rebuild.svg');">
+    <img class="" src="/img/2026/10/durable-data-single-node-k3s-ebs-rebuild.svg" alt="A node rebuild: Node A is replaced by Node B, each root EBS volume is disposable, and the separate labeled EBS data volume detaches from the old node and re-attaches to the new one so the ePHPm blog&#39;s SQLite file and uploads survive">
+  </a>
+        <header>
+          <h2><a href="/blog/2026/10/durable-data-single-node-k3s-ebs-rebuild/">Surviving a Node Rebuild: A Durable ePHPm Blog on Single-Node k3s</a></h2>
+          <time class="published" datetime="2026-10-28 10:00:00 -0700 PDT">October 28, 2026</time>
+        </header>
+      </article>
+      
+      <article class="mini-post">
+          <a href="/blog/2026/10/docker-in-docker-without-root/" class="image" style="--bg-image: url('/img/2026/10/docker-in-docker-without-root-cracks.svg');">
+    <img class="" src="/img/2026/10/docker-in-docker-without-root-cracks.svg" alt="Four dind sandbox cracks and the ephemerd PR that closed each one">
+  </a>
+        <header>
+          <h2><a href="/blog/2026/10/docker-in-docker-without-root/">Docker-in-Docker in CI Without Handing Jobs Root</a></h2>
+          <time class="published" datetime="2026-10-24 10:00:00 -0700 PDT">October 24, 2026</time>
+        </header>
+      </article>
+      
+      <article class="mini-post">
+          <a href="/blog/2026/10/ci-cache-proxies-ephemeral-runners/" class="image" style="--bg-image: url('/img/2026/10/ci-cache-proxies-ephemeral-runners-flow.svg');">
+    <img class="" src="/img/2026/10/ci-cache-proxies-ephemeral-runners-flow.svg" alt="A fresh runner per job points go mod, cargo, composer, release downloads and actions/cache at matching cache proxies on the ephemerd node, where the caches persist and only reach the internet on a miss">
+  </a>
+        <header>
+          <h2><a href="/blog/2026/10/ci-cache-proxies-ephemeral-runners/">Cache Proxies for Ephemeral CI Runners</a></h2>
+          <time class="published" datetime="2026-10-23 15:00:00 -0700 PDT">October 23, 2026</time>
+        </header>
+      </article>
+      
+      <article class="mini-post">
+          <a href="/blog/2026/10/ephemeral-macos-runners-vm-clones/" class="image" style="--bg-image: url('/img/2026/10/ephemeral-macos-runners-vm-clones-lifecycle.svg');">
+    <img class="" src="/img/2026/10/ephemeral-macos-runners-vm-clones-lifecycle.svg" alt="A macOS CI job lifecycle: clone the base image, boot and grow the disk, set up over SSH, run the job, then stop and sweep, with a band showing the single slot held the whole time">
+  </a>
+        <header>
+          <h2><a href="/blog/2026/10/ephemeral-macos-runners-vm-clones/">Ephemeral macOS Runners: A Fresh VM Per Job on Apple Silicon</a></h2>
+          <time class="published" datetime="2026-10-23 11:00:00 -0700 PDT">October 23, 2026</time>
+        </header>
+      </article>
+      
+      <article class="mini-post">
+          <a href="/blog/2026/10/turso-page1-allocation-race/" class="image" style="--bg-image: url('/img/2026/10/turso-page1-allocation-race-races.svg');">
+    <img class="" src="/img/2026/10/turso-page1-allocation-race-races.svg" alt="Sequence diagram of two connections and init_lock: in race 1, B checks for an empty file, A publishes page 1 and releases the lock, then B takes the lock and panics on its assert; in race 2, A&#39;s lock is dropped while page 1 is being written, so B takes it and writes page 1 again">
+  </a>
+        <header>
+          <h2><a href="/blog/2026/10/turso-page1-allocation-race/">Thirty-Two Connections and an Empty File: A Race in Turso&#39;s Page-1 Allocation</a></h2>
+          <time class="published" datetime="2026-10-18 14:30:00 -0700 PDT">October 18, 2026</time>
+        </header>
+      </article>
+      
+      
+        <footer>
+          <a href="/blog" class="button">See More</a>
+        </footer>
+      
+    </section>
+  
+
+  
+    
+
+      <section id="categories">
+        <header>
+          <h1><a href="/categories">Categories</a></h1>
+        </header>
+        <ul>
+          
+          
+          <li>
+              <a href="/categories/ephpm/">ephpm<span class="count">38</span></a>
+          
+          <li>
+              <a href="/categories/go/">go<span class="count">32</span></a>
+          
+          <li>
+              <a href="/categories/php/">php<span class="count">26</span></a>
+          
+          <li>
+              <a href="/categories/rust/">rust<span class="count">17</span></a>
+          
+          <li>
+              <a href="/categories/homelab/">homelab<span class="count">14</span></a>
+          
+          <li>
+              <a href="/categories/windows/">windows<span class="count">14</span></a>
+          
+          <li>
+              <a href="/categories/ci/">ci<span class="count">12</span></a>
+          
+          <li>
+              <a href="/categories/containers/">containers<span class="count">10</span></a>
+          
+          <li>
+              <a href="/categories/databases/">databases<span class="count">10</span></a>
+          
+          <li>
+              <a href="/categories/security/">security<span class="count">10</span></a>
+          
+          <li>
+              <a href="/categories/ephemerd/">ephemerd<span class="count">9</span></a>
+          
+          <li>
+              <a href="/categories/tools/">tools<span class="count">5</span></a>
+          
+          <li>
+              <a href="/categories/ai-agents/">ai-agents<span class="count">4</span></a>
+          
+          </li>
+        </ul>
+      </section>
+    
+  
+
+  
+    <section id="mini-bio">
+      <header>
+        <h1>About</h1>
+      </header>
+      <p>Luther is a 20+ year software veteran specializing in backend APIs and architecting products. Employed at <a href='https://www.suse.com'>SUSE</a> as the Team Lead for the <a href='https://github.com/rancher/windows/issues'>Containers on Windows Team</a> working on <a href='https://rancher.com/'>Rancher</a> + <a href='https://kubernetes.io/'>Kubernetes</a></p>
+      <footer>
+        <a href="/about" class="button">Learn More</a>
+      </footer>
+    </section>
+  
+</section>
+
+      <footer id="site-footer">
+  
+      <ul class="socnet-icons">
+        
+
+        <li><a href="//github.com/luthermonson" target="_blank" rel="noopener" title="GitHub" class="fab fa-github"></a></li>
+
+
+
+
+
+
+
+
+
+
+
+<li><a href="//www.linkedin.com/in/luthermonson" target="_blank" rel="noopener" title="LinkedIn" class="fab fa-linkedin"></a></li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li><a href="//twitter.com/luthermonson" target="_blank" rel="noopener" title="Twitter" class="fab fa-twitter"></a></li>
+
+
+
+
+
+
+
+
+
+
+
+<li><a href="mailto:luther.monson@gmail.com" target="_blank" title="Email" class="far fa-envelope"></a></li>
+
+      </ul>
+  
+  <p class="copyright">
+    © 2026 Luther Monson
+      <br>
+    Theme: <a href='https://github.com/pacollins/hugo-future-imperfect-slim' target='_blank' rel='noopener'>Hugo Future Imperfect Slim</a><br>A <a href='https://html5up.net/future-imperfect' target='_blank' rel='noopener'>HTML5 UP port</a> | Powered by <a href='https://gohugo.io/' title='0.160.1' target='_blank' rel='noopener'>Hugo</a>
+  </p>
+</footer>
+<a id="back-to-top" href="#" class="fas fa-arrow-up fa-2x"></a>
+
+      <script src="/js/bundle.min.241b62ebc4792fe8c7a75879e5f710894f226f2b73342e9916b3a3b0526030cc.js" integrity="sha256-JBti68R5L&#43;jHp1h55fcQiU8ibytzNC6ZFrOjsFJgMMw="></script>
+    <script src="/js/add-on.js"></script>
+    </div>
+  </body>
+</html>

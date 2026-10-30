@@ -6,8 +6,15 @@
     <description>Recent content in Cgroups on Luther Monson</description>
     <generator>Hugo</generator>
     <language>en</language>
-    <lastBuildDate>Sat, 26 Sep 2026 16:20:00 -0700</lastBuildDate>
+    <lastBuildDate>Sat, 24 Oct 2026 10:00:00 -0700</lastBuildDate>
     <atom:link href="https://luth.io/tags/cgroups/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>Docker-in-Docker in CI Without Handing Jobs Root</title>
+      <link>https://luth.io/blog/2026/10/docker-in-docker-without-root/</link>
+      <pubDate>Sat, 24 Oct 2026 10:00:00 -0700</pubDate>
+      <guid>https://luth.io/blog/2026/10/docker-in-docker-without-root/</guid>
+      <description>&lt;p&gt;&lt;a href=&#34;https://luth.io/blog/2026/08/ephemerd-one-daemon-every-os/&#34;&gt;ephemerd&lt;/a&gt; runs a fresh GitHub Actions runner per job. Some of those&#xA;jobs need Docker. A workflow builds an image, runs a service container, or uses the &lt;code&gt;container:&lt;/code&gt; key. The usual way to&#xA;give a self-hosted job Docker is Docker-in-Docker, or dind.&lt;/p&gt;&#xA;&lt;p&gt;The catch is what dind normally costs you. The standard recipe is a &lt;code&gt;--privileged&lt;/code&gt; container. Privileged hands the job&#xA;most of root on the host. For CI that runs fork pull requests, that is a non-starter. A fork PR is a stranger&amp;rsquo;s code.&lt;/p&gt;</description>
+    </item>
     <item>
       <title>Cross-Platform Process Containment: Job Objects vs Process Groups vs cgroups</title>
       <link>https://luth.io/blog/2026/09/process-containment-job-objects-process-groups-cgroups/</link>

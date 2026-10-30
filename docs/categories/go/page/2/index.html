@@ -215,6 +215,136 @@
   <header>
   <div class="title">
     
+      <h2><a href="/blog/2026/09/linode-tui/">Building k9s for Linode With Bubble Tea</a></h2>
+    
+    
+      <p>A k9s-style terminal app for managing Linode. Search for any resource, browse it, and jump straight into k9s, a database shell or SSH.</p>
+    
+  </div>
+  <div class="meta">
+    <time datetime="2026-09-09 21:22:00 -0700 PDT">September 9, 2026</time>
+    
+    <p>8-Minute Read</p>
+  </div>
+</header>
+
+  <div class="content">
+    <a href="/blog/2026/09/linode-tui/" class="image" style="--bg-image: url('/img/2026/09/linode-tui-linodes.svg');">
+    <img class="" src="/img/2026/09/linode-tui-linodes.svg" alt="linode-tui showing the Linodes view with the command bar open and tab completion suggesting lke">
+  </a>
+    
+    <p>A lot of my day is spent in <a href="https://k9scli.io/">k9s</a>. Sometimes I need something from the Linode side of the house. Maybe it&rsquo;s a
+node that won&rsquo;t boot, a volume nobody cleaned up or the kubeconfig for a cluster I just made. Then I&rsquo;m back in a browser tab or typing
+<code>linode-cli</code> incantations. I wanted the k9s workflow for the Linode API itself:</p>
+  </div>
+  <footer>
+    <a href="/blog/2026/09/linode-tui/" class="button big">Read More</a>
+    <div class="stats">
+  
+    <ul class="categories">
+      
+        
+          <li><a class="article-terms-link" href="/categories/go/">go</a></li>
+        
+          <li><a class="article-terms-link" href="/categories/tools/">tools</a></li>
+        
+      
+    </ul>
+  
+  
+    <ul class="tags">
+      
+        
+          <li><a class="article-terms-link" href="/tags/go/">go</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/bubbletea/">bubbletea</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/tui/">tui</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/linode/">linode</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/kubernetes/">kubernetes</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/k9s/">k9s</a></li>
+        
+      
+    </ul>
+  
+</div>
+
+  </footer>
+</article>
+
+  
+    <article class="post">
+  <header>
+  <div class="title">
+    
+      <h2><a href="/blog/2026/09/remotedialer-data-race-two-thirds-fix/">Finding a Data Race in rancher/remotedialer, Then Pinning Only Two-Thirds of the Fix</a></h2>
+    
+    
+      <p>Two data races in remotedialer v0.6.1 that upstream&#39;s tests never ran with -race, and how my replace directive ended up pinned to the middle commit of my own fix.</p>
+    
+  </div>
+  <div class="meta">
+    <time datetime="2026-09-01 21:05:00 -0700 PDT">September 1, 2026</time>
+    
+    <p>7-Minute Read</p>
+  </div>
+</header>
+
+  <div class="content">
+    <a href="/blog/2026/09/remotedialer-data-race-two-thirds-fix/" class="image" style="--bg-image: url('/img/2026/09/remotedialer-data-race-two-thirds-fix-cover.svg');">
+    <img class="" src="/img/2026/09/remotedialer-data-race-two-thirds-fix-cover.svg" alt="Three commits of remotedialer PR 265 and which one the replace directive pointed at">
+  </a>
+    
+    <p><a href="/blog/2026/08/shipmates-persona-based-ai-coding-crews/">shipmates</a> ships connect to Fleet Command over outbound
+websocket tunnels. That way nothing on the ship side has to be exposed to the internet. I didn&rsquo;t write that tunnel
+layer. I used <a href="https://github.com/rancher/remotedialer">rancher/remotedialer</a>, the same library Rancher uses to reach
+downstream cluster agents. I spent years around that code at Rancher, so it was the obvious pick. What I didn&rsquo;t
+expect was for my CI&rsquo;s race job to find two data races in it in the first week.</p>
+  </div>
+  <footer>
+    <a href="/blog/2026/09/remotedialer-data-race-two-thirds-fix/" class="button big">Read More</a>
+    <div class="stats">
+  
+    <ul class="categories">
+      
+        
+          <li><a class="article-terms-link" href="/categories/go/">go</a></li>
+        
+      
+    </ul>
+  
+  
+    <ul class="tags">
+      
+        
+          <li><a class="article-terms-link" href="/tags/go/">go</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/race-detector/">race-detector</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/remotedialer/">remotedialer</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/rancher/">rancher</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/go-modules/">go-modules</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/shipmates/">shipmates</a></li>
+        
+      
+    </ul>
+  
+</div>
+
+  </footer>
+</article>
+
+  
+    <article class="post">
+  <header>
+  <div class="title">
+    
       <h2><a href="/blog/2026/08/shipmates-persona-based-ai-coding-crews/">shipmates: Persona-Based AI Coding Crews That Remember</a></h2>
     
     
@@ -308,6 +438,8 @@ one fork PR away from somebody running code on your LAN.</p>
   
     <ul class="categories">
       
+        
+          <li><a class="article-terms-link" href="/categories/ephemerd/">ephemerd</a></li>
         
           <li><a class="article-terms-link" href="/categories/ci/">ci</a></li>
         
@@ -732,136 +864,6 @@ have come in. One of them is a bug I&rsquo;d already fixed once and then reintro
 </article>
 
   
-    <article class="post">
-  <header>
-  <div class="title">
-    
-      <h2><a href="/blog/2026/06/escaping-wsl-hcs-linux-vm/">Escaping WSL: Booting My Own Linux VM Through Hyper-V&#39;s HCS API</a></h2>
-    
-    
-      <p>WSL2 refuses to run under LocalSystem, so ephemerd boots an Alpine kernel directly through vmcompute.dll instead.</p>
-    
-  </div>
-  <div class="meta">
-    <time datetime="2026-06-14 20:12:00 -0700 PDT">June 14, 2026</time>
-    
-    <p>9-Minute Read</p>
-  </div>
-</header>
-
-  <div class="content">
-    <a href="/blog/2026/06/escaping-wsl-hcs-linux-vm/" class="image" style="--bg-image: url('/img/2026/06/escaping-wsl-hcs-linux-vm-boot.svg');">
-    <img class="" src="/img/2026/06/escaping-wsl-hcs-linux-vm-boot.svg" alt="Diagram of ephemerd booting a Linux VM through HCS and reading its IP from the serial console">
-  </a>
-    
-    <p>I&rsquo;ve been building <a href="https://github.com/ephpm/ephemerd">ephemerd</a>, a daemon that runs self-hosted GitHub Actions runners
-with a fresh environment per job. On a Windows host, Windows jobs run in Hyper-V isolated containers. Linux jobs still
-need a Linux kernel from somewhere. The obvious answer on Windows in 2026 is WSL2, and that&rsquo;s what I used first. It worked
-great from my terminal and fell over the moment ephemerd became a real Windows service.</p>
-  </div>
-  <footer>
-    <a href="/blog/2026/06/escaping-wsl-hcs-linux-vm/" class="button big">Read More</a>
-    <div class="stats">
-  
-    <ul class="categories">
-      
-        
-          <li><a class="article-terms-link" href="/categories/windows/">windows</a></li>
-        
-          <li><a class="article-terms-link" href="/categories/ci/">ci</a></li>
-        
-          <li><a class="article-terms-link" href="/categories/go/">go</a></li>
-        
-      
-    </ul>
-  
-  
-    <ul class="tags">
-      
-        
-          <li><a class="article-terms-link" href="/tags/go/">go</a></li>
-        
-          <li><a class="article-terms-link" href="/tags/windows/">windows</a></li>
-        
-          <li><a class="article-terms-link" href="/tags/hyper-v/">hyper-v</a></li>
-        
-          <li><a class="article-terms-link" href="/tags/hcs/">hcs</a></li>
-        
-          <li><a class="article-terms-link" href="/tags/linux/">linux</a></li>
-        
-          <li><a class="article-terms-link" href="/tags/ephemerd/">ephemerd</a></li>
-        
-          <li><a class="article-terms-link" href="/tags/github-actions/">github-actions</a></li>
-        
-      
-    </ul>
-  
-</div>
-
-  </footer>
-</article>
-
-  
-    <article class="post">
-  <header>
-  <div class="title">
-    
-      <h2><a href="/blog/2026/06/omitempty-zero-values-proxmox-defaults/">Your Zero Value Just Turned Off My TLS Verification: omitempty, Go Defaults and Proxmox</a></h2>
-    
-    
-      <p>A plain Go field can&#39;t tell unset from false. In go-proxmox the fix for one omitempty bug created the opposite bug, until an audit against the Proxmox schema found 75 fields and v0.7.0 moved them to pointers.</p>
-    
-  </div>
-  <div class="meta">
-    <time datetime="2026-06-13 19:52:00 -0700 PDT">June 13, 2026</time>
-    
-    <p>7-Minute Read</p>
-  </div>
-</header>
-
-  <div class="content">
-    <a href="/blog/2026/06/omitempty-zero-values-proxmox-defaults/" class="image" style="--bg-image: url('/img/2026/06/omitempty-zero-values-proxmox-defaults-table.svg');">
-    <img class="" src="/img/2026/06/omitempty-zero-values-proxmox-defaults-table.svg" alt="Table showing how verify-certificates was sent by go-proxmox before #210, between v0.2.3 and v0.6.x, and in v0.7.0">
-  </a>
-    
-    <p>Every Go developer knows <code>omitempty</code> drops zero values. What takes longer to sink in is that a plain <code>bool</code> only has
-two states. A caller filling in an options struct means one of three:</p>
-  </div>
-  <footer>
-    <a href="/blog/2026/06/omitempty-zero-values-proxmox-defaults/" class="button big">Read More</a>
-    <div class="stats">
-  
-    <ul class="categories">
-      
-        
-          <li><a class="article-terms-link" href="/categories/go/">go</a></li>
-        
-          <li><a class="article-terms-link" href="/categories/homelab/">homelab</a></li>
-        
-      
-    </ul>
-  
-  
-    <ul class="tags">
-      
-        
-          <li><a class="article-terms-link" href="/tags/proxmox/">proxmox</a></li>
-        
-          <li><a class="article-terms-link" href="/tags/go/">go</a></li>
-        
-          <li><a class="article-terms-link" href="/tags/go-proxmox/">go-proxmox</a></li>
-        
-          <li><a class="article-terms-link" href="/tags/json/">json</a></li>
-        
-      
-    </ul>
-  
-</div>
-
-  </footer>
-</article>
-
-  
   <div class="pagination">
     
       <a href="/categories/go/" class="button left"><span>Previous Page</span></a>
@@ -880,52 +882,52 @@ two states. A caller filling in an options struct means one of three:</p>
       </header>
       
       <article class="mini-post">
+          <a href="/blog/2026/10/durable-data-single-node-k3s-ebs-rebuild/" class="image" style="--bg-image: url('/img/2026/10/durable-data-single-node-k3s-ebs-rebuild.svg');">
+    <img class="" src="/img/2026/10/durable-data-single-node-k3s-ebs-rebuild.svg" alt="A node rebuild: Node A is replaced by Node B, each root EBS volume is disposable, and the separate labeled EBS data volume detaches from the old node and re-attaches to the new one so the ePHPm blog&#39;s SQLite file and uploads survive">
+  </a>
+        <header>
+          <h2><a href="/blog/2026/10/durable-data-single-node-k3s-ebs-rebuild/">Surviving a Node Rebuild: A Durable ePHPm Blog on Single-Node k3s</a></h2>
+          <time class="published" datetime="2026-10-28 10:00:00 -0700 PDT">October 28, 2026</time>
+        </header>
+      </article>
+      
+      <article class="mini-post">
+          <a href="/blog/2026/10/docker-in-docker-without-root/" class="image" style="--bg-image: url('/img/2026/10/docker-in-docker-without-root-cracks.svg');">
+    <img class="" src="/img/2026/10/docker-in-docker-without-root-cracks.svg" alt="Four dind sandbox cracks and the ephemerd PR that closed each one">
+  </a>
+        <header>
+          <h2><a href="/blog/2026/10/docker-in-docker-without-root/">Docker-in-Docker in CI Without Handing Jobs Root</a></h2>
+          <time class="published" datetime="2026-10-24 10:00:00 -0700 PDT">October 24, 2026</time>
+        </header>
+      </article>
+      
+      <article class="mini-post">
+          <a href="/blog/2026/10/ci-cache-proxies-ephemeral-runners/" class="image" style="--bg-image: url('/img/2026/10/ci-cache-proxies-ephemeral-runners-flow.svg');">
+    <img class="" src="/img/2026/10/ci-cache-proxies-ephemeral-runners-flow.svg" alt="A fresh runner per job points go mod, cargo, composer, release downloads and actions/cache at matching cache proxies on the ephemerd node, where the caches persist and only reach the internet on a miss">
+  </a>
+        <header>
+          <h2><a href="/blog/2026/10/ci-cache-proxies-ephemeral-runners/">Cache Proxies for Ephemeral CI Runners</a></h2>
+          <time class="published" datetime="2026-10-23 15:00:00 -0700 PDT">October 23, 2026</time>
+        </header>
+      </article>
+      
+      <article class="mini-post">
+          <a href="/blog/2026/10/ephemeral-macos-runners-vm-clones/" class="image" style="--bg-image: url('/img/2026/10/ephemeral-macos-runners-vm-clones-lifecycle.svg');">
+    <img class="" src="/img/2026/10/ephemeral-macos-runners-vm-clones-lifecycle.svg" alt="A macOS CI job lifecycle: clone the base image, boot and grow the disk, set up over SSH, run the job, then stop and sweep, with a band showing the single slot held the whole time">
+  </a>
+        <header>
+          <h2><a href="/blog/2026/10/ephemeral-macos-runners-vm-clones/">Ephemeral macOS Runners: A Fresh VM Per Job on Apple Silicon</a></h2>
+          <time class="published" datetime="2026-10-23 11:00:00 -0700 PDT">October 23, 2026</time>
+        </header>
+      </article>
+      
+      <article class="mini-post">
           <a href="/blog/2026/10/turso-page1-allocation-race/" class="image" style="--bg-image: url('/img/2026/10/turso-page1-allocation-race-races.svg');">
     <img class="" src="/img/2026/10/turso-page1-allocation-race-races.svg" alt="Sequence diagram of two connections and init_lock: in race 1, B checks for an empty file, A publishes page 1 and releases the lock, then B takes the lock and panics on its assert; in race 2, A&#39;s lock is dropped while page 1 is being written, so B takes it and writes page 1 again">
   </a>
         <header>
           <h2><a href="/blog/2026/10/turso-page1-allocation-race/">Thirty-Two Connections and an Empty File: A Race in Turso&#39;s Page-1 Allocation</a></h2>
           <time class="published" datetime="2026-10-18 14:30:00 -0700 PDT">October 18, 2026</time>
-        </header>
-      </article>
-      
-      <article class="mini-post">
-          <a href="/blog/2026/10/ephpm-worker-mode-performance/" class="image" style="--bg-image: url('/img/2026/10/ephpm-worker-mode-performance-cover.svg');">
-    <img class="" src="/img/2026/10/ephpm-worker-mode-performance-cover.svg" alt="Diagram: before, hyper/tokio hands each request to one shared bounded channel whose waiter list all 20 PHP threads contend on; after, a dispatcher hands the job straight into the mailbox of the most recently idle PHP thread and only queues it in a FIFO overflow queue when every thread is busy">
-  </a>
-        <header>
-          <h2><a href="/blog/2026/10/ephpm-worker-mode-performance/">Fourth Place in Worker Mode, and Why It Wasn&#39;t PHP</a></h2>
-          <time class="published" datetime="2026-10-15 19:45:00 -0700 PDT">October 15, 2026</time>
-        </header>
-      </article>
-      
-      <article class="mini-post">
-          <a href="/blog/2026/10/composer-without-php-vivacity/" class="image" style="--bg-image: url('/img/2026/10/composer-without-php-vivacity-bench.svg');">
-    <img class="" src="/img/2026/10/composer-without-php-vivacity-bench.svg" alt="Bar chart comparing Composer 2.10.3 and ephpm composer on a Laravel install on native Windows">
-  </a>
-        <header>
-          <h2><a href="/blog/2026/10/composer-without-php-vivacity/">Composer Without PHP: Embedding vivacity in ePHPm</a></h2>
-          <time class="published" datetime="2026-10-14 23:20:00 -0700 PDT">October 14, 2026</time>
-        </header>
-      </article>
-      
-      <article class="mini-post">
-          <a href="/blog/2026/10/a-lock-is-only-as-good-as-its-release/" class="image" style="--bg-image: url('/img/2026/10/a-lock-is-only-as-good-as-its-release-cover.svg');">
-    <img class="" src="/img/2026/10/a-lock-is-only-as-good-as-its-release-cover.svg" alt="Timeline: request A&#39;s lock expires, B acquires it, A&#39;s blind DEL frees B&#39;s lock and C gets in">
-  </a>
-        <header>
-          <h2><a href="/blog/2026/10/a-lock-is-only-as-good-as-its-release/">A Lock Is Only as Good as Its Release</a></h2>
-          <time class="published" datetime="2026-10-13 20:40:00 -0700 PDT">October 13, 2026</time>
-        </header>
-      </article>
-      
-      <article class="mini-post">
-          <a href="/blog/2026/10/xdebug-worker-mode/" class="image" style="--bg-image: url('/img/2026/10/xdebug-worker-mode-cover.svg');">
-    <img class="" src="/img/2026/10/xdebug-worker-mode-cover.svg" alt="Diagram of the ePHPm router sending untriggered requests to the warm worker pool and Xdebug-triggered requests to a one-request debug lane">
-  </a>
-        <header>
-          <h2><a href="/blog/2026/10/xdebug-worker-mode/">Step Debugging a Worker That Never Ends</a></h2>
-          <time class="published" datetime="2026-10-12 21:10:00 -0700 PDT">October 12, 2026</time>
         </header>
       </article>
       
@@ -948,10 +950,10 @@ two states. A caller filling in an options struct means one of three:</p>
           
           
           <li>
-              <a href="/categories/ephpm/">ephpm<span class="count">37</span></a>
+              <a href="/categories/ephpm/">ephpm<span class="count">38</span></a>
           
           <li>
-              <a href="/categories/go/">go<span class="count">30</span></a>
+              <a href="/categories/go/">go<span class="count">32</span></a>
           
           <li>
               <a href="/categories/php/">php<span class="count">26</span></a>
@@ -966,16 +968,19 @@ two states. A caller filling in an options struct means one of three:</p>
               <a href="/categories/windows/">windows<span class="count">14</span></a>
           
           <li>
+              <a href="/categories/ci/">ci<span class="count">12</span></a>
+          
+          <li>
+              <a href="/categories/containers/">containers<span class="count">10</span></a>
+          
+          <li>
               <a href="/categories/databases/">databases<span class="count">10</span></a>
           
           <li>
-              <a href="/categories/ci/">ci<span class="count">9</span></a>
+              <a href="/categories/security/">security<span class="count">10</span></a>
           
           <li>
-              <a href="/categories/security/">security<span class="count">9</span></a>
-          
-          <li>
-              <a href="/categories/containers/">containers<span class="count">7</span></a>
+              <a href="/categories/ephemerd/">ephemerd<span class="count">9</span></a>
           
           <li>
               <a href="/categories/tools/">tools<span class="count">5</span></a>

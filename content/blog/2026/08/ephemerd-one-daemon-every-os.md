@@ -3,7 +3,7 @@ title: "ephemerd: One Daemon, a Fresh Runner Per Job, Every OS"
 description: "A single Go binary that runs self-hosted GitHub Actions runners on Linux, Windows and macOS, with a new container or VM for every job."
 date: 2026-08-18T21:05:00-07:00
 tags: [ go, github-actions, containerd, kubernetes, hyper-v, macos, ephemerd ]
-categories: [ ci, go, containers ]
+categories: [ ephemerd, ci, go, containers ]
 series: [ "ephemerd" ]
 images:
  - src: img/2026/08/ephemerd-one-daemon-every-os-arch.svg

@@ -215,6 +215,282 @@
   <header>
   <div class="title">
     
+      <h2><a href="/blog/2026/05/go-diskfs-rock-ridge-joliet-windows/">go-diskfs: Getting Rock Ridge Working for Joliet on Windows</a></h2>
+    
+    
+      <p>I fixed Rock Ridge and added Joliet to go-diskfs so a Go-built cloud-init ISO works for cloudbase-init. Then I found out what Windows actually wanted.</p>
+    
+  </div>
+  <div class="meta">
+    <time datetime="2026-05-17 20:40:00 -0700 PDT">May 17, 2026</time>
+    
+    <p>10-Minute Read</p>
+  </div>
+</header>
+
+  <div class="content">
+    <a href="/blog/2026/05/go-diskfs-rock-ridge-joliet-windows/" class="image" style="--bg-image: url('/img/2026/05/go-diskfs-rock-ridge-joliet-windows-layout.svg');">
+    <img class="" src="/img/2026/05/go-diskfs-rock-ridge-joliet-windows-layout.svg" alt="Sector map of a cidata ISO built by go-diskfs with a Rock Ridge primary tree and a Joliet supplementary tree sharing the same file extents">
+  </a>
+    
+    <p><a href="https://github.com/luthermonson/go-proxmox">go-proxmox</a> has had a <code>CloudInit()</code> helper since 2023. It builds a small
+nocloud ISO in Go, uploads it to Proxmox and mounts it on the VM as a CD-ROM. It&rsquo;s always worked fine for Linux guests. It
+has never worked for Windows guests running <a href="https://cloudbase.it/cloudbase-init/">cloudbase-init</a>. The reason is a
+filesystem extension from 1995 called Joliet.</p>
+  </div>
+  <footer>
+    <a href="/blog/2026/05/go-diskfs-rock-ridge-joliet-windows/" class="button big">Read More</a>
+    <div class="stats">
+  
+    <ul class="categories">
+      
+        
+          <li><a class="article-terms-link" href="/categories/go/">go</a></li>
+        
+          <li><a class="article-terms-link" href="/categories/windows/">windows</a></li>
+        
+      
+    </ul>
+  
+  
+    <ul class="tags">
+      
+        
+          <li><a class="article-terms-link" href="/tags/go/">go</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/iso9660/">iso9660</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/rock-ridge/">rock-ridge</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/joliet/">joliet</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/go-diskfs/">go-diskfs</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/cloud-init/">cloud-init</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/windows/">windows</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/open-source/">open-source</a></li>
+        
+      
+    </ul>
+  
+</div>
+
+  </footer>
+</article>
+
+  
+    <article class="post">
+  <header>
+  <div class="title">
+    
+      <h2><a href="/blog/2026/04/php-signal-safety-init-ordering/">PHP Signal Safety - The Init Ordering Bug Nobody Warns You About</a></h2>
+    
+    
+      <p>Embedding PHP in a multithreaded server means PHP&#39;s timeout signals can land on any thread. How ePHPm got that under control.</p>
+    
+  </div>
+  <div class="meta">
+    <time datetime="2026-04-12 20:15:00 -0700 PDT">April 12, 2026</time>
+    
+    <p>11-Minute Read</p>
+  </div>
+</header>
+
+  <div class="content">
+    <a href="/blog/2026/04/php-signal-safety-init-ordering/" class="image" style="--bg-image: url('/img/2026/04/php-signal-safety-init-ordering-cover.svg');">
+    <img class="" src="/img/2026/04/php-signal-safety-init-ordering-cover.svg" alt="Thread timeline: the main thread installs PHP&#39;s signal handlers during php_embed_init, a PHP thread later arms ITIMER_PROF, and SIGPROF is delivered to a tokio worker that has no PHP state">
+  </a>
+    
+    <p>Last week I wrote about <a href="/blog/2026/04/why-rust-for-php-embedding/">why ePHPm embeds PHP from Rust</a> and promised the
+signal bug its own post. Here it is. It&rsquo;s the kind of bug where the fix is about ten lines and the explanation is the
+whole post. Nothing in PHP&rsquo;s embed documentation (there&rsquo;s barely any) tells you that initializing PHP has
+process-wide side effects. Those side effects assume PHP is the only thing in the process.</p>
+  </div>
+  <footer>
+    <a href="/blog/2026/04/php-signal-safety-init-ordering/" class="button big">Read More</a>
+    <div class="stats">
+  
+    <ul class="categories">
+      
+        
+          <li><a class="article-terms-link" href="/categories/ephpm/">ephpm</a></li>
+        
+          <li><a class="article-terms-link" href="/categories/php/">php</a></li>
+        
+          <li><a class="article-terms-link" href="/categories/rust/">rust</a></li>
+        
+      
+    </ul>
+  
+  
+    <ul class="tags">
+      
+        
+          <li><a class="article-terms-link" href="/tags/ephpm/">ephpm</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/php/">php</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/rust/">rust</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/signals/">signals</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/linux/">linux</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/tokio/">tokio</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/debugging/">debugging</a></li>
+        
+      
+    </ul>
+  
+</div>
+
+  </footer>
+</article>
+
+  
+    <article class="post">
+  <header>
+  <div class="title">
+    
+      <h2><a href="/blog/2026/04/why-rust-for-php-embedding/">Why Rust for PHP Embedding (Not Go)</a></h2>
+    
+    
+      <p>I&#39;m a Go developer building a PHP application server in Rust. Here&#39;s the FFI reasoning, the C wrapper it forced on me, and what cgo actually costs when you measure it.</p>
+    
+  </div>
+  <div class="meta">
+    <time datetime="2026-04-05 19:40:00 -0700 PDT">April 5, 2026</time>
+    
+    <p>11-Minute Read</p>
+  </div>
+</header>
+
+  <div class="content">
+    <a href="/blog/2026/04/why-rust-for-php-embedding/" class="image" style="--bg-image: url('/img/2026/04/why-rust-for-php-embedding-cover.svg');">
+    <img class="" src="/img/2026/04/why-rust-for-php-embedding-cover.svg" alt="Diagram of a request flowing from hyper/tokio through a Rust blocking thread, a C wrapper with setjmp, and libphp, with SAPI callbacks writing into thread-local C buffers">
+  </a>
+    
+    <p>Go is my primary language and has been for a long time. When I started building <a href="https://github.com/ephpm/ephpm">ePHPm</a>
+a few weeks ago the obvious move was to write it in Go. ePHPm is a PHP application server. It&rsquo;s one binary that embeds
+the real PHP interpreter (<code>libphp</code>, the Zend engine) and puts an HTTP server, TLS, a KV cache and a database proxy
+around it. A PHP app doesn&rsquo;t need nginx + php-fpm + Redis to run. <a href="https://frankenphp.dev/">FrankenPHP</a> already proved
+the &ldquo;PHP inside a Go web server&rdquo; idea works, and it works well. I&hellip;</p>
+  </div>
+  <footer>
+    <a href="/blog/2026/04/why-rust-for-php-embedding/" class="button big">Read More</a>
+    <div class="stats">
+  
+    <ul class="categories">
+      
+        
+          <li><a class="article-terms-link" href="/categories/ephpm/">ephpm</a></li>
+        
+          <li><a class="article-terms-link" href="/categories/rust/">rust</a></li>
+        
+          <li><a class="article-terms-link" href="/categories/php/">php</a></li>
+        
+      
+    </ul>
+  
+  
+    <ul class="tags">
+      
+        
+          <li><a class="article-terms-link" href="/tags/ephpm/">ephpm</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/rust/">rust</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/go/">go</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/php/">php</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/ffi/">ffi</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/cgo/">cgo</a></li>
+        
+      
+    </ul>
+  
+</div>
+
+  </footer>
+</article>
+
+  
+    <article class="post">
+  <header>
+  <div class="title">
+    
+      <h2><a href="/blog/2024/02/goodhosts/">Maintaining a Go Tool That Edits /etc/hosts on Every OS</a></h2>
+    
+    
+      <p>Notes from maintaining goodhosts, the hosts file CLI and Go library behind vagrant-goodhosts and ddev. It covers Windows quirks, a HostsPerLine bug, and making the CLI testable.</p>
+    
+  </div>
+  <div class="meta">
+    <time datetime="2024-02-03 19:22:00 -0700 -0700">February 3, 2024</time>
+    
+    <p>8-Minute Read</p>
+  </div>
+</header>
+
+  <div class="content">
+    <a href="/blog/2024/02/goodhosts/" class="image" style="--bg-image: url('/img/2024/02/goodhosts-hosts-per-line.svg');">
+    <img class="" src="/img/2024/02/goodhosts-hosts-per-line.svg" alt="hosts file output from hostsfile v0.1.4, v0.1.5 and v0.1.6 for the same sequence of adds">
+  </a>
+    
+    <p>Editing the hosts file sounds like the most boring problem in software. Read a text file, add a line, write it back. Then you find out
+your binary is being shelled out to from a Ruby Vagrant plugin on a Windows laptop with UAC prompts. Your library is being called in a
+loop by <a href="https://github.com/ddev/ddev">ddev</a>. And every hosts file you parse was hand-edited by somebody at some point. I&rsquo;ve been
+maintaining <a href="https://github.com/goodhosts">goodhosts</a> for a few years now. I just spent a chunk of the fall and the holidays on it, so
+here&rsquo;s what that&hellip;</p>
+  </div>
+  <footer>
+    <a href="/blog/2024/02/goodhosts/" class="button big">Read More</a>
+    <div class="stats">
+  
+    <ul class="categories">
+      
+        
+          <li><a class="article-terms-link" href="/categories/go/">go</a></li>
+        
+          <li><a class="article-terms-link" href="/categories/tools/">tools</a></li>
+        
+          <li><a class="article-terms-link" href="/categories/windows/">windows</a></li>
+        
+      
+    </ul>
+  
+  
+    <ul class="tags">
+      
+        
+          <li><a class="article-terms-link" href="/tags/go/">go</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/goodhosts/">goodhosts</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/open-source/">open source</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/windows/">windows</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/testing/">testing</a></li>
+        
+      
+    </ul>
+  
+</div>
+
+  </footer>
+</article>
+
+  
+    <article class="post">
+  <header>
+  <div class="title">
+    
       <h2><a href="/blog/2023/11/proxmox-doesnt-know-what-type-a-number-is/">Proxmox Doesn&#39;t Know What Type a Number Is</a></h2>
     
     
@@ -573,50 +849,12 @@ with custom DNS. It takes minimal effort, costs nothing and runs completely out 
 </article>
 
   
-    <article class="post">
-  <header>
-  <div class="title">
-    
-      <h2><a href="/blog/introduction/">Introduction</a></h2>
-    
-    
-  </div>
-  <div class="meta">
-    <time datetime="2022-01-27 10:11:05 -0700 -0700">January 27, 2022</time>
-    
-    <p>1-Minute Read</p>
-  </div>
-</header>
-
-  <div class="content">
-    
-    
-    <p>Getting a blog up and running to get some of the thoughts out of my head and into a markdown file. For reference on
-who I am please check out the <a href="/about/">about</a> section. Stay tuned for more content related to what it is I do everyday.</p>
-  </div>
-  <footer>
-    <a href="/blog/introduction/" class="button big">Read More</a>
-    <div class="stats">
-  
-    <ul class="categories">
-      <li>None</li>
-    </ul>
-  
-  
-    <ul class="tags">
-      <li>None</li>
-    </ul>
-  
-</div>
-
-  </footer>
-</article>
-
-  
   <div class="pagination">
     
       <a href="/blog/page/7/" class="button left"><span>Previous Page</span></a>
     
+    
+      <a href="/blog/page/9/" class="button right"><span>Next Page</span></a>
     
   </div>
 
@@ -629,52 +867,52 @@ who I am please check out the <a href="/about/">about</a> section. Stay tuned fo
       </header>
       
       <article class="mini-post">
+          <a href="/blog/2026/10/durable-data-single-node-k3s-ebs-rebuild/" class="image" style="--bg-image: url('/img/2026/10/durable-data-single-node-k3s-ebs-rebuild.svg');">
+    <img class="" src="/img/2026/10/durable-data-single-node-k3s-ebs-rebuild.svg" alt="A node rebuild: Node A is replaced by Node B, each root EBS volume is disposable, and the separate labeled EBS data volume detaches from the old node and re-attaches to the new one so the ePHPm blog&#39;s SQLite file and uploads survive">
+  </a>
+        <header>
+          <h2><a href="/blog/2026/10/durable-data-single-node-k3s-ebs-rebuild/">Surviving a Node Rebuild: A Durable ePHPm Blog on Single-Node k3s</a></h2>
+          <time class="published" datetime="2026-10-28 10:00:00 -0700 PDT">October 28, 2026</time>
+        </header>
+      </article>
+      
+      <article class="mini-post">
+          <a href="/blog/2026/10/docker-in-docker-without-root/" class="image" style="--bg-image: url('/img/2026/10/docker-in-docker-without-root-cracks.svg');">
+    <img class="" src="/img/2026/10/docker-in-docker-without-root-cracks.svg" alt="Four dind sandbox cracks and the ephemerd PR that closed each one">
+  </a>
+        <header>
+          <h2><a href="/blog/2026/10/docker-in-docker-without-root/">Docker-in-Docker in CI Without Handing Jobs Root</a></h2>
+          <time class="published" datetime="2026-10-24 10:00:00 -0700 PDT">October 24, 2026</time>
+        </header>
+      </article>
+      
+      <article class="mini-post">
+          <a href="/blog/2026/10/ci-cache-proxies-ephemeral-runners/" class="image" style="--bg-image: url('/img/2026/10/ci-cache-proxies-ephemeral-runners-flow.svg');">
+    <img class="" src="/img/2026/10/ci-cache-proxies-ephemeral-runners-flow.svg" alt="A fresh runner per job points go mod, cargo, composer, release downloads and actions/cache at matching cache proxies on the ephemerd node, where the caches persist and only reach the internet on a miss">
+  </a>
+        <header>
+          <h2><a href="/blog/2026/10/ci-cache-proxies-ephemeral-runners/">Cache Proxies for Ephemeral CI Runners</a></h2>
+          <time class="published" datetime="2026-10-23 15:00:00 -0700 PDT">October 23, 2026</time>
+        </header>
+      </article>
+      
+      <article class="mini-post">
+          <a href="/blog/2026/10/ephemeral-macos-runners-vm-clones/" class="image" style="--bg-image: url('/img/2026/10/ephemeral-macos-runners-vm-clones-lifecycle.svg');">
+    <img class="" src="/img/2026/10/ephemeral-macos-runners-vm-clones-lifecycle.svg" alt="A macOS CI job lifecycle: clone the base image, boot and grow the disk, set up over SSH, run the job, then stop and sweep, with a band showing the single slot held the whole time">
+  </a>
+        <header>
+          <h2><a href="/blog/2026/10/ephemeral-macos-runners-vm-clones/">Ephemeral macOS Runners: A Fresh VM Per Job on Apple Silicon</a></h2>
+          <time class="published" datetime="2026-10-23 11:00:00 -0700 PDT">October 23, 2026</time>
+        </header>
+      </article>
+      
+      <article class="mini-post">
           <a href="/blog/2026/10/turso-page1-allocation-race/" class="image" style="--bg-image: url('/img/2026/10/turso-page1-allocation-race-races.svg');">
     <img class="" src="/img/2026/10/turso-page1-allocation-race-races.svg" alt="Sequence diagram of two connections and init_lock: in race 1, B checks for an empty file, A publishes page 1 and releases the lock, then B takes the lock and panics on its assert; in race 2, A&#39;s lock is dropped while page 1 is being written, so B takes it and writes page 1 again">
   </a>
         <header>
           <h2><a href="/blog/2026/10/turso-page1-allocation-race/">Thirty-Two Connections and an Empty File: A Race in Turso&#39;s Page-1 Allocation</a></h2>
           <time class="published" datetime="2026-10-18 14:30:00 -0700 PDT">October 18, 2026</time>
-        </header>
-      </article>
-      
-      <article class="mini-post">
-          <a href="/blog/2026/10/ephpm-worker-mode-performance/" class="image" style="--bg-image: url('/img/2026/10/ephpm-worker-mode-performance-cover.svg');">
-    <img class="" src="/img/2026/10/ephpm-worker-mode-performance-cover.svg" alt="Diagram: before, hyper/tokio hands each request to one shared bounded channel whose waiter list all 20 PHP threads contend on; after, a dispatcher hands the job straight into the mailbox of the most recently idle PHP thread and only queues it in a FIFO overflow queue when every thread is busy">
-  </a>
-        <header>
-          <h2><a href="/blog/2026/10/ephpm-worker-mode-performance/">Fourth Place in Worker Mode, and Why It Wasn&#39;t PHP</a></h2>
-          <time class="published" datetime="2026-10-15 19:45:00 -0700 PDT">October 15, 2026</time>
-        </header>
-      </article>
-      
-      <article class="mini-post">
-          <a href="/blog/2026/10/composer-without-php-vivacity/" class="image" style="--bg-image: url('/img/2026/10/composer-without-php-vivacity-bench.svg');">
-    <img class="" src="/img/2026/10/composer-without-php-vivacity-bench.svg" alt="Bar chart comparing Composer 2.10.3 and ephpm composer on a Laravel install on native Windows">
-  </a>
-        <header>
-          <h2><a href="/blog/2026/10/composer-without-php-vivacity/">Composer Without PHP: Embedding vivacity in ePHPm</a></h2>
-          <time class="published" datetime="2026-10-14 23:20:00 -0700 PDT">October 14, 2026</time>
-        </header>
-      </article>
-      
-      <article class="mini-post">
-          <a href="/blog/2026/10/a-lock-is-only-as-good-as-its-release/" class="image" style="--bg-image: url('/img/2026/10/a-lock-is-only-as-good-as-its-release-cover.svg');">
-    <img class="" src="/img/2026/10/a-lock-is-only-as-good-as-its-release-cover.svg" alt="Timeline: request A&#39;s lock expires, B acquires it, A&#39;s blind DEL frees B&#39;s lock and C gets in">
-  </a>
-        <header>
-          <h2><a href="/blog/2026/10/a-lock-is-only-as-good-as-its-release/">A Lock Is Only as Good as Its Release</a></h2>
-          <time class="published" datetime="2026-10-13 20:40:00 -0700 PDT">October 13, 2026</time>
-        </header>
-      </article>
-      
-      <article class="mini-post">
-          <a href="/blog/2026/10/xdebug-worker-mode/" class="image" style="--bg-image: url('/img/2026/10/xdebug-worker-mode-cover.svg');">
-    <img class="" src="/img/2026/10/xdebug-worker-mode-cover.svg" alt="Diagram of the ePHPm router sending untriggered requests to the warm worker pool and Xdebug-triggered requests to a one-request debug lane">
-  </a>
-        <header>
-          <h2><a href="/blog/2026/10/xdebug-worker-mode/">Step Debugging a Worker That Never Ends</a></h2>
-          <time class="published" datetime="2026-10-12 21:10:00 -0700 PDT">October 12, 2026</time>
         </header>
       </article>
       
@@ -697,10 +935,10 @@ who I am please check out the <a href="/about/">about</a> section. Stay tuned fo
           
           
           <li>
-              <a href="/categories/ephpm/">ephpm<span class="count">37</span></a>
+              <a href="/categories/ephpm/">ephpm<span class="count">38</span></a>
           
           <li>
-              <a href="/categories/go/">go<span class="count">30</span></a>
+              <a href="/categories/go/">go<span class="count">32</span></a>
           
           <li>
               <a href="/categories/php/">php<span class="count">26</span></a>
@@ -715,16 +953,19 @@ who I am please check out the <a href="/about/">about</a> section. Stay tuned fo
               <a href="/categories/windows/">windows<span class="count">14</span></a>
           
           <li>
+              <a href="/categories/ci/">ci<span class="count">12</span></a>
+          
+          <li>
+              <a href="/categories/containers/">containers<span class="count">10</span></a>
+          
+          <li>
               <a href="/categories/databases/">databases<span class="count">10</span></a>
           
           <li>
-              <a href="/categories/ci/">ci<span class="count">9</span></a>
+              <a href="/categories/security/">security<span class="count">10</span></a>
           
           <li>
-              <a href="/categories/security/">security<span class="count">9</span></a>
-          
-          <li>
-              <a href="/categories/containers/">containers<span class="count">7</span></a>
+              <a href="/categories/ephemerd/">ephemerd<span class="count">9</span></a>
           
           <li>
               <a href="/categories/tools/">tools<span class="count">5</span></a>

@@ -3,7 +3,7 @@ title: "Bind Mounts Across Mount Namespaces: Four PRs and a Container Escape"
 description: "Making GitHub Actions container: jobs work through ephemerd's Docker API shim took four tries, then a TOCTOU race turned the working version into an escape."
 date: 2026-09-24T21:02:00-07:00
 tags: [ linux, containers, runc, containerd, mount-namespaces, security, github-actions, ephemerd ]
-categories: [ containers, ci, security ]
+categories: [ ephemerd, containers, ci, security ]
 series: [ "ephemerd" ]
 images:
  - src: img/2026/09/bind-mounts-across-mount-namespaces-toctou.svg

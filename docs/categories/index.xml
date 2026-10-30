@@ -6,20 +6,55 @@
     <description>Recent content in Categories on Luther Monson</description>
     <generator>Hugo</generator>
     <language>en</language>
-    <lastBuildDate>Sun, 18 Oct 2026 14:30:00 -0700</lastBuildDate>
+    <lastBuildDate>Wed, 28 Oct 2026 10:00:00 -0700</lastBuildDate>
     <atom:link href="https://luth.io/categories/index.xml" rel="self" type="application/rss+xml" />
     <item>
-      <title>Databases</title>
-      <link>https://luth.io/categories/databases/</link>
-      <pubDate>Sun, 18 Oct 2026 14:30:00 -0700</pubDate>
-      <guid>https://luth.io/categories/databases/</guid>
+      <title>Containers &amp; Linux</title>
+      <link>https://luth.io/categories/containers/</link>
+      <pubDate>Wed, 28 Oct 2026 10:00:00 -0700</pubDate>
+      <guid>https://luth.io/categories/containers/</guid>
       <description></description>
     </item>
     <item>
       <title>ePHPm</title>
       <link>https://luth.io/categories/ephpm/</link>
-      <pubDate>Sun, 18 Oct 2026 14:30:00 -0700</pubDate>
+      <pubDate>Wed, 28 Oct 2026 10:00:00 -0700</pubDate>
       <guid>https://luth.io/categories/ephpm/</guid>
+      <description></description>
+    </item>
+    <item>
+      <title>CI &amp; Runners</title>
+      <link>https://luth.io/categories/ci/</link>
+      <pubDate>Sat, 24 Oct 2026 10:00:00 -0700</pubDate>
+      <guid>https://luth.io/categories/ci/</guid>
+      <description></description>
+    </item>
+    <item>
+      <title>ephemerd</title>
+      <link>https://luth.io/categories/ephemerd/</link>
+      <pubDate>Sat, 24 Oct 2026 10:00:00 -0700</pubDate>
+      <guid>https://luth.io/categories/ephemerd/</guid>
+      <description></description>
+    </item>
+    <item>
+      <title>Security</title>
+      <link>https://luth.io/categories/security/</link>
+      <pubDate>Sat, 24 Oct 2026 10:00:00 -0700</pubDate>
+      <guid>https://luth.io/categories/security/</guid>
+      <description></description>
+    </item>
+    <item>
+      <title>Go</title>
+      <link>https://luth.io/categories/go/</link>
+      <pubDate>Fri, 23 Oct 2026 15:00:00 -0700</pubDate>
+      <guid>https://luth.io/categories/go/</guid>
+      <description></description>
+    </item>
+    <item>
+      <title>Databases</title>
+      <link>https://luth.io/categories/databases/</link>
+      <pubDate>Sun, 18 Oct 2026 14:30:00 -0700</pubDate>
+      <guid>https://luth.io/categories/databases/</guid>
       <description></description>
     </item>
     <item>
@@ -34,20 +69,6 @@
       <link>https://luth.io/categories/php/</link>
       <pubDate>Thu, 15 Oct 2026 19:45:00 -0700</pubDate>
       <guid>https://luth.io/categories/php/</guid>
-      <description></description>
-    </item>
-    <item>
-      <title>CI &amp; Runners</title>
-      <link>https://luth.io/categories/ci/</link>
-      <pubDate>Wed, 07 Oct 2026 21:10:00 -0700</pubDate>
-      <guid>https://luth.io/categories/ci/</guid>
-      <description></description>
-    </item>
-    <item>
-      <title>Go</title>
-      <link>https://luth.io/categories/go/</link>
-      <pubDate>Wed, 07 Oct 2026 21:10:00 -0700</pubDate>
-      <guid>https://luth.io/categories/go/</guid>
       <description></description>
     </item>
     <item>
@@ -69,20 +90,6 @@
       <link>https://luth.io/categories/ai-agents/</link>
       <pubDate>Tue, 29 Sep 2026 20:30:00 -0700</pubDate>
       <guid>https://luth.io/categories/ai-agents/</guid>
-      <description></description>
-    </item>
-    <item>
-      <title>Security</title>
-      <link>https://luth.io/categories/security/</link>
-      <pubDate>Tue, 29 Sep 2026 20:30:00 -0700</pubDate>
-      <guid>https://luth.io/categories/security/</guid>
-      <description></description>
-    </item>
-    <item>
-      <title>Containers &amp; Linux</title>
-      <link>https://luth.io/categories/containers/</link>
-      <pubDate>Sat, 26 Sep 2026 16:20:00 -0700</pubDate>
-      <guid>https://luth.io/categories/containers/</guid>
       <description></description>
     </item>
     <item>

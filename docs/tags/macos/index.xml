@@ -6,8 +6,15 @@
     <description>Recent content in Macos on Luther Monson</description>
     <generator>Hugo</generator>
     <language>en</language>
-    <lastBuildDate>Sat, 26 Sep 2026 16:20:00 -0700</lastBuildDate>
+    <lastBuildDate>Fri, 23 Oct 2026 11:00:00 -0700</lastBuildDate>
     <atom:link href="https://luth.io/tags/macos/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>Ephemeral macOS Runners: A Fresh VM Per Job on Apple Silicon</title>
+      <link>https://luth.io/blog/2026/10/ephemeral-macos-runners-vm-clones/</link>
+      <pubDate>Fri, 23 Oct 2026 11:00:00 -0700</pubDate>
+      <guid>https://luth.io/blog/2026/10/ephemeral-macos-runners-vm-clones/</guid>
+      <description>&lt;p&gt;&lt;a href=&#34;https://github.com/ephpm/ephemerd&#34;&gt;ephemerd&lt;/a&gt; gives every CI job a brand new environment and throws it away after.&#xA;On Linux and Windows that environment is a container. On macOS it can&amp;rsquo;t be. Apple&amp;rsquo;s license wants macOS running on&#xA;Apple hardware, so the Mac in my rack is the real thing. The isolation comes from a VM instead.&lt;/p&gt;&#xA;&lt;p&gt;Each macOS job gets a fresh &lt;a href=&#34;https://developer.apple.com/documentation/virtualization&#34;&gt;Virtualization.framework&lt;/a&gt; VM&#xA;cloned from a base image. The job runs inside it. The VM is destroyed when the job finishes. That&amp;rsquo;s the same contract&#xA;as the container path. Getting there took four fixes that I only found by running the fleet. This post walks the VM&#xA;lifecycle and the three ways it bit me:&lt;/p&gt;</description>
+    </item>
     <item>
       <title>Cross-Platform Process Containment: Job Objects vs Process Groups vs cgroups</title>
       <link>https://luth.io/blog/2026/09/process-containment-job-objects-process-groups-cgroups/</link>

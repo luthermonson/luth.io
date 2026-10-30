@@ -3,7 +3,7 @@ title: "Kata Containers for CI: Boot Cost Isn't the Problem, File I/O Is"
 description: "Kata containers are safer for CI, but slower. Starting one takes 12x longer, which is fine. Reading small files is about 40x slower for the entire job, which isn't."
 date: 2026-09-03T21:35:00-07:00
 tags: [ kata-containers, containerd, linux, kvm, virtualization, ci, performance, ephemerd ]
-categories: [ containers, ci ]
+categories: [ ephemerd, containers, ci ]
 series: [ "ephemerd" ]
 images:
  - src: img/2026/08/kata-containers-for-ci-ratio.svg

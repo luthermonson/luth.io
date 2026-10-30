@@ -1,0 +1,52 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 470" font-family="system-ui, -apple-system, Segoe UI, sans-serif">
+  <title>A node rebuild with a dedicated EBS data volume</title>
+  <desc>Node A is replaced by Node B with terraform apply -replace. Each node's root EBS volume is disposable and deleted on termination. The separate EBS data volume, labeled k3s-data, detaches from the old node and re-attaches to the new one by label, so the ePHPm blog's SQLite file and uploads survive.</desc>
+  <rect width="900" height="470" fill="#ffffff"/>
+  <text x="450" y="34" text-anchor="middle" font-size="19" font-weight="600" fill="#222">terraform apply -replace: the node changes, the data volume does not</text>
+
+  <!-- Node A -->
+  <rect x="40" y="70" width="300" height="160" rx="8" fill="#eaf1f8" stroke="#0550ae" stroke-width="2"/>
+  <text x="190" y="96" text-anchor="middle" font-size="16" font-weight="600" fill="#0550ae">Node A &#8212; before</text>
+  <text x="190" y="120" text-anchor="middle" font-size="14" fill="#333">k3s + one ePHPm blog pod</text>
+  <rect x="64" y="140" width="252" height="68" rx="6" fill="#fff" stroke="#a34700" stroke-width="2" stroke-dasharray="6 4"/>
+  <text x="190" y="166" text-anchor="middle" font-size="14" font-weight="600" fill="#a34700">root EBS &#183; disposable</text>
+  <text x="190" y="188" text-anchor="middle" font-size="13" fill="#555">delete_on_termination = true</text>
+
+  <!-- Node B -->
+  <rect x="560" y="70" width="300" height="160" rx="8" fill="#eaf1f8" stroke="#0550ae" stroke-width="2"/>
+  <text x="710" y="96" text-anchor="middle" font-size="16" font-weight="600" fill="#0550ae">Node B &#8212; after</text>
+  <text x="710" y="120" text-anchor="middle" font-size="14" fill="#333">fresh instance, pod rebinds</text>
+  <rect x="584" y="140" width="252" height="68" rx="6" fill="#fff" stroke="#a34700" stroke-width="2" stroke-dasharray="6 4"/>
+  <text x="710" y="166" text-anchor="middle" font-size="14" font-weight="600" fill="#a34700">root EBS &#183; disposable</text>
+  <text x="710" y="188" text-anchor="middle" font-size="13" fill="#555">new, empty root volume</text>
+
+  <!-- replace arrow -->
+  <g stroke="#3a3a3a" stroke-width="2" fill="#3a3a3a">
+    <line x1="344" y1="150" x2="552" y2="150"/><polygon points="552,144 560,150 552,156"/>
+  </g>
+  <text x="452" y="140" text-anchor="middle" font-size="14" font-weight="600" fill="#3a3a3a">rebuild</text>
+  <text x="452" y="172" text-anchor="middle" font-size="13" fill="#888">Node A terminated,</text>
+  <text x="452" y="188" text-anchor="middle" font-size="13" fill="#888">its root volume gone</text>
+
+  <!-- data volume -->
+  <rect x="40" y="340" width="820" height="100" rx="8" fill="#e3f1f2" stroke="#00707a" stroke-width="2.5"/>
+  <text x="450" y="368" text-anchor="middle" font-size="16" font-weight="600" fill="#00707a">EBS data volume &#8212; LABEL=k3s-data</text>
+  <text x="450" y="392" text-anchor="middle" font-size="13" fill="#333">gp3 &#183; encrypted &#183; prevent_destroy &#183; its own aws_ebs_volume, not the root</text>
+  <text x="450" y="414" text-anchor="middle" font-size="13" fill="#333">wp-content/database/.ht.sqlite &#183; wp-content/uploads &#183; your post + image survive</text>
+
+  <!-- connectors -->
+  <g stroke="#00707a" stroke-width="2" fill="none" stroke-dasharray="7 4">
+    <path d="M150 230 L150 340"/>
+    <path d="M750 340 L750 230"/>
+  </g>
+  <g fill="#00707a">
+    <polygon points="144,334 150,342 156,334"/>
+    <polygon points="744,236 750,228 756,236"/>
+  </g>
+  <text x="150" y="268" text-anchor="middle" font-size="13" font-weight="600" fill="#00707a">detaches</text>
+  <text x="150" y="284" text-anchor="middle" font-size="12" fill="#555">(same volume)</text>
+  <text x="750" y="300" text-anchor="middle" font-size="13" font-weight="600" fill="#00707a">re-attaches</text>
+  <text x="750" y="316" text-anchor="middle" font-size="12" fill="#555">by label</text>
+
+  <text x="450" y="462" text-anchor="middle" font-size="13" fill="#6b6b6b">Single node, so no failover. This protects the data, not uptime.</text>
+</svg>
