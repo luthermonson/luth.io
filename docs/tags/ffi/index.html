@@ -434,9 +434,11 @@ the &ldquo;PHP inside a Go web server&rdquo; idea works, and it works well. I&he
       </header>
       
       <article class="mini-post">
-          
+          <a href="/blog/2026/11/dagger-on-ephemerd-runner-fleet/" class="image" style="--bg-image: url('/img/2026/11/dagger-ephemerd-cache-architecture.svg');">
+    <img class="" src="/img/2026/11/dagger-ephemerd-cache-architecture.svg" alt="GitHub fires a workflow_job webhook at ephemerd on the node, which provisions a fresh VLAN-isolated runner that is destroyed after the job. Inside it a cold per-job BuildKit engine imports and exports cached layers over the GitHub Actions Cache v2 protocol to ephemerd&#39;s Actions-cache proxy, which persists the cache on the node across every job.">
+  </a>
         <header>
-          <h2><a href="/blog/2026/11/dagger-on-ephemerd-runner-fleet/">Running Dagger on an ephemerd Runner Fleet</a></h2>
+          <h2><a href="/blog/2026/11/dagger-on-ephemerd-runner-fleet/">Dagger on ephemerd, and a Warm Cache on Throwaway Runners</a></h2>
           <time class="published" datetime="2026-11-18 09:00:00 -0700 MST">November 18, 2026</time>
         </header>
       </article>

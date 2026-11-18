@@ -215,23 +215,25 @@
   <header>
   <div class="title">
     
-      <h2><a href="/blog/2026/11/dagger-on-ephemerd-runner-fleet/">Running Dagger on an ephemerd Runner Fleet</a></h2>
+      <h2><a href="/blog/2026/11/dagger-on-ephemerd-runner-fleet/">Dagger on ephemerd, and a Warm Cache on Throwaway Runners</a></h2>
     
     
-      <p>Dagger decides how CI steps execute while ephemerd and GitHub Actions decide where the job runs. Here is how to wire one shared Dagger engine to a fleet of ephemeral self-hosted runners.</p>
+      <p>A fresh engine per job means a cold cache every job — unless the cache lives on the node instead of in the engine. Benchmarked: an ephemeral BuildKit engine warms itself to within a few seconds of a long-running one, no persistent engine required.</p>
     
   </div>
   <div class="meta">
     <time datetime="2026-11-18 09:00:00 -0700 MST">November 18, 2026</time>
     
-    <p>15-Minute Read</p>
+    <p>10-Minute Read</p>
   </div>
 </header>
 
   <div class="content">
+    <a href="/blog/2026/11/dagger-on-ephemerd-runner-fleet/" class="image" style="--bg-image: url('/img/2026/11/dagger-ephemerd-cache-architecture.svg');">
+    <img class="" src="/img/2026/11/dagger-ephemerd-cache-architecture.svg" alt="GitHub fires a workflow_job webhook at ephemerd on the node, which provisions a fresh VLAN-isolated runner that is destroyed after the job. Inside it a cold per-job BuildKit engine imports and exports cached layers over the GitHub Actions Cache v2 protocol to ephemerd&#39;s Actions-cache proxy, which persists the cache on the node across every job.">
+  </a>
     
-    
-    <p>A friend asked me if Dagger replaces ephemerd. It doesn&rsquo;t. They sit at different layers. Since I just rode this merry-go-round here is how I put the two together, with every command run against a real engine on a Linux box.</p>
+    <p>A friend asked me whether Dagger replaces ephemerd. It doesn&rsquo;t — they sit at different layers, and I wrote half this post explaining that before I noticed the more interesting question hiding underneath it.</p>
   </div>
   <footer>
     <a href="/blog/2026/11/dagger-on-ephemerd-runner-fleet/" class="button big">Read More</a>
@@ -916,9 +918,11 @@ lists and never applies.</p>
       </header>
       
       <article class="mini-post">
-          
+          <a href="/blog/2026/11/dagger-on-ephemerd-runner-fleet/" class="image" style="--bg-image: url('/img/2026/11/dagger-ephemerd-cache-architecture.svg');">
+    <img class="" src="/img/2026/11/dagger-ephemerd-cache-architecture.svg" alt="GitHub fires a workflow_job webhook at ephemerd on the node, which provisions a fresh VLAN-isolated runner that is destroyed after the job. Inside it a cold per-job BuildKit engine imports and exports cached layers over the GitHub Actions Cache v2 protocol to ephemerd&#39;s Actions-cache proxy, which persists the cache on the node across every job.">
+  </a>
         <header>
-          <h2><a href="/blog/2026/11/dagger-on-ephemerd-runner-fleet/">Running Dagger on an ephemerd Runner Fleet</a></h2>
+          <h2><a href="/blog/2026/11/dagger-on-ephemerd-runner-fleet/">Dagger on ephemerd, and a Warm Cache on Throwaway Runners</a></h2>
           <time class="published" datetime="2026-11-18 09:00:00 -0700 MST">November 18, 2026</time>
         </header>
       </article>

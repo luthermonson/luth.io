@@ -1,0 +1,70 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 820 512" font-family="system-ui, -apple-system, Segoe UI, Roboto, sans-serif" role="img" aria-labelledby="t d">
+  <title id="t">A cold per-job engine, a warm cache on the node</title>
+  <desc id="d">GitHub fires a workflow_job webhook at ephemerd on the node. ephemerd provisions a fresh, VLAN-isolated runner that is destroyed after the job. Inside it a per-job BuildKit engine starts with an empty local cache, then imports cached layers from and exports new layers to ephemerd's Actions-cache proxy over the GitHub Actions Cache v2 protocol. The engine is thrown away; the cache on the node is not.</desc>
+  <style>
+    .box { fill: #ffffff; stroke: #333333; stroke-width: 2; }
+    .lbl { fill: #222222; font-size: 15px; }
+    .lblb { fill: #222222; font-size: 16px; font-weight: 600; }
+    .sub { fill: #555555; font-size: 13px; }
+    .mono { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 13px; fill: #0550ae; }
+    .arr { stroke: #555555; stroke-width: 2.5; fill: none; }
+    .arrcold { stroke: #00707a; stroke-width: 2.5; fill: none; }
+    .arrwarm { stroke: #0550ae; stroke-width: 2.5; fill: none; }
+  </style>
+  <defs>
+    <marker id="a" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto"><path d="M0,0 L9,3 L0,6 Z" fill="#555555"/></marker>
+    <marker id="ac" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto"><path d="M0,0 L9,3 L0,6 Z" fill="#00707a"/></marker>
+    <marker id="aw" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto"><path d="M0,0 L9,3 L0,6 Z" fill="#0550ae"/></marker>
+  </defs>
+
+  <!-- GitHub (control plane trigger) -->
+  <rect class="box" x="300" y="16" width="220" height="56" rx="10" stroke="#a0287f"/>
+  <text class="lblb" x="410" y="40" text-anchor="middle" fill="#a0287f">GitHub</text>
+  <text class="sub" x="410" y="60" text-anchor="middle">workflow_job webhook</text>
+
+  <!-- Runner zone (ephemeral) -->
+  <rect class="box" x="22" y="112" width="348" height="372" rx="12" stroke="#0550ae" stroke-dasharray="7 5"/>
+  <text class="lblb" x="196" y="140" text-anchor="middle" fill="#0550ae">Fresh runner — one per job</text>
+  <text class="sub" x="196" y="160" text-anchor="middle">VLAN 2 · egress fence · destroyed after the job</text>
+  <rect class="box" x="50" y="188" width="292" height="44" rx="6"/>
+  <text class="lbl" x="66" y="215">GitHub Actions job</text>
+  <rect class="box" x="50" y="248" width="292" height="44" rx="6"/>
+  <text class="lbl" x="66" y="275">buildkitd · per job · --privileged</text>
+  <rect class="box" x="50" y="308" width="292" height="42" rx="6" stroke="#0550ae" stroke-dasharray="5 4"/>
+  <text class="lbl" x="66" y="334">local build cache: <tspan font-weight="600">0 B at start (cold)</tspan></text>
+  <text class="mono" x="196" y="378" text-anchor="middle">buildx / dagger  --import/--export type=gha</text>
+  <text class="sub" x="196" y="402" text-anchor="middle">the engine is the throwaway part —</text>
+  <text class="sub" x="196" y="420" text-anchor="middle">it holds no state between jobs</text>
+
+  <!-- Node zone (ephemerd, persistent) -->
+  <rect class="box" x="450" y="112" width="348" height="372" rx="12" stroke="#00707a"/>
+  <text class="lblb" x="624" y="140" text-anchor="middle" fill="#00707a">ephemerd — on the node</text>
+  <text class="sub" x="624" y="160" text-anchor="middle">one daemon, outlives every job</text>
+  <rect class="box" x="478" y="188" width="292" height="44" rx="6"/>
+  <text class="lbl" x="494" y="215">Actions-cache proxy · GHA Cache v2</text>
+  <rect class="box" x="478" y="248" width="292" height="44" rx="6"/>
+  <text class="lbl" x="494" y="275">writable OCI registry</text>
+  <!-- persistent cache cylinder -->
+  <g transform="translate(478,312)">
+    <path d="M0,12 a146,11 0 0 1 292,0 l0,30 a146,11 0 0 1 -292,0 Z" fill="#e6f0f0" stroke="#00707a" stroke-width="2"/>
+    <path d="M0,12 a146,11 0 0 0 292,0" fill="none" stroke="#00707a" stroke-width="2"/>
+    <text class="lbl" x="146" y="38" text-anchor="middle" fill="#00707a">build cache persists across jobs</text>
+  </g>
+  <text class="sub" x="624" y="402" text-anchor="middle">survives teardown — the next cold</text>
+  <text class="sub" x="624" y="420" text-anchor="middle">engine warms itself from here</text>
+
+  <!-- control-plane arrows -->
+  <path class="arr" d="M470,58 C 560,70 624,82 624,110" marker-end="url(#a)"/>
+  <text class="sub" x="566" y="80" fill="#555555">① webhook</text>
+  <path class="arr" d="M450,182 H372" marker-end="url(#a)"/>
+  <text class="sub" x="411" y="176" text-anchor="middle" fill="#555555">② provision</text>
+
+  <!-- cache data-path arrows (buildkitd <-> proxy) -->
+  <path class="arrcold" d="M448,264 H344" marker-end="url(#ac)"/>
+  <text class="sub" x="396" y="258" text-anchor="middle" fill="#00707a">③ import</text>
+  <path class="arrwarm" d="M344,288 H448" marker-end="url(#aw)"/>
+  <text class="sub" x="396" y="306" text-anchor="middle" fill="#0550ae">④ export</text>
+
+  <!-- legend -->
+  <text class="sub" x="410" y="470" text-anchor="middle">③ cold engine pulls cached layers (warm start)  ·  ④ engine pushes new layers back  —  no long-running engine anywhere</text>
+</svg>

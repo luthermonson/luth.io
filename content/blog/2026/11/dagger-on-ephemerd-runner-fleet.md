@@ -1,520 +1,112 @@
 ---
-title: "Running Dagger on an ephemerd Runner Fleet"
-description: "Dagger decides how CI steps execute while ephemerd and GitHub Actions decide where the job runs. Here is how to wire one shared Dagger engine to a fleet of ephemeral self-hosted runners."
+title: "Dagger on ephemerd, and a Warm Cache on Throwaway Runners"
+description: "A fresh engine per job means a cold cache every job — unless the cache lives on the node instead of in the engine. Benchmarked: an ephemeral BuildKit engine warms itself to within a few seconds of a long-running one, no persistent engine required."
 date: 2026-11-18T09:00:00-07:00
 tags: [ infrastructure, ephemerd ]
 categories: [ ci, containers ]
+images:
+ - src: img/2026/11/dagger-ephemerd-cache-architecture.svg
+   alt: "GitHub fires a workflow_job webhook at ephemerd on the node, which provisions a fresh VLAN-isolated runner that is destroyed after the job. Inside it a cold per-job BuildKit engine imports and exports cached layers over the GitHub Actions Cache v2 protocol to ephemerd's Actions-cache proxy, which persists the cache on the node across every job."
+   stretch: "none"
 draft: false
 ---
 
-A friend asked me if Dagger replaces ephemerd. It doesn't. They sit at different layers. Since I just rode this merry-go-round here is how I put the two together, with every command run against a real engine on a Linux box.
+A friend asked me whether Dagger replaces ephemerd. It doesn't — they sit at different layers, and I wrote half this post explaining that before I noticed the more interesting question hiding underneath it.
 
-### Two layers, not two competitors
+Ephemeral runners throw the whole machine away after every job. That is deliberate: a fork PR gets a clean, single-use box and nothing it does survives. But the build cache does not survive either. Every job starts cold — re-pull the base images, recompile from scratch, re-download every dependency. The usual fix is a long-running build engine with a persistent disk, which for a hardened fleet means standing up a privileged box that sits *outside* your isolation. That trade bothered me enough to measure the alternative.
 
-[Dagger](https://dagger.io) is a client plus an engine. The engine is a long-running daemon that wraps BuildKit. Every step in a pipeline runs as a container under runc inside that engine. The client is the `dagger` CLI or an SDK. It sends the pipeline to the engine and prints the result.
+The alternative works. **A fresh BuildKit engine, started cold on every job, can warm itself from a cache that lives on the node — and it lands within a few seconds of a long-running engine without keeping one running.** Here is the measurement, the wiring, and where Dagger does and does not fit.
 
-Dagger has no scheduler and no event source. It does not speak the GitHub Actions runner protocol. It fetches git repos only when a pipeline asks for them. Something else has to receive the `workflow_job` event and provide a machine to run the client on.
+### A fresh engine is a cold engine
 
-That something is GitHub Actions plus [ephemerd](https://github.com/ephemerd/ephemerd). ephemerd receives the `workflow_job` webhook and registers a just-in-time runner for that one job. The job runs in a fresh single-use container on a runner node. When it finishes the container is gone. To Dagger an ephemerd runner is an ordinary client host. Nothing more.
+Dagger wraps BuildKit; so does `docker buildx`. The speed of both comes from a content-addressed cache in the engine's state dir — solved build steps, extracted image layers, `RUN --mount=type=cache` scratch. A long-lived engine holds all of it and the second build of anything is nearly free. An engine that is created fresh for one job and destroyed at the end holds none of it. The Dagger docs put it plainly: "Each new machine starts with an empty cache."
 
-```
-GitHub workflow_job event
-        |
-        v
-ephemerd node  --->  fresh runner container (unprivileged)
-                              |
-                              |  dagger call  (the client)
-                              v
-                     Dagger engine (privileged, one trusted host)
-                              |
-                              |  runc
-                              v
-                     one container per pipeline step
-```
+So the honest baseline on an ephemeral runner is: full cost, every single run. In my benchmark a representative build — a Go program cross-compiled for six targets, about 31 seconds of actual compiler time — costs **~41 seconds every run** with no cache, forever. It never gets faster, because there is nothing to get faster from.
 
-ephemerd decides where and when a job runs. Dagger decides how the steps inside that job execute. Swapping `go test` in a `run:` step for `dagger call test` changes the second thing only.
+The fix everyone reaches for is a persistent engine. It works — the same build drops to **0.6 seconds** warm — but it is a long-running, privileged service. On my fleet, where every runner is pinned to an isolated VLAN behind an egress fence, a shared engine host is a box that lives *outside* that fence, holds every job's state at once, and is reachable over the network. That is a real containment cost for a cache win. (I get into exactly why privileged and placement matter in the safety section below.)
 
-One limit up front. The Dagger engine runs Linux containers and nothing else. The CLI runs on macOS and Windows but execution is always Linux. So this post applies to ephemerd's Linux pools. It gives you nothing on the Windows and macOS runners. Those are the pools where ephemerd earns its keep. Dagger has no answer there.
+### Put the cache on the node, not in the engine
 
-### Prerequisites
+The thing I missed the first time: BuildKit can export and import its cache to an **external backend** — `registry`, `local`, `s3`, or `gha` (the GitHub Actions Cache service). The engine stays throwaway; the cache it produces gets pushed somewhere that outlives the job, and the *next* cold engine imports it at startup. The engine is ephemeral. The cache is not.
 
-- A Linux host for the engine with Docker or Podman and a disk you don't mind filling. I used a Fedora 44 Podman machine with rootful podman.
-- The Dagger CLI at the same version as the engine. I used v0.21.12, released November 17, 2026.
-- An ephemerd Linux pool and a repo whose workflows can target it.
-- Network reachability from the runner pool to the engine host on one TCP port. More on that below.
+And ephemerd already runs exactly the backend this needs. Its Actions-cache proxy speaks the **GitHub Actions Cache v2** protocol, backed by a writable OCI registry on the node, with per-repo scoping, and it already injects the cache URL and token into every job container for `actions/cache`. BuildKit's `gha` cache backend speaks that same protocol. Point a cold per-job `buildkitd` at it with `--import-cache`/`--export-cache type=gha` and you get a warm cache on a throwaway engine, served by infrastructure the fleet already has.
 
-All of it is open source. The engine image `registry.dagger.io/engine` is Apache-2.0. Dagger Cloud is not required. A local volume at `/var/lib/dagger` is the cache. Cloud only adds a distributed cache and trace viewing on top.
+### The numbers
 
-### Pick a model
+I ran three scenarios, three runs each, same build and same output target every time so the only variable is the cache. Fresh BuildKit engine per run except the persistent column; every ephemeral engine logged an empty local cache (`buildctl du` = `0 B`) before building.
 
-There are two ways to run this. I recommend the second one.
+![Build time per run: no cache stays ~41s every run; the GHA cache pays ~56s on run 1 to populate then drops to ~3-5s; a persistent engine is ~0.6s](/img/2026/11/dagger-ephemerd-cache-benchmark.svg)
 
-**Model A, an engine per job.** The job itself runs `docker run --privileged registry.dagger.io/engine` and points the CLI at it. No shared infrastructure. The cost is a cold cache on every job and privileged Docker inside an untrusted runner. Details in the appendix.
+| scenario | run 1 (cold) | run 2 | run 3 | compile cached? |
+|---|---|---|---|---|
+| no cache (ephemeral) | 41.1 s | 41.5 s | 41.3 s | never |
+| **GHA cache (ephemeral)** | 56.0 s | 4.8 s | 2.9 s | runs 2–3 |
+| persistent engine | 41.6 s | 0.7 s | 0.6 s | runs 2–3 |
 
-**Model B, one shared engine as a trusted fleet peer.** You stand up one privileged engine on a dedicated host with a persistent `/var/lib/dagger`. The ephemerd runners stay unprivileged. They run the CLI and set one environment variable. Privilege lives on one box you control and the cache stays warm across jobs. This fits how ephemerd already treats a runner. The runner is a client. It is not infrastructure.
+The headline: **ephemeral with the GHA cache is 3.9 seconds warm against 41.4 seconds with no cache — 10.7× faster, 91% of the build time gone.** Of the 40.8-second gap between "no cache" and a full long-running engine, the throwaway-engine-plus-external-cache path recovers **92%**, and it keeps nothing running between jobs.
 
-### Model B: start the engine
+It is not free, and the chart shows the catch honestly: **run 1 with the GHA cache is *slower* than no cache** — 56 seconds against 41 — because that first run pays a one-time cost to upload the whole cache (`mode=max`, base image included, ~1.25 GB). You pay once to populate; every run after rides it. The warm runs genuinely fetch from the server — each engine started at 0 B and pulled the cached layer back down — so the ~3–4 seconds is round-trips and a small download, not compute. A single long-running engine is still faster warm (0.6 s vs 3.9 s; the gap is network, not work), but it costs you a permanent privileged service, and this does not.
 
-The engine needs root capabilities including `CAP_SYS_ADMIN`. The Dagger docs say it plainly: "Currently, the Dagger Engine cannot be run as a rootless container". So this is `--privileged` on a host you treat as a trust boundary. Anyone who can reach the port can run containers on it.
+### How it is wired
 
-Name the container and name the volume. Anonymous volumes pile up and nobody finds them again. Pass `--addr` to add a TCP listener. The engine keeps its unix sockets too.
+The pieces here are spread across three trust zones. The cover image up top shows the whole path; here it is in words.
 
-Docker:
+1. GitHub fires a `workflow_job` webhook at ephemerd on the node.
+2. ephemerd provisions a **fresh runner** for that one job — a container on an isolated VLAN, behind the egress fence, destroyed when the job ends.
+3. Inside the runner, the job starts a **per-job `buildkitd`** (privileged — see below) with an empty local cache.
+4. The build runs with `--import-cache type=gha` (warm start) and `--export-cache type=gha` (push new layers), pointed at **ephemerd's Actions-cache proxy** — which lives on the node, speaks GHA Cache v2, and is backed by a writable registry.
+5. That cache **survives teardown**. The next job gets a brand-new cold engine that warms itself from the same proxy.
 
-```sh
-docker run -d --name dagger-engine --privileged --restart always \
-  -v dagger-engine-cache:/var/lib/dagger \
-  -p 2345:2345 \
-  registry.dagger.io/engine:v0.21.12 \
-  --addr tcp://0.0.0.0:2345
-```
-
-Podman, as root:
-
-```sh
-sudo podman run -d --name dagger-engine --privileged \
-  -v dagger-engine-cache:/var/lib/dagger \
-  -p 2345:2345 \
-  registry.dagger.io/engine:v0.21.12 \
-  --addr tcp://0.0.0.0:2345
-```
-
-The image is 671 MB. Check the log once it is up:
-
-```
-$ sudo podman logs dagger-engine 2>&1 | grep -v '^\s*#' | tail -6
-level=info msg="auto snapshotter: using overlayfs"
-level=debug msg="starting main engine api listeners"
-level=warning msg="TLS is not enabled for tcp://0.0.0.0:2345. enabling mutual TLS authentication is highly recommended"
-level=info msg="running server on /run/dagger/engine.sock"
-level=info msg="running server on /run/buildkit/buildkitd.sock"
-level=info msg="running server on [::]:2345"
-```
-
-Two things to notice. The snapshotter is overlayfs. That is why the volume matters. Without a real volume you get overlayfs on overlayfs and the docs warn it gets extremely slow. The TLS warning is real. A plain `tcp://` listener has no authentication. The engine supports mutual TLS with `--tlscert`, `--tlskey` and `--tlscacert`. On a private fleet VLAN with a firewall in front I skipped it for this walkthrough. On a shared network set it up.
-
-### Model B: point a client at it
-
-Install the CLI at the engine's version. The install script takes a `BIN_DIR` so it needs no root.
-
-```sh
-curl -fsSL https://dl.dagger.io/dagger/install.sh \
-  | DAGGER_VERSION=0.21.12 BIN_DIR=$HOME/.local/bin sh
-dagger version
-```
-
-```
-dagger v0.21.12 (image://registry.dagger.io/engine:v0.21.12) linux/amd64
-```
-
-That parenthetical is the default engine source. With no override the CLI pulls that image and starts its own engine through whatever container runtime it finds. We don't want that on a runner. The override is `_EXPERIMENTAL_DAGGER_RUNNER_HOST`.
-
-```sh
-export _EXPERIMENTAL_DAGGER_RUNNER_HOST=tcp://127.0.0.1:2345
-dagger --progress=plain core container from --address=alpine:3.21 \
-  with-exec --args=echo,hello,from,dagger stdout
-```
-
-Trimmed output:
-
-```
-8   : Container.from DONE [2.3s]
-9   : Container.withExec DONE [0.1s]
-9   : [1.0s] | hello from dagger
-10  : Container.stdout DONE [1.0s]
-
-hello from dagger
-```
-
-Every invocation also prints a connect block near the top. This one is from a `dagger functions` call later in the walkthrough:
-
-```
-3   : connecting to engine
-3   : [0.0s] | INF connected name=a24f4fd5fdc3 client-version=v0.21.12 server-version=v0.21.12
-3   : connecting to engine DONE [0.0s]
-```
-
-The `connected name=a24f4fd5fdc3` line is the proof. That is the engine container's ID. Look for it in every job log. If it is missing the CLI went somewhere else.
-
-The variable accepts other schemes. `container://NAME` connects to a running engine container through the local runtime. `container+podman://NAME` forces podman. `unix://PATH` and `kube-pod://POD?namespace=NS` exist too. I tested `container+podman://dagger-engine` against the same engine and got the same `connected name=a24f4fd5fdc3` line. For a shared engine on another host `tcp://` is the one you want.
-
-### Model B: a real pipeline as a module
-
-A one-liner proves the loop. A module proves the workflow. This is a tiny Go app with a test plus a Dagger module written in the Go SDK. You do not need Go on the client. The SDK runtime builds inside the engine.
-
-The app:
-
-```go
-// main.go
-package main
-
-import (
-	"fmt"
-	"os"
-)
-
-func Greeting(name string) string {
-	if name == "" {
-		name = "fleet"
-	}
-	return fmt.Sprintf("hello, %s", name)
-}
-
-func main() {
-	fmt.Println(Greeting(os.Getenv("HELLO_NAME")))
-}
-```
-
-```go
-// main_test.go
-package main
-
-import "testing"
-
-func TestGreeting(t *testing.T) {
-	cases := map[string]string{
-		"":       "hello, fleet",
-		"luther": "hello, luther",
-	}
-	for in, want := range cases {
-		if got := Greeting(in); got != want {
-			t.Errorf("Greeting(%q) = %q, want %q", in, got, want)
-		}
-	}
-}
-```
-
-Initialize the module in a `.dagger` subdirectory so it stays out of the app's package tree:
-
-```sh
-dagger init --sdk=go --name=hello-ci --source=.dagger
-cat dagger.json
-```
-
-```json
-{
-  "name": "hello-ci",
-  "engineVersion": "v0.21.12",
-  "sdk": {
-    "source": "go"
-  },
-  "source": ".dagger"
-}
-```
-
-Replace the generated `.dagger/main.go` with three functions. `Test` runs vet and test. `Build` returns a static binary as a file. `Run` drops that binary into a clean alpine image and runs it.
-
-```go
-// .dagger/main.go
-package main
-
-import (
-	"context"
-	"dagger/hello-ci/internal/dagger"
-)
-
-type HelloCi struct{}
-
-// base is a Go toolchain container with the source mounted and the
-// module and build caches attached as engine cache volumes.
-func (m *HelloCi) base(source *dagger.Directory) *dagger.Container {
-	return dag.Container().
-		From("golang:1.25-alpine").
-		WithMountedCache("/go/pkg/mod", dag.CacheVolume("go-mod")).
-		WithMountedCache("/root/.cache/go-build", dag.CacheVolume("go-build")).
-		WithMountedDirectory("/src", source).
-		WithWorkdir("/src")
-}
-
-// Test runs go vet and go test and returns their output.
-func (m *HelloCi) Test(
-	ctx context.Context,
-	// +defaultPath="/"
-	// +ignore=[".dagger", "out"]
-	source *dagger.Directory,
-) (string, error) {
-	return m.base(source).
-		WithExec([]string{"go", "vet", "./..."}).
-		WithExec([]string{"go", "test", "-v", "./..."}).
-		Stdout(ctx)
-}
-
-// Build compiles a static linux binary and returns it as a file.
-func (m *HelloCi) Build(
-	// +defaultPath="/"
-	// +ignore=[".dagger", "out"]
-	source *dagger.Directory,
-) *dagger.File {
-	return m.base(source).
-		WithEnvVariable("CGO_ENABLED", "0").
-		WithExec([]string{"go", "build", "-o", "/out/hello", "."}).
-		File("/out/hello")
-}
-
-// Run drops the built binary into a clean alpine image and runs it.
-func (m *HelloCi) Run(
-	ctx context.Context,
-	// +defaultPath="/"
-	// +ignore=[".dagger", "out"]
-	source *dagger.Directory,
-	// +default="fleet"
-	name string,
-) (string, error) {
-	return dag.Container().
-		From("alpine:3.21").
-		WithFile("/usr/local/bin/hello", m.Build(source)).
-		WithEnvVariable("HELLO_NAME", name).
-		WithExec([]string{"hello"}).
-		Stdout(ctx)
-}
-```
-
-The `+defaultPath="/"` pragma makes the module root the default source. The `+ignore` pragma keeps the module's own generated code and the build output out of the upload. The two `CacheVolume` mounts are Go's module and build caches. They live in the engine and survive across jobs. That is the whole reason for a shared engine.
-
-Regenerate the bindings and list the functions:
-
-```sh
-dagger develop
-dagger functions
-```
-
-```
-Name    Description
-build   Build compiles a static linux binary and returns it as a file.
-run     Run drops the built binary into a clean alpine image and runs it.
-test    Test runs go vet and go test and returns their output.
-```
-
-Now the first test run. The engine has to pull `golang:1.25-alpine` and run the tests:
-
-```sh
-time dagger --progress=plain call test
-```
-
-```
-11  : Container.from DONE [8.7s]
-16  : Container.withExec DONE [0.0s]
-17  : Container.withExec DONE [0.9s]
-17  : [12.1s] | === RUN   TestGreeting
-17  : [12.1s] | --- PASS: TestGreeting (0.00s)
-17  : [12.1s] | PASS
-17  : [12.1s] | ok  	example.com/hello	0.002s
-9   : HelloCi.test DONE [14.0s]
-
-real	0m14.355s
-```
-
-Run it again with nothing changed:
-
-```
-9   : HelloCi.test CACHED [0.0s]
-
-=== RUN   TestGreeting
---- PASS: TestGreeting (0.00s)
-PASS
-ok  	example.com/hello	0.002s
-
-real	0m0.711s
-```
-
-14.4 seconds down to 0.7 seconds. Nothing re-executed. On an ephemeral runner with its own engine the second run would be 14 seconds again because the cache died with the job.
-
-Build and export the binary, then run it through the alpine stage:
-
-```sh
-dagger --progress=plain call build export --path=out/hello
-```
-
-```
-20  : export file hello to host out/hello DONE [0.0s]
-19  : File.export DONE [0.3s]
-
-real	0m1.436s
-```
-
-```sh
-head -c 4 out/hello | od -c | head -1
-```
-
-```
-0000000 177   E   L   F
-```
-
-```sh
-dagger --progress=plain call run --name=ephemerd
-```
-
-```
-9   : HelloCi.run DONE [1.2s]
-
-hello, ephemerd
-```
-
-A 2.3 MB static ELF binary and a run through a second container. After these runs the cache volume on the engine held 1.6 GB. That is the Go image, the module cache and the build cache. It stays there for the next job.
-
-### Model B: the workflow
-
-This is the full workflow for an ephemerd Linux pool. It installs the CLI into `$RUNNER_TEMP`, checks the engine port is open, then calls the module. The `--progress=plain` flag matters. There is no TTY on a runner and the default progress output is unreadable in the job log.
+The engine is the disposable part; the cache is the durable part; and the durable part lives on the node, inside the fleet, not on some long-running box outside it. In a workflow it is a handful of lines around your existing build step:
 
 ```yaml
-name: ci
-
-on:
-  push:
-    branches: [main]
-  pull_request:
-
-env:
-  DAGGER_VERSION: "0.21.12"
-
-jobs:
-  test-and-build:
-    # An ephemerd Linux pool claims this. Match whatever labels your pool
-    # requires in its dispatch policy.
-    runs-on: [self-hosted, linux, x64]
-    env:
-      # The shared engine on the trusted fleet host. The runner VLAN must be
-      # allowed to reach this port. If it is blocked the CLI hangs at
-      # "connecting to engine" until the job times out.
-      _EXPERIMENTAL_DAGGER_RUNNER_HOST: tcp://dagger-engine.fleet.internal:2345
-      DAGGER_NO_NAG: "1"
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Install the Dagger CLI
-        run: |
-          curl -fsSL https://dl.dagger.io/dagger/install.sh \
-            | DAGGER_VERSION="$DAGGER_VERSION" BIN_DIR="$RUNNER_TEMP/bin" sh
-          echo "$RUNNER_TEMP/bin" >> "$GITHUB_PATH"
-
-      - name: Check the engine is reachable
-        run: |
-          dagger version
-          timeout 5 bash -c 'cat < /dev/null > /dev/tcp/dagger-engine.fleet.internal/2345'
-
-      - name: Test
-        run: dagger --progress=plain call test
-
-      - name: Build
-        run: dagger --progress=plain call build export --path=out/hello
-
-      - uses: actions/upload-artifact@v4
-        with:
-          name: hello
-          path: out/hello
+    # ephemerd already injects ACTIONS_RESULTS_URL + ACTIONS_RUNTIME_TOKEN
+    # into the job for actions/cache; BuildKit's gha backend reads the same.
+    - name: Build with a node-side cache
+      run: |
+        buildctl build \
+          --frontend dockerfile.v0 \
+          --local context=. --local dockerfile=. \
+          --import-cache type=gha \
+          --export-cache type=gha,mode=max
 ```
 
-The reachability step is deliberate. It fails fast with a clear message when the firewall is wrong. Without it you get the behavior described in the gotchas below.
+### Privileged is the price, and it is a safety decision
 
-If you prefer the official action, `dagger/dagger-for-github@v8.4.1` installs the CLI and runs one verb. It picks up `_EXPERIMENTAL_DAGGER_RUNNER_HOST` from the job environment like any other step:
+Running a BuildKit engine — Dagger's or buildx's — inside the job means a **`--privileged`** container. The engine needs it; the Dagger docs say it cannot run rootless, and buildkitd is the same. On ephemerd that means the pool needs `dind.allow_privileged = true`, which ephemerd defaults to **off on every platform**. Before you flip it, be exact about what it does and does not do, because it is easy to assume it hands the job the whole network. It does not.
 
-```yaml
-      - uses: dagger/dagger-for-github@v8.4.1
-        with:
-          version: "0.21.12"
-          verb: call
-          args: test
-```
+**What privileged does NOT change: the network.** ephemerd enforces its egress allow-list, its RFC1918 blocks, and its cross-job fence as iptables chains in the *host* network namespace, and the VLAN at the switch. A privileged container holds `CAP_NET_ADMIN` only inside its own namespace and cannot reach any of those rules. The network blast radius of a privileged job is identical to a normal one.
 
-I validated both workflows with actionlint 1.7.12.
+**What privileged DOES change: escape.** It turns off the per-container hardening ephemerd normally applies — the trimmed capability set, seccomp, AppArmor. That is the containment that keeps a job from breaking out to the runner, and from the runner to the node. A privileged job that escapes lands in the host namespace, which is exactly where the cache, the firewall, and the other jobs live.
 
-### Model B: the ephemerd side
+These are the rules:
 
-Nothing changes in the runner container. It stays unprivileged. It needs curl, bash and outbound access to download the CLI. The source directory is uploaded to the engine over the same TCP connection. The build output comes back the same way.
+- **Never run code you have not read under a privileged engine.** Fork PRs, drive-by contributions, anything from outside your team — do not let it execute here without reviewing the diff first. A privileged escape in a job running outside code is a node compromise, not a job failure.
+- **Keep privileged pools single-tenant and trusted.** Gate them to internal pushes or maintainer-approved runs, the same way ephemerd already gates fork PRs. On a single-tenant pool the worst case of an escape is one ephemeral runner that is destroyed the moment the job ends.
+- Safety first: if you are unsure, leave `allow_privileged` off. A cold cache is cheap; a privileged escape running someone else's code is not.
 
-Three fleet-level notes:
+Keeping the cache on the node has a second benefit: the privilege and the escape risk stay inside the single-use runner, while the cache — the thing you actually want to keep — lives on the node, out of reach of the job's privilege.
 
-1. **Linux pools only.** Put the Dagger workflows on `runs-on: [self-hosted, linux, x64]` or your arm64 label. Windows and macOS jobs keep their plain `run:` steps.
-2. **Open the port.** The runner VLAN needs a firewall rule allowing TCP to the engine host on 2345. Allow that one destination and nothing else. Verify it from inside a job, not from your laptop.
-3. **Pin versions together.** The CLI version in the workflow and the engine image tag must match. Bump them in the same change.
+### Where Dagger fits, and where it doesn't
 
-If you gate dispatch with ephemerd's `required_labels`, add that label to `runs-on` too. The workflow above uses the plain label set so it works on a pool with no gate.
+There is a catch, and it is specific to Dagger. Everything above is **BuildKit/buildx**. Dagger's own engine does **not** expose cache export/import to any external backend — no `type=gha`, no `type=registry`, nothing you can point at ephemerd's proxy. (The `--cache-to type=registry` examples you will find online are the retired 0.2 CUE engine.) Modern Dagger's only sanctioned cross-run cache is a **long-lived engine with a persistent disk** or **Dagger Cloud**. And you cannot share one engine state dir across concurrent ephemeral engines — BuildKit's metadata store is single-writer and corrupts.
 
-### Appendix: Model A, an engine per job
+So the cache win is specifically for plain buildx. For Dagger itself you are back to a long-running engine: one inside the job (privileged, but no warmer than a plain build, because its cache still dies with the job) or one shared engine as a fleet peer (warm, but outside ephemerd's isolation unless you put the engine host inside the same VLAN and egress fence). Dagger buys you a real thing — the pipeline as one definition in Go that runs the same on a laptop as on the fleet. It does not buy you the warm-cache-on-a-throwaway-engine trick. buildx does.
 
-If you have no spare host and your pool allows privileged Docker inside the runner, the job can bring its own engine. This is what the CLI does by default when it finds a Docker socket and no runner host variable.
-
-```yaml
-name: ci-engine-per-job
-
-on:
-  pull_request:
-
-jobs:
-  test:
-    # Only a pool that allows privileged Docker can run this.
-    runs-on: [self-hosted, linux, x64, privileged]
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Start a throwaway engine
-        run: |
-          docker run -d --name dagger-engine --privileged \
-            -v dagger-engine:/var/lib/dagger \
-            registry.dagger.io/engine:v0.21.12
-
-      - name: Test
-        uses: dagger/dagger-for-github@v8.4.1
-        env:
-          _EXPERIMENTAL_DAGGER_RUNNER_HOST: container://dagger-engine
-          DAGGER_NO_NAG: "1"
-        with:
-          version: "0.21.12"
-          verb: call
-          args: test
-
-      - name: Stop the engine
-        if: always()
-        run: docker rm -f dagger-engine
-```
-
-Be honest with yourself about what this is. A privileged container inside a runner that executes code from a pull request. ephemerd isolates jobs from each other with single-use containers. My fleet adds a VLAN and an egress firewall on top. Privileged Docker-in-Docker is a hole through that. Keep Model A on trusted pools that never see fork PRs. The cache is also cold every single time. Every job pulls the Go image again and recompiles from scratch. For the sample above that is the 14 second run on every push instead of the 0.7 second one.
-
-### Gotchas and limits
-
-**Privileged is not optional.** The engine will not start rootless. The docs are explicit about it and I didn't find a workaround. Treat the engine host like you treat a Docker host. Anyone with the port has root-equivalent access to that box.
-
-**The wrong variable name fails silently.** The 1.0 beta docs at docs.dagger.io rename the setting to `DAGGER_ENGINE`. On v0.21.12 that name does nothing. I tested it. The call succeeded, which looked fine. Then `podman ps` showed a `dagger-engine-v0.21.12` container the CLI had quietly started on the client, plus a second 671 MB copy of the image. On a runner with Docker available that is exactly the Model A behavior you were trying to avoid. On a runner without Docker it is a confusing failure. Grep the job log for `connected name=` and confirm it is your engine's container ID.
-
-**A blocked port does not error. It hangs.** I pointed the CLI at a closed port to see what a bad firewall rule looks like:
-
-```
-$ _EXPERIMENTAL_DAGGER_RUNNER_HOST=tcp://127.0.0.1:9 timeout 30 dagger --progress=plain call test
-1   : connect
-2   : starting engine DONE [0.0s]
-3   : connecting to engine
-$ echo $?
-124
-```
-
-It sat at `connecting to engine` until `timeout` killed it. No message. On a real fleet that means a job that burns its whole time budget before GitHub cancels it. This is the same class of bug as the pull-through registry cache on my fleet. It sat at a zero percent hit ratio after the runners moved to an isolated VLAN. They could no longer route to it. Nothing failed. Pulls went to the internet and the cache sat idle. If your runners live behind an egress firewall, open the engine port explicitly and put the `/dev/tcp` check in the workflow.
-
-**No shared engine means no cache.** The Dagger docs say it directly: "Do not run engines on a pool of ephemeral machines. Each new machine starts with an empty cache." An ephemerd runner is the definition of an ephemeral machine.
-
-**Linux execution only.** The engine runs Linux containers. A Windows build or a macOS signing step cannot run through Dagger. Those stay as plain steps on ephemerd's Windows and macOS pools.
-
-**`tcp://` has no auth.** The engine warns about it on every start. Mutual TLS is supported with `--tlscert`, `--tlskey` and `--tlscacert`. Use it if the engine is reachable from any network you don't fully control.
-
-**Give the engine disk.** Default garbage collection keeps the cache under 75 percent of the disk and leaves 20 percent free. You can tune `maxUsedSpace`, `reservedSpace` and `minFreeSpace` under `gc` in an `engine.json` mounted at `/etc/dagger/engine.json`. A small disk means constant eviction and a cache that never gets warm.
-
-### Why this is nice
-
-The runner does not get more powerful. It stays a disposable unprivileged container that runs a CLI. All the privilege and all the state sit on one host you can name. That is the posture ephemerd already has. A runner is a client of the fleet. Dagger fits that shape without a fight.
-
-You also get real caching on ephemeral runners without paying for Dagger Cloud. And the pipeline definition is Go code that runs the same way on a laptop as it does on the fleet. Point your local CLI at the same engine and you share the cache with CI.
+That answers my friend's question better than the layer diagram did. If what you want is fast builds on isolated ephemeral runners, you do not need Dagger and you do not need a long-running engine. ephemerd already runs the cache backend that makes it work.
 
 ### What I tested
 
-Everything in the Model B sections ran on a Fedora 44 Podman machine under WSL2 with rootful podman 5.8.5. The engine was `registry.dagger.io/engine:v0.21.12` started with the podman command above. My test container and volume carried a `-blog-` in their names. The CLI was v0.21.12 on the same host and connected over `tcp://127.0.0.1:2345`. Every terminal block in those sections is captured output, trimmed of progress noise. The `container+podman://` scheme, the dead-port hang, the `DAGGER_ENGINE` fallback and the cache volume size were all observed the same way. Both workflow files pass actionlint 1.7.12 with a config declaring the custom `privileged` label.
+The build was a two-stage Dockerfile (`golang:1.23-alpine` cross-compiling six targets, ~31 s of real compile, then a `scratch` output stage so the export is ~37 MB and does not bury the cache effect). Engine was `moby/buildkit` v0.35.0, `--privileged`, fresh per run with no persistent volume; `buildctl du` confirmed `0 B` before each ephemeral build. Wall time is the `buildctl build` call only. The `gha` backend needs `url_v2=` to select the v2 client in BuildKit v0.35. Every number in the table is captured output, N=3; the GHA warm runs varied 2.9–4.8 s.
 
-What I did not run here: a job on an actual ephemerd runner, the fleet firewall rule and the Model A workflow end to end. Those are written from the ephemerd docs and the Dagger docs and the commands follow the tested pattern. Run the reachability step first when you set it up.
+The mechanism — a cold engine warming from an external GHA v2 cache across runs — holds against a `registry` backend, an open-source GHA v2 server, and **ephemerd's own Actions-cache proxy**. For the last one I imported ephemerd's actual `actionscache` package and ran it the way the scheduler drives it, backed by a real registry, then pointed a fresh cold `buildkitd` at it. Run 1 populated the cache — the proxy stored the 162 MB build layer as 155 Azure blocks. A brand-new cold engine (`buildctl du` = `0 B`) then imported it: the compile step came back `CACHED` and the blobs streamed back from the proxy, taking the engine cache from 0 B to 1.19 GB, with no image pushed anywhere to shortcut it. BuildKit's Go client and ephemerd's proxy agreed on the Twirp JSON field names, the Azure block-upload sequence, and the download, with no changes to either.
+
+One surprise: ephemerd does not check the `ACTIONS_RUNTIME_TOKEN` — it can't verify GitHub's token — so it attributes every cache request to a job by its **source IP** instead. The token only has to be well-formed because BuildKit's client parses it locally. The job's network identity is the credential, which is a clean fit for a fleet where every runner already has its own address.
 
 ### Links
 
 - [Dagger](https://github.com/dagger/dagger) and the [self-hosting docs](https://docs.dagger.io/self-hosting)
+- [BuildKit cache backends](https://docs.docker.com/build/cache/backends/) (registry, gha, s3, local)
 - [Dagger 0.21 custom runner reference](https://docs.dagger.io/0.21/reference/configuration/custom-runner)
-- [Dagger 0.21 engine configuration](https://docs.dagger.io/0.21/reference/configuration/engine)
-- [dagger-for-github action](https://github.com/dagger/dagger-for-github)
 - [ephemerd](https://github.com/ephemerd/ephemerd)
 - [mayfly](https://github.com/ephemerd/mayfly)
-- [actionlint](https://github.com/rhysd/actionlint)

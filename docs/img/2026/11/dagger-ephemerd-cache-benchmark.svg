@@ -1,0 +1,61 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 820 480" font-family="system-ui, -apple-system, Segoe UI, Roboto, sans-serif" role="img" aria-labelledby="t d">
+  <title id="t">Build time per run: no cache vs GHA cache vs a persistent engine</title>
+  <desc id="d">Grouped bar chart of wall-clock build time across three runs. Without a cache a fresh engine takes about 41 seconds every run. With the GHA cache a fresh engine pays 56 seconds on run 1 to populate the cache, then drops to about 4 seconds on later runs. A single persistent engine is 41.6 seconds on run 1 then about 0.6 seconds. The ephemeral GHA path recovers most of the benefit of a long-running engine without keeping one.</desc>
+  <style>
+    .lblb { fill: #222222; font-size: 17px; font-weight: 600; }
+    .sub { fill: #555555; font-size: 13px; }
+    .axis { fill: #777777; font-size: 12px; }
+    .val { font-size: 12px; font-weight: 600; }
+    .grid { stroke: #e3e3e3; stroke-width: 1; }
+    .axl { stroke: #999999; stroke-width: 1.5; }
+    .nc { fill: #a34700; }
+    .gha { fill: #0550ae; }
+    .pe { fill: #00707a; }
+  </style>
+
+  <text class="lblb" x="60" y="34" text-anchor="start">A cold engine with a warm cache</text>
+  <text class="sub" x="60" y="54" text-anchor="start">Wall-clock build time, seconds. Same build (a ~31s Go cross-compile), fresh BuildKit engine per run except where noted.</text>
+
+  <!-- gridlines + y labels: 0..60s, plot y 90..390 (5px/s) -->
+  <g>
+    <line class="grid" x1="70" y1="390" x2="790" y2="390"/><text class="axis" x="60" y="394" text-anchor="end">0</text>
+    <line class="grid" x1="70" y1="340" x2="790" y2="340"/><text class="axis" x="60" y="344" text-anchor="end">10</text>
+    <line class="grid" x1="70" y1="290" x2="790" y2="290"/><text class="axis" x="60" y="294" text-anchor="end">20</text>
+    <line class="grid" x1="70" y1="240" x2="790" y2="240"/><text class="axis" x="60" y="244" text-anchor="end">30</text>
+    <line class="grid" x1="70" y1="190" x2="790" y2="190"/><text class="axis" x="60" y="194" text-anchor="end">40</text>
+    <line class="grid" x1="70" y1="140" x2="790" y2="140"/><text class="axis" x="60" y="144" text-anchor="end">50</text>
+    <line class="grid" x1="70" y1="90"  x2="790" y2="90"/><text class="axis" x="60" y="94"  text-anchor="end">60</text>
+    <line class="axl" x1="70" y1="90" x2="70" y2="390"/>
+  </g>
+
+  <!-- Run 1 group (center 200): nc 41.1, gha 56.0, pe 41.6 -->
+  <g>
+    <rect class="nc"  x="123" y="184.5" width="46" height="205.5"/><text class="val nc"  x="146" y="178" text-anchor="middle">41.1</text>
+    <rect class="gha" x="177" y="110"   width="46" height="280"/>  <text class="val gha" x="200" y="104" text-anchor="middle">56.0</text>
+    <rect class="pe"  x="231" y="182"   width="46" height="208"/>  <text class="val pe"  x="254" y="176" text-anchor="middle">41.6</text>
+    <text class="sub" x="200" y="412" text-anchor="middle">Run 1 (cold)</text>
+  </g>
+
+  <!-- Run 2 group (center 430): nc 41.5, gha 4.8, pe 0.7 -->
+  <g>
+    <rect class="nc"  x="353" y="182.5" width="46" height="207.5"/><text class="val nc"  x="376" y="176" text-anchor="middle">41.5</text>
+    <rect class="gha" x="407" y="366"   width="46" height="24"/>   <text class="val gha" x="430" y="360" text-anchor="middle">4.8</text>
+    <rect class="pe"  x="461" y="386.5" width="46" height="3.5"/>  <text class="val pe"  x="484" y="380" text-anchor="middle">0.7</text>
+    <text class="sub" x="430" y="412" text-anchor="middle">Run 2 (warm)</text>
+  </g>
+
+  <!-- Run 3 group (center 660): nc 41.3, gha 2.9, pe 0.56 -->
+  <g>
+    <rect class="nc"  x="583" y="183.5" width="46" height="206.5"/><text class="val nc"  x="606" y="177" text-anchor="middle">41.3</text>
+    <rect class="gha" x="637" y="375.5" width="46" height="14.5"/> <text class="val gha" x="660" y="369" text-anchor="middle">2.9</text>
+    <rect class="pe"  x="691" y="387.2" width="46" height="2.8"/>  <text class="val pe"  x="714" y="381" text-anchor="middle">0.6</text>
+    <text class="sub" x="660" y="412" text-anchor="middle">Run 3 (warm)</text>
+  </g>
+
+  <!-- legend -->
+  <g>
+    <rect class="nc"  x="150" y="444" width="15" height="15" rx="2"/><text class="sub" x="172" y="456">no cache (fresh engine, never warms)</text>
+    <rect class="gha" x="430" y="444" width="15" height="15" rx="2"/><text class="sub" x="452" y="456">GHA cache (fresh engine)</text>
+    <rect class="pe"  x="628" y="444" width="15" height="15" rx="2"/><text class="sub" x="650" y="456">persistent engine</text>
+  </g>
+</svg>

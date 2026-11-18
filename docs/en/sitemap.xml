@@ -64,6 +64,9 @@
     <loc>https://luth.io/categories/containers/</loc>
     <lastmod>2026-11-18T09:00:00-07:00</lastmod>
   </url><url>
+    <loc>https://luth.io/blog/2026/11/dagger-on-ephemerd-runner-fleet/</loc>
+    <lastmod>2026-11-18T09:00:00-07:00</lastmod>
+  </url><url>
     <loc>https://luth.io/tags/ephemerd/</loc>
     <lastmod>2026-11-18T09:00:00-07:00</lastmod>
   </url><url>
@@ -122,9 +125,6 @@
                 hreflang="en"
                 href="https://luth.io/"
                 />
-  </url><url>
-    <loc>https://luth.io/blog/2026/11/dagger-on-ephemerd-runner-fleet/</loc>
-    <lastmod>2026-11-18T09:00:00-07:00</lastmod>
   </url><url>
     <loc>https://luth.io/tags/</loc>
     <lastmod>2026-11-18T09:00:00-07:00</lastmod>
