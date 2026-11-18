@@ -146,12 +146,12 @@
 
     <div id="wrapper">
       <section id="site-intro" class="hidden-single-column">
-  <a href="/"><img src="/img/luther-monson-headshot.jpg" class="circle" width="100" alt="Luther Monson, Staff Software Engineer at SUSE" /></a>
+  <a href="/"><img src="/img/luther-monson-headshot.jpg" class="circle" width="100" alt="Luther Monson, Founding Engineer at Gas City" /></a>
   <header>
     <h1>Luther Monson</h1>
   </header>
   <main>
-    <p>Go by way of PHP &middot; Containers &middot; VMs &middot; Windows &middot; Kubernetes</p>
+    <p>Open Source &middot; AI &middot; Containers &middot; VMs &middot; Kubernetes &middot; Windows &middot; Go by way of PHP</p>
   </main>
   
     <footer>
@@ -215,6 +215,71 @@
   <header>
   <div class="title">
     
+      <h2><a href="/blog/2026/08/requests-that-end-wrong/">Requests That End Wrong: A 200 That Was Really a Crash</a></h2>
+    
+    
+      <p>Three ePHPm bugs lived in how an embedded PHP request starts and ends. A bailout returned 200, $_POST came up empty and a SIGTERM corrupted the heap.</p>
+    
+  </div>
+  <div class="meta">
+    <time datetime="2026-08-13 21:14:00 -0700 MST">August 13, 2026</time>
+    
+    <p>10-Minute Read</p>
+  </div>
+</header>
+
+  <div class="content">
+    <a href="/blog/2026/08/requests-that-end-wrong/" class="image" style="--bg-image: url('/img/2026/08/requests-that-end-wrong-cover.svg');">
+    <img class="" src="/img/2026/08/requests-that-end-wrong-cover.svg" alt="Diagram of a bare zend_bailout being absorbed by php_execute_script&#39;s own zend_try instead of reaching ePHPm&#39;s guard">
+  </a>
+    
+    <p>The scariest response a server can send isn&rsquo;t a 500. It&rsquo;s a 200 that should have been a 500. A crash is loud. The pod
+restarts, an alert fires, somebody looks. A truncated page with a success status code is quiet. Your CDN caches it and
+the health check calls the box healthy. A client parses half a document as if it were the whole thing.</p>
+  </div>
+  <footer>
+    <a href="/blog/2026/08/requests-that-end-wrong/" class="button big">Read More</a>
+    <div class="stats">
+  
+    <ul class="categories">
+      
+        
+          <li><a class="article-terms-link" href="/categories/ephpm/">ephpm</a></li>
+        
+          <li><a class="article-terms-link" href="/categories/php/">php</a></li>
+        
+          <li><a class="article-terms-link" href="/categories/rust/">rust</a></li>
+        
+      
+    </ul>
+  
+  
+    <ul class="tags">
+      
+        
+          <li><a class="article-terms-link" href="/tags/php/">php</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/rust/">rust</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/ephpm/">ephpm</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/zend/">zend</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/debugging/">debugging</a></li>
+        
+      
+    </ul>
+  
+</div>
+
+  </footer>
+</article>
+
+  
+    <article class="post">
+  <header>
+  <div class="title">
+    
       <h2><a href="/blog/2026/08/libxml2-2-14-broke-php-windows-builds/">libxml2 2.14 Broke PHP Windows Builds - And Nobody Noticed</a></h2>
     
     
@@ -222,7 +287,7 @@
     
   </div>
   <div class="meta">
-    <time datetime="2026-08-11 20:36:00 -0700 PDT">August 11, 2026</time>
+    <time datetime="2026-08-11 20:36:00 -0700 MST">August 11, 2026</time>
     
     <p>9-Minute Read</p>
   </div>
@@ -287,7 +352,7 @@ using my fork of <a href="https://github.com/crazywhalecc/static-php-cli">static
     
   </div>
   <div class="meta">
-    <time datetime="2026-08-09 16:25:00 -0700 PDT">August 9, 2026</time>
+    <time datetime="2026-08-09 16:25:00 -0700 MST">August 9, 2026</time>
     
     <p>10-Minute Read</p>
   </div>
@@ -354,7 +419,7 @@ TCP connect, a MySQL&hellip;</p>
     
   </div>
   <div class="meta">
-    <time datetime="2026-08-08 20:14:00 -0700 PDT">August 8, 2026</time>
+    <time datetime="2026-08-08 20:14:00 -0700 MST">August 8, 2026</time>
     
     <p>9-Minute Read</p>
   </div>
@@ -423,7 +488,7 @@ don&rsquo;t know the difference. No <code>mysqld</code>, no child processes, jus
     
   </div>
   <div class="meta">
-    <time datetime="2026-08-06 21:27:00 -0700 PDT">August 6, 2026</time>
+    <time datetime="2026-08-06 21:27:00 -0700 MST">August 6, 2026</time>
     
     <p>7-Minute Read</p>
   </div>
@@ -490,7 +555,7 @@ more interesting than &ldquo;Windows is different&rdquo;.</p>
     
   </div>
   <div class="meta">
-    <time datetime="2026-08-04 20:52:00 -0700 PDT">August 4, 2026</time>
+    <time datetime="2026-08-04 20:52:00 -0700 MST">August 4, 2026</time>
     
     <p>11-Minute Read</p>
   </div>
@@ -556,7 +621,7 @@ works until Redis is the thing you&rsquo;re trying not to run.</p>
     
   </div>
   <div class="meta">
-    <time datetime="2026-08-01 13:15:00 -0700 PDT">August 1, 2026</time>
+    <time datetime="2026-08-01 13:15:00 -0700 MST">August 1, 2026</time>
     
     <p>10-Minute Read</p>
   </div>
@@ -626,7 +691,7 @@ was refusing on <strong>policy</strong> grounds, not because anything was broken
     
   </div>
   <div class="meta">
-    <time datetime="2026-07-30 20:18:00 -0700 PDT">July 30, 2026</time>
+    <time datetime="2026-07-30 20:18:00 -0700 MST">July 30, 2026</time>
     
     <p>9-Minute Read</p>
   </div>
@@ -695,7 +760,7 @@ in March.</p>
     
   </div>
   <div class="meta">
-    <time datetime="2026-07-28 20:12:00 -0700 PDT">July 28, 2026</time>
+    <time datetime="2026-07-28 20:12:00 -0700 MST">July 28, 2026</time>
     
     <p>6-Minute Read</p>
   </div>
@@ -759,7 +824,7 @@ than a year to show up. The fix that finally landed in May is one line. Here&rsq
     
   </div>
   <div class="meta">
-    <time datetime="2026-07-25 20:40:00 -0700 PDT">July 25, 2026</time>
+    <time datetime="2026-07-25 20:40:00 -0700 MST">July 25, 2026</time>
     
     <p>10-Minute Read</p>
   </div>
@@ -819,71 +884,6 @@ pointed at. I mentioned this in the <a href="/blog/2026/06/ephpm-pragmatism/">eP
 </article>
 
   
-    <article class="post">
-  <header>
-  <div class="title">
-    
-      <h2><a href="/blog/2026/07/spc-windows-archive-extraction/">Fixing Windows Archive Extraction in SPC</a></h2>
-    
-    
-      <p>&#34;The pipe has been ended&#34; wasn&#39;t a pipe problem. It was the wrong tar program and Windows symlinks, and fixing one line of static-php-cli took three tries.</p>
-    
-  </div>
-  <div class="meta">
-    <time datetime="2026-07-18 16:10:00 -0700 PDT">July 18, 2026</time>
-    
-    <p>7-Minute Read</p>
-  </div>
-</header>
-
-  <div class="content">
-    <a href="/blog/2026/07/spc-windows-archive-extraction/" class="image" style="--bg-image: url('/img/2026/07/spc-windows-archive-extraction-pipe.svg');">
-    <img class="" src="/img/2026/07/spc-windows-archive-extraction-pipe.svg" alt="Diagram: 7za decompressing into a pipe read by MinGW tar, which exits on a C:\ path and leaves 7za reporting The pipe has been ended">
-  </a>
-    
-    <p>One of the first things that broke when I started building PHP on Windows with
-<a href="https://github.com/crazywhalecc/static-php-cli">static-php-cli</a> (SPC) wasn&rsquo;t PHP at all. It was unpacking the source
-tarballs. libxml2, xz and a couple of others would die partway through extraction with:</p>
-  </div>
-  <footer>
-    <a href="/blog/2026/07/spc-windows-archive-extraction/" class="button big">Read More</a>
-    <div class="stats">
-  
-    <ul class="categories">
-      
-        
-          <li><a class="article-terms-link" href="/categories/php/">php</a></li>
-        
-          <li><a class="article-terms-link" href="/categories/windows/">windows</a></li>
-        
-      
-    </ul>
-  
-  
-    <ul class="tags">
-      
-        
-          <li><a class="article-terms-link" href="/tags/php/">php</a></li>
-        
-          <li><a class="article-terms-link" href="/tags/windows/">windows</a></li>
-        
-          <li><a class="article-terms-link" href="/tags/static-php-cli/">static-php-cli</a></li>
-        
-          <li><a class="article-terms-link" href="/tags/tar/">tar</a></li>
-        
-          <li><a class="article-terms-link" href="/tags/7zip/">7zip</a></li>
-        
-          <li><a class="article-terms-link" href="/tags/open-source/">open-source</a></li>
-        
-      
-    </ul>
-  
-</div>
-
-  </footer>
-</article>
-
-  
   <div class="pagination">
     
       <a href="/blog/page/5/" class="button left"><span>Previous Page</span></a>
@@ -902,12 +902,20 @@ tarballs. libxml2, xz and a couple of others would die partway through extractio
       </header>
       
       <article class="mini-post">
+          
+        <header>
+          <h2><a href="/blog/2026/11/dagger-on-ephemerd-runner-fleet/">Running Dagger on an ephemerd Runner Fleet</a></h2>
+          <time class="published" datetime="2026-11-18 09:00:00 -0700 MST">November 18, 2026</time>
+        </header>
+      </article>
+      
+      <article class="mini-post">
           <a href="/blog/2026/10/durable-data-single-node-k3s-ebs-rebuild/" class="image" style="--bg-image: url('/img/2026/10/durable-data-single-node-k3s-ebs-rebuild.svg');">
     <img class="" src="/img/2026/10/durable-data-single-node-k3s-ebs-rebuild.svg" alt="A node rebuild: Node A is replaced by Node B, each root EBS volume is disposable, and the separate labeled EBS data volume detaches from the old node and re-attaches to the new one so the ePHPm blog&#39;s SQLite file and uploads survive">
   </a>
         <header>
           <h2><a href="/blog/2026/10/durable-data-single-node-k3s-ebs-rebuild/">Surviving a Node Rebuild: A Durable ePHPm Blog on Single-Node k3s</a></h2>
-          <time class="published" datetime="2026-10-28 10:00:00 -0700 PDT">October 28, 2026</time>
+          <time class="published" datetime="2026-10-28 10:00:00 -0700 MST">October 28, 2026</time>
         </header>
       </article>
       
@@ -917,7 +925,7 @@ tarballs. libxml2, xz and a couple of others would die partway through extractio
   </a>
         <header>
           <h2><a href="/blog/2026/10/docker-in-docker-without-root/">Docker-in-Docker in CI Without Handing Jobs Root</a></h2>
-          <time class="published" datetime="2026-10-24 10:00:00 -0700 PDT">October 24, 2026</time>
+          <time class="published" datetime="2026-10-24 10:00:00 -0700 MST">October 24, 2026</time>
         </header>
       </article>
       
@@ -927,7 +935,7 @@ tarballs. libxml2, xz and a couple of others would die partway through extractio
   </a>
         <header>
           <h2><a href="/blog/2026/10/ci-cache-proxies-ephemeral-runners/">Cache Proxies for Ephemeral CI Runners</a></h2>
-          <time class="published" datetime="2026-10-23 15:00:00 -0700 PDT">October 23, 2026</time>
+          <time class="published" datetime="2026-10-23 15:00:00 -0700 MST">October 23, 2026</time>
         </header>
       </article>
       
@@ -937,17 +945,7 @@ tarballs. libxml2, xz and a couple of others would die partway through extractio
   </a>
         <header>
           <h2><a href="/blog/2026/10/ephemeral-macos-runners-vm-clones/">Ephemeral macOS Runners: A Fresh VM Per Job on Apple Silicon</a></h2>
-          <time class="published" datetime="2026-10-23 11:00:00 -0700 PDT">October 23, 2026</time>
-        </header>
-      </article>
-      
-      <article class="mini-post">
-          <a href="/blog/2026/10/turso-page1-allocation-race/" class="image" style="--bg-image: url('/img/2026/10/turso-page1-allocation-race-races.svg');">
-    <img class="" src="/img/2026/10/turso-page1-allocation-race-races.svg" alt="Sequence diagram of two connections and init_lock: in race 1, B checks for an empty file, A publishes page 1 and releases the lock, then B takes the lock and panics on its assert; in race 2, A&#39;s lock is dropped while page 1 is being written, so B takes it and writes page 1 again">
-  </a>
-        <header>
-          <h2><a href="/blog/2026/10/turso-page1-allocation-race/">Thirty-Two Connections and an Empty File: A Race in Turso&#39;s Page-1 Allocation</a></h2>
-          <time class="published" datetime="2026-10-18 14:30:00 -0700 PDT">October 18, 2026</time>
+          <time class="published" datetime="2026-10-23 11:00:00 -0700 MST">October 23, 2026</time>
         </header>
       </article>
       
@@ -988,10 +986,10 @@ tarballs. libxml2, xz and a couple of others would die partway through extractio
               <a href="/categories/windows/">windows<span class="count">14</span></a>
           
           <li>
-              <a href="/categories/ci/">ci<span class="count">12</span></a>
+              <a href="/categories/ci/">ci<span class="count">13</span></a>
           
           <li>
-              <a href="/categories/containers/">containers<span class="count">10</span></a>
+              <a href="/categories/containers/">containers<span class="count">11</span></a>
           
           <li>
               <a href="/categories/databases/">databases<span class="count">10</span></a>
@@ -1019,7 +1017,7 @@ tarballs. libxml2, xz and a couple of others would die partway through extractio
       <header>
         <h1>About</h1>
       </header>
-      <p>Luther is a 20+ year software veteran specializing in backend APIs and architecting products. Employed at <a href='https://www.suse.com'>SUSE</a> as the Team Lead for the <a href='https://github.com/rancher/windows/issues'>Containers on Windows Team</a> working on <a href='https://rancher.com/'>Rancher</a> + <a href='https://kubernetes.io/'>Kubernetes</a></p>
+      <p>Luther is a 20+ year software veteran specializing in backend APIs and architecting products. Founding engineer at <a href='https://gascity.com'>Gas City</a> building open-source AI software factories on <a href='https://github.com/gastownhall/beads'>Beads</a>, the durable work graph for coding agents.</p>
       <footer>
         <a href="/about" class="button">Learn More</a>
       </footer>

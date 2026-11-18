@@ -6,8 +6,15 @@
     <description>Recent content on Luther Monson</description>
     <generator>Hugo</generator>
     <language>en</language>
-    <lastBuildDate>Wed, 28 Oct 2026 10:00:00 -0700</lastBuildDate>
+    <lastBuildDate>Wed, 18 Nov 2026 09:00:00 -0700</lastBuildDate>
     <atom:link href="https://luth.io/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>Running Dagger on an ephemerd Runner Fleet</title>
+      <link>https://luth.io/blog/2026/11/dagger-on-ephemerd-runner-fleet/</link>
+      <pubDate>Wed, 18 Nov 2026 09:00:00 -0700</pubDate>
+      <guid>https://luth.io/blog/2026/11/dagger-on-ephemerd-runner-fleet/</guid>
+      <description>&lt;p&gt;A friend asked me if Dagger replaces ephemerd. It doesn&amp;rsquo;t. They sit at different layers. Since I just rode this merry-go-round here is how I put the two together, with every command run against a real engine on a Linux box.&lt;/p&gt;&#xA;&lt;h3 id=&#34;two-layers-not-two-competitors&#34;&gt;Two layers, not two competitors&lt;/h3&gt;&#xA;&lt;p&gt;&lt;a href=&#34;https://dagger.io&#34;&gt;Dagger&lt;/a&gt; is a client plus an engine. The engine is a long-running daemon that wraps BuildKit. Every step in a pipeline runs as a container under runc inside that engine. The client is the &lt;code&gt;dagger&lt;/code&gt; CLI or an SDK. It sends the pipeline to the engine and prints the result.&lt;/p&gt;</description>
+    </item>
     <item>
       <title>Surviving a Node Rebuild: A Durable ePHPm Blog on Single-Node k3s</title>
       <link>https://luth.io/blog/2026/10/durable-data-single-node-k3s-ebs-rebuild/</link>
@@ -580,7 +587,7 @@
       <link>https://luth.io/about/</link>
       <pubDate>Wed, 26 Jan 2022 08:26:16 -0700</pubDate>
       <guid>https://luth.io/about/</guid>
-      <description>&lt;p&gt;Originally born and raised in the Midwest, Luther received a Bachelor of the Arts in Computer Science from&#xA;&lt;a href=&#34;https://gustavus.edu/&#34;&gt;Gustavus Adolphus College&lt;/a&gt; in Southern Minnesota. After that he moved to the expansive deserts&#xA;of the American Southwest. In Arizona, Luther spent his career building web APIs and utilities for various industries&#xA;in PHP and NodeJS. From there he migrated to Open Source DevOps tooling using Containers and Virtualization.&lt;/p&gt;&#xA;&lt;p&gt;Luther works at &lt;a href=&#34;https://www.akamai.com/&#34;&gt;Akamai&lt;/a&gt; on &lt;a href=&#34;https://www.linode.com/products/kubernetes/&#34;&gt;LKE Enterprise&lt;/a&gt;,&#xA;the enterprise tier of the Linode Kubernetes Engine. Before Akamai he spent years in the Kubernetes space at&#xA;Rancher Labs and &lt;a href=&#34;https://suse.com/&#34;&gt;SUSE&lt;/a&gt; working on the Multi-Cluster Management tool&#xA;&lt;a href=&#34;https://rancher.com/&#34;&gt;Rancher&lt;/a&gt;. As the Team Lead for &lt;a href=&#34;https://github.com/rancher/windows&#34;&gt;Windows on Rancher&lt;/a&gt; he&#xA;specialized in Kubernetes on alternative operating systems and architectures including Windows, arm64 and s390x.&#xA;After Rancher he worked at &lt;a href=&#34;https://www.spectrocloud.com/&#34;&gt;Spectro Cloud&lt;/a&gt; on Cluster API providers for AWS and Azure.&#xA;That included OIDC/IRSA support for self-managed clusters on AWS.&#xA;Working in this unique space and working from home full time has made him a home lab aficionado and consumer of&#xA;&lt;a href=&#34;https://www.proxmox.com/en/&#34;&gt;Proxmox VE&lt;/a&gt;.&lt;/p&gt;</description>
+      <description>&lt;p&gt;Originally born and raised in the Midwest, Luther received a Bachelor of the Arts in Computer Science from&#xA;&lt;a href=&#34;https://gustavus.edu/&#34;&gt;Gustavus Adolphus College&lt;/a&gt; in Southern Minnesota. After that he moved to the expansive deserts&#xA;of the American Southwest. In Arizona, Luther spent his career building web APIs and utilities for various industries&#xA;in PHP and NodeJS. From there he migrated to Open Source DevOps tooling using Containers and Virtualization, and most recently to AI&#xA;software factories for coding agents.&lt;/p&gt;</description>
     </item>
     <item>
       <title>Archive</title>

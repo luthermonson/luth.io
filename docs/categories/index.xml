@@ -6,12 +6,19 @@
     <description>Recent content in Categories on Luther Monson</description>
     <generator>Hugo</generator>
     <language>en</language>
-    <lastBuildDate>Wed, 28 Oct 2026 10:00:00 -0700</lastBuildDate>
+    <lastBuildDate>Wed, 18 Nov 2026 09:00:00 -0700</lastBuildDate>
     <atom:link href="https://luth.io/categories/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>CI &amp; Runners</title>
+      <link>https://luth.io/categories/ci/</link>
+      <pubDate>Wed, 18 Nov 2026 09:00:00 -0700</pubDate>
+      <guid>https://luth.io/categories/ci/</guid>
+      <description></description>
+    </item>
     <item>
       <title>Containers &amp; Linux</title>
       <link>https://luth.io/categories/containers/</link>
-      <pubDate>Wed, 28 Oct 2026 10:00:00 -0700</pubDate>
+      <pubDate>Wed, 18 Nov 2026 09:00:00 -0700</pubDate>
       <guid>https://luth.io/categories/containers/</guid>
       <description></description>
     </item>
@@ -20,13 +27,6 @@
       <link>https://luth.io/categories/ephpm/</link>
       <pubDate>Wed, 28 Oct 2026 10:00:00 -0700</pubDate>
       <guid>https://luth.io/categories/ephpm/</guid>
-      <description></description>
-    </item>
-    <item>
-      <title>CI &amp; Runners</title>
-      <link>https://luth.io/categories/ci/</link>
-      <pubDate>Sat, 24 Oct 2026 10:00:00 -0700</pubDate>
-      <guid>https://luth.io/categories/ci/</guid>
       <description></description>
     </item>
     <item>

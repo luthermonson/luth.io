@@ -6,8 +6,15 @@
     <description>Recent content in Ephemerd on Luther Monson</description>
     <generator>Hugo</generator>
     <language>en</language>
-    <lastBuildDate>Sat, 24 Oct 2026 10:00:00 -0700</lastBuildDate>
+    <lastBuildDate>Wed, 18 Nov 2026 09:00:00 -0700</lastBuildDate>
     <atom:link href="https://luth.io/tags/ephemerd/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>Running Dagger on an ephemerd Runner Fleet</title>
+      <link>https://luth.io/blog/2026/11/dagger-on-ephemerd-runner-fleet/</link>
+      <pubDate>Wed, 18 Nov 2026 09:00:00 -0700</pubDate>
+      <guid>https://luth.io/blog/2026/11/dagger-on-ephemerd-runner-fleet/</guid>
+      <description>&lt;p&gt;A friend asked me if Dagger replaces ephemerd. It doesn&amp;rsquo;t. They sit at different layers. Since I just rode this merry-go-round here is how I put the two together, with every command run against a real engine on a Linux box.&lt;/p&gt;&#xA;&lt;h3 id=&#34;two-layers-not-two-competitors&#34;&gt;Two layers, not two competitors&lt;/h3&gt;&#xA;&lt;p&gt;&lt;a href=&#34;https://dagger.io&#34;&gt;Dagger&lt;/a&gt; is a client plus an engine. The engine is a long-running daemon that wraps BuildKit. Every step in a pipeline runs as a container under runc inside that engine. The client is the &lt;code&gt;dagger&lt;/code&gt; CLI or an SDK. It sends the pipeline to the engine and prints the result.&lt;/p&gt;</description>
+    </item>
     <item>
       <title>Docker-in-Docker in CI Without Handing Jobs Root</title>
       <link>https://luth.io/blog/2026/10/docker-in-docker-without-root/</link>

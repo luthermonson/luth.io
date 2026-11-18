@@ -3,22 +3,44 @@ title: "About the Blogger"
 date: 2022-01-26T08:26:16-07:00
 author: "Luther Monson"
 comments: false
+layout: about
 ---
 
 Originally born and raised in the Midwest, Luther received a Bachelor of the Arts in Computer Science from
 [Gustavus Adolphus College](https://gustavus.edu/) in Southern Minnesota. After that he moved to the expansive deserts
 of the American Southwest. In Arizona, Luther spent his career building web APIs and utilities for various industries
-in PHP and NodeJS. From there he migrated to Open Source DevOps tooling using Containers and Virtualization.
+in PHP and NodeJS. From there he migrated to Open Source DevOps tooling using Containers and Virtualization, and most recently to AI
+software factories for coding agents.
 
-Luther works at [Akamai](https://www.akamai.com/) on [LKE Enterprise](https://www.linode.com/products/kubernetes/),
-the enterprise tier of the Linode Kubernetes Engine. Before Akamai he spent years in the Kubernetes space at
-Rancher Labs and [SUSE](https://suse.com/) working on the Multi-Cluster Management tool
-[Rancher](https://rancher.com/). As the Team Lead for [Windows on Rancher](https://github.com/rancher/windows) he
-specialized in Kubernetes on alternative operating systems and architectures including Windows, arm64 and s390x.
-After Rancher he worked at [Spectro Cloud](https://www.spectrocloud.com/) on Cluster API providers for AWS and Azure.
-That included OIDC/IRSA support for self-managed clusters on AWS.
-Working in this unique space and working from home full time has made him a home lab aficionado and consumer of
-[Proxmox VE](https://www.proxmox.com/en/).
+Luther is a founding engineer at [Gas City](https://gascity.com), building open-source AI software factories: tooling
+that orchestrates fleets of CLI coding agents through durable, reviewable workflows. Before Gas City he worked at
+[Akamai](https://www.akamai.com/) on [LKE Enterprise](https://www.linode.com/products/kubernetes/), the enterprise
+tier of the Linode Kubernetes Engine. Before Akamai he spent years in the Kubernetes space at Rancher Labs and
+[SUSE](https://suse.com/) working on the Multi-Cluster Management tool [Rancher](https://rancher.com/). As the Team
+Lead for [Windows on Rancher](https://github.com/rancher/windows) he specialized in Kubernetes on alternative
+operating systems and architectures including Windows, arm64 and s390x. After Rancher he worked at
+[Spectro Cloud](https://www.spectrocloud.com/) on Cluster API providers for AWS and Azure, including OIDC/IRSA support
+for self-managed clusters on AWS. Working in this unique space and working from home full time has made him a home
+lab aficionado and consumer of [Proxmox VE](https://www.proxmox.com/en/).
+
+### Gas City
+
+[Gas City](https://gascity.com) is an open-source software factory for professional engineers. It orchestrates CLI
+coding agents through reusable workflows and automations and runs on infrastructure you control. The
+[orchestration SDK](https://github.com/gastownhall/gascity) builds the factories;
+[Gasworks](https://gascity.com) is the coming hosted, multi-operator version for teams.
+
+### Beads
+
+[Beads](https://github.com/gastownhall/beads) is the durable work graph the factory runs on: a Git-friendly,
+dependency-aware issue tracker and persistent memory layer for coding agents, built on
+[Dolt](https://github.com/dolthub/dolt). It gives agents memory across sessions, crashes, compaction and handoffs,
+and syncs both ways with Linear, Jira and GitHub Issues.
+
+### Gas Town
+
+[Gas Town](https://github.com/gastownhall/gastown) is the multi-agent workspace manager that runs many coding agents
+at once on top of Beads, turning a single operator into a crew working a shared backlog.
 
 ### ePHPm
 
@@ -29,7 +51,7 @@ services to operate.
 
 ### ephemerd
 
-[ephemerd](https://github.com/ephpm/ephemerd) is ephemeral GitHub Actions runners in a single binary for every
+[ephemerd](https://github.com/ephemerd/ephemerd) is ephemeral GitHub Actions runners in a single binary for every
 platform: containers on Linux, Hyper-V on Windows, VMs on macOS. Every job gets an isolated, disposable environment
 that is thrown away when the job finishes.
 

@@ -146,12 +146,12 @@
 
     <div id="wrapper">
       <section id="site-intro" >
-  <a href="/"><img src="/img/luther-monson-headshot.jpg" class="circle" width="100" alt="Luther Monson, Staff Software Engineer at SUSE" /></a>
+  <a href="/"><img src="/img/luther-monson-headshot.jpg" class="circle" width="100" alt="Luther Monson, Founding Engineer at Gas City" /></a>
   <header>
     <h1>Luther Monson</h1>
   </header>
   <main>
-    <p>Go by way of PHP &middot; Containers &middot; VMs &middot; Windows &middot; Kubernetes</p>
+    <p>Open Source &middot; AI &middot; Containers &middot; VMs &middot; Kubernetes &middot; Windows &middot; Go by way of PHP</p>
   </main>
   
     <footer>
@@ -215,6 +215,71 @@
   <header>
   <div class="title">
     
+      <h2><a href="/blog/2026/07/spc-windows-archive-extraction/">Fixing Windows Archive Extraction in SPC</a></h2>
+    
+    
+      <p>&#34;The pipe has been ended&#34; wasn&#39;t a pipe problem. It was the wrong tar program and Windows symlinks, and fixing one line of static-php-cli took three tries.</p>
+    
+  </div>
+  <div class="meta">
+    <time datetime="2026-07-18 16:10:00 -0700 MST">July 18, 2026</time>
+    
+    <p>7-Minute Read</p>
+  </div>
+</header>
+
+  <div class="content">
+    <a href="/blog/2026/07/spc-windows-archive-extraction/" class="image" style="--bg-image: url('/img/2026/07/spc-windows-archive-extraction-pipe.svg');">
+    <img class="" src="/img/2026/07/spc-windows-archive-extraction-pipe.svg" alt="Diagram: 7za decompressing into a pipe read by MinGW tar, which exits on a C:\ path and leaves 7za reporting The pipe has been ended">
+  </a>
+    
+    <p>One of the first things that broke when I started building PHP on Windows with
+<a href="https://github.com/crazywhalecc/static-php-cli">static-php-cli</a> (SPC) wasn&rsquo;t PHP at all. It was unpacking the source
+tarballs. libxml2, xz and a couple of others would die partway through extraction with:</p>
+  </div>
+  <footer>
+    <a href="/blog/2026/07/spc-windows-archive-extraction/" class="button big">Read More</a>
+    <div class="stats">
+  
+    <ul class="categories">
+      
+        
+          <li><a class="article-terms-link" href="/categories/php/">php</a></li>
+        
+          <li><a class="article-terms-link" href="/categories/windows/">windows</a></li>
+        
+      
+    </ul>
+  
+  
+    <ul class="tags">
+      
+        
+          <li><a class="article-terms-link" href="/tags/php/">php</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/windows/">windows</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/static-php-cli/">static-php-cli</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/tar/">tar</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/7zip/">7zip</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/open-source/">open-source</a></li>
+        
+      
+    </ul>
+  
+</div>
+
+  </footer>
+</article>
+
+  
+    <article class="post">
+  <header>
+  <div class="title">
+    
       <h2><a href="/blog/2026/07/go-proxmox-watch-close-withretry/">Two Small go-proxmox Fixes: A Watch Channel That Never Closed, and WithRetry</a></h2>
     
     
@@ -222,7 +287,7 @@
     
   </div>
   <div class="meta">
-    <time datetime="2026-07-11 17:26:00 -0700 PDT">July 11, 2026</time>
+    <time datetime="2026-07-11 17:26:00 -0700 MST">July 11, 2026</time>
     
     <p>6-Minute Read</p>
   </div>
@@ -285,7 +350,7 @@ in code I wrote about in 2022. The other is a feature that replaces a retry loop
     
   </div>
   <div class="meta">
-    <time datetime="2026-06-27 18:47:00 -0700 PDT">June 27, 2026</time>
+    <time datetime="2026-06-27 18:47:00 -0700 MST">June 27, 2026</time>
     
     <p>7-Minute Read</p>
   </div>
@@ -353,7 +418,7 @@ a lot of it by several at once. This is what that looked like from the maintaine
     
   </div>
   <div class="meta">
-    <time datetime="2026-06-23 20:31:00 -0700 PDT">June 23, 2026</time>
+    <time datetime="2026-06-23 20:31:00 -0700 MST">June 23, 2026</time>
     
     <p>7-Minute Read</p>
   </div>
@@ -415,7 +480,7 @@ have come in. One of them is a bug I&rsquo;d already fixed once and then reintro
     
   </div>
   <div class="meta">
-    <time datetime="2026-06-21 19:05:00 -0700 PDT">June 21, 2026</time>
+    <time datetime="2026-06-21 19:05:00 -0700 MST">June 21, 2026</time>
     
     <p>7-Minute Read</p>
   </div>
@@ -481,7 +546,7 @@ into a checklist of things other projects have.</p>
     
   </div>
   <div class="meta">
-    <time datetime="2026-06-20 20:31:00 -0700 PDT">June 20, 2026</time>
+    <time datetime="2026-06-20 20:31:00 -0700 MST">June 20, 2026</time>
     
     <p>8-Minute Read</p>
   </div>
@@ -544,7 +609,7 @@ into a checklist of things other projects have.</p>
     
   </div>
   <div class="meta">
-    <time datetime="2026-06-14 20:12:00 -0700 PDT">June 14, 2026</time>
+    <time datetime="2026-06-14 20:12:00 -0700 MST">June 14, 2026</time>
     
     <p>9-Minute Read</p>
   </div>
@@ -616,7 +681,7 @@ great from my terminal and fell over the moment ephemerd became a real Windows s
     
   </div>
   <div class="meta">
-    <time datetime="2026-06-13 19:52:00 -0700 PDT">June 13, 2026</time>
+    <time datetime="2026-06-13 19:52:00 -0700 MST">June 13, 2026</time>
     
     <p>7-Minute Read</p>
   </div>
@@ -676,7 +741,7 @@ two states. A caller filling in an options struct means one of three:</p>
     
   </div>
   <div class="meta">
-    <time datetime="2026-06-07 21:36:00 -0700 PDT">June 7, 2026</time>
+    <time datetime="2026-06-07 21:36:00 -0700 MST">June 7, 2026</time>
     
     <p>8-Minute Read</p>
   </div>
@@ -740,7 +805,7 @@ answer was 100%. The more interesting part is how many times the measuring stick
     
   </div>
   <div class="meta">
-    <time datetime="2026-06-06 15:20:00 -0700 PDT">June 6, 2026</time>
+    <time datetime="2026-06-06 15:20:00 -0700 MST">June 6, 2026</time>
     
     <p>8-Minute Read</p>
   </div>
@@ -796,70 +861,6 @@ system&hellip;</p>
 </article>
 
   
-    <article class="post">
-  <header>
-  <div class="title">
-    
-      <h2><a href="/blog/2026/05/staying-logged-in-to-proxmox/">Staying Logged In to Proxmox: Ticket Renewal, Expiry and Where API Tokens Stop</a></h2>
-    
-    
-      <p>Proxmox tickets die after two hours. How go-proxmox went from never re-authenticating to renewing tickets in place, plus the one thing API tokens can&#39;t do.</p>
-    
-  </div>
-  <div class="meta">
-    <time datetime="2026-05-31 20:24:00 -0700 PDT">May 31, 2026</time>
-    
-    <p>7-Minute Read</p>
-  </div>
-</header>
-
-  <div class="content">
-    <a href="/blog/2026/05/staying-logged-in-to-proxmox/" class="image" style="--bg-image: url('/img/2026/05/staying-logged-in-to-proxmox-timeline.svg');">
-    <img class="" src="/img/2026/05/staying-logged-in-to-proxmox-timeline.svg" alt="Timeline of a Proxmox ticket: valid for two hours server side, considered stale by the client after one">
-  </a>
-    
-    <p>Back in 2023 I wrote up <a href="/blog/2023/08/proxmox-api-auth-tickets-tokens-go/">how go-proxmox logs in</a> and ended it with a
-shrug. Once a session existed the client never logged in again. A ticket-based client died at the two hour mark. My
-advice was &ldquo;use an API token for anything long running&rdquo;. It took until this month to fix that properly. It took three
-PRs from two of us to get there. Here&rsquo;s the whole arc, plus the one place where an API token isn&rsquo;t an option at all.</p>
-  </div>
-  <footer>
-    <a href="/blog/2026/05/staying-logged-in-to-proxmox/" class="button big">Read More</a>
-    <div class="stats">
-  
-    <ul class="categories">
-      
-        
-          <li><a class="article-terms-link" href="/categories/go/">go</a></li>
-        
-          <li><a class="article-terms-link" href="/categories/homelab/">homelab</a></li>
-        
-      
-    </ul>
-  
-  
-    <ul class="tags">
-      
-        
-          <li><a class="article-terms-link" href="/tags/proxmox/">proxmox</a></li>
-        
-          <li><a class="article-terms-link" href="/tags/go/">go</a></li>
-        
-          <li><a class="article-terms-link" href="/tags/go-proxmox/">go-proxmox</a></li>
-        
-          <li><a class="article-terms-link" href="/tags/authentication/">authentication</a></li>
-        
-          <li><a class="article-terms-link" href="/tags/websockets/">websockets</a></li>
-        
-      
-    </ul>
-  
-</div>
-
-  </footer>
-</article>
-
-  
   <div class="pagination">
     
       <a href="/page/6/" class="button left"><span>Previous Page</span></a>
@@ -878,12 +879,20 @@ PRs from two of us to get there. Here&rsquo;s the whole arc, plus the one place 
       </header>
       
       <article class="mini-post">
+          
+        <header>
+          <h2><a href="/blog/2026/11/dagger-on-ephemerd-runner-fleet/">Running Dagger on an ephemerd Runner Fleet</a></h2>
+          <time class="published" datetime="2026-11-18 09:00:00 -0700 MST">November 18, 2026</time>
+        </header>
+      </article>
+      
+      <article class="mini-post">
           <a href="/blog/2026/10/durable-data-single-node-k3s-ebs-rebuild/" class="image" style="--bg-image: url('/img/2026/10/durable-data-single-node-k3s-ebs-rebuild.svg');">
     <img class="" src="/img/2026/10/durable-data-single-node-k3s-ebs-rebuild.svg" alt="A node rebuild: Node A is replaced by Node B, each root EBS volume is disposable, and the separate labeled EBS data volume detaches from the old node and re-attaches to the new one so the ePHPm blog&#39;s SQLite file and uploads survive">
   </a>
         <header>
           <h2><a href="/blog/2026/10/durable-data-single-node-k3s-ebs-rebuild/">Surviving a Node Rebuild: A Durable ePHPm Blog on Single-Node k3s</a></h2>
-          <time class="published" datetime="2026-10-28 10:00:00 -0700 PDT">October 28, 2026</time>
+          <time class="published" datetime="2026-10-28 10:00:00 -0700 MST">October 28, 2026</time>
         </header>
       </article>
       
@@ -893,7 +902,7 @@ PRs from two of us to get there. Here&rsquo;s the whole arc, plus the one place 
   </a>
         <header>
           <h2><a href="/blog/2026/10/docker-in-docker-without-root/">Docker-in-Docker in CI Without Handing Jobs Root</a></h2>
-          <time class="published" datetime="2026-10-24 10:00:00 -0700 PDT">October 24, 2026</time>
+          <time class="published" datetime="2026-10-24 10:00:00 -0700 MST">October 24, 2026</time>
         </header>
       </article>
       
@@ -903,7 +912,7 @@ PRs from two of us to get there. Here&rsquo;s the whole arc, plus the one place 
   </a>
         <header>
           <h2><a href="/blog/2026/10/ci-cache-proxies-ephemeral-runners/">Cache Proxies for Ephemeral CI Runners</a></h2>
-          <time class="published" datetime="2026-10-23 15:00:00 -0700 PDT">October 23, 2026</time>
+          <time class="published" datetime="2026-10-23 15:00:00 -0700 MST">October 23, 2026</time>
         </header>
       </article>
       
@@ -913,17 +922,7 @@ PRs from two of us to get there. Here&rsquo;s the whole arc, plus the one place 
   </a>
         <header>
           <h2><a href="/blog/2026/10/ephemeral-macos-runners-vm-clones/">Ephemeral macOS Runners: A Fresh VM Per Job on Apple Silicon</a></h2>
-          <time class="published" datetime="2026-10-23 11:00:00 -0700 PDT">October 23, 2026</time>
-        </header>
-      </article>
-      
-      <article class="mini-post">
-          <a href="/blog/2026/10/turso-page1-allocation-race/" class="image" style="--bg-image: url('/img/2026/10/turso-page1-allocation-race-races.svg');">
-    <img class="" src="/img/2026/10/turso-page1-allocation-race-races.svg" alt="Sequence diagram of two connections and init_lock: in race 1, B checks for an empty file, A publishes page 1 and releases the lock, then B takes the lock and panics on its assert; in race 2, A&#39;s lock is dropped while page 1 is being written, so B takes it and writes page 1 again">
-  </a>
-        <header>
-          <h2><a href="/blog/2026/10/turso-page1-allocation-race/">Thirty-Two Connections and an Empty File: A Race in Turso&#39;s Page-1 Allocation</a></h2>
-          <time class="published" datetime="2026-10-18 14:30:00 -0700 PDT">October 18, 2026</time>
+          <time class="published" datetime="2026-10-23 11:00:00 -0700 MST">October 23, 2026</time>
         </header>
       </article>
       
@@ -964,10 +963,10 @@ PRs from two of us to get there. Here&rsquo;s the whole arc, plus the one place 
               <a href="/categories/windows/">windows<span class="count">14</span></a>
           
           <li>
-              <a href="/categories/ci/">ci<span class="count">12</span></a>
+              <a href="/categories/ci/">ci<span class="count">13</span></a>
           
           <li>
-              <a href="/categories/containers/">containers<span class="count">10</span></a>
+              <a href="/categories/containers/">containers<span class="count">11</span></a>
           
           <li>
               <a href="/categories/databases/">databases<span class="count">10</span></a>
@@ -995,7 +994,7 @@ PRs from two of us to get there. Here&rsquo;s the whole arc, plus the one place 
       <header>
         <h1>About</h1>
       </header>
-      <p>Luther is a 20+ year software veteran specializing in backend APIs and architecting products. Employed at <a href='https://www.suse.com'>SUSE</a> as the Team Lead for the <a href='https://github.com/rancher/windows/issues'>Containers on Windows Team</a> working on <a href='https://rancher.com/'>Rancher</a> + <a href='https://kubernetes.io/'>Kubernetes</a></p>
+      <p>Luther is a 20+ year software veteran specializing in backend APIs and architecting products. Founding engineer at <a href='https://gascity.com'>Gas City</a> building open-source AI software factories on <a href='https://github.com/gastownhall/beads'>Beads</a>, the durable work graph for coding agents.</p>
       <footer>
         <a href="/about" class="button">Learn More</a>
       </footer>

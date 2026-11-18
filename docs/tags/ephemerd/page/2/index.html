@@ -146,12 +146,12 @@
 
     <div id="wrapper">
       <section id="site-intro" class="hidden-single-column">
-  <a href="/"><img src="/img/luther-monson-headshot.jpg" class="circle" width="100" alt="Luther Monson, Staff Software Engineer at SUSE" /></a>
+  <a href="/"><img src="/img/luther-monson-headshot.jpg" class="circle" width="100" alt="Luther Monson, Founding Engineer at Gas City" /></a>
   <header>
     <h1>Luther Monson</h1>
   </header>
   <main>
-    <p>Go by way of PHP &middot; Containers &middot; VMs &middot; Windows &middot; Kubernetes</p>
+    <p>Open Source &middot; AI &middot; Containers &middot; VMs &middot; Kubernetes &middot; Windows &middot; Go by way of PHP</p>
   </main>
   
     <footer>
@@ -215,6 +215,78 @@
   <header>
   <div class="title">
     
+      <h2><a href="/blog/2026/08/ephemerd-one-daemon-every-os/">ephemerd: One Daemon, a Fresh Runner Per Job, Every OS</a></h2>
+    
+    
+      <p>A single Go binary that runs self-hosted GitHub Actions runners on Linux, Windows and macOS, with a new container or VM for every job.</p>
+    
+  </div>
+  <div class="meta">
+    <time datetime="2026-08-18 21:05:00 -0700 MST">August 18, 2026</time>
+    
+    <p>6-Minute Read</p>
+  </div>
+</header>
+
+  <div class="content">
+    <a href="/blog/2026/08/ephemerd-one-daemon-every-os/" class="image" style="--bg-image: url('/img/2026/08/ephemerd-one-daemon-every-os-arch.svg');">
+    <img class="" src="/img/2026/08/ephemerd-one-daemon-every-os-arch.svg" alt="ephemerd architecture across Linux, Windows and macOS hosts">
+  </a>
+    
+    <p>I have CI that needs Linux amd64, Linux arm64, Windows and macOS. GitHub-hosted runners for all four get expensive fast,
+especially the arm64 and Mac minutes. Self-hosted runners fix the bill and create a different problem. A stock
+<code>actions/runner</code> on a box you own runs whatever the workflow says. It keeps whatever the last job left behind. And it&rsquo;s
+one fork PR away from somebody running code on your LAN.</p>
+  </div>
+  <footer>
+    <a href="/blog/2026/08/ephemerd-one-daemon-every-os/" class="button big">Read More</a>
+    <div class="stats">
+  
+    <ul class="categories">
+      
+        
+          <li><a class="article-terms-link" href="/categories/ephemerd/">ephemerd</a></li>
+        
+          <li><a class="article-terms-link" href="/categories/ci/">ci</a></li>
+        
+          <li><a class="article-terms-link" href="/categories/go/">go</a></li>
+        
+          <li><a class="article-terms-link" href="/categories/containers/">containers</a></li>
+        
+      
+    </ul>
+  
+  
+    <ul class="tags">
+      
+        
+          <li><a class="article-terms-link" href="/tags/go/">go</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/github-actions/">github-actions</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/containerd/">containerd</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/kubernetes/">kubernetes</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/hyper-v/">hyper-v</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/macos/">macos</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/ephemerd/">ephemerd</a></li>
+        
+      
+    </ul>
+  
+</div>
+
+  </footer>
+</article>
+
+  
+    <article class="post">
+  <header>
+  <div class="title">
+    
       <h2><a href="/blog/2026/06/escaping-wsl-hcs-linux-vm/">Escaping WSL: Booting My Own Linux VM Through Hyper-V&#39;s HCS API</a></h2>
     
     
@@ -222,7 +294,7 @@
     
   </div>
   <div class="meta">
-    <time datetime="2026-06-14 20:12:00 -0700 PDT">June 14, 2026</time>
+    <time datetime="2026-06-14 20:12:00 -0700 MST">June 14, 2026</time>
     
     <p>9-Minute Read</p>
   </div>
@@ -299,12 +371,20 @@ great from my terminal and fell over the moment ephemerd became a real Windows s
       </header>
       
       <article class="mini-post">
+          
+        <header>
+          <h2><a href="/blog/2026/11/dagger-on-ephemerd-runner-fleet/">Running Dagger on an ephemerd Runner Fleet</a></h2>
+          <time class="published" datetime="2026-11-18 09:00:00 -0700 MST">November 18, 2026</time>
+        </header>
+      </article>
+      
+      <article class="mini-post">
           <a href="/blog/2026/10/durable-data-single-node-k3s-ebs-rebuild/" class="image" style="--bg-image: url('/img/2026/10/durable-data-single-node-k3s-ebs-rebuild.svg');">
     <img class="" src="/img/2026/10/durable-data-single-node-k3s-ebs-rebuild.svg" alt="A node rebuild: Node A is replaced by Node B, each root EBS volume is disposable, and the separate labeled EBS data volume detaches from the old node and re-attaches to the new one so the ePHPm blog&#39;s SQLite file and uploads survive">
   </a>
         <header>
           <h2><a href="/blog/2026/10/durable-data-single-node-k3s-ebs-rebuild/">Surviving a Node Rebuild: A Durable ePHPm Blog on Single-Node k3s</a></h2>
-          <time class="published" datetime="2026-10-28 10:00:00 -0700 PDT">October 28, 2026</time>
+          <time class="published" datetime="2026-10-28 10:00:00 -0700 MST">October 28, 2026</time>
         </header>
       </article>
       
@@ -314,7 +394,7 @@ great from my terminal and fell over the moment ephemerd became a real Windows s
   </a>
         <header>
           <h2><a href="/blog/2026/10/docker-in-docker-without-root/">Docker-in-Docker in CI Without Handing Jobs Root</a></h2>
-          <time class="published" datetime="2026-10-24 10:00:00 -0700 PDT">October 24, 2026</time>
+          <time class="published" datetime="2026-10-24 10:00:00 -0700 MST">October 24, 2026</time>
         </header>
       </article>
       
@@ -324,7 +404,7 @@ great from my terminal and fell over the moment ephemerd became a real Windows s
   </a>
         <header>
           <h2><a href="/blog/2026/10/ci-cache-proxies-ephemeral-runners/">Cache Proxies for Ephemeral CI Runners</a></h2>
-          <time class="published" datetime="2026-10-23 15:00:00 -0700 PDT">October 23, 2026</time>
+          <time class="published" datetime="2026-10-23 15:00:00 -0700 MST">October 23, 2026</time>
         </header>
       </article>
       
@@ -334,17 +414,7 @@ great from my terminal and fell over the moment ephemerd became a real Windows s
   </a>
         <header>
           <h2><a href="/blog/2026/10/ephemeral-macos-runners-vm-clones/">Ephemeral macOS Runners: A Fresh VM Per Job on Apple Silicon</a></h2>
-          <time class="published" datetime="2026-10-23 11:00:00 -0700 PDT">October 23, 2026</time>
-        </header>
-      </article>
-      
-      <article class="mini-post">
-          <a href="/blog/2026/10/turso-page1-allocation-race/" class="image" style="--bg-image: url('/img/2026/10/turso-page1-allocation-race-races.svg');">
-    <img class="" src="/img/2026/10/turso-page1-allocation-race-races.svg" alt="Sequence diagram of two connections and init_lock: in race 1, B checks for an empty file, A publishes page 1 and releases the lock, then B takes the lock and panics on its assert; in race 2, A&#39;s lock is dropped while page 1 is being written, so B takes it and writes page 1 again">
-  </a>
-        <header>
-          <h2><a href="/blog/2026/10/turso-page1-allocation-race/">Thirty-Two Connections and an Empty File: A Race in Turso&#39;s Page-1 Allocation</a></h2>
-          <time class="published" datetime="2026-10-18 14:30:00 -0700 PDT">October 18, 2026</time>
+          <time class="published" datetime="2026-10-23 11:00:00 -0700 MST">October 23, 2026</time>
         </header>
       </article>
       
@@ -385,10 +455,10 @@ great from my terminal and fell over the moment ephemerd became a real Windows s
               <a href="/categories/windows/">windows<span class="count">14</span></a>
           
           <li>
-              <a href="/categories/ci/">ci<span class="count">12</span></a>
+              <a href="/categories/ci/">ci<span class="count">13</span></a>
           
           <li>
-              <a href="/categories/containers/">containers<span class="count">10</span></a>
+              <a href="/categories/containers/">containers<span class="count">11</span></a>
           
           <li>
               <a href="/categories/databases/">databases<span class="count">10</span></a>
@@ -416,7 +486,7 @@ great from my terminal and fell over the moment ephemerd became a real Windows s
       <header>
         <h1>About</h1>
       </header>
-      <p>Luther is a 20+ year software veteran specializing in backend APIs and architecting products. Employed at <a href='https://www.suse.com'>SUSE</a> as the Team Lead for the <a href='https://github.com/rancher/windows/issues'>Containers on Windows Team</a> working on <a href='https://rancher.com/'>Rancher</a> + <a href='https://kubernetes.io/'>Kubernetes</a></p>
+      <p>Luther is a 20+ year software veteran specializing in backend APIs and architecting products. Founding engineer at <a href='https://gascity.com'>Gas City</a> building open-source AI software factories on <a href='https://github.com/gastownhall/beads'>Beads</a>, the durable work graph for coding agents.</p>
       <footer>
         <a href="/about" class="button">Learn More</a>
       </footer>

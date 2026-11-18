@@ -146,12 +146,12 @@
 
     <div id="wrapper">
       <section id="site-intro" class="hidden-single-column">
-  <a href="/"><img src="/img/luther-monson-headshot.jpg" class="circle" width="100" alt="Luther Monson, Staff Software Engineer at SUSE" /></a>
+  <a href="/"><img src="/img/luther-monson-headshot.jpg" class="circle" width="100" alt="Luther Monson, Founding Engineer at Gas City" /></a>
   <header>
     <h1>Luther Monson</h1>
   </header>
   <main>
-    <p>Go by way of PHP &middot; Containers &middot; VMs &middot; Windows &middot; Kubernetes</p>
+    <p>Open Source &middot; AI &middot; Containers &middot; VMs &middot; Kubernetes &middot; Windows &middot; Go by way of PHP</p>
   </main>
   
     <footer>
@@ -215,6 +215,59 @@
   <header>
   <div class="title">
     
+      <h2><a href="/blog/2026/11/dagger-on-ephemerd-runner-fleet/">Running Dagger on an ephemerd Runner Fleet</a></h2>
+    
+    
+      <p>Dagger decides how CI steps execute while ephemerd and GitHub Actions decide where the job runs. Here is how to wire one shared Dagger engine to a fleet of ephemeral self-hosted runners.</p>
+    
+  </div>
+  <div class="meta">
+    <time datetime="2026-11-18 09:00:00 -0700 MST">November 18, 2026</time>
+    
+    <p>15-Minute Read</p>
+  </div>
+</header>
+
+  <div class="content">
+    
+    
+    <p>A friend asked me if Dagger replaces ephemerd. It doesn&rsquo;t. They sit at different layers. Since I just rode this merry-go-round here is how I put the two together, with every command run against a real engine on a Linux box.</p>
+  </div>
+  <footer>
+    <a href="/blog/2026/11/dagger-on-ephemerd-runner-fleet/" class="button big">Read More</a>
+    <div class="stats">
+  
+    <ul class="categories">
+      
+        
+          <li><a class="article-terms-link" href="/categories/ci/">ci</a></li>
+        
+          <li><a class="article-terms-link" href="/categories/containers/">containers</a></li>
+        
+      
+    </ul>
+  
+  
+    <ul class="tags">
+      
+        
+          <li><a class="article-terms-link" href="/tags/infrastructure/">infrastructure</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/ephemerd/">ephemerd</a></li>
+        
+      
+    </ul>
+  
+</div>
+
+  </footer>
+</article>
+
+  
+    <article class="post">
+  <header>
+  <div class="title">
+    
       <h2><a href="/blog/2026/10/docker-in-docker-without-root/">Docker-in-Docker in CI Without Handing Jobs Root</a></h2>
     
     
@@ -222,7 +275,7 @@
     
   </div>
   <div class="meta">
-    <time datetime="2026-10-24 10:00:00 -0700 PDT">October 24, 2026</time>
+    <time datetime="2026-10-24 10:00:00 -0700 MST">October 24, 2026</time>
     
     <p>8-Minute Read</p>
   </div>
@@ -297,7 +350,7 @@ give a self-hosted job Docker is Docker-in-Docker, or dind.</p>
     
   </div>
   <div class="meta">
-    <time datetime="2026-10-23 15:00:00 -0700 PDT">October 23, 2026</time>
+    <time datetime="2026-10-23 15:00:00 -0700 MST">October 23, 2026</time>
     
     <p>10-Minute Read</p>
   </div>
@@ -364,7 +417,7 @@ image. That is the whole point. Nothing a job does can leak into the next one.</
     
   </div>
   <div class="meta">
-    <time datetime="2026-10-23 11:00:00 -0700 PDT">October 23, 2026</time>
+    <time datetime="2026-10-23 11:00:00 -0700 MST">October 23, 2026</time>
     
     <p>9-Minute Read</p>
   </div>
@@ -431,7 +484,7 @@ Apple hardware, so the Mac in my rack is the real thing. The isolation comes fro
     
   </div>
   <div class="meta">
-    <time datetime="2026-10-07 21:10:00 -0700 PDT">October 7, 2026</time>
+    <time datetime="2026-10-07 21:10:00 -0700 MST">October 7, 2026</time>
     
     <p>9-Minute Read</p>
   </div>
@@ -500,7 +553,7 @@ runner itself, on purpose, while it was running the build.</p>
     
   </div>
   <div class="meta">
-    <time datetime="2026-10-03 14:30:00 -0700 PDT">October 3, 2026</time>
+    <time datetime="2026-10-03 14:30:00 -0700 MST">October 3, 2026</time>
     
     <p>7-Minute Read</p>
   </div>
@@ -567,7 +620,7 @@ long way from the cause.</p>
     
   </div>
   <div class="meta">
-    <time datetime="2026-09-24 21:02:00 -0700 PDT">September 24, 2026</time>
+    <time datetime="2026-09-24 21:02:00 -0700 MST">September 24, 2026</time>
     
     <p>8-Minute Read</p>
   </div>
@@ -642,7 +695,7 @@ in a week. A couple of months later the version that worked&hellip;</p>
     
   </div>
   <div class="meta">
-    <time datetime="2026-09-12 14:35:00 -0700 PDT">September 12, 2026</time>
+    <time datetime="2026-09-12 14:35:00 -0700 MST">September 12, 2026</time>
     
     <p>5-Minute Read</p>
   </div>
@@ -710,7 +763,7 @@ too good to leave in commit messages, though.</p>
     
   </div>
   <div class="meta">
-    <time datetime="2026-09-03 21:35:00 -0700 PDT">September 3, 2026</time>
+    <time datetime="2026-09-03 21:35:00 -0700 MST">September 3, 2026</time>
     
     <p>7-Minute Read</p>
   </div>
@@ -784,7 +837,7 @@ kernel. It plugs into containerd as just another runtime handler. So I added it 
     
   </div>
   <div class="meta">
-    <time datetime="2026-08-26 20:30:00 -0700 PDT">August 26, 2026</time>
+    <time datetime="2026-08-26 20:30:00 -0700 MST">August 26, 2026</time>
     
     <p>8-Minute Read</p>
   </div>
@@ -843,78 +896,6 @@ matched a packet in its life. That node had pushed 9.8 GB through the same chain
 </article>
 
   
-    <article class="post">
-  <header>
-  <div class="title">
-    
-      <h2><a href="/blog/2026/08/windows-container-egress-firewall/">Five Ways to Not Firewall a Windows Container (and the One That Works)</a></h2>
-    
-    
-      <p>Five different Windows firewall approaches failed to stop a container from reaching my home network. The sixth, a different network mode for the container, finally worked.</p>
-    
-  </div>
-  <div class="meta">
-    <time datetime="2026-08-22 19:40:00 -0700 PDT">August 22, 2026</time>
-    
-    <p>10-Minute Read</p>
-  </div>
-</header>
-
-  <div class="content">
-    <a href="/blog/2026/08/windows-container-egress-firewall/" class="image" style="--bg-image: url('/img/2026/08/windows-container-egress-firewall-paths.svg');">
-    <img class="" src="/img/2026/08/windows-container-egress-firewall-paths.svg" alt="Packet path of a Windows container on an HNS NAT network versus an L2Bridge network">
-  </a>
-    
-    <p><a href="/blog/2026/08/ephemerd-one-daemon-every-os/">ephemerd</a> runs CI jobs from pull requests. One of the rules is that a job can
-reach the internet but not my LAN. On Linux that&rsquo;s a few iptables rules in the <code>FORWARD</code> path, and I didn&rsquo;t think about it
-much. On Windows I spent about a week finding out how many ways there are to write a firewall rule that Windows accepts,
-lists and never applies.</p>
-  </div>
-  <footer>
-    <a href="/blog/2026/08/windows-container-egress-firewall/" class="button big">Read More</a>
-    <div class="stats">
-  
-    <ul class="categories">
-      
-        
-          <li><a class="article-terms-link" href="/categories/windows/">windows</a></li>
-        
-          <li><a class="article-terms-link" href="/categories/security/">security</a></li>
-        
-          <li><a class="article-terms-link" href="/categories/ci/">ci</a></li>
-        
-      
-    </ul>
-  
-  
-    <ul class="tags">
-      
-        
-          <li><a class="article-terms-link" href="/tags/windows/">windows</a></li>
-        
-          <li><a class="article-terms-link" href="/tags/hyper-v/">hyper-v</a></li>
-        
-          <li><a class="article-terms-link" href="/tags/networking/">networking</a></li>
-        
-          <li><a class="article-terms-link" href="/tags/firewall/">firewall</a></li>
-        
-          <li><a class="article-terms-link" href="/tags/wfp/">wfp</a></li>
-        
-          <li><a class="article-terms-link" href="/tags/hns/">hns</a></li>
-        
-          <li><a class="article-terms-link" href="/tags/security/">security</a></li>
-        
-          <li><a class="article-terms-link" href="/tags/ephemerd/">ephemerd</a></li>
-        
-      
-    </ul>
-  
-</div>
-
-  </footer>
-</article>
-
-  
   <div class="pagination">
     
     
@@ -931,12 +912,20 @@ lists and never applies.</p>
       </header>
       
       <article class="mini-post">
+          
+        <header>
+          <h2><a href="/blog/2026/11/dagger-on-ephemerd-runner-fleet/">Running Dagger on an ephemerd Runner Fleet</a></h2>
+          <time class="published" datetime="2026-11-18 09:00:00 -0700 MST">November 18, 2026</time>
+        </header>
+      </article>
+      
+      <article class="mini-post">
           <a href="/blog/2026/10/durable-data-single-node-k3s-ebs-rebuild/" class="image" style="--bg-image: url('/img/2026/10/durable-data-single-node-k3s-ebs-rebuild.svg');">
     <img class="" src="/img/2026/10/durable-data-single-node-k3s-ebs-rebuild.svg" alt="A node rebuild: Node A is replaced by Node B, each root EBS volume is disposable, and the separate labeled EBS data volume detaches from the old node and re-attaches to the new one so the ePHPm blog&#39;s SQLite file and uploads survive">
   </a>
         <header>
           <h2><a href="/blog/2026/10/durable-data-single-node-k3s-ebs-rebuild/">Surviving a Node Rebuild: A Durable ePHPm Blog on Single-Node k3s</a></h2>
-          <time class="published" datetime="2026-10-28 10:00:00 -0700 PDT">October 28, 2026</time>
+          <time class="published" datetime="2026-10-28 10:00:00 -0700 MST">October 28, 2026</time>
         </header>
       </article>
       
@@ -946,7 +935,7 @@ lists and never applies.</p>
   </a>
         <header>
           <h2><a href="/blog/2026/10/docker-in-docker-without-root/">Docker-in-Docker in CI Without Handing Jobs Root</a></h2>
-          <time class="published" datetime="2026-10-24 10:00:00 -0700 PDT">October 24, 2026</time>
+          <time class="published" datetime="2026-10-24 10:00:00 -0700 MST">October 24, 2026</time>
         </header>
       </article>
       
@@ -956,7 +945,7 @@ lists and never applies.</p>
   </a>
         <header>
           <h2><a href="/blog/2026/10/ci-cache-proxies-ephemeral-runners/">Cache Proxies for Ephemeral CI Runners</a></h2>
-          <time class="published" datetime="2026-10-23 15:00:00 -0700 PDT">October 23, 2026</time>
+          <time class="published" datetime="2026-10-23 15:00:00 -0700 MST">October 23, 2026</time>
         </header>
       </article>
       
@@ -966,17 +955,7 @@ lists and never applies.</p>
   </a>
         <header>
           <h2><a href="/blog/2026/10/ephemeral-macos-runners-vm-clones/">Ephemeral macOS Runners: A Fresh VM Per Job on Apple Silicon</a></h2>
-          <time class="published" datetime="2026-10-23 11:00:00 -0700 PDT">October 23, 2026</time>
-        </header>
-      </article>
-      
-      <article class="mini-post">
-          <a href="/blog/2026/10/turso-page1-allocation-race/" class="image" style="--bg-image: url('/img/2026/10/turso-page1-allocation-race-races.svg');">
-    <img class="" src="/img/2026/10/turso-page1-allocation-race-races.svg" alt="Sequence diagram of two connections and init_lock: in race 1, B checks for an empty file, A publishes page 1 and releases the lock, then B takes the lock and panics on its assert; in race 2, A&#39;s lock is dropped while page 1 is being written, so B takes it and writes page 1 again">
-  </a>
-        <header>
-          <h2><a href="/blog/2026/10/turso-page1-allocation-race/">Thirty-Two Connections and an Empty File: A Race in Turso&#39;s Page-1 Allocation</a></h2>
-          <time class="published" datetime="2026-10-18 14:30:00 -0700 PDT">October 18, 2026</time>
+          <time class="published" datetime="2026-10-23 11:00:00 -0700 MST">October 23, 2026</time>
         </header>
       </article>
       
@@ -1017,10 +996,10 @@ lists and never applies.</p>
               <a href="/categories/windows/">windows<span class="count">14</span></a>
           
           <li>
-              <a href="/categories/ci/">ci<span class="count">12</span></a>
+              <a href="/categories/ci/">ci<span class="count">13</span></a>
           
           <li>
-              <a href="/categories/containers/">containers<span class="count">10</span></a>
+              <a href="/categories/containers/">containers<span class="count">11</span></a>
           
           <li>
               <a href="/categories/databases/">databases<span class="count">10</span></a>
@@ -1048,7 +1027,7 @@ lists and never applies.</p>
       <header>
         <h1>About</h1>
       </header>
-      <p>Luther is a 20+ year software veteran specializing in backend APIs and architecting products. Employed at <a href='https://www.suse.com'>SUSE</a> as the Team Lead for the <a href='https://github.com/rancher/windows/issues'>Containers on Windows Team</a> working on <a href='https://rancher.com/'>Rancher</a> + <a href='https://kubernetes.io/'>Kubernetes</a></p>
+      <p>Luther is a 20+ year software veteran specializing in backend APIs and architecting products. Founding engineer at <a href='https://gascity.com'>Gas City</a> building open-source AI software factories on <a href='https://github.com/gastownhall/beads'>Beads</a>, the durable work graph for coding agents.</p>
       <footer>
         <a href="/about" class="button">Learn More</a>
       </footer>
