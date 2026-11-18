@@ -6,7 +6,7 @@ tags: [ infrastructure, ephemerd ]
 categories: [ ci, containers ]
 images:
  - src: img/2026/11/dagger-ephemerd-cache-architecture.svg
-   alt: "GitHub fires a workflow_job webhook at ephemerd on the node, which provisions a fresh VLAN-isolated runner that is destroyed after the job. Inside it a cold per-job BuildKit engine imports and exports cached layers over the GitHub Actions Cache v2 protocol to ephemerd's Actions-cache proxy, which persists the cache on the node across every job."
+   alt: "GitHub fires a workflow_job webhook at ephemerd on the node, which provisions a fresh VLAN-isolated runner that is destroyed after the job. Inside it a cold per-job BuildKit engine imports and exports cached layers over the GitHub Actions Cache v2 protocol to ephemerd's Actions-cache proxy, which persists the cache in a registry; point one shared registry in the VLAN at every host for a single fleet-wide cache."
    stretch: "none"
 draft: false
 ---
@@ -29,7 +29,7 @@ The fix everyone reaches for is a persistent engine. It works — the same build
 
 The thing I missed the first time: BuildKit can export and import its cache to an **external backend** — `registry`, `local`, `s3`, or `gha` (the GitHub Actions Cache service). The engine stays throwaway; the cache it produces gets pushed somewhere that outlives the job, and the *next* cold engine imports it at startup. The engine is ephemeral. The cache is not.
 
-And ephemerd already runs exactly the backend this needs. Its Actions-cache proxy speaks the **GitHub Actions Cache v2** protocol, backed by a writable OCI registry on the node, with per-repo scoping, and it already injects the cache URL and token into every job container for `actions/cache`. BuildKit's `gha` cache backend speaks that same protocol. Point a cold per-job `buildkitd` at it with `--import-cache`/`--export-cache type=gha` and you get a warm cache on a throwaway engine, served by infrastructure the fleet already has.
+And ephemerd already runs exactly the backend this needs. Its Actions-cache proxy speaks the **GitHub Actions Cache v2** protocol, stores entries in a writable OCI registry it is pointed at, scopes them per repo, and already injects the cache URL and token into every job container for `actions/cache`. That registry is a config URL, not a fixed local box: aim one `registry:2` in the VLAN at every ephemerd host and the cache is shared across the whole fleet, keyed by repo — so a cold engine on one host warms from what another host built. BuildKit's `gha` cache backend speaks that same protocol. Point a cold per-job `buildkitd` at it with `--import-cache`/`--export-cache type=gha` and you get a warm cache on a throwaway engine, served by infrastructure the fleet already has.
 
 ### The numbers
 
@@ -49,15 +49,17 @@ It is not free, and the chart shows the catch honestly: **run 1 with the GHA cac
 
 ### How it is wired
 
-The pieces here are spread across three trust zones. The cover image up top shows the whole path; here it is in words.
+The pieces here are spread across three trust zones. Here is the whole path, then the same thing in words.
+
+![GitHub fires a webhook at ephemerd, which provisions a VLAN-isolated throwaway runner holding a cold per-job buildkitd. The engine imports and exports cache over type=gha to ephemerd's Actions-cache proxy, which stores it in a registry. Point one shared registry in the VLAN and every ephemerd host shares a single fleet-wide build cache.](/img/2026/11/dagger-ephemerd-cache-architecture.svg)
 
 1. GitHub fires a `workflow_job` webhook at ephemerd on the node.
 2. ephemerd provisions a **fresh runner** for that one job — a container on an isolated VLAN, behind the egress fence, destroyed when the job ends.
 3. Inside the runner, the job starts a **per-job `buildkitd`** (privileged — see below) with an empty local cache.
-4. The build runs with `--import-cache type=gha` (warm start) and `--export-cache type=gha` (push new layers), pointed at **ephemerd's Actions-cache proxy** — which lives on the node, speaks GHA Cache v2, and is backed by a writable registry.
-5. That cache **survives teardown**. The next job gets a brand-new cold engine that warms itself from the same proxy.
+4. The build runs with `--import-cache type=gha` (warm start) and `--export-cache type=gha` (push new layers), pointed at **ephemerd's Actions-cache proxy** — which runs on the node, speaks GHA Cache v2, and stores entries in a registry it is configured to use.
+5. That cache **survives teardown**. The next job — on this host, or any other host pointed at the same registry — gets a brand-new cold engine that warms itself from it.
 
-The engine is the disposable part; the cache is the durable part; and the durable part lives on the node, inside the fleet, not on some long-running box outside it. In a workflow it is a handful of lines around your existing build step:
+The engine is the disposable part; the cache is the durable part; and the durable part lives in a registry inside the fleet — one per node, or a single one shared across every host — not on some long-running box outside it. In a workflow it is a handful of lines around your existing build step:
 
 ```yaml
     # ephemerd already injects ACTIONS_RESULTS_URL + ACTIONS_RUNTIME_TOKEN

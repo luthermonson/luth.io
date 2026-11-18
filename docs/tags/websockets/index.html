@@ -479,7 +479,7 @@ can take away hours of your day. That&rsquo;s at cost to your employer for both 
       
       <article class="mini-post">
           <a href="/blog/2026/11/dagger-on-ephemerd-runner-fleet/" class="image" style="--bg-image: url('/img/2026/11/dagger-ephemerd-cache-architecture.svg');">
-    <img class="" src="/img/2026/11/dagger-ephemerd-cache-architecture.svg" alt="GitHub fires a workflow_job webhook at ephemerd on the node, which provisions a fresh VLAN-isolated runner that is destroyed after the job. Inside it a cold per-job BuildKit engine imports and exports cached layers over the GitHub Actions Cache v2 protocol to ephemerd&#39;s Actions-cache proxy, which persists the cache on the node across every job.">
+    <img class="" src="/img/2026/11/dagger-ephemerd-cache-architecture.svg" alt="GitHub fires a workflow_job webhook at ephemerd on the node, which provisions a fresh VLAN-isolated runner that is destroyed after the job. Inside it a cold per-job BuildKit engine imports and exports cached layers over the GitHub Actions Cache v2 protocol to ephemerd&#39;s Actions-cache proxy, which persists the cache in a registry; point one shared registry in the VLAN at every host for a single fleet-wide cache.">
   </a>
         <header>
           <h2><a href="/blog/2026/11/dagger-on-ephemerd-runner-fleet/">Dagger on ephemerd, and a Warm Cache on Throwaway Runners</a></h2>
