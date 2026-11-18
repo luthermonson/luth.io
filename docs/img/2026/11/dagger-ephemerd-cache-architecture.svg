@@ -1,6 +1,6 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 860 566" font-family="system-ui, -apple-system, Segoe UI, Roboto, sans-serif" role="img" aria-labelledby="t d">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 580" font-family="system-ui, -apple-system, Segoe UI, Roboto, sans-serif" role="img" aria-labelledby="t d">
   <title id="t">A cold per-job engine, one shared cache for the fleet</title>
-  <desc id="d">GitHub fires a workflow_job webhook at ephemerd on a node, which provisions a fresh VLAN-isolated runner that is destroyed after the job. Inside it a per-job BuildKit engine starts with an empty local cache, then imports from and exports to ephemerd's Actions-cache proxy over the GitHub Actions Cache v2 protocol. The proxy stores entries in a registry it is configured to use; pointing every ephemerd host at one shared registry:2 in the VLAN gives the whole fleet a single build cache, keyed by repo. The engines are thrown away; the cache is not.</desc>
+  <desc id="d">GitHub fires a workflow_job webhook at ephemerd on a node, which provisions a fresh VLAN-isolated runner that is destroyed after the job. Inside it a per-job BuildKit engine starts with an empty local cache, then imports from and exports to ephemerd's Actions-cache proxy over the GitHub Actions Cache v2 protocol. The proxy stores entries in a registry it is configured to use; pointing every ephemerd host at one shared registry in the VLAN gives the whole fleet a single build cache, keyed by repo. The engines are thrown away; the cache is not.</desc>
   <style>
     .box { fill: #ffffff; stroke: #333333; stroke-width: 2; }
     .lbl { fill: #222222; font-size: 15px; }
@@ -11,72 +11,78 @@
     .arrcold { stroke: #00707a; stroke-width: 2.5; fill: none; }
     .arrwarm { stroke: #0550ae; stroke-width: 2.5; fill: none; }
     .arrreg { stroke: #a0287f; stroke-width: 2.5; fill: none; }
+    .tcold { fill: #00707a; font-size: 13px; }
+    .twarm { fill: #0550ae; font-size: 13px; }
+    .treg { fill: #a0287f; font-size: 13px; }
   </style>
   <defs>
-    <marker id="a" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto"><path d="M0,0 L9,3 L0,6 Z" fill="#555555"/></marker>
-    <marker id="ac" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto"><path d="M0,0 L9,3 L0,6 Z" fill="#00707a"/></marker>
-    <marker id="aw" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto"><path d="M0,0 L9,3 L0,6 Z" fill="#0550ae"/></marker>
-    <marker id="ar" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto"><path d="M0,0 L9,3 L0,6 Z" fill="#a0287f"/></marker>
+    <marker id="a" markerWidth="9" markerHeight="9" refX="7.5" refY="3" orient="auto"><path d="M0,0 L9,3 L0,6 Z" fill="#555555"/></marker>
+    <marker id="ac" markerWidth="9" markerHeight="9" refX="7.5" refY="3" orient="auto"><path d="M0,0 L9,3 L0,6 Z" fill="#00707a"/></marker>
+    <marker id="aw" markerWidth="9" markerHeight="9" refX="7.5" refY="3" orient="auto"><path d="M0,0 L9,3 L0,6 Z" fill="#0550ae"/></marker>
+    <marker id="ar" markerWidth="9" markerHeight="9" refX="7.5" refY="3" orient="auto"><path d="M0,0 L9,3 L0,6 Z" fill="#a0287f"/></marker>
   </defs>
 
   <!-- GitHub -->
-  <rect class="box" x="330" y="14" width="200" height="52" rx="10" stroke="#a0287f"/>
-  <text class="lblb" x="430" y="38" text-anchor="middle" fill="#a0287f">GitHub</text>
-  <text class="sub" x="430" y="57" text-anchor="middle">workflow_job webhook</text>
+  <rect class="box" x="350" y="14" width="200" height="52" rx="10" stroke="#a0287f"/>
+  <text class="lblb" x="450" y="38" text-anchor="middle" fill="#a0287f">GitHub</text>
+  <text class="sub" x="450" y="57" text-anchor="middle">workflow_job webhook</text>
 
   <!-- Runner zone (ephemeral) -->
-  <rect class="box" x="24" y="96" width="352" height="236" rx="12" stroke="#0550ae" stroke-dasharray="7 5"/>
-  <text class="lblb" x="200" y="123" text-anchor="middle" fill="#0550ae">Fresh runner — one per job</text>
-  <text class="sub" x="200" y="143" text-anchor="middle">VLAN 2 · egress fence · destroyed after the job</text>
-  <rect class="box" x="50" y="164" width="300" height="42" rx="6"/>
-  <text class="lbl" x="64" y="190">GitHub Actions job</text>
-  <rect class="box" x="50" y="216" width="300" height="42" rx="6"/>
-  <text class="lbl" x="64" y="242">buildkitd · per job · --privileged</text>
-  <rect class="box" x="50" y="268" width="300" height="40" rx="6" stroke="#0550ae" stroke-dasharray="5 4"/>
-  <text class="lbl" x="64" y="293">local build cache: <tspan font-weight="600">0 B (cold)</tspan></text>
+  <rect class="box" x="30" y="100" width="360" height="252" rx="12" stroke="#0550ae" stroke-dasharray="7 5"/>
+  <text class="lblb" x="210" y="130" text-anchor="middle" fill="#0550ae">Fresh runner — one per job</text>
+  <text class="sub" x="210" y="150" text-anchor="middle">VLAN 2 · egress fence · destroyed after the job</text>
+  <rect class="box" x="58" y="176" width="304" height="44" rx="6"/>
+  <text class="lbl" x="74" y="203">GitHub Actions job</text>
+  <rect class="box" x="58" y="232" width="304" height="44" rx="6"/>
+  <text class="lbl" x="74" y="259">buildkitd · per job · --privileged</text>
+  <rect class="box" x="58" y="288" width="304" height="42" rx="6" stroke="#0550ae" stroke-dasharray="5 4"/>
+  <text class="lbl" x="74" y="314">local build cache: <tspan font-weight="600">0 B (cold)</tspan></text>
+  <text class="mono" x="210" y="346" text-anchor="middle">--import / --export  type=gha</text>
 
   <!-- Node A zone -->
-  <rect class="box" x="484" y="96" width="352" height="236" rx="12" stroke="#00707a"/>
-  <text class="lblb" x="660" y="123" text-anchor="middle" fill="#00707a">ephemerd · node A</text>
-  <text class="sub" x="660" y="143" text-anchor="middle">provisions the runner</text>
-  <rect class="box" x="510" y="188" width="300" height="46" rx="6"/>
-  <text class="lbl" x="524" y="216">Actions-cache proxy · GHA Cache v2</text>
-  <text class="sub" x="660" y="268" text-anchor="middle">stores + fetches entries in the</text>
-  <text class="sub" x="660" y="287" text-anchor="middle">registry it is pointed at  ↓</text>
+  <rect class="box" x="510" y="100" width="360" height="252" rx="12" stroke="#00707a"/>
+  <text class="lblb" x="690" y="130" text-anchor="middle" fill="#00707a">ephemerd · node A</text>
+  <text class="sub" x="690" y="150" text-anchor="middle">provisions the runner</text>
+  <rect class="box" x="538" y="232" width="304" height="44" rx="6"/>
+  <text class="lbl" x="554" y="259">Actions-cache proxy · GHA Cache v2</text>
+  <text class="sub" x="690" y="304" text-anchor="middle">stores + fetches cache entries</text>
+  <text class="sub" x="690" y="323" text-anchor="middle">in the registry it points at  ↓</text>
 
-  <!-- control-plane arrows -->
-  <path class="arr" d="M470,56 C 560,70 660,80 660,94" marker-end="url(#a)"/>
-  <text class="sub" x="566" y="76" fill="#555555">① webhook</text>
-  <path class="arr" d="M484,176 H380" marker-end="url(#a)"/>
-  <text class="sub" x="432" y="170" text-anchor="middle" fill="#555555">② provision</text>
+  <!-- webhook arrow -->
+  <path class="arr" d="M532,64 C 620,78 690,82 690,98" marker-end="url(#a)"/>
+  <text class="sub" x="624" y="76" text-anchor="middle">webhook</text>
 
-  <!-- cache data-path arrows (buildkitd <-> proxy) -->
-  <path class="arrcold" d="M508,224 H354" marker-end="url(#ac)"/>
-  <text class="sub" x="431" y="218" text-anchor="middle" fill="#00707a">③ import</text>
-  <path class="arrwarm" d="M354,250 H508" marker-end="url(#aw)"/>
-  <text class="sub" x="431" y="268" text-anchor="middle" fill="#0550ae">④ export</text>
+  <!-- provision arrow (node A -> runner), above the inner boxes -->
+  <path class="arr" d="M510,170 H392" marker-end="url(#a)"/>
+  <text class="sub" x="451" y="164" text-anchor="middle">provisions runner</text>
+
+  <!-- import / export between buildkitd and proxy (aligned boxes) -->
+  <text class="tcold" x="450" y="240" text-anchor="middle">import</text>
+  <path class="arrcold" d="M538,250 H364" marker-end="url(#ac)"/>
+  <path class="arrwarm" d="M364,264 H538" marker-end="url(#aw)"/>
+  <text class="twarm" x="450" y="282" text-anchor="middle">export</text>
 
   <!-- shared registry cylinder (in the VLAN) -->
-  <g transform="translate(248,402)">
-    <path d="M0,16 a182,13 0 0 1 364,0 l0,62 a182,13 0 0 1 -364,0 Z" fill="#f7e9f1" stroke="#a0287f" stroke-width="2"/>
-    <path d="M0,16 a182,13 0 0 0 364,0" fill="none" stroke="#a0287f" stroke-width="2"/>
-    <text class="lblb" x="182" y="46" text-anchor="middle" fill="#a0287f">shared registry:2 — in the VLAN</text>
-    <text class="sub" x="182" y="66" text-anchor="middle">one build cache for every host, keyed by repo</text>
-    <text class="sub" x="182" y="84" text-anchor="middle">survives every job</text>
+  <g transform="translate(270,410)">
+    <path d="M0,16 a180,13 0 0 1 360,0 l0,60 a180,13 0 0 1 -360,0 Z" fill="#f7e9f1" stroke="#a0287f" stroke-width="2"/>
+    <path d="M0,16 a180,13 0 0 0 360,0" fill="none" stroke="#a0287f" stroke-width="2"/>
+    <text class="lblb" x="180" y="46" text-anchor="middle" fill="#a0287f">shared registry — in the VLAN</text>
+    <text class="sub" x="180" y="66" text-anchor="middle">one build cache for every host, keyed by repo</text>
+    <text class="sub" x="180" y="84" text-anchor="middle">survives every job</text>
   </g>
 
   <!-- node A proxy -> shared registry -->
-  <path class="arrreg" d="M636,234 C 600,320 540,360 500,414" marker-end="url(#ar)"/>
-  <text class="sub" x="596" y="356" fill="#a0287f">store + fetch</text>
+  <path class="arrreg" d="M660,352 C 640,382 600,398 572,420" marker-end="url(#ar)"/>
+  <text class="treg" x="648" y="388" text-anchor="middle">store + fetch</text>
 
   <!-- other hosts -> same registry -->
-  <rect class="box" x="36" y="420" width="176" height="86" rx="10" stroke="#00707a"/>
-  <text class="lbl" x="124" y="450" text-anchor="middle" fill="#00707a">ephemerd · node B</text>
-  <text class="sub" x="124" y="470" text-anchor="middle">node C · …</text>
-  <text class="sub" x="124" y="488" text-anchor="middle">+ their own runners</text>
-  <path class="arrreg" d="M214,462 H246" marker-end="url(#ar)"/>
-  <text class="sub" x="150" y="412" text-anchor="middle" fill="#a0287f">every host points here</text>
+  <rect class="box" x="40" y="432" width="186" height="86" rx="10" stroke="#00707a"/>
+  <text class="lbl" x="133" y="460" text-anchor="middle" fill="#00707a">ephemerd · node B</text>
+  <text class="sub" x="133" y="480" text-anchor="middle">node C · …</text>
+  <text class="sub" x="133" y="499" text-anchor="middle">+ their own runners</text>
+  <path class="arrreg" d="M228,472 H268" marker-end="url(#ar)"/>
+  <text class="treg" x="140" y="424" text-anchor="middle">every host points here</text>
 
   <!-- caption -->
-  <text class="sub" x="430" y="548" text-anchor="middle">Throw the engine away each job; the cache lives in the registry. Share one registry and every cold engine warms from what any host built.</text>
+  <text class="sub" x="450" y="560" text-anchor="middle">Throw the engine away each job. The cache lives in the registry — share one and every cold engine warms from what any host built.</text>
 </svg>
