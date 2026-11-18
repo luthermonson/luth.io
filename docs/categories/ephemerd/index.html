@@ -215,6 +215,63 @@
   <header>
   <div class="title">
     
+      <h2><a href="/blog/2026/11/dagger-on-ephemerd-runner-fleet/">Dagger on ephemerd, and a Warm Cache on Throwaway Runners</a></h2>
+    
+    
+      <p>A fresh engine per job means a cold cache every job — unless the cache lives on the node instead of in the engine. Benchmarked: an ephemeral BuildKit engine warms itself to within a few seconds of a long-running one, no persistent engine required.</p>
+    
+  </div>
+  <div class="meta">
+    <time datetime="2026-11-18 09:00:00 -0700 MST">November 18, 2026</time>
+    
+    <p>10-Minute Read</p>
+  </div>
+</header>
+
+  <div class="content">
+    <a href="/blog/2026/11/dagger-on-ephemerd-runner-fleet/" class="image" style="--bg-image: url('/img/2026/11/dagger-ephemerd-cache-architecture.svg');">
+    <img class="" src="/img/2026/11/dagger-ephemerd-cache-architecture.svg" alt="GitHub fires a workflow_job webhook at ephemerd on the node, which provisions a fresh VLAN-isolated runner that is destroyed after the job. Inside it a cold per-job BuildKit engine imports and exports cached layers over the GitHub Actions Cache v2 protocol to ephemerd&#39;s Actions-cache proxy, which persists the cache in a registry; point one shared registry in the VLAN at every host for a single fleet-wide cache.">
+  </a>
+    
+    <p>A friend asked me whether Dagger replaces ephemerd. It doesn&rsquo;t — they sit at different layers, and I wrote half this post explaining that before I noticed the more interesting question hiding underneath it.</p>
+  </div>
+  <footer>
+    <a href="/blog/2026/11/dagger-on-ephemerd-runner-fleet/" class="button big">Read More</a>
+    <div class="stats">
+  
+    <ul class="categories">
+      
+        
+          <li><a class="article-terms-link" href="/categories/ephemerd/">ephemerd</a></li>
+        
+          <li><a class="article-terms-link" href="/categories/ci/">ci</a></li>
+        
+          <li><a class="article-terms-link" href="/categories/containers/">containers</a></li>
+        
+      
+    </ul>
+  
+  
+    <ul class="tags">
+      
+        
+          <li><a class="article-terms-link" href="/tags/infrastructure/">infrastructure</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/ephemerd/">ephemerd</a></li>
+        
+      
+    </ul>
+  
+</div>
+
+  </footer>
+</article>
+
+  
+    <article class="post">
+  <header>
+  <div class="title">
+    
       <h2><a href="/blog/2026/10/docker-in-docker-without-root/">Docker-in-Docker in CI Without Handing Jobs Root</a></h2>
     
     
@@ -961,10 +1018,10 @@ great from my terminal and fell over the moment ephemerd became a real Windows s
               <a href="/categories/databases/">databases<span class="count">10</span></a>
           
           <li>
-              <a href="/categories/security/">security<span class="count">10</span></a>
+              <a href="/categories/ephemerd/">ephemerd<span class="count">10</span></a>
           
           <li>
-              <a href="/categories/ephemerd/">ephemerd<span class="count">9</span></a>
+              <a href="/categories/security/">security<span class="count">10</span></a>
           
           <li>
               <a href="/categories/tools/">tools<span class="count">5</span></a>

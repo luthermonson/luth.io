@@ -6,8 +6,15 @@
     <description>Recent content in ephemerd on Luther Monson</description>
     <generator>Hugo</generator>
     <language>en</language>
-    <lastBuildDate>Sat, 24 Oct 2026 10:00:00 -0700</lastBuildDate>
+    <lastBuildDate>Wed, 18 Nov 2026 09:00:00 -0700</lastBuildDate>
     <atom:link href="https://luth.io/categories/ephemerd/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>Dagger on ephemerd, and a Warm Cache on Throwaway Runners</title>
+      <link>https://luth.io/blog/2026/11/dagger-on-ephemerd-runner-fleet/</link>
+      <pubDate>Wed, 18 Nov 2026 09:00:00 -0700</pubDate>
+      <guid>https://luth.io/blog/2026/11/dagger-on-ephemerd-runner-fleet/</guid>
+      <description>&lt;p&gt;A friend asked me whether Dagger replaces ephemerd. It doesn&amp;rsquo;t — they sit at different layers, and I wrote half this post explaining that before I noticed the more interesting question hiding underneath it.&lt;/p&gt;&#xA;&lt;p&gt;Ephemeral runners throw the whole machine away after every job. That is deliberate: a fork PR gets a clean, single-use box and nothing it does survives. But the build cache does not survive either. Every job starts cold — re-pull the base images, recompile from scratch, re-download every dependency. The usual fix is a long-running build engine with a persistent disk, which for a hardened fleet means standing up a privileged box that sits &lt;em&gt;outside&lt;/em&gt; your isolation. That trade bothered me enough to measure the alternative.&lt;/p&gt;</description>
+    </item>
     <item>
       <title>Docker-in-Docker in CI Without Handing Jobs Root</title>
       <link>https://luth.io/blog/2026/10/docker-in-docker-without-root/</link>

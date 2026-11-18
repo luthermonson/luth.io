@@ -3,7 +3,7 @@ title: "Dagger on ephemerd, and a Warm Cache on Throwaway Runners"
 description: "A fresh engine per job means a cold cache every job — unless the cache lives on the node instead of in the engine. Benchmarked: an ephemeral BuildKit engine warms itself to within a few seconds of a long-running one, no persistent engine required."
 date: 2026-11-18T09:00:00-07:00
 tags: [ infrastructure, ephemerd ]
-categories: [ ci, containers ]
+categories: [ ephemerd, ci, containers ]
 images:
  - src: img/2026/11/dagger-ephemerd-cache-architecture.svg
    alt: "GitHub fires a workflow_job webhook at ephemerd on the node, which provisions a fresh VLAN-isolated runner that is destroyed after the job. Inside it a cold per-job BuildKit engine imports and exports cached layers over the GitHub Actions Cache v2 protocol to ephemerd's Actions-cache proxy, which persists the cache in a registry; point one shared registry in the VLAN at every host for a single fleet-wide cache."
