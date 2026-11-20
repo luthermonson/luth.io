@@ -217,7 +217,7 @@
       
         <li>
           <a href="/tags/ephpm/">Ephpm</a>
-          <span class="term-count">40</span>
+          <span class="term-count">42</span>
         </li>
       
         <li>
@@ -241,6 +241,11 @@
         </li>
       
         <li>
+          <a href="/tags/sqlite/">Sqlite</a>
+          <span class="term-count">13</span>
+        </li>
+      
+        <li>
           <a href="/tags/ephemerd/">Ephemerd</a>
           <span class="term-count">12</span>
         </li>
@@ -252,11 +257,6 @@
       
         <li>
           <a href="/tags/go-proxmox/">Go-Proxmox</a>
-          <span class="term-count">11</span>
-        </li>
-      
-        <li>
-          <a href="/tags/sqlite/">Sqlite</a>
           <span class="term-count">11</span>
         </li>
       
@@ -281,7 +281,7 @@
         </li>
       
         <li>
-          <a href="/tags/open-source/">Open-Source</a>
+          <a href="/tags/open-source/">Open Source</a>
           <span class="term-count">7</span>
         </li>
       
@@ -348,6 +348,11 @@
         <li>
           <a href="/tags/websockets/">Websockets</a>
           <span class="term-count">4</span>
+        </li>
+      
+        <li>
+          <a href="/tags/aws/">Aws</a>
+          <span class="term-count">3</span>
         </li>
       
         <li>
@@ -451,7 +456,7 @@
         </li>
       
         <li>
-          <a href="/tags/distributed-systems/">Distributed-Systems</a>
+          <a href="/tags/distributed-systems/">Distributed Systems</a>
           <span class="term-count">2</span>
         </li>
       
@@ -511,6 +516,11 @@
         </li>
       
         <li>
+          <a href="/tags/terraform/">Terraform</a>
+          <span class="term-count">2</span>
+        </li>
+      
+        <li>
           <a href="/tags/tui/">Tui</a>
           <span class="term-count">2</span>
         </li>
@@ -551,12 +561,17 @@
         </li>
       
         <li>
-          <a href="/tags/aws/">Aws</a>
+          <a href="/tags/backups/">Backups</a>
           <span class="term-count">1</span>
         </li>
       
         <li>
           <a href="/tags/benchmarks/">Benchmarks</a>
+          <span class="term-count">1</span>
+        </li>
+      
+        <li>
+          <a href="/tags/blue-green/">Blue-Green</a>
           <span class="term-count">1</span>
         </li>
       
@@ -622,6 +637,11 @@
       
         <li>
           <a href="/tags/ebs/">Ebs</a>
+          <span class="term-count">1</span>
+        </li>
+      
+        <li>
+          <a href="/tags/ec2/">Ec2</a>
           <span class="term-count">1</span>
         </li>
       
@@ -826,6 +846,11 @@
         </li>
       
         <li>
+          <a href="/tags/packer/">Packer</a>
+          <span class="term-count">1</span>
+        </li>
+      
+        <li>
           <a href="/tags/php-internals/">Php Internals</a>
           <span class="term-count">1</span>
         </li>
@@ -891,6 +916,11 @@
         </li>
       
         <li>
+          <a href="/tags/spot/">Spot</a>
+          <span class="term-count">1</span>
+        </li>
+      
+        <li>
           <a href="/tags/sqld/">Sqld</a>
           <span class="term-count">1</span>
         </li>
@@ -912,11 +942,6 @@
       
         <li>
           <a href="/tags/tcp/">Tcp</a>
-          <span class="term-count">1</span>
-        </li>
-      
-        <li>
-          <a href="/tags/terraform/">Terraform</a>
           <span class="term-count">1</span>
         </li>
       
@@ -998,12 +1023,32 @@
       </header>
       
       <article class="mini-post">
+          <a href="/blog/2026/11/operating-one-box-ephpm-backups-blue-green/" class="image" style="--bg-image: url('/img/2026/11/one-box-one-binary-blue-green.svg');">
+    <img class="" src="/img/2026/11/one-box-one-binary-blue-green.svg" alt="Node A holds the live data; a green node B comes up with its own empty volume; each site&#39;s SQLite replicates A to B over the cluster channel with Turso CDC; once B converges the Elastic IP moves and A is retired, while S3 backups stay on because exactly one node takes them">
+  </a>
+        <header>
+          <h2><a href="/blog/2026/11/operating-one-box-ephpm-backups-blue-green/">Operating the One-Box ePHPm Setup: Backups and Blue/Green</a></h2>
+          <time class="published" datetime="2026-11-19 07:30:00 -0700 MST">November 19, 2026</time>
+        </header>
+      </article>
+      
+      <article class="mini-post">
           <a href="/blog/2026/11/dagger-on-ephemerd-runner-fleet/" class="image" style="--bg-image: url('/img/2026/11/dagger-ephemerd-cache-architecture.svg');">
     <img class="" src="/img/2026/11/dagger-ephemerd-cache-architecture.svg" alt="GitHub fires a workflow_job webhook at ephemerd on the node, which provisions a fresh VLAN-isolated runner that is destroyed after the job. Inside it a cold per-job BuildKit engine imports and exports cached layers over the GitHub Actions Cache v2 protocol to ephemerd&#39;s Actions-cache proxy, which persists the cache in a registry; point one shared registry in the VLAN at every host for a single fleet-wide cache.">
   </a>
         <header>
           <h2><a href="/blog/2026/11/dagger-on-ephemerd-runner-fleet/">Dagger on ephemerd, and a Warm Cache on Throwaway Runners</a></h2>
           <time class="published" datetime="2026-11-18 09:00:00 -0700 MST">November 18, 2026</time>
+        </header>
+      </article>
+      
+      <article class="mini-post">
+          <a href="/blog/2026/11/one-box-one-binary-single-ephpm-vm/" class="image" style="--bg-image: url('/img/2026/11/one-box-one-binary-single-ephpm-vm-cover.svg');">
+    <img class="" src="/img/2026/11/one-box-one-binary-single-ephpm-vm-cover.svg" alt="A tall single-node k3s stack of Traefik, Tailscale, three PHP pods, three CronJobs, a litestream sidecar, PVs and the control plane collapses into one Debian VM running a single ephpm process that is the web server, PHP runtime, per-site SQLite, KV store, cron scheduler and S3 backup agent">
+  </a>
+        <header>
+          <h2><a href="/blog/2026/11/one-box-one-binary-single-ephpm-vm/">Replacing a k3s Cluster With One ePHPm Process</a></h2>
+          <time class="published" datetime="2026-11-18 07:30:00 -0700 MST">November 18, 2026</time>
         </header>
       </article>
       
@@ -1024,26 +1069,6 @@
         <header>
           <h2><a href="/blog/2026/10/docker-in-docker-without-root/">Docker-in-Docker in CI Without Handing Jobs Root</a></h2>
           <time class="published" datetime="2026-10-24 10:00:00 -0700 MST">October 24, 2026</time>
-        </header>
-      </article>
-      
-      <article class="mini-post">
-          <a href="/blog/2026/10/ci-cache-proxies-ephemeral-runners/" class="image" style="--bg-image: url('/img/2026/10/ci-cache-proxies-ephemeral-runners-flow.svg');">
-    <img class="" src="/img/2026/10/ci-cache-proxies-ephemeral-runners-flow.svg" alt="A fresh runner per job points go mod, cargo, composer, release downloads and actions/cache at matching cache proxies on the ephemerd node, where the caches persist and only reach the internet on a miss">
-  </a>
-        <header>
-          <h2><a href="/blog/2026/10/ci-cache-proxies-ephemeral-runners/">Cache Proxies for Ephemeral CI Runners</a></h2>
-          <time class="published" datetime="2026-10-23 15:00:00 -0700 MST">October 23, 2026</time>
-        </header>
-      </article>
-      
-      <article class="mini-post">
-          <a href="/blog/2026/10/ephemeral-macos-runners-vm-clones/" class="image" style="--bg-image: url('/img/2026/10/ephemeral-macos-runners-vm-clones-lifecycle.svg');">
-    <img class="" src="/img/2026/10/ephemeral-macos-runners-vm-clones-lifecycle.svg" alt="A macOS CI job lifecycle: clone the base image, boot and grow the disk, set up over SSH, run the job, then stop and sweep, with a band showing the single slot held the whole time">
-  </a>
-        <header>
-          <h2><a href="/blog/2026/10/ephemeral-macos-runners-vm-clones/">Ephemeral macOS Runners: A Fresh VM Per Job on Apple Silicon</a></h2>
-          <time class="published" datetime="2026-10-23 11:00:00 -0700 MST">October 23, 2026</time>
         </header>
       </article>
       

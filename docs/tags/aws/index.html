@@ -215,6 +215,136 @@
   <header>
   <div class="title">
     
+      <h2><a href="/blog/2026/11/operating-one-box-ephpm-backups-blue-green/">Operating the One-Box ePHPm Setup: Backups and Blue/Green</a></h2>
+    
+    
+      <p>Day-two work on the single-VM ePHPm box: a golden AMI that smoke-tests itself, an S3 backup that survives on a box too small to hold two copies of the database, and a blue/green upgrade that moves the data instead of the disk.</p>
+    
+  </div>
+  <div class="meta">
+    <time datetime="2026-11-19 07:30:00 -0700 MST">November 19, 2026</time>
+    
+    <p>7-Minute Read</p>
+  </div>
+</header>
+
+  <div class="content">
+    <a href="/blog/2026/11/operating-one-box-ephpm-backups-blue-green/" class="image" style="--bg-image: url('/img/2026/11/one-box-one-binary-blue-green.svg');">
+    <img class="" src="/img/2026/11/one-box-one-binary-blue-green.svg" alt="Node A holds the live data; a green node B comes up with its own empty volume; each site&#39;s SQLite replicates A to B over the cluster channel with Turso CDC; once B converges the Elastic IP moves and A is retired, while S3 backups stay on because exactly one node takes them">
+  </a>
+    
+    <p>The box is baked, not configured in place. Packer builds a Debian 12 AMI with the ePHPm binary and all three apps&rsquo; code
+already on disk. The source gets pulled from the three private GitHub repos&rsquo; tarballs at build time and run through
+<code>composer install</code> right there in the image. Rolling new code means baking a new AMI.</p>
+  </div>
+  <footer>
+    <a href="/blog/2026/11/operating-one-box-ephpm-backups-blue-green/" class="button big">Read More</a>
+    <div class="stats">
+  
+    <ul class="categories">
+      
+        
+          <li><a class="article-terms-link" href="/categories/ephpm/">ephpm</a></li>
+        
+          <li><a class="article-terms-link" href="/categories/containers/">containers</a></li>
+        
+      
+    </ul>
+  
+  
+    <ul class="tags">
+      
+        
+          <li><a class="article-terms-link" href="/tags/aws/">aws</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/packer/">packer</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/terraform/">terraform</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/ephpm/">ephpm</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/blue-green/">blue-green</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/sqlite/">sqlite</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/backups/">backups</a></li>
+        
+      
+    </ul>
+  
+</div>
+
+  </footer>
+</article>
+
+  
+    <article class="post">
+  <header>
+  <div class="title">
+    
+      <h2><a href="/blog/2026/11/one-box-one-binary-single-ephpm-vm/">Replacing a k3s Cluster With One ePHPm Process</a></h2>
+    
+    
+      <p>How three PHP sites, their databases, cron and backups collapse onto one small VM, and what that costs once you match the bill to the size of the problem.</p>
+    
+  </div>
+  <div class="meta">
+    <time datetime="2026-11-18 07:30:00 -0700 MST">November 18, 2026</time>
+    
+    <p>9-Minute Read</p>
+  </div>
+</header>
+
+  <div class="content">
+    <a href="/blog/2026/11/one-box-one-binary-single-ephpm-vm/" class="image" style="--bg-image: url('/img/2026/11/one-box-one-binary-single-ephpm-vm-cover.svg');">
+    <img class="" src="/img/2026/11/one-box-one-binary-single-ephpm-vm-cover.svg" alt="A tall single-node k3s stack of Traefik, Tailscale, three PHP pods, three CronJobs, a litestream sidecar, PVs and the control plane collapses into one Debian VM running a single ephpm process that is the web server, PHP runtime, per-site SQLite, KV store, cron scheduler and S3 backup agent">
+  </a>
+    
+    <p>A couple of weeks ago I wrote up <a href="/blog/2026/10/durable-data-single-node-k3s-ebs-rebuild/">surviving a node rebuild</a>
+on single-node k3s. Put the stateful bytes on a dedicated EBS volume, treat the node as cattle, and rebuild the machine
+without losing the data. It works.</p>
+  </div>
+  <footer>
+    <a href="/blog/2026/11/one-box-one-binary-single-ephpm-vm/" class="button big">Read More</a>
+    <div class="stats">
+  
+    <ul class="categories">
+      
+        
+          <li><a class="article-terms-link" href="/categories/ephpm/">ephpm</a></li>
+        
+          <li><a class="article-terms-link" href="/categories/containers/">containers</a></li>
+        
+      
+    </ul>
+  
+  
+    <ul class="tags">
+      
+        
+          <li><a class="article-terms-link" href="/tags/aws/">aws</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/ec2/">ec2</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/ephpm/">ephpm</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/spot/">spot</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/sqlite/">sqlite</a></li>
+        
+      
+    </ul>
+  
+</div>
+
+  </footer>
+</article>
+
+  
+    <article class="post">
+  <header>
+  <div class="title">
+    
       <h2><a href="/blog/2026/10/durable-data-single-node-k3s-ebs-rebuild/">Surviving a Node Rebuild: A Durable ePHPm Blog on Single-Node k3s</a></h2>
     
     
@@ -294,12 +424,32 @@ one process, one file, a distroless image around 270 MB. That fits a micro VM wi
       </header>
       
       <article class="mini-post">
+          <a href="/blog/2026/11/operating-one-box-ephpm-backups-blue-green/" class="image" style="--bg-image: url('/img/2026/11/one-box-one-binary-blue-green.svg');">
+    <img class="" src="/img/2026/11/one-box-one-binary-blue-green.svg" alt="Node A holds the live data; a green node B comes up with its own empty volume; each site&#39;s SQLite replicates A to B over the cluster channel with Turso CDC; once B converges the Elastic IP moves and A is retired, while S3 backups stay on because exactly one node takes them">
+  </a>
+        <header>
+          <h2><a href="/blog/2026/11/operating-one-box-ephpm-backups-blue-green/">Operating the One-Box ePHPm Setup: Backups and Blue/Green</a></h2>
+          <time class="published" datetime="2026-11-19 07:30:00 -0700 MST">November 19, 2026</time>
+        </header>
+      </article>
+      
+      <article class="mini-post">
           <a href="/blog/2026/11/dagger-on-ephemerd-runner-fleet/" class="image" style="--bg-image: url('/img/2026/11/dagger-ephemerd-cache-architecture.svg');">
     <img class="" src="/img/2026/11/dagger-ephemerd-cache-architecture.svg" alt="GitHub fires a workflow_job webhook at ephemerd on the node, which provisions a fresh VLAN-isolated runner that is destroyed after the job. Inside it a cold per-job BuildKit engine imports and exports cached layers over the GitHub Actions Cache v2 protocol to ephemerd&#39;s Actions-cache proxy, which persists the cache in a registry; point one shared registry in the VLAN at every host for a single fleet-wide cache.">
   </a>
         <header>
           <h2><a href="/blog/2026/11/dagger-on-ephemerd-runner-fleet/">Dagger on ephemerd, and a Warm Cache on Throwaway Runners</a></h2>
           <time class="published" datetime="2026-11-18 09:00:00 -0700 MST">November 18, 2026</time>
+        </header>
+      </article>
+      
+      <article class="mini-post">
+          <a href="/blog/2026/11/one-box-one-binary-single-ephpm-vm/" class="image" style="--bg-image: url('/img/2026/11/one-box-one-binary-single-ephpm-vm-cover.svg');">
+    <img class="" src="/img/2026/11/one-box-one-binary-single-ephpm-vm-cover.svg" alt="A tall single-node k3s stack of Traefik, Tailscale, three PHP pods, three CronJobs, a litestream sidecar, PVs and the control plane collapses into one Debian VM running a single ephpm process that is the web server, PHP runtime, per-site SQLite, KV store, cron scheduler and S3 backup agent">
+  </a>
+        <header>
+          <h2><a href="/blog/2026/11/one-box-one-binary-single-ephpm-vm/">Replacing a k3s Cluster With One ePHPm Process</a></h2>
+          <time class="published" datetime="2026-11-18 07:30:00 -0700 MST">November 18, 2026</time>
         </header>
       </article>
       
@@ -323,26 +473,6 @@ one process, one file, a distroless image around 270 MB. That fits a micro VM wi
         </header>
       </article>
       
-      <article class="mini-post">
-          <a href="/blog/2026/10/ci-cache-proxies-ephemeral-runners/" class="image" style="--bg-image: url('/img/2026/10/ci-cache-proxies-ephemeral-runners-flow.svg');">
-    <img class="" src="/img/2026/10/ci-cache-proxies-ephemeral-runners-flow.svg" alt="A fresh runner per job points go mod, cargo, composer, release downloads and actions/cache at matching cache proxies on the ephemerd node, where the caches persist and only reach the internet on a miss">
-  </a>
-        <header>
-          <h2><a href="/blog/2026/10/ci-cache-proxies-ephemeral-runners/">Cache Proxies for Ephemeral CI Runners</a></h2>
-          <time class="published" datetime="2026-10-23 15:00:00 -0700 MST">October 23, 2026</time>
-        </header>
-      </article>
-      
-      <article class="mini-post">
-          <a href="/blog/2026/10/ephemeral-macos-runners-vm-clones/" class="image" style="--bg-image: url('/img/2026/10/ephemeral-macos-runners-vm-clones-lifecycle.svg');">
-    <img class="" src="/img/2026/10/ephemeral-macos-runners-vm-clones-lifecycle.svg" alt="A macOS CI job lifecycle: clone the base image, boot and grow the disk, set up over SSH, run the job, then stop and sweep, with a band showing the single slot held the whole time">
-  </a>
-        <header>
-          <h2><a href="/blog/2026/10/ephemeral-macos-runners-vm-clones/">Ephemeral macOS Runners: A Fresh VM Per Job on Apple Silicon</a></h2>
-          <time class="published" datetime="2026-10-23 11:00:00 -0700 MST">October 23, 2026</time>
-        </header>
-      </article>
-      
       
         <footer>
           <a href="/blog" class="button">See More</a>
@@ -362,7 +492,7 @@ one process, one file, a distroless image around 270 MB. That fits a micro VM wi
           
           
           <li>
-              <a href="/categories/ephpm/">ephpm<span class="count">39</span></a>
+              <a href="/categories/ephpm/">ephpm<span class="count">41</span></a>
           
           <li>
               <a href="/categories/go/">go<span class="count">32</span></a>
@@ -383,7 +513,7 @@ one process, one file, a distroless image around 270 MB. That fits a micro VM wi
               <a href="/categories/ci/">ci<span class="count">13</span></a>
           
           <li>
-              <a href="/categories/containers/">containers<span class="count">11</span></a>
+              <a href="/categories/containers/">containers<span class="count">13</span></a>
           
           <li>
               <a href="/categories/databases/">databases<span class="count">10</span></a>

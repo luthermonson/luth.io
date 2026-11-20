@@ -6,8 +6,57 @@
     <description>Recent content in Tags on Luther Monson</description>
     <generator>Hugo</generator>
     <language>en</language>
-    <lastBuildDate>Wed, 18 Nov 2026 09:00:00 -0700</lastBuildDate>
+    <lastBuildDate>Thu, 19 Nov 2026 07:30:00 -0700</lastBuildDate>
     <atom:link href="https://luth.io/tags/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>Aws</title>
+      <link>https://luth.io/tags/aws/</link>
+      <pubDate>Thu, 19 Nov 2026 07:30:00 -0700</pubDate>
+      <guid>https://luth.io/tags/aws/</guid>
+      <description></description>
+    </item>
+    <item>
+      <title>Backups</title>
+      <link>https://luth.io/tags/backups/</link>
+      <pubDate>Thu, 19 Nov 2026 07:30:00 -0700</pubDate>
+      <guid>https://luth.io/tags/backups/</guid>
+      <description></description>
+    </item>
+    <item>
+      <title>Blue-Green</title>
+      <link>https://luth.io/tags/blue-green/</link>
+      <pubDate>Thu, 19 Nov 2026 07:30:00 -0700</pubDate>
+      <guid>https://luth.io/tags/blue-green/</guid>
+      <description></description>
+    </item>
+    <item>
+      <title>Ephpm</title>
+      <link>https://luth.io/tags/ephpm/</link>
+      <pubDate>Thu, 19 Nov 2026 07:30:00 -0700</pubDate>
+      <guid>https://luth.io/tags/ephpm/</guid>
+      <description></description>
+    </item>
+    <item>
+      <title>Packer</title>
+      <link>https://luth.io/tags/packer/</link>
+      <pubDate>Thu, 19 Nov 2026 07:30:00 -0700</pubDate>
+      <guid>https://luth.io/tags/packer/</guid>
+      <description></description>
+    </item>
+    <item>
+      <title>Sqlite</title>
+      <link>https://luth.io/tags/sqlite/</link>
+      <pubDate>Thu, 19 Nov 2026 07:30:00 -0700</pubDate>
+      <guid>https://luth.io/tags/sqlite/</guid>
+      <description></description>
+    </item>
+    <item>
+      <title>Terraform</title>
+      <link>https://luth.io/tags/terraform/</link>
+      <pubDate>Thu, 19 Nov 2026 07:30:00 -0700</pubDate>
+      <guid>https://luth.io/tags/terraform/</guid>
+      <description></description>
+    </item>
     <item>
       <title>Ephemerd</title>
       <link>https://luth.io/tags/ephemerd/</link>
@@ -23,10 +72,17 @@
       <description></description>
     </item>
     <item>
-      <title>Aws</title>
-      <link>https://luth.io/tags/aws/</link>
-      <pubDate>Wed, 28 Oct 2026 10:00:00 -0700</pubDate>
-      <guid>https://luth.io/tags/aws/</guid>
+      <title>Ec2</title>
+      <link>https://luth.io/tags/ec2/</link>
+      <pubDate>Wed, 18 Nov 2026 07:30:00 -0700</pubDate>
+      <guid>https://luth.io/tags/ec2/</guid>
+      <description></description>
+    </item>
+    <item>
+      <title>Spot</title>
+      <link>https://luth.io/tags/spot/</link>
+      <pubDate>Wed, 18 Nov 2026 07:30:00 -0700</pubDate>
+      <guid>https://luth.io/tags/spot/</guid>
       <description></description>
     </item>
     <item>
@@ -34,13 +90,6 @@
       <link>https://luth.io/tags/ebs/</link>
       <pubDate>Wed, 28 Oct 2026 10:00:00 -0700</pubDate>
       <guid>https://luth.io/tags/ebs/</guid>
-      <description></description>
-    </item>
-    <item>
-      <title>Ephpm</title>
-      <link>https://luth.io/tags/ephpm/</link>
-      <pubDate>Wed, 28 Oct 2026 10:00:00 -0700</pubDate>
-      <guid>https://luth.io/tags/ephpm/</guid>
       <description></description>
     </item>
     <item>
@@ -55,20 +104,6 @@
       <link>https://luth.io/tags/kubernetes/</link>
       <pubDate>Wed, 28 Oct 2026 10:00:00 -0700</pubDate>
       <guid>https://luth.io/tags/kubernetes/</guid>
-      <description></description>
-    </item>
-    <item>
-      <title>Sqlite</title>
-      <link>https://luth.io/tags/sqlite/</link>
-      <pubDate>Wed, 28 Oct 2026 10:00:00 -0700</pubDate>
-      <guid>https://luth.io/tags/sqlite/</guid>
-      <description></description>
-    </item>
-    <item>
-      <title>Terraform</title>
-      <link>https://luth.io/tags/terraform/</link>
-      <pubDate>Wed, 28 Oct 2026 10:00:00 -0700</pubDate>
-      <guid>https://luth.io/tags/terraform/</guid>
       <description></description>
     </item>
     <item>
@@ -303,7 +338,7 @@
       <description></description>
     </item>
     <item>
-      <title>Distributed-Systems</title>
+      <title>Distributed Systems</title>
       <link>https://luth.io/tags/distributed-systems/</link>
       <pubDate>Wed, 07 Oct 2026 21:10:00 -0700</pubDate>
       <guid>https://luth.io/tags/distributed-systems/</guid>
@@ -331,7 +366,7 @@
       <description></description>
     </item>
     <item>
-      <title>Open-Source</title>
+      <title>Open Source</title>
       <link>https://luth.io/tags/open-source/</link>
       <pubDate>Sun, 04 Oct 2026 19:40:00 -0700</pubDate>
       <guid>https://luth.io/tags/open-source/</guid>

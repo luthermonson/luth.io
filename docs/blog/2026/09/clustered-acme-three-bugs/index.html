@@ -511,12 +511,32 @@ staging run, and then treat the flip itself as a separate thing to test.</p>
       </header>
       
       <article class="mini-post">
+          <a href="/blog/2026/11/operating-one-box-ephpm-backups-blue-green/" class="image" style="--bg-image: url('/img/2026/11/one-box-one-binary-blue-green.svg');">
+    <img class="" src="/img/2026/11/one-box-one-binary-blue-green.svg" alt="Node A holds the live data; a green node B comes up with its own empty volume; each site&#39;s SQLite replicates A to B over the cluster channel with Turso CDC; once B converges the Elastic IP moves and A is retired, while S3 backups stay on because exactly one node takes them">
+  </a>
+        <header>
+          <h2><a href="/blog/2026/11/operating-one-box-ephpm-backups-blue-green/">Operating the One-Box ePHPm Setup: Backups and Blue/Green</a></h2>
+          <time class="published" datetime="2026-11-19 07:30:00 -0700 MST">November 19, 2026</time>
+        </header>
+      </article>
+      
+      <article class="mini-post">
           <a href="/blog/2026/11/dagger-on-ephemerd-runner-fleet/" class="image" style="--bg-image: url('/img/2026/11/dagger-ephemerd-cache-architecture.svg');">
     <img class="" src="/img/2026/11/dagger-ephemerd-cache-architecture.svg" alt="GitHub fires a workflow_job webhook at ephemerd on the node, which provisions a fresh VLAN-isolated runner that is destroyed after the job. Inside it a cold per-job BuildKit engine imports and exports cached layers over the GitHub Actions Cache v2 protocol to ephemerd&#39;s Actions-cache proxy, which persists the cache in a registry; point one shared registry in the VLAN at every host for a single fleet-wide cache.">
   </a>
         <header>
           <h2><a href="/blog/2026/11/dagger-on-ephemerd-runner-fleet/">Dagger on ephemerd, and a Warm Cache on Throwaway Runners</a></h2>
           <time class="published" datetime="2026-11-18 09:00:00 -0700 MST">November 18, 2026</time>
+        </header>
+      </article>
+      
+      <article class="mini-post">
+          <a href="/blog/2026/11/one-box-one-binary-single-ephpm-vm/" class="image" style="--bg-image: url('/img/2026/11/one-box-one-binary-single-ephpm-vm-cover.svg');">
+    <img class="" src="/img/2026/11/one-box-one-binary-single-ephpm-vm-cover.svg" alt="A tall single-node k3s stack of Traefik, Tailscale, three PHP pods, three CronJobs, a litestream sidecar, PVs and the control plane collapses into one Debian VM running a single ephpm process that is the web server, PHP runtime, per-site SQLite, KV store, cron scheduler and S3 backup agent">
+  </a>
+        <header>
+          <h2><a href="/blog/2026/11/one-box-one-binary-single-ephpm-vm/">Replacing a k3s Cluster With One ePHPm Process</a></h2>
+          <time class="published" datetime="2026-11-18 07:30:00 -0700 MST">November 18, 2026</time>
         </header>
       </article>
       
@@ -540,26 +560,6 @@ staging run, and then treat the flip itself as a separate thing to test.</p>
         </header>
       </article>
       
-      <article class="mini-post">
-          <a href="/blog/2026/10/ci-cache-proxies-ephemeral-runners/" class="image" style="--bg-image: url('/img/2026/10/ci-cache-proxies-ephemeral-runners-flow.svg');">
-    <img class="" src="/img/2026/10/ci-cache-proxies-ephemeral-runners-flow.svg" alt="A fresh runner per job points go mod, cargo, composer, release downloads and actions/cache at matching cache proxies on the ephemerd node, where the caches persist and only reach the internet on a miss">
-  </a>
-        <header>
-          <h2><a href="/blog/2026/10/ci-cache-proxies-ephemeral-runners/">Cache Proxies for Ephemeral CI Runners</a></h2>
-          <time class="published" datetime="2026-10-23 15:00:00 -0700 MST">October 23, 2026</time>
-        </header>
-      </article>
-      
-      <article class="mini-post">
-          <a href="/blog/2026/10/ephemeral-macos-runners-vm-clones/" class="image" style="--bg-image: url('/img/2026/10/ephemeral-macos-runners-vm-clones-lifecycle.svg');">
-    <img class="" src="/img/2026/10/ephemeral-macos-runners-vm-clones-lifecycle.svg" alt="A macOS CI job lifecycle: clone the base image, boot and grow the disk, set up over SSH, run the job, then stop and sweep, with a band showing the single slot held the whole time">
-  </a>
-        <header>
-          <h2><a href="/blog/2026/10/ephemeral-macos-runners-vm-clones/">Ephemeral macOS Runners: A Fresh VM Per Job on Apple Silicon</a></h2>
-          <time class="published" datetime="2026-10-23 11:00:00 -0700 MST">October 23, 2026</time>
-        </header>
-      </article>
-      
       
         <footer>
           <a href="/blog" class="button">See More</a>
@@ -579,7 +579,7 @@ staging run, and then treat the flip itself as a separate thing to test.</p>
           
           
           <li>
-              <a href="/categories/ephpm/">ephpm<span class="count">39</span></a>
+              <a href="/categories/ephpm/">ephpm<span class="count">41</span></a>
           
           <li>
               <a href="/categories/go/">go<span class="count">32</span></a>
@@ -600,7 +600,7 @@ staging run, and then treat the flip itself as a separate thing to test.</p>
               <a href="/categories/ci/">ci<span class="count">13</span></a>
           
           <li>
-              <a href="/categories/containers/">containers<span class="count">11</span></a>
+              <a href="/categories/containers/">containers<span class="count">13</span></a>
           
           <li>
               <a href="/categories/databases/">databases<span class="count">10</span></a>

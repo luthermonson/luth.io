@@ -215,6 +215,142 @@
   <header>
   <div class="title">
     
+      <h2><a href="/blog/2026/08/faking-mysql-quirks-wordpress/">Faking MySQL&#39;s Quirks Well Enough to Fool WordPress</a></h2>
+    
+    
+      <p>Passing WordPress&#39;s install tests didn&#39;t mean litewire behaved like MySQL. This is the second round of fixes, for the small MySQL behaviors that WordPress and Laravel quietly depend on.</p>
+    
+  </div>
+  <div class="meta">
+    <time datetime="2026-08-16 15:50:00 -0700 MST">August 16, 2026</time>
+    
+    <p>10-Minute Read</p>
+  </div>
+</header>
+
+  <div class="content">
+    <a href="/blog/2026/08/faking-mysql-quirks-wordpress/" class="image" style="--bg-image: url('/img/2026/08/faking-mysql-quirks-wordpress-cover.svg');">
+    <img class="" src="/img/2026/08/faking-mysql-quirks-wordpress-cover.svg" alt="A table of MySQL behaviors WordPress relies on, with what litewire answered before and after the August fixes">
+  </a>
+    
+    <p>Last month I wrote about <a href="/blog/2026/07/sqlite-production-database-protocol-translation/">running SQLite behind a MySQL socket</a>
+with <a href="https://github.com/ephpm/litewire">litewire</a>. I ended on &ldquo;passing an install suite is not the same thing as
+behaving like MySQL&rdquo;. That turned out to be accurate. On August 10th a few things happened at once:</p>
+  </div>
+  <footer>
+    <a href="/blog/2026/08/faking-mysql-quirks-wordpress/" class="button big">Read More</a>
+    <div class="stats">
+  
+    <ul class="categories">
+      
+        
+          <li><a class="article-terms-link" href="/categories/databases/">databases</a></li>
+        
+          <li><a class="article-terms-link" href="/categories/ephpm/">ephpm</a></li>
+        
+          <li><a class="article-terms-link" href="/categories/php/">php</a></li>
+        
+      
+    </ul>
+  
+  
+    <ul class="tags">
+      
+        
+          <li><a class="article-terms-link" href="/tags/litewire/">litewire</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/ephpm/">ephpm</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/sqlite/">sqlite</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/mysql/">mysql</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/rust/">rust</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/wordpress/">wordpress</a></li>
+        
+      
+    </ul>
+  
+</div>
+
+  </footer>
+</article>
+
+  
+    <article class="post">
+  <header>
+  <div class="title">
+    
+      <h2><a href="/blog/2026/08/clustered-sqlite-sqld-sidecar/">Clustered SQLite in ePHPm, Part 1: Replication by Sidecar</a></h2>
+    
+    
+      <p>ePHPm first made SQLite highly available by embedding sqld as a child process. This is how that worked and the list of things that went wrong with it.</p>
+    
+  </div>
+  <div class="meta">
+    <time datetime="2026-08-08 20:14:00 -0700 MST">August 8, 2026</time>
+    
+    <p>9-Minute Read</p>
+  </div>
+</header>
+
+  <div class="content">
+    <a href="/blog/2026/08/clustered-sqlite-sqld-sidecar/" class="image" style="--bg-image: url('/img/2026/08/clustered-sqlite-sqld-sidecar-topology.svg');">
+    <img class="" src="/img/2026/08/clustered-sqlite-sqld-sidecar-topology.svg" alt="Two ePHPm nodes, each running an embedded sqld child process, connected by gossip, a KV data plane and sqld gRPC">
+  </a>
+    
+    <p>Most PHP sites I have run in the last twenty years did not need a MySQL server. They needed <em>a</em> database, and MySQL was the
+one every framework spoke. With <a href="https://github.com/ephpm/ephpm">ePHPm</a> I have been trying to get rid of that server for
+the common case. The piece that makes it possible is <a href="https://github.com/ephpm/litewire">litewire</a>. PHP connects with
+plain <code>pdo_mysql</code>. litewire speaks the MySQL wire protocol, and the queries land in a SQLite file. WordPress and Laravel
+don&rsquo;t know the difference. No <code>mysqld</code>, no child processes, just <code>ephpm</code> and a <code>.db</code> file.</p>
+  </div>
+  <footer>
+    <a href="/blog/2026/08/clustered-sqlite-sqld-sidecar/" class="button big">Read More</a>
+    <div class="stats">
+  
+    <ul class="categories">
+      
+        
+          <li><a class="article-terms-link" href="/categories/ephpm/">ephpm</a></li>
+        
+          <li><a class="article-terms-link" href="/categories/databases/">databases</a></li>
+        
+      
+    </ul>
+  
+  
+    <ul class="tags">
+      
+        
+          <li><a class="article-terms-link" href="/tags/ephpm/">ephpm</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/sqlite/">sqlite</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/sqld/">sqld</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/libsql/">libsql</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/rust/">rust</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/clustering/">clustering</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/php/">php</a></li>
+        
+      
+    </ul>
+  
+</div>
+
+  </footer>
+</article>
+
+  
+    <article class="post">
+  <header>
+  <div class="title">
+    
       <h2><a href="/blog/2026/07/sqlite-production-database-protocol-translation/">SQLite as a Production Database via Protocol Translation</a></h2>
     
     
@@ -298,12 +434,32 @@ pointed at. I mentioned this in the <a href="/blog/2026/06/ephpm-pragmatism/">eP
       </header>
       
       <article class="mini-post">
+          <a href="/blog/2026/11/operating-one-box-ephpm-backups-blue-green/" class="image" style="--bg-image: url('/img/2026/11/one-box-one-binary-blue-green.svg');">
+    <img class="" src="/img/2026/11/one-box-one-binary-blue-green.svg" alt="Node A holds the live data; a green node B comes up with its own empty volume; each site&#39;s SQLite replicates A to B over the cluster channel with Turso CDC; once B converges the Elastic IP moves and A is retired, while S3 backups stay on because exactly one node takes them">
+  </a>
+        <header>
+          <h2><a href="/blog/2026/11/operating-one-box-ephpm-backups-blue-green/">Operating the One-Box ePHPm Setup: Backups and Blue/Green</a></h2>
+          <time class="published" datetime="2026-11-19 07:30:00 -0700 MST">November 19, 2026</time>
+        </header>
+      </article>
+      
+      <article class="mini-post">
           <a href="/blog/2026/11/dagger-on-ephemerd-runner-fleet/" class="image" style="--bg-image: url('/img/2026/11/dagger-ephemerd-cache-architecture.svg');">
     <img class="" src="/img/2026/11/dagger-ephemerd-cache-architecture.svg" alt="GitHub fires a workflow_job webhook at ephemerd on the node, which provisions a fresh VLAN-isolated runner that is destroyed after the job. Inside it a cold per-job BuildKit engine imports and exports cached layers over the GitHub Actions Cache v2 protocol to ephemerd&#39;s Actions-cache proxy, which persists the cache in a registry; point one shared registry in the VLAN at every host for a single fleet-wide cache.">
   </a>
         <header>
           <h2><a href="/blog/2026/11/dagger-on-ephemerd-runner-fleet/">Dagger on ephemerd, and a Warm Cache on Throwaway Runners</a></h2>
           <time class="published" datetime="2026-11-18 09:00:00 -0700 MST">November 18, 2026</time>
+        </header>
+      </article>
+      
+      <article class="mini-post">
+          <a href="/blog/2026/11/one-box-one-binary-single-ephpm-vm/" class="image" style="--bg-image: url('/img/2026/11/one-box-one-binary-single-ephpm-vm-cover.svg');">
+    <img class="" src="/img/2026/11/one-box-one-binary-single-ephpm-vm-cover.svg" alt="A tall single-node k3s stack of Traefik, Tailscale, three PHP pods, three CronJobs, a litestream sidecar, PVs and the control plane collapses into one Debian VM running a single ephpm process that is the web server, PHP runtime, per-site SQLite, KV store, cron scheduler and S3 backup agent">
+  </a>
+        <header>
+          <h2><a href="/blog/2026/11/one-box-one-binary-single-ephpm-vm/">Replacing a k3s Cluster With One ePHPm Process</a></h2>
+          <time class="published" datetime="2026-11-18 07:30:00 -0700 MST">November 18, 2026</time>
         </header>
       </article>
       
@@ -327,26 +483,6 @@ pointed at. I mentioned this in the <a href="/blog/2026/06/ephpm-pragmatism/">eP
         </header>
       </article>
       
-      <article class="mini-post">
-          <a href="/blog/2026/10/ci-cache-proxies-ephemeral-runners/" class="image" style="--bg-image: url('/img/2026/10/ci-cache-proxies-ephemeral-runners-flow.svg');">
-    <img class="" src="/img/2026/10/ci-cache-proxies-ephemeral-runners-flow.svg" alt="A fresh runner per job points go mod, cargo, composer, release downloads and actions/cache at matching cache proxies on the ephemerd node, where the caches persist and only reach the internet on a miss">
-  </a>
-        <header>
-          <h2><a href="/blog/2026/10/ci-cache-proxies-ephemeral-runners/">Cache Proxies for Ephemeral CI Runners</a></h2>
-          <time class="published" datetime="2026-10-23 15:00:00 -0700 MST">October 23, 2026</time>
-        </header>
-      </article>
-      
-      <article class="mini-post">
-          <a href="/blog/2026/10/ephemeral-macos-runners-vm-clones/" class="image" style="--bg-image: url('/img/2026/10/ephemeral-macos-runners-vm-clones-lifecycle.svg');">
-    <img class="" src="/img/2026/10/ephemeral-macos-runners-vm-clones-lifecycle.svg" alt="A macOS CI job lifecycle: clone the base image, boot and grow the disk, set up over SSH, run the job, then stop and sweep, with a band showing the single slot held the whole time">
-  </a>
-        <header>
-          <h2><a href="/blog/2026/10/ephemeral-macos-runners-vm-clones/">Ephemeral macOS Runners: A Fresh VM Per Job on Apple Silicon</a></h2>
-          <time class="published" datetime="2026-10-23 11:00:00 -0700 MST">October 23, 2026</time>
-        </header>
-      </article>
-      
       
         <footer>
           <a href="/blog" class="button">See More</a>
@@ -366,7 +502,7 @@ pointed at. I mentioned this in the <a href="/blog/2026/06/ephpm-pragmatism/">eP
           
           
           <li>
-              <a href="/categories/ephpm/">ephpm<span class="count">39</span></a>
+              <a href="/categories/ephpm/">ephpm<span class="count">41</span></a>
           
           <li>
               <a href="/categories/go/">go<span class="count">32</span></a>
@@ -387,7 +523,7 @@ pointed at. I mentioned this in the <a href="/blog/2026/06/ephpm-pragmatism/">eP
               <a href="/categories/ci/">ci<span class="count">13</span></a>
           
           <li>
-              <a href="/categories/containers/">containers<span class="count">11</span></a>
+              <a href="/categories/containers/">containers<span class="count">13</span></a>
           
           <li>
               <a href="/categories/databases/">databases<span class="count">10</span></a>

@@ -215,6 +215,130 @@
   <header>
   <div class="title">
     
+      <h2><a href="/blog/2022/03/proxmox-tasks-upid-wait-go/">Waiting on Proxmox: UPIDs, Tasks and WaitFor in Go</a></h2>
+    
+    
+      <p>Most Proxmox VE API calls that change something hand you a UPID instead of a result. Here is how go-proxmox turns that string into something you can wait on.</p>
+    
+  </div>
+  <div class="meta">
+    <time datetime="2022-03-20 16:42:00 -0700 MST">March 20, 2022</time>
+    
+    <p>6-Minute Read</p>
+  </div>
+</header>
+
+  <div class="content">
+    <a href="/blog/2022/03/proxmox-tasks-upid-wait-go/" class="image" style="--bg-image: url('/img/2022/03/proxmox-tasks-upid-wait-go-anatomy.svg');">
+    <img class="" src="/img/2022/03/proxmox-tasks-upid-wait-go-anatomy.svg" alt="Diagram breaking a Proxmox UPID string into node, pid, pstart, starttime, type, id and user">
+  </a>
+    
+    <p>If you start automating <a href="https://www.proxmox.com/en/">Proxmox VE</a> through the API, one thing trips you up first.
+Almost nothing you ask it to do is finished when the HTTP call returns. Start a VM, clone a template, download an ISO
+to storage, delete a disk&hellip; the response is a single string that looks like a typo. The actual work is happening in a
+worker process on the node. If your next call depends on that work being done, you have to go find out when it&rsquo;s done.</p>
+  </div>
+  <footer>
+    <a href="/blog/2022/03/proxmox-tasks-upid-wait-go/" class="button big">Read More</a>
+    <div class="stats">
+  
+    <ul class="categories">
+      
+        
+          <li><a class="article-terms-link" href="/categories/go/">go</a></li>
+        
+          <li><a class="article-terms-link" href="/categories/homelab/">homelab</a></li>
+        
+      
+    </ul>
+  
+  
+    <ul class="tags">
+      
+        
+          <li><a class="article-terms-link" href="/tags/proxmox/">proxmox</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/go/">go</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/go-proxmox/">go-proxmox</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/homelab/">homelab</a></li>
+        
+      
+    </ul>
+  
+</div>
+
+  </footer>
+</article>
+
+  
+    <article class="post">
+  <header>
+  <div class="title">
+    
+      <h2><a href="/blog/2022/02/recreating-proxmox-ve-xtermjs-in-go/">Recreating Proxmox Ve Xtermjs in Go</a></h2>
+    
+    
+      <p>Proxmox&#39;s web console is xterm.js over a websocket. Here&#39;s how I reverse engineered that protocol and rebuilt the terminal connection in Go with go-proxmox.</p>
+    
+  </div>
+  <div class="meta">
+    <time datetime="2022-02-06 21:54:53 -0700 MST">February 6, 2022</time>
+    
+    <p>9-Minute Read</p>
+  </div>
+</header>
+
+  <div class="content">
+    <a href="/blog/2022/02/recreating-proxmox-ve-xtermjs-in-go/" class="image">
+    <img class="" src="/img/2022/02/proxmox-logo.png" alt="Proxmox VE Logo">
+  </a>
+    
+    <p>Part of a hobby of mine is running a home lab and using on <a href="https://www.proxmox.com/en/">Proxmox VE</a> to do the virtualization.
+Since I work in the space I&rsquo;m slowly trying to build tooling around Proxmox that will let me use the home lab full time for work.
+Usually my work involves building Kubernetes management tooling. You can imagine waiting for public cloud APIs all day
+can take away hours of your day. That&rsquo;s at cost to your employer for both your time and the compute resources.</p>
+  </div>
+  <footer>
+    <a href="/blog/2022/02/recreating-proxmox-ve-xtermjs-in-go/" class="button big">Read More</a>
+    <div class="stats">
+  
+    <ul class="categories">
+      
+        
+          <li><a class="article-terms-link" href="/categories/go/">go</a></li>
+        
+          <li><a class="article-terms-link" href="/categories/homelab/">homelab</a></li>
+        
+      
+    </ul>
+  
+  
+    <ul class="tags">
+      
+        
+          <li><a class="article-terms-link" href="/tags/proxmox/">proxmox</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/go/">go</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/javascript/">javascript</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/websockets/">websockets</a></li>
+        
+      
+    </ul>
+  
+</div>
+
+  </footer>
+</article>
+
+  
+    <article class="post">
+  <header>
+  <div class="title">
+    
       <h2><a href="/blog/2022/01/practical-cue-example/">Practical Cue Example, Produce YAML Config from Go Types</a></h2>
     
     
@@ -380,12 +504,32 @@ who I am please check out the <a href="/about/">about</a> section. Stay tuned fo
       </header>
       
       <article class="mini-post">
+          <a href="/blog/2026/11/operating-one-box-ephpm-backups-blue-green/" class="image" style="--bg-image: url('/img/2026/11/one-box-one-binary-blue-green.svg');">
+    <img class="" src="/img/2026/11/one-box-one-binary-blue-green.svg" alt="Node A holds the live data; a green node B comes up with its own empty volume; each site&#39;s SQLite replicates A to B over the cluster channel with Turso CDC; once B converges the Elastic IP moves and A is retired, while S3 backups stay on because exactly one node takes them">
+  </a>
+        <header>
+          <h2><a href="/blog/2026/11/operating-one-box-ephpm-backups-blue-green/">Operating the One-Box ePHPm Setup: Backups and Blue/Green</a></h2>
+          <time class="published" datetime="2026-11-19 07:30:00 -0700 MST">November 19, 2026</time>
+        </header>
+      </article>
+      
+      <article class="mini-post">
           <a href="/blog/2026/11/dagger-on-ephemerd-runner-fleet/" class="image" style="--bg-image: url('/img/2026/11/dagger-ephemerd-cache-architecture.svg');">
     <img class="" src="/img/2026/11/dagger-ephemerd-cache-architecture.svg" alt="GitHub fires a workflow_job webhook at ephemerd on the node, which provisions a fresh VLAN-isolated runner that is destroyed after the job. Inside it a cold per-job BuildKit engine imports and exports cached layers over the GitHub Actions Cache v2 protocol to ephemerd&#39;s Actions-cache proxy, which persists the cache in a registry; point one shared registry in the VLAN at every host for a single fleet-wide cache.">
   </a>
         <header>
           <h2><a href="/blog/2026/11/dagger-on-ephemerd-runner-fleet/">Dagger on ephemerd, and a Warm Cache on Throwaway Runners</a></h2>
           <time class="published" datetime="2026-11-18 09:00:00 -0700 MST">November 18, 2026</time>
+        </header>
+      </article>
+      
+      <article class="mini-post">
+          <a href="/blog/2026/11/one-box-one-binary-single-ephpm-vm/" class="image" style="--bg-image: url('/img/2026/11/one-box-one-binary-single-ephpm-vm-cover.svg');">
+    <img class="" src="/img/2026/11/one-box-one-binary-single-ephpm-vm-cover.svg" alt="A tall single-node k3s stack of Traefik, Tailscale, three PHP pods, three CronJobs, a litestream sidecar, PVs and the control plane collapses into one Debian VM running a single ephpm process that is the web server, PHP runtime, per-site SQLite, KV store, cron scheduler and S3 backup agent">
+  </a>
+        <header>
+          <h2><a href="/blog/2026/11/one-box-one-binary-single-ephpm-vm/">Replacing a k3s Cluster With One ePHPm Process</a></h2>
+          <time class="published" datetime="2026-11-18 07:30:00 -0700 MST">November 18, 2026</time>
         </header>
       </article>
       
@@ -409,26 +553,6 @@ who I am please check out the <a href="/about/">about</a> section. Stay tuned fo
         </header>
       </article>
       
-      <article class="mini-post">
-          <a href="/blog/2026/10/ci-cache-proxies-ephemeral-runners/" class="image" style="--bg-image: url('/img/2026/10/ci-cache-proxies-ephemeral-runners-flow.svg');">
-    <img class="" src="/img/2026/10/ci-cache-proxies-ephemeral-runners-flow.svg" alt="A fresh runner per job points go mod, cargo, composer, release downloads and actions/cache at matching cache proxies on the ephemerd node, where the caches persist and only reach the internet on a miss">
-  </a>
-        <header>
-          <h2><a href="/blog/2026/10/ci-cache-proxies-ephemeral-runners/">Cache Proxies for Ephemeral CI Runners</a></h2>
-          <time class="published" datetime="2026-10-23 15:00:00 -0700 MST">October 23, 2026</time>
-        </header>
-      </article>
-      
-      <article class="mini-post">
-          <a href="/blog/2026/10/ephemeral-macos-runners-vm-clones/" class="image" style="--bg-image: url('/img/2026/10/ephemeral-macos-runners-vm-clones-lifecycle.svg');">
-    <img class="" src="/img/2026/10/ephemeral-macos-runners-vm-clones-lifecycle.svg" alt="A macOS CI job lifecycle: clone the base image, boot and grow the disk, set up over SSH, run the job, then stop and sweep, with a band showing the single slot held the whole time">
-  </a>
-        <header>
-          <h2><a href="/blog/2026/10/ephemeral-macos-runners-vm-clones/">Ephemeral macOS Runners: A Fresh VM Per Job on Apple Silicon</a></h2>
-          <time class="published" datetime="2026-10-23 11:00:00 -0700 MST">October 23, 2026</time>
-        </header>
-      </article>
-      
       
         <footer>
           <a href="/blog" class="button">See More</a>
@@ -448,7 +572,7 @@ who I am please check out the <a href="/about/">about</a> section. Stay tuned fo
           
           
           <li>
-              <a href="/categories/ephpm/">ephpm<span class="count">39</span></a>
+              <a href="/categories/ephpm/">ephpm<span class="count">41</span></a>
           
           <li>
               <a href="/categories/go/">go<span class="count">32</span></a>
@@ -469,7 +593,7 @@ who I am please check out the <a href="/about/">about</a> section. Stay tuned fo
               <a href="/categories/ci/">ci<span class="count">13</span></a>
           
           <li>
-              <a href="/categories/containers/">containers<span class="count">11</span></a>
+              <a href="/categories/containers/">containers<span class="count">13</span></a>
           
           <li>
               <a href="/categories/databases/">databases<span class="count">10</span></a>

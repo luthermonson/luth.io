@@ -215,6 +215,144 @@
   <header>
   <div class="title">
     
+      <h2><a href="/blog/2026/08/ephpm-ebpf-per-vhost-network-policy/">Per-Tenant Network Policy in One Process: ePHPm&#39;s eBPF Thread Tags</a></h2>
+    
+    
+      <p>Every site on an ePHPm server runs inside the same process, so a normal firewall can&#39;t tell them apart. A small eBPF program tags each thread with its site. It keeps sites from reaching each other&#39;s local ports for under a microsecond per connection.</p>
+    
+  </div>
+  <div class="meta">
+    <time datetime="2026-08-28 20:40:00 -0700 MST">August 28, 2026</time>
+    
+    <p>17-Minute Read</p>
+  </div>
+</header>
+
+  <div class="content">
+    <a href="/blog/2026/08/ephpm-ebpf-per-vhost-network-policy/" class="image" style="--bg-image: url('/img/2026/08/ephpm-ebpf-per-vhost-network-flow.svg');">
+    <img class="" src="/img/2026/08/ephpm-ebpf-per-vhost-network-flow.svg" alt="Flow from a PHP pool thread writing its vhost tag into a BPF map, through the bind and connect cgroup hooks, to allow, rewrite or EPERM">
+  </a>
+    
+    <p>In multi-tenant mode <a href="https://github.com/ephpm/ephpm">ePHPm</a> serves every site in <code>sites_dir</code> from one process. Every
+tenant&rsquo;s PHP runs as the same OS user on the same pool of ZTS threads. A thread that just served <code>blog.example</code> will
+serve <code>shop.example</code> a few milliseconds later. That&rsquo;s the density win. It also means the kernel has no idea which
+tenant is behind a given <code>connect()</code>. As far as Linux is concerned it&rsquo;s all <code>ephpm-web</code>.</p>
+  </div>
+  <footer>
+    <a href="/blog/2026/08/ephpm-ebpf-per-vhost-network-policy/" class="button big">Read More</a>
+    <div class="stats">
+  
+    <ul class="categories">
+      
+        
+          <li><a class="article-terms-link" href="/categories/security/">security</a></li>
+        
+          <li><a class="article-terms-link" href="/categories/ephpm/">ephpm</a></li>
+        
+          <li><a class="article-terms-link" href="/categories/containers/">containers</a></li>
+        
+      
+    </ul>
+  
+  
+    <ul class="tags">
+      
+        
+          <li><a class="article-terms-link" href="/tags/rust/">rust</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/ephpm/">ephpm</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/ebpf/">ebpf</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/linux/">linux</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/multi-tenant/">multi-tenant</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/cgroups/">cgroups</a></li>
+        
+      
+    </ul>
+  
+</div>
+
+  </footer>
+</article>
+
+  
+    <article class="post">
+  <header>
+  <div class="title">
+    
+      <h2><a href="/blog/2026/08/iptables-rule-zero-packets/">My iptables Rule Matched 0 Packets in 9.8 GB</a></h2>
+    
+    
+      <p>Container-to-host traffic goes through INPUT, not FORWARD, so ephemerd&#39;s carefully written allow-list never matched a single packet.</p>
+    
+  </div>
+  <div class="meta">
+    <time datetime="2026-08-26 20:30:00 -0700 MST">August 26, 2026</time>
+    
+    <p>8-Minute Read</p>
+  </div>
+</header>
+
+  <div class="content">
+    <a href="/blog/2026/08/iptables-rule-zero-packets/" class="image" style="--bg-image: url('/img/2026/08/iptables-rule-zero-packets-flow.svg');">
+    <img class="" src="/img/2026/08/iptables-rule-zero-packets-flow.svg" alt="Netfilter flow showing container traffic to the host taking INPUT instead of FORWARD">
+  </a>
+    
+    <p>After a week of Windows firewall rules that <a href="/blog/2026/08/windows-container-egress-firewall/">listed fine and enforced nothing</a>,
+I went back to the Linux side of <a href="https://github.com/ephpm/ephemerd">ephemerd</a> feeling pretty good about it. iptables is
+the boring, well-understood one. Then I looked at the packet counters on a live node. I found a rule that had never
+matched a packet in its life. That node had pushed 9.8 GB through the same chain.</p>
+  </div>
+  <footer>
+    <a href="/blog/2026/08/iptables-rule-zero-packets/" class="button big">Read More</a>
+    <div class="stats">
+  
+    <ul class="categories">
+      
+        
+          <li><a class="article-terms-link" href="/categories/ephemerd/">ephemerd</a></li>
+        
+          <li><a class="article-terms-link" href="/categories/containers/">containers</a></li>
+        
+          <li><a class="article-terms-link" href="/categories/security/">security</a></li>
+        
+          <li><a class="article-terms-link" href="/categories/ci/">ci</a></li>
+        
+      
+    </ul>
+  
+  
+    <ul class="tags">
+      
+        
+          <li><a class="article-terms-link" href="/tags/linux/">linux</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/iptables/">iptables</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/netfilter/">netfilter</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/containers/">containers</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/security/">security</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/ephemerd/">ephemerd</a></li>
+        
+      
+    </ul>
+  
+</div>
+
+  </footer>
+</article>
+
+  
+    <article class="post">
+  <header>
+  <div class="title">
+    
       <h2><a href="/blog/2026/08/ephemerd-one-daemon-every-os/">ephemerd: One Daemon, a Fresh Runner Per Job, Every OS</a></h2>
     
     
@@ -299,12 +437,32 @@ one fork PR away from somebody running code on your LAN.</p>
       </header>
       
       <article class="mini-post">
+          <a href="/blog/2026/11/operating-one-box-ephpm-backups-blue-green/" class="image" style="--bg-image: url('/img/2026/11/one-box-one-binary-blue-green.svg');">
+    <img class="" src="/img/2026/11/one-box-one-binary-blue-green.svg" alt="Node A holds the live data; a green node B comes up with its own empty volume; each site&#39;s SQLite replicates A to B over the cluster channel with Turso CDC; once B converges the Elastic IP moves and A is retired, while S3 backups stay on because exactly one node takes them">
+  </a>
+        <header>
+          <h2><a href="/blog/2026/11/operating-one-box-ephpm-backups-blue-green/">Operating the One-Box ePHPm Setup: Backups and Blue/Green</a></h2>
+          <time class="published" datetime="2026-11-19 07:30:00 -0700 MST">November 19, 2026</time>
+        </header>
+      </article>
+      
+      <article class="mini-post">
           <a href="/blog/2026/11/dagger-on-ephemerd-runner-fleet/" class="image" style="--bg-image: url('/img/2026/11/dagger-ephemerd-cache-architecture.svg');">
     <img class="" src="/img/2026/11/dagger-ephemerd-cache-architecture.svg" alt="GitHub fires a workflow_job webhook at ephemerd on the node, which provisions a fresh VLAN-isolated runner that is destroyed after the job. Inside it a cold per-job BuildKit engine imports and exports cached layers over the GitHub Actions Cache v2 protocol to ephemerd&#39;s Actions-cache proxy, which persists the cache in a registry; point one shared registry in the VLAN at every host for a single fleet-wide cache.">
   </a>
         <header>
           <h2><a href="/blog/2026/11/dagger-on-ephemerd-runner-fleet/">Dagger on ephemerd, and a Warm Cache on Throwaway Runners</a></h2>
           <time class="published" datetime="2026-11-18 09:00:00 -0700 MST">November 18, 2026</time>
+        </header>
+      </article>
+      
+      <article class="mini-post">
+          <a href="/blog/2026/11/one-box-one-binary-single-ephpm-vm/" class="image" style="--bg-image: url('/img/2026/11/one-box-one-binary-single-ephpm-vm-cover.svg');">
+    <img class="" src="/img/2026/11/one-box-one-binary-single-ephpm-vm-cover.svg" alt="A tall single-node k3s stack of Traefik, Tailscale, three PHP pods, three CronJobs, a litestream sidecar, PVs and the control plane collapses into one Debian VM running a single ephpm process that is the web server, PHP runtime, per-site SQLite, KV store, cron scheduler and S3 backup agent">
+  </a>
+        <header>
+          <h2><a href="/blog/2026/11/one-box-one-binary-single-ephpm-vm/">Replacing a k3s Cluster With One ePHPm Process</a></h2>
+          <time class="published" datetime="2026-11-18 07:30:00 -0700 MST">November 18, 2026</time>
         </header>
       </article>
       
@@ -328,26 +486,6 @@ one fork PR away from somebody running code on your LAN.</p>
         </header>
       </article>
       
-      <article class="mini-post">
-          <a href="/blog/2026/10/ci-cache-proxies-ephemeral-runners/" class="image" style="--bg-image: url('/img/2026/10/ci-cache-proxies-ephemeral-runners-flow.svg');">
-    <img class="" src="/img/2026/10/ci-cache-proxies-ephemeral-runners-flow.svg" alt="A fresh runner per job points go mod, cargo, composer, release downloads and actions/cache at matching cache proxies on the ephemerd node, where the caches persist and only reach the internet on a miss">
-  </a>
-        <header>
-          <h2><a href="/blog/2026/10/ci-cache-proxies-ephemeral-runners/">Cache Proxies for Ephemeral CI Runners</a></h2>
-          <time class="published" datetime="2026-10-23 15:00:00 -0700 MST">October 23, 2026</time>
-        </header>
-      </article>
-      
-      <article class="mini-post">
-          <a href="/blog/2026/10/ephemeral-macos-runners-vm-clones/" class="image" style="--bg-image: url('/img/2026/10/ephemeral-macos-runners-vm-clones-lifecycle.svg');">
-    <img class="" src="/img/2026/10/ephemeral-macos-runners-vm-clones-lifecycle.svg" alt="A macOS CI job lifecycle: clone the base image, boot and grow the disk, set up over SSH, run the job, then stop and sweep, with a band showing the single slot held the whole time">
-  </a>
-        <header>
-          <h2><a href="/blog/2026/10/ephemeral-macos-runners-vm-clones/">Ephemeral macOS Runners: A Fresh VM Per Job on Apple Silicon</a></h2>
-          <time class="published" datetime="2026-10-23 11:00:00 -0700 MST">October 23, 2026</time>
-        </header>
-      </article>
-      
       
         <footer>
           <a href="/blog" class="button">See More</a>
@@ -367,7 +505,7 @@ one fork PR away from somebody running code on your LAN.</p>
           
           
           <li>
-              <a href="/categories/ephpm/">ephpm<span class="count">39</span></a>
+              <a href="/categories/ephpm/">ephpm<span class="count">41</span></a>
           
           <li>
               <a href="/categories/go/">go<span class="count">32</span></a>
@@ -388,7 +526,7 @@ one fork PR away from somebody running code on your LAN.</p>
               <a href="/categories/ci/">ci<span class="count">13</span></a>
           
           <li>
-              <a href="/categories/containers/">containers<span class="count">11</span></a>
+              <a href="/categories/containers/">containers<span class="count">13</span></a>
           
           <li>
               <a href="/categories/databases/">databases<span class="count">10</span></a>

@@ -215,6 +215,137 @@
   <header>
   <div class="title">
     
+      <h2><a href="/blog/2026/09/calling-rust-from-php-without-a-socket-part-2/">Calling Rust From PHP Without a Socket, Part 2: Making Existing Code Use It</a></h2>
+    
+    
+      <p>Thirteen Composer packages let existing Redis and database code in WordPress, Laravel and Symfony use ePHPm&#39;s built-in versions. This post covers what&#39;s in them and the bugs they turned up.</p>
+    
+  </div>
+  <div class="meta">
+    <time datetime="2026-09-21 19:55:00 -0700 MST">September 21, 2026</time>
+    
+    <p>8-Minute Read</p>
+  </div>
+</header>
+
+  <div class="content">
+    <a href="/blog/2026/09/calling-rust-from-php-without-a-socket-part-2/" class="image" style="--bg-image: url('/img/2026/09/calling-rust-from-php-without-a-socket-part-2-cover.svg');">
+    <img class="" src="/img/2026/09/calling-rust-from-php-without-a-socket-part-2-cover.svg" alt="The APIs PHP apps already call, mapped through ePHPm wrapper packages onto ephpm_kv_* and ephpm_db_*">
+  </a>
+    
+    <p><a href="/blog/2026/09/calling-rust-from-php-without-a-socket-part-1/">Part 1</a> covered the plumbing. ePHPm registers
+<code>ephpm_kv_*</code> and <code>ephpm_db_*</code> functions that call straight into Rust. A cache read through one costs about a tenth of a
+microsecond instead of a loopback round trip. That&rsquo;s nice and also useless on its own. Nobody is going to rewrite their
+WordPress object cache or their Laravel cache store around a function called <code>ephpm_kv_set()</code>. Applications talk to
+existing APIs instead:</p>
+  </div>
+  <footer>
+    <a href="/blog/2026/09/calling-rust-from-php-without-a-socket-part-2/" class="button big">Read More</a>
+    <div class="stats">
+  
+    <ul class="categories">
+      
+        
+          <li><a class="article-terms-link" href="/categories/ephpm/">ephpm</a></li>
+        
+          <li><a class="article-terms-link" href="/categories/php/">php</a></li>
+        
+      
+    </ul>
+  
+  
+    <ul class="tags">
+      
+        
+          <li><a class="article-terms-link" href="/tags/ephpm/">ephpm</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/php/">php</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/redis/">redis</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/wordpress/">wordpress</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/laravel/">laravel</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/composer/">composer</a></li>
+        
+      
+    </ul>
+  
+</div>
+
+  </footer>
+</article>
+
+  
+    <article class="post">
+  <header>
+  <div class="title">
+    
+      <h2><a href="/blog/2026/09/ephpm-smaller-angles/">ePHPm Odds and Ends: OOM-Killed Links, Opcode Scanning, WebSockets and a 44 ms Stall</a></h2>
+    
+    
+      <p>Four smaller ePHPm stories that didn&#39;t need a post each but were too useful to leave in PR descriptions.</p>
+    
+  </div>
+  <div class="meta">
+    <time datetime="2026-09-18 20:05:00 -0700 MST">September 18, 2026</time>
+    
+    <p>7-Minute Read</p>
+  </div>
+</header>
+
+  <div class="content">
+    <a href="/blog/2026/09/ephpm-smaller-angles/" class="image" style="--bg-image: url('/img/2026/09/ephpm-smaller-angles-nodelay.svg');">
+    <img class="" src="/img/2026/09/ephpm-smaller-angles-nodelay.svg" alt="Bar chart: db.php p50 at c=1 dropped from 444 ms on v0.4.0 to 4.4 ms on v0.4.1">
+  </a>
+    
+    <p>Not every fix in <a href="https://github.com/ephpm/ephpm">ePHPm</a> earns a full write-up. A few of the smaller ones have stuck
+with me because the lesson in each was bigger than the diff. Here are four from this summer.</p>
+  </div>
+  <footer>
+    <a href="/blog/2026/09/ephpm-smaller-angles/" class="button big">Read More</a>
+    <div class="stats">
+  
+    <ul class="categories">
+      
+        
+          <li><a class="article-terms-link" href="/categories/ephpm/">ephpm</a></li>
+        
+          <li><a class="article-terms-link" href="/categories/php/">php</a></li>
+        
+      
+    </ul>
+  
+  
+    <ul class="tags">
+      
+        
+          <li><a class="article-terms-link" href="/tags/php/">php</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/rust/">rust</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/ephpm/">ephpm</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/ci/">ci</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/websockets/">websockets</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/tcp/">tcp</a></li>
+        
+      
+    </ul>
+  
+</div>
+
+  </footer>
+</article>
+
+  
+    <article class="post">
+  <header>
+  <div class="title">
+    
       <h2><a href="/blog/2026/09/php-timeout-linker-wraps/">The Bugs Were Our Own Linker Wraps: Making a PHP Timeout Actually Time Out</a></h2>
     
     
@@ -752,142 +883,6 @@ every other tenant on the box.</p>
 </article>
 
   
-    <article class="post">
-  <header>
-  <div class="title">
-    
-      <h2><a href="/blog/2026/09/own-your-php-thread-pool/">Stop Running PHP on tokio&#39;s spawn_blocking - Own Your Thread Pool</a></h2>
-    
-    
-      <p>Why ePHPm moved PHP execution off tokio&#39;s generic blocking pool onto threads it owns. How the switch rolled out behind a knob and what it did to memory, throughput and overload.</p>
-    
-  </div>
-  <div class="meta">
-    <time datetime="2026-09-04 20:30:00 -0700 MST">September 4, 2026</time>
-    
-    <p>10-Minute Read</p>
-  </div>
-</header>
-
-  <div class="content">
-    <a href="/blog/2026/09/own-your-php-thread-pool/" class="image" style="--bg-image: url('/img/2026/09/own-your-php-thread-pool-rss.svg');">
-    <img class="" src="/img/2026/09/own-your-php-thread-pool-rss.svg" alt="Bar chart of server RSS at 32, 128 and 512 concurrent clients: spawn_blocking grows with concurrency, the owned pool stays flat">
-  </a>
-    
-    <p>For most of its life, <a href="https://github.com/ephpm/ephpm">ePHPm</a> ran every PHP request on tokio&rsquo;s <code>spawn_blocking</code>
-pool. It works. It passes tests and it serves benchmarks fine. It&rsquo;s the first thing anybody reaches for when they need
-to call blocking code from async Rust. It&rsquo;s also quietly wrong for a language runtime. The problems only show up under
-overload or after a crash. Over the last three weeks it got replaced with a pool of OS threads that ePHPm owns. That
-pool shipped first behind a config flag, then as&hellip;</p>
-  </div>
-  <footer>
-    <a href="/blog/2026/09/own-your-php-thread-pool/" class="button big">Read More</a>
-    <div class="stats">
-  
-    <ul class="categories">
-      
-        
-          <li><a class="article-terms-link" href="/categories/ephpm/">ephpm</a></li>
-        
-          <li><a class="article-terms-link" href="/categories/rust/">rust</a></li>
-        
-      
-    </ul>
-  
-  
-    <ul class="tags">
-      
-        
-          <li><a class="article-terms-link" href="/tags/rust/">rust</a></li>
-        
-          <li><a class="article-terms-link" href="/tags/tokio/">tokio</a></li>
-        
-          <li><a class="article-terms-link" href="/tags/php/">php</a></li>
-        
-          <li><a class="article-terms-link" href="/tags/ephpm/">ephpm</a></li>
-        
-          <li><a class="article-terms-link" href="/tags/concurrency/">concurrency</a></li>
-        
-          <li><a class="article-terms-link" href="/tags/benchmarking/">benchmarking</a></li>
-        
-      
-    </ul>
-  
-</div>
-
-  </footer>
-</article>
-
-  
-    <article class="post">
-  <header>
-  <div class="title">
-    
-      <h2><a href="/blog/2026/09/clustered-acme-three-bugs/">Clustered ACME in Production: Three Bugs That Took TLS Down</a></h2>
-    
-    
-      <p>Moving wildcard TLS onto a live 3-node ePHPm cluster found a leader election that wasn&#39;t, a certificate only two nodes could see, and an HTTP port speaking TLS.</p>
-    
-  </div>
-  <div class="meta">
-    <time datetime="2026-09-02 19:30:00 -0700 MST">September 2, 2026</time>
-    
-    <p>10-Minute Read</p>
-  </div>
-</header>
-
-  <div class="content">
-    <a href="/blog/2026/09/clustered-acme-three-bugs/" class="image" style="--bg-image: url('/img/2026/09/clustered-acme-three-bugs-cover.svg');">
-    <img class="" src="/img/2026/09/clustered-acme-three-bugs-cover.svg" alt="Diagram comparing a sharded KV write that leaves one of three nodes without the certificate to a broadcast write that reaches all three">
-  </a>
-    
-    <p><a href="https://github.com/ephpm/ephpm">ePHPm</a> gets its own certificates from Let&rsquo;s Encrypt. In a cluster only one node should
-be talking to the CA. The nodes elect an ACME leader over the shared KV store. The leader orders the cert, and everybody
-else installs it from KV. That all had unit tests and had worked on single nodes for months. Then I tried to move
-wildcard TLS termination for our preview environment off a separate proxy and onto the 3-node cluster itself. In about
-two days it found three separate bugs that each took&hellip;</p>
-  </div>
-  <footer>
-    <a href="/blog/2026/09/clustered-acme-three-bugs/" class="button big">Read More</a>
-    <div class="stats">
-  
-    <ul class="categories">
-      
-        
-          <li><a class="article-terms-link" href="/categories/ephpm/">ephpm</a></li>
-        
-          <li><a class="article-terms-link" href="/categories/security/">security</a></li>
-        
-          <li><a class="article-terms-link" href="/categories/rust/">rust</a></li>
-        
-      
-    </ul>
-  
-  
-    <ul class="tags">
-      
-        
-          <li><a class="article-terms-link" href="/tags/rust/">rust</a></li>
-        
-          <li><a class="article-terms-link" href="/tags/ephpm/">ephpm</a></li>
-        
-          <li><a class="article-terms-link" href="/tags/tls/">tls</a></li>
-        
-          <li><a class="article-terms-link" href="/tags/acme/">acme</a></li>
-        
-          <li><a class="article-terms-link" href="/tags/letsencrypt/">letsencrypt</a></li>
-        
-          <li><a class="article-terms-link" href="/tags/clustering/">clustering</a></li>
-        
-      
-    </ul>
-  
-</div>
-
-  </footer>
-</article>
-
-  
   <div class="pagination">
     
       <a href="/tags/ephpm/" class="button left"><span>Previous Page</span></a>
@@ -906,12 +901,32 @@ two days it found three separate bugs that each took&hellip;</p>
       </header>
       
       <article class="mini-post">
+          <a href="/blog/2026/11/operating-one-box-ephpm-backups-blue-green/" class="image" style="--bg-image: url('/img/2026/11/one-box-one-binary-blue-green.svg');">
+    <img class="" src="/img/2026/11/one-box-one-binary-blue-green.svg" alt="Node A holds the live data; a green node B comes up with its own empty volume; each site&#39;s SQLite replicates A to B over the cluster channel with Turso CDC; once B converges the Elastic IP moves and A is retired, while S3 backups stay on because exactly one node takes them">
+  </a>
+        <header>
+          <h2><a href="/blog/2026/11/operating-one-box-ephpm-backups-blue-green/">Operating the One-Box ePHPm Setup: Backups and Blue/Green</a></h2>
+          <time class="published" datetime="2026-11-19 07:30:00 -0700 MST">November 19, 2026</time>
+        </header>
+      </article>
+      
+      <article class="mini-post">
           <a href="/blog/2026/11/dagger-on-ephemerd-runner-fleet/" class="image" style="--bg-image: url('/img/2026/11/dagger-ephemerd-cache-architecture.svg');">
     <img class="" src="/img/2026/11/dagger-ephemerd-cache-architecture.svg" alt="GitHub fires a workflow_job webhook at ephemerd on the node, which provisions a fresh VLAN-isolated runner that is destroyed after the job. Inside it a cold per-job BuildKit engine imports and exports cached layers over the GitHub Actions Cache v2 protocol to ephemerd&#39;s Actions-cache proxy, which persists the cache in a registry; point one shared registry in the VLAN at every host for a single fleet-wide cache.">
   </a>
         <header>
           <h2><a href="/blog/2026/11/dagger-on-ephemerd-runner-fleet/">Dagger on ephemerd, and a Warm Cache on Throwaway Runners</a></h2>
           <time class="published" datetime="2026-11-18 09:00:00 -0700 MST">November 18, 2026</time>
+        </header>
+      </article>
+      
+      <article class="mini-post">
+          <a href="/blog/2026/11/one-box-one-binary-single-ephpm-vm/" class="image" style="--bg-image: url('/img/2026/11/one-box-one-binary-single-ephpm-vm-cover.svg');">
+    <img class="" src="/img/2026/11/one-box-one-binary-single-ephpm-vm-cover.svg" alt="A tall single-node k3s stack of Traefik, Tailscale, three PHP pods, three CronJobs, a litestream sidecar, PVs and the control plane collapses into one Debian VM running a single ephpm process that is the web server, PHP runtime, per-site SQLite, KV store, cron scheduler and S3 backup agent">
+  </a>
+        <header>
+          <h2><a href="/blog/2026/11/one-box-one-binary-single-ephpm-vm/">Replacing a k3s Cluster With One ePHPm Process</a></h2>
+          <time class="published" datetime="2026-11-18 07:30:00 -0700 MST">November 18, 2026</time>
         </header>
       </article>
       
@@ -935,26 +950,6 @@ two days it found three separate bugs that each took&hellip;</p>
         </header>
       </article>
       
-      <article class="mini-post">
-          <a href="/blog/2026/10/ci-cache-proxies-ephemeral-runners/" class="image" style="--bg-image: url('/img/2026/10/ci-cache-proxies-ephemeral-runners-flow.svg');">
-    <img class="" src="/img/2026/10/ci-cache-proxies-ephemeral-runners-flow.svg" alt="A fresh runner per job points go mod, cargo, composer, release downloads and actions/cache at matching cache proxies on the ephemerd node, where the caches persist and only reach the internet on a miss">
-  </a>
-        <header>
-          <h2><a href="/blog/2026/10/ci-cache-proxies-ephemeral-runners/">Cache Proxies for Ephemeral CI Runners</a></h2>
-          <time class="published" datetime="2026-10-23 15:00:00 -0700 MST">October 23, 2026</time>
-        </header>
-      </article>
-      
-      <article class="mini-post">
-          <a href="/blog/2026/10/ephemeral-macos-runners-vm-clones/" class="image" style="--bg-image: url('/img/2026/10/ephemeral-macos-runners-vm-clones-lifecycle.svg');">
-    <img class="" src="/img/2026/10/ephemeral-macos-runners-vm-clones-lifecycle.svg" alt="A macOS CI job lifecycle: clone the base image, boot and grow the disk, set up over SSH, run the job, then stop and sweep, with a band showing the single slot held the whole time">
-  </a>
-        <header>
-          <h2><a href="/blog/2026/10/ephemeral-macos-runners-vm-clones/">Ephemeral macOS Runners: A Fresh VM Per Job on Apple Silicon</a></h2>
-          <time class="published" datetime="2026-10-23 11:00:00 -0700 MST">October 23, 2026</time>
-        </header>
-      </article>
-      
       
         <footer>
           <a href="/blog" class="button">See More</a>
@@ -974,7 +969,7 @@ two days it found three separate bugs that each took&hellip;</p>
           
           
           <li>
-              <a href="/categories/ephpm/">ephpm<span class="count">39</span></a>
+              <a href="/categories/ephpm/">ephpm<span class="count">41</span></a>
           
           <li>
               <a href="/categories/go/">go<span class="count">32</span></a>
@@ -995,7 +990,7 @@ two days it found three separate bugs that each took&hellip;</p>
               <a href="/categories/ci/">ci<span class="count">13</span></a>
           
           <li>
-              <a href="/categories/containers/">containers<span class="count">11</span></a>
+              <a href="/categories/containers/">containers<span class="count">13</span></a>
           
           <li>
               <a href="/categories/databases/">databases<span class="count">10</span></a>

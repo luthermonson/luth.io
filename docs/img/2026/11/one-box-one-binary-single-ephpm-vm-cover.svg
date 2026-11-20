@@ -1,0 +1,58 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 470" font-family="system-ui, -apple-system, Segoe UI, sans-serif">
+  <title>A k3s stack collapsed into one ePHPm process</title>
+  <desc>On the left, the old single-node k3s setup is a tall stack of parts: Traefik ingress, Tailscale, three Helm-deployed PHP pods (admin, sendy, wholesale), three k8s CronJobs, a litestream backup sidecar and the kubelet and control plane. On the right it collapses into one Debian VM running a single ephpm process that is the web server, the PHP runtime, a per-site SQLite engine, a KV store, the cron scheduler and the S3 backup agent.</desc>
+  <rect width="900" height="470" fill="#ffffff"/>
+  <text x="450" y="34" text-anchor="middle" font-size="19" font-weight="600" fill="#222">Three PHP sites and some cron jobs — same workload, two shapes</text>
+
+  <!-- LEFT: the k3s stack -->
+  <rect x="36" y="64" width="360" height="372" rx="8" fill="#f6f1ec" stroke="#a34700" stroke-width="2"/>
+  <text x="216" y="90" text-anchor="middle" font-size="16" font-weight="600" fill="#a34700">Before: single-node k3s</text>
+
+  <g font-size="13.5" fill="#333">
+    <rect x="60" y="106" width="312" height="30" rx="5" fill="#fff" stroke="#a34700" stroke-width="1.4" stroke-dasharray="5 3"/>
+    <text x="216" y="126" text-anchor="middle">Traefik ingress + TLS</text>
+    <rect x="60" y="142" width="312" height="30" rx="5" fill="#fff" stroke="#a34700" stroke-width="1.4" stroke-dasharray="5 3"/>
+    <text x="216" y="162" text-anchor="middle">Tailscale for operator access</text>
+    <rect x="60" y="178" width="100" height="44" rx="5" fill="#fff" stroke="#a34700" stroke-width="1.4"/>
+    <text x="110" y="200" text-anchor="middle">admin</text><text x="110" y="214" text-anchor="middle" font-size="11" fill="#777">pod</text>
+    <rect x="166" y="178" width="100" height="44" rx="5" fill="#fff" stroke="#a34700" stroke-width="1.4"/>
+    <text x="216" y="200" text-anchor="middle">sendy</text><text x="216" y="214" text-anchor="middle" font-size="11" fill="#777">pod</text>
+    <rect x="272" y="178" width="100" height="44" rx="5" fill="#fff" stroke="#a34700" stroke-width="1.4"/>
+    <text x="322" y="200" text-anchor="middle">wholesale</text><text x="322" y="214" text-anchor="middle" font-size="11" fill="#777">pod</text>
+    <rect x="60" y="230" width="312" height="30" rx="5" fill="#fff" stroke="#a34700" stroke-width="1.4"/>
+    <text x="216" y="250" text-anchor="middle">3 × k8s CronJob</text>
+    <rect x="60" y="266" width="312" height="30" rx="5" fill="#fff" stroke="#a34700" stroke-width="1.4"/>
+    <text x="216" y="286" text-anchor="middle">litestream backup sidecar</text>
+    <rect x="60" y="302" width="312" height="30" rx="5" fill="#fff" stroke="#a34700" stroke-width="1.4"/>
+    <text x="216" y="322" text-anchor="middle">PersistentVolumes + CSI / hostPath</text>
+    <rect x="60" y="338" width="312" height="30" rx="5" fill="#fff" stroke="#a34700" stroke-width="1.4"/>
+    <text x="216" y="358" text-anchor="middle">kubelet + k3s control plane</text>
+    <rect x="60" y="374" width="312" height="44" rx="5" fill="#fbe9df" stroke="#a34700" stroke-width="1.4"/>
+    <text x="216" y="396" text-anchor="middle" font-weight="600" fill="#a34700">EC2 node(s) + EBS</text>
+    <text x="216" y="410" text-anchor="middle" font-size="11" fill="#777">plus the Helm charts to drive all of it</text>
+  </g>
+
+  <!-- arrow -->
+  <g stroke="#3a3a3a" stroke-width="2.5" fill="#3a3a3a">
+    <line x1="402" y1="250" x2="486" y2="250"/><polygon points="486,242 500,250 486,258"/>
+  </g>
+  <text x="451" y="238" text-anchor="middle" font-size="12.5" font-weight="600" fill="#3a3a3a">collapse</text>
+
+  <!-- RIGHT: one VM, one process -->
+  <rect x="506" y="64" width="358" height="372" rx="8" fill="#eaf1f8" stroke="#0550ae" stroke-width="2"/>
+  <text x="685" y="90" text-anchor="middle" font-size="16" font-weight="600" fill="#0550ae">After: one Debian VM</text>
+
+  <rect x="530" y="106" width="310" height="246" rx="7" fill="#fff" stroke="#00707a" stroke-width="2.5"/>
+  <text x="685" y="130" text-anchor="middle" font-size="15" font-weight="600" fill="#00707a">one ephpm process</text>
+  <g font-size="13.5" fill="#333">
+    <rect x="552" y="144" width="266" height="28" rx="5" fill="#e3f1f2" stroke="#00707a" stroke-width="1.2"/><text x="685" y="163" text-anchor="middle">HTTP + TLS server</text>
+    <rect x="552" y="176" width="266" height="28" rx="5" fill="#e3f1f2" stroke="#00707a" stroke-width="1.2"/><text x="685" y="195" text-anchor="middle">PHP runtime (ZTS, embedded)</text>
+    <rect x="552" y="208" width="266" height="28" rx="5" fill="#e3f1f2" stroke="#00707a" stroke-width="1.2"/><text x="685" y="227" text-anchor="middle">per-site SQLite (Turso)</text>
+    <rect x="552" y="240" width="266" height="28" rx="5" fill="#e3f1f2" stroke="#00707a" stroke-width="1.2"/><text x="685" y="259" text-anchor="middle">KV store + cron scheduler</text>
+    <rect x="552" y="272" width="266" height="28" rx="5" fill="#e3f1f2" stroke="#00707a" stroke-width="1.2"/><text x="685" y="291" text-anchor="middle">S3 database-backup agent</text>
+    <text x="685" y="326" text-anchor="middle" font-size="12.5" fill="#555">admin · sendy · wholesale, all in-process</text>
+  </g>
+  <rect x="530" y="360" width="310" height="58" rx="6" fill="#dde8f5" stroke="#0550ae" stroke-width="1.6"/>
+  <text x="685" y="382" text-anchor="middle" font-size="13.5" font-weight="600" fill="#0550ae">1 × t3a.small + /data EBS</text>
+  <text x="685" y="402" text-anchor="middle" font-size="12" fill="#666">baked from a Packer golden AMI</text>
+</svg>

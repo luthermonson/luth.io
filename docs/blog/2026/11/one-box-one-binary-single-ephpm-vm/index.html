@@ -1,0 +1,730 @@
+<!doctype html>
+<html lang="en">
+  <head>
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-MSTSKGFWTX"></script>
+<script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+
+    gtag('config', 'G-MSTSKGFWTX');
+</script><meta charset="utf-8">
+<title>Replacing a k3s Cluster With One ePHPm Process - Luther Monson</title>
+<meta name="description" content="How three PHP sites, their databases, cron and backups collapse onto one small VM, and what that costs once you match the bill to the size of the problem.">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<meta name="twitter:card" content="summary_large_image"><meta name="twitter:site" content="@luthermonson">
+
+<meta property="og:site_name" content="Luther Monson">
+<meta property="og:title" content="Replacing a k3s Cluster With One ePHPm Process">
+<meta property="og:description" content="How three PHP sites, their databases, cron and backups collapse onto one small VM, and what that costs once you match the bill to the size of the problem.">
+<meta property="og:type" content="article">
+<meta property="og:url" content="https://luth.io/blog/2026/11/one-box-one-binary-single-ephpm-vm/">
+    <meta property="og:image" content="https://luth.io/img/2026/11/one-box-one-binary-single-ephpm-vm-cover.svg">
+    <meta property="og:image:alt" content="A tall single-node k3s stack of Traefik, Tailscale, three PHP pods, three CronJobs, a litestream sidecar, PVs and the control plane collapses into one Debian VM running a single ephpm process that is the web server, PHP runtime, per-site SQLite, KV store, cron scheduler and S3 backup agent">
+
+
+  <link rel="manifest" href="/favicon/site.webmanifest?v=1">
+  <link rel="apple-touch-icon" sizes="180x180" href="/favicon/apple-touch-icon.png?v=1">
+  <link rel="icon" type="image/png" sizes="32x32" href="/favicon/favicon-32x32.png?v=1">
+  <link rel="icon" type="image/png" sizes="16x16" href="/favicon/favicon-16x16.png?v=1">
+  
+    <link rel="mask-icon" href="/favicon/safari-pinned-tab.svg?v=1" color="#ffffff">
+    <link rel="shortcut icon" href="/favicon/favicon.ico?v=1">
+    <meta name="msapplication-config" content="/favicon/browserconfig.xml?v=1">
+  
+  <meta name="msapplication-TileColor" content="#ffffff">
+  <meta name="theme-color" content="#ffffff">
+
+
+  <meta name="generator" content="Hugo 0.160.1">
+  <link rel="alternate" type="application/rss+xml" href="https://luth.io/index.xml" title="Luther Monson">
+  <link rel="stylesheet" href="/css/bundle.min.e1ffed86714fbb7eff75eab221c0c61b8260be0c7d1c08db0fcb7a2bdb6af7c9.css" integrity="sha256-4f/thnFPu37/deqyIcDGG4Jgvgx9HAjbD8t6K9tq98k="><link rel="stylesheet" href="/css/add-on.css">
+        <link rel="stylesheet" href="/css/code.css">
+        <link rel="stylesheet" href="/css/mobile.css">
+</head>
+
+  <body>
+    
+
+<header id="site-header">
+  <nav id="site-nav">
+    <h1 class="nav-title">
+      <a href="/" class="nav">
+        <img class="nav-avatar" src="/img/luther-monson-headshot.jpg" alt="" width="32" height="32">
+        
+          Blog
+        
+      </a>
+    </h1>
+    <menu id="site-nav-menu" class="flyout-menu menu">
+      
+        
+          
+          <a href="/" class="nav link"><i class='fa fa-home'></i> Home</a>
+        
+      
+        
+          
+          <a href="/about" class="nav link"><i class='far fa-id-card'></i> About</a>
+        
+      
+        
+          
+          <a href="/blog" class="nav link"><i class='far fa-newspaper'></i> Blog</a>
+        
+      
+        
+          
+          <a href="/archive" class="nav link"><i class='far fa-calendar-alt'></i> Archive</a>
+        
+      
+        
+          
+          <a href="/categories" class="nav link"><i class='fas fa-sitemap'></i> Categories</a>
+        
+      
+      <a href="#share-menu" class="nav link share-toggle"><i class="fas fa-share-alt">&nbsp;</i>Share</a>
+      <a href="#search-input" class="nav link search-toggle"><i class="fas fa-search">&nbsp;</i>Search</a>
+    </menu>
+    <a href="#search-input" class="nav search-toggle"><i class="fas fa-search fa-2x">&nbsp;</i></a>
+    <a href="#share-menu" class="nav share-toggle"><i class="fas fa-share-alt fa-2x">&nbsp;</i></a>
+    
+    <a href="#site-nav" class="nav nav-toggle"><i class="fas fa-bars fa-2x"></i></a>
+  </nav>
+  <menu id="search" class="menu"><input id="search-input" class="search-input menu"></input><div id="search-results" class="search-results menu"></div></menu>
+  
+  
+    <menu id="share-menu" class="flyout-menu menu">
+      <h1>Share Post</h1>
+      
+
+
+
+
+  
+    
+    <a href="//twitter.com/share?text=Replacing%20a%20k3s%20Cluster%20With%20One%20ePHPm%20Process&amp;url=https%3a%2f%2fluth.io%2fblog%2f2026%2f11%2fone-box-one-binary-single-ephpm-vm%2f" target="_blank" rel="noopener" class="nav share-btn twitter">
+        <p>Twitter</p>
+      </a>
+  
+
+  
+      <a href="//www.facebook.com/sharer/sharer.php?u=https%3a%2f%2fluth.io%2fblog%2f2026%2f11%2fone-box-one-binary-single-ephpm-vm%2f" target="_blank" rel="noopener" class="nav share-btn facebook">
+        <p>Facebook</p>
+        </a>
+  
+
+  
+    <a href="//www.reddit.com/submit?url=https%3a%2f%2fluth.io%2fblog%2f2026%2f11%2fone-box-one-binary-single-ephpm-vm%2f&amp;title=Replacing%20a%20k3s%20Cluster%20With%20One%20ePHPm%20Process" target="_blank" rel="noopener" class="nav share-btn reddit">
+          <p>Reddit</p>
+        </a>
+  
+
+  
+        <a href="//www.linkedin.com/shareArticle?url=https%3a%2f%2fluth.io%2fblog%2f2026%2f11%2fone-box-one-binary-single-ephpm-vm%2f&amp;title=Replacing%20a%20k3s%20Cluster%20With%20One%20ePHPm%20Process" target="_blank" rel="noopener" class="nav share-btn linkedin">
+            <p>LinkedIn</p>
+          </a>
+  
+
+  
+        <a href="//www.pinterest.com/pin/create/button/?url=https%3a%2f%2fluth.io%2fblog%2f2026%2f11%2fone-box-one-binary-single-ephpm-vm%2f&amp;description=Replacing%20a%20k3s%20Cluster%20With%20One%20ePHPm%20Process" target="_blank" rel="noopener" class="nav share-btn pinterest">
+          <p>Pinterest</p>
+        </a>
+  
+
+  
+        <a href="mailto:?subject=Check%20out%20this%20post%20by Luther%20Monson&amp;body=https%3a%2f%2fluth.io%2fblog%2f2026%2f11%2fone-box-one-binary-single-ephpm-vm%2f" target="_blank" class="nav share-btn email" data-proofer-ignore>
+          <p>Email</p>
+        </a>
+  
+
+
+    </menu>
+  
+</header>
+
+    <div id="wrapper">
+      <section id="site-intro" class="hidden-single-column">
+  <a href="/"><img src="/img/luther-monson-headshot.jpg" class="circle" width="100" alt="Luther Monson, Founding Engineer at Gas City" /></a>
+  <header>
+    <h1>Luther Monson</h1>
+  </header>
+  <main>
+    <p>Open Source &middot; AI &middot; Containers &middot; VMs &middot; Kubernetes &middot; Windows &middot; Go by way of PHP</p>
+  </main>
+  
+    <footer>
+      <ul class="socnet-icons">
+        
+
+        <li><a href="//github.com/luthermonson" target="_blank" rel="noopener" title="GitHub" class="fab fa-github"></a></li>
+
+
+
+
+
+
+
+
+
+
+
+<li><a href="//www.linkedin.com/in/luthermonson" target="_blank" rel="noopener" title="LinkedIn" class="fab fa-linkedin"></a></li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li><a href="//twitter.com/luthermonson" target="_blank" rel="noopener" title="Twitter" class="fab fa-twitter"></a></li>
+
+
+
+
+
+
+
+
+
+
+
+<li><a href="mailto:luther.monson@gmail.com" target="_blank" title="Email" class="far fa-envelope"></a></li>
+
+      </ul>
+    </footer>
+  
+</section>
+
+      <main id="site-main">
+        
+  <article>
+    <div class="post">
+      <header>
+  <div class="title">
+    
+      <h2><a href="/blog/2026/11/one-box-one-binary-single-ephpm-vm/">Replacing a k3s Cluster With One ePHPm Process</a></h2>
+    
+    
+      <p>How three PHP sites, their databases, cron and backups collapse onto one small VM, and what that costs once you match the bill to the size of the problem.</p>
+    
+  </div>
+  <div class="meta">
+    <time datetime="2026-11-18 07:30:00 -0700 MST">November 18, 2026</time>
+    
+    <p>9-Minute Read</p>
+  </div>
+</header>
+
+      <div id="socnet-share">
+        
+
+
+
+
+  
+    
+    <a href="//twitter.com/share?text=Replacing%20a%20k3s%20Cluster%20With%20One%20ePHPm%20Process&amp;url=https%3a%2f%2fluth.io%2fblog%2f2026%2f11%2fone-box-one-binary-single-ephpm-vm%2f" target="_blank" rel="noopener" class="nav share-btn twitter">
+        <p>Twitter</p>
+      </a>
+  
+
+  
+      <a href="//www.facebook.com/sharer/sharer.php?u=https%3a%2f%2fluth.io%2fblog%2f2026%2f11%2fone-box-one-binary-single-ephpm-vm%2f" target="_blank" rel="noopener" class="nav share-btn facebook">
+        <p>Facebook</p>
+        </a>
+  
+
+  
+    <a href="//www.reddit.com/submit?url=https%3a%2f%2fluth.io%2fblog%2f2026%2f11%2fone-box-one-binary-single-ephpm-vm%2f&amp;title=Replacing%20a%20k3s%20Cluster%20With%20One%20ePHPm%20Process" target="_blank" rel="noopener" class="nav share-btn reddit">
+          <p>Reddit</p>
+        </a>
+  
+
+  
+        <a href="//www.linkedin.com/shareArticle?url=https%3a%2f%2fluth.io%2fblog%2f2026%2f11%2fone-box-one-binary-single-ephpm-vm%2f&amp;title=Replacing%20a%20k3s%20Cluster%20With%20One%20ePHPm%20Process" target="_blank" rel="noopener" class="nav share-btn linkedin">
+            <p>LinkedIn</p>
+          </a>
+  
+
+  
+        <a href="//www.pinterest.com/pin/create/button/?url=https%3a%2f%2fluth.io%2fblog%2f2026%2f11%2fone-box-one-binary-single-ephpm-vm%2f&amp;description=Replacing%20a%20k3s%20Cluster%20With%20One%20ePHPm%20Process" target="_blank" rel="noopener" class="nav share-btn pinterest">
+          <p>Pinterest</p>
+        </a>
+  
+
+  
+        <a href="mailto:?subject=Check%20out%20this%20post%20by Luther%20Monson&amp;body=https%3a%2f%2fluth.io%2fblog%2f2026%2f11%2fone-box-one-binary-single-ephpm-vm%2f" target="_blank" class="nav share-btn email" data-proofer-ignore>
+          <p>Email</p>
+        </a>
+  
+
+
+      </div>
+      <div class="content">
+        
+        <p>A couple of weeks ago I wrote up <a href="/blog/2026/10/durable-data-single-node-k3s-ebs-rebuild/">surviving a node rebuild</a>
+on single-node k3s. Put the stateful bytes on a dedicated EBS volume, treat the node as cattle, and rebuild the machine
+without losing the data. It works.</p>
+<p>Then I looked at what I was actually running on that node and felt a little silly.</p>
+<p>The workload is three PHP sites (an admin app, self-hosted Sendy for email, a wholesale catalog) plus three crons.
+That&rsquo;s it. To run it I had a k3s control plane, a kubelet, Traefik for ingress, Tailscale for access, a CSI driver, a
+litestream sidecar for backups, three k8s CronJobs, and a stack of Helm charts holding it together. Every piece of that is
+something I patch, monitor, and get paged for, and none of it is the app. It was a datacenter wrapped around three PHP
+sites and some crons.</p>
+<p>So I migrated it. The whole thing now runs as a single process on one AWS VM: <a href="https://github.com/ephpm/ephpm">ePHPm</a>.
+The one binary is the web server, the PHP runtime, the per-site SQLite engine, the KV store, the cron scheduler, and the
+backup agent: the whole stack above, collapsed into one. The only other thing on the machine is the app code.</p>
+<p><img src="/img/2026/11/one-box-one-binary-single-ephpm-vm-cover.svg" alt="A tall single-node k3s stack collapses into one Debian VM running a single ephpm process that is the web server, PHP runtime, per-site SQLite, KV store, cron scheduler and S3 backup agent"></p>
+<h3 id="what-ephpm-absorbs">What ePHPm absorbs</h3>
+<p>The reason a single binary can replace that stack is that ePHPm already <em>is</em> most of the stack. It embeds PHP with the ZTS
+build, so it is the runtime directly, no php-fpm pool. It serves HTTP and terminates TLS itself, so there&rsquo;s no reverse
+proxy. Each site gets its own SQLite database through the embedded Turso engine, so there&rsquo;s no MySQL to run. And it carries
+a Redis-compatible KV store for sessions, a cron scheduler, and a backup agent that snapshots every database to S3.</p>
+<p>I covered the <a href="/blog/2026/08/clustered-sqlite-adding-turso/">clustered SQLite</a> and the
+<a href="/blog/2026/08/rolling-your-own-kv-store/">KV store</a> before; what matters here is the deployment shape. One <code>ephpm.toml</code>
+describes all three sites. The apps connect to their databases with stock <code>pdo_mysql</code> over a loopback listener, and ePHPm
+injects each site&rsquo;s credentials, so no app file holds a password. Sendy&rsquo;s scheduled send, its CSV import, and the wholesale
+catalog refresh are three <code>[[cron.jobs]]</code> entries: the former k8s CronJobs, now config lines the scheduler runs exactly
+once even when more than one node is up.</p>
+<p>Sendy is the one that proves the isolation is real. It&rsquo;s a classic <code>.htaccess</code> app (dozens of top-level PHP scripts and
+pretty tracking URLs), so it needs a per-site <code>[[rewrite]]</code> block, plus a scoped capability grant that lifts <code>mail</code> and
+<code>fsockopen</code> for that vhost alone. Admin and wholesale never get those; they stay hardened. One binary, three very different
+apps, and the loose one can&rsquo;t reach past its own vhost.</p>
+<p>One structural fact matters below: the box is a baked, immutable image, and its state lives on a separate EBS volume. The
+instance is disposable; the data isn&rsquo;t. How that image is built is
+<a href="/blog/2026/11/operating-one-box-ephpm-backups-blue-green/">part two</a>. Here it just has to be true, because it&rsquo;s what
+makes the cost math work.</p>
+<h3 id="what-it-costs">What it costs</h3>
+<p>This is the part people get wrong about going from a cluster to a box. They assume you traded capability for thrift. You
+didn&rsquo;t. You matched the bill to the size of the problem. Here&rsquo;s the whole monthly bill, us-west-2, on-demand, nothing
+reserved.</p>
+<table>
+  <thead>
+      <tr>
+          <th>Line item</th>
+          <th>Spec</th>
+          <th>Monthly</th>
+      </tr>
+  </thead>
+  <tbody>
+      <tr>
+          <td><code>t3a.small</code> on-demand</td>
+          <td>2 vCPU / 2 GB, ~730 hrs</td>
+          <td>$13.72</td>
+      </tr>
+      <tr>
+          <td>EBS gp3</td>
+          <td>20 GB root + 20 GB data @ $0.08/GB</td>
+          <td>$3.20</td>
+      </tr>
+      <tr>
+          <td>Public IPv4 (Elastic IP, in use)</td>
+          <td>1 address @ $0.005/hr</td>
+          <td>$3.65</td>
+      </tr>
+      <tr>
+          <td>S3 backups</td>
+          <td>gzipped snapshots, retention-tuned</td>
+          <td>~$2-3</td>
+      </tr>
+      <tr>
+          <td><strong>All-in</strong></td>
+          <td></td>
+          <td><strong>~$23/mo</strong></td>
+      </tr>
+  </tbody>
+</table>
+<p>The fixed floor (compute, disk, IP) is $20.57. Two line items are easy to miss. gp3 is cheaper than the old gp2 default
+and still gives you 3,000 IOPS baseline for free, so 40 GB is $3.20 and not a penny more. And since February 2024 AWS
+charges for every public IPv4 address, in use or idle: about $3.65/mo for the one Elastic IP, a line nobody budgeted for
+two years ago. A &ldquo;free&rdquo; static IP is a real part of this comparison.</p>
+<p>I did shop around. Linode and DigitalOcean bundle the static IP, and Oracle&rsquo;s always-free ARM tier is genuinely capable for
+nothing. Both are real options, and the ARM pricing is better. I stayed on AWS for two unglamorous reasons: the account,
+Terraform, and S3 bucket are already there, and the admin app&rsquo;s imagick build is pinned to amd64 and glibc 2.36, so
+Oracle&rsquo;s ARM (Ampere) tier means rebuilding that ABI story, not copying a config. A $3.65/mo static IP that just works beat
+a free one on a platform I&rsquo;d have to re-learn.</p>
+<p>None of this is about squeezing pennies. It&rsquo;s about matching the infrastructure bill <em>and</em> the operational cost to the
+actual size of the problem. Three PHP sites and some crons is a small problem. It should run on a small thing.</p>
+<h3 id="the-outage-you-can-afford">The outage you can afford</h3>
+<p>Everything above is on-demand, the no-tricks number. But there&rsquo;s a cheaper gear, and whether you can shift into it is a
+question about your <em>apps</em>, not your infrastructure.</p>
+<p>First, right-size. I load-tested the box and it idles around 400 MB of RAM and a few percent of one CPU. Even under a
+sustained flood (fifty concurrent connections on the heaviest catalog page), memory barely moved, because ePHPm caps PHP
+concurrency to the core count (floored at two) and queues the rest; traffic can&rsquo;t balloon the heap, it just waits. A 1 GB
+<code>t3a.micro</code> has plenty of headroom. The 2 GB in the table was caution, not need.</p>
+<p>Then spot. Spot is the same hardware at a fraction of the price (a <code>t3a.micro</code> runs about $2-3/mo on spot against $6.86
+on-demand) with one string: AWS can take the box back on two minutes&rsquo; notice. For a lot of workloads that&rsquo;s a dealbreaker;
+for <em>this</em> one it isn&rsquo;t, since the storefront is Shopify, never this box, and what&rsquo;s here (the admin panel, the wholesale
+catalog, Sendy) is internal tools and a mailer that can go dark for a couple of minutes without breaking a checkout or
+losing a dollar, exactly the profile where spot stops being reckless and starts being obvious.</p>
+<p>Right-sized and on spot, it&rsquo;s the same box for less than half the bill:</p>
+<table>
+  <thead>
+      <tr>
+          <th></th>
+          <th>On-demand, as billed above</th>
+          <th>Right-sized on spot</th>
+      </tr>
+  </thead>
+  <tbody>
+      <tr>
+          <td>Instance</td>
+          <td><code>t3a.small</code>, 2 GB</td>
+          <td><code>t3a.micro</code>, 1 GB</td>
+      </tr>
+      <tr>
+          <td>Compute</td>
+          <td>$13.72/mo</td>
+          <td>~$2-3/mo</td>
+      </tr>
+      <tr>
+          <td>All-in</td>
+          <td>~$23/mo</td>
+          <td>~$10/mo</td>
+      </tr>
+      <tr>
+          <td>Interruptions</td>
+          <td>none</td>
+          <td>AWS can reclaim on two minutes&rsquo; notice</td>
+      </tr>
+  </tbody>
+</table>
+<p>So the box runs in a single-node spot Auto Scaling Group. The data already lives on its own EBS volume, so when a spot node
+dies the disk outlives it. A replacement boots, re-attaches that same volume (seconds, not a copy; the 1.3 GB never moves),
+re-grabs the Elastic IP, and starts serving. A small watcher catches the two-minute interruption notice and stops ePHPm
+gracefully first, so it flushes its WAL and finishes the in-flight Sendy SES batch; the next cron tick resumes the send at
+the exact queue offset, because Sendy&rsquo;s queue <em>is</em> the resume point.</p>
+<p>I didn&rsquo;t want to take that on faith, so I tested it the rude way and timed the gap, twice:</p>
+<ul>
+<li><strong>Hard kill, no notice.</strong> I terminated the running spot node cold, the worst case. The ASG launched a replacement, it
+re-attached the volume and the IP, and the site answered again <strong>81 seconds</strong> later. The databases came back
+byte-for-byte intact, because the replacement replayed Sendy&rsquo;s uncheckpointed WAL on startup, which is the whole point of
+a write-ahead log.</li>
+<li><strong>Real rebalance, minutes later.</strong> AWS sent a genuine rebalance recommendation and the ASG swapped the node <em>again</em>, and
+the data sailed through that one too.</li>
+</ul>
+<p>Two unplanned replacements, zero data loss.</p>
+<p>The second swap taught me one thing worth passing on: for a <em>single</em> node, leave capacity rebalancing off. It replaces an
+at-risk instance before it&rsquo;s actually interrupted, which is what you want when a second node covers the swap and what you
+<em>don&rsquo;t</em> want when there&rsquo;s one node and every swap is 80 seconds dark for an interruption that might never come. One node
+rides until a real interruption; a fleet rebalances early.</p>
+<p>Is it zero-downtime? No. One node on spot has a real, non-zero chance of a few minutes dark, and no arrangement of spot
+drives that to zero. If I needed never-interrupted I&rsquo;d keep one on-demand node as a floor (<code>on_demand_base = 1</code>) or run a
+warm second node; both cost more, in dollars or moving parts. I need neither. Call it 99.98% on internal tools whose
+outages self-heal and never reach a customer; not a number worth paying to improve. Match the availability to the problem:
+some apps can trade a sliver of uptime for a chunk of cost, and these are those apps. Doing it drops the all-in nearer
+<strong>$10/mo</strong> than $23.</p>
+<h3 id="whats-next-closing-the-81-second-gap">What&rsquo;s next: closing the 81-second gap</h3>
+<p>That 81 seconds is a cold, reactive replacement. The node dies, then the ASG notices, then a new one boots, attaches the
+volume, grabs the IP, and starts serving. Every step waits on the one before it, and nothing starts until the box is
+already gone. The obvious next move is to stop waiting for it to die.</p>
+<p>Spot tells you first. The two-minute interruption notice and the rebalance recommendation both land before the box
+actually goes away, and right now I only use that window to drain cleanly. The idea is to use it to act: on the signal,
+launch the replacement immediately so it boots and reaches ready while the old node is still serving, then hand off the EBS
+volume and the Elastic IP at the last second. The dark window shrinks from &ldquo;boot a whole VM&rdquo; to &ldquo;detach, attach, flip the
+IP,&rdquo; which is a few seconds, not eighty.</p>
+<p>The catch is the one from the blue/green section: a single EBS volume can&rsquo;t attach to two live nodes at once, so the warm
+replacement can boot and initialize but can&rsquo;t take the data until the old node lets go. There&rsquo;s still a hard serialization
+point at the handoff. Whether that lands at five seconds or twenty-five is the thing I actually want to measure, so the
+experiment is to wire a watcher to the interruption and rebalance signals, have it pre-launch the replacement and pre-stage
+the attach, then force the reclaim and time it against the 81-second cold-start baseline. Same rude test, one variable
+changed. If it lands where I think it will, a planned spot reclaim costs a handful of seconds and the whole &ldquo;outage you can
+afford&rdquo; math gets easier still.</p>
+<p>Baking the image, backing it up, and shipping new code without downtime is
+<a href="/blog/2026/11/operating-one-box-ephpm-backups-blue-green/">the second half</a>.</p>
+<h3 id="links">Links</h3>
+<ul>
+<li><a href="/blog/2026/10/durable-data-single-node-k3s-ebs-rebuild/">Surviving a Node Rebuild: Durable Data on Single-Node k3s</a></li>
+<li><a href="/blog/2026/11/operating-one-box-ephpm-backups-blue-green/">Part two: Operating the One-Box ePHPm Setup</a></li>
+<li><a href="https://github.com/ephpm/ephpm">ePHPm</a></li>
+<li><a href="/blog/2026/08/clustered-sqlite-adding-turso/">Clustered SQLite: Adding Turso</a></li>
+<li><a href="/blog/2026/08/rolling-your-own-kv-store/">Rolling Your Own KV Store</a></li>
+<li><a href="https://aws.amazon.com/blogs/aws/new-aws-public-ipv4-address-charge-public-ip-insights/">AWS public IPv4 address charge</a></li>
+<li><a href="https://aws.amazon.com/ebs/pricing/">Amazon EBS gp3 pricing</a></li>
+</ul>
+
+      </div>
+      <footer>
+        <div class="stats">
+  
+    <ul class="categories">
+      
+        
+          <li><a class="article-terms-link" href="/categories/ephpm/">ephpm</a></li>
+        
+          <li><a class="article-terms-link" href="/categories/containers/">containers</a></li>
+        
+      
+    </ul>
+  
+  
+    <ul class="tags">
+      
+        
+          <li><a class="article-terms-link" href="/tags/aws/">aws</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/ec2/">ec2</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/ephpm/">ephpm</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/spot/">spot</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/sqlite/">sqlite</a></li>
+        
+      
+    </ul>
+  
+</div>
+
+      </footer>
+    </div>
+    
+      
+  
+  <div class='post giscus-wrap'>
+    <script src='https://giscus.app/client.js'
+            data-repo='luthermonson/luth.io'
+            data-repo-id='R_kgDOGvFBXQ'
+            data-category='Announcements'
+            data-category-id='DIC_kwDOGvFBXc4DH_gv'
+            data-mapping='pathname'
+            data-strict='1'
+            data-reactions-enabled='1'
+            data-emit-metadata='0'
+            data-input-position='top'
+            data-theme='light'
+            data-lang='en'
+            data-loading='lazy'
+            crossorigin='anonymous'
+            async>
+    </script>
+  </div>
+  
+
+
+
+    
+  </article>
+  
+    <nav class="post-nav">
+      
+        <a href="/blog/2026/10/durable-data-single-node-k3s-ebs-rebuild/" class="post-nav-link older">
+          <span class="post-nav-label">&larr; Older</span>
+          <span class="post-nav-title">Surviving a Node Rebuild: A Durable ePHPm Blog on Single-Node k3s</span>
+        </a>
+      
+      
+        <a href="/blog/2026/11/dagger-on-ephemerd-runner-fleet/" class="post-nav-link newer">
+          <span class="post-nav-label">Newer &rarr;</span>
+          <span class="post-nav-title">Dagger on ephemerd, and a Warm Cache on Throwaway Runners</span>
+        </a>
+      
+    </nav>
+  
+
+      </main>
+      <section id="site-sidebar">
+  
+    <section id="recent-posts">
+      <header>
+        <h1>Recent Posts</h1>
+      </header>
+      
+      <article class="mini-post">
+          <a href="/blog/2026/11/operating-one-box-ephpm-backups-blue-green/" class="image" style="--bg-image: url('/img/2026/11/one-box-one-binary-blue-green.svg');">
+    <img class="" src="/img/2026/11/one-box-one-binary-blue-green.svg" alt="Node A holds the live data; a green node B comes up with its own empty volume; each site&#39;s SQLite replicates A to B over the cluster channel with Turso CDC; once B converges the Elastic IP moves and A is retired, while S3 backups stay on because exactly one node takes them">
+  </a>
+        <header>
+          <h2><a href="/blog/2026/11/operating-one-box-ephpm-backups-blue-green/">Operating the One-Box ePHPm Setup: Backups and Blue/Green</a></h2>
+          <time class="published" datetime="2026-11-19 07:30:00 -0700 MST">November 19, 2026</time>
+        </header>
+      </article>
+      
+      <article class="mini-post">
+          <a href="/blog/2026/11/dagger-on-ephemerd-runner-fleet/" class="image" style="--bg-image: url('/img/2026/11/dagger-ephemerd-cache-architecture.svg');">
+    <img class="" src="/img/2026/11/dagger-ephemerd-cache-architecture.svg" alt="GitHub fires a workflow_job webhook at ephemerd on the node, which provisions a fresh VLAN-isolated runner that is destroyed after the job. Inside it a cold per-job BuildKit engine imports and exports cached layers over the GitHub Actions Cache v2 protocol to ephemerd&#39;s Actions-cache proxy, which persists the cache in a registry; point one shared registry in the VLAN at every host for a single fleet-wide cache.">
+  </a>
+        <header>
+          <h2><a href="/blog/2026/11/dagger-on-ephemerd-runner-fleet/">Dagger on ephemerd, and a Warm Cache on Throwaway Runners</a></h2>
+          <time class="published" datetime="2026-11-18 09:00:00 -0700 MST">November 18, 2026</time>
+        </header>
+      </article>
+      
+      <article class="mini-post">
+          <a href="/blog/2026/11/one-box-one-binary-single-ephpm-vm/" class="image" style="--bg-image: url('/img/2026/11/one-box-one-binary-single-ephpm-vm-cover.svg');">
+    <img class="" src="/img/2026/11/one-box-one-binary-single-ephpm-vm-cover.svg" alt="A tall single-node k3s stack of Traefik, Tailscale, three PHP pods, three CronJobs, a litestream sidecar, PVs and the control plane collapses into one Debian VM running a single ephpm process that is the web server, PHP runtime, per-site SQLite, KV store, cron scheduler and S3 backup agent">
+  </a>
+        <header>
+          <h2><a href="/blog/2026/11/one-box-one-binary-single-ephpm-vm/">Replacing a k3s Cluster With One ePHPm Process</a></h2>
+          <time class="published" datetime="2026-11-18 07:30:00 -0700 MST">November 18, 2026</time>
+        </header>
+      </article>
+      
+      <article class="mini-post">
+          <a href="/blog/2026/10/durable-data-single-node-k3s-ebs-rebuild/" class="image" style="--bg-image: url('/img/2026/10/durable-data-single-node-k3s-ebs-rebuild.svg');">
+    <img class="" src="/img/2026/10/durable-data-single-node-k3s-ebs-rebuild.svg" alt="A node rebuild: Node A is replaced by Node B, each root EBS volume is disposable, and the separate labeled EBS data volume detaches from the old node and re-attaches to the new one so the ePHPm blog&#39;s SQLite file and uploads survive">
+  </a>
+        <header>
+          <h2><a href="/blog/2026/10/durable-data-single-node-k3s-ebs-rebuild/">Surviving a Node Rebuild: A Durable ePHPm Blog on Single-Node k3s</a></h2>
+          <time class="published" datetime="2026-10-28 10:00:00 -0700 MST">October 28, 2026</time>
+        </header>
+      </article>
+      
+      <article class="mini-post">
+          <a href="/blog/2026/10/docker-in-docker-without-root/" class="image" style="--bg-image: url('/img/2026/10/docker-in-docker-without-root-cracks.svg');">
+    <img class="" src="/img/2026/10/docker-in-docker-without-root-cracks.svg" alt="Four dind sandbox cracks and the ephemerd PR that closed each one">
+  </a>
+        <header>
+          <h2><a href="/blog/2026/10/docker-in-docker-without-root/">Docker-in-Docker in CI Without Handing Jobs Root</a></h2>
+          <time class="published" datetime="2026-10-24 10:00:00 -0700 MST">October 24, 2026</time>
+        </header>
+      </article>
+      
+      
+        <footer>
+          <a href="/blog" class="button">See More</a>
+        </footer>
+      
+    </section>
+  
+
+  
+    
+
+      <section id="categories">
+        <header>
+          <h1><a href="/categories">Categories</a></h1>
+        </header>
+        <ul>
+          
+          
+          <li>
+              <a href="/categories/ephpm/">ephpm<span class="count">41</span></a>
+          
+          <li>
+              <a href="/categories/go/">go<span class="count">32</span></a>
+          
+          <li>
+              <a href="/categories/php/">php<span class="count">27</span></a>
+          
+          <li>
+              <a href="/categories/rust/">rust<span class="count">17</span></a>
+          
+          <li>
+              <a href="/categories/homelab/">homelab<span class="count">14</span></a>
+          
+          <li>
+              <a href="/categories/windows/">windows<span class="count">14</span></a>
+          
+          <li>
+              <a href="/categories/ci/">ci<span class="count">13</span></a>
+          
+          <li>
+              <a href="/categories/containers/">containers<span class="count">13</span></a>
+          
+          <li>
+              <a href="/categories/databases/">databases<span class="count">10</span></a>
+          
+          <li>
+              <a href="/categories/ephemerd/">ephemerd<span class="count">10</span></a>
+          
+          <li>
+              <a href="/categories/security/">security<span class="count">10</span></a>
+          
+          <li>
+              <a href="/categories/tools/">tools<span class="count">5</span></a>
+          
+          <li>
+              <a href="/categories/ai-agents/">ai-agents<span class="count">4</span></a>
+          
+          </li>
+        </ul>
+      </section>
+    
+  
+
+  
+    <section id="mini-bio">
+      <header>
+        <h1>About</h1>
+      </header>
+      <p>Luther is a 20+ year software veteran specializing in backend APIs and architecting products. Founding engineer at <a href='https://gascity.com'>Gas City</a> building open-source AI software factories on <a href='https://github.com/gastownhall/beads'>Beads</a>, the durable work graph for coding agents.</p>
+      <footer>
+        <a href="/about" class="button">Learn More</a>
+      </footer>
+    </section>
+  
+</section>
+
+      <footer id="site-footer">
+  
+      <ul class="socnet-icons">
+        
+
+        <li><a href="//github.com/luthermonson" target="_blank" rel="noopener" title="GitHub" class="fab fa-github"></a></li>
+
+
+
+
+
+
+
+
+
+
+
+<li><a href="//www.linkedin.com/in/luthermonson" target="_blank" rel="noopener" title="LinkedIn" class="fab fa-linkedin"></a></li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li><a href="//twitter.com/luthermonson" target="_blank" rel="noopener" title="Twitter" class="fab fa-twitter"></a></li>
+
+
+
+
+
+
+
+
+
+
+
+<li><a href="mailto:luther.monson@gmail.com" target="_blank" title="Email" class="far fa-envelope"></a></li>
+
+      </ul>
+  
+  <p class="copyright">
+    © 2026 Luther Monson
+      <br>
+    Theme: <a href='https://github.com/pacollins/hugo-future-imperfect-slim' target='_blank' rel='noopener'>Hugo Future Imperfect Slim</a><br>A <a href='https://html5up.net/future-imperfect' target='_blank' rel='noopener'>HTML5 UP port</a> | Powered by <a href='https://gohugo.io/' title='0.160.1' target='_blank' rel='noopener'>Hugo</a>
+  </p>
+</footer>
+<a id="back-to-top" href="#" class="fas fa-arrow-up fa-2x"></a>
+
+      <script src="/js/bundle.min.241b62ebc4792fe8c7a75879e5f710894f226f2b73342e9916b3a3b0526030cc.js" integrity="sha256-JBti68R5L&#43;jHp1h55fcQiU8ibytzNC6ZFrOjsFJgMMw="></script>
+    <script src="/js/add-on.js"></script>
+    </div>
+  </body>
+</html>

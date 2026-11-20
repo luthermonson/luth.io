@@ -6,8 +6,15 @@
     <description>Recent content in Terraform on Luther Monson</description>
     <generator>Hugo</generator>
     <language>en</language>
-    <lastBuildDate>Wed, 28 Oct 2026 10:00:00 -0700</lastBuildDate>
+    <lastBuildDate>Thu, 19 Nov 2026 07:30:00 -0700</lastBuildDate>
     <atom:link href="https://luth.io/tags/terraform/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>Operating the One-Box ePHPm Setup: Backups and Blue/Green</title>
+      <link>https://luth.io/blog/2026/11/operating-one-box-ephpm-backups-blue-green/</link>
+      <pubDate>Thu, 19 Nov 2026 07:30:00 -0700</pubDate>
+      <guid>https://luth.io/blog/2026/11/operating-one-box-ephpm-backups-blue-green/</guid>
+      <description>&lt;h3 id=&#34;the-golden-ami-immutable-code-mutable-data&#34;&gt;The golden AMI: immutable code, mutable data&lt;/h3&gt;&#xA;&lt;p&gt;The box is baked, not configured in place. Packer builds a Debian 12 AMI with the ePHPm binary and all three apps&amp;rsquo; code&#xA;already on disk. The source gets pulled from the three private GitHub repos&amp;rsquo; tarballs at build time and run through&#xA;&lt;code&gt;composer install&lt;/code&gt; right there in the image. Rolling new code means baking a new AMI.&lt;/p&gt;&#xA;&lt;p&gt;Debian 12 specifically, because the admin app&amp;rsquo;s imagick build is compiled against glibc 2.36 and bookworm is that exact&#xA;version. (That ABI pin is also why the box stayed on AWS amd64 instead of chasing a free ARM tier. That&amp;rsquo;s the cost math in&#xA;&lt;a href=&#34;https://luth.io/blog/2026/11/one-box-one-binary-single-ephpm-vm/&#34;&gt;part one&lt;/a&gt;.)&lt;/p&gt;</description>
+    </item>
     <item>
       <title>Surviving a Node Rebuild: A Durable ePHPm Blog on Single-Node k3s</title>
       <link>https://luth.io/blog/2026/10/durable-data-single-node-k3s-ebs-rebuild/</link>

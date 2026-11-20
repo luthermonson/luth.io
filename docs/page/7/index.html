@@ -215,6 +215,139 @@
   <header>
   <div class="title">
     
+      <h2><a href="/blog/2026/07/building-a-custom-php-sapi/">Building a Custom SAPI - How PHP Actually Talks to the Outside World</a></h2>
+    
+    
+      <p>php-fpm, mod_php and the PHP command line all plug into PHP the same way. Here&#39;s how ePHPm does it, and the shortcut that broke WordPress.</p>
+    
+  </div>
+  <div class="meta">
+    <time datetime="2026-07-30 20:18:00 -0700 MST">July 30, 2026</time>
+    
+    <p>9-Minute Read</p>
+  </div>
+</header>
+
+  <div class="content">
+    <a href="/blog/2026/07/building-a-custom-php-sapi/" class="image" style="--bg-image: url('/img/2026/08/building-a-custom-php-sapi-cover.svg');">
+    <img class="" src="/img/2026/08/building-a-custom-php-sapi-cover.svg" alt="Table mapping PHP operations like echo, header(), $_POST, $_COOKIE and $_SERVER to SAPI callbacks and to the Rust side of ePHPm">
+  </a>
+    
+    <p>If you&rsquo;ve only ever run PHP behind nginx, you&rsquo;ve probably never had to think about how <code>echo</code> reaches a socket. When
+you embed PHP like <a href="https://github.com/ephpm/ephpm">ePHPm</a> does, it&rsquo;s the first thing you have to answer. The answer
+is a SAPI. There is very little written about implementing one. Most of what I know came from reading <code>sapi/cli</code>,
+<code>sapi/cgi</code> and <code>sapi/embed</code> in php-src. Then I found out which parts I&rsquo;d misread. This is the write-up I wanted back
+in March.</p>
+  </div>
+  <footer>
+    <a href="/blog/2026/07/building-a-custom-php-sapi/" class="button big">Read More</a>
+    <div class="stats">
+  
+    <ul class="categories">
+      
+        
+          <li><a class="article-terms-link" href="/categories/ephpm/">ephpm</a></li>
+        
+          <li><a class="article-terms-link" href="/categories/php/">php</a></li>
+        
+          <li><a class="article-terms-link" href="/categories/rust/">rust</a></li>
+        
+      
+    </ul>
+  
+  
+    <ul class="tags">
+      
+        
+          <li><a class="article-terms-link" href="/tags/ephpm/">ephpm</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/php/">php</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/rust/">rust</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/sapi/">sapi</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/php-internals/">php internals</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/wordpress/">wordpress</a></li>
+        
+      
+    </ul>
+  
+</div>
+
+  </footer>
+</article>
+
+  
+    <article class="post">
+  <header>
+  <div class="title">
+    
+      <h2><a href="/blog/2026/07/five-ways-to-url-encode-an-ssh-key/">Five Ways to URL-Encode an SSH Key (and Why Proxmox Rejects Them)</a></h2>
+    
+    
+      <p>Proxmox&#39;s sshkeys parameter wants Python-style percent encoding that no single Go function produces. This covers a two-year-old issue, its one-line fix, and a related double-encoding bug in guest file writes.</p>
+    
+  </div>
+  <div class="meta">
+    <time datetime="2026-07-28 20:12:00 -0700 MST">July 28, 2026</time>
+    
+    <p>6-Minute Read</p>
+  </div>
+</header>
+
+  <div class="content">
+    <a href="/blog/2026/07/five-ways-to-url-encode-an-ssh-key/" class="image" style="--bg-image: url('/img/2026/07/five-ways-to-url-encode-an-ssh-key-results.svg');">
+    <img class="" src="/img/2026/07/five-ways-to-url-encode-an-ssh-key-results.svg" alt="Table of seven ways to encode an SSH public key and whether each passes Proxmox&#39;s urlencoded validator">
+  </a>
+    
+    <p><a href="https://github.com/luthermonson/go-proxmox/issues/144">Issue #144</a> on go-proxmox was opened in April 2024 with the
+title &ldquo;Weird sshkeys SSH public key validation error&rdquo;. It is one of my less proud threads. It&rsquo;s thirteen comments of
+people, including me, trying to get a public key into a cloud-init VM through the API. The working answer took more
+than a year to show up. The fix that finally landed in May is one line. Here&rsquo;s why it took so long.</p>
+  </div>
+  <footer>
+    <a href="/blog/2026/07/five-ways-to-url-encode-an-ssh-key/" class="button big">Read More</a>
+    <div class="stats">
+  
+    <ul class="categories">
+      
+        
+          <li><a class="article-terms-link" href="/categories/go/">go</a></li>
+        
+          <li><a class="article-terms-link" href="/categories/homelab/">homelab</a></li>
+        
+      
+    </ul>
+  
+  
+    <ul class="tags">
+      
+        
+          <li><a class="article-terms-link" href="/tags/proxmox/">proxmox</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/go/">go</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/go-proxmox/">go-proxmox</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/cloud-init/">cloud-init</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/encoding/">encoding</a></li>
+        
+      
+    </ul>
+  
+</div>
+
+  </footer>
+</article>
+
+  
+    <article class="post">
+  <header>
+  <div class="title">
+    
       <h2><a href="/blog/2026/07/sqlite-production-database-protocol-translation/">SQLite as a Production Database via Protocol Translation</a></h2>
     
     
@@ -741,130 +874,6 @@ great from my terminal and fell over the moment ephemerd became a real Windows s
 </article>
 
   
-    <article class="post">
-  <header>
-  <div class="title">
-    
-      <h2><a href="/blog/2026/06/omitempty-zero-values-proxmox-defaults/">Your Zero Value Just Turned Off My TLS Verification: omitempty, Go Defaults and Proxmox</a></h2>
-    
-    
-      <p>A plain Go field can&#39;t tell unset from false. In go-proxmox the fix for one omitempty bug created the opposite bug, until an audit against the Proxmox schema found 75 fields and v0.7.0 moved them to pointers.</p>
-    
-  </div>
-  <div class="meta">
-    <time datetime="2026-06-13 19:52:00 -0700 MST">June 13, 2026</time>
-    
-    <p>7-Minute Read</p>
-  </div>
-</header>
-
-  <div class="content">
-    <a href="/blog/2026/06/omitempty-zero-values-proxmox-defaults/" class="image" style="--bg-image: url('/img/2026/06/omitempty-zero-values-proxmox-defaults-table.svg');">
-    <img class="" src="/img/2026/06/omitempty-zero-values-proxmox-defaults-table.svg" alt="Table showing how verify-certificates was sent by go-proxmox before #210, between v0.2.3 and v0.6.x, and in v0.7.0">
-  </a>
-    
-    <p>Every Go developer knows <code>omitempty</code> drops zero values. What takes longer to sink in is that a plain <code>bool</code> only has
-two states. A caller filling in an options struct means one of three:</p>
-  </div>
-  <footer>
-    <a href="/blog/2026/06/omitempty-zero-values-proxmox-defaults/" class="button big">Read More</a>
-    <div class="stats">
-  
-    <ul class="categories">
-      
-        
-          <li><a class="article-terms-link" href="/categories/go/">go</a></li>
-        
-          <li><a class="article-terms-link" href="/categories/homelab/">homelab</a></li>
-        
-      
-    </ul>
-  
-  
-    <ul class="tags">
-      
-        
-          <li><a class="article-terms-link" href="/tags/proxmox/">proxmox</a></li>
-        
-          <li><a class="article-terms-link" href="/tags/go/">go</a></li>
-        
-          <li><a class="article-terms-link" href="/tags/go-proxmox/">go-proxmox</a></li>
-        
-          <li><a class="article-terms-link" href="/tags/json/">json</a></li>
-        
-      
-    </ul>
-  
-</div>
-
-  </footer>
-</article>
-
-  
-    <article class="post">
-  <header>
-  <div class="title">
-    
-      <h2><a href="/blog/2026/06/go-proxmox-endpoint-coverage/">From 52% to 100%: Measuring a Go Client Against the Proxmox API Schema</a></h2>
-    
-    
-      <p>I built a stdlib-only mage target that pulls Proxmox&#39;s own API schema and regex-scans go-proxmox for HTTP call sites to report coverage. The tool was wrong more often than the code was.</p>
-    
-  </div>
-  <div class="meta">
-    <time datetime="2026-06-07 21:36:00 -0700 MST">June 7, 2026</time>
-    
-    <p>8-Minute Read</p>
-  </div>
-</header>
-
-  <div class="content">
-    <a href="/blog/2026/06/go-proxmox-endpoint-coverage/" class="image" style="--bg-image: url('/img/2026/06/go-proxmox-endpoint-coverage-history.svg');">
-    <img class="" src="/img/2026/06/go-proxmox-endpoint-coverage-history.svg" alt="Line chart of go-proxmox endpoint coverage from 4% in 2021 to 100% in May 2026">
-  </a>
-    
-    <p>For five years the honest answer to &ldquo;how much of the Proxmox API does go-proxmox cover?&rdquo; was &ldquo;a lot of it? the parts
-people asked for?&rdquo;. Issues would come in for endpoints that didn&rsquo;t exist in the client. I&rsquo;d have no idea how many more
-were missing. At the end of May I finally built the thing that answers the question. Three days after the first run the
-answer was 100%. The more interesting part is how many times the measuring stick was wrong on the way there.</p>
-  </div>
-  <footer>
-    <a href="/blog/2026/06/go-proxmox-endpoint-coverage/" class="button big">Read More</a>
-    <div class="stats">
-  
-    <ul class="categories">
-      
-        
-          <li><a class="article-terms-link" href="/categories/go/">go</a></li>
-        
-          <li><a class="article-terms-link" href="/categories/homelab/">homelab</a></li>
-        
-      
-    </ul>
-  
-  
-    <ul class="tags">
-      
-        
-          <li><a class="article-terms-link" href="/tags/proxmox/">proxmox</a></li>
-        
-          <li><a class="article-terms-link" href="/tags/go/">go</a></li>
-        
-          <li><a class="article-terms-link" href="/tags/go-proxmox/">go-proxmox</a></li>
-        
-          <li><a class="article-terms-link" href="/tags/mage/">mage</a></li>
-        
-          <li><a class="article-terms-link" href="/tags/api/">api</a></li>
-        
-      
-    </ul>
-  
-</div>
-
-  </footer>
-</article>
-
-  
   <div class="pagination">
     
       <a href="/page/6/" class="button left"><span>Previous Page</span></a>
@@ -883,12 +892,32 @@ answer was 100%. The more interesting part is how many times the measuring stick
       </header>
       
       <article class="mini-post">
+          <a href="/blog/2026/11/operating-one-box-ephpm-backups-blue-green/" class="image" style="--bg-image: url('/img/2026/11/one-box-one-binary-blue-green.svg');">
+    <img class="" src="/img/2026/11/one-box-one-binary-blue-green.svg" alt="Node A holds the live data; a green node B comes up with its own empty volume; each site&#39;s SQLite replicates A to B over the cluster channel with Turso CDC; once B converges the Elastic IP moves and A is retired, while S3 backups stay on because exactly one node takes them">
+  </a>
+        <header>
+          <h2><a href="/blog/2026/11/operating-one-box-ephpm-backups-blue-green/">Operating the One-Box ePHPm Setup: Backups and Blue/Green</a></h2>
+          <time class="published" datetime="2026-11-19 07:30:00 -0700 MST">November 19, 2026</time>
+        </header>
+      </article>
+      
+      <article class="mini-post">
           <a href="/blog/2026/11/dagger-on-ephemerd-runner-fleet/" class="image" style="--bg-image: url('/img/2026/11/dagger-ephemerd-cache-architecture.svg');">
     <img class="" src="/img/2026/11/dagger-ephemerd-cache-architecture.svg" alt="GitHub fires a workflow_job webhook at ephemerd on the node, which provisions a fresh VLAN-isolated runner that is destroyed after the job. Inside it a cold per-job BuildKit engine imports and exports cached layers over the GitHub Actions Cache v2 protocol to ephemerd&#39;s Actions-cache proxy, which persists the cache in a registry; point one shared registry in the VLAN at every host for a single fleet-wide cache.">
   </a>
         <header>
           <h2><a href="/blog/2026/11/dagger-on-ephemerd-runner-fleet/">Dagger on ephemerd, and a Warm Cache on Throwaway Runners</a></h2>
           <time class="published" datetime="2026-11-18 09:00:00 -0700 MST">November 18, 2026</time>
+        </header>
+      </article>
+      
+      <article class="mini-post">
+          <a href="/blog/2026/11/one-box-one-binary-single-ephpm-vm/" class="image" style="--bg-image: url('/img/2026/11/one-box-one-binary-single-ephpm-vm-cover.svg');">
+    <img class="" src="/img/2026/11/one-box-one-binary-single-ephpm-vm-cover.svg" alt="A tall single-node k3s stack of Traefik, Tailscale, three PHP pods, three CronJobs, a litestream sidecar, PVs and the control plane collapses into one Debian VM running a single ephpm process that is the web server, PHP runtime, per-site SQLite, KV store, cron scheduler and S3 backup agent">
+  </a>
+        <header>
+          <h2><a href="/blog/2026/11/one-box-one-binary-single-ephpm-vm/">Replacing a k3s Cluster With One ePHPm Process</a></h2>
+          <time class="published" datetime="2026-11-18 07:30:00 -0700 MST">November 18, 2026</time>
         </header>
       </article>
       
@@ -912,26 +941,6 @@ answer was 100%. The more interesting part is how many times the measuring stick
         </header>
       </article>
       
-      <article class="mini-post">
-          <a href="/blog/2026/10/ci-cache-proxies-ephemeral-runners/" class="image" style="--bg-image: url('/img/2026/10/ci-cache-proxies-ephemeral-runners-flow.svg');">
-    <img class="" src="/img/2026/10/ci-cache-proxies-ephemeral-runners-flow.svg" alt="A fresh runner per job points go mod, cargo, composer, release downloads and actions/cache at matching cache proxies on the ephemerd node, where the caches persist and only reach the internet on a miss">
-  </a>
-        <header>
-          <h2><a href="/blog/2026/10/ci-cache-proxies-ephemeral-runners/">Cache Proxies for Ephemeral CI Runners</a></h2>
-          <time class="published" datetime="2026-10-23 15:00:00 -0700 MST">October 23, 2026</time>
-        </header>
-      </article>
-      
-      <article class="mini-post">
-          <a href="/blog/2026/10/ephemeral-macos-runners-vm-clones/" class="image" style="--bg-image: url('/img/2026/10/ephemeral-macos-runners-vm-clones-lifecycle.svg');">
-    <img class="" src="/img/2026/10/ephemeral-macos-runners-vm-clones-lifecycle.svg" alt="A macOS CI job lifecycle: clone the base image, boot and grow the disk, set up over SSH, run the job, then stop and sweep, with a band showing the single slot held the whole time">
-  </a>
-        <header>
-          <h2><a href="/blog/2026/10/ephemeral-macos-runners-vm-clones/">Ephemeral macOS Runners: A Fresh VM Per Job on Apple Silicon</a></h2>
-          <time class="published" datetime="2026-10-23 11:00:00 -0700 MST">October 23, 2026</time>
-        </header>
-      </article>
-      
       
         <footer>
           <a href="/blog" class="button">See More</a>
@@ -951,7 +960,7 @@ answer was 100%. The more interesting part is how many times the measuring stick
           
           
           <li>
-              <a href="/categories/ephpm/">ephpm<span class="count">39</span></a>
+              <a href="/categories/ephpm/">ephpm<span class="count">41</span></a>
           
           <li>
               <a href="/categories/go/">go<span class="count">32</span></a>
@@ -972,7 +981,7 @@ answer was 100%. The more interesting part is how many times the measuring stick
               <a href="/categories/ci/">ci<span class="count">13</span></a>
           
           <li>
-              <a href="/categories/containers/">containers<span class="count">11</span></a>
+              <a href="/categories/containers/">containers<span class="count">13</span></a>
           
           <li>
               <a href="/categories/databases/">databases<span class="count">10</span></a>

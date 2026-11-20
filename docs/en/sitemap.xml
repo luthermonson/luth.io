@@ -2,11 +2,20 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"
   xmlns:xhtml="http://www.w3.org/1999/xhtml">
   <url>
+    <loc>https://luth.io/tags/aws/</loc>
+    <lastmod>2026-11-19T07:30:00-07:00</lastmod>
+  </url><url>
+    <loc>https://luth.io/tags/backups/</loc>
+    <lastmod>2026-11-19T07:30:00-07:00</lastmod>
+  </url><url>
     <loc>https://luth.io/blog/</loc>
-    <lastmod>2026-11-18T09:00:00-07:00</lastmod>
+    <lastmod>2026-11-19T07:30:00-07:00</lastmod>
+  </url><url>
+    <loc>https://luth.io/tags/blue-green/</loc>
+    <lastmod>2026-11-19T07:30:00-07:00</lastmod>
   </url><url>
     <loc>https://luth.io/categories/</loc>
-    <lastmod>2026-11-18T09:00:00-07:00</lastmod>
+    <lastmod>2026-11-19T07:30:00-07:00</lastmod>
     <xhtml:link
                 rel="alternate"
                 hreflang="fr"
@@ -58,26 +67,17 @@
                 href="https://luth.io/categories/"
                 />
   </url><url>
-    <loc>https://luth.io/categories/ci/</loc>
-    <lastmod>2026-11-18T09:00:00-07:00</lastmod>
-  </url><url>
     <loc>https://luth.io/categories/containers/</loc>
-    <lastmod>2026-11-18T09:00:00-07:00</lastmod>
+    <lastmod>2026-11-19T07:30:00-07:00</lastmod>
   </url><url>
-    <loc>https://luth.io/blog/2026/11/dagger-on-ephemerd-runner-fleet/</loc>
-    <lastmod>2026-11-18T09:00:00-07:00</lastmod>
+    <loc>https://luth.io/categories/ephpm/</loc>
+    <lastmod>2026-11-19T07:30:00-07:00</lastmod>
   </url><url>
-    <loc>https://luth.io/categories/ephemerd/</loc>
-    <lastmod>2026-11-18T09:00:00-07:00</lastmod>
-  </url><url>
-    <loc>https://luth.io/tags/ephemerd/</loc>
-    <lastmod>2026-11-18T09:00:00-07:00</lastmod>
-  </url><url>
-    <loc>https://luth.io/tags/infrastructure/</loc>
-    <lastmod>2026-11-18T09:00:00-07:00</lastmod>
+    <loc>https://luth.io/tags/ephpm/</loc>
+    <lastmod>2026-11-19T07:30:00-07:00</lastmod>
   </url><url>
     <loc>https://luth.io/</loc>
-    <lastmod>2026-11-18T09:00:00-07:00</lastmod>
+    <lastmod>2026-11-19T07:30:00-07:00</lastmod>
     <xhtml:link
                 rel="alternate"
                 hreflang="fr"
@@ -129,8 +129,17 @@
                 href="https://luth.io/"
                 />
   </url><url>
+    <loc>https://luth.io/blog/2026/11/operating-one-box-ephpm-backups-blue-green/</loc>
+    <lastmod>2026-11-19T07:30:00-07:00</lastmod>
+  </url><url>
+    <loc>https://luth.io/tags/packer/</loc>
+    <lastmod>2026-11-19T07:30:00-07:00</lastmod>
+  </url><url>
+    <loc>https://luth.io/tags/sqlite/</loc>
+    <lastmod>2026-11-19T07:30:00-07:00</lastmod>
+  </url><url>
     <loc>https://luth.io/tags/</loc>
-    <lastmod>2026-11-18T09:00:00-07:00</lastmod>
+    <lastmod>2026-11-19T07:30:00-07:00</lastmod>
     <xhtml:link
                 rel="alternate"
                 hreflang="fr"
@@ -182,16 +191,34 @@
                 href="https://luth.io/tags/"
                 />
   </url><url>
-    <loc>https://luth.io/tags/aws/</loc>
-    <lastmod>2026-10-28T10:00:00-07:00</lastmod>
+    <loc>https://luth.io/tags/terraform/</loc>
+    <lastmod>2026-11-19T07:30:00-07:00</lastmod>
+  </url><url>
+    <loc>https://luth.io/categories/ci/</loc>
+    <lastmod>2026-11-18T09:00:00-07:00</lastmod>
+  </url><url>
+    <loc>https://luth.io/blog/2026/11/dagger-on-ephemerd-runner-fleet/</loc>
+    <lastmod>2026-11-18T09:00:00-07:00</lastmod>
+  </url><url>
+    <loc>https://luth.io/categories/ephemerd/</loc>
+    <lastmod>2026-11-18T09:00:00-07:00</lastmod>
+  </url><url>
+    <loc>https://luth.io/tags/ephemerd/</loc>
+    <lastmod>2026-11-18T09:00:00-07:00</lastmod>
+  </url><url>
+    <loc>https://luth.io/tags/infrastructure/</loc>
+    <lastmod>2026-11-18T09:00:00-07:00</lastmod>
+  </url><url>
+    <loc>https://luth.io/tags/ec2/</loc>
+    <lastmod>2026-11-18T07:30:00-07:00</lastmod>
+  </url><url>
+    <loc>https://luth.io/blog/2026/11/one-box-one-binary-single-ephpm-vm/</loc>
+    <lastmod>2026-11-18T07:30:00-07:00</lastmod>
+  </url><url>
+    <loc>https://luth.io/tags/spot/</loc>
+    <lastmod>2026-11-18T07:30:00-07:00</lastmod>
   </url><url>
     <loc>https://luth.io/tags/ebs/</loc>
-    <lastmod>2026-10-28T10:00:00-07:00</lastmod>
-  </url><url>
-    <loc>https://luth.io/categories/ephpm/</loc>
-    <lastmod>2026-10-28T10:00:00-07:00</lastmod>
-  </url><url>
-    <loc>https://luth.io/tags/ephpm/</loc>
     <lastmod>2026-10-28T10:00:00-07:00</lastmod>
   </url><url>
     <loc>https://luth.io/tags/k3s/</loc>
@@ -200,13 +227,7 @@
     <loc>https://luth.io/tags/kubernetes/</loc>
     <lastmod>2026-10-28T10:00:00-07:00</lastmod>
   </url><url>
-    <loc>https://luth.io/tags/sqlite/</loc>
-    <lastmod>2026-10-28T10:00:00-07:00</lastmod>
-  </url><url>
     <loc>https://luth.io/blog/2026/10/durable-data-single-node-k3s-ebs-rebuild/</loc>
-    <lastmod>2026-10-28T10:00:00-07:00</lastmod>
-  </url><url>
-    <loc>https://luth.io/tags/terraform/</loc>
     <lastmod>2026-10-28T10:00:00-07:00</lastmod>
   </url><url>
     <loc>https://luth.io/tags/wordpress/</loc>

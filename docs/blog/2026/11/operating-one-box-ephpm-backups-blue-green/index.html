@@ -1,0 +1,643 @@
+<!doctype html>
+<html lang="en">
+  <head>
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-MSTSKGFWTX"></script>
+<script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+
+    gtag('config', 'G-MSTSKGFWTX');
+</script><meta charset="utf-8">
+<title>Operating the One-Box ePHPm Setup: Backups and Blue/Green - Luther Monson</title>
+<meta name="description" content="Day-two work on the single-VM ePHPm box: a golden AMI that smoke-tests itself, an S3 backup that survives on a box too small to hold two copies of the database, and a blue/green upgrade that moves the data instead of the disk.">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<meta name="twitter:card" content="summary_large_image"><meta name="twitter:site" content="@luthermonson">
+
+<meta property="og:site_name" content="Luther Monson">
+<meta property="og:title" content="Operating the One-Box ePHPm Setup: Backups and Blue/Green">
+<meta property="og:description" content="Day-two work on the single-VM ePHPm box: a golden AMI that smoke-tests itself, an S3 backup that survives on a box too small to hold two copies of the database, and a blue/green upgrade that moves the data instead of the disk.">
+<meta property="og:type" content="article">
+<meta property="og:url" content="https://luth.io/blog/2026/11/operating-one-box-ephpm-backups-blue-green/">
+    <meta property="og:image" content="https://luth.io/img/2026/11/one-box-one-binary-blue-green.svg">
+    <meta property="og:image:alt" content="Node A holds the live data; a green node B comes up with its own empty volume; each site&#39;s SQLite replicates A to B over the cluster channel with Turso CDC; once B converges the Elastic IP moves and A is retired, while S3 backups stay on because exactly one node takes them">
+
+
+  <link rel="manifest" href="/favicon/site.webmanifest?v=1">
+  <link rel="apple-touch-icon" sizes="180x180" href="/favicon/apple-touch-icon.png?v=1">
+  <link rel="icon" type="image/png" sizes="32x32" href="/favicon/favicon-32x32.png?v=1">
+  <link rel="icon" type="image/png" sizes="16x16" href="/favicon/favicon-16x16.png?v=1">
+  
+    <link rel="mask-icon" href="/favicon/safari-pinned-tab.svg?v=1" color="#ffffff">
+    <link rel="shortcut icon" href="/favicon/favicon.ico?v=1">
+    <meta name="msapplication-config" content="/favicon/browserconfig.xml?v=1">
+  
+  <meta name="msapplication-TileColor" content="#ffffff">
+  <meta name="theme-color" content="#ffffff">
+
+
+  <meta name="generator" content="Hugo 0.160.1">
+  <link rel="alternate" type="application/rss+xml" href="https://luth.io/index.xml" title="Luther Monson">
+  <link rel="stylesheet" href="/css/bundle.min.e1ffed86714fbb7eff75eab221c0c61b8260be0c7d1c08db0fcb7a2bdb6af7c9.css" integrity="sha256-4f/thnFPu37/deqyIcDGG4Jgvgx9HAjbD8t6K9tq98k="><link rel="stylesheet" href="/css/add-on.css">
+        <link rel="stylesheet" href="/css/code.css">
+        <link rel="stylesheet" href="/css/mobile.css">
+</head>
+
+  <body>
+    
+
+<header id="site-header">
+  <nav id="site-nav">
+    <h1 class="nav-title">
+      <a href="/" class="nav">
+        <img class="nav-avatar" src="/img/luther-monson-headshot.jpg" alt="" width="32" height="32">
+        
+          Blog
+        
+      </a>
+    </h1>
+    <menu id="site-nav-menu" class="flyout-menu menu">
+      
+        
+          
+          <a href="/" class="nav link"><i class='fa fa-home'></i> Home</a>
+        
+      
+        
+          
+          <a href="/about" class="nav link"><i class='far fa-id-card'></i> About</a>
+        
+      
+        
+          
+          <a href="/blog" class="nav link"><i class='far fa-newspaper'></i> Blog</a>
+        
+      
+        
+          
+          <a href="/archive" class="nav link"><i class='far fa-calendar-alt'></i> Archive</a>
+        
+      
+        
+          
+          <a href="/categories" class="nav link"><i class='fas fa-sitemap'></i> Categories</a>
+        
+      
+      <a href="#share-menu" class="nav link share-toggle"><i class="fas fa-share-alt">&nbsp;</i>Share</a>
+      <a href="#search-input" class="nav link search-toggle"><i class="fas fa-search">&nbsp;</i>Search</a>
+    </menu>
+    <a href="#search-input" class="nav search-toggle"><i class="fas fa-search fa-2x">&nbsp;</i></a>
+    <a href="#share-menu" class="nav share-toggle"><i class="fas fa-share-alt fa-2x">&nbsp;</i></a>
+    
+    <a href="#site-nav" class="nav nav-toggle"><i class="fas fa-bars fa-2x"></i></a>
+  </nav>
+  <menu id="search" class="menu"><input id="search-input" class="search-input menu"></input><div id="search-results" class="search-results menu"></div></menu>
+  
+  
+    <menu id="share-menu" class="flyout-menu menu">
+      <h1>Share Post</h1>
+      
+
+
+
+
+  
+    
+    <a href="//twitter.com/share?text=Operating%20the%20One-Box%20ePHPm%20Setup%3a%20Backups%20and%20Blue%2fGreen&amp;url=https%3a%2f%2fluth.io%2fblog%2f2026%2f11%2foperating-one-box-ephpm-backups-blue-green%2f" target="_blank" rel="noopener" class="nav share-btn twitter">
+        <p>Twitter</p>
+      </a>
+  
+
+  
+      <a href="//www.facebook.com/sharer/sharer.php?u=https%3a%2f%2fluth.io%2fblog%2f2026%2f11%2foperating-one-box-ephpm-backups-blue-green%2f" target="_blank" rel="noopener" class="nav share-btn facebook">
+        <p>Facebook</p>
+        </a>
+  
+
+  
+    <a href="//www.reddit.com/submit?url=https%3a%2f%2fluth.io%2fblog%2f2026%2f11%2foperating-one-box-ephpm-backups-blue-green%2f&amp;title=Operating%20the%20One-Box%20ePHPm%20Setup%3a%20Backups%20and%20Blue%2fGreen" target="_blank" rel="noopener" class="nav share-btn reddit">
+          <p>Reddit</p>
+        </a>
+  
+
+  
+        <a href="//www.linkedin.com/shareArticle?url=https%3a%2f%2fluth.io%2fblog%2f2026%2f11%2foperating-one-box-ephpm-backups-blue-green%2f&amp;title=Operating%20the%20One-Box%20ePHPm%20Setup%3a%20Backups%20and%20Blue%2fGreen" target="_blank" rel="noopener" class="nav share-btn linkedin">
+            <p>LinkedIn</p>
+          </a>
+  
+
+  
+        <a href="//www.pinterest.com/pin/create/button/?url=https%3a%2f%2fluth.io%2fblog%2f2026%2f11%2foperating-one-box-ephpm-backups-blue-green%2f&amp;description=Operating%20the%20One-Box%20ePHPm%20Setup%3a%20Backups%20and%20Blue%2fGreen" target="_blank" rel="noopener" class="nav share-btn pinterest">
+          <p>Pinterest</p>
+        </a>
+  
+
+  
+        <a href="mailto:?subject=Check%20out%20this%20post%20by Luther%20Monson&amp;body=https%3a%2f%2fluth.io%2fblog%2f2026%2f11%2foperating-one-box-ephpm-backups-blue-green%2f" target="_blank" class="nav share-btn email" data-proofer-ignore>
+          <p>Email</p>
+        </a>
+  
+
+
+    </menu>
+  
+</header>
+
+    <div id="wrapper">
+      <section id="site-intro" class="hidden-single-column">
+  <a href="/"><img src="/img/luther-monson-headshot.jpg" class="circle" width="100" alt="Luther Monson, Founding Engineer at Gas City" /></a>
+  <header>
+    <h1>Luther Monson</h1>
+  </header>
+  <main>
+    <p>Open Source &middot; AI &middot; Containers &middot; VMs &middot; Kubernetes &middot; Windows &middot; Go by way of PHP</p>
+  </main>
+  
+    <footer>
+      <ul class="socnet-icons">
+        
+
+        <li><a href="//github.com/luthermonson" target="_blank" rel="noopener" title="GitHub" class="fab fa-github"></a></li>
+
+
+
+
+
+
+
+
+
+
+
+<li><a href="//www.linkedin.com/in/luthermonson" target="_blank" rel="noopener" title="LinkedIn" class="fab fa-linkedin"></a></li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li><a href="//twitter.com/luthermonson" target="_blank" rel="noopener" title="Twitter" class="fab fa-twitter"></a></li>
+
+
+
+
+
+
+
+
+
+
+
+<li><a href="mailto:luther.monson@gmail.com" target="_blank" title="Email" class="far fa-envelope"></a></li>
+
+      </ul>
+    </footer>
+  
+</section>
+
+      <main id="site-main">
+        
+  <article>
+    <div class="post">
+      <header>
+  <div class="title">
+    
+      <h2><a href="/blog/2026/11/operating-one-box-ephpm-backups-blue-green/">Operating the One-Box ePHPm Setup: Backups and Blue/Green</a></h2>
+    
+    
+      <p>Day-two work on the single-VM ePHPm box: a golden AMI that smoke-tests itself, an S3 backup that survives on a box too small to hold two copies of the database, and a blue/green upgrade that moves the data instead of the disk.</p>
+    
+  </div>
+  <div class="meta">
+    <time datetime="2026-11-19 07:30:00 -0700 MST">November 19, 2026</time>
+    
+    <p>7-Minute Read</p>
+  </div>
+</header>
+
+      <div id="socnet-share">
+        
+
+
+
+
+  
+    
+    <a href="//twitter.com/share?text=Operating%20the%20One-Box%20ePHPm%20Setup%3a%20Backups%20and%20Blue%2fGreen&amp;url=https%3a%2f%2fluth.io%2fblog%2f2026%2f11%2foperating-one-box-ephpm-backups-blue-green%2f" target="_blank" rel="noopener" class="nav share-btn twitter">
+        <p>Twitter</p>
+      </a>
+  
+
+  
+      <a href="//www.facebook.com/sharer/sharer.php?u=https%3a%2f%2fluth.io%2fblog%2f2026%2f11%2foperating-one-box-ephpm-backups-blue-green%2f" target="_blank" rel="noopener" class="nav share-btn facebook">
+        <p>Facebook</p>
+        </a>
+  
+
+  
+    <a href="//www.reddit.com/submit?url=https%3a%2f%2fluth.io%2fblog%2f2026%2f11%2foperating-one-box-ephpm-backups-blue-green%2f&amp;title=Operating%20the%20One-Box%20ePHPm%20Setup%3a%20Backups%20and%20Blue%2fGreen" target="_blank" rel="noopener" class="nav share-btn reddit">
+          <p>Reddit</p>
+        </a>
+  
+
+  
+        <a href="//www.linkedin.com/shareArticle?url=https%3a%2f%2fluth.io%2fblog%2f2026%2f11%2foperating-one-box-ephpm-backups-blue-green%2f&amp;title=Operating%20the%20One-Box%20ePHPm%20Setup%3a%20Backups%20and%20Blue%2fGreen" target="_blank" rel="noopener" class="nav share-btn linkedin">
+            <p>LinkedIn</p>
+          </a>
+  
+
+  
+        <a href="//www.pinterest.com/pin/create/button/?url=https%3a%2f%2fluth.io%2fblog%2f2026%2f11%2foperating-one-box-ephpm-backups-blue-green%2f&amp;description=Operating%20the%20One-Box%20ePHPm%20Setup%3a%20Backups%20and%20Blue%2fGreen" target="_blank" rel="noopener" class="nav share-btn pinterest">
+          <p>Pinterest</p>
+        </a>
+  
+
+  
+        <a href="mailto:?subject=Check%20out%20this%20post%20by Luther%20Monson&amp;body=https%3a%2f%2fluth.io%2fblog%2f2026%2f11%2foperating-one-box-ephpm-backups-blue-green%2f" target="_blank" class="nav share-btn email" data-proofer-ignore>
+          <p>Email</p>
+        </a>
+  
+
+
+      </div>
+      <div class="content">
+        
+        <h3 id="the-golden-ami-immutable-code-mutable-data">The golden AMI: immutable code, mutable data</h3>
+<p>The box is baked, not configured in place. Packer builds a Debian 12 AMI with the ePHPm binary and all three apps&rsquo; code
+already on disk. The source gets pulled from the three private GitHub repos&rsquo; tarballs at build time and run through
+<code>composer install</code> right there in the image. Rolling new code means baking a new AMI.</p>
+<p>Debian 12 specifically, because the admin app&rsquo;s imagick build is compiled against glibc 2.36 and bookworm is that exact
+version. (That ABI pin is also why the box stayed on AWS amd64 instead of chasing a free ARM tier. That&rsquo;s the cost math in
+<a href="/blog/2026/11/one-box-one-binary-single-ephpm-vm/">part one</a>.)</p>
+<p>The split is the important bit. The <strong>image is immutable code</strong>; the <strong>mutable state lives elsewhere.</strong> The SQLite
+databases and Sendy&rsquo;s uploads live on a separate EBS data volume at <code>/data</code>, the same durable-volume trick from the
+<a href="/blog/2026/10/durable-data-single-node-k3s-ebs-rebuild/">node-rebuild post</a>. Secrets never get baked. They arrive at
+launch through cloud-init, which writes a <code>0600</code> env file the service reads. The AMI holds code, the volume holds data, the
+launch holds secrets.</p>
+<p>The part I like most is the build-time smoke test. Before Packer registers the AMI, a script boots ePHPm from the baked
+config, waits for it to listen, and asserts all three sites answer: wholesale&rsquo;s <code>/ping</code> returns 200 and its listing
+renders, admin and sendy route. If any of that fails, the build fails and no broken image ships. A bad config dies in CI,
+not in production.</p>
+<h3 id="s3-is-the-floor">S3 is the floor</h3>
+<p>A dedicated EBS volume survives a node rebuild. It does not survive a bad <code>DROP</code>, a corrupt filesystem, or losing the
+whole VM. So ePHPm ships every embedded database to S3 on a schedule: a <code>VACUUM INTO</code> of each database, gzipped, uploaded
+as a timestamped object, kept 14 days, interval configurable per database. Lose the box and you restore onto a fresh one
+with <code>ephpm db restore</code>. S3 is the recovery floor.</p>
+<p>There&rsquo;s a real subtlety I hit head-on. Sendy&rsquo;s database is about 1.2 GB (530,281 subscribers) and gzips to roughly
+457 MB a snapshot. A naive <code>VACUUM INTO</code> of a database that size wants about twice the file resident in memory, which
+OOM-kills a 2 GB box. ePHPm runs a bounded snapshot inside its own process instead, so peak memory tracks your largest
+single index, not the whole file. Call it 66 MiB plus twice your biggest index. That&rsquo;s the difference between a backup
+that works on a <code>t3a.small</code> and one that kills it.</p>
+<p>That bound is also why the S3 line stays small. A fifteen-minute snapshot of Sendy kept 14 days is ~600 GB and would cost
+more than the instance, so I run it hourly. That&rsquo;s the recovery point I&rsquo;m comfortable with for a mailer. Admin and wholesale
+are a few megabytes each. The big one is the only one you tune.</p>
+<p>The bounded path isn&rsquo;t ePHPm sleight of hand. It&rsquo;s a change to the engine. Stock Turso builds the <code>VACUUM INTO</code> target
+in one shot, which is where that doubled memory comes from. I reworked it to build the target in batches so the statement
+runs in bounded memory, and sent it upstream as <a href="https://github.com/tursodatabase/turso/pull/11503">tursodatabase/turso#11503</a>.
+It&rsquo;s still open, so ePHPm carries it in an org mirror of Turso pinned a few patches ahead of the upstream release. On a box
+this small the backup agent doesn&rsquo;t run without it.</p>
+<p>It also reads a pinned snapshot of the source, so the copy is internally consistent even while Sendy is being written the
+whole time the backup runs. A real point-in-time, not a smear. That&rsquo;s an upstream change too:
+<a href="https://github.com/tursodatabase/turso/pull/11808">tursodatabase/turso#11808</a> opens a read transaction on the source
+before the copy begins, so the page images stay pinned for the whole <code>VACUUM INTO</code> instead of shifting under it. It rides
+in the same mirror; the consistency landed in ePHPm v0.16.4, and it&rsquo;s why I re-baked. An hourly backup of a busy mailer is
+exactly where a torn snapshot would bite.</p>
+<h3 id="bluegreen-without-moving-the-disk">Blue/green without moving the disk</h3>
+<p>Here&rsquo;s the problem with immutable images and a stateful box: you can&rsquo;t attach one EBS volume to two VMs at once. So the
+durable-volume move (detach the disk, re-attach it to the new node) doesn&rsquo;t help you do a zero-downtime upgrade. The disk
+is busy on the live node.</p>
+<p>ePHPm&rsquo;s clustered mode solves it by moving the data instead of the disk. Node A is blue and holds the live data. To ship a
+new AMI, I bring up node B as green, on the new image, with its own empty EBS volume. The two form a short-lived cluster,
+and each site&rsquo;s SQLite replicates from A to B over the cluster channel using Turso change-data-capture: a snapshot
+bootstrap, then a stream of the changes. Once B has converged, I move the Elastic IP from A to B and retire A. The Elastic
+IP is the stable public address; it&rsquo;s what makes the swap invisible from outside.</p>
+<p><img src="/img/2026/11/one-box-one-binary-blue-green.svg" alt="Node A holds the live data; a green node B comes up with its own empty volume; each site’s SQLite replicates A to B over the cluster channel with Turso CDC; once B converges the Elastic IP moves and A is retired, while S3 backups stay on because exactly one node takes them"></p>
+<p>The part that matters most is proving no data is lost across that cutover. I tested it the blunt way: wrote a probe into
+A (1,000 rows with a known checksum), let it replicate, stopped A, and confirmed B returned the exact rows. That&rsquo;s the
+test I trust, not a diagram.</p>
+<p>Two honest caveats, because this is newer ground than the rest.</p>
+<p>First, backups and clustering used to fight. Before ePHPm v0.16.2 you had to turn S3 backups <strong>off</strong> during a blue/green
+window, precisely when you least want to fly without a net. v0.16.2 made backups owner-aware (<code>source = &quot;primary&quot;</code>), so
+exactly one node, the write owner, takes the snapshot, and S3 stays on through the whole upgrade. The box is baked on
+v0.16.4, so it&rsquo;s had that fix from the first bake.</p>
+<p>Second, the lossless guarantee has a shape. ePHPm&rsquo;s provable drain-without-loss is for <em>whole-database</em> clustered mode:
+one shared database, an elected primary. This box runs <em>per-site</em> clustered mode, one database per vhost, which is the
+experimental path, so I don&rsquo;t get the automatic drain gate here. I keep a manual converge-then-cut-over step: watch CDC
+catch up, run the probe, then flip the IP. For a store I upgrade on purpose in a quiet window, a manual gate I can watch is
+fine. I&rsquo;m not pretending it&rsquo;s the automatic one.</p>
+<h3 id="whats-next-turning-the-same-binary-up">What&rsquo;s next: turning the same binary up</h3>
+<p>This box is single-node on purpose. The workload is small enough that one machine on spot is the right call, and the
+manual blue/green cut-over is fine for an upgrade I run in a quiet window. The interesting question is what changes when the
+site <em>isn&rsquo;t</em> small: same binary, same AMI, same S3 floor, but something that has to stay up under real traffic.</p>
+<p>That&rsquo;s a different Auto Scaling Group. Instead of <code>min = max = 1</code> with an Elastic IP that moves, you run a multi-node group
+behind a load balancer, and the single-node choices flip. Capacity rebalancing goes <strong>on</strong>. With a fleet serving, you
+<em>want</em> AWS to replace an at-risk node early instead of riding it into a hard interruption. You set an on-demand floor
+(<code>on_demand_base</code>) so a spot dip can&rsquo;t take the whole group. And the Elastic-IP move retires: the load balancer
+health-checks the nodes, and a dead one drops out of rotation.</p>
+<p>The data is where it gets real: the blue/green gap seen from the other side. More than one ePHPm serving the same site
+means more than one writer, and SQLite is one writer per database. So scaling means <em>whole-database</em> clustered mode: one
+shared database, an elected primary that takes writes, and replicas that follow it over CDC and serve reads. That&rsquo;s the
+mode with the provable lossless drain: lose the primary and a new one is elected without dropping a write, the <code>--reseed</code>
+gate. The per-site mode this box runs doesn&rsquo;t have that gate yet; the automatic per-site drain is the roadmap item that
+would make a multi-node per-vhost group safe. Backups already come along for free: owner-aware snapshots mean exactly one
+node takes the S3 copy, however many are running.</p>
+<p>The honest shape of it: this scales <em>reads</em>, not <em>writes</em>. More nodes buy read capacity and failover headroom; the write
+path stays a single primary, because the store is still SQLite. Behind a CDN, for a read-heavy site, that&rsquo;s plenty.
+That&rsquo;s most sites. For a write-heavy one it&rsquo;s the wrong tool, and no ASG knob changes that. For now the single box is up,
+the data has an S3 floor under it, and scaling it out is the same binary turned up: a load balancer, a bigger group, and a
+whole-database primary.</p>
+<h3 id="links">Links</h3>
+<ul>
+<li><a href="/blog/2026/11/one-box-one-binary-single-ephpm-vm/">Part one: Replacing a k3s Cluster With One ePHPm Process</a></li>
+<li><a href="/blog/2026/10/durable-data-single-node-k3s-ebs-rebuild/">Surviving a Node Rebuild: Durable Data on Single-Node k3s</a></li>
+<li><a href="https://github.com/ephpm/ephpm">ePHPm</a></li>
+<li><a href="/blog/2026/08/clustered-sqlite-adding-turso/">Clustered SQLite: Adding Turso</a></li>
+<li><a href="https://github.com/tursodatabase/turso/pull/11503">Turso #11503: batch the <code>VACUUM INTO</code> target so the statement runs in bounded memory</a></li>
+<li><a href="https://github.com/tursodatabase/turso/pull/11808">Turso #11808: begin a read transaction on the source for <code>VACUUM INTO</code></a></li>
+<li><a href="/blog/2026/08/rolling-your-own-kv-store/">Rolling Your Own KV Store</a></li>
+</ul>
+
+      </div>
+      <footer>
+        <div class="stats">
+  
+    <ul class="categories">
+      
+        
+          <li><a class="article-terms-link" href="/categories/ephpm/">ephpm</a></li>
+        
+          <li><a class="article-terms-link" href="/categories/containers/">containers</a></li>
+        
+      
+    </ul>
+  
+  
+    <ul class="tags">
+      
+        
+          <li><a class="article-terms-link" href="/tags/aws/">aws</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/packer/">packer</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/terraform/">terraform</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/ephpm/">ephpm</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/blue-green/">blue-green</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/sqlite/">sqlite</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/backups/">backups</a></li>
+        
+      
+    </ul>
+  
+</div>
+
+      </footer>
+    </div>
+    
+      
+  
+  <div class='post giscus-wrap'>
+    <script src='https://giscus.app/client.js'
+            data-repo='luthermonson/luth.io'
+            data-repo-id='R_kgDOGvFBXQ'
+            data-category='Announcements'
+            data-category-id='DIC_kwDOGvFBXc4DH_gv'
+            data-mapping='pathname'
+            data-strict='1'
+            data-reactions-enabled='1'
+            data-emit-metadata='0'
+            data-input-position='top'
+            data-theme='light'
+            data-lang='en'
+            data-loading='lazy'
+            crossorigin='anonymous'
+            async>
+    </script>
+  </div>
+  
+
+
+
+    
+  </article>
+  
+    <nav class="post-nav">
+      
+        <a href="/blog/2026/11/dagger-on-ephemerd-runner-fleet/" class="post-nav-link older">
+          <span class="post-nav-label">&larr; Older</span>
+          <span class="post-nav-title">Dagger on ephemerd, and a Warm Cache on Throwaway Runners</span>
+        </a>
+      
+      
+    </nav>
+  
+
+      </main>
+      <section id="site-sidebar">
+  
+    <section id="recent-posts">
+      <header>
+        <h1>Recent Posts</h1>
+      </header>
+      
+      <article class="mini-post">
+          <a href="/blog/2026/11/operating-one-box-ephpm-backups-blue-green/" class="image" style="--bg-image: url('/img/2026/11/one-box-one-binary-blue-green.svg');">
+    <img class="" src="/img/2026/11/one-box-one-binary-blue-green.svg" alt="Node A holds the live data; a green node B comes up with its own empty volume; each site&#39;s SQLite replicates A to B over the cluster channel with Turso CDC; once B converges the Elastic IP moves and A is retired, while S3 backups stay on because exactly one node takes them">
+  </a>
+        <header>
+          <h2><a href="/blog/2026/11/operating-one-box-ephpm-backups-blue-green/">Operating the One-Box ePHPm Setup: Backups and Blue/Green</a></h2>
+          <time class="published" datetime="2026-11-19 07:30:00 -0700 MST">November 19, 2026</time>
+        </header>
+      </article>
+      
+      <article class="mini-post">
+          <a href="/blog/2026/11/dagger-on-ephemerd-runner-fleet/" class="image" style="--bg-image: url('/img/2026/11/dagger-ephemerd-cache-architecture.svg');">
+    <img class="" src="/img/2026/11/dagger-ephemerd-cache-architecture.svg" alt="GitHub fires a workflow_job webhook at ephemerd on the node, which provisions a fresh VLAN-isolated runner that is destroyed after the job. Inside it a cold per-job BuildKit engine imports and exports cached layers over the GitHub Actions Cache v2 protocol to ephemerd&#39;s Actions-cache proxy, which persists the cache in a registry; point one shared registry in the VLAN at every host for a single fleet-wide cache.">
+  </a>
+        <header>
+          <h2><a href="/blog/2026/11/dagger-on-ephemerd-runner-fleet/">Dagger on ephemerd, and a Warm Cache on Throwaway Runners</a></h2>
+          <time class="published" datetime="2026-11-18 09:00:00 -0700 MST">November 18, 2026</time>
+        </header>
+      </article>
+      
+      <article class="mini-post">
+          <a href="/blog/2026/11/one-box-one-binary-single-ephpm-vm/" class="image" style="--bg-image: url('/img/2026/11/one-box-one-binary-single-ephpm-vm-cover.svg');">
+    <img class="" src="/img/2026/11/one-box-one-binary-single-ephpm-vm-cover.svg" alt="A tall single-node k3s stack of Traefik, Tailscale, three PHP pods, three CronJobs, a litestream sidecar, PVs and the control plane collapses into one Debian VM running a single ephpm process that is the web server, PHP runtime, per-site SQLite, KV store, cron scheduler and S3 backup agent">
+  </a>
+        <header>
+          <h2><a href="/blog/2026/11/one-box-one-binary-single-ephpm-vm/">Replacing a k3s Cluster With One ePHPm Process</a></h2>
+          <time class="published" datetime="2026-11-18 07:30:00 -0700 MST">November 18, 2026</time>
+        </header>
+      </article>
+      
+      <article class="mini-post">
+          <a href="/blog/2026/10/durable-data-single-node-k3s-ebs-rebuild/" class="image" style="--bg-image: url('/img/2026/10/durable-data-single-node-k3s-ebs-rebuild.svg');">
+    <img class="" src="/img/2026/10/durable-data-single-node-k3s-ebs-rebuild.svg" alt="A node rebuild: Node A is replaced by Node B, each root EBS volume is disposable, and the separate labeled EBS data volume detaches from the old node and re-attaches to the new one so the ePHPm blog&#39;s SQLite file and uploads survive">
+  </a>
+        <header>
+          <h2><a href="/blog/2026/10/durable-data-single-node-k3s-ebs-rebuild/">Surviving a Node Rebuild: A Durable ePHPm Blog on Single-Node k3s</a></h2>
+          <time class="published" datetime="2026-10-28 10:00:00 -0700 MST">October 28, 2026</time>
+        </header>
+      </article>
+      
+      <article class="mini-post">
+          <a href="/blog/2026/10/docker-in-docker-without-root/" class="image" style="--bg-image: url('/img/2026/10/docker-in-docker-without-root-cracks.svg');">
+    <img class="" src="/img/2026/10/docker-in-docker-without-root-cracks.svg" alt="Four dind sandbox cracks and the ephemerd PR that closed each one">
+  </a>
+        <header>
+          <h2><a href="/blog/2026/10/docker-in-docker-without-root/">Docker-in-Docker in CI Without Handing Jobs Root</a></h2>
+          <time class="published" datetime="2026-10-24 10:00:00 -0700 MST">October 24, 2026</time>
+        </header>
+      </article>
+      
+      
+        <footer>
+          <a href="/blog" class="button">See More</a>
+        </footer>
+      
+    </section>
+  
+
+  
+    
+
+      <section id="categories">
+        <header>
+          <h1><a href="/categories">Categories</a></h1>
+        </header>
+        <ul>
+          
+          
+          <li>
+              <a href="/categories/ephpm/">ephpm<span class="count">41</span></a>
+          
+          <li>
+              <a href="/categories/go/">go<span class="count">32</span></a>
+          
+          <li>
+              <a href="/categories/php/">php<span class="count">27</span></a>
+          
+          <li>
+              <a href="/categories/rust/">rust<span class="count">17</span></a>
+          
+          <li>
+              <a href="/categories/homelab/">homelab<span class="count">14</span></a>
+          
+          <li>
+              <a href="/categories/windows/">windows<span class="count">14</span></a>
+          
+          <li>
+              <a href="/categories/ci/">ci<span class="count">13</span></a>
+          
+          <li>
+              <a href="/categories/containers/">containers<span class="count">13</span></a>
+          
+          <li>
+              <a href="/categories/databases/">databases<span class="count">10</span></a>
+          
+          <li>
+              <a href="/categories/ephemerd/">ephemerd<span class="count">10</span></a>
+          
+          <li>
+              <a href="/categories/security/">security<span class="count">10</span></a>
+          
+          <li>
+              <a href="/categories/tools/">tools<span class="count">5</span></a>
+          
+          <li>
+              <a href="/categories/ai-agents/">ai-agents<span class="count">4</span></a>
+          
+          </li>
+        </ul>
+      </section>
+    
+  
+
+  
+    <section id="mini-bio">
+      <header>
+        <h1>About</h1>
+      </header>
+      <p>Luther is a 20+ year software veteran specializing in backend APIs and architecting products. Founding engineer at <a href='https://gascity.com'>Gas City</a> building open-source AI software factories on <a href='https://github.com/gastownhall/beads'>Beads</a>, the durable work graph for coding agents.</p>
+      <footer>
+        <a href="/about" class="button">Learn More</a>
+      </footer>
+    </section>
+  
+</section>
+
+      <footer id="site-footer">
+  
+      <ul class="socnet-icons">
+        
+
+        <li><a href="//github.com/luthermonson" target="_blank" rel="noopener" title="GitHub" class="fab fa-github"></a></li>
+
+
+
+
+
+
+
+
+
+
+
+<li><a href="//www.linkedin.com/in/luthermonson" target="_blank" rel="noopener" title="LinkedIn" class="fab fa-linkedin"></a></li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li><a href="//twitter.com/luthermonson" target="_blank" rel="noopener" title="Twitter" class="fab fa-twitter"></a></li>
+
+
+
+
+
+
+
+
+
+
+
+<li><a href="mailto:luther.monson@gmail.com" target="_blank" title="Email" class="far fa-envelope"></a></li>
+
+      </ul>
+  
+  <p class="copyright">
+    © 2026 Luther Monson
+      <br>
+    Theme: <a href='https://github.com/pacollins/hugo-future-imperfect-slim' target='_blank' rel='noopener'>Hugo Future Imperfect Slim</a><br>A <a href='https://html5up.net/future-imperfect' target='_blank' rel='noopener'>HTML5 UP port</a> | Powered by <a href='https://gohugo.io/' title='0.160.1' target='_blank' rel='noopener'>Hugo</a>
+  </p>
+</footer>
+<a id="back-to-top" href="#" class="fas fa-arrow-up fa-2x"></a>
+
+      <script src="/js/bundle.min.241b62ebc4792fe8c7a75879e5f710894f226f2b73342e9916b3a3b0526030cc.js" integrity="sha256-JBti68R5L&#43;jHp1h55fcQiU8ibytzNC6ZFrOjsFJgMMw="></script>
+    <script src="/js/add-on.js"></script>
+    </div>
+  </body>
+</html>

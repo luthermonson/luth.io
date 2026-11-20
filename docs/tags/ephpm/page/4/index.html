@@ -215,6 +215,143 @@
   <header>
   <div class="title">
     
+      <h2><a href="/blog/2026/08/clustered-sqlite-adding-turso/">Clustered SQLite in ePHPm, Part 2: Adding Turso</a></h2>
+    
+    
+      <p>How I decided a beta database engine was ready by testing it instead of reading its version number. ePHPm v0.7.0 replaces both rusqlite and sqld with Turso.</p>
+    
+  </div>
+  <div class="meta">
+    <time datetime="2026-08-19 20:37:00 -0700 MST">August 19, 2026</time>
+    
+    <p>9-Minute Read</p>
+  </div>
+</header>
+
+  <div class="content">
+    <a href="/blog/2026/08/clustered-sqlite-adding-turso/" class="image" style="--bg-image: url('/img/2026/08/clustered-sqlite-adding-turso-four-lanes.svg');">
+    <img class="" src="/img/2026/08/clustered-sqlite-adding-turso-four-lanes.svg" alt="Bar chart of four SQLite lanes at 16 concurrent connections: rusqlite and Turso single node, sqld and Turso CDC clustered">
+  </a>
+    
+    <p><a href="/blog/2026/08/clustered-sqlite-sqld-sidecar/">Part 1</a> ended with ePHPm running two SQLite engines. rusqlite ran
+in-process for a single node, and an embedded sqld child process ran for a cluster. The sidecar fell off a cliff past
+four concurrent writers. The best fix I could ship was a semaphore set to 1. This post is about replacing both engines
+with one, and about how I decided that engine was ready.</p>
+  </div>
+  <footer>
+    <a href="/blog/2026/08/clustered-sqlite-adding-turso/" class="button big">Read More</a>
+    <div class="stats">
+  
+    <ul class="categories">
+      
+        
+          <li><a class="article-terms-link" href="/categories/ephpm/">ephpm</a></li>
+        
+          <li><a class="article-terms-link" href="/categories/databases/">databases</a></li>
+        
+      
+    </ul>
+  
+  
+    <ul class="tags">
+      
+        
+          <li><a class="article-terms-link" href="/tags/ephpm/">ephpm</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/sqlite/">sqlite</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/turso/">turso</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/rust/">rust</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/benchmarks/">benchmarks</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/php/">php</a></li>
+        
+      
+    </ul>
+  
+</div>
+
+  </footer>
+</article>
+
+  
+    <article class="post">
+  <header>
+  <div class="title">
+    
+      <h2><a href="/blog/2026/08/rolling-your-own-kv-store/">Rolling Your Own KV Store Instead of Embedding Redis</a></h2>
+    
+    
+      <p>Why ePHPm has its own Redis-compatible cache built in instead of running Redis. It also covers a bug that hid in it for four months and how it compares to real Redis on the same machine.</p>
+    
+  </div>
+  <div class="meta">
+    <time datetime="2026-08-17 20:44:00 -0700 MST">August 17, 2026</time>
+    
+    <p>11-Minute Read</p>
+  </div>
+</header>
+
+  <div class="content">
+    <a href="/blog/2026/08/rolling-your-own-kv-store/" class="image" style="--bg-image: url('/img/2026/09/rolling-your-own-kv-store-bench.svg');">
+    <img class="" src="/img/2026/09/rolling-your-own-kv-store-bench.svg" alt="Bar chart of redis-benchmark GET and SET throughput against Redis 7.4, ePHPm v0.5.2 and ePHPm v0.2.0">
+  </a>
+    
+    <p>Every PHP deployment I&rsquo;ve run eventually grew a Redis. Sessions, the WordPress object cache, Laravel&rsquo;s cache and locks,
+rate limiting. <a href="https://github.com/ephpm/ephpm">ePHPm</a> is supposed to be one binary that replaces nginx + php-fpm +
+Redis, so it needed a cache in the box. I didn&rsquo;t want to write one. This post covers why I did anyway and how it&rsquo;s
+built. It also covers the bug that sat in its eviction code from March until last month. Then I compare it against a
+stock Redis on the same machine with&hellip;</p>
+  </div>
+  <footer>
+    <a href="/blog/2026/08/rolling-your-own-kv-store/" class="button big">Read More</a>
+    <div class="stats">
+  
+    <ul class="categories">
+      
+        
+          <li><a class="article-terms-link" href="/categories/ephpm/">ephpm</a></li>
+        
+          <li><a class="article-terms-link" href="/categories/rust/">rust</a></li>
+        
+          <li><a class="article-terms-link" href="/categories/databases/">databases</a></li>
+        
+      
+    </ul>
+  
+  
+    <ul class="tags">
+      
+        
+          <li><a class="article-terms-link" href="/tags/ephpm/">ephpm</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/rust/">rust</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/redis/">redis</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/kv/">kv</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/dashmap/">dashmap</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/caching/">caching</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/performance/">performance</a></li>
+        
+      
+    </ul>
+  
+</div>
+
+  </footer>
+</article>
+
+  
+    <article class="post">
+  <header>
+  <div class="title">
+    
       <h2><a href="/blog/2026/08/faking-mysql-quirks-wordpress/">Faking MySQL&#39;s Quirks Well Enough to Fool WordPress</a></h2>
     
     
@@ -751,149 +888,12 @@ into a checklist of things other projects have.</p>
 </article>
 
   
-    <article class="post">
-  <header>
-  <div class="title">
-    
-      <h2><a href="/blog/2026/04/php-signal-safety-init-ordering/">PHP Signal Safety - The Init Ordering Bug Nobody Warns You About</a></h2>
-    
-    
-      <p>Embedding PHP in a multithreaded server means PHP&#39;s timeout signals can land on any thread. How ePHPm got that under control.</p>
-    
-  </div>
-  <div class="meta">
-    <time datetime="2026-04-12 20:15:00 -0700 MST">April 12, 2026</time>
-    
-    <p>11-Minute Read</p>
-  </div>
-</header>
-
-  <div class="content">
-    <a href="/blog/2026/04/php-signal-safety-init-ordering/" class="image" style="--bg-image: url('/img/2026/04/php-signal-safety-init-ordering-cover.svg');">
-    <img class="" src="/img/2026/04/php-signal-safety-init-ordering-cover.svg" alt="Thread timeline: the main thread installs PHP&#39;s signal handlers during php_embed_init, a PHP thread later arms ITIMER_PROF, and SIGPROF is delivered to a tokio worker that has no PHP state">
-  </a>
-    
-    <p>Last week I wrote about <a href="/blog/2026/04/why-rust-for-php-embedding/">why ePHPm embeds PHP from Rust</a> and promised the
-signal bug its own post. Here it is. It&rsquo;s the kind of bug where the fix is about ten lines and the explanation is the
-whole post. Nothing in PHP&rsquo;s embed documentation (there&rsquo;s barely any) tells you that initializing PHP has
-process-wide side effects. Those side effects assume PHP is the only thing in the process.</p>
-  </div>
-  <footer>
-    <a href="/blog/2026/04/php-signal-safety-init-ordering/" class="button big">Read More</a>
-    <div class="stats">
-  
-    <ul class="categories">
-      
-        
-          <li><a class="article-terms-link" href="/categories/ephpm/">ephpm</a></li>
-        
-          <li><a class="article-terms-link" href="/categories/php/">php</a></li>
-        
-          <li><a class="article-terms-link" href="/categories/rust/">rust</a></li>
-        
-      
-    </ul>
-  
-  
-    <ul class="tags">
-      
-        
-          <li><a class="article-terms-link" href="/tags/ephpm/">ephpm</a></li>
-        
-          <li><a class="article-terms-link" href="/tags/php/">php</a></li>
-        
-          <li><a class="article-terms-link" href="/tags/rust/">rust</a></li>
-        
-          <li><a class="article-terms-link" href="/tags/signals/">signals</a></li>
-        
-          <li><a class="article-terms-link" href="/tags/linux/">linux</a></li>
-        
-          <li><a class="article-terms-link" href="/tags/tokio/">tokio</a></li>
-        
-          <li><a class="article-terms-link" href="/tags/debugging/">debugging</a></li>
-        
-      
-    </ul>
-  
-</div>
-
-  </footer>
-</article>
-
-  
-    <article class="post">
-  <header>
-  <div class="title">
-    
-      <h2><a href="/blog/2026/04/why-rust-for-php-embedding/">Why Rust for PHP Embedding (Not Go)</a></h2>
-    
-    
-      <p>I&#39;m a Go developer building a PHP application server in Rust. Here&#39;s the FFI reasoning, the C wrapper it forced on me, and what cgo actually costs when you measure it.</p>
-    
-  </div>
-  <div class="meta">
-    <time datetime="2026-04-05 19:40:00 -0700 MST">April 5, 2026</time>
-    
-    <p>11-Minute Read</p>
-  </div>
-</header>
-
-  <div class="content">
-    <a href="/blog/2026/04/why-rust-for-php-embedding/" class="image" style="--bg-image: url('/img/2026/04/why-rust-for-php-embedding-cover.svg');">
-    <img class="" src="/img/2026/04/why-rust-for-php-embedding-cover.svg" alt="Diagram of a request flowing from hyper/tokio through a Rust blocking thread, a C wrapper with setjmp, and libphp, with SAPI callbacks writing into thread-local C buffers">
-  </a>
-    
-    <p>Go is my primary language and has been for a long time. When I started building <a href="https://github.com/ephpm/ephpm">ePHPm</a>
-a few weeks ago the obvious move was to write it in Go. ePHPm is a PHP application server. It&rsquo;s one binary that embeds
-the real PHP interpreter (<code>libphp</code>, the Zend engine) and puts an HTTP server, TLS, a KV cache and a database proxy
-around it. A PHP app doesn&rsquo;t need nginx + php-fpm + Redis to run. <a href="https://frankenphp.dev/">FrankenPHP</a> already proved
-the &ldquo;PHP inside a Go web server&rdquo; idea works, and it works well. I&hellip;</p>
-  </div>
-  <footer>
-    <a href="/blog/2026/04/why-rust-for-php-embedding/" class="button big">Read More</a>
-    <div class="stats">
-  
-    <ul class="categories">
-      
-        
-          <li><a class="article-terms-link" href="/categories/ephpm/">ephpm</a></li>
-        
-          <li><a class="article-terms-link" href="/categories/rust/">rust</a></li>
-        
-          <li><a class="article-terms-link" href="/categories/php/">php</a></li>
-        
-      
-    </ul>
-  
-  
-    <ul class="tags">
-      
-        
-          <li><a class="article-terms-link" href="/tags/ephpm/">ephpm</a></li>
-        
-          <li><a class="article-terms-link" href="/tags/rust/">rust</a></li>
-        
-          <li><a class="article-terms-link" href="/tags/go/">go</a></li>
-        
-          <li><a class="article-terms-link" href="/tags/php/">php</a></li>
-        
-          <li><a class="article-terms-link" href="/tags/ffi/">ffi</a></li>
-        
-          <li><a class="article-terms-link" href="/tags/cgo/">cgo</a></li>
-        
-      
-    </ul>
-  
-</div>
-
-  </footer>
-</article>
-
-  
   <div class="pagination">
     
       <a href="/tags/ephpm/page/3/" class="button left"><span>Previous Page</span></a>
     
+    
+      <a href="/tags/ephpm/page/5/" class="button right"><span>Next Page</span></a>
     
   </div>
 
@@ -906,12 +906,32 @@ the &ldquo;PHP inside a Go web server&rdquo; idea works, and it works well. I&he
       </header>
       
       <article class="mini-post">
+          <a href="/blog/2026/11/operating-one-box-ephpm-backups-blue-green/" class="image" style="--bg-image: url('/img/2026/11/one-box-one-binary-blue-green.svg');">
+    <img class="" src="/img/2026/11/one-box-one-binary-blue-green.svg" alt="Node A holds the live data; a green node B comes up with its own empty volume; each site&#39;s SQLite replicates A to B over the cluster channel with Turso CDC; once B converges the Elastic IP moves and A is retired, while S3 backups stay on because exactly one node takes them">
+  </a>
+        <header>
+          <h2><a href="/blog/2026/11/operating-one-box-ephpm-backups-blue-green/">Operating the One-Box ePHPm Setup: Backups and Blue/Green</a></h2>
+          <time class="published" datetime="2026-11-19 07:30:00 -0700 MST">November 19, 2026</time>
+        </header>
+      </article>
+      
+      <article class="mini-post">
           <a href="/blog/2026/11/dagger-on-ephemerd-runner-fleet/" class="image" style="--bg-image: url('/img/2026/11/dagger-ephemerd-cache-architecture.svg');">
     <img class="" src="/img/2026/11/dagger-ephemerd-cache-architecture.svg" alt="GitHub fires a workflow_job webhook at ephemerd on the node, which provisions a fresh VLAN-isolated runner that is destroyed after the job. Inside it a cold per-job BuildKit engine imports and exports cached layers over the GitHub Actions Cache v2 protocol to ephemerd&#39;s Actions-cache proxy, which persists the cache in a registry; point one shared registry in the VLAN at every host for a single fleet-wide cache.">
   </a>
         <header>
           <h2><a href="/blog/2026/11/dagger-on-ephemerd-runner-fleet/">Dagger on ephemerd, and a Warm Cache on Throwaway Runners</a></h2>
           <time class="published" datetime="2026-11-18 09:00:00 -0700 MST">November 18, 2026</time>
+        </header>
+      </article>
+      
+      <article class="mini-post">
+          <a href="/blog/2026/11/one-box-one-binary-single-ephpm-vm/" class="image" style="--bg-image: url('/img/2026/11/one-box-one-binary-single-ephpm-vm-cover.svg');">
+    <img class="" src="/img/2026/11/one-box-one-binary-single-ephpm-vm-cover.svg" alt="A tall single-node k3s stack of Traefik, Tailscale, three PHP pods, three CronJobs, a litestream sidecar, PVs and the control plane collapses into one Debian VM running a single ephpm process that is the web server, PHP runtime, per-site SQLite, KV store, cron scheduler and S3 backup agent">
+  </a>
+        <header>
+          <h2><a href="/blog/2026/11/one-box-one-binary-single-ephpm-vm/">Replacing a k3s Cluster With One ePHPm Process</a></h2>
+          <time class="published" datetime="2026-11-18 07:30:00 -0700 MST">November 18, 2026</time>
         </header>
       </article>
       
@@ -935,26 +955,6 @@ the &ldquo;PHP inside a Go web server&rdquo; idea works, and it works well. I&he
         </header>
       </article>
       
-      <article class="mini-post">
-          <a href="/blog/2026/10/ci-cache-proxies-ephemeral-runners/" class="image" style="--bg-image: url('/img/2026/10/ci-cache-proxies-ephemeral-runners-flow.svg');">
-    <img class="" src="/img/2026/10/ci-cache-proxies-ephemeral-runners-flow.svg" alt="A fresh runner per job points go mod, cargo, composer, release downloads and actions/cache at matching cache proxies on the ephemerd node, where the caches persist and only reach the internet on a miss">
-  </a>
-        <header>
-          <h2><a href="/blog/2026/10/ci-cache-proxies-ephemeral-runners/">Cache Proxies for Ephemeral CI Runners</a></h2>
-          <time class="published" datetime="2026-10-23 15:00:00 -0700 MST">October 23, 2026</time>
-        </header>
-      </article>
-      
-      <article class="mini-post">
-          <a href="/blog/2026/10/ephemeral-macos-runners-vm-clones/" class="image" style="--bg-image: url('/img/2026/10/ephemeral-macos-runners-vm-clones-lifecycle.svg');">
-    <img class="" src="/img/2026/10/ephemeral-macos-runners-vm-clones-lifecycle.svg" alt="A macOS CI job lifecycle: clone the base image, boot and grow the disk, set up over SSH, run the job, then stop and sweep, with a band showing the single slot held the whole time">
-  </a>
-        <header>
-          <h2><a href="/blog/2026/10/ephemeral-macos-runners-vm-clones/">Ephemeral macOS Runners: A Fresh VM Per Job on Apple Silicon</a></h2>
-          <time class="published" datetime="2026-10-23 11:00:00 -0700 MST">October 23, 2026</time>
-        </header>
-      </article>
-      
       
         <footer>
           <a href="/blog" class="button">See More</a>
@@ -974,7 +974,7 @@ the &ldquo;PHP inside a Go web server&rdquo; idea works, and it works well. I&he
           
           
           <li>
-              <a href="/categories/ephpm/">ephpm<span class="count">39</span></a>
+              <a href="/categories/ephpm/">ephpm<span class="count">41</span></a>
           
           <li>
               <a href="/categories/go/">go<span class="count">32</span></a>
@@ -995,7 +995,7 @@ the &ldquo;PHP inside a Go web server&rdquo; idea works, and it works well. I&he
               <a href="/categories/ci/">ci<span class="count">13</span></a>
           
           <li>
-              <a href="/categories/containers/">containers<span class="count">11</span></a>
+              <a href="/categories/containers/">containers<span class="count">13</span></a>
           
           <li>
               <a href="/categories/databases/">databases<span class="count">10</span></a>

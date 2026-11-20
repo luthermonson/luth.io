@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>Spot on Luther Monson</title>
+    <link>https://luth.io/tags/spot/</link>
+    <description>Recent content in Spot on Luther Monson</description>
+    <generator>Hugo</generator>
+    <language>en</language>
+    <lastBuildDate>Wed, 18 Nov 2026 07:30:00 -0700</lastBuildDate>
+    <atom:link href="https://luth.io/tags/spot/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>Replacing a k3s Cluster With One ePHPm Process</title>
+      <link>https://luth.io/blog/2026/11/one-box-one-binary-single-ephpm-vm/</link>
+      <pubDate>Wed, 18 Nov 2026 07:30:00 -0700</pubDate>
+      <guid>https://luth.io/blog/2026/11/one-box-one-binary-single-ephpm-vm/</guid>
+      <description>&lt;p&gt;A couple of weeks ago I wrote up &lt;a href=&#34;https://luth.io/blog/2026/10/durable-data-single-node-k3s-ebs-rebuild/&#34;&gt;surviving a node rebuild&lt;/a&gt;&#xA;on single-node k3s. Put the stateful bytes on a dedicated EBS volume, treat the node as cattle, and rebuild the machine&#xA;without losing the data. It works.&lt;/p&gt;&#xA;&lt;p&gt;Then I looked at what I was actually running on that node and felt a little silly.&lt;/p&gt;&#xA;&lt;p&gt;The workload is three PHP sites (an admin app, self-hosted Sendy for email, a wholesale catalog) plus three crons.&#xA;That&amp;rsquo;s it. To run it I had a k3s control plane, a kubelet, Traefik for ingress, Tailscale for access, a CSI driver, a&#xA;litestream sidecar for backups, three k8s CronJobs, and a stack of Helm charts holding it together. Every piece of that is&#xA;something I patch, monitor, and get paged for, and none of it is the app. It was a datacenter wrapped around three PHP&#xA;sites and some crons.&lt;/p&gt;</description>
+    </item>
+  </channel>
+</rss>
