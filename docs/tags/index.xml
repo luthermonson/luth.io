@@ -16,10 +16,17 @@
       <description></description>
     </item>
     <item>
-      <title>Ec2</title>
-      <link>https://luth.io/tags/ec2/</link>
+      <title>Backups</title>
+      <link>https://luth.io/tags/backups/</link>
       <pubDate>Fri, 20 Nov 2026 07:30:00 -0700</pubDate>
-      <guid>https://luth.io/tags/ec2/</guid>
+      <guid>https://luth.io/tags/backups/</guid>
+      <description></description>
+    </item>
+    <item>
+      <title>Blue-Green</title>
+      <link>https://luth.io/tags/blue-green/</link>
+      <pubDate>Fri, 20 Nov 2026 07:30:00 -0700</pubDate>
+      <guid>https://luth.io/tags/blue-green/</guid>
       <description></description>
     </item>
     <item>
@@ -30,10 +37,10 @@
       <description></description>
     </item>
     <item>
-      <title>Spot</title>
-      <link>https://luth.io/tags/spot/</link>
+      <title>Packer</title>
+      <link>https://luth.io/tags/packer/</link>
       <pubDate>Fri, 20 Nov 2026 07:30:00 -0700</pubDate>
-      <guid>https://luth.io/tags/spot/</guid>
+      <guid>https://luth.io/tags/packer/</guid>
       <description></description>
     </item>
     <item>
@@ -44,31 +51,24 @@
       <description></description>
     </item>
     <item>
-      <title>Backups</title>
-      <link>https://luth.io/tags/backups/</link>
-      <pubDate>Fri, 20 Nov 2026 06:00:00 -0700</pubDate>
-      <guid>https://luth.io/tags/backups/</guid>
-      <description></description>
-    </item>
-    <item>
-      <title>Blue-Green</title>
-      <link>https://luth.io/tags/blue-green/</link>
-      <pubDate>Fri, 20 Nov 2026 06:00:00 -0700</pubDate>
-      <guid>https://luth.io/tags/blue-green/</guid>
-      <description></description>
-    </item>
-    <item>
-      <title>Packer</title>
-      <link>https://luth.io/tags/packer/</link>
-      <pubDate>Fri, 20 Nov 2026 06:00:00 -0700</pubDate>
-      <guid>https://luth.io/tags/packer/</guid>
-      <description></description>
-    </item>
-    <item>
       <title>Terraform</title>
       <link>https://luth.io/tags/terraform/</link>
-      <pubDate>Fri, 20 Nov 2026 06:00:00 -0700</pubDate>
+      <pubDate>Fri, 20 Nov 2026 07:30:00 -0700</pubDate>
       <guid>https://luth.io/tags/terraform/</guid>
+      <description></description>
+    </item>
+    <item>
+      <title>Ec2</title>
+      <link>https://luth.io/tags/ec2/</link>
+      <pubDate>Fri, 20 Nov 2026 06:00:00 -0700</pubDate>
+      <guid>https://luth.io/tags/ec2/</guid>
+      <description></description>
+    </item>
+    <item>
+      <title>Spot</title>
+      <link>https://luth.io/tags/spot/</link>
+      <pubDate>Fri, 20 Nov 2026 06:00:00 -0700</pubDate>
+      <guid>https://luth.io/tags/spot/</guid>
       <description></description>
     </item>
     <item>

@@ -1,7 +1,7 @@
 ---
 title: "Replacing a k3s Cluster With One ePHPm Process"
 description: "How three PHP sites, their databases, cron and backups collapse onto one small VM, and what that costs once you match the bill to the size of the problem."
-date: 2026-11-20T07:30:00-07:00
+date: 2026-11-20T06:00:00-07:00
 tags: [ aws, ec2, ephpm, spot, sqlite ]
 categories: [ ephpm, containers ]
 images:

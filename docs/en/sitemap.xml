@@ -5,7 +5,13 @@
     <loc>https://luth.io/tags/aws/</loc>
     <lastmod>2026-11-20T07:30:00-07:00</lastmod>
   </url><url>
+    <loc>https://luth.io/tags/backups/</loc>
+    <lastmod>2026-11-20T07:30:00-07:00</lastmod>
+  </url><url>
     <loc>https://luth.io/blog/</loc>
+    <lastmod>2026-11-20T07:30:00-07:00</lastmod>
+  </url><url>
+    <loc>https://luth.io/tags/blue-green/</loc>
     <lastmod>2026-11-20T07:30:00-07:00</lastmod>
   </url><url>
     <loc>https://luth.io/categories/</loc>
@@ -62,9 +68,6 @@
                 />
   </url><url>
     <loc>https://luth.io/categories/containers/</loc>
-    <lastmod>2026-11-20T07:30:00-07:00</lastmod>
-  </url><url>
-    <loc>https://luth.io/tags/ec2/</loc>
     <lastmod>2026-11-20T07:30:00-07:00</lastmod>
   </url><url>
     <loc>https://luth.io/categories/ephpm/</loc>
@@ -126,10 +129,10 @@
                 href="https://luth.io/"
                 />
   </url><url>
-    <loc>https://luth.io/blog/2026/11/one-box-one-binary-single-ephpm-vm/</loc>
+    <loc>https://luth.io/blog/2026/11/operating-one-box-ephpm-backups-blue-green/</loc>
     <lastmod>2026-11-20T07:30:00-07:00</lastmod>
   </url><url>
-    <loc>https://luth.io/tags/spot/</loc>
+    <loc>https://luth.io/tags/packer/</loc>
     <lastmod>2026-11-20T07:30:00-07:00</lastmod>
   </url><url>
     <loc>https://luth.io/tags/sqlite/</loc>
@@ -139,13 +142,13 @@
     <lastmod>2026-11-20T07:30:00-07:00</lastmod>
     <xhtml:link
                 rel="alternate"
-                hreflang="fr"
-                href="https://luth.io/fr/tags/"
+                hreflang="pl"
+                href="https://luth.io/pl/tags/"
                 />
     <xhtml:link
                 rel="alternate"
-                hreflang="pl"
-                href="https://luth.io/pl/tags/"
+                hreflang="fr"
+                href="https://luth.io/fr/tags/"
                 />
     <xhtml:link
                 rel="alternate"
@@ -188,19 +191,16 @@
                 href="https://luth.io/tags/"
                 />
   </url><url>
-    <loc>https://luth.io/tags/backups/</loc>
-    <lastmod>2026-11-20T06:00:00-07:00</lastmod>
-  </url><url>
-    <loc>https://luth.io/tags/blue-green/</loc>
-    <lastmod>2026-11-20T06:00:00-07:00</lastmod>
-  </url><url>
-    <loc>https://luth.io/blog/2026/11/operating-one-box-ephpm-backups-blue-green/</loc>
-    <lastmod>2026-11-20T06:00:00-07:00</lastmod>
-  </url><url>
-    <loc>https://luth.io/tags/packer/</loc>
-    <lastmod>2026-11-20T06:00:00-07:00</lastmod>
-  </url><url>
     <loc>https://luth.io/tags/terraform/</loc>
+    <lastmod>2026-11-20T07:30:00-07:00</lastmod>
+  </url><url>
+    <loc>https://luth.io/tags/ec2/</loc>
+    <lastmod>2026-11-20T06:00:00-07:00</lastmod>
+  </url><url>
+    <loc>https://luth.io/blog/2026/11/one-box-one-binary-single-ephpm-vm/</loc>
+    <lastmod>2026-11-20T06:00:00-07:00</lastmod>
+  </url><url>
+    <loc>https://luth.io/tags/spot/</loc>
     <lastmod>2026-11-20T06:00:00-07:00</lastmod>
   </url><url>
     <loc>https://luth.io/categories/ci/</loc>
