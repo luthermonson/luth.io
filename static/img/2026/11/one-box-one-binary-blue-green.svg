@@ -1,0 +1,49 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 460" font-family="system-ui, -apple-system, Segoe UI, sans-serif">
+  <title>Blue/green upgrade by replicating the database, not moving the disk</title>
+  <desc>Node A, the blue node, runs the live data on its own EBS volume. A green node B comes up on the new AMI with its own empty EBS volume. The two nodes form a short-lived cluster and each site's SQLite replicates from A to B over the cluster channel using Turso change-data-capture. Once B has converged, the Elastic IP moves from A to B and A is retired. S3 backups stay on the whole time because exactly one node, the write owner, takes them.</desc>
+  <rect width="900" height="460" fill="#ffffff"/>
+  <text x="450" y="32" text-anchor="middle" font-size="19" font-weight="600" fill="#222">You can't move one EBS volume between two VMs, so replicate instead</text>
+
+  <!-- Node A (blue, live) -->
+  <rect x="40" y="70" width="300" height="150" rx="8" fill="#eaf1f8" stroke="#0550ae" stroke-width="2.5"/>
+  <text x="190" y="96" text-anchor="middle" font-size="16" font-weight="600" fill="#0550ae">Node A — blue, live</text>
+  <text x="190" y="118" text-anchor="middle" font-size="13" fill="#333">old AMI · serving traffic</text>
+  <rect x="64" y="132" width="252" height="70" rx="6" fill="#fff" stroke="#00707a" stroke-width="2"/>
+  <text x="190" y="156" text-anchor="middle" font-size="13.5" font-weight="600" fill="#00707a">data vol A</text>
+  <text x="190" y="176" text-anchor="middle" font-size="12.5" fill="#555">per-site SQLite + Sendy uploads</text>
+  <text x="190" y="193" text-anchor="middle" font-size="12" fill="#888">the live rows</text>
+
+  <!-- Node B (green, converging) -->
+  <rect x="560" y="70" width="300" height="150" rx="8" fill="#eef3ea" stroke="#2e7d32" stroke-width="2.5"/>
+  <text x="710" y="96" text-anchor="middle" font-size="16" font-weight="600" fill="#2e7d32">Node B — green, new</text>
+  <text x="710" y="118" text-anchor="middle" font-size="13" fill="#333">new AMI · its own empty volume</text>
+  <rect x="584" y="132" width="252" height="70" rx="6" fill="#fff" stroke="#00707a" stroke-width="2" stroke-dasharray="6 4"/>
+  <text x="710" y="156" text-anchor="middle" font-size="13.5" font-weight="600" fill="#00707a">data vol B</text>
+  <text x="710" y="176" text-anchor="middle" font-size="12.5" fill="#555">cold, then bootstrapped</text>
+  <text x="710" y="193" text-anchor="middle" font-size="12" fill="#888">converges to A</text>
+
+  <!-- CDC replication arrow A->B -->
+  <g stroke="#a0287f" stroke-width="2.5" fill="#a0287f">
+    <line x1="344" y1="130" x2="552" y2="130"/><polygon points="552,122 566,130 552,138"/>
+  </g>
+  <text x="452" y="118" text-anchor="middle" font-size="13.5" font-weight="600" fill="#a0287f">cluster channel · Turso CDC</text>
+  <text x="452" y="150" text-anchor="middle" font-size="12.5" fill="#666">snapshot bootstrap, then stream the changes</text>
+
+  <!-- EIP move -->
+  <rect x="330" y="252" width="240" height="64" rx="8" fill="#fdf3e6" stroke="#a34700" stroke-width="2"/>
+  <text x="450" y="277" text-anchor="middle" font-size="14.5" font-weight="600" fill="#a34700">Elastic IP — the stable address</text>
+  <text x="450" y="298" text-anchor="middle" font-size="12.5" fill="#555">flips A → B once B has converged</text>
+  <g stroke="#a34700" stroke-width="2" fill="#a34700">
+    <line x1="190" y1="220" x2="190" y2="284"/><line x1="190" y1="284" x2="326" y2="284"/>
+    <line x1="570" y1="284" x2="710" y2="284"/><line x1="710" y1="284" x2="710" y2="224"/>
+    <polygon points="704,232 710,220 716,232"/>
+  </g>
+  <text x="258" y="252" text-anchor="middle" font-size="12" fill="#888">was here</text>
+  <text x="648" y="252" text-anchor="middle" font-size="12" font-weight="600" fill="#a34700">moves here</text>
+
+  <!-- S3 backups stay on -->
+  <rect x="40" y="356" width="820" height="74" rx="8" fill="#e3f1f2" stroke="#00707a" stroke-width="2.5"/>
+  <text x="450" y="382" text-anchor="middle" font-size="15" font-weight="600" fill="#00707a">S3 backups stay ON through the whole window</text>
+  <text x="450" y="404" text-anchor="middle" font-size="12.5" fill="#333">v0.16.2: backups are owner-aware (source = "primary") — exactly one node snapshots each site, so a cluster never double-backs-up or pauses</text>
+  <text x="450" y="421" text-anchor="middle" font-size="12" fill="#777">then retire Node A: terminate it, its root and data volumes go with it</text>
+</svg>
