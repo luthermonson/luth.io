@@ -135,26 +135,6 @@ outages self-heal and never reach a customer; not a number worth paying to impro
 some apps can trade a sliver of uptime for a chunk of cost, and these are those apps. Doing it drops the all-in nearer
 **$10/mo** than $23.
 
-### What's next: closing the 81-second gap
-
-That 81 seconds is a cold, reactive replacement. The node dies, then the ASG notices, then a new one boots, attaches the
-volume, grabs the IP, and starts serving. Every step waits on the one before it, and nothing starts until the box is
-already gone. The obvious next move is to stop waiting for it to die.
-
-Spot tells you first. The two-minute interruption notice and the rebalance recommendation both land before the box
-actually goes away, and right now I only use that window to drain cleanly. The idea is to use it to act: on the signal,
-launch the replacement immediately so it boots and reaches ready while the old node is still serving, then hand off the EBS
-volume and the Elastic IP at the last second. The dark window shrinks from "boot a whole VM" to "detach, attach, flip the
-IP," which is a few seconds, not eighty.
-
-The catch is the one from the blue/green section: a single EBS volume can't attach to two live nodes at once, so the warm
-replacement can boot and initialize but can't take the data until the old node lets go. There's still a hard serialization
-point at the handoff. Whether that lands at five seconds or twenty-five is the thing I actually want to measure, so the
-experiment is to wire a watcher to the interruption and rebalance signals, have it pre-launch the replacement and pre-stage
-the attach, then force the reclaim and time it against the 81-second cold-start baseline. Same rude test, one variable
-changed. If it lands where I think it will, a planned spot reclaim costs a handful of seconds and the whole "outage you can
-afford" math gets easier still.
-
 Baking the image, backing it up, and shipping new code without downtime is
 [the second half](/blog/2026/11/operating-one-box-ephpm-backups-blue-green/).
 

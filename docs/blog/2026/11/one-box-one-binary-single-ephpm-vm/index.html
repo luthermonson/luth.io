@@ -221,7 +221,7 @@
   <div class="meta">
     <time datetime="2026-11-18 07:30:00 -0700 MST">November 18, 2026</time>
     
-    <p>9-Minute Read</p>
+    <p>8-Minute Read</p>
   </div>
 </header>
 
@@ -424,22 +424,6 @@ warm second node; both cost more, in dollars or moving parts. I need neither. Ca
 outages self-heal and never reach a customer; not a number worth paying to improve. Match the availability to the problem:
 some apps can trade a sliver of uptime for a chunk of cost, and these are those apps. Doing it drops the all-in nearer
 <strong>$10/mo</strong> than $23.</p>
-<h3 id="whats-next-closing-the-81-second-gap">What&rsquo;s next: closing the 81-second gap</h3>
-<p>That 81 seconds is a cold, reactive replacement. The node dies, then the ASG notices, then a new one boots, attaches the
-volume, grabs the IP, and starts serving. Every step waits on the one before it, and nothing starts until the box is
-already gone. The obvious next move is to stop waiting for it to die.</p>
-<p>Spot tells you first. The two-minute interruption notice and the rebalance recommendation both land before the box
-actually goes away, and right now I only use that window to drain cleanly. The idea is to use it to act: on the signal,
-launch the replacement immediately so it boots and reaches ready while the old node is still serving, then hand off the EBS
-volume and the Elastic IP at the last second. The dark window shrinks from &ldquo;boot a whole VM&rdquo; to &ldquo;detach, attach, flip the
-IP,&rdquo; which is a few seconds, not eighty.</p>
-<p>The catch is the one from the blue/green section: a single EBS volume can&rsquo;t attach to two live nodes at once, so the warm
-replacement can boot and initialize but can&rsquo;t take the data until the old node lets go. There&rsquo;s still a hard serialization
-point at the handoff. Whether that lands at five seconds or twenty-five is the thing I actually want to measure, so the
-experiment is to wire a watcher to the interruption and rebalance signals, have it pre-launch the replacement and pre-stage
-the attach, then force the reclaim and time it against the 81-second cold-start baseline. Same rude test, one variable
-changed. If it lands where I think it will, a planned spot reclaim costs a handful of seconds and the whole &ldquo;outage you can
-afford&rdquo; math gets easier still.</p>
 <p>Baking the image, backing it up, and shipping new code without downtime is
 <a href="/blog/2026/11/operating-one-box-ephpm-backups-blue-green/">the second half</a>.</p>
 <h3 id="links">Links</h3>
