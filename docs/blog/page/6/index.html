@@ -215,6 +215,73 @@
   <header>
   <div class="title">
     
+      <h2><a href="/blog/2026/08/faking-mysql-quirks-wordpress/">Faking MySQL&#39;s Quirks Well Enough to Fool WordPress</a></h2>
+    
+    
+      <p>Passing WordPress&#39;s install tests didn&#39;t mean litewire behaved like MySQL. This is the second round of fixes, for the small MySQL behaviors that WordPress and Laravel quietly depend on.</p>
+    
+  </div>
+  <div class="meta">
+    <time datetime="2026-08-16 15:50:00 -0700 MST">August 16, 2026</time>
+    
+    <p>10-Minute Read</p>
+  </div>
+</header>
+
+  <div class="content">
+    <a href="/blog/2026/08/faking-mysql-quirks-wordpress/" class="image" style="--bg-image: url('/img/2026/08/faking-mysql-quirks-wordpress-cover.svg');">
+    <img class="" src="/img/2026/08/faking-mysql-quirks-wordpress-cover.svg" alt="A table of MySQL behaviors WordPress relies on, with what litewire answered before and after the August fixes">
+  </a>
+    
+    <p>Last month I wrote about <a href="/blog/2026/07/sqlite-production-database-protocol-translation/">running SQLite behind a MySQL socket</a>
+with <a href="https://github.com/ephpm/litewire">litewire</a>. I ended on &ldquo;passing an install suite is not the same thing as
+behaving like MySQL&rdquo;. That turned out to be accurate. On August 10th a few things happened at once:</p>
+  </div>
+  <footer>
+    <a href="/blog/2026/08/faking-mysql-quirks-wordpress/" class="button big">Read More</a>
+    <div class="stats">
+  
+    <ul class="categories">
+      
+        
+          <li><a class="article-terms-link" href="/categories/databases/">databases</a></li>
+        
+          <li><a class="article-terms-link" href="/categories/ephpm/">ephpm</a></li>
+        
+          <li><a class="article-terms-link" href="/categories/php/">php</a></li>
+        
+      
+    </ul>
+  
+  
+    <ul class="tags">
+      
+        
+          <li><a class="article-terms-link" href="/tags/litewire/">litewire</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/ephpm/">ephpm</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/sqlite/">sqlite</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/mysql/">mysql</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/rust/">rust</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/wordpress/">wordpress</a></li>
+        
+      
+    </ul>
+  
+</div>
+
+  </footer>
+</article>
+
+  
+    <article class="post">
+  <header>
+  <div class="title">
+    
       <h2><a href="/blog/2026/08/requests-that-end-wrong/">Requests That End Wrong: A 200 That Was Really a Crash</a></h2>
     
     
@@ -813,77 +880,6 @@ than a year to show up. The fix that finally landed in May is one line. Here&rsq
 </article>
 
   
-    <article class="post">
-  <header>
-  <div class="title">
-    
-      <h2><a href="/blog/2026/07/sqlite-production-database-protocol-translation/">SQLite as a Production Database via Protocol Translation</a></h2>
-    
-    
-      <p>litewire speaks the MySQL wire protocol on one side and SQLite on the other. That lets WordPress and Laravel run against a .db file without a code change.</p>
-    
-  </div>
-  <div class="meta">
-    <time datetime="2026-07-25 20:40:00 -0700 MST">July 25, 2026</time>
-    
-    <p>10-Minute Read</p>
-  </div>
-</header>
-
-  <div class="content">
-    <a href="/blog/2026/07/sqlite-production-database-protocol-translation/" class="image" style="--bg-image: url('/img/2026/07/sqlite-production-database-protocol-translation-cover.svg');">
-    <img class="" src="/img/2026/07/sqlite-production-database-protocol-translation-cover.svg" alt="A PHP app connecting over the MySQL wire protocol on port 3306 to litewire, which translates the SQL and runs it against a SQLite file">
-  </a>
-    
-    <p>Most of the PHP sites I&rsquo;d put on <a href="https://github.com/ephpm/ephpm">ePHPm</a> don&rsquo;t need a MySQL server. A brochure
-WordPress, an internal Laravel tool, a preview environment that lives for an afternoon. What they do need is something
-that <em>looks</em> like MySQL, because <code>mysqli</code> and <code>pdo_mysql</code> are the only database drivers their code has ever been
-pointed at. I mentioned this in the <a href="/blog/2026/06/ephpm-pragmatism/">ePHPm pragmatism post</a> as a one-paragraph
-&ldquo;because&rdquo;. This is the longer version, now that WordPress 7.0 and Laravel 13 both install and&hellip;</p>
-  </div>
-  <footer>
-    <a href="/blog/2026/07/sqlite-production-database-protocol-translation/" class="button big">Read More</a>
-    <div class="stats">
-  
-    <ul class="categories">
-      
-        
-          <li><a class="article-terms-link" href="/categories/databases/">databases</a></li>
-        
-          <li><a class="article-terms-link" href="/categories/rust/">rust</a></li>
-        
-          <li><a class="article-terms-link" href="/categories/ephpm/">ephpm</a></li>
-        
-      
-    </ul>
-  
-  
-    <ul class="tags">
-      
-        
-          <li><a class="article-terms-link" href="/tags/litewire/">litewire</a></li>
-        
-          <li><a class="article-terms-link" href="/tags/ephpm/">ephpm</a></li>
-        
-          <li><a class="article-terms-link" href="/tags/sqlite/">sqlite</a></li>
-        
-          <li><a class="article-terms-link" href="/tags/mysql/">mysql</a></li>
-        
-          <li><a class="article-terms-link" href="/tags/rust/">rust</a></li>
-        
-          <li><a class="article-terms-link" href="/tags/wordpress/">wordpress</a></li>
-        
-          <li><a class="article-terms-link" href="/tags/laravel/">laravel</a></li>
-        
-      
-    </ul>
-  
-</div>
-
-  </footer>
-</article>
-
-  
   <div class="pagination">
     
       <a href="/blog/page/5/" class="button left"><span>Previous Page</span></a>
@@ -970,13 +966,13 @@ pointed at. I mentioned this in the <a href="/blog/2026/06/ephpm-pragmatism/">eP
           
           
           <li>
-              <a href="/categories/ephpm/">ephpm<span class="count">38</span></a>
+              <a href="/categories/ephpm/">ephpm<span class="count">39</span></a>
           
           <li>
               <a href="/categories/go/">go<span class="count">32</span></a>
           
           <li>
-              <a href="/categories/php/">php<span class="count">26</span></a>
+              <a href="/categories/php/">php<span class="count">27</span></a>
           
           <li>
               <a href="/categories/rust/">rust<span class="count">17</span></a>

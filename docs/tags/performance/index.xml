@@ -30,6 +30,13 @@
       <description>&lt;p&gt;&lt;a href=&#34;https://github.com/ephpm/litewire&#34;&gt;litewire&lt;/a&gt; is the piece of ePHPm that lets PHP apps talk MySQL to a SQLite file. I&#xA;wrote about &lt;a href=&#34;https://luth.io/blog/2026/07/sqlite-production-database-protocol-translation/&#34;&gt;how it works&lt;/a&gt; and about &lt;a href=&#34;https://luth.io/blog/2026/08/faking-mysql-quirks-wordpress/&#34;&gt;the MySQL quirks&#xA;WordPress depends on&lt;/a&gt;. This one is the less visible half of August:&lt;/p&gt;&#xA;&lt;ul&gt;&#xA;&lt;li&gt;an audit pass on litewire&lt;/li&gt;&#xA;&lt;li&gt;a multi-tenant mode that turned a database proxy into a security boundary&lt;/li&gt;&#xA;&lt;li&gt;a performance regression I shipped and then had to go find&lt;/li&gt;&#xA;&lt;/ul&gt;&#xA;&lt;p&gt;It&amp;rsquo;s written in Rust. Memory safety is supposed to be the part I don&amp;rsquo;t have to think about, and it mostly is. The&#xA;use-after-free in this story was in a dependency. The worst bug wasn&amp;rsquo;t a memory bug at all.&lt;/p&gt;</description>
     </item>
     <item>
+      <title>The Fast PHP Interpreter Windows Never Got</title>
+      <link>https://luth.io/blog/2026/08/windows-php-fast-vm-tailcall/</link>
+      <pubDate>Fri, 21 Aug 2026 10:00:00 -0700</pubDate>
+      <guid>https://luth.io/blog/2026/08/windows-php-fast-vm-tailcall/</guid>
+      <description>&lt;p&gt;&amp;ldquo;PHP is slow on Windows&amp;rdquo; is one of those things everyone knows and nobody questions. I believed it too, right up until I went looking for &lt;em&gt;where&lt;/em&gt; the slowness actually lives. Part of it is real and unfixable. But a big chunk of the interpreter half turns out to be something much more boring: nobody ever wrote the fast dispatch loop for the Windows compiler. That is not the same claim as &amp;ldquo;the OS is slower.&amp;rdquo; It is a missing implementation.&lt;/p&gt;</description>
+    </item>
+    <item>
       <title>Rolling Your Own KV Store Instead of Embedding Redis</title>
       <link>https://luth.io/blog/2026/08/rolling-your-own-kv-store/</link>
       <pubDate>Mon, 17 Aug 2026 20:44:00 -0700</pubDate>

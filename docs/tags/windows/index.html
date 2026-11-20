@@ -766,6 +766,67 @@ lists and never applies.</p>
   <header>
   <div class="title">
     
+      <h2><a href="/blog/2026/08/windows-php-fast-vm-tailcall/">The Fast PHP Interpreter Windows Never Got</a></h2>
+    
+    
+      <p>Windows PHP being slow is mostly a missing-implementation story, not an OS fact. Here is why ePHPm ships a separate clang-cl build with the TAILCALL interpreter, and what it proves.</p>
+    
+  </div>
+  <div class="meta">
+    <time datetime="2026-08-21 10:00:00 -0700 MST">August 21, 2026</time>
+    
+    <p>9-Minute Read</p>
+  </div>
+</header>
+
+  <div class="content">
+    <a href="/blog/2026/08/windows-php-fast-vm-tailcall/" class="image" style="--bg-image: url('/img/2026/08/windows-php-fast-vm-tailcall.svg');">
+    <img class="" src="/img/2026/08/windows-php-fast-vm-tailcall.svg" alt="Bar chart of upstream bench.php run time for three Zend dispatch kinds on one machine: CALL (MSVC, the slow fallback) at 1.783s, HYBRID (GCC, default since 7.2) at 1.006s, and TAILCALL (Clang, new in PHP 8.5) at 1.017s, showing TAILCALL recovers almost all of HYBRID&#39;s advantage over CALL">
+  </a>
+    
+    <p>&ldquo;PHP is slow on Windows&rdquo; is one of those things everyone knows and nobody questions. I believed it too, right up until I went looking for <em>where</em> the slowness actually lives. Part of it is real and unfixable. But a big chunk of the interpreter half turns out to be something much more boring: nobody ever wrote the fast dispatch loop for the Windows compiler. That is not the same claim as &ldquo;the OS is slower.&rdquo; It is a missing implementation.</p>
+  </div>
+  <footer>
+    <a href="/blog/2026/08/windows-php-fast-vm-tailcall/" class="button big">Read More</a>
+    <div class="stats">
+  
+    <ul class="categories">
+      
+        
+          <li><a class="article-terms-link" href="/categories/ephpm/">ephpm</a></li>
+        
+          <li><a class="article-terms-link" href="/categories/php/">php</a></li>
+        
+      
+    </ul>
+  
+  
+    <ul class="tags">
+      
+        
+          <li><a class="article-terms-link" href="/tags/php/">php</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/windows/">windows</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/ephpm/">ephpm</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/performance/">performance</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/rust/">rust</a></li>
+        
+      
+    </ul>
+  
+</div>
+
+  </footer>
+</article>
+
+  
+    <article class="post">
+  <header>
+  <div class="title">
+    
       <h2><a href="/blog/2026/08/benchmark-4x-wrong-wsl-drvfs-cwd/">My Benchmark Was 4x Wrong Because of WSL</a></h2>
     
     
@@ -821,71 +882,6 @@ capital letters in its README.</p>
           <li><a class="article-terms-link" href="/tags/linux/">linux</a></li>
         
           <li><a class="article-terms-link" href="/tags/strace/">strace</a></li>
-        
-      
-    </ul>
-  
-</div>
-
-  </footer>
-</article>
-
-  
-    <article class="post">
-  <header>
-  <div class="title">
-    
-      <h2><a href="/blog/2026/08/libxml2-2-14-broke-php-windows-builds/">libxml2 2.14 Broke PHP Windows Builds - And Nobody Noticed</a></h2>
-    
-    
-      <p>Why a static PHP build on Windows dies with hundreds of LNK2001 errors against modern libxml2, and why Linux never sees it.</p>
-    
-  </div>
-  <div class="meta">
-    <time datetime="2026-08-11 20:36:00 -0700 MST">August 11, 2026</time>
-    
-    <p>9-Minute Read</p>
-  </div>
-</header>
-
-  <div class="content">
-    <a href="/blog/2026/08/libxml2-2-14-broke-php-windows-builds/" class="image" style="--bg-image: url('/img/2026/08/libxml2-214-php-windows-def-missing-symbols.svg');">
-    <img class="" src="/img/2026/08/libxml2-214-php-windows-def-missing-symbols.svg" alt="Bar chart: legacy php_libxml2.def entries missing from libxml2 headers - 0 for 2.11.9 and 2.13.0, 294 for 2.14.0 and 2.15.0">
-  </a>
-    
-    <p>Back in April I was getting the embed SAPI building on Windows for <a href="https://github.com/ephpm/ephpm">ePHPm</a>. I was
-using my fork of <a href="https://github.com/crazywhalecc/static-php-cli">static-php-cli</a> (SPC). The link step for
-<code>php8ts.dll</code> fell over with a wall of errors that all looked like this:</p>
-  </div>
-  <footer>
-    <a href="/blog/2026/08/libxml2-2-14-broke-php-windows-builds/" class="button big">Read More</a>
-    <div class="stats">
-  
-    <ul class="categories">
-      
-        
-          <li><a class="article-terms-link" href="/categories/php/">php</a></li>
-        
-          <li><a class="article-terms-link" href="/categories/windows/">windows</a></li>
-        
-      
-    </ul>
-  
-  
-    <ul class="tags">
-      
-        
-          <li><a class="article-terms-link" href="/tags/php/">php</a></li>
-        
-          <li><a class="article-terms-link" href="/tags/windows/">windows</a></li>
-        
-          <li><a class="article-terms-link" href="/tags/libxml2/">libxml2</a></li>
-        
-          <li><a class="article-terms-link" href="/tags/msvc/">msvc</a></li>
-        
-          <li><a class="article-terms-link" href="/tags/static-php-cli/">static-php-cli</a></li>
-        
-          <li><a class="article-terms-link" href="/tags/linker/">linker</a></li>
         
       
     </ul>
@@ -980,13 +976,13 @@ using my fork of <a href="https://github.com/crazywhalecc/static-php-cli">static
           
           
           <li>
-              <a href="/categories/ephpm/">ephpm<span class="count">38</span></a>
+              <a href="/categories/ephpm/">ephpm<span class="count">39</span></a>
           
           <li>
               <a href="/categories/go/">go<span class="count">32</span></a>
           
           <li>
-              <a href="/categories/php/">php<span class="count">26</span></a>
+              <a href="/categories/php/">php<span class="count">27</span></a>
           
           <li>
               <a href="/categories/rust/">rust<span class="count">17</span></a>

@@ -149,6 +149,13 @@
       <description>&lt;p&gt;Ask most people what their PHP server does when it&amp;rsquo;s overloaded and you&amp;rsquo;ll hear &amp;ldquo;it returns 503s.&amp;rdquo; Ask them how they&#xA;know and it usually comes down to a config setting they read about. I was in that camp for &lt;a href=&#34;https://github.com/ephpm/ephpm&#34;&gt;ePHPm&lt;/a&gt;.&#xA;We had a &lt;code&gt;[server.limits] max_connections&lt;/code&gt; knob, and the docs said it returned 503 at the cap. Every benchmark we had&#xA;ever run reported zero errors under heavy load. Then I wrote a load generator that could produce overload. The honest&#xA;answer was that an overloaded ePHPm returned nothing at all.&lt;/p&gt;</description>
     </item>
     <item>
+      <title>The Fast PHP Interpreter Windows Never Got</title>
+      <link>https://luth.io/blog/2026/08/windows-php-fast-vm-tailcall/</link>
+      <pubDate>Fri, 21 Aug 2026 10:00:00 -0700</pubDate>
+      <guid>https://luth.io/blog/2026/08/windows-php-fast-vm-tailcall/</guid>
+      <description>&lt;p&gt;&amp;ldquo;PHP is slow on Windows&amp;rdquo; is one of those things everyone knows and nobody questions. I believed it too, right up until I went looking for &lt;em&gt;where&lt;/em&gt; the slowness actually lives. Part of it is real and unfixable. But a big chunk of the interpreter half turns out to be something much more boring: nobody ever wrote the fast dispatch loop for the Windows compiler. That is not the same claim as &amp;ldquo;the OS is slower.&amp;rdquo; It is a missing implementation.&lt;/p&gt;</description>
+    </item>
+    <item>
       <title>My Benchmark Was 4x Wrong Because of WSL</title>
       <link>https://luth.io/blog/2026/08/benchmark-4x-wrong-wsl-drvfs-cwd/</link>
       <pubDate>Thu, 20 Aug 2026 20:45:00 -0700</pubDate>

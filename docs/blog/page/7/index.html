@@ -215,6 +215,77 @@
   <header>
   <div class="title">
     
+      <h2><a href="/blog/2026/07/sqlite-production-database-protocol-translation/">SQLite as a Production Database via Protocol Translation</a></h2>
+    
+    
+      <p>litewire speaks the MySQL wire protocol on one side and SQLite on the other. That lets WordPress and Laravel run against a .db file without a code change.</p>
+    
+  </div>
+  <div class="meta">
+    <time datetime="2026-07-25 20:40:00 -0700 MST">July 25, 2026</time>
+    
+    <p>10-Minute Read</p>
+  </div>
+</header>
+
+  <div class="content">
+    <a href="/blog/2026/07/sqlite-production-database-protocol-translation/" class="image" style="--bg-image: url('/img/2026/07/sqlite-production-database-protocol-translation-cover.svg');">
+    <img class="" src="/img/2026/07/sqlite-production-database-protocol-translation-cover.svg" alt="A PHP app connecting over the MySQL wire protocol on port 3306 to litewire, which translates the SQL and runs it against a SQLite file">
+  </a>
+    
+    <p>Most of the PHP sites I&rsquo;d put on <a href="https://github.com/ephpm/ephpm">ePHPm</a> don&rsquo;t need a MySQL server. A brochure
+WordPress, an internal Laravel tool, a preview environment that lives for an afternoon. What they do need is something
+that <em>looks</em> like MySQL, because <code>mysqli</code> and <code>pdo_mysql</code> are the only database drivers their code has ever been
+pointed at. I mentioned this in the <a href="/blog/2026/06/ephpm-pragmatism/">ePHPm pragmatism post</a> as a one-paragraph
+&ldquo;because&rdquo;. This is the longer version, now that WordPress 7.0 and Laravel 13 both install and&hellip;</p>
+  </div>
+  <footer>
+    <a href="/blog/2026/07/sqlite-production-database-protocol-translation/" class="button big">Read More</a>
+    <div class="stats">
+  
+    <ul class="categories">
+      
+        
+          <li><a class="article-terms-link" href="/categories/databases/">databases</a></li>
+        
+          <li><a class="article-terms-link" href="/categories/rust/">rust</a></li>
+        
+          <li><a class="article-terms-link" href="/categories/ephpm/">ephpm</a></li>
+        
+      
+    </ul>
+  
+  
+    <ul class="tags">
+      
+        
+          <li><a class="article-terms-link" href="/tags/litewire/">litewire</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/ephpm/">ephpm</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/sqlite/">sqlite</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/mysql/">mysql</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/rust/">rust</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/wordpress/">wordpress</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/laravel/">laravel</a></li>
+        
+      
+    </ul>
+  
+</div>
+
+  </footer>
+</article>
+
+  
+    <article class="post">
+  <header>
+  <div class="title">
+    
       <h2><a href="/blog/2026/07/spc-windows-archive-extraction/">Fixing Windows Archive Extraction in SPC</a></h2>
     
     
@@ -794,73 +865,6 @@ answer was 100%. The more interesting part is how many times the measuring stick
 </article>
 
   
-    <article class="post">
-  <header>
-  <div class="title">
-    
-      <h2><a href="/blog/2026/06/cloud-init-isos-pure-go-proxmox/">Cloud-Init ISOs in Pure Go with go-proxmox</a></h2>
-    
-    
-      <p>Building nocloud cloud-init ISOs in memory with go-diskfs, uploading them to Proxmox and mounting them on a VM in one call, with no genisoimage.</p>
-    
-  </div>
-  <div class="meta">
-    <time datetime="2026-06-06 15:20:00 -0700 MST">June 6, 2026</time>
-    
-    <p>8-Minute Read</p>
-  </div>
-</header>
-
-  <div class="content">
-    <a href="/blog/2026/06/cloud-init-isos-pure-go-proxmox/" class="image" style="--bg-image: url('/img/2026/06/cloud-init-isos-pure-go-proxmox-lifecycle.svg');">
-    <img class="" src="/img/2026/06/cloud-init-isos-pure-go-proxmox-lifecycle.svg" alt="Flow: makeCloudInitISO, upload to Proxmox storage, mount as CD-ROM, VM boots and cloud-init reads the cidata volume, cleanup">
-  </a>
-    
-    <p>Proxmox&rsquo;s built-in cloud-init support is fine for the basics: a user, an SSH key, an IP config. It falls apart the second you
-want your own <code>user-data</code>, <code>vendor-data</code> or a real <code>network-config</code>. The GUI and the <code>ci*</code> options only expose a handful of
-fields. The escape hatch is <code>cicustom</code> pointing at snippet files, and that means getting files onto the Proxmox host&rsquo;s
-filesystem first. The usual alternative is building a nocloud ISO yourself with <code>genisoimage</code> or <code>mkisofs</code>. That means a
-system&hellip;</p>
-  </div>
-  <footer>
-    <a href="/blog/2026/06/cloud-init-isos-pure-go-proxmox/" class="button big">Read More</a>
-    <div class="stats">
-  
-    <ul class="categories">
-      
-        
-          <li><a class="article-terms-link" href="/categories/go/">go</a></li>
-        
-          <li><a class="article-terms-link" href="/categories/homelab/">homelab</a></li>
-        
-      
-    </ul>
-  
-  
-    <ul class="tags">
-      
-        
-          <li><a class="article-terms-link" href="/tags/go/">go</a></li>
-        
-          <li><a class="article-terms-link" href="/tags/proxmox/">proxmox</a></li>
-        
-          <li><a class="article-terms-link" href="/tags/cloud-init/">cloud-init</a></li>
-        
-          <li><a class="article-terms-link" href="/tags/iso9660/">iso9660</a></li>
-        
-          <li><a class="article-terms-link" href="/tags/go-diskfs/">go-diskfs</a></li>
-        
-          <li><a class="article-terms-link" href="/tags/homelab/">homelab</a></li>
-        
-      
-    </ul>
-  
-</div>
-
-  </footer>
-</article>
-
-  
   <div class="pagination">
     
       <a href="/blog/page/6/" class="button left"><span>Previous Page</span></a>
@@ -947,13 +951,13 @@ system&hellip;</p>
           
           
           <li>
-              <a href="/categories/ephpm/">ephpm<span class="count">38</span></a>
+              <a href="/categories/ephpm/">ephpm<span class="count">39</span></a>
           
           <li>
               <a href="/categories/go/">go<span class="count">32</span></a>
           
           <li>
-              <a href="/categories/php/">php<span class="count">26</span></a>
+              <a href="/categories/php/">php<span class="count">27</span></a>
           
           <li>
               <a href="/categories/rust/">rust<span class="count">17</span></a>

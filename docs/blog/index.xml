@@ -324,6 +324,13 @@
       <description>&lt;p&gt;Since June most of my evenings have gone into &lt;a href=&#34;https://github.com/luthermonson/shipmates&#34;&gt;shipmates&lt;/a&gt;, a Go CLI and daemon&#xA;for running crews of AI coding agents. I tagged &lt;a href=&#34;https://github.com/luthermonson/shipmates/releases/tag/v0.5.0&#34;&gt;v0.5.0&lt;/a&gt;&#xA;on August 17th. That was two months and about 240 commits after the first architecture doc. So it&amp;rsquo;s a good time to write&#xA;down what it is and why it exists.&lt;/p&gt;&#xA;&lt;h3 id=&#34;the-problem&#34;&gt;The problem&lt;/h3&gt;&#xA;&lt;p&gt;I run a lot of agent sessions. On a normal night this workstation has four or five projects going at once. Each has a&#xA;few Claude Code sessions doing different jobs: one reviewing, one writing tests, one chasing a bug. Two things kept&#xA;annoying me.&lt;/p&gt;</description>
     </item>
     <item>
+      <title>The Fast PHP Interpreter Windows Never Got</title>
+      <link>https://luth.io/blog/2026/08/windows-php-fast-vm-tailcall/</link>
+      <pubDate>Fri, 21 Aug 2026 10:00:00 -0700</pubDate>
+      <guid>https://luth.io/blog/2026/08/windows-php-fast-vm-tailcall/</guid>
+      <description>&lt;p&gt;&amp;ldquo;PHP is slow on Windows&amp;rdquo; is one of those things everyone knows and nobody questions. I believed it too, right up until I went looking for &lt;em&gt;where&lt;/em&gt; the slowness actually lives. Part of it is real and unfixable. But a big chunk of the interpreter half turns out to be something much more boring: nobody ever wrote the fast dispatch loop for the Windows compiler. That is not the same claim as &amp;ldquo;the OS is slower.&amp;rdquo; It is a missing implementation.&lt;/p&gt;</description>
+    </item>
+    <item>
       <title>My Benchmark Was 4x Wrong Because of WSL</title>
       <link>https://luth.io/blog/2026/08/benchmark-4x-wrong-wsl-drvfs-cwd/</link>
       <pubDate>Thu, 20 Aug 2026 20:45:00 -0700</pubDate>

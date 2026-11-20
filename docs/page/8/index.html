@@ -215,6 +215,73 @@
   <header>
   <div class="title">
     
+      <h2><a href="/blog/2026/06/cloud-init-isos-pure-go-proxmox/">Cloud-Init ISOs in Pure Go with go-proxmox</a></h2>
+    
+    
+      <p>Building nocloud cloud-init ISOs in memory with go-diskfs, uploading them to Proxmox and mounting them on a VM in one call, with no genisoimage.</p>
+    
+  </div>
+  <div class="meta">
+    <time datetime="2026-06-06 15:20:00 -0700 MST">June 6, 2026</time>
+    
+    <p>8-Minute Read</p>
+  </div>
+</header>
+
+  <div class="content">
+    <a href="/blog/2026/06/cloud-init-isos-pure-go-proxmox/" class="image" style="--bg-image: url('/img/2026/06/cloud-init-isos-pure-go-proxmox-lifecycle.svg');">
+    <img class="" src="/img/2026/06/cloud-init-isos-pure-go-proxmox-lifecycle.svg" alt="Flow: makeCloudInitISO, upload to Proxmox storage, mount as CD-ROM, VM boots and cloud-init reads the cidata volume, cleanup">
+  </a>
+    
+    <p>Proxmox&rsquo;s built-in cloud-init support is fine for the basics: a user, an SSH key, an IP config. It falls apart the second you
+want your own <code>user-data</code>, <code>vendor-data</code> or a real <code>network-config</code>. The GUI and the <code>ci*</code> options only expose a handful of
+fields. The escape hatch is <code>cicustom</code> pointing at snippet files, and that means getting files onto the Proxmox host&rsquo;s
+filesystem first. The usual alternative is building a nocloud ISO yourself with <code>genisoimage</code> or <code>mkisofs</code>. That means a
+system&hellip;</p>
+  </div>
+  <footer>
+    <a href="/blog/2026/06/cloud-init-isos-pure-go-proxmox/" class="button big">Read More</a>
+    <div class="stats">
+  
+    <ul class="categories">
+      
+        
+          <li><a class="article-terms-link" href="/categories/go/">go</a></li>
+        
+          <li><a class="article-terms-link" href="/categories/homelab/">homelab</a></li>
+        
+      
+    </ul>
+  
+  
+    <ul class="tags">
+      
+        
+          <li><a class="article-terms-link" href="/tags/go/">go</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/proxmox/">proxmox</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/cloud-init/">cloud-init</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/iso9660/">iso9660</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/go-diskfs/">go-diskfs</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/homelab/">homelab</a></li>
+        
+      
+    </ul>
+  
+</div>
+
+  </footer>
+</article>
+
+  
+    <article class="post">
+  <header>
+  <div class="title">
+    
       <h2><a href="/blog/2026/05/staying-logged-in-to-proxmox/">Staying Logged In to Proxmox: Ticket Renewal, Expiry and Where API Tokens Stop</a></h2>
     
     
@@ -800,63 +867,6 @@ can take away hours of your day. That&rsquo;s at cost to your employer for both 
 </article>
 
   
-    <article class="post">
-  <header>
-  <div class="title">
-    
-      <h2><a href="/blog/2022/01/practical-cue-example/">Practical Cue Example, Produce YAML Config from Go Types</a></h2>
-    
-    
-      <p>A hands-on Cue tutorial: start from Go types, generate Cue definitions, and produce two different YAML config files from them.</p>
-    
-  </div>
-  <div class="meta">
-    <time datetime="2022-01-31 09:57:26 -0700 MST">January 31, 2022</time>
-    
-    <p>5-Minute Read</p>
-  </div>
-</header>
-
-  <div class="content">
-    
-    
-    <p>I recently had to spend some time to learn <a href="https://cuelang.org/">Cue</a> and felt the examples/tutorials were a bit lacking.
-The paradigm shift to the entire language sort of messed with my head, and some things Cue does were a bit foreign to me.
-To get started, note that I spent all of my time getting this information from two places: their main
-<a href="https://cuelang.org/docs/">docs</a> and a community <a href="https://cuetorials.com/">Cuetorials</a> site. This will be a tutorial on
-how you can use Cue to generate two different YAML documents, all starting with Go types to generate Cue files.</p>
-  </div>
-  <footer>
-    <a href="/blog/2022/01/practical-cue-example/" class="button big">Read More</a>
-    <div class="stats">
-  
-    <ul class="categories">
-      
-        
-          <li><a class="article-terms-link" href="/categories/go/">go</a></li>
-        
-          <li><a class="article-terms-link" href="/categories/tools/">tools</a></li>
-        
-      
-    </ul>
-  
-  
-    <ul class="tags">
-      
-        
-          <li><a class="article-terms-link" href="/tags/cue/">cue</a></li>
-        
-          <li><a class="article-terms-link" href="/tags/go/">go</a></li>
-        
-      
-    </ul>
-  
-</div>
-
-  </footer>
-</article>
-
-  
   <div class="pagination">
     
       <a href="/page/7/" class="button left"><span>Previous Page</span></a>
@@ -943,13 +953,13 @@ how you can use Cue to generate two different YAML documents, all starting with 
           
           
           <li>
-              <a href="/categories/ephpm/">ephpm<span class="count">38</span></a>
+              <a href="/categories/ephpm/">ephpm<span class="count">39</span></a>
           
           <li>
               <a href="/categories/go/">go<span class="count">32</span></a>
           
           <li>
-              <a href="/categories/php/">php<span class="count">26</span></a>
+              <a href="/categories/php/">php<span class="count">27</span></a>
           
           <li>
               <a href="/categories/rust/">rust<span class="count">17</span></a>

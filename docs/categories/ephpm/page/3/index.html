@@ -555,6 +555,67 @@ answer was that an&hellip;</p>
   <header>
   <div class="title">
     
+      <h2><a href="/blog/2026/08/windows-php-fast-vm-tailcall/">The Fast PHP Interpreter Windows Never Got</a></h2>
+    
+    
+      <p>Windows PHP being slow is mostly a missing-implementation story, not an OS fact. Here is why ePHPm ships a separate clang-cl build with the TAILCALL interpreter, and what it proves.</p>
+    
+  </div>
+  <div class="meta">
+    <time datetime="2026-08-21 10:00:00 -0700 MST">August 21, 2026</time>
+    
+    <p>9-Minute Read</p>
+  </div>
+</header>
+
+  <div class="content">
+    <a href="/blog/2026/08/windows-php-fast-vm-tailcall/" class="image" style="--bg-image: url('/img/2026/08/windows-php-fast-vm-tailcall.svg');">
+    <img class="" src="/img/2026/08/windows-php-fast-vm-tailcall.svg" alt="Bar chart of upstream bench.php run time for three Zend dispatch kinds on one machine: CALL (MSVC, the slow fallback) at 1.783s, HYBRID (GCC, default since 7.2) at 1.006s, and TAILCALL (Clang, new in PHP 8.5) at 1.017s, showing TAILCALL recovers almost all of HYBRID&#39;s advantage over CALL">
+  </a>
+    
+    <p>&ldquo;PHP is slow on Windows&rdquo; is one of those things everyone knows and nobody questions. I believed it too, right up until I went looking for <em>where</em> the slowness actually lives. Part of it is real and unfixable. But a big chunk of the interpreter half turns out to be something much more boring: nobody ever wrote the fast dispatch loop for the Windows compiler. That is not the same claim as &ldquo;the OS is slower.&rdquo; It is a missing implementation.</p>
+  </div>
+  <footer>
+    <a href="/blog/2026/08/windows-php-fast-vm-tailcall/" class="button big">Read More</a>
+    <div class="stats">
+  
+    <ul class="categories">
+      
+        
+          <li><a class="article-terms-link" href="/categories/ephpm/">ephpm</a></li>
+        
+          <li><a class="article-terms-link" href="/categories/php/">php</a></li>
+        
+      
+    </ul>
+  
+  
+    <ul class="tags">
+      
+        
+          <li><a class="article-terms-link" href="/tags/php/">php</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/windows/">windows</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/ephpm/">ephpm</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/performance/">performance</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/rust/">rust</a></li>
+        
+      
+    </ul>
+  
+</div>
+
+  </footer>
+</article>
+
+  
+    <article class="post">
+  <header>
+  <div class="title">
+    
       <h2><a href="/blog/2026/08/benchmark-4x-wrong-wsl-drvfs-cwd/">My Benchmark Was 4x Wrong Because of WSL</a></h2>
     
     
@@ -824,71 +885,6 @@ behaving like MySQL&rdquo;. That turned out to be accurate. On August 10th a few
 </article>
 
   
-    <article class="post">
-  <header>
-  <div class="title">
-    
-      <h2><a href="/blog/2026/08/requests-that-end-wrong/">Requests That End Wrong: A 200 That Was Really a Crash</a></h2>
-    
-    
-      <p>Three ePHPm bugs lived in how an embedded PHP request starts and ends. A bailout returned 200, $_POST came up empty and a SIGTERM corrupted the heap.</p>
-    
-  </div>
-  <div class="meta">
-    <time datetime="2026-08-13 21:14:00 -0700 MST">August 13, 2026</time>
-    
-    <p>10-Minute Read</p>
-  </div>
-</header>
-
-  <div class="content">
-    <a href="/blog/2026/08/requests-that-end-wrong/" class="image" style="--bg-image: url('/img/2026/08/requests-that-end-wrong-cover.svg');">
-    <img class="" src="/img/2026/08/requests-that-end-wrong-cover.svg" alt="Diagram of a bare zend_bailout being absorbed by php_execute_script&#39;s own zend_try instead of reaching ePHPm&#39;s guard">
-  </a>
-    
-    <p>The scariest response a server can send isn&rsquo;t a 500. It&rsquo;s a 200 that should have been a 500. A crash is loud. The pod
-restarts, an alert fires, somebody looks. A truncated page with a success status code is quiet. Your CDN caches it and
-the health check calls the box healthy. A client parses half a document as if it were the whole thing.</p>
-  </div>
-  <footer>
-    <a href="/blog/2026/08/requests-that-end-wrong/" class="button big">Read More</a>
-    <div class="stats">
-  
-    <ul class="categories">
-      
-        
-          <li><a class="article-terms-link" href="/categories/ephpm/">ephpm</a></li>
-        
-          <li><a class="article-terms-link" href="/categories/php/">php</a></li>
-        
-          <li><a class="article-terms-link" href="/categories/rust/">rust</a></li>
-        
-      
-    </ul>
-  
-  
-    <ul class="tags">
-      
-        
-          <li><a class="article-terms-link" href="/tags/php/">php</a></li>
-        
-          <li><a class="article-terms-link" href="/tags/rust/">rust</a></li>
-        
-          <li><a class="article-terms-link" href="/tags/ephpm/">ephpm</a></li>
-        
-          <li><a class="article-terms-link" href="/tags/zend/">zend</a></li>
-        
-          <li><a class="article-terms-link" href="/tags/debugging/">debugging</a></li>
-        
-      
-    </ul>
-  
-</div>
-
-  </footer>
-</article>
-
-  
   <div class="pagination">
     
       <a href="/categories/ephpm/page/2/" class="button left"><span>Previous Page</span></a>
@@ -975,13 +971,13 @@ the health check calls the box healthy. A client parses half a document as if it
           
           
           <li>
-              <a href="/categories/ephpm/">ephpm<span class="count">38</span></a>
+              <a href="/categories/ephpm/">ephpm<span class="count">39</span></a>
           
           <li>
               <a href="/categories/go/">go<span class="count">32</span></a>
           
           <li>
-              <a href="/categories/php/">php<span class="count">26</span></a>
+              <a href="/categories/php/">php<span class="count">27</span></a>
           
           <li>
               <a href="/categories/rust/">rust<span class="count">17</span></a>

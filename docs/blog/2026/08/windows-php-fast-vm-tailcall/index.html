@@ -1,0 +1,586 @@
+<!doctype html>
+<html lang="en">
+  <head>
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-MSTSKGFWTX"></script>
+<script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+
+    gtag('config', 'G-MSTSKGFWTX');
+</script><meta charset="utf-8">
+<title>The Fast PHP Interpreter Windows Never Got - Luther Monson</title>
+<meta name="description" content="Windows PHP being slow is mostly a missing-implementation story, not an OS fact. Here is why ePHPm ships a separate clang-cl build with the TAILCALL interpreter, and what it proves.">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<meta name="twitter:card" content="summary_large_image"><meta name="twitter:site" content="@luthermonson">
+
+<meta property="og:site_name" content="Luther Monson">
+<meta property="og:title" content="The Fast PHP Interpreter Windows Never Got">
+<meta property="og:description" content="Windows PHP being slow is mostly a missing-implementation story, not an OS fact. Here is why ePHPm ships a separate clang-cl build with the TAILCALL interpreter, and what it proves.">
+<meta property="og:type" content="article">
+<meta property="og:url" content="https://luth.io/blog/2026/08/windows-php-fast-vm-tailcall/">
+    <meta property="og:image" content="https://luth.io/img/2026/08/windows-php-fast-vm-tailcall.svg">
+    <meta property="og:image:alt" content="Bar chart of upstream bench.php run time for three Zend dispatch kinds on one machine: CALL (MSVC, the slow fallback) at 1.783s, HYBRID (GCC, default since 7.2) at 1.006s, and TAILCALL (Clang, new in PHP 8.5) at 1.017s, showing TAILCALL recovers almost all of HYBRID&#39;s advantage over CALL">
+
+
+  <link rel="manifest" href="/favicon/site.webmanifest?v=1">
+  <link rel="apple-touch-icon" sizes="180x180" href="/favicon/apple-touch-icon.png?v=1">
+  <link rel="icon" type="image/png" sizes="32x32" href="/favicon/favicon-32x32.png?v=1">
+  <link rel="icon" type="image/png" sizes="16x16" href="/favicon/favicon-16x16.png?v=1">
+  
+    <link rel="mask-icon" href="/favicon/safari-pinned-tab.svg?v=1" color="#ffffff">
+    <link rel="shortcut icon" href="/favicon/favicon.ico?v=1">
+    <meta name="msapplication-config" content="/favicon/browserconfig.xml?v=1">
+  
+  <meta name="msapplication-TileColor" content="#ffffff">
+  <meta name="theme-color" content="#ffffff">
+
+
+  <meta name="generator" content="Hugo 0.160.1">
+  <link rel="alternate" type="application/rss+xml" href="https://luth.io/index.xml" title="Luther Monson">
+  <link rel="stylesheet" href="/css/bundle.min.e1ffed86714fbb7eff75eab221c0c61b8260be0c7d1c08db0fcb7a2bdb6af7c9.css" integrity="sha256-4f/thnFPu37/deqyIcDGG4Jgvgx9HAjbD8t6K9tq98k="><link rel="stylesheet" href="/css/add-on.css">
+        <link rel="stylesheet" href="/css/code.css">
+        <link rel="stylesheet" href="/css/mobile.css">
+</head>
+
+  <body>
+    
+
+<header id="site-header">
+  <nav id="site-nav">
+    <h1 class="nav-title">
+      <a href="/" class="nav">
+        <img class="nav-avatar" src="/img/luther-monson-headshot.jpg" alt="" width="32" height="32">
+        
+          Blog
+        
+      </a>
+    </h1>
+    <menu id="site-nav-menu" class="flyout-menu menu">
+      
+        
+          
+          <a href="/" class="nav link"><i class='fa fa-home'></i> Home</a>
+        
+      
+        
+          
+          <a href="/about" class="nav link"><i class='far fa-id-card'></i> About</a>
+        
+      
+        
+          
+          <a href="/blog" class="nav link"><i class='far fa-newspaper'></i> Blog</a>
+        
+      
+        
+          
+          <a href="/archive" class="nav link"><i class='far fa-calendar-alt'></i> Archive</a>
+        
+      
+        
+          
+          <a href="/categories" class="nav link"><i class='fas fa-sitemap'></i> Categories</a>
+        
+      
+      <a href="#share-menu" class="nav link share-toggle"><i class="fas fa-share-alt">&nbsp;</i>Share</a>
+      <a href="#search-input" class="nav link search-toggle"><i class="fas fa-search">&nbsp;</i>Search</a>
+    </menu>
+    <a href="#search-input" class="nav search-toggle"><i class="fas fa-search fa-2x">&nbsp;</i></a>
+    <a href="#share-menu" class="nav share-toggle"><i class="fas fa-share-alt fa-2x">&nbsp;</i></a>
+    
+    <a href="#site-nav" class="nav nav-toggle"><i class="fas fa-bars fa-2x"></i></a>
+  </nav>
+  <menu id="search" class="menu"><input id="search-input" class="search-input menu"></input><div id="search-results" class="search-results menu"></div></menu>
+  
+  
+    <menu id="share-menu" class="flyout-menu menu">
+      <h1>Share Post</h1>
+      
+
+
+
+
+  
+    
+    <a href="//twitter.com/share?text=The%20Fast%20PHP%20Interpreter%20Windows%20Never%20Got&amp;url=https%3a%2f%2fluth.io%2fblog%2f2026%2f08%2fwindows-php-fast-vm-tailcall%2f" target="_blank" rel="noopener" class="nav share-btn twitter">
+        <p>Twitter</p>
+      </a>
+  
+
+  
+      <a href="//www.facebook.com/sharer/sharer.php?u=https%3a%2f%2fluth.io%2fblog%2f2026%2f08%2fwindows-php-fast-vm-tailcall%2f" target="_blank" rel="noopener" class="nav share-btn facebook">
+        <p>Facebook</p>
+        </a>
+  
+
+  
+    <a href="//www.reddit.com/submit?url=https%3a%2f%2fluth.io%2fblog%2f2026%2f08%2fwindows-php-fast-vm-tailcall%2f&amp;title=The%20Fast%20PHP%20Interpreter%20Windows%20Never%20Got" target="_blank" rel="noopener" class="nav share-btn reddit">
+          <p>Reddit</p>
+        </a>
+  
+
+  
+        <a href="//www.linkedin.com/shareArticle?url=https%3a%2f%2fluth.io%2fblog%2f2026%2f08%2fwindows-php-fast-vm-tailcall%2f&amp;title=The%20Fast%20PHP%20Interpreter%20Windows%20Never%20Got" target="_blank" rel="noopener" class="nav share-btn linkedin">
+            <p>LinkedIn</p>
+          </a>
+  
+
+  
+        <a href="//www.pinterest.com/pin/create/button/?url=https%3a%2f%2fluth.io%2fblog%2f2026%2f08%2fwindows-php-fast-vm-tailcall%2f&amp;description=The%20Fast%20PHP%20Interpreter%20Windows%20Never%20Got" target="_blank" rel="noopener" class="nav share-btn pinterest">
+          <p>Pinterest</p>
+        </a>
+  
+
+  
+        <a href="mailto:?subject=Check%20out%20this%20post%20by Luther%20Monson&amp;body=https%3a%2f%2fluth.io%2fblog%2f2026%2f08%2fwindows-php-fast-vm-tailcall%2f" target="_blank" class="nav share-btn email" data-proofer-ignore>
+          <p>Email</p>
+        </a>
+  
+
+
+    </menu>
+  
+</header>
+
+    <div id="wrapper">
+      <section id="site-intro" class="hidden-single-column">
+  <a href="/"><img src="/img/luther-monson-headshot.jpg" class="circle" width="100" alt="Luther Monson, Founding Engineer at Gas City" /></a>
+  <header>
+    <h1>Luther Monson</h1>
+  </header>
+  <main>
+    <p>Open Source &middot; AI &middot; Containers &middot; VMs &middot; Kubernetes &middot; Windows &middot; Go by way of PHP</p>
+  </main>
+  
+    <footer>
+      <ul class="socnet-icons">
+        
+
+        <li><a href="//github.com/luthermonson" target="_blank" rel="noopener" title="GitHub" class="fab fa-github"></a></li>
+
+
+
+
+
+
+
+
+
+
+
+<li><a href="//www.linkedin.com/in/luthermonson" target="_blank" rel="noopener" title="LinkedIn" class="fab fa-linkedin"></a></li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li><a href="//twitter.com/luthermonson" target="_blank" rel="noopener" title="Twitter" class="fab fa-twitter"></a></li>
+
+
+
+
+
+
+
+
+
+
+
+<li><a href="mailto:luther.monson@gmail.com" target="_blank" title="Email" class="far fa-envelope"></a></li>
+
+      </ul>
+    </footer>
+  
+</section>
+
+      <main id="site-main">
+        
+  <article>
+    <div class="post">
+      <header>
+  <div class="title">
+    
+      <h2><a href="/blog/2026/08/windows-php-fast-vm-tailcall/">The Fast PHP Interpreter Windows Never Got</a></h2>
+    
+    
+      <p>Windows PHP being slow is mostly a missing-implementation story, not an OS fact. Here is why ePHPm ships a separate clang-cl build with the TAILCALL interpreter, and what it proves.</p>
+    
+  </div>
+  <div class="meta">
+    <time datetime="2026-08-21 10:00:00 -0700 MST">August 21, 2026</time>
+    
+    <p>9-Minute Read</p>
+  </div>
+</header>
+
+      <div id="socnet-share">
+        
+
+
+
+
+  
+    
+    <a href="//twitter.com/share?text=The%20Fast%20PHP%20Interpreter%20Windows%20Never%20Got&amp;url=https%3a%2f%2fluth.io%2fblog%2f2026%2f08%2fwindows-php-fast-vm-tailcall%2f" target="_blank" rel="noopener" class="nav share-btn twitter">
+        <p>Twitter</p>
+      </a>
+  
+
+  
+      <a href="//www.facebook.com/sharer/sharer.php?u=https%3a%2f%2fluth.io%2fblog%2f2026%2f08%2fwindows-php-fast-vm-tailcall%2f" target="_blank" rel="noopener" class="nav share-btn facebook">
+        <p>Facebook</p>
+        </a>
+  
+
+  
+    <a href="//www.reddit.com/submit?url=https%3a%2f%2fluth.io%2fblog%2f2026%2f08%2fwindows-php-fast-vm-tailcall%2f&amp;title=The%20Fast%20PHP%20Interpreter%20Windows%20Never%20Got" target="_blank" rel="noopener" class="nav share-btn reddit">
+          <p>Reddit</p>
+        </a>
+  
+
+  
+        <a href="//www.linkedin.com/shareArticle?url=https%3a%2f%2fluth.io%2fblog%2f2026%2f08%2fwindows-php-fast-vm-tailcall%2f&amp;title=The%20Fast%20PHP%20Interpreter%20Windows%20Never%20Got" target="_blank" rel="noopener" class="nav share-btn linkedin">
+            <p>LinkedIn</p>
+          </a>
+  
+
+  
+        <a href="//www.pinterest.com/pin/create/button/?url=https%3a%2f%2fluth.io%2fblog%2f2026%2f08%2fwindows-php-fast-vm-tailcall%2f&amp;description=The%20Fast%20PHP%20Interpreter%20Windows%20Never%20Got" target="_blank" rel="noopener" class="nav share-btn pinterest">
+          <p>Pinterest</p>
+        </a>
+  
+
+  
+        <a href="mailto:?subject=Check%20out%20this%20post%20by Luther%20Monson&amp;body=https%3a%2f%2fluth.io%2fblog%2f2026%2f08%2fwindows-php-fast-vm-tailcall%2f" target="_blank" class="nav share-btn email" data-proofer-ignore>
+          <p>Email</p>
+        </a>
+  
+
+
+      </div>
+      <div class="content">
+        
+        <p>&ldquo;PHP is slow on Windows&rdquo; is one of those things everyone knows and nobody questions. I believed it too, right up until I went looking for <em>where</em> the slowness actually lives. Part of it is real and unfixable. But a big chunk of the interpreter half turns out to be something much more boring: nobody ever wrote the fast dispatch loop for the Windows compiler. That is not the same claim as &ldquo;the OS is slower.&rdquo; It is a missing implementation.</p>
+<p><a href="https://github.com/ephpm/ephpm">ePHPm</a> embeds PHP into a single Rust binary, so I ship my own Windows PHP build and I care a lot about how fast it runs. That is how I ended up with a second, separate Windows binary that closes most of the interpreter gap to Linux. To explain why it has to be a separate binary, I have to explain how the Zend interpreter actually dispatches an opcode.</p>
+<h3 id="three-ways-to-run-a-bytecode-loop">Three ways to run a bytecode loop</h3>
+<p>PHP compiles your script to opcodes and then runs them in a loop. For each opcode it has to pick the handler, run it, and move to the next. How it does that pick is the &ldquo;VM kind,&rdquo; and the Zend engine has three that actually ship.</p>
+<p><strong>CALL</strong> is the portable one. Every opcode handler is its own function, and the loop makes one indirect function call per opcode. That sounds fine until you count the cost. Every call pays a full register-save prologue on the way in, re-loads the interpreter&rsquo;s state from memory, does its work, then restores registers on the way out. You pay that tax on every single opcode. It is the fallback that works on any C compiler, and it is what MSVC produces.</p>
+<p><strong>HYBRID</strong> is the fast one. Instead of separate functions, all the handlers are blocks inside one giant function, and dispatch is a computed goto straight to the next block. No call, no prologue, no epilogue. On top of that, the two hottest interpreter variables — the current execution frame and the instruction pointer — get pinned into CPU registers for the entire life of the process. They never get reloaded from memory because they never leave the register. This is the default on Linux and has been since PHP 7.2. It is also a GCC-only trick: computed goto and global register variables are GCC extensions.</p>
+<p><strong>TAILCALL</strong> is the new one, added in PHP 8.5. Handlers stay separate functions, but each one ends by tail-calling the next handler directly, using Clang&rsquo;s <code>[[clang::musttail]]</code> and the <code>preserve_none</code> calling convention. The guaranteed tail call means no stack growth and no save/restore churn between handlers, and <code>preserve_none</code> lets the compiler stop babysitting callee-saved registers. The result lands within about one percent of HYBRID. It is Clang-only.</p>
+<p>There are two more kinds, SWITCH and GOTO, but they are legacy generator modes and nobody ships them pre-generated, so ignore them.</p>
+<p>Here is what the three shipped kinds cost on the same machine, from the upstream benchmark that introduced TAILCALL:</p>
+<p><img src="/img/2026/08/windows-php-fast-vm-tailcall.svg" alt="Bar chart of bench.php run time for CALL, HYBRID and TAILCALL on one machine: CALL 1.783s, HYBRID 1.006s, TAILCALL 1.017s"></p>
+<p>CALL is about 1.77x slower than HYBRID on this opcode-bound benchmark. TAILCALL claws essentially all of that back. The important detail is that this is one machine, one OS. It is a pure compiler-and-dispatch effect. Nothing about Windows is in that number.</p>
+<h3 id="why-msvc-gets-the-slow-one">Why MSVC gets the slow one</h3>
+<p>The VM kind is not configured. It is selected by the C preprocessor when php-src is compiled, by a chain that boils down to this: if you are on GCC with global register variables, you get HYBRID; else if you are on Clang with musttail and preserve_none on x86-64 or arm64, you get TAILCALL; otherwise you get CALL.</p>
+<p>MSVC is the &ldquo;otherwise.&rdquo; It does not define <code>__GNUC__</code>, it has no labels-as-values, it has no global register variables, and it has no guaranteed-tail-call attribute. So both fast arms fail and MSVC falls through to CALL. Every stock Windows PHP build is in this bucket. The php.net zip, FrankenPHP&rsquo;s Windows bundle, my own regular ePHPm Windows artifact — all of them run CALL, because all of them are built with MSVC, and MSVC is the only compiler PHP officially supports on Windows. When I benchmarked the php.net build and the FrankenPHP build on the same CPU loop they came out within a rounding error of each other, which makes sense: same interpreter lineage, same slow dispatch.</p>
+<p>So &ldquo;Windows PHP is slow&rdquo; in the interpreter is really &ldquo;the supported Windows compiler can&rsquo;t emit the fast interpreter, and until 8.5 there was no fast interpreter it <em>could</em> emit.&rdquo; That second clause is the part that changed. TAILCALL was built for exactly the compiler Windows can actually use.</p>
+<h3 id="you-cant-flip-it-on--so-i-ship-a-second-binary">You can&rsquo;t flip it on — so I ship a second binary</h3>
+<p>This is the part that trips people up, so let me say it plainly. There is no <code>opcache.vm_kind</code>. There is no <code>php.ini</code> setting and no CLI flag. The VM kind is baked into the binary by how it was compiled. You cannot turn TAILCALL &ldquo;on&rdquo; in an MSVC build, because the MSVC build does not contain the TAILCALL code at all. The preprocessor compiled it out.</p>
+<p>That is why ePHPm ships TAILCALL as a <em>separate</em> Windows download rather than a config knob. It is a whole second binary, built with clang-cl instead of MSVC. clang-cl is Clang wearing the MSVC command-line interface, so it produces a Microsoft-ABI object that links into my unchanged Rust pipeline, but it qualifies for the Clang arm of that preprocessor chain and emits TAILCALL. The regular MSVC artifact stays the default. The clang build sits next to it with a <code>-tailcall</code> suffix for people doing CPU-heavy work on PHP 8.5.</p>
+<h3 id="what-its-actually-worth">What it&rsquo;s actually worth</h3>
+<p>Measured end to end through ePHPm on Windows, on a pure CPU loop with the JIT off, the TAILCALL build runs the interpreter about 1.72x faster than the MSVC build. Roughly 4.8ms drops to roughly 2.8ms. That matches the upstream dispatch number almost exactly, which is reassuring: the win is the dispatch kind, nothing fancier.</p>
+<p>Now the honest part. That full 1.72x lands with the JIT off. That happens to be ePHPm&rsquo;s shipped default on every platform right now, so for ePHPm the number is real and it is the common case, not a corner case. But I want to be clear about why, because it is easy to oversell.</p>
+<p>The JIT compiles hot code to native machine code that bypasses the C interpreter loop entirely. When hot code is running JIT-compiled, the dispatch quality of the interpreter stops mattering, because you are not in the interpreter. So on a warm hot loop with the tracing JIT on, the MSVC build and the TAILCALL build land on top of each other. TAILCALL&rsquo;s value with a warm JIT is not steady-state throughput. It is cold-path latency: framework bootstrap, first-request code, short scripts, anything that runs the interpreter before the JIT has traced it. There TAILCALL still wins by about 1.55x even with the JIT enabled.</p>
+<p>So the reframe I want to land is this. Every platform already runs the fastest interpreter its compiler can emit. Linux on GCC gets HYBRID. Clang targets — Windows through clang-cl, and macOS — get TAILCALL. There is no reason to switch Linux to TAILCALL, because HYBRID is already as fast and is the GCC path. TAILCALL was never a project-wide upgrade. It was built specifically for the platforms GCC can&rsquo;t serve, where the only alternative was the slow CALL fallback. Windows is the headline example. The reputation was never &ldquo;the OS is slower.&rdquo; It was &ldquo;the Windows toolchain was never handed a fast VM.&rdquo; Now, on 8.5 and later, it has one.</p>
+<h3 id="the-other-half-is-the-filesystem-and-that-ones-real">The other half is the filesystem, and that one&rsquo;s real</h3>
+<p>I don&rsquo;t want to leave you thinking a clang build fixes Windows PHP, because it only fixes half the story, and arguably the smaller half for a real app.</p>
+<p>The other half is filesystem metadata. A <code>stat</code> or a <code>file_exists</code> on Windows costs roughly 10x what it costs on Linux. I measured a deep <code>vendor/</code> walk with a couple thousand existence checks at about 207ms on Windows against about 20ms on Linux, same hardware. That is not Defender, and it is not a tuning mistake. Every one of those calls pays a per-call UTF-8 to UTF-16 conversion, a path canonicalization, and a full <code>CreateFileW</code> handle open that walks the whole NT filter-driver stack. The Linux side is one syscall served out of the dentry cache. A framework that stats hundreds of files per request multiplies that structural difference straight into your request time.</p>
+<p>And here is the thing: that half has no compiler fix. There is no second binary that makes a <code>stat</code> cheap. You can only pay it less often — production opcache settings, authoritative autoloader classmaps, Dev Drive, turning off timestamp validation. The first touch of every file is always full price. On a filesystem-bound app the interpreter win is a couple of percent and the filesystem is the whole game.</p>
+<p>Which brings me to the thing I actually can&rsquo;t stop thinking about. The metadata cost is bad on a local NTFS volume. It gets genuinely ugly over a network filesystem, and NFS performance for this kind of stat-heavy, metadata-chatty PHP workload is its own special misery that I have been staring at for a while now. I don&rsquo;t have an answer for it yet. It is an open problem I would like to crack one day, the same way the interpreter half turned out to be crackable once I stopped treating &ldquo;Windows is slow&rdquo; as a law of nature and went looking for the actual mechanism. No promises, no roadmap line. Just a hope that one day the network-filesystem half has as clean an answer as the interpreter half finally got.</p>
+<h3 id="whats-next">What&rsquo;s next</h3>
+<p>The TAILCALL lane is still experimental and non-gating in CI, so it has less soak time than the MSVC artifact. If you run CPU-bound PHP on Windows, grab the <code>-tailcall</code> build, run your own test suite against it, and tell me what breaks. The mechanism is upstream and solid; the packaging is where I still want more miles. And if you have ever made PHP behave over NFS, I would genuinely love to hear how.</p>
+<h3 id="links">Links</h3>
+<ul>
+<li><a href="https://github.com/php/php-src/pull/17849">php-src PR #17849 — the tail-call VM</a> — the upstream change that added TAILCALL in PHP 8.5, with the bench.php numbers (HYBRID 1.006s / CALL 1.783s / TAILCALL 1.017s).</li>
+<li><a href="https://externals.io/message/99043">Dmitry Stogov introducing HYBRID</a> — the php-internals thread for the GCC dispatch that has been the Linux default since PHP 7.2.</li>
+<li><a href="https://github.com/ephpm/ephpm/issues/329">ephpm/ephpm#329</a> — the clang-cl TAILCALL lane for ePHPm&rsquo;s Windows builds, with the measured end-to-end numbers.</li>
+</ul>
+
+      </div>
+      <footer>
+        <div class="stats">
+  
+    <ul class="categories">
+      
+        
+          <li><a class="article-terms-link" href="/categories/ephpm/">ephpm</a></li>
+        
+          <li><a class="article-terms-link" href="/categories/php/">php</a></li>
+        
+      
+    </ul>
+  
+  
+    <ul class="tags">
+      
+        
+          <li><a class="article-terms-link" href="/tags/php/">php</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/windows/">windows</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/ephpm/">ephpm</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/performance/">performance</a></li>
+        
+          <li><a class="article-terms-link" href="/tags/rust/">rust</a></li>
+        
+      
+    </ul>
+  
+</div>
+
+      </footer>
+    </div>
+    
+      
+  
+  <div class='post giscus-wrap'>
+    <script src='https://giscus.app/client.js'
+            data-repo='luthermonson/luth.io'
+            data-repo-id='R_kgDOGvFBXQ'
+            data-category='Announcements'
+            data-category-id='DIC_kwDOGvFBXc4DH_gv'
+            data-mapping='pathname'
+            data-strict='1'
+            data-reactions-enabled='1'
+            data-emit-metadata='0'
+            data-input-position='top'
+            data-theme='light'
+            data-lang='en'
+            data-loading='lazy'
+            crossorigin='anonymous'
+            async>
+    </script>
+  </div>
+  
+
+
+
+    
+  </article>
+  
+    <nav class="post-nav">
+      
+        <a href="/blog/2026/08/benchmark-4x-wrong-wsl-drvfs-cwd/" class="post-nav-link older">
+          <span class="post-nav-label">&larr; Older</span>
+          <span class="post-nav-title">My Benchmark Was 4x Wrong Because of WSL</span>
+        </a>
+      
+      
+        <a href="/blog/2026/08/shipmates-persona-based-ai-coding-crews/" class="post-nav-link newer">
+          <span class="post-nav-label">Newer &rarr;</span>
+          <span class="post-nav-title">shipmates: Persona-Based AI Coding Crews That Remember</span>
+        </a>
+      
+    </nav>
+  
+
+      </main>
+      <section id="site-sidebar">
+  
+    <section id="recent-posts">
+      <header>
+        <h1>Recent Posts</h1>
+      </header>
+      
+      <article class="mini-post">
+          <a href="/blog/2026/11/dagger-on-ephemerd-runner-fleet/" class="image" style="--bg-image: url('/img/2026/11/dagger-ephemerd-cache-architecture.svg');">
+    <img class="" src="/img/2026/11/dagger-ephemerd-cache-architecture.svg" alt="GitHub fires a workflow_job webhook at ephemerd on the node, which provisions a fresh VLAN-isolated runner that is destroyed after the job. Inside it a cold per-job BuildKit engine imports and exports cached layers over the GitHub Actions Cache v2 protocol to ephemerd&#39;s Actions-cache proxy, which persists the cache in a registry; point one shared registry in the VLAN at every host for a single fleet-wide cache.">
+  </a>
+        <header>
+          <h2><a href="/blog/2026/11/dagger-on-ephemerd-runner-fleet/">Dagger on ephemerd, and a Warm Cache on Throwaway Runners</a></h2>
+          <time class="published" datetime="2026-11-18 09:00:00 -0700 MST">November 18, 2026</time>
+        </header>
+      </article>
+      
+      <article class="mini-post">
+          <a href="/blog/2026/10/durable-data-single-node-k3s-ebs-rebuild/" class="image" style="--bg-image: url('/img/2026/10/durable-data-single-node-k3s-ebs-rebuild.svg');">
+    <img class="" src="/img/2026/10/durable-data-single-node-k3s-ebs-rebuild.svg" alt="A node rebuild: Node A is replaced by Node B, each root EBS volume is disposable, and the separate labeled EBS data volume detaches from the old node and re-attaches to the new one so the ePHPm blog&#39;s SQLite file and uploads survive">
+  </a>
+        <header>
+          <h2><a href="/blog/2026/10/durable-data-single-node-k3s-ebs-rebuild/">Surviving a Node Rebuild: A Durable ePHPm Blog on Single-Node k3s</a></h2>
+          <time class="published" datetime="2026-10-28 10:00:00 -0700 MST">October 28, 2026</time>
+        </header>
+      </article>
+      
+      <article class="mini-post">
+          <a href="/blog/2026/10/docker-in-docker-without-root/" class="image" style="--bg-image: url('/img/2026/10/docker-in-docker-without-root-cracks.svg');">
+    <img class="" src="/img/2026/10/docker-in-docker-without-root-cracks.svg" alt="Four dind sandbox cracks and the ephemerd PR that closed each one">
+  </a>
+        <header>
+          <h2><a href="/blog/2026/10/docker-in-docker-without-root/">Docker-in-Docker in CI Without Handing Jobs Root</a></h2>
+          <time class="published" datetime="2026-10-24 10:00:00 -0700 MST">October 24, 2026</time>
+        </header>
+      </article>
+      
+      <article class="mini-post">
+          <a href="/blog/2026/10/ci-cache-proxies-ephemeral-runners/" class="image" style="--bg-image: url('/img/2026/10/ci-cache-proxies-ephemeral-runners-flow.svg');">
+    <img class="" src="/img/2026/10/ci-cache-proxies-ephemeral-runners-flow.svg" alt="A fresh runner per job points go mod, cargo, composer, release downloads and actions/cache at matching cache proxies on the ephemerd node, where the caches persist and only reach the internet on a miss">
+  </a>
+        <header>
+          <h2><a href="/blog/2026/10/ci-cache-proxies-ephemeral-runners/">Cache Proxies for Ephemeral CI Runners</a></h2>
+          <time class="published" datetime="2026-10-23 15:00:00 -0700 MST">October 23, 2026</time>
+        </header>
+      </article>
+      
+      <article class="mini-post">
+          <a href="/blog/2026/10/ephemeral-macos-runners-vm-clones/" class="image" style="--bg-image: url('/img/2026/10/ephemeral-macos-runners-vm-clones-lifecycle.svg');">
+    <img class="" src="/img/2026/10/ephemeral-macos-runners-vm-clones-lifecycle.svg" alt="A macOS CI job lifecycle: clone the base image, boot and grow the disk, set up over SSH, run the job, then stop and sweep, with a band showing the single slot held the whole time">
+  </a>
+        <header>
+          <h2><a href="/blog/2026/10/ephemeral-macos-runners-vm-clones/">Ephemeral macOS Runners: A Fresh VM Per Job on Apple Silicon</a></h2>
+          <time class="published" datetime="2026-10-23 11:00:00 -0700 MST">October 23, 2026</time>
+        </header>
+      </article>
+      
+      
+        <footer>
+          <a href="/blog" class="button">See More</a>
+        </footer>
+      
+    </section>
+  
+
+  
+    
+
+      <section id="categories">
+        <header>
+          <h1><a href="/categories">Categories</a></h1>
+        </header>
+        <ul>
+          
+          
+          <li>
+              <a href="/categories/ephpm/">ephpm<span class="count">39</span></a>
+          
+          <li>
+              <a href="/categories/go/">go<span class="count">32</span></a>
+          
+          <li>
+              <a href="/categories/php/">php<span class="count">27</span></a>
+          
+          <li>
+              <a href="/categories/rust/">rust<span class="count">17</span></a>
+          
+          <li>
+              <a href="/categories/homelab/">homelab<span class="count">14</span></a>
+          
+          <li>
+              <a href="/categories/windows/">windows<span class="count">14</span></a>
+          
+          <li>
+              <a href="/categories/ci/">ci<span class="count">13</span></a>
+          
+          <li>
+              <a href="/categories/containers/">containers<span class="count">11</span></a>
+          
+          <li>
+              <a href="/categories/databases/">databases<span class="count">10</span></a>
+          
+          <li>
+              <a href="/categories/ephemerd/">ephemerd<span class="count">10</span></a>
+          
+          <li>
+              <a href="/categories/security/">security<span class="count">10</span></a>
+          
+          <li>
+              <a href="/categories/tools/">tools<span class="count">5</span></a>
+          
+          <li>
+              <a href="/categories/ai-agents/">ai-agents<span class="count">4</span></a>
+          
+          </li>
+        </ul>
+      </section>
+    
+  
+
+  
+    <section id="mini-bio">
+      <header>
+        <h1>About</h1>
+      </header>
+      <p>Luther is a 20+ year software veteran specializing in backend APIs and architecting products. Founding engineer at <a href='https://gascity.com'>Gas City</a> building open-source AI software factories on <a href='https://github.com/gastownhall/beads'>Beads</a>, the durable work graph for coding agents.</p>
+      <footer>
+        <a href="/about" class="button">Learn More</a>
+      </footer>
+    </section>
+  
+</section>
+
+      <footer id="site-footer">
+  
+      <ul class="socnet-icons">
+        
+
+        <li><a href="//github.com/luthermonson" target="_blank" rel="noopener" title="GitHub" class="fab fa-github"></a></li>
+
+
+
+
+
+
+
+
+
+
+
+<li><a href="//www.linkedin.com/in/luthermonson" target="_blank" rel="noopener" title="LinkedIn" class="fab fa-linkedin"></a></li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li><a href="//twitter.com/luthermonson" target="_blank" rel="noopener" title="Twitter" class="fab fa-twitter"></a></li>
+
+
+
+
+
+
+
+
+
+
+
+<li><a href="mailto:luther.monson@gmail.com" target="_blank" title="Email" class="far fa-envelope"></a></li>
+
+      </ul>
+  
+  <p class="copyright">
+    © 2026 Luther Monson
+      <br>
+    Theme: <a href='https://github.com/pacollins/hugo-future-imperfect-slim' target='_blank' rel='noopener'>Hugo Future Imperfect Slim</a><br>A <a href='https://html5up.net/future-imperfect' target='_blank' rel='noopener'>HTML5 UP port</a> | Powered by <a href='https://gohugo.io/' title='0.160.1' target='_blank' rel='noopener'>Hugo</a>
+  </p>
+</footer>
+<a id="back-to-top" href="#" class="fas fa-arrow-up fa-2x"></a>
+
+      <script src="/js/bundle.min.241b62ebc4792fe8c7a75879e5f710894f226f2b73342e9916b3a3b0526030cc.js" integrity="sha256-JBti68R5L&#43;jHp1h55fcQiU8ibytzNC6ZFrOjsFJgMMw="></script>
+    <script src="/js/add-on.js"></script>
+    </div>
+  </body>
+</html>
