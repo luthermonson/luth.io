@@ -1,0 +1,91 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 540" font-family="system-ui, -apple-system, Segoe UI, Roboto, sans-serif" role="img" aria-labelledby="t d">
+  <title id="t">One db console into a live ePHPm server's database and KV</title>
+  <desc id="d">The ephpm db console probes the MySQL listener: if a server answers it forwards over the wire in live mode authenticating as the site, otherwise it direct-opens the site's file offline. In live mode a SELECT's rows feed a dollar-brace key template, and /kv-put writes one KV key per row into the same running server's embedded KV store.</desc>
+
+  <defs>
+    <marker id="ablue" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#0550ae"/>
+    </marker>
+    <marker id="aorange" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#a34700"/>
+    </marker>
+    <marker id="agray" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#555"/>
+    </marker>
+  </defs>
+
+  <rect width="960" height="540" fill="#ffffff"/>
+  <text x="480" y="34" text-anchor="middle" font-size="21" font-weight="600" fill="#222">One console, one running server: the live DB and the live KV from the same prompt</text>
+
+  <!-- Terminal -->
+  <rect x="24" y="80" width="214" height="200" rx="10" fill="#f4f6f9" stroke="#6b6b6b"/>
+  <text x="131" y="106" text-anchor="middle" font-size="15" font-weight="600" fill="#222">your terminal</text>
+  <text x="131" y="132" text-anchor="middle" font-size="12.5" fill="#333">ephpm db shell</text>
+  <text x="131" y="150" text-anchor="middle" font-size="12.5" fill="#333">--site blog -c ephpm.toml</text>
+  <rect x="40" y="170" width="182" height="92" rx="6" fill="#fff" stroke="#6b6b6b"/>
+  <text x="131" y="191" text-anchor="middle" font-size="12" fill="#0550ae">SELECT id, payload</text>
+  <text x="131" y="209" text-anchor="middle" font-size="12" fill="#0550ae">FROM widgets ...;</text>
+  <text x="131" y="233" text-anchor="middle" font-size="12" fill="#a34700">/kv GET widget:42</text>
+  <text x="131" y="251" text-anchor="middle" font-size="12" fill="#a34700">/kv-put 'widget:${id}' payload</text>
+
+  <!-- Decision -->
+  <path d="M330,180 L392,140 L454,180 L392,220 z" fill="#f8f8f8" stroke="#555" stroke-width="1.5"/>
+  <text x="392" y="176" text-anchor="middle" font-size="12.5" fill="#222">server up on</text>
+  <text x="392" y="192" text-anchor="middle" font-size="12.5" fill="#222">MySQL listener?</text>
+  <line x1="238" y1="180" x2="326" y2="180" stroke="#555" stroke-width="2" marker-end="url(#agray)"/>
+  <text x="282" y="172" text-anchor="middle" font-size="11" fill="#555">probe</text>
+
+  <!-- offline branch -->
+  <path d="M392,220 L392,300 L300,300" fill="none" stroke="#555" stroke-width="2" stroke-dasharray="5 4" marker-end="url(#agray)"/>
+  <text x="408" y="262" font-size="11.5" fill="#555">no</text>
+  <rect x="96" y="320" width="204" height="86" rx="8" fill="#f8f8f8" stroke="#555"/>
+  <text x="198" y="344" text-anchor="middle" font-size="13" font-weight="600" fill="#222">offline</text>
+  <text x="198" y="366" text-anchor="middle" font-size="12" fill="#333">direct-open the site file</text>
+  <text x="198" y="384" text-anchor="middle" font-size="12" fill="#333">any dialect; no /kv</text>
+  <text x="198" y="400" text-anchor="middle" font-size="11" fill="#6b6b6b">good for seeding</text>
+
+  <!-- live branch -->
+  <line x1="454" y1="180" x2="556" y2="180" stroke="#0550ae" stroke-width="2.5" marker-end="url(#ablue)"/>
+  <text x="505" y="172" text-anchor="middle" font-size="11.5" fill="#0550ae">yes</text>
+  <text x="505" y="200" text-anchor="middle" font-size="11" fill="#0550ae">forward, auth as site</text>
+
+  <!-- Running server box -->
+  <rect x="560" y="80" width="372" height="326" rx="10" fill="#eaf1fa" stroke="#0550ae" stroke-width="2"/>
+  <text x="746" y="106" text-anchor="middle" font-size="15" font-weight="600" fill="#0550ae">the running ePHPm server (one process)</text>
+  <text x="746" y="124" text-anchor="middle" font-size="11.5" fill="#0550ae">live mode: MySQL dialect only</text>
+
+  <rect x="584" y="146" width="150" height="120" rx="8" fill="#fff" stroke="#0550ae"/>
+  <text x="659" y="170" text-anchor="middle" font-size="13" font-weight="600" fill="#222">embedded DB</text>
+  <text x="659" y="190" text-anchor="middle" font-size="12" fill="#333">Turso engine</text>
+  <text x="659" y="208" text-anchor="middle" font-size="12" fill="#333">per-site .db file</text>
+  <text x="659" y="234" text-anchor="middle" font-size="11.5" fill="#333">rows come back</text>
+  <text x="659" y="250" text-anchor="middle" font-size="11.5" fill="#333">to the console</text>
+
+  <rect x="758" y="146" width="150" height="120" rx="8" fill="#fdf1e6" stroke="#a34700"/>
+  <text x="833" y="170" text-anchor="middle" font-size="13" font-weight="600" fill="#a34700">embedded KV</text>
+  <text x="833" y="190" text-anchor="middle" font-size="12" fill="#333">RESP / redis-compat</text>
+  <text x="833" y="208" text-anchor="middle" font-size="12" fill="#333">per-site keyspace</text>
+  <text x="833" y="234" text-anchor="middle" font-size="11.5" fill="#333">the cache PHP</text>
+  <text x="833" y="250" text-anchor="middle" font-size="11.5" fill="#333">reads at runtime</text>
+
+  <!-- the ${col} flow -->
+  <rect x="584" y="286" width="324" height="104" rx="8" fill="#fff" stroke="#a34700"/>
+  <text x="746" y="308" text-anchor="middle" font-size="12.5" font-weight="600" fill="#222">/kv-put: one KV key per result row</text>
+  <text x="746" y="330" text-anchor="middle" font-size="12" fill="#0550ae">SELECT id=42, payload={...new...}</text>
+  <text x="746" y="350" text-anchor="middle" font-size="12" fill="#222">key template widget:${id}  →  widget:42</text>
+  <text x="746" y="370" text-anchor="middle" font-size="12" fill="#a34700">SET widget:42 = payload column</text>
+
+  <!-- DB -> flow -->
+  <line x1="659" y1="266" x2="659" y2="284" stroke="#0550ae" stroke-width="2" marker-end="url(#ablue)"/>
+  <!-- flow -> KV -->
+  <line x1="833" y1="286" x2="833" y2="268" stroke="#a34700" stroke-width="2" marker-end="url(#aorange)"/>
+
+  <!-- terminal -> server -->
+  <path d="M222,214 C430,470 540,440 620,392" fill="none" stroke="#a34700" stroke-width="2" stroke-dasharray="2 3"/>
+
+  <!-- footer -->
+  <rect x="24" y="430" width="908" height="86" rx="8" fill="#f8f8f8" stroke="#ddd"/>
+  <text x="44" y="456" font-size="12.5" fill="#222"><tspan font-weight="600">live</tspan> hits the exact DB and KV the running server uses; the console authenticates per-site, so you only touch that tenant's keyspace.</text>
+  <text x="44" y="478" font-size="12.5" fill="#222"><tspan font-weight="600">${col}</tspan> interpolates columns from the last SELECT into the key; the value is a column name, or the whole row as JSON when omitted.</text>
+  <text x="44" y="500" font-size="12.5" fill="#222"><tspan font-weight="600">/kv</tspan> and <tspan font-weight="600">/kv-put</tspan> are console meta-commands, not SQL functions. Calling KV from inside SQL is a separate, not-yet-shipped feature.</text>
+</svg>

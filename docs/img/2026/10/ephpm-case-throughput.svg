@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 540 350" font-family="system-ui,Segoe UI,Helvetica,Arial,sans-serif">
+  <rect width="540" height="350" fill="#ffffff"/>
+  <text x="270" y="28" text-anchor="middle" font-size="18" font-weight="700" fill="#1f2937">Throughput — higher is better (req/s)</text>
+  <!-- axes -->
+  <line x1="70" y1="50" x2="70" y2="280" stroke="#9ca3af" stroke-width="1"/>
+  <line x1="70" y1="280" x2="510" y2="280" stroke="#9ca3af" stroke-width="1"/>
+  <!-- gridlines + y labels (0.767 px/req; baseline y=280) -->
+  <line x1="70" y1="203.3" x2="510" y2="203.3" stroke="#e5e7eb"/><text x="64" y="208" text-anchor="end" font-size="11" fill="#6b7280">100</text>
+  <line x1="70" y1="126.6" x2="510" y2="126.6" stroke="#e5e7eb"/><text x="64" y="131" text-anchor="end" font-size="11" fill="#6b7280">200</text>
+  <line x1="70" y1="50" x2="510" y2="50" stroke="#e5e7eb"/><text x="64" y="54" text-anchor="end" font-size="11" fill="#6b7280">300</text>
+  <!-- bars -->
+  <rect x="150" y="130.4" width="90" height="149.6" fill="#c2410c"/><text x="195" y="124" text-anchor="middle" font-size="13" font-weight="700" fill="#c2410c">195</text>
+  <text x="195" y="298" text-anchor="middle" font-size="13" font-weight="600" fill="#374151">RDS</text>
+  <rect x="320" y="85.2" width="90" height="194.8" fill="#15803d"/><text x="365" y="79" text-anchor="middle" font-size="13" font-weight="700" fill="#15803d">254</text>
+  <text x="365" y="298" text-anchor="middle" font-size="13" font-weight="600" fill="#374151">ePHPm+Turso</text>
+  <!-- +30% callout -->
+  <text x="270" y="325" text-anchor="middle" font-size="13" font-weight="700" fill="#15803d">+30% throughput on one box, no RDS</text>
+</svg>

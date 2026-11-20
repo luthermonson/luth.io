@@ -1,7 +1,7 @@
 ---
 title: "Operating the One-Box ePHPm Setup: Backups and Blue/Green"
 description: "Day-two work on the single-VM ePHPm box: a golden AMI that smoke-tests itself, an S3 backup that survives on a box too small to hold two copies of the database, and a blue/green upgrade that moves the data instead of the disk."
-date: 2026-11-19T07:30:00-07:00
+date: 2026-11-20T06:00:00-07:00
 tags: [ aws, packer, terraform, ephpm, blue-green, sqlite, backups ]
 categories: [ ephpm, containers ]
 images:
