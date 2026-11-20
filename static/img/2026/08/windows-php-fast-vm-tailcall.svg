@@ -1,0 +1,51 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 760 430" font-family="system-ui, -apple-system, Segoe UI, Roboto, sans-serif" role="img" aria-labelledby="t d">
+  <title id="t">Zend VM dispatch on bench.php: CALL vs HYBRID vs TAILCALL</title>
+  <desc id="d">Bar chart of upstream bench.php run time in seconds for the three shipped Zend interpreter dispatch kinds, all on the same machine. CALL, the portable fallback MSVC gets, runs in about 1.783 seconds. HYBRID, the GCC-only dispatch Linux has used since PHP 7.2, runs in about 1.006 seconds. TAILCALL, the Clang-only dispatch added in PHP 8.5, runs in about 1.017 seconds, recovering almost all of HYBRID's advantage. CALL is roughly 1.77 times slower than the other two.</desc>
+  <style>
+    .hd { fill: #222222; font-size: 18px; font-weight: 600; }
+    .sub { fill: #555555; font-size: 13px; }
+    .axis { fill: #777777; font-size: 12px; }
+    .val { font-size: 15px; font-weight: 700; }
+    .name { fill: #222222; font-size: 15px; font-weight: 600; }
+    .cmp { fill: #555555; font-size: 12px; }
+    .grid { stroke: #e3e3e3; stroke-width: 1; }
+    .axl { stroke: #999999; stroke-width: 1.5; }
+    .call { fill: #a34700; }
+    .hybrid { fill: #00707a; }
+    .tail { fill: #0550ae; }
+  </style>
+
+  <text class="hd" x="60" y="34" text-anchor="start">The same loop, three dispatch methods</text>
+  <text class="sub" x="60" y="54" text-anchor="start">Upstream bench.php, one machine, seconds. Lower is faster. Numbers from php-src PR #17849.</text>
+
+  <!-- gridlines + y labels: 0..2.0s, plot y 80 (2.0) .. 360 (0), 140px/s -->
+  <g>
+    <line class="grid" x1="90" y1="360" x2="720" y2="360"/><text class="axis" x="80" y="364" text-anchor="end">0</text>
+    <line class="grid" x1="90" y1="290" x2="720" y2="290"/><text class="axis" x="80" y="294" text-anchor="end">0.5</text>
+    <line class="grid" x1="90" y1="220" x2="720" y2="220"/><text class="axis" x="80" y="224" text-anchor="end">1.0</text>
+    <line class="grid" x1="90" y1="150" x2="720" y2="150"/><text class="axis" x="80" y="154" text-anchor="end">1.5</text>
+    <line class="grid" x1="90" y1="80"  x2="720" y2="80"/> <text class="axis" x="80" y="84"  text-anchor="end">2.0</text>
+    <line class="axl" x1="90" y1="80" x2="90" y2="360"/>
+  </g>
+
+  <!-- CALL: 1.783 -> height 249.6, top 110.4 -->
+  <rect class="call" x="155" y="110.4" width="90" height="249.6"/>
+  <text class="val call" x="200" y="104" text-anchor="middle">1.783 s</text>
+  <text class="name" x="200" y="384" text-anchor="middle">CALL</text>
+  <text class="cmp"  x="200" y="402" text-anchor="middle">MSVC (Windows)</text>
+  <text class="cmp"  x="200" y="418" text-anchor="middle">the slow fallback</text>
+
+  <!-- HYBRID: 1.006 -> height 140.8, top 219.2 -->
+  <rect class="hybrid" x="355" y="219.2" width="90" height="140.8"/>
+  <text class="val hybrid" x="400" y="213" text-anchor="middle">1.006 s</text>
+  <text class="name" x="400" y="384" text-anchor="middle">HYBRID</text>
+  <text class="cmp"  x="400" y="402" text-anchor="middle">GCC (Linux)</text>
+  <text class="cmp"  x="400" y="418" text-anchor="middle">default since 7.2</text>
+
+  <!-- TAILCALL: 1.017 -> height 142.4, top 217.6 -->
+  <rect class="tail" x="555" y="217.6" width="90" height="142.4"/>
+  <text class="val tail" x="600" y="211" text-anchor="middle">1.017 s</text>
+  <text class="name" x="600" y="384" text-anchor="middle">TAILCALL</text>
+  <text class="cmp"  x="600" y="402" text-anchor="middle">Clang / clang-cl</text>
+  <text class="cmp"  x="600" y="418" text-anchor="middle">new in PHP 8.5</text>
+</svg>
